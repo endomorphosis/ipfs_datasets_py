@@ -41,9 +41,7 @@ def _state() -> ModalAutoencoderTrainingState:
         },
         family_embedding_weights={"deontic": [0.1, 0.9, 0.0]},
         semantic_slot_embedding_weights={"actor": [0.4, 0.3, 0.2]},
-        family_semantic_slot_embedding_weights={
-            "deontic||actor": [0.7, -0.1, 0.2]
-        },
+        family_semantic_slot_embedding_weights={"deontic||actor": [0.7, -0.1, 0.2]},
         family_semantic_slot_legal_ir_view_embedding_weights={
             "deontic||actor||deontic": [0.6, -0.2, 0.1]
         },
@@ -52,14 +50,10 @@ def _state() -> ModalAutoencoderTrainingState:
             "shall": {"deontic": 1.25, "kg": -0.25},
             "unless": {"cec": 0.5},
         },
-        semantic_slot_legal_ir_view_logits={
-            "actor": {"deontic": 0.875}
-        },
+        semantic_slot_legal_ir_view_logits={"actor": {"deontic": 0.875}},
         legal_ir_view_logits={"deontic": 0.625, "kg": -0.125},
         proof_auxiliary_head_logits={
-            "obligation_family": {
-                "__global__": {"mandatory": 0.75, "permission": -0.25}
-            }
+            "obligation_family": {"__global__": {"mandatory": 0.75, "permission": -0.25}}
         },
         proof_feedback_version_fingerprint="hammer-v1",
         applied_proof_feedback_ids=["proof-1"],
@@ -99,20 +93,14 @@ def test_all_trainable_parameters_are_contiguous_and_sample_memory_is_not_keyed(
     assert all(tensor.dtype == np.float64 for tensor in packed.parameter_tensors.values())
     assert "decoded_embeddings" not in packed.tables
     assert "family_logits" not in packed.tables
-    assert all(
-        key.value != "sample-17" for key in packed.registry.keys()
-    )
-    assert packed.non_parameter_state["decoded_embeddings"] == {
-        "sample-17": [0.1, 0.2]
-    }
+    assert all(key.value != "sample-17" for key in packed.registry.keys())
+    assert packed.non_parameter_state["decoded_embeddings"] == {"sample-17": [0.1, 0.2]}
 
 
 def test_map_and_json_migration_are_deterministic_and_reversible(tmp_path: Path) -> None:
     state = _state()
     original = state.to_dict()
-    reversed_mapping = {
-        key: value for key, value in reversed(list(original.items()))
-    }
+    reversed_mapping = {key: value for key, value in reversed(list(original.items()))}
     # Also reverse representative inner maps: stable IDs and tensor row order
     # must depend on key content, never Python insertion order.
     reversed_mapping["feature_embedding_weights"] = dict(
@@ -211,20 +199,17 @@ def test_proof_auxiliary_three_level_map_round_trips_as_typed_tensor() -> None:
     assert table.layout == "matrix"
     assert table.row_kind is TensorKeyKind.INTERACTION
     assert table.column_kind is TensorKeyKind.TARGET
-    assert packed.proof_auxiliary_head_logits["obligation_family"]["__global__"][
-        "mandatory"
-    ] == 0.75
-    packed.proof_auxiliary_head_logits["obligation_family"]["__global__"][
-        "mandatory"
-    ] = 0.875
-    assert packed.proof_auxiliary_head_logits["obligation_family"]["__global__"][
-        "mandatory"
-    ] == 0.875
-    state.proof_auxiliary_head_logits["obligation_family"]["__global__"][
-        "mandatory"
-    ] = 0.875
-    assert packed.to_legacy_dict()["proof_auxiliary_head_logits"] == (
-        state.to_dict()["proof_auxiliary_head_logits"]
+    assert (
+        packed.proof_auxiliary_head_logits["obligation_family"]["__global__"]["mandatory"] == 0.75
+    )
+    packed.proof_auxiliary_head_logits["obligation_family"]["__global__"]["mandatory"] = 0.875
+    assert (
+        packed.proof_auxiliary_head_logits["obligation_family"]["__global__"]["mandatory"] == 0.875
+    )
+    state.proof_auxiliary_head_logits["obligation_family"]["__global__"]["mandatory"] = 0.875
+    assert (
+        packed.to_legacy_dict()["proof_auxiliary_head_logits"]
+        == (state.to_dict()["proof_auxiliary_head_logits"])
     )
 
 

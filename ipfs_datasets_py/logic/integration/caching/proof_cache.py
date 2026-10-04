@@ -23,6 +23,7 @@ __all__ = [
 @dataclass
 class CachedProof:
     """Compat CachedProof dataclass matching the test API."""
+
     formula_hash: str
     prover: str
     result_data: Dict[str, Any]

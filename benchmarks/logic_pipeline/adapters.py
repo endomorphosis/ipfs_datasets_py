@@ -84,41 +84,28 @@ STAGE_ORDER: Final = (
 _SAFE_ID_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
 _MAX_DETAIL_LENGTH: Final = 512
 
-HAMMER_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
-)
-LEANSTRAL_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.leanstral-evidence.v1"
-)
-LEANSTRAL_DRAFT_SCHEMA: Final = (
-    "ipfs_accelerate_py/agent-supervisor/leanstral-proof-draft@1"
-)
+HAMMER_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
+LEANSTRAL_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.leanstral-evidence.v1"
+LEANSTRAL_DRAFT_SCHEMA: Final = "ipfs_accelerate_py/agent-supervisor/leanstral-proof-draft@1"
 LEANSTRAL_PROOF_OUTPUT_SCHEMA: Final = (
     "ipfs_accelerate_py.agent_supervisor.leanstral-proof-proposal@1"
 )
 LEANSTRAL_GENERATION_BOUNDARY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-generation-boundary.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-generation-boundary.v2"
 )
 LEANSTRAL_GENERATION_FAILURE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-generation-failure.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-generation-failure.v1"
 )
 LEANSTRAL_REPAIR_CONTEXT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-repair-context.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-repair-context.v1"
 )
 LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-strict-semantic-context.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-strict-semantic-context.v2"
 )
 LEANSTRAL_MODEL_SEMANTIC_CONTEXT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-model-semantic-context.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-model-semantic-context.v1"
 )
-LEANSTRAL_JSON_NUMBER_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.json-number-text.v1"
-)
+LEANSTRAL_JSON_NUMBER_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.json-number-text.v1"
 LEANSTRAL_MODEL_RESOURCE_CLASS: Final = "model"
 LEANSTRAL_KERNEL_RESOURCE_CLASS: Final = "kernel"
 LEANSTRAL_MAX_REPAIR_ATTEMPTS: Final = 1
@@ -131,26 +118,14 @@ LEANSTRAL_MEASURED_MAX_NEW_TOKENS: Final = 1_400
 # StageRecord also bounds individual strings to 4096 characters.  Keep the
 # provider output within that durable wire-contract limit.
 LEANSTRAL_MAX_DRAFT_BYTES: Final = 4 * 1024
-SPACY_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
-)
-SPACY_EVIDENCE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-)
+SPACY_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
+SPACY_EVIDENCE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
 SPACY_MAX_EVIDENCE_BYTES: Final = 60 * 1024
 SPACY_MAX_TEXT_BYTES: Final = 4 * 1024
-SYMAI_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
-)
-SYMAI_EVIDENCE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-)
-SYMAI_PROMPT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v1"
-)
-SEMANTIC_CONTEXT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"
-)
+SYMAI_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
+SYMAI_EVIDENCE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
+SYMAI_PROMPT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v1"
+SEMANTIC_CONTEXT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"
 SEMANTIC_CONTEXT_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v2"
 )
@@ -161,9 +136,7 @@ SYMAI_MAX_CANDIDATE_BYTES: Final = 24 * 1024
 SYMAI_MAX_RETRIES: Final = 2
 SYMAI_MAX_LIST_ITEMS: Final = 256
 SYMAI_MAX_ITEM_LENGTH: Final = 256
-SYMAI_ROUTER_ENGINE: Final = (
-    "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine"
-)
+SYMAI_ROUTER_ENGINE: Final = "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine"
 _LEANSTRAL_FORBIDDEN_CONSTRUCT = re.compile(
     r"(?i)(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx|axiom|unsafe)(?![A-Za-z0-9_'])"
 )
@@ -359,10 +332,7 @@ class SpacyAdapterConfig:
         if not isinstance(self.mode, SpacyAdapterMode):
             raise ProtocolContractError("mode must be a SpacyAdapterMode")
         _safe_id(self.requested_model, "requested_model")
-        if (
-            not isinstance(self.language, str)
-            or not re.fullmatch(r"[a-z]{2,8}", self.language)
-        ):
+        if not isinstance(self.language, str) or not re.fullmatch(r"[a-z]{2,8}", self.language):
             raise ProtocolContractError(
                 "language must be a lowercase ISO-style language identifier"
             )
@@ -378,9 +348,7 @@ class SpacyAdapterConfig:
             self.semantic_protocol_cid is not None
             and self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
         ):
-            raise ProtocolContractError(
-                "spaCy semantic protocol CID is unsupported"
-            )
+            raise ProtocolContractError("spaCy semantic protocol CID is unsupported")
 
 
 @dataclass(frozen=True, slots=True)
@@ -410,17 +378,13 @@ class SymaiAdapterConfig:
         _safe_id(self.provider, "provider")
         _safe_id(self.model, "model")
         if _is_recursive_symai_identity(self.provider):
-            raise ProtocolContractError(
-                "SyMAI cannot select itself as an llm_router provider"
-            )
+            raise ProtocolContractError("SyMAI cannot select itself as an llm_router provider")
         if (
             not isinstance(self.max_retries, int)
             or isinstance(self.max_retries, bool)
             or not 0 <= self.max_retries <= SYMAI_MAX_RETRIES
         ):
-            raise ProtocolContractError(
-                f"max_retries must be between 0 and {SYMAI_MAX_RETRIES}"
-            )
+            raise ProtocolContractError(f"max_retries must be between 0 and {SYMAI_MAX_RETRIES}")
         if type(self.dry_run) is not bool:
             raise ProtocolContractError("dry_run must be a boolean")
         if type(self.cache_enabled) is not bool:
@@ -433,23 +397,16 @@ class SymaiAdapterConfig:
         )
         if any(value is not None for value in inner_bindings):
             if not all(
-                isinstance(value, str)
-                and value
-                and value == value.strip()
+                isinstance(value, str) and value and value == value.strip()
                 for value in inner_bindings
             ):
-                raise ProtocolContractError(
-                    "SyMAI inner route bindings must be supplied together"
-                )
+                raise ProtocolContractError("SyMAI inner route bindings must be supplied together")
             _safe_id(self.expected_inner_provider, "expected_inner_provider")
             _safe_id(self.expected_inner_backend, "expected_inner_backend")
-            if (
-                len(self.expected_inner_model) > SYMAI_MAX_ITEM_LENGTH
-                or any(ord(char) < 32 for char in self.expected_inner_model)
+            if len(self.expected_inner_model) > SYMAI_MAX_ITEM_LENGTH or any(
+                ord(char) < 32 for char in self.expected_inner_model
             ):
-                raise ProtocolContractError(
-                    "expected_inner_model must be a bounded model identity"
-                )
+                raise ProtocolContractError("expected_inner_model must be a bounded model identity")
             endpoint = urllib.parse.urlsplit(self.expected_inner_endpoint)
             if (
                 endpoint.scheme not in {"http", "https"}
@@ -476,16 +433,13 @@ class SymaiAdapterConfig:
             or not 1 <= self.max_raw_output_bytes <= SYMAI_MAX_RAW_OUTPUT_BYTES
         ):
             raise ProtocolContractError(
-                "max_raw_output_bytes must be between 1 and "
-                f"{SYMAI_MAX_RAW_OUTPUT_BYTES}"
+                f"max_raw_output_bytes must be between 1 and {SYMAI_MAX_RAW_OUTPUT_BYTES}"
             )
         if (
             self.semantic_protocol_cid is not None
             and self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
         ):
-            raise ProtocolContractError(
-                "SyMAI semantic protocol CID is unsupported"
-            )
+            raise ProtocolContractError("SyMAI semantic protocol CID is unsupported")
 
 
 def _safe_id(value: object, field_name: str) -> str:
@@ -497,24 +451,22 @@ def _safe_id(value: object, field_name: str) -> str:
         or any(char not in _SAFE_ID_CHARS for char in value)
         or value in {".", ".."}
     ):
-        raise ProtocolContractError(
-            f"{field_name} must be a safe 1-128 character identifier"
-        )
+        raise ProtocolContractError(f"{field_name} must be a safe 1-128 character identifier")
     return value
 
 
 def _digest(value: object, field_name: str) -> str:
-    if not isinstance(value, str) or len(value) != 64 or any(
-        char not in "0123456789abcdef" for char in value
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(char not in "0123456789abcdef" for char in value)
     ):
         raise ProtocolContractError(f"{field_name} must be a lowercase SHA-256 digest")
     return value
 
 
 def _freeze_mapping(value: Mapping[str, object], field_name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise ProtocolContractError(f"{field_name} must be an object with string keys")
     # StageRecord performs the complete bounded/deep-freeze validation.  This
     # shallow proxy also prevents mutation between request construction and
@@ -544,9 +496,7 @@ def _freeze_json(value: object) -> object:
 
     def freeze(item: object) -> object:
         if isinstance(item, dict):
-            return MappingProxyType(
-                {str(key): freeze(member) for key, member in item.items()}
-            )
+            return MappingProxyType({str(key): freeze(member) for key, member in item.items()})
         if isinstance(item, list):
             return tuple(freeze(member) for member in item)
         return item
@@ -591,9 +541,7 @@ class StageArtifact:
             or not isinstance(self.invocation_index, int)
             or not 0 <= self.invocation_index < len(StageName)
         ):
-            raise ProtocolContractError(
-                "artifact invocation_index must be a bounded integer"
-            )
+            raise ProtocolContractError("artifact invocation_index must be a bounded integer")
         if type(self.invoked) is not bool:
             raise ProtocolContractError("artifact invoked must be a boolean")
         if (
@@ -601,41 +549,27 @@ class StageArtifact:
             or not self.policy_reason.strip()
             or len(self.policy_reason) > 256
         ):
-            raise ProtocolContractError(
-                "artifact policy_reason must be a bounded nonempty string"
-            )
+            raise ProtocolContractError("artifact policy_reason must be a bounded nonempty string")
         frozen = _freeze_json(self.data)
         object.__setattr__(self, "data", frozen)
         if not isinstance(self.effective_identity, Mapping):
-            raise ProtocolContractError(
-                "artifact.effective_identity must be an object"
-            )
+            raise ProtocolContractError("artifact.effective_identity must be an object")
         identity = _freeze_json(self.effective_identity)
         if not isinstance(identity, Mapping):  # defensive after JSON freezing
-            raise ProtocolContractError(
-                "artifact.effective_identity must remain an object"
-            )
+            raise ProtocolContractError("artifact.effective_identity must remain an object")
         object.__setattr__(self, "effective_identity", identity)
-        calculated = hashlib.sha256(
-            canonical_json(_thaw_json(frozen)).encode("utf-8")
-        ).hexdigest()
+        calculated = hashlib.sha256(canonical_json(_thaw_json(frozen)).encode("utf-8")).hexdigest()
         if self.status is StageStatus.SUCCESS:
             if self.output_sha256 is None:
                 object.__setattr__(self, "output_sha256", calculated)
             elif _digest(self.output_sha256, "artifact.output_sha256") != calculated:
-                raise ProtocolContractError(
-                    "artifact output_sha256 does not match its data"
-                )
+                raise ProtocolContractError("artifact output_sha256 does not match its data")
         elif self.output_sha256 is not None:
-            raise ProtocolContractError(
-                "non-success artifact cannot carry an output digest"
-            )
+            raise ProtocolContractError("non-success artifact cannot carry an output digest")
 
     @property
     def digest(self) -> str:
-        return hashlib.sha256(
-            canonical_json(self.to_dict()).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -672,26 +606,18 @@ def _leanstral_repair_failure_text(value: object) -> str:
     """Return one bounded, single-line diagnostic safe for prompt projection."""
 
     if not isinstance(value, str):
-        raise ProtocolContractError(
-            "Leanstral repair failure_text must be a string"
-        )
+        raise ProtocolContractError("Leanstral repair failure_text must be a string")
     printable = "".join(char if char.isprintable() else " " for char in value)
     sanitized = " ".join(printable.split())
     if not sanitized:
-        raise ProtocolContractError(
-            "Leanstral repair failure_text must be nonempty"
-        )
+        raise ProtocolContractError("Leanstral repair failure_text must be nonempty")
     if len(sanitized.encode("utf-8")) > LEANSTRAL_MAX_REPAIR_FAILURE_BYTES:
-        raise ProtocolContractError(
-            "Leanstral repair failure_text exceeds its byte bound"
-        )
+        raise ProtocolContractError("Leanstral repair failure_text exceeds its byte bound")
     return sanitized
 
 
 def _leanstral_repair_json_digest(value: object) -> str:
-    return hashlib.sha256(
-        canonical_json(_thaw_json(value)).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_json(_thaw_json(value)).encode("utf-8")).hexdigest()
 
 
 def _validate_leanstral_repair_context(
@@ -702,16 +628,10 @@ def _validate_leanstral_repair_context(
 ) -> Mapping[str, object]:
     """Validate and deeply freeze a source-bound, out-of-band repair context."""
 
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise ProtocolContractError(
-            "repair_context must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise ProtocolContractError("repair_context must be an object with string keys")
     if set(value) != _LEANSTRAL_REPAIR_CONTEXT_FIELDS:
-        raise ProtocolContractError(
-            "repair_context fields do not match the exact schema"
-        )
+        raise ProtocolContractError("repair_context fields do not match the exact schema")
     try:
         encoded = canonical_json(_thaw_json(value)).encode("utf-8")
     except ProtocolContractError:
@@ -720,13 +640,9 @@ def _validate_leanstral_repair_context(
     if normalized["schema"] != LEANSTRAL_REPAIR_CONTEXT_SCHEMA:
         raise ProtocolContractError("repair_context uses the wrong schema")
     if normalized["case_input_sha256"] != case_input_sha256:
-        raise ProtocolContractError(
-            "repair_context is not bound to the current case input"
-        )
+        raise ProtocolContractError("repair_context is not bound to the current case input")
     if type(normalized["attempt"]) is not int or normalized["attempt"] != 1:
-        raise ProtocolContractError(
-            "repair_context attempt must be exactly one"
-        )
+        raise ProtocolContractError("repair_context attempt must be exactly one")
     for field_name in (
         "case_input_sha256",
         "failed_leanstral_artifact_sha256",
@@ -736,45 +652,28 @@ def _validate_leanstral_repair_context(
     ):
         _digest(normalized[field_name], f"repair_context.{field_name}")
 
-    failure_text = _leanstral_repair_failure_text(
-        normalized["failure_text"]
-    )
+    failure_text = _leanstral_repair_failure_text(normalized["failure_text"])
     if failure_text != normalized["failure_text"]:
-        raise ProtocolContractError(
-            "repair_context failure_text is not canonically sanitized"
-        )
-    if hashlib.sha256(failure_text.encode("utf-8")).hexdigest() != normalized[
-        "failure_text_sha256"
-    ]:
-        raise ProtocolContractError(
-            "repair_context failure_text digest does not match"
-        )
+        raise ProtocolContractError("repair_context failure_text is not canonically sanitized")
+    if (
+        hashlib.sha256(failure_text.encode("utf-8")).hexdigest()
+        != normalized["failure_text_sha256"]
+    ):
+        raise ProtocolContractError("repair_context failure_text digest does not match")
 
     failed_draft = normalized["failed_draft"]
     if not isinstance(failed_draft, dict) or not failed_draft:
-        raise ProtocolContractError(
-            "repair_context failed_draft must be a nonempty object"
-        )
+        raise ProtocolContractError("repair_context failed_draft must be a nonempty object")
     failed_draft_bytes = canonical_json(failed_draft).encode("utf-8")
     if len(failed_draft_bytes) > LEANSTRAL_MAX_REPAIR_DRAFT_BYTES:
-        raise ProtocolContractError(
-            "repair_context failed_draft exceeds its byte bound"
-        )
-    if hashlib.sha256(failed_draft_bytes).hexdigest() != normalized[
-        "failed_draft_sha256"
-    ]:
-        raise ProtocolContractError(
-            "repair_context failed_draft digest does not match"
-        )
+        raise ProtocolContractError("repair_context failed_draft exceeds its byte bound")
+    if hashlib.sha256(failed_draft_bytes).hexdigest() != normalized["failed_draft_sha256"]:
+        raise ProtocolContractError("repair_context failed_draft digest does not match")
     if len(encoded) > LEANSTRAL_MAX_REPAIR_CONTEXT_BYTES:
         raise ProtocolContractError("repair_context exceeds its byte bound")
 
     leanstral = next(
-        (
-            artifact
-            for artifact in upstream_artifacts
-            if artifact.stage is StageName.LEANSTRAL
-        ),
+        (artifact for artifact in upstream_artifacts if artifact.stage is StageName.LEANSTRAL),
         None,
     )
     if (
@@ -785,37 +684,25 @@ def _validate_leanstral_repair_context(
         or leanstral.data.get("schema") != LEANSTRAL_EVIDENCE_SCHEMA
         or not isinstance(leanstral.data.get("draft"), Mapping)
     ):
-        raise ProtocolContractError(
-            "repair_context is not bound to the failed Leanstral artifact"
-        )
+        raise ProtocolContractError("repair_context is not bound to the failed Leanstral artifact")
     if leanstral.digest == normalized["failed_leanstral_artifact_sha256"]:
-        if (
-            canonical_json(_thaw_json(leanstral.data["draft"]))
-            != canonical_json(failed_draft)
-        ):
+        if canonical_json(_thaw_json(leanstral.data["draft"])) != canonical_json(failed_draft):
             raise ProtocolContractError(
                 "repair_context is not bound to the failed Leanstral artifact"
             )
     elif not (
         leanstral.data.get("mode") == "repair"
         and leanstral.data.get("repair_attempts") == 1
-        and canonical_json(_thaw_json(leanstral.data["draft"]))
-        != canonical_json(failed_draft)
+        and canonical_json(_thaw_json(leanstral.data["draft"])) != canonical_json(failed_draft)
     ):
         # A downstream kernel request carries the newly repaired Leanstral
         # artifact, not a duplicate copy of the failed artifact.  Permit that
         # one exact role while retaining the failed artifact digest and draft
         # in the immutable context for independent prompt reconstruction.
-        raise ProtocolContractError(
-            "repair_context is not bound to the failed Leanstral artifact"
-        )
+        raise ProtocolContractError("repair_context is not bound to the failed Leanstral artifact")
 
     kernel = next(
-        (
-            artifact
-            for artifact in upstream_artifacts
-            if artifact.stage is StageName.KERNEL
-        ),
+        (artifact for artifact in upstream_artifacts if artifact.stage is StageName.KERNEL),
         None,
     )
     if (
@@ -824,26 +711,19 @@ def _validate_leanstral_repair_context(
         or kernel.status is not StageStatus.FAILED
         or not isinstance(kernel.data, Mapping)
     ):
-        raise ProtocolContractError(
-            "repair_context requires a failed kernel artifact"
-        )
+        raise ProtocolContractError("repair_context requires a failed kernel artifact")
     kernel_receipt = _thaw_json(kernel.data)
     if not isinstance(kernel_receipt, dict):  # pragma: no cover - mapping above
-        raise ProtocolContractError(
-            "repair_context kernel receipt must be an object"
-        )
+        raise ProtocolContractError("repair_context kernel receipt must be an object")
     receipt_sha256 = kernel_receipt.get("receipt_sha256")
     receipt_body = {
-        key: member
-        for key, member in kernel_receipt.items()
-        if key != "receipt_sha256"
+        key: member for key, member in kernel_receipt.items() if key != "receipt_sha256"
     }
     if (
         kernel_receipt.get("schema") != _NATIVE_KERNEL_RECEIPT_SCHEMA
         or kernel_receipt.get("independent") is not True
         or kernel_receipt.get("accepted") is not False
-        or receipt_sha256
-        != normalized["kernel_rejection_receipt_sha256"]
+        or receipt_sha256 != normalized["kernel_rejection_receipt_sha256"]
         or receipt_sha256 != _leanstral_repair_json_digest(receipt_body)
     ):
         raise ProtocolContractError(
@@ -866,39 +746,28 @@ def build_leanstral_repair_context(
     """Build the exact out-of-band context for one kernel-driven repair."""
 
     _digest(case_input_sha256, "case_input_sha256")
-    if (
-        not isinstance(failed_leanstral_artifact, StageArtifact)
-        or not isinstance(kernel_rejection_artifact, StageArtifact)
+    if not isinstance(failed_leanstral_artifact, StageArtifact) or not isinstance(
+        kernel_rejection_artifact, StageArtifact
     ):
-        raise ProtocolContractError(
-            "repair context requires typed Leanstral and kernel artifacts"
-        )
+        raise ProtocolContractError("repair context requires typed Leanstral and kernel artifacts")
     if not isinstance(failed_leanstral_artifact.data, Mapping):
-        raise ProtocolContractError(
-            "failed Leanstral artifact is not an evidence object"
-        )
+        raise ProtocolContractError("failed Leanstral artifact is not an evidence object")
     failed_draft = failed_leanstral_artifact.data.get("draft")
     if not isinstance(failed_draft, Mapping):
-        raise ProtocolContractError(
-            "failed Leanstral artifact omitted its draft"
-        )
+        raise ProtocolContractError("failed Leanstral artifact omitted its draft")
     sanitized_failure = _leanstral_repair_failure_text(failure_text)
     context = {
         "schema": LEANSTRAL_REPAIR_CONTEXT_SCHEMA,
         "case_input_sha256": case_input_sha256,
         "attempt": 1,
-        "failed_leanstral_artifact_sha256": (
-            failed_leanstral_artifact.digest
-        ),
+        "failed_leanstral_artifact_sha256": (failed_leanstral_artifact.digest),
         "kernel_rejection_receipt_sha256": (
             kernel_rejection_artifact.data.get("receipt_sha256")
             if isinstance(kernel_rejection_artifact.data, Mapping)
             else None
         ),
         "failure_text": sanitized_failure,
-        "failure_text_sha256": hashlib.sha256(
-            sanitized_failure.encode("utf-8")
-        ).hexdigest(),
+        "failure_text_sha256": hashlib.sha256(sanitized_failure.encode("utf-8")).hexdigest(),
         "failed_draft": _thaw_json(failed_draft),
         "failed_draft_sha256": _leanstral_repair_json_digest(failed_draft),
     }
@@ -923,9 +792,7 @@ class StageRequest:
     split: Split = Split.PILOT
     cache_mode: CacheMode = CacheMode.COLD
     input_data: object = field(default_factory=dict)
-    requested_identity: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    requested_identity: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
     environment_sha256: str | None = None
     source: tuple[str, ...] = ("benchmark_input",)
     upstream_stage_digests: tuple[str, ...] = ()
@@ -953,9 +820,7 @@ class StageRequest:
             self.semantic_protocol_cid is not None
             and self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
         ):
-            raise ProtocolContractError(
-                "request semantic protocol CID is unsupported"
-            )
+            raise ProtocolContractError("request semantic protocol CID is unsupported")
         if self.environment_sha256 is not None:
             _digest(self.environment_sha256, "environment_sha256")
         if not isinstance(self.source, tuple) or not self.source:
@@ -973,42 +838,24 @@ class StageRequest:
             raise ProtocolContractError("upstream_artifacts must be a tuple")
         if len(self.upstream_artifacts) > len(StageName):
             raise ProtocolContractError("too many upstream stage artifacts")
-        if not all(
-            isinstance(artifact, StageArtifact)
-            for artifact in self.upstream_artifacts
-        ):
-            raise ProtocolContractError(
-                "upstream_artifacts must contain StageArtifact values"
-            )
-        artifact_stages = tuple(
-            artifact.stage for artifact in self.upstream_artifacts
-        )
+        if not all(isinstance(artifact, StageArtifact) for artifact in self.upstream_artifacts):
+            raise ProtocolContractError("upstream_artifacts must contain StageArtifact values")
+        artifact_stages = tuple(artifact.stage for artifact in self.upstream_artifacts)
         if len(set(artifact_stages)) != len(artifact_stages):
-            raise ProtocolContractError(
-                "upstream_artifacts must not contain duplicate stages"
-            )
+            raise ProtocolContractError("upstream_artifacts must not contain duplicate stages")
         if (
             isinstance(self.invocation_index, bool)
             or not isinstance(self.invocation_index, int)
             or not 0 <= self.invocation_index < len(StageName)
         ):
-            raise ProtocolContractError(
-                "invocation_index must be a bounded integer"
-            )
-        if (
-            self.deadline_unix_ms is not None
-            and (
-                isinstance(self.deadline_unix_ms, bool)
-                or not isinstance(self.deadline_unix_ms, int)
-                or self.deadline_unix_ms < 0
-            )
+            raise ProtocolContractError("invocation_index must be a bounded integer")
+        if self.deadline_unix_ms is not None and (
+            isinstance(self.deadline_unix_ms, bool)
+            or not isinstance(self.deadline_unix_ms, int)
+            or self.deadline_unix_ms < 0
         ):
-            raise ProtocolContractError(
-                "deadline_unix_ms must be a nonnegative integer or null"
-            )
-        identity = _freeze_mapping(
-            self.requested_identity, "requested_identity"
-        )
+            raise ProtocolContractError("deadline_unix_ms must be a nonnegative integer or null")
+        identity = _freeze_mapping(self.requested_identity, "requested_identity")
         object.__setattr__(self, "requested_identity", identity)
         input_sha256, _input_bytes = _input_digest(self.input_data)
         if self.semantic_protocol_cid is not None:
@@ -1026,45 +873,33 @@ class StageRequest:
                 SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
             )
             if forbidden:  # pragma: no cover - exact-key check is stronger
-                raise ProtocolContractError(
-                    "semantic protocol v2 input contains evaluator fields"
-                )
+                raise ProtocolContractError("semantic protocol v2 input contains evaluator fields")
         if self.proof_context is not None:
             if self.semantic_protocol_cid is None:
+                raise ProtocolContractError("proof_context requires semantic protocol v2")
+            if not isinstance(self.proof_context, Mapping) or set(self.proof_context) != {
+                "obligation_id",
+                "proof_obligation",
+            }:
                 raise ProtocolContractError(
-                    "proof_context requires semantic protocol v2"
-                )
-            if (
-                not isinstance(self.proof_context, Mapping)
-                or set(self.proof_context)
-                != {"obligation_id", "proof_obligation"}
-            ):
-                raise ProtocolContractError(
-                    "proof_context must contain exactly obligation_id and "
-                    "proof_obligation"
+                    "proof_context must contain exactly obligation_id and proof_obligation"
                 )
             obligation_id = self.proof_context.get("obligation_id")
             obligation = self.proof_context.get("proof_obligation")
             if (obligation_id is None) != (obligation is None):
-                raise ProtocolContractError(
-                    "proof_context obligation fields must be null together"
-                )
+                raise ProtocolContractError("proof_context obligation fields must be null together")
             if obligation is not None:
                 _safe_id(obligation_id, "proof_context.obligation_id")
                 if (
                     not isinstance(obligation, Mapping)
                     or set(obligation) != {"kind", "logic", "target"}
-                    or obligation.get("kind")
-                    not in {"theorem", "countermodel"}
-                    or obligation.get("logic")
-                    not in {"fol", "deontic", "temporal"}
+                    or obligation.get("kind") not in {"theorem", "countermodel"}
+                    or obligation.get("logic") not in {"fol", "deontic", "temporal"}
                     or not isinstance(obligation.get("target"), str)
                     or not str(obligation["target"]).strip()
                     or len(str(obligation["target"])) > 256
                 ):
-                    raise ProtocolContractError(
-                        "proof_context proof_obligation is invalid"
-                    )
+                    raise ProtocolContractError("proof_context proof_obligation is invalid")
             frozen_proof_context = _freeze_json(self.proof_context)
             if not isinstance(frozen_proof_context, Mapping):
                 raise ProtocolContractError("proof_context must be an object")
@@ -1099,14 +934,10 @@ class StageRequest:
         if self.semantic_protocol_cid is None:
             return None
         if not isinstance(self.input_data, Mapping):
-            raise ProtocolContractError(
-                "semantic protocol v2 requires an object source input"
-            )
+            raise ProtocolContractError("semantic protocol v2 requires an object source input")
         source_text = self.input_data.get("text")
         if not isinstance(source_text, str):
-            raise ProtocolContractError(
-                "semantic protocol v2 source text is unavailable"
-            )
+            raise ProtocolContractError("semantic protocol v2 source text is unavailable")
         return cid_for_bytes(source_text.encode("utf-8"))
 
     @property
@@ -1122,9 +953,7 @@ class StageRequest:
         if self.proof_context is None:
             return self.input_data
         if not isinstance(self.input_data, Mapping):
-            raise ProtocolContractError(
-                "proof context requires an object source input"
-            )
+            raise ProtocolContractError("proof context requires an object source input")
         return {
             **_thaw_json(self.input_data),
             **_thaw_json(self.proof_context),
@@ -1149,11 +978,7 @@ class StageRequest:
         """Return the typed upstream output for ``stage``, when scheduled."""
 
         return next(
-            (
-                artifact
-                for artifact in self.upstream_artifacts
-                if artifact.stage is stage
-            ),
+            (artifact for artifact in self.upstream_artifacts if artifact.stage is stage),
             None,
         )
 
@@ -1166,11 +991,7 @@ def _mapping_subset(
 
     if not isinstance(value, Mapping):
         return {}
-    return {
-        key: _thaw_json(value[key])
-        for key in keys
-        if key in value
-    }
+    return {key: _thaw_json(value[key]) for key in keys if key in value}
 
 
 def _mapping_sequence_prefix(
@@ -1181,15 +1002,9 @@ def _mapping_sequence_prefix(
 ) -> list[dict[str, object]]:
     """Bound one sequence of evidence records without using evaluator labels."""
 
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         return []
-    return [
-        _mapping_subset(item, keys)
-        for item in value[:maximum]
-        if isinstance(item, Mapping)
-    ]
+    return [_mapping_subset(item, keys) for item in value[:maximum] if isinstance(item, Mapping)]
 
 
 def _contains_forbidden_semantic_input_key(value: object) -> bool:
@@ -1201,13 +1016,8 @@ def _contains_forbidden_semantic_input_key(value: object) -> bool:
                 return True
             if _contains_forbidden_semantic_input_key(item):
                 return True
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
-        return any(
-            _contains_forbidden_semantic_input_key(item)
-            for item in value
-        )
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return any(_contains_forbidden_semantic_input_key(item) for item in value)
     return False
 
 
@@ -1248,13 +1058,9 @@ def _semantic_artifact_projection(
     ):
         return projection
     data = artifact.data
-    if (
-        model_facing
-        and _contains_forbidden_semantic_input_key(data)
-    ):
+    if model_facing and _contains_forbidden_semantic_input_key(data):
         raise ProtocolContractError(
-            "model-facing semantic evidence contains an evaluator or "
-            "proof field"
+            "model-facing semantic evidence contains an evaluator or proof field"
         )
     if artifact.stage is StageName.SPACY:
         if data.get("schema") not in {
@@ -1312,9 +1118,7 @@ def _semantic_artifact_projection(
             )
             if not model_facing:
                 if semantic_v2:
-                    modal_projection["modal_ir_cid"] = cid_for_dag_json(
-                        _thaw_json(modal_ir)
-                    )
+                    modal_projection["modal_ir_cid"] = cid_for_dag_json(_thaw_json(modal_ir))
                 else:
                     modal_projection["modal_ir_sha256"] = hashlib.sha256(
                         canonical_json(_thaw_json(modal_ir)).encode("utf-8")
@@ -1417,48 +1221,30 @@ def _semantic_artifact_projection(
                 data,
                 (
                     "schema",
-                    "semantic_projection"
-                    if semantic_v2
-                    else "candidate_ir",
-                    "validated_response"
-                    if semantic_v2
-                    else "normalized_predicates",
+                    "semantic_projection" if semantic_v2 else "candidate_ir",
+                    "validated_response" if semantic_v2 else "normalized_predicates",
                     "entities",
                     "ambiguity_flags",
-                    "confidence_millionths"
-                    if semantic_v2
-                    else "confidence",
+                    "confidence_millionths" if semantic_v2 else "confidence",
                     "validation_errors",
                     "assurance",
                 )
                 if model_facing
                 else (
                     "schema",
-                    "semantic_protocol_cid"
-                    if semantic_v2
-                    else "candidate_ir",
-                    "semantic_projection"
-                    if semantic_v2
-                    else "candidate_ir_sha256",
-                    "validated_response"
-                    if semantic_v2
-                    else "normalized_predicates",
-                    "validated_response_cid"
-                    if semantic_v2
-                    else "quantifiers",
+                    "semantic_protocol_cid" if semantic_v2 else "candidate_ir",
+                    "semantic_projection" if semantic_v2 else "candidate_ir_sha256",
+                    "validated_response" if semantic_v2 else "normalized_predicates",
+                    "validated_response_cid" if semantic_v2 else "quantifiers",
                     "raw_output_cid" if semantic_v2 else "entities",
                     "entities",
                     "ambiguity_flags",
-                    "confidence_millionths"
-                    if semantic_v2
-                    else "confidence",
+                    "confidence_millionths" if semantic_v2 else "confidence",
                     "validation_errors",
                     "assurance",
                 ),
             )
-        elif data.get("schema") == (
-            "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"
-        ):
+        elif data.get("schema") == ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"):
             projection["evidence"] = _mapping_subset(
                 data,
                 ("schema", "stage", "invoked", "reason", "invocation_index"),
@@ -1468,9 +1254,7 @@ def _semantic_artifact_projection(
                 "SyMAI semantic context used an unsupported evidence schema"
             )
     else:
-        raise ProtocolContractError(
-            "semantic context accepts only spaCy and SyMAI artifacts"
-        )
+        raise ProtocolContractError("semantic context accepts only spaCy and SyMAI artifacts")
     return projection
 
 
@@ -1490,51 +1274,32 @@ def build_upstream_semantic_context(
     required = set(require_success)
     present = set(require_present) | required
     if not present.issubset(set(stages)):
-        raise ProtocolContractError(
-            "required semantic stages must be included in the projection"
-        )
+        raise ProtocolContractError("required semantic stages must be included in the projection")
     artifacts: list[dict[str, object]] = []
     measured_request = _is_frozen_ablation_request(request)
     for stage in stages:
         if stage not in {StageName.SPACY, StageName.SYMAI}:
-            raise ProtocolContractError(
-                "semantic context stages must be spaCy or SyMAI"
-            )
+            raise ProtocolContractError("semantic context stages must be spaCy or SyMAI")
         artifact = request.artifact(stage)
         if artifact is None:
             if stage in present:
-                raise ProtocolContractError(
-                    f"required {stage.value} semantic artifact is missing"
-                )
+                raise ProtocolContractError(f"required {stage.value} semantic artifact is missing")
             continue
         graph_invoked = artifact.effective_identity.get("graph_invoked")
         if measured_request and type(graph_invoked) is not bool:
-            raise ProtocolContractError(
-                f"{stage.value} semantic artifact omitted graph_invoked"
-            )
-        if (
-            graph_invoked is not None
-            and (
-                type(graph_invoked) is not bool
-                or graph_invoked is not artifact.invoked
-            )
+            raise ProtocolContractError(f"{stage.value} semantic artifact omitted graph_invoked")
+        if graph_invoked is not None and (
+            type(graph_invoked) is not bool or graph_invoked is not artifact.invoked
         ):
             raise ProtocolContractError(
                 f"{stage.value} semantic artifact invocation receipt is inconsistent"
             )
-        if (
-            not artifact.invoked
-            and (
-                not isinstance(artifact.data, Mapping)
-                or artifact.data.get("invoked") is not False
-            )
+        if not artifact.invoked and (
+            not isinstance(artifact.data, Mapping) or artifact.data.get("invoked") is not False
         ):
-            raise ProtocolContractError(
-                f"{stage.value} gated artifact omitted invoked=false"
-            )
+            raise ProtocolContractError(f"{stage.value} gated artifact omitted invoked=false")
         if stage in required and (
-            not artifact.invoked
-            or artifact.status is not StageStatus.SUCCESS
+            not artifact.invoked or artifact.status is not StageStatus.SUCCESS
         ):
             raise ProtocolContractError(
                 f"required {stage.value} semantic artifact is not successful"
@@ -1547,9 +1312,7 @@ def build_upstream_semantic_context(
         )
     source_text = None
     if isinstance(request.input_data, Mapping):
-        source_text = request.input_data.get(
-            "text", request.input_data.get("source_text")
-        )
+        source_text = request.input_data.get("text", request.input_data.get("source_text"))
     semantic_v2 = request.semantic_protocol_cid is not None
     source_identity = (
         {"source_cid": request.source_cid}
@@ -1563,19 +1326,13 @@ def build_upstream_semantic_context(
         }
     )
     context_without_digest = {
-        "schema": (
-            SEMANTIC_CONTEXT_SCHEMA_V2
-            if semantic_v2
-            else SEMANTIC_CONTEXT_SCHEMA
-        ),
+        "schema": (SEMANTIC_CONTEXT_SCHEMA_V2 if semantic_v2 else SEMANTIC_CONTEXT_SCHEMA),
         **source_identity,
         "artifacts": artifacts,
     }
     encoded = canonical_json(context_without_digest).encode("utf-8")
     if len(encoded) > SEMANTIC_CONTEXT_MAX_BYTES:
-        raise ProtocolContractError(
-            "upstream semantic context exceeds its byte bound"
-        )
+        raise ProtocolContractError("upstream semantic context exceeds its byte bound")
     if semantic_v2:
         return {
             **context_without_digest,
@@ -1593,9 +1350,7 @@ class StageOutput:
 
     data: object = field(default_factory=dict)
     status: StageStatus = StageStatus.SUCCESS
-    effective_identity: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    effective_identity: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
     failure_code: FailureCode | None = None
     failure_detail: str | None = None
     telemetry: TelemetryRecord | None = None
@@ -1606,9 +1361,7 @@ class StageOutput:
         if not isinstance(self.status, StageStatus):
             raise ProtocolContractError("status must be a StageStatus")
         _freeze_mapping(self.effective_identity, "effective_identity")
-        if self.failure_code is not None and not isinstance(
-            self.failure_code, FailureCode
-        ):
+        if self.failure_code is not None and not isinstance(self.failure_code, FailureCode):
             raise ProtocolContractError("failure_code must be a FailureCode")
         if self.failure_detail is not None and (
             not isinstance(self.failure_detail, str)
@@ -1634,13 +1387,9 @@ class StageInvocation:
 
     def __post_init__(self) -> None:
         if not isinstance(self.output, StageOutput):
-            raise ProtocolContractError(
-                "invocation output must be a StageOutput"
-            )
+            raise ProtocolContractError("invocation output must be a StageOutput")
         if not isinstance(self.telemetry, TelemetryRecord):
-            raise ProtocolContractError(
-                "invocation telemetry must be a TelemetryRecord"
-            )
+            raise ProtocolContractError("invocation telemetry must be a TelemetryRecord")
 
 
 def _semantic_failure_receipt(
@@ -1674,14 +1423,12 @@ def _with_semantic_failure_receipt(
 
     if (
         request.semantic_protocol_cid is None
-        or stage
-        not in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
+        or stage not in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
         or result.status is StageStatus.SUCCESS
     ):
         return result
     if isinstance(result.data, Mapping) and (
-        result.data.get("schema") == SEMANTIC_FAILURE_SCHEMA_V2
-        or "semantic_failure" in result.data
+        result.data.get("schema") == SEMANTIC_FAILURE_SCHEMA_V2 or "semantic_failure" in result.data
     ):
         return result
     if result.failure_code is FailureCode.SAFETY_CONTROL_FAILURE:
@@ -1691,20 +1438,14 @@ def _with_semantic_failure_receipt(
     else:
         subcode = "semantic_schema_incompatible"
     payload = (
-        dict(result.data)
-        if isinstance(result.data, Mapping)
-        else {"retained_failure_data": None}
+        dict(result.data) if isinstance(result.data, Mapping) else {"retained_failure_data": None}
     )
     evidence: dict[str, object]
     if stage is StageName.SYMAI:
         raw_output = payload.get("raw_output")
         if isinstance(raw_output, str):
-            raw_output_bytes: int | None = len(
-                raw_output.encode("utf-8")
-            )
-            raw_output_cid: str | None = cid_for_bytes(
-                raw_output.encode("utf-8")
-            )
+            raw_output_bytes: int | None = len(raw_output.encode("utf-8"))
+            raw_output_cid: str | None = cid_for_bytes(raw_output.encode("utf-8"))
             retained_exactly = True
         else:
             raw_output = None
@@ -1747,11 +1488,7 @@ def _with_semantic_failure_receipt(
         }
     else:
         evidence = {
-            "failure_code": (
-                None
-                if result.failure_code is None
-                else result.failure_code.value
-            )
+            "failure_code": (None if result.failure_code is None else result.failure_code.value)
         }
     payload["semantic_failure"] = _semantic_failure_receipt(
         request,
@@ -1863,8 +1600,7 @@ class StageAdapter:
         result: StageOutput
         if (
             request.semantic_protocol_cid is not None
-            and self.stage
-            in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
+            and self.stage in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
             and request.proof_context is not None
         ):
             result = StageOutput(
@@ -1876,10 +1612,7 @@ class StageAdapter:
                 status=StageStatus.FAILED,
                 effective_identity=request.requested_identity,
                 failure_code=FailureCode.SAFETY_CONTROL_FAILURE,
-                failure_detail=(
-                    f"{self.stage.value} semantic producer received "
-                    "proof_context"
-                ),
+                failure_detail=(f"{self.stage.value} semantic producer received proof_context"),
             )
         elif self.handler is None:
             result = StageOutput(
@@ -1943,13 +1676,9 @@ class StageAdapter:
         if not isinstance(request, StageRequest):
             raise ProtocolContractError("request must be a StageRequest")
         if not isinstance(invocation, StageInvocation):
-            raise ProtocolContractError(
-                "invocation must be a StageInvocation"
-            )
+            raise ProtocolContractError("invocation must be a StageInvocation")
         result = invocation.output
-        effective_identity = (
-            result.effective_identity or request.requested_identity
-        )
+        effective_identity = result.effective_identity or request.requested_identity
         measured = invocation.telemetry
         if measured.resource_lane is not self.resource_lane:
             raise ProtocolContractError(
@@ -1999,40 +1728,24 @@ class CompilerAdapter(StageAdapter):
         semantic_protocol_cid: str | None = None,
         **kwargs: object,
     ) -> None:
-        if (
-            semantic_protocol_cid is not None
-            and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-        ):
-            raise ProtocolContractError(
-                "compiler semantic protocol CID is unsupported"
-            )
+        if semantic_protocol_cid is not None and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+            raise ProtocolContractError("compiler semantic protocol CID is unsupported")
         if semantic_protocol_cid is not None:
             kwargs.setdefault("adapter_version", "2")
         super().__init__(StageName.COMPILER, handler=handler, **kwargs)
 
 
-_SEMANTIC_NORMALIZATION_SPEC_V2: Final = (
-    semantic_normalization_spec_v2()
-)
-if (
-    cid_for_dag_json(_SEMANTIC_NORMALIZATION_SPEC_V2)
-    != SEMANTIC_NORMALIZATION_V2_CID
-):
-    raise RuntimeError(
-        "semantic-v2 runtime normalization rules are not CID-bound"
-    )
+_SEMANTIC_NORMALIZATION_SPEC_V2: Final = semantic_normalization_spec_v2()
+if cid_for_dag_json(_SEMANTIC_NORMALIZATION_SPEC_V2) != SEMANTIC_NORMALIZATION_V2_CID:
+    raise RuntimeError("semantic-v2 runtime normalization rules are not CID-bound")
 
 
 def _semantic_rule_mapping(
     value: object,
     field_name: str,
 ) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise RuntimeError(
-            f"semantic-v2 normalization rule {field_name} is invalid"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise RuntimeError(f"semantic-v2 normalization rule {field_name} is invalid")
     return value
 
 
@@ -2041,9 +1754,7 @@ def _semantic_rule_string(
     field_name: str,
 ) -> str:
     if not isinstance(value, str) or not value:
-        raise RuntimeError(
-            f"semantic-v2 normalization rule {field_name} is invalid"
-        )
+        raise RuntimeError(f"semantic-v2 normalization rule {field_name} is invalid")
     return value
 
 
@@ -2051,14 +1762,8 @@ def _semantic_rule_int(
     value: object,
     field_name: str,
 ) -> int:
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, int)
-        or not 0 <= value <= 1_000_000
-    ):
-        raise RuntimeError(
-            f"semantic-v2 normalization rule {field_name} is invalid"
-        )
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 1_000_000:
+        raise RuntimeError(f"semantic-v2 normalization rule {field_name} is invalid")
     return value
 
 
@@ -2071,9 +1776,7 @@ if not all(
     for key, value in _SEMANTIC_LOGIC_ALIASES_RULE_V2.items()
 ):
     raise RuntimeError("semantic-v2 logic aliases are invalid")
-_SEMANTIC_LOGIC_ALIASES_V2: Final = MappingProxyType(
-    dict(_SEMANTIC_LOGIC_ALIASES_RULE_V2)
-)
+_SEMANTIC_LOGIC_ALIASES_V2: Final = MappingProxyType(dict(_SEMANTIC_LOGIC_ALIASES_RULE_V2))
 _SEMANTIC_MODAL_IR_RULES_V2: Final = _semantic_rule_mapping(
     _SEMANTIC_NORMALIZATION_SPEC_V2.get("modal_ir"),
     "modal_ir",
@@ -2115,9 +1818,7 @@ _SEMANTIC_CLASS_RULES_V2: Final = _semantic_rule_mapping(
     "class_inference",
 )
 _SEMANTIC_CLASS_CONFLICT_RULES_V2: Final = _semantic_rule_mapping(
-    _SEMANTIC_CLASS_RULES_V2.get(
-        "conflicting_distinct_signal_classes"
-    ),
+    _SEMANTIC_CLASS_RULES_V2.get("conflicting_distinct_signal_classes"),
     "class_inference.conflicting_distinct_signal_classes",
 )
 _SEMANTIC_CLASS_DEFAULT_RULES_V2: Final = _semantic_rule_mapping(
@@ -2129,9 +1830,7 @@ _SEMANTIC_VALIDATION_RULES_V2: Final = _semantic_rule_mapping(
     "validation",
 )
 _semantic_required_field_rules = _semantic_rule_mapping(
-    _SEMANTIC_VALIDATION_RULES_V2.get(
-        "required_projection_fields"
-    ),
+    _SEMANTIC_VALIDATION_RULES_V2.get("required_projection_fields"),
     "validation.required_projection_fields",
 )
 _SEMANTIC_REQUIRED_FIELD_RULES_V2: Final = MappingProxyType(
@@ -2177,13 +1876,9 @@ _SEMANTIC_PREDICATE_NAME_FIELD_V2: Final = _semantic_rule_string(
     _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("mapping_name_field"),
     "modal_ir.predicate.mapping_name_field",
 )
-_SEMANTIC_PREDICATE_ARGUMENTS_FIELD_V2: Final = (
-    _semantic_rule_string(
-        _SEMANTIC_MODAL_PREDICATE_RULES_V2.get(
-            "mapping_arguments_field"
-        ),
-        "modal_ir.predicate.mapping_arguments_field",
-    )
+_SEMANTIC_PREDICATE_ARGUMENTS_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("mapping_arguments_field"),
+    "modal_ir.predicate.mapping_arguments_field",
 )
 _SEMANTIC_PREDICATE_ROLE_FIELD_V2: Final = _semantic_rule_string(
     _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("mapping_role_field"),
@@ -2198,106 +1893,57 @@ _SEMANTIC_MISSING_TERM_V2: Final = _semantic_rule_string(
     "modal_ir.projection_fields.missing_term",
 )
 if (
-    _SEMANTIC_VALIDATION_RULES_V2.get("missing_term")
-    != _SEMANTIC_MISSING_TERM_V2
-    or set(_SEMANTIC_REQUIRED_FIELD_RULES_V2)
-    != {"logic_family", "target", "predicates"}
-    or set(_SEMANTIC_COMPLETENESS_RULES_V2)
-    != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+    _SEMANTIC_VALIDATION_RULES_V2.get("missing_term") != _SEMANTIC_MISSING_TERM_V2
+    or set(_SEMANTIC_REQUIRED_FIELD_RULES_V2) != {"logic_family", "target", "predicates"}
+    or set(_SEMANTIC_COMPLETENESS_RULES_V2) != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
 ):
-    raise RuntimeError(
-        "semantic-v2 validation/completeness field rules are unsupported"
-    )
+    raise RuntimeError("semantic-v2 validation/completeness field rules are unsupported")
 
-_semantic_entity_values = _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
-    "entity_values"
-)
+_semantic_entity_values = _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("entity_values")
 if (
     not isinstance(_semantic_entity_values, list)
     or len(_semantic_entity_values) != 2
     or _semantic_entity_values[0] != "exact_argument"
     or not isinstance(_semantic_entity_values[1], str)
-    or not _semantic_entity_values[1].startswith(
-        "suffix_after_final_"
-    )
+    or not _semantic_entity_values[1].startswith("suffix_after_final_")
 ):
-    raise RuntimeError(
-        "semantic-v2 entity extraction rules are unsupported"
-    )
-_SEMANTIC_ENTITY_QUALIFIER_V2: Final = _semantic_entity_values[
-    1
-].removeprefix("suffix_after_final_")
-if not _SEMANTIC_ENTITY_QUALIFIER_V2:
-    raise RuntimeError(
-        "semantic-v2 entity qualifier must not be empty"
-    )
-_semantic_max_persisted_items = _SEMANTIC_MODAL_PROJECTION_RULES_V2.get(
-    "maximum_persisted_items"
+    raise RuntimeError("semantic-v2 entity extraction rules are unsupported")
+_SEMANTIC_ENTITY_QUALIFIER_V2: Final = _semantic_entity_values[1].removeprefix(
+    "suffix_after_final_"
 )
+if not _SEMANTIC_ENTITY_QUALIFIER_V2:
+    raise RuntimeError("semantic-v2 entity qualifier must not be empty")
+_semantic_max_persisted_items = _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("maximum_persisted_items")
 if (
     isinstance(_semantic_max_persisted_items, bool)
     or not isinstance(_semantic_max_persisted_items, int)
     or _semantic_max_persisted_items < 1
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
-        "suffix_only_when_qualifier_present"
-    )
-    is not True
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
-        "empty_normalized_values"
-    )
-    != "omit"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("normalization")
-    != "term_normalization"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("canonicalization")
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("suffix_only_when_qualifier_present") is not True
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("empty_normalized_values") != "omit"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("normalization") != "term_normalization"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("canonicalization") != "sorted_unique"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("overflow") != "reject_projection"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("empty_normalized_values") != "omit"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("predicate_and_entity_canonicalization")
     != "sorted_unique"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("overflow")
-    != "reject_projection"
-    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get(
-        "empty_normalized_values"
-    )
-    != "omit"
-    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get(
-        "predicate_and_entity_canonicalization"
-    )
-    != "sorted_unique"
-    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("overflow")
-    != "reject_projection"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
-        "maximum_persisted_items"
-    )
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("overflow") != "reject_projection"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("maximum_persisted_items")
     != _semantic_max_persisted_items
 ):
-    raise RuntimeError(
-        "semantic-v2 extraction canonicalization rules are unsupported"
-    )
+    raise RuntimeError("semantic-v2 extraction canonicalization rules are unsupported")
 del _semantic_max_persisted_items
 
-_semantic_primary_order = _SEMANTIC_MODAL_PRIMARY_RULES_V2.get(
-    "ordered_tiebreakers"
-)
+_semantic_primary_order = _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("ordered_tiebreakers")
 if (
     not isinstance(_semantic_primary_order, list)
     or len(_semantic_primary_order) != 4
-    or any(
-        not isinstance(rule, Mapping)
-        for rule in _semantic_primary_order
-    )
+    or any(not isinstance(rule, Mapping) for rule in _semantic_primary_order)
 ):
-    raise RuntimeError(
-        "semantic-v2 primary-formula ordering rules are invalid"
-    )
-_SEMANTIC_PRIMARY_START_PATH_V2: Final = tuple(
-    _semantic_primary_order[0].get("path", ())
-)
-_SEMANTIC_PRIMARY_END_PATH_V2: Final = tuple(
-    _semantic_primary_order[1].get("path", ())
-)
-_SEMANTIC_PRIMARY_ID_PATH_V2: Final = tuple(
-    _semantic_primary_order[2].get("path", ())
-)
-_SEMANTIC_PRIMARY_INDEX_PATH_V2: Final = tuple(
-    _semantic_primary_order[3].get("path", ())
-)
+    raise RuntimeError("semantic-v2 primary-formula ordering rules are invalid")
+_SEMANTIC_PRIMARY_START_PATH_V2: Final = tuple(_semantic_primary_order[0].get("path", ()))
+_SEMANTIC_PRIMARY_END_PATH_V2: Final = tuple(_semantic_primary_order[1].get("path", ()))
+_SEMANTIC_PRIMARY_ID_PATH_V2: Final = tuple(_semantic_primary_order[2].get("path", ()))
+_SEMANTIC_PRIMARY_INDEX_PATH_V2: Final = tuple(_semantic_primary_order[3].get("path", ()))
 if (
     len(_SEMANTIC_PRIMARY_START_PATH_V2) != 2
     or len(_SEMANTIC_PRIMARY_END_PATH_V2) != 2
@@ -2313,65 +1959,38 @@ if (
         )
     )
 ):
-    raise RuntimeError(
-        "semantic-v2 primary-formula paths are invalid"
-    )
-_semantic_primary_role_path = tuple(
-    _SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get("path", ())
-)
+    raise RuntimeError("semantic-v2 primary-formula paths are invalid")
+_semantic_primary_role_path = tuple(_SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get("path", ()))
 if (
     _semantic_primary_role_path
     != (
         _SEMANTIC_PREDICATE_FIELD_V2,
         _SEMANTIC_PREDICATE_ROLE_FIELD_V2,
     )
-    or _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("candidates")
-    != "all_accepted_mapping_formulas"
-    or _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("empty_result")
-    != "no_primary_formula"
-    or _SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get(
-        "missing_or_non_string"
-    )
-    != "not_preferred"
-    or _semantic_primary_order[0].get("accepted_type")
-    != "integer_excluding_boolean"
-    or _semantic_primary_order[0].get("missing_or_invalid")
-    != "positive_infinity"
-    or _semantic_primary_order[1].get("accepted_type")
-    != "integer_excluding_boolean"
-    or _semantic_primary_order[1].get("missing_or_invalid")
-    != "positive_infinity"
+    or _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("candidates") != "all_accepted_mapping_formulas"
+    or _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("empty_result") != "no_primary_formula"
+    or _SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get("missing_or_non_string") != "not_preferred"
+    or _semantic_primary_order[0].get("accepted_type") != "integer_excluding_boolean"
+    or _semantic_primary_order[0].get("missing_or_invalid") != "positive_infinity"
+    or _semantic_primary_order[1].get("accepted_type") != "integer_excluding_boolean"
+    or _semantic_primary_order[1].get("missing_or_invalid") != "positive_infinity"
     or _semantic_primary_order[2].get("coercion") != "python_str"
     or _semantic_primary_order[2].get("missing") != ""
     or _semantic_primary_order[3].get("accepted_type") != "integer"
 ):
-    raise RuntimeError(
-        "semantic-v2 primary-formula selection rules are unsupported"
-    )
+    raise RuntimeError("semantic-v2 primary-formula selection rules are unsupported")
 del _semantic_primary_role_path
 
-_semantic_signal_values = _SEMANTIC_CLASS_RULES_V2.get(
-    "ordered_explicit_signals"
-)
+_semantic_signal_values = _SEMANTIC_CLASS_RULES_V2.get("ordered_explicit_signals")
 if not isinstance(_semantic_signal_values, list):
-    raise RuntimeError(
-        "semantic-v2 explicit class signals are invalid"
-    )
-_semantic_regex_flag_names = _SEMANTIC_CLASS_RULES_V2.get(
-    "regex_flags"
-)
-if (
-    _SEMANTIC_CLASS_RULES_V2.get("regex_engine")
-    != "python_re_search"
-    or _semantic_regex_flag_names != ["IGNORECASE"]
-):
-    raise RuntimeError(
-        "semantic-v2 class-signal regex rules are unsupported"
-    )
+    raise RuntimeError("semantic-v2 explicit class signals are invalid")
+_semantic_regex_flag_names = _SEMANTIC_CLASS_RULES_V2.get("regex_flags")
+if _SEMANTIC_CLASS_RULES_V2.get(
+    "regex_engine"
+) != "python_re_search" or _semantic_regex_flag_names != ["IGNORECASE"]:
+    raise RuntimeError("semantic-v2 class-signal regex rules are unsupported")
 _SEMANTIC_CLASS_REGEX_FLAGS_V2: Final = re.IGNORECASE
-_semantic_signal_rules: list[
-    tuple[re.Pattern[str], str, str | None, int]
-] = []
+_semantic_signal_rules: list[tuple[re.Pattern[str], str, str | None, int]] = []
 for index, raw_signal in enumerate(_semantic_signal_values):
     signal = _semantic_rule_mapping(
         raw_signal,
@@ -2390,13 +2009,10 @@ for index, raw_signal in enumerate(_semantic_signal_values):
         ambiguity_flag,
         str,
     ):
-        raise RuntimeError(
-            "semantic-v2 ambiguity flag rule is invalid"
-        )
+        raise RuntimeError("semantic-v2 ambiguity flag rule is invalid")
     confidence = _semantic_rule_int(
         signal.get("confidence_millionths"),
-        f"class_inference.ordered_explicit_signals[{index}]."
-        "confidence_millionths",
+        f"class_inference.ordered_explicit_signals[{index}].confidence_millionths",
     )
     _semantic_signal_rules.append(
         (
@@ -2406,46 +2022,27 @@ for index, raw_signal in enumerate(_semantic_signal_values):
             confidence,
         )
     )
-_SEMANTIC_CLASS_SIGNAL_RULES_V2: Final = tuple(
-    _semantic_signal_rules
-)
+_SEMANTIC_CLASS_SIGNAL_RULES_V2: Final = tuple(_semantic_signal_rules)
 del _semantic_signal_rules
 del _semantic_regex_flag_names
 if _SEMANTIC_CLASS_RULES_V2.get("proved_signals") != []:
-    raise RuntimeError(
-        "semantic-v2 deterministic ModalIR projection cannot claim proved"
-    )
+    raise RuntimeError("semantic-v2 deterministic ModalIR projection cannot claim proved")
 if (
-    _SEMANTIC_CLASS_RULES_V2.get(
-        "validation_errors_precede_class_signals"
-    )
-    is not True
-    or _SEMANTIC_CLASS_RULES_V2.get(
-        "ambiguity_flags_retained_with_validation_errors"
-    )
-    is not True
-    or _SEMANTIC_CLASS_RULES_V2.get(
-        "multiple_matching_signals_of_one_class"
-    )
+    _SEMANTIC_CLASS_RULES_V2.get("validation_errors_precede_class_signals") is not True
+    or _SEMANTIC_CLASS_RULES_V2.get("ambiguity_flags_retained_with_validation_errors") is not True
+    or _SEMANTIC_CLASS_RULES_V2.get("multiple_matching_signals_of_one_class")
     != "first_ordered_signal_sets_class_and_confidence"
-    or _SEMANTIC_VALIDATION_RULES_V2.get(
-        "validation_errors_take_precedence_over_ambiguity"
-    )
+    or _SEMANTIC_VALIDATION_RULES_V2.get("validation_errors_take_precedence_over_ambiguity")
     is not True
-    or _SEMANTIC_VALIDATION_RULES_V2.get("canonicalization")
-    != "sorted_unique"
+    or _SEMANTIC_VALIDATION_RULES_V2.get("canonicalization") != "sorted_unique"
 ):
-    raise RuntimeError(
-        "semantic-v2 class and validation precedence rules are unsupported"
-    )
+    raise RuntimeError("semantic-v2 class and validation precedence rules are unsupported")
 _SEMANTIC_VALIDATION_CLASS_V2: Final = _semantic_rule_string(
     _SEMANTIC_VALIDATION_RULES_V2.get("validation_error_class"),
     "validation.validation_error_class",
 )
 _SEMANTIC_VALIDATION_CONFIDENCE_V2: Final = _semantic_rule_int(
-    _SEMANTIC_VALIDATION_RULES_V2.get(
-        "validation_error_confidence_millionths"
-    ),
+    _SEMANTIC_VALIDATION_RULES_V2.get("validation_error_confidence_millionths"),
     "validation.validation_error_confidence_millionths",
 )
 _SEMANTIC_DEFAULT_CLASS_V2: Final = _semantic_rule_string(
@@ -2462,17 +2059,11 @@ _SEMANTIC_CONFLICT_CLASS_V2: Final = _semantic_rule_string(
 )
 _SEMANTIC_CONFLICT_ERROR_V2: Final = _semantic_rule_string(
     _SEMANTIC_CLASS_CONFLICT_RULES_V2.get("validation_error"),
-    (
-        "class_inference.conflicting_distinct_signal_classes."
-        "validation_error"
-    ),
+    ("class_inference.conflicting_distinct_signal_classes.validation_error"),
 )
 _SEMANTIC_CONFLICT_CONFIDENCE_V2: Final = _semantic_rule_int(
     _SEMANTIC_CLASS_CONFLICT_RULES_V2.get("confidence_millionths"),
-    (
-        "class_inference.conflicting_distinct_signal_classes."
-        "confidence_millionths"
-    ),
+    ("class_inference.conflicting_distinct_signal_classes.confidence_millionths"),
 )
 if (
     _SEMANTIC_DEFAULT_CLASS_V2 == "proved"
@@ -2482,8 +2073,7 @@ if (
         _SEMANTIC_CONFLICT_CLASS_V2,
         *(
             signal_class
-            for _pattern, signal_class, _flag, _confidence
-            in _SEMANTIC_CLASS_SIGNAL_RULES_V2
+            for _pattern, signal_class, _flag, _confidence in _SEMANTIC_CLASS_SIGNAL_RULES_V2
         ),
     }
     - set(SEMANTIC_PROJECTION_CLASSES_V2)
@@ -2496,15 +2086,9 @@ if (
         _SEMANTIC_VALIDATION_CONFIDENCE_V2,
     )
 ):
-    raise RuntimeError(
-        "semantic-v2 fail-closed class and confidence rules are invalid"
-    )
-_semantic_operator_shapes = (
-    _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("accepted_shapes")
-)
-_semantic_predicate_shapes = (
-    _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("accepted_shapes")
-)
+    raise RuntimeError("semantic-v2 fail-closed class and confidence rules are invalid")
+_semantic_operator_shapes = _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("accepted_shapes")
+_semantic_predicate_shapes = _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("accepted_shapes")
 if (
     not isinstance(_semantic_operator_shapes, list)
     or not isinstance(_semantic_predicate_shapes, list)
@@ -2516,80 +2100,38 @@ if (
         )
     )
 ):
-    raise RuntimeError(
-        "semantic-v2 ModalIR accepted-shape rules are invalid"
-    )
-_SEMANTIC_OPERATOR_SHAPES_V2: Final = frozenset(
-    _semantic_operator_shapes
-)
-_SEMANTIC_PREDICATE_SHAPES_V2: Final = frozenset(
-    _semantic_predicate_shapes
-)
+    raise RuntimeError("semantic-v2 ModalIR accepted-shape rules are invalid")
+_SEMANTIC_OPERATOR_SHAPES_V2: Final = frozenset(_semantic_operator_shapes)
+_SEMANTIC_PREDICATE_SHAPES_V2: Final = frozenset(_semantic_predicate_shapes)
 if (
-    _SEMANTIC_MODAL_DOCUMENT_RULES_V2.get("accepted_shape")
-    != "mapping"
+    _SEMANTIC_MODAL_DOCUMENT_RULES_V2.get("accepted_shape") != "mapping"
     or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("accepted_container")
     != "sequence_excluding_string_bytes_bytearray"
-    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("accepted_item_shape")
-    != "mapping"
-    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("invalid_items")
-    != "ignore"
-    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get(
-        "invalid_container_result"
-    )
-    != "empty"
-    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("collection_order")
-    != "input_sequence"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("accepted_item_shape") != "mapping"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("invalid_items") != "ignore"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("invalid_container_result") != "empty"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("collection_order") != "input_sequence"
     or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("accepted_container")
     != "sequence_excluding_string_bytes_bytearray"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("accepted_item_type")
-    != "string"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("invalid_items")
-    != "ignore"
-    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
-        "invalid_container_result"
-    )
-    != "empty"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("accepted_item_type") != "string"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("invalid_items") != "ignore"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("invalid_container_result") != "empty"
     or _SEMANTIC_OPERATOR_SHAPES_V2 != {"mapping", "string"}
     or _SEMANTIC_PREDICATE_SHAPES_V2 != {"mapping", "string"}
-    or _SEMANTIC_MODAL_OPERATOR_RULES_V2.get(
-        "string_value_is_family"
-    )
-    is not True
-    or _SEMANTIC_MODAL_OPERATOR_RULES_V2.get(
-        "unsupported_or_non_string_family_result"
-    )
-    != "missing"
-    or _SEMANTIC_MODAL_PREDICATE_RULES_V2.get(
-        "string_value_is_name"
-    )
-    is not True
-    or _SEMANTIC_MODAL_PREDICATE_RULES_V2.get(
-        "unsupported_or_non_string_name_result"
-    )
-    != "missing"
+    or _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("string_value_is_family") is not True
+    or _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("unsupported_or_non_string_family_result") != "missing"
+    or _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("string_value_is_name") is not True
+    or _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("unsupported_or_non_string_name_result") != "missing"
     or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("logic_family")
-    != (
-        "primary_formula."
-        f"{_SEMANTIC_OPERATOR_FIELD_V2}."
-        f"{_SEMANTIC_OPERATOR_FAMILY_FIELD_V2}"
-    )
+    != (f"primary_formula.{_SEMANTIC_OPERATOR_FIELD_V2}.{_SEMANTIC_OPERATOR_FAMILY_FIELD_V2}")
     or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("target")
-    != (
-        "primary_formula."
-        f"{_SEMANTIC_PREDICATE_FIELD_V2}."
-        f"{_SEMANTIC_PREDICATE_NAME_FIELD_V2}"
-    )
+    != (f"primary_formula.{_SEMANTIC_PREDICATE_FIELD_V2}.{_SEMANTIC_PREDICATE_NAME_FIELD_V2}")
     or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("predicates")
     != "all_accepted_formula_predicate_names"
-    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("entities")
-    != "all_accepted_predicate_arguments"
-    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("normalization")
-    != "term_normalization"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("entities") != "all_accepted_predicate_arguments"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("normalization") != "term_normalization"
 ):
-    raise RuntimeError(
-        "semantic-v2 ModalIR shape interpreter does not match its CID"
-    )
+    raise RuntimeError("semantic-v2 ModalIR shape interpreter does not match its CID")
 del _semantic_operator_shapes
 del _semantic_predicate_shapes
 
@@ -2603,14 +2145,10 @@ def build_modal_semantic_projection_v2(
     """Apply the CID-bound ModalIR normalization rules without labels."""
 
     if not isinstance(modal_ir, Mapping):
-        raise ProtocolContractError(
-            "semantic projection requires a ModalIR object"
-        )
+        raise ProtocolContractError("semantic projection requires a ModalIR object")
     raw_formulas = modal_ir.get(_SEMANTIC_FORMULAS_FIELD_V2, ())
     formulas = (
-        tuple(
-            item for item in raw_formulas if isinstance(item, Mapping)
-        )
+        tuple(item for item in raw_formulas if isinstance(item, Mapping))
         if isinstance(raw_formulas, Sequence)
         and not isinstance(raw_formulas, (str, bytes, bytearray))
         else ()
@@ -2619,13 +2157,8 @@ def build_modal_semantic_projection_v2(
     entities: list[str] = []
     for formula in formulas:
         predicate = formula.get(_SEMANTIC_PREDICATE_FIELD_V2)
-        if (
-            isinstance(predicate, Mapping)
-            and "mapping" in _SEMANTIC_PREDICATE_SHAPES_V2
-        ):
-            raw_name = predicate.get(
-                _SEMANTIC_PREDICATE_NAME_FIELD_V2
-            )
+        if isinstance(predicate, Mapping) and "mapping" in _SEMANTIC_PREDICATE_SHAPES_V2:
+            raw_name = predicate.get(_SEMANTIC_PREDICATE_NAME_FIELD_V2)
             if isinstance(raw_name, str):
                 predicates.append(raw_name)
             raw_arguments = predicate.get(
@@ -2638,20 +2171,14 @@ def build_modal_semantic_projection_v2(
                 for raw_argument in raw_arguments:
                     if isinstance(raw_argument, str):
                         entities.append(raw_argument)
-                        if (
-                            _SEMANTIC_ENTITY_QUALIFIER_V2
-                            in raw_argument
-                        ):
+                        if _SEMANTIC_ENTITY_QUALIFIER_V2 in raw_argument:
                             entities.append(
                                 raw_argument.rsplit(
                                     _SEMANTIC_ENTITY_QUALIFIER_V2,
                                     1,
                                 )[-1]
                             )
-        elif (
-            isinstance(predicate, str)
-            and "string" in _SEMANTIC_PREDICATE_SHAPES_V2
-        ):
+        elif isinstance(predicate, str) and "string" in _SEMANTIC_PREDICATE_SHAPES_V2:
             predicates.append(predicate)
 
     def primary_order(
@@ -2660,15 +2187,11 @@ def build_modal_semantic_projection_v2(
         index, formula = indexed_formula
         predicate = formula.get(_SEMANTIC_PREDICATE_FIELD_V2)
         role = (
-            normalize_semantic_term(
-                predicate.get(_SEMANTIC_PREDICATE_ROLE_FIELD_V2)
-            )
+            normalize_semantic_term(predicate.get(_SEMANTIC_PREDICATE_ROLE_FIELD_V2))
             if isinstance(predicate, Mapping)
             else ""
         )
-        provenance = formula.get(
-            _SEMANTIC_PRIMARY_START_PATH_V2[0]
-        )
+        provenance = formula.get(_SEMANTIC_PRIMARY_START_PATH_V2[0])
         start = (
             provenance.get(_SEMANTIC_PRIMARY_START_PATH_V2[1])
             if isinstance(provenance, Mapping)
@@ -2681,12 +2204,8 @@ def build_modal_semantic_projection_v2(
         )
         return (
             role != _SEMANTIC_PRIMARY_ROLE_V2,
-            start
-            if isinstance(start, int) and not isinstance(start, bool)
-            else math.inf,
-            end
-            if isinstance(end, int) and not isinstance(end, bool)
-            else math.inf,
+            start if isinstance(start, int) and not isinstance(start, bool) else math.inf,
+            end if isinstance(end, int) and not isinstance(end, bool) else math.inf,
             str(
                 formula.get(
                     _SEMANTIC_PRIMARY_ID_PATH_V2[0],
@@ -2696,53 +2215,33 @@ def build_modal_semantic_projection_v2(
             index,
         )
 
-    primary = (
-        min(enumerate(formulas), key=primary_order)[1]
-        if formulas
-        else None
-    )
+    primary = min(enumerate(formulas), key=primary_order)[1] if formulas else None
     primary_operator = (
-        primary.get(_SEMANTIC_OPERATOR_FIELD_V2)
-        if isinstance(primary, Mapping)
-        else None
+        primary.get(_SEMANTIC_OPERATOR_FIELD_V2) if isinstance(primary, Mapping) else None
     )
     primary_predicate = (
-        primary.get(_SEMANTIC_PREDICATE_FIELD_V2)
-        if isinstance(primary, Mapping)
-        else None
+        primary.get(_SEMANTIC_PREDICATE_FIELD_V2) if isinstance(primary, Mapping) else None
     )
     raw_logic = (
         primary_operator.get(_SEMANTIC_OPERATOR_FAMILY_FIELD_V2)
-        if (
-            isinstance(primary_operator, Mapping)
-            and "mapping" in _SEMANTIC_OPERATOR_SHAPES_V2
-        )
+        if (isinstance(primary_operator, Mapping) and "mapping" in _SEMANTIC_OPERATOR_SHAPES_V2)
         else (
             primary_operator
-            if isinstance(primary_operator, str)
-            and "string" in _SEMANTIC_OPERATOR_SHAPES_V2
+            if isinstance(primary_operator, str) and "string" in _SEMANTIC_OPERATOR_SHAPES_V2
             else None
         )
     )
     raw_target = (
         primary_predicate.get(_SEMANTIC_PREDICATE_NAME_FIELD_V2)
-        if (
-            isinstance(primary_predicate, Mapping)
-            and "mapping" in _SEMANTIC_PREDICATE_SHAPES_V2
-        )
+        if (isinstance(primary_predicate, Mapping) and "mapping" in _SEMANTIC_PREDICATE_SHAPES_V2)
         else (
             primary_predicate
-            if isinstance(primary_predicate, str)
-            and "string" in _SEMANTIC_PREDICATE_SHAPES_V2
+            if isinstance(primary_predicate, str) and "string" in _SEMANTIC_PREDICATE_SHAPES_V2
             else None
         )
     )
     normalized_logic = normalize_semantic_term(raw_logic)
-    normalized_predicates = [
-        value
-        for raw in predicates
-        if (value := normalize_semantic_term(raw))
-    ]
+    normalized_predicates = [value for raw in predicates if (value := normalize_semantic_term(raw))]
     logic_family = (
         _SEMANTIC_LOGIC_ALIASES_V2.get(
             normalized_logic,
@@ -2751,10 +2250,7 @@ def build_modal_semantic_projection_v2(
         if normalized_logic
         else _SEMANTIC_MISSING_TERM_V2
     )
-    target = (
-        normalize_semantic_term(raw_target)
-        or _SEMANTIC_MISSING_TERM_V2
-    )
+    target = normalize_semantic_term(raw_target) or _SEMANTIC_MISSING_TERM_V2
 
     projection_values: dict[str, object] = {
         "logic_family": logic_family,
@@ -2771,11 +2267,7 @@ def build_modal_semantic_projection_v2(
         presence_rule = rule.get("presence")
         value = projection_values.get(field)
         if presence_rule == "nonempty_nonmissing_string":
-            present = bool(
-                isinstance(value, str)
-                and value
-                and value != _SEMANTIC_MISSING_TERM_V2
-            )
+            present = bool(isinstance(value, str) and value and value != _SEMANTIC_MISSING_TERM_V2)
         elif presence_rule == "nonempty_collection":
             present = bool(
                 isinstance(value, Sequence)
@@ -2786,38 +2278,24 @@ def build_modal_semantic_projection_v2(
                 and value
             )
         else:
-            raise RuntimeError(
-                "semantic-v2 validation presence rule is unsupported"
-            )
+            raise RuntimeError("semantic-v2 validation presence rule is unsupported")
         validation_presence[field] = present
         if not present:
             validation_errors.append(
                 _semantic_rule_string(
                     rule.get("error"),
-                    (
-                        "validation.required_projection_fields."
-                        f"{field}.error"
-                    ),
+                    (f"validation.required_projection_fields.{field}.error"),
                 )
             )
 
     matched_signals: list[tuple[str, str | None, int]] = []
-    for pattern, signal_class, ambiguity_flag, confidence in (
-        _SEMANTIC_CLASS_SIGNAL_RULES_V2
-    ):
+    for pattern, signal_class, ambiguity_flag, confidence in _SEMANTIC_CLASS_SIGNAL_RULES_V2:
         if pattern.search(source_text):
-            matched_signals.append(
-                (signal_class, ambiguity_flag, confidence)
-            )
+            matched_signals.append((signal_class, ambiguity_flag, confidence))
     ambiguity_flags = tuple(
-        flag
-        for _signal_class, flag, _confidence in matched_signals
-        if flag is not None
+        flag for _signal_class, flag, _confidence in matched_signals if flag is not None
     )
-    distinct_signal_classes = {
-        signal_class
-        for signal_class, _flag, _confidence in matched_signals
-    }
+    distinct_signal_classes = {signal_class for signal_class, _flag, _confidence in matched_signals}
     if len(distinct_signal_classes) > 1:
         validation_errors.append(_SEMANTIC_CONFLICT_ERROR_V2)
 
@@ -2838,17 +2316,12 @@ def build_modal_semantic_projection_v2(
         or not isinstance(confidence_millionths, int)
         or not 0 <= confidence_millionths <= 1_000_000
     ):
-        raise RuntimeError(
-            "semantic-v2 confidence rule is invalid"
-        )
+        raise RuntimeError("semantic-v2 confidence rule is invalid")
 
     completeness: dict[str, bool] = {}
     for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2:
         rule = _SEMANTIC_COMPLETENESS_RULES_V2.get(field)
-        if (
-            isinstance(rule, str)
-            and rule.startswith("validation_presence.")
-        ):
+        if isinstance(rule, str) and rule.startswith("validation_presence."):
             completeness[field] = validation_presence.get(
                 rule.removeprefix("validation_presence."),
                 False,
@@ -2858,9 +2331,7 @@ def build_modal_semantic_projection_v2(
         elif rule == "observed_collection_empty_is_complete":
             completeness[field] = True
         else:
-            raise RuntimeError(
-                "semantic-v2 completeness rule is unsupported"
-            )
+            raise RuntimeError("semantic-v2 completeness rule is unsupported")
 
     evidence_cid = cid_for_dag_json(_thaw_json(modal_ir))
     return SemanticProjection.create(
@@ -2909,9 +2380,7 @@ def _spacy_request_document(
             # ``text`` key in new records.
             raw_text = legacy_source
         if not isinstance(raw_text, str):
-            raise ProtocolContractError(
-                "spaCy input_data must contain a string text field"
-            )
+            raise ProtocolContractError("spaCy input_data must contain a string text field")
         text = raw_text
         document_id = data.get("document_id", request.case_id)
         citation = data.get("citation")
@@ -2924,9 +2393,7 @@ def _spacy_request_document(
             ),
         )
     else:
-        raise ProtocolContractError(
-            "spaCy input_data must be text or an object containing text"
-        )
+        raise ProtocolContractError("spaCy input_data must be text or an object containing text")
     if not text.strip():
         raise ProtocolContractError("spaCy input text must not be empty")
     if len(text.encode("utf-8")) > config.max_text_bytes:
@@ -2935,16 +2402,10 @@ def _spacy_request_document(
         )
     _safe_id(document_id, "document_id")
     if citation is not None and (
-        not isinstance(citation, str)
-        or not citation.strip()
-        or len(citation) > 256
+        not isinstance(citation, str) or not citation.strip() or len(citation) > 256
     ):
         raise ProtocolContractError("citation must be a bounded nonempty string")
-    if (
-        not isinstance(source, str)
-        or not source.strip()
-        or len(source) > 256
-    ):
+    if not isinstance(source, str) or not source.strip() or len(source) > 256:
         raise ProtocolContractError("source_name must be a bounded nonempty string")
     return text, document_id, citation, source
 
@@ -2964,13 +2425,9 @@ def _spacy_failure(
         data={} if data is None else data,
         status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
         effective_identity=(
-            request.requested_identity
-            if effective_identity is None
-            else effective_identity
+            request.requested_identity if effective_identity is None else effective_identity
         ),
-        failure_code=(
-            FailureCode.CAPABILITY_UNAVAILABLE if unavailable else failure_code
-        ),
+        failure_code=(FailureCode.CAPABILITY_UNAVAILABLE if unavailable else failure_code),
         failure_detail=detail[:_MAX_DETAIL_LENGTH],
     )
 
@@ -2998,14 +2455,10 @@ def _spacy_semantic_roles(frames: object) -> list[dict[str, object]]:
             if callable(serializer):
                 serialized_frame = serializer()
                 if not isinstance(serialized_frame, Mapping):
-                    raise ProtocolContractError(
-                        "semantic-role frame must serialize to an object"
-                    )
+                    raise ProtocolContractError("semantic-role frame must serialize to an object")
                 frame = serialized_frame
         raw_arguments = _spacy_frame_value(frame, "arguments", ())
-        if not isinstance(raw_arguments, Sequence) or isinstance(
-            raw_arguments, (str, bytes)
-        ):
+        if not isinstance(raw_arguments, Sequence) or isinstance(raw_arguments, (str, bytes)):
             raise ProtocolContractError("semantic-role arguments must be a sequence")
         arguments: list[dict[str, object]] = []
         for argument in raw_arguments:
@@ -3027,9 +2480,7 @@ def _spacy_semantic_roles(frames: object) -> list[dict[str, object]]:
                     "role": str(_spacy_frame_value(argument, "role", "")),
                     "text": str(_spacy_frame_value(argument, "text", "")),
                     "span": serialized_span,
-                    "confidence": float(
-                        _spacy_frame_value(argument, "confidence", 0.0)
-                    ),
+                    "confidence": float(_spacy_frame_value(argument, "confidence", 0.0)),
                 }
             )
         arguments.sort(
@@ -3065,8 +2516,7 @@ def _spacy_semantic_roles(frames: object) -> list[dict[str, object]]:
             "source": str(_spacy_frame_value(frame, "source", "")),
         }
         body["frame_id"] = (
-            "srl-"
-            + hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()[:24]
+            "srl-" + hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()[:24]
         )
         normalized.append(body)
     normalized.sort(
@@ -3164,12 +2614,8 @@ def _modal_cues_from_ir(modal_ir: Mapping[str, object]) -> list[dict[str, object
                 "system": str(operator.get("system", "")),
                 "symbol": str(operator.get("symbol", "")),
                 "label": str(operator.get("label", "")),
-                "start_char": int(
-                    metadata.get("cue_start_char", provenance.get("start_char", 0))
-                ),
-                "end_char": int(
-                    metadata.get("cue_end_char", provenance.get("end_char", 0))
-                ),
+                "start_char": int(metadata.get("cue_start_char", provenance.get("start_char", 0))),
+                "end_char": int(metadata.get("cue_end_char", provenance.get("end_char", 0))),
                 "token_indices": [],
             }
         )
@@ -3234,28 +2680,20 @@ def _spacy_evidence_handler(
     modal_compiler_factory: Callable[[], object],
 ) -> StageHandler:
     def handler(request: StageRequest) -> StageOutput:
-        if (
-            request.semantic_protocol_cid
-            != config.semantic_protocol_cid
-        ):
+        if request.semantic_protocol_cid != config.semantic_protocol_cid:
             return _spacy_failure(
                 request,
                 "spaCy request/config semantic protocol identity mismatch",
                 failure_code=FailureCode.FIXTURE_INVALID,
             )
-        if (
-            config.semantic_protocol_cid is not None
-            and request.proof_context is not None
-        ):
+        if config.semantic_protocol_cid is not None and request.proof_context is not None:
             return _spacy_failure(
                 request,
                 "spaCy semantic producer cannot receive proof_context",
                 failure_code=FailureCode.FIXTURE_INVALID,
             )
         try:
-            text, document_id, citation, source = _spacy_request_document(
-                request, config
-            )
+            text, document_id, citation, source = _spacy_request_document(request, config)
         except ProtocolContractError as exc:
             return _spacy_failure(
                 request,
@@ -3326,17 +2764,13 @@ def _spacy_evidence_handler(
                 nlp = getattr(encoder, "nlp", None)
                 pipe_names = list(getattr(nlp, "pipe_names", ()))
                 raw_model_meta = getattr(nlp, "meta", {})
-                model_meta = (
-                    raw_model_meta if isinstance(raw_model_meta, Mapping) else {}
-                )
+                model_meta = raw_model_meta if isinstance(raw_model_meta, Mapping) else {}
                 model_version = str(model_meta.get("version", ""))
                 model_language = str(model_meta.get("lang", config.language))
                 model_meta_sha256 = hashlib.sha256(
                     canonical_json(
                         {
-                            "name": str(
-                                model_meta.get("name", config.requested_model)
-                            ),
+                            "name": str(model_meta.get("name", config.requested_model)),
                             "version": model_version,
                             "language": model_language,
                             "pipeline": pipe_names,
@@ -3358,10 +2792,7 @@ def _spacy_evidence_handler(
                     "model_language": model_language,
                     "model_meta_sha256": model_meta_sha256,
                 }
-                if (
-                    config.mode is SpacyAdapterMode.FULL_MODEL
-                    and used_fallback
-                ):
+                if config.mode is SpacyAdapterMode.FULL_MODEL and used_fallback:
                     return _spacy_failure(
                         request,
                         f"requested spaCy model {config.requested_model!r} is "
@@ -3369,10 +2800,7 @@ def _spacy_evidence_handler(
                         unavailable=True,
                         effective_identity=identity,
                     )
-                if (
-                    config.mode is SpacyAdapterMode.BLANK_MODEL
-                    and not used_fallback
-                ):
+                if config.mode is SpacyAdapterMode.BLANK_MODEL and not used_fallback:
                     return _spacy_failure(
                         request,
                         "blank-model mode did not produce a blank spaCy pipeline",
@@ -3383,9 +2811,7 @@ def _spacy_evidence_handler(
                     raise ProtocolContractError(
                         "SpaCyLegalEncoder output must serialize to an object"
                     )
-                normalized_text = str(
-                    encoding_data.get("normalized_text", text.strip())
-                )
+                normalized_text = str(encoding_data.get("normalized_text", text.strip()))
                 tokens = list(encoding_data.get("tokens", ()))
                 sentences = list(encoding_data.get("sentences", ()))
                 modal_cues = list(encoding_data.get("cues", ()))
@@ -3398,9 +2824,7 @@ def _spacy_evidence_handler(
                 modal_ir_object = modal_compiler_factory().compile(encoding)
                 modal_ir = modal_ir_object.to_dict()
                 effective_model = (
-                    f"spacy.blank:{config.language}"
-                    if used_fallback
-                    else config.requested_model
+                    f"spacy.blank:{config.language}" if used_fallback else config.requested_model
                 )
                 try:
                     import spacy
@@ -3441,11 +2865,7 @@ def _spacy_evidence_handler(
                     **(
                         {"source_cid": request.source_cid}
                         if config.semantic_protocol_cid is not None
-                        else {
-                            "text_sha256": hashlib.sha256(
-                                text.encode("utf-8")
-                            ).hexdigest()
-                        }
+                        else {"text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}
                     ),
                 },
                 "tokens": tokens,
@@ -3556,14 +2976,10 @@ class SpacyAdapter(StageAdapter):
                 modal_compiler_factory,
             )
         ):
-            raise ProtocolContractError(
-                "spaCy component factories require a SpacyAdapterConfig"
-            )
+            raise ProtocolContractError("spaCy component factories require a SpacyAdapterConfig")
         if config is not None:
             if not isinstance(config, SpacyAdapterConfig):
-                raise ProtocolContractError(
-                    "config must be a SpacyAdapterConfig"
-                )
+                raise ProtocolContractError("config must be a SpacyAdapterConfig")
             if config.semantic_protocol_cid is not None:
                 kwargs.setdefault("adapter_version", "2")
             handler = _spacy_evidence_handler(
@@ -3571,9 +2987,7 @@ class SpacyAdapter(StageAdapter):
                 encoder_factory=encoder_factory or _default_spacy_encoder,
                 srl_factory=srl_factory or _default_srl_extractor,
                 legal_parser_factory=legal_parser_factory or _default_legal_parser,
-                modal_compiler_factory=(
-                    modal_compiler_factory or _default_spacy_modal_compiler
-                ),
+                modal_compiler_factory=(modal_compiler_factory or _default_spacy_modal_compiler),
             )
         object.__setattr__(self, "config", config)
         super().__init__(StageName.SPACY, handler=handler, **kwargs)
@@ -3661,9 +3075,7 @@ def _reject_symai_recursion(
         "router_provider",
     ):
         if key in metadata and _is_recursive_symai_identity(metadata[key]):
-            raise SymaiRecursiveRoutingError(
-                f"llm_router resolved recursively to SyMAI via {key}"
-            )
+            raise SymaiRecursiveRoutingError(f"llm_router resolved recursively to SyMAI via {key}")
 
 
 def _symai_request_text(request: StageRequest, config: SymaiAdapterConfig) -> str:
@@ -3680,11 +3092,7 @@ def _symai_request_text(request: StageRequest, config: SymaiAdapterConfig) -> st
         raise SymaiAdapterContractError(
             "SyMAI input must contain a nonempty text or source_text string"
         )
-    normalized = (
-        text
-        if config.semantic_protocol_cid is not None
-        else text.strip()
-    )
+    normalized = text if config.semantic_protocol_cid is not None else text.strip()
     if len(normalized.encode("utf-8")) > config.max_text_bytes:
         raise SymaiAdapterContractError(
             f"SyMAI input exceeds {config.max_text_bytes} encoded bytes"
@@ -3702,10 +3110,7 @@ def _symai_cache_namespace(request: StageRequest) -> str:
     ).namespace
     if request.semantic_protocol_cid is None:
         return revision_1_namespace
-    return (
-        f"{revision_1_namespace}/semantic-protocol/"
-        f"{request.semantic_protocol_cid}"
-    )
+    return f"{revision_1_namespace}/semantic-protocol/{request.semantic_protocol_cid}"
 
 
 def _symai_cache_key(
@@ -3722,18 +3127,12 @@ def _symai_cache_key(
             "case_id": request.case_id,
             "source_cid": request.source_cid,
             "semantic_context_cid": (
-                None
-                if semantic_context is None
-                else semantic_context.get("context_cid")
+                None if semantic_context is None else semantic_context.get("context_cid")
             ),
             "semantic_protocol_cid": config.semantic_protocol_cid,
             "semantic_prompt_cid": SEMANTIC_PROMPT_V2_CID,
-            "semantic_response_schema_cid": (
-                SEMANTIC_RESPONSE_SCHEMA_V2_CID
-            ),
-            "semantic_producer_registry_cid": (
-                SEMANTIC_PRODUCER_REGISTRY_V2_CID
-            ),
+            "semantic_response_schema_cid": (SEMANTIC_RESPONSE_SCHEMA_V2_CID),
+            "semantic_producer_registry_cid": (SEMANTIC_PRODUCER_REGISTRY_V2_CID),
             "provider": config.provider,
             "model": config.model,
             "inner_route": {
@@ -3744,10 +3143,7 @@ def _symai_cache_key(
             },
             "dry_run": config.dry_run,
         }
-        return (
-            f"{namespace}/stage/symai/"
-            f"{cid_for_dag_json(semantic_key_content)}"
-        )
+        return f"{namespace}/stage/symai/{cid_for_dag_json(semantic_key_content)}"
     digest = hashlib.sha256(
         canonical_json(
             {
@@ -3763,9 +3159,7 @@ def _symai_cache_key(
                     artifact.digest for artifact in request.upstream_artifacts
                 ],
                 "semantic_context_sha256": (
-                    None
-                    if semantic_context is None
-                    else semantic_context.get("context_sha256")
+                    None if semantic_context is None else semantic_context.get("context_sha256")
                 ),
                 "provider": config.provider,
                 "model": config.model,
@@ -3865,9 +3259,7 @@ def _symai_prompt(
                     formulas: list[dict[str, object]] = []
                     if isinstance(modal_ir, Mapping):
                         raw_formulas = modal_ir.get("formulas", ())
-                        if isinstance(
-                            raw_formulas, Sequence
-                        ) and not isinstance(
+                        if isinstance(raw_formulas, Sequence) and not isinstance(
                             raw_formulas, (str, bytes, bytearray)
                         ):
                             for formula in raw_formulas[:8]:
@@ -3883,23 +3275,17 @@ def _symai_prompt(
                                     if isinstance(raw_predicate, Mapping)
                                     else ()
                                 )
-                                if isinstance(
-                                    raw_arguments, Sequence
-                                ) and not isinstance(
+                                if isinstance(raw_arguments, Sequence) and not isinstance(
                                     raw_arguments,
                                     (str, bytes, bytearray),
                                 ):
                                     if not all(
-                                        isinstance(argument, str)
-                                        for argument in raw_arguments[:16]
+                                        isinstance(argument, str) for argument in raw_arguments[:16]
                                     ):
                                         raise SymaiAdapterContractError(
-                                            "modal predicate arguments must "
-                                            "be strings"
+                                            "modal predicate arguments must be strings"
                                         )
-                                    predicate["arguments"] = list(
-                                        raw_arguments[:16]
-                                    )
+                                    predicate["arguments"] = list(raw_arguments[:16])
                                 formulas.append(
                                     {
                                         "operator": _mapping_subset(
@@ -3912,12 +3298,8 @@ def _symai_prompt(
                                             ),
                                         ),
                                         "predicate": predicate,
-                                        "has_conditions": bool(
-                                            formula.get("conditions")
-                                        ),
-                                        "has_exceptions": bool(
-                                            formula.get("exceptions")
-                                        ),
+                                        "has_conditions": bool(formula.get("conditions")),
+                                        "has_exceptions": bool(formula.get("exceptions")),
                                     }
                                 )
                     roles: list[dict[str, object]] = []
@@ -3937,8 +3319,7 @@ def _symai_prompt(
                                 for argument in arguments[:8]:
                                     if not isinstance(argument, Mapping):
                                         raise SymaiAdapterContractError(
-                                            "semantic-role arguments must "
-                                            "be objects"
+                                            "semantic-role arguments must be objects"
                                         )
                                     safe_arguments.append(
                                         _mapping_subset(
@@ -4001,14 +3382,10 @@ def _symai_prompt(
         evidence = concise_artifacts
     evidence_json = canonical_json(evidence)
     if len(evidence_json.encode("utf-8")) > 12 * 1024:
-        raise SymaiAdapterContractError(
-            "concise SyMAI semantic evidence exceeds 12 KiB"
-        )
+        raise SymaiAdapterContractError("concise SyMAI semantic evidence exceeds 12 KiB")
     semantic_v2 = semantic_protocol_cid is not None
     if semantic_v2 and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
-        raise SymaiAdapterContractError(
-            "SyMAI prompt semantic protocol is unsupported"
-        )
+        raise SymaiAdapterContractError("SyMAI prompt semantic protocol is unsupported")
     output_skeleton = (
         {
             "logic_family": "",
@@ -4016,10 +3393,7 @@ def _symai_prompt(
             "class": "unsupported",
             "predicates": [],
             "entities": [],
-            "completeness": {
-                field: False
-                for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-            },
+            "completeness": {field: False for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2},
             "ambiguity_flags": [],
             "confidence_millionths": 0,
             "validation_errors": [],
@@ -4041,16 +3415,11 @@ def _symai_prompt(
             "The prior response reached the output-token limit. Return only "
             "the nine semantic fields in OUTPUT_SKELETON, using short "
             "source-derived terms and bounded arrays."
-            if (
-                semantic_v2
-                and repair_failure_class == _SYMAI_OUTPUT_TOKEN_LIMIT
-            )
+            if (semantic_v2 and repair_failure_class == _SYMAI_OUTPUT_TOKEN_LIMIT)
             else _SYMAI_REPAIR_INSTRUCTIONS.get(repair_failure_class)
         )
         if instruction is None:
-            raise SymaiAdapterContractError(
-                "SyMAI repair failure class is not allow-listed"
-            )
+            raise SymaiAdapterContractError("SyMAI repair failure class is not allow-listed")
         repair_instruction = (
             "\nSAFE_REPAIR_CLASS:"
             + repair_failure_class
@@ -4087,9 +3456,7 @@ def _symai_prompt(
         "task, upstream_semantic_context, source_text_sha256, artifacts, "
         "artifact_sha256, or output_sha256 into the top-level output. Do not "
         "repeat the source text or evidence container. Do not claim proof, "
-        "kernel acceptance, verification, or authority. No Markdown.\n"
-        + repair_instruction
-        + "\n"
+        "kernel acceptance, verification, or authority. No Markdown.\n" + repair_instruction + "\n"
         "OUTPUT_SKELETON:\n"
         + canonical_json(output_skeleton)
         + "\nSOURCE_TEXT_JSON_STRING:\n"
@@ -4110,24 +3477,20 @@ def _is_frozen_ablation_request(request: StageRequest) -> bool:
         return False
     return (
         request.requested_identity.get("variant_id") == request.variant_id
-        and request.requested_identity.get("configuration_sha256")
-        == definition.digest
+        and request.requested_identity.get("configuration_sha256") == definition.digest
     )
 
 
 def _symai_input_semantic_context(
     request: StageRequest,
 ) -> dict[str, object]:
-    measured_semantic_arm = (
-        _is_frozen_ablation_request(request)
-        and request.variant_id in {f"A{index}" for index in range(4, 13)}
-    )
+    measured_semantic_arm = _is_frozen_ablation_request(request) and request.variant_id in {
+        f"A{index}" for index in range(4, 13)
+    }
     return build_upstream_semantic_context(
         request,
         stages=(StageName.SPACY,),
-        require_success=(
-            (StageName.SPACY,) if measured_semantic_arm else ()
-        ),
+        require_success=((StageName.SPACY,) if measured_semantic_arm else ()),
         model_facing=request.semantic_protocol_cid is not None,
     )
 
@@ -4138,14 +3501,10 @@ def semantic_context_binding(
     if "context_cid" in semantic_context:
         artifact_cids: list[str] = []
         artifacts = semantic_context.get("artifacts", ())
-        if isinstance(artifacts, Sequence) and not isinstance(
-            artifacts, (str, bytes, bytearray)
-        ):
+        if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes, bytearray)):
             for artifact in artifacts:
                 if isinstance(artifact, Mapping):
-                    artifact_cids.append(
-                        cid_for_dag_json(_thaw_json(artifact))
-                    )
+                    artifact_cids.append(cid_for_dag_json(_thaw_json(artifact)))
         return {
             "schema": SEMANTIC_CONTEXT_SCHEMA_V2,
             "context_cid": semantic_context.get("context_cid"),
@@ -4154,9 +3513,7 @@ def semantic_context_binding(
         }
     artifacts = semantic_context.get("artifacts", ())
     artifact_sha256s: list[str] = []
-    if isinstance(artifacts, Sequence) and not isinstance(
-        artifacts, (str, bytes, bytearray)
-    ):
+    if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes, bytearray)):
         for artifact in artifacts:
             if isinstance(artifact, Mapping):
                 digest = artifact.get("artifact_sha256")
@@ -4180,8 +3537,7 @@ def _symai_dry_run_raw(request: StageRequest) -> str:
                 "predicates": [],
                 "entities": [],
                 "completeness": {
-                    field: False
-                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                    field: False for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
                 },
                 "ambiguity_flags": [],
                 "confidence_millionths": 0,
@@ -4223,20 +3579,14 @@ def _symai_string_list(value: object, field_name: str) -> list[str]:
     if not isinstance(value, list):
         raise SymaiAdapterContractError(f"{field_name} must be an array")
     if len(value) > SYMAI_MAX_LIST_ITEMS:
-        raise SymaiAdapterContractError(
-            f"{field_name} exceeds {SYMAI_MAX_LIST_ITEMS} items"
-        )
+        raise SymaiAdapterContractError(f"{field_name} exceeds {SYMAI_MAX_LIST_ITEMS} items")
     result: list[str] = []
     for item in value:
         if not isinstance(item, str) or not item.strip():
-            raise SymaiAdapterContractError(
-                f"{field_name} must contain nonempty strings"
-            )
+            raise SymaiAdapterContractError(f"{field_name} must contain nonempty strings")
         normalized = item.strip()
         if len(normalized) > SYMAI_MAX_ITEM_LENGTH:
-            raise SymaiAdapterContractError(
-                f"{field_name} contains an overlong string"
-            )
+            raise SymaiAdapterContractError(f"{field_name} contains an overlong string")
         result.append(normalized)
     if len(set(result)) != len(result):
         raise SymaiAdapterContractError(f"{field_name} contains duplicate values")
@@ -4269,43 +3619,27 @@ def _validate_symai_candidate_value(
         return
     if isinstance(value, float):
         if not math.isfinite(value):
-            raise SymaiAdapterContractError(
-                f"{field_name} contains a non-finite number"
-            )
+            raise SymaiAdapterContractError(f"{field_name} contains a non-finite number")
         return
     if isinstance(value, str):
         if len(value) > 4096:
-            raise SymaiAdapterContractError(
-                f"{field_name} contains an overlong string"
-            )
+            raise SymaiAdapterContractError(f"{field_name} contains an overlong string")
         return
     if isinstance(value, list):
         if len(value) > SYMAI_MAX_LIST_ITEMS:
-            raise SymaiAdapterContractError(
-                f"{field_name} contains too many array items"
-            )
+            raise SymaiAdapterContractError(f"{field_name} contains too many array items")
         for index, item in enumerate(value):
-            _validate_symai_candidate_value(
-                item, f"{field_name}[{index}]", depth=depth + 1
-            )
+            _validate_symai_candidate_value(item, f"{field_name}[{index}]", depth=depth + 1)
         return
     if isinstance(value, dict):
         if len(value) > SYMAI_MAX_LIST_ITEMS:
-            raise SymaiAdapterContractError(
-                f"{field_name} contains too many object members"
-            )
+            raise SymaiAdapterContractError(f"{field_name} contains too many object members")
         for key, item in value.items():
             if not isinstance(key, str) or not key or len(key) > SYMAI_MAX_ITEM_LENGTH:
-                raise SymaiAdapterContractError(
-                    f"{field_name} contains an invalid object key"
-                )
-            _validate_symai_candidate_value(
-                item, f"{field_name}.{key}", depth=depth + 1
-            )
+                raise SymaiAdapterContractError(f"{field_name} contains an invalid object key")
+            _validate_symai_candidate_value(item, f"{field_name}.{key}", depth=depth + 1)
         return
-    raise SymaiAdapterContractError(
-        f"{field_name} contains a non-JSON value"
-    )
+    raise SymaiAdapterContractError(f"{field_name} contains a non-JSON value")
 
 
 def _validate_symai_contract(
@@ -4356,33 +3690,22 @@ def _validate_symai_contract(
     missing = contract_keys - set(decoded)
     unknown = set(decoded) - contract_keys
     if missing or unknown:
-        raise SymaiAdapterContractError(
-            "SyMAI contract keys do not match the frozen schema"
-        )
+        raise SymaiAdapterContractError("SyMAI contract keys do not match the frozen schema")
     if semantic_v2:
         logic_family = normalize_semantic_term(decoded["logic_family"])
         target = normalize_semantic_term(decoded["target"])
         semantic_class = normalize_semantic_term(decoded["class"])
-        predicates = _symai_string_list(
-            decoded["predicates"], "predicates"
-        )
+        predicates = _symai_string_list(decoded["predicates"], "predicates")
         entities = _symai_string_list(decoded["entities"], "entities")
-        ambiguity_flags = _symai_string_list(
-            decoded["ambiguity_flags"], "ambiguity_flags"
-        )
-        validation_errors = _symai_string_list(
-            decoded["validation_errors"], "validation_errors"
-        )
+        ambiguity_flags = _symai_string_list(decoded["ambiguity_flags"], "ambiguity_flags")
+        validation_errors = _symai_string_list(decoded["validation_errors"], "validation_errors")
         completeness = decoded["completeness"]
         if (
             not isinstance(completeness, dict)
-            or set(completeness)
-            != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+            or set(completeness) != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
             or any(type(value) is not bool for value in completeness.values())
         ):
-            raise SymaiAdapterContractError(
-                "SyMAI semantic completeness fields are invalid"
-            )
+            raise SymaiAdapterContractError("SyMAI semantic completeness fields are invalid")
         confidence_millionths = decoded["confidence_millionths"]
         if (
             isinstance(confidence_millionths, bool)
@@ -4390,17 +3713,14 @@ def _validate_symai_contract(
             or not 0 <= confidence_millionths <= 1_000_000
         ):
             raise SymaiAdapterContractError(
-                "confidence_millionths must be an integer from zero to "
-                "one million"
+                "confidence_millionths must be an integer from zero to one million"
             )
         if validation_errors:
             raise SymaiCompletionContractError(
                 _SYMAI_SEMANTIC_VALIDATION_FAILED,
                 "SyMAI semantic response retained validation errors",
             )
-        normalized_predicates = {
-            normalize_semantic_term(value) for value in predicates
-        }
+        normalized_predicates = {normalize_semantic_term(value) for value in predicates}
         if (
             not all(completeness.values())
             or logic_family in {"", "unknown", "unspecified", "none"}
@@ -4418,13 +3738,9 @@ def _validate_symai_contract(
             "ambiguous",
             "unsupported",
         }:
-            raise SymaiAdapterContractError(
-                "SyMAI semantic class is unsupported"
-            )
+            raise SymaiAdapterContractError("SyMAI semantic class is unsupported")
         if ambiguity_flags and semantic_class != "ambiguous":
-            raise SymaiAdapterContractError(
-                "SyMAI ambiguity flags require class=ambiguous"
-            )
+            raise SymaiAdapterContractError("SyMAI ambiguity flags require class=ambiguous")
         return raw, {
             "logic_family": logic_family,
             "target": target,
@@ -4441,9 +3757,7 @@ def _validate_symai_contract(
         raise SymaiAdapterContractError("candidate_ir must be a nonempty object")
     _validate_symai_candidate_value(candidate_ir)
     if _contains_symai_authority_key(candidate_ir):
-        raise SymaiAdapterContractError(
-            "candidate_ir contains a forbidden proof-authority claim"
-        )
+        raise SymaiAdapterContractError("candidate_ir contains a forbidden proof-authority claim")
     candidate_bytes = len(canonical_json(candidate_ir).encode("utf-8"))
     if candidate_bytes > SYMAI_MAX_CANDIDATE_BYTES:
         raise SymaiAdapterContractError(
@@ -4456,9 +3770,7 @@ def _validate_symai_contract(
         or not math.isfinite(float(confidence))
         or not 0.0 <= float(confidence) <= 1.0
     ):
-        raise SymaiAdapterContractError(
-            "confidence must be a finite number between 0 and 1"
-        )
+        raise SymaiAdapterContractError("confidence must be a finite number between 0 and 1")
     validated = {
         "candidate_ir": candidate_ir,
         "normalized_predicates": _symai_string_list(
@@ -4466,13 +3778,9 @@ def _validate_symai_contract(
         ),
         "quantifiers": _symai_string_list(decoded["quantifiers"], "quantifiers"),
         "entities": _symai_string_list(decoded["entities"], "entities"),
-        "ambiguity_flags": _symai_string_list(
-            decoded["ambiguity_flags"], "ambiguity_flags"
-        ),
+        "ambiguity_flags": _symai_string_list(decoded["ambiguity_flags"], "ambiguity_flags"),
         "confidence": float(confidence),
-        "validation_errors": _symai_string_list(
-            decoded["validation_errors"], "validation_errors"
-        ),
+        "validation_errors": _symai_string_list(decoded["validation_errors"], "validation_errors"),
     }
     return raw, validated
 
@@ -4485,9 +3793,7 @@ def _default_symai_engine_factory(
     # preflight configuration is missing; callers convert that to explicit
     # capability missingness instead of invoking its setup wizard.
     importlib.import_module("symai")
-    engine_module = importlib.import_module(
-        "ipfs_datasets_py.utils.symai_ipfs_engine"
-    )
+    engine_module = importlib.import_module("ipfs_datasets_py.utils.symai_ipfs_engine")
     engine_type = getattr(engine_module, "IPFSSyMAINeurosymbolicEngine", None)
     if not isinstance(engine_type, type):
         raise ImportError("IPFSSyMAINeurosymbolicEngine is unavailable")
@@ -4498,9 +3804,7 @@ def _default_symai_engine_factory(
         cache_namespace=namespace,
         allow_local_fallback=False,
         dry_run=config.dry_run,
-        cache_enabled=(
-            config.cache_enabled and namespace.endswith("/cache/warm")
-        ),
+        cache_enabled=(config.cache_enabled and namespace.endswith("/cache/warm")),
         model_name=config.model,
         route_binding=_symai_route_binding(config),
     )
@@ -4553,22 +3857,17 @@ def _validate_symai_inner_route(
     missing = sorted(
         key
         for key in fields
-        if not isinstance(metadata.get(key), str)
-        or not str(metadata.get(key)).strip()
+        if not isinstance(metadata.get(key), str) or not str(metadata.get(key)).strip()
     )
     if missing:
-        raise SymaiAdapterContractError(
-            "SyMAI inner route trace omitted: " + ", ".join(missing)
-        )
+        raise SymaiAdapterContractError("SyMAI inner route trace omitted: " + ", ".join(missing))
     drifted = sorted(
         key
         for key, expected in fields.items()
         if expected is not None and metadata.get(key) != expected
     )
     if drifted:
-        raise SymaiAdapterContractError(
-            "SyMAI inner route identity drifted: " + ", ".join(drifted)
-        )
+        raise SymaiAdapterContractError("SyMAI inner route identity drifted: " + ", ".join(drifted))
 
 
 def _invoke_symai_engine(
@@ -4597,16 +3896,13 @@ def _invoke_symai_engine(
     except Exception as exc:
         try:
             router = importlib.import_module("ipfs_datasets_py.llm_router")
-            completion_error = getattr(
-                router, "PinnedSymaiCompletionError", None
-            )
+            completion_error = getattr(router, "PinnedSymaiCompletionError", None)
         except (ImportError, ModuleNotFoundError):
             completion_error = None
         if (
             isinstance(completion_error, type)
             and isinstance(exc, completion_error)
-            and getattr(exc, "safe_failure_class", None)
-            == _SYMAI_OUTPUT_TOKEN_LIMIT
+            and getattr(exc, "safe_failure_class", None) == _SYMAI_OUTPUT_TOKEN_LIMIT
         ):
             raise SymaiCompletionContractError(
                 _SYMAI_OUTPUT_TOKEN_LIMIT,
@@ -4622,9 +3918,7 @@ def _invoke_symai_engine(
         or not isinstance(result[0][0], str)
         or not isinstance(result[1], Mapping)
     ):
-        raise SymaiAdapterContractError(
-            "SyMAI engine must return one text output and metadata"
-        )
+        raise SymaiAdapterContractError("SyMAI engine must return one text output and metadata")
     return result[0][0], dict(result[1])
 
 
@@ -4677,9 +3971,7 @@ def _symai_telemetry(
         cache_misses=0 if cache_hit else 1,
         retries=retries,
         bytes_in=request.input_bytes,
-        bytes_out=(
-            0 if raw_output is None else len(raw_output.encode("utf-8"))
-        ),
+        bytes_out=(0 if raw_output is None else len(raw_output.encode("utf-8"))),
         resource_lane=ResourceLane.MODEL,
     )
 
@@ -4717,33 +4009,19 @@ def _symai_failure_output(
     }
     if safe_failure_class is not None:
         if safe_failure_class not in _SYMAI_REPAIR_INSTRUCTIONS:
-            raise ProtocolContractError(
-                "SyMAI safe failure class is not allow-listed"
-            )
+            raise ProtocolContractError("SyMAI safe failure class is not allow-listed")
         identity["symai_safe_failure_class"] = safe_failure_class
     if metadata:
         identity.update(
-            {
-                f"router_{key}": value
-                for key, value in _safe_symai_metadata(metadata).items()
-            }
+            {f"router_{key}": value for key, value in _safe_symai_metadata(metadata).items()}
         )
     failure_data: dict[str, object]
     if config.semantic_protocol_cid is not None:
-        raw_output_bytes = (
-            None
-            if raw_output is None
-            else len(raw_output.encode("utf-8"))
-        )
-        raw_output_cid = (
-            None
-            if raw_output is None
-            else cid_for_bytes(raw_output.encode("utf-8"))
-        )
+        raw_output_bytes = None if raw_output is None else len(raw_output.encode("utf-8"))
+        raw_output_cid = None if raw_output is None else cid_for_bytes(raw_output.encode("utf-8"))
         retained_raw_output = (
             raw_output
-            if raw_output_bytes is not None
-            and raw_output_bytes <= config.max_raw_output_bytes
+            if raw_output_bytes is not None and raw_output_bytes <= config.max_raw_output_bytes
             else None
         )
         identity["raw_output_cid"] = raw_output_cid
@@ -4762,9 +4040,7 @@ def _symai_failure_output(
             "raw_output": retained_raw_output,
             "raw_output_cid": raw_output_cid,
             "raw_output_bytes": raw_output_bytes,
-            "raw_output_retained_exactly": (
-                retained_raw_output is not None
-            ),
+            "raw_output_retained_exactly": (retained_raw_output is not None),
             "semantic_projection": None,
             "cache_namespace": namespace,
             "cache_key": cache_key,
@@ -4780,9 +4056,7 @@ def _symai_failure_output(
             ),
             "assurance": {
                 "semantic_hypothesis": False,
-                "raw_output_retained_exactly": (
-                    retained_raw_output is not None
-                ),
+                "raw_output_retained_exactly": (retained_raw_output is not None),
                 "authoritative": False,
                 "kernel_checked": False,
                 "verified": False,
@@ -4807,9 +4081,7 @@ def _symai_failure_output(
         data=failure_data,
         status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
         effective_identity=identity,
-        failure_code=(
-            FailureCode.CAPABILITY_UNAVAILABLE if unavailable else failure_code
-        ),
+        failure_code=(FailureCode.CAPABILITY_UNAVAILABLE if unavailable else failure_code),
         failure_detail=bounded_detail,
         telemetry=_symai_telemetry(
             request,
@@ -4843,10 +4115,7 @@ def _symai_evidence_handler(
         model_calls = 0
         retries = 0
 
-        if (
-            request.semantic_protocol_cid
-            != config.semantic_protocol_cid
-        ):
+        if request.semantic_protocol_cid != config.semantic_protocol_cid:
             return _symai_failure_output(
                 request,
                 config,
@@ -4895,9 +4164,7 @@ def _symai_evidence_handler(
             if isinstance(cached, Mapping):
                 cached_raw = cached.get("raw_output")
                 cached_metadata = cached.get("metadata", {})
-                if isinstance(cached_raw, str) and isinstance(
-                    cached_metadata, Mapping
-                ):
+                if isinstance(cached_raw, str) and isinstance(cached_metadata, Mapping):
                     raw_output = cached_raw
                     metadata = dict(cached_metadata)
                     cache_hit = True
@@ -4936,14 +4203,11 @@ def _symai_evidence_handler(
                                 namespace,
                                 semantic_context,
                                 repair_failure_class=repair_failure_class,
-                                semantic_protocol_cid=(
-                                    config.semantic_protocol_cid
-                                ),
+                                semantic_protocol_cid=(config.semantic_protocol_cid),
                             ),
                             response_format=(
                                 SYMAI_RESPONSE_FORMAT_V2
-                                if config.semantic_protocol_cid
-                                is not None
+                                if config.semantic_protocol_cid is not None
                                 else SYMAI_RESPONSE_FORMAT
                             ),
                         )
@@ -5005,9 +4269,7 @@ def _symai_evidence_handler(
                             cache_key=cache_key,
                             started_wall=started_wall,
                             started_cpu=started_cpu,
-                            failure_code=(
-                                FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
-                            ),
+                            failure_code=(FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR),
                             raw_output=raw_output,
                             metadata=metadata,
                             model_calls=model_calls,
@@ -5015,9 +4277,7 @@ def _symai_evidence_handler(
                             cache_hit=cache_hit,
                         )
                 try:
-                    raw_output, validated = _validate_symai_contract(
-                        raw_output, config
-                    )
+                    raw_output, validated = _validate_symai_contract(raw_output, config)
                     break
                 except SymaiAdapterContractError as exc:
                     last_contract_error = exc
@@ -5082,8 +4342,7 @@ def _symai_evidence_handler(
                 request,
                 config,
                 detail=(
-                    "SyMAI existing-router trace omitted the effective "
-                    "provider/model identity"
+                    "SyMAI existing-router trace omitted the effective provider/model identity"
                 ),
                 namespace=namespace,
                 cache_key=cache_key,
@@ -5103,8 +4362,7 @@ def _symai_evidence_handler(
                 request,
                 config,
                 detail=(
-                    "SyMAI existing-router requested/effective "
-                    "provider/model identity mismatch"
+                    "SyMAI existing-router requested/effective provider/model identity mismatch"
                 ),
                 namespace=namespace,
                 cache_key=cache_key,
@@ -5148,9 +4406,7 @@ def _symai_evidence_handler(
                     entities=validated_response["entities"],
                     completeness=validated_response["completeness"],
                     ambiguity_flags=validated_response["ambiguity_flags"],
-                    confidence_millionths=(
-                        validated_response["confidence_millionths"]
-                    ),
+                    confidence_millionths=(validated_response["confidence_millionths"]),
                     validation_errors=validated_response["validation_errors"],
                     evidence_cid=validated_response_cid,
                 )
@@ -5161,8 +4417,7 @@ def _symai_evidence_handler(
                     request,
                     config,
                     detail=(
-                        "SyMAI semantic projection materialization failed: "
-                        f"{type(exc).__name__}"
+                        f"SyMAI semantic projection materialization failed: {type(exc).__name__}"
                     ),
                     namespace=namespace,
                     cache_key=cache_key,
@@ -5174,9 +4429,7 @@ def _symai_evidence_handler(
                     model_calls=model_calls,
                     retries=retries,
                     cache_hit=cache_hit,
-                    safe_failure_class=(
-                        _SYMAI_SEMANTIC_VALIDATION_FAILED
-                    ),
+                    safe_failure_class=(_SYMAI_SEMANTIC_VALIDATION_FAILED),
                 )
             if not projection.scoreable:
                 if cache_hit:
@@ -5195,9 +4448,7 @@ def _symai_evidence_handler(
                     model_calls=model_calls,
                     retries=retries,
                     cache_hit=cache_hit,
-                    safe_failure_class=(
-                        _SYMAI_SEMANTIC_PROJECTION_INCOMPLETE
-                    ),
+                    safe_failure_class=(_SYMAI_SEMANTIC_PROJECTION_INCOMPLETE),
                 )
             if config.cache_enabled and not cache_hit:
                 cache[cache_key] = {
@@ -5236,8 +4487,7 @@ def _symai_evidence_handler(
                     "hit": cache_hit,
                 },
                 "semantic_context": semantic_context_binding(
-                    semantic_context
-                    or _symai_input_semantic_context(request)
+                    semantic_context or _symai_input_semantic_context(request)
                 ),
                 "assurance": {
                     "semantic_hypothesis": True,
@@ -5262,9 +4512,7 @@ def _symai_evidence_handler(
                 "existing_router_engine": SYMAI_ROUTER_ENGINE,
                 "starts_model_server": False,
                 "semantic_context_cid": (
-                    None
-                    if semantic_context is None
-                    else semantic_context.get("context_cid")
+                    None if semantic_context is None else semantic_context.get("context_cid")
                 ),
                 "raw_output_cid": raw_output_cid,
                 "validated_response_cid": validated_response_cid,
@@ -5294,9 +4542,7 @@ def _symai_evidence_handler(
 
         safe_metadata = _safe_symai_metadata(metadata)
         candidate_ir = validated["candidate_ir"]
-        candidate_sha256 = hashlib.sha256(
-            canonical_json(candidate_ir).encode("utf-8")
-        ).hexdigest()
+        candidate_sha256 = hashlib.sha256(canonical_json(candidate_ir).encode("utf-8")).hexdigest()
         evidence = {
             "schema": SYMAI_EVIDENCE_SCHEMA,
             "candidate_ir": candidate_ir,
@@ -5355,9 +4601,7 @@ def _symai_evidence_handler(
             "existing_router_engine": SYMAI_ROUTER_ENGINE,
             "starts_model_server": False,
             "semantic_context_sha256": (
-                None
-                if semantic_context is None
-                else semantic_context.get("context_sha256")
+                None if semantic_context is None else semantic_context.get("context_sha256")
             ),
         }
         return StageOutput(
@@ -5406,14 +4650,10 @@ class SymaiAdapter(StageAdapter):
         if config is None and any(
             value is not None for value in (engine_factory, trace_getter, cache)
         ):
-            raise ProtocolContractError(
-                "SyMAI engine, trace, and cache injection require a config"
-            )
+            raise ProtocolContractError("SyMAI engine, trace, and cache injection require a config")
         if config is not None:
             if not isinstance(config, SymaiAdapterConfig):
-                raise ProtocolContractError(
-                    "config must be a SymaiAdapterConfig"
-                )
+                raise ProtocolContractError("config must be a SymaiAdapterConfig")
             if config.semantic_protocol_cid is not None:
                 kwargs.setdefault("adapter_version", "2")
             selected_cache = {} if cache is None else cache
@@ -5630,9 +4870,7 @@ def _validate_hammer_evidence(
             "LLM premise ranking is only permitted by named variant A11"
         )
     if set(portfolio.evidence) - attempt_ids:
-        raise HammerAdapterContractError(
-            "portfolio evidence contains an unknown solver attempt"
-        )
+        raise HammerAdapterContractError("portfolio evidence contains an unknown solver attempt")
 
     if candidate is not None:
         if candidate.request_id != request_id:
@@ -5667,9 +4905,7 @@ def _validate_hammer_evidence(
                 f"does not match proof_candidate.candidate_id {candidate.candidate_id!r}"
             )
         if environment_lock is None:
-            raise HammerAdapterContractError(
-                "reconstruction requires environment_lock"
-            )
+            raise HammerAdapterContractError("reconstruction requires environment_lock")
         if (
             environment_lock is not None
             and reconstruction.environment_lock_id != environment_lock.lock_id
@@ -5710,8 +4946,7 @@ def _validate_hammer_evidence(
                 validator()
             if evidence.request_id != request_id or evidence.attempt_id != attempt_id:
                 raise HammerAdapterContractError(
-                    f"normalized evidence {attempt_id!r} is not bound to the "
-                    "owning request/attempt"
+                    f"normalized evidence {attempt_id!r} is not bound to the owning request/attempt"
                 )
             if attempt_id not in attempt_ids:
                 raise HammerAdapterContractError(
@@ -5723,9 +4958,7 @@ def _validate_hammer_evidence(
     except HammerAdapterContractError:
         raise
     except (KeyError, TypeError, ValueError) as exc:
-        raise HammerAdapterContractError(
-            f"invalid normalized_evidence payload: {exc}"
-        ) from exc
+        raise HammerAdapterContractError(f"invalid normalized_evidence payload: {exc}") from exc
 
     accepted = bool(reconstruction is not None and reconstruction.kernel_accepted)
     record_payload: dict[str, object] = {
@@ -5749,9 +4982,7 @@ def _validate_hammer_evidence(
         "status": "verified" if accepted else ("candidate" if candidate else "unknown"),
     }
     evidence_id = hashlib.sha256(
-        canonical_json({"schema": HAMMER_EVIDENCE_SCHEMA, **record_payload}).encode(
-            "utf-8"
-        )
+        canonical_json({"schema": HAMMER_EVIDENCE_SCHEMA, **record_payload}).encode("utf-8")
     ).hexdigest()
     return {
         "schema": HAMMER_EVIDENCE_SCHEMA,
@@ -5817,9 +5048,7 @@ class HammerAdapter(StageAdapter):
                     failure_detail=f"Hammer contracts unavailable: {exc}",
                 )
             except (KeyError, TypeError, ValueError) as exc:
-                raise HammerAdapterContractError(
-                    f"invalid Hammer evidence payload: {exc}"
-                ) from exc
+                raise HammerAdapterContractError(f"invalid Hammer evidence payload: {exc}") from exc
 
         return invoke
 
@@ -5850,21 +5079,11 @@ _LEANSTRAL_SAFE_FAILURE_CLASSES: Final = frozenset(
 )
 _LEANSTRAL_FAILURE_DETAILS: Final[Mapping[str, str]] = MappingProxyType(
     {
-        "length_exhausted": (
-            "Leanstral generation reached the configured output limit"
-        ),
-        "resource_exhausted": (
-            "Leanstral generation exceeded a configured resource bound"
-        ),
-        "malformed_request": (
-            "Leanstral request violated the strict provider contract"
-        ),
-        "malformed_response": (
-            "Leanstral service returned a malformed response"
-        ),
-        "inadmissible_proposal": (
-            "Leanstral response violated the proof admissibility contract"
-        ),
+        "length_exhausted": ("Leanstral generation reached the configured output limit"),
+        "resource_exhausted": ("Leanstral generation exceeded a configured resource bound"),
+        "malformed_request": ("Leanstral request violated the strict provider contract"),
+        "malformed_response": ("Leanstral service returned a malformed response"),
+        "inadmissible_proposal": ("Leanstral response violated the proof admissibility contract"),
         "timed_out": "Leanstral provider timed out",
         "provider_error": "Leanstral provider failed",
         "unavailable": "Leanstral provider is unavailable",
@@ -5887,15 +5106,12 @@ def _leanstral_pinned_identity(
         not isinstance(value, Mapping)
         or set(value) != _LEANSTRAL_PINNED_IDENTITY_FIELDS
         or any(
-            not isinstance(value.get(field), str)
-            or not str(value[field]).strip()
+            not isinstance(value.get(field), str) or not str(value[field]).strip()
             for field in ("endpoint", "provider", "model")
         )
         or value.get("cache_prompt") is not False
     ):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral provider identity is invalid"
-        )
+        raise LeanstralAdapterContractError("pinned Leanstral provider identity is invalid")
     return MappingProxyType(dict(value))
 
 
@@ -5918,9 +5134,7 @@ def _leanstral_route_identity(
 def _content_addressed_receipt(
     body: Mapping[str, object],
 ) -> dict[str, object]:
-    normalized = dict(
-        _bounded_canonical(body, "content-addressed receipt", 16 * 1024)
-    )
+    normalized = dict(_bounded_canonical(body, "content-addressed receipt", 16 * 1024))
     normalized["receipt_sha256"] = hashlib.sha256(
         canonical_json(normalized).encode("utf-8")
     ).hexdigest()
@@ -5954,17 +5168,12 @@ class LeanstralGenerationFailure(LeanstralAdapterContractError):
             raise LeanstralAdapterContractError(
                 "Leanstral generation failure phase is not allow-listed"
             )
-        if (
-            http_status is not None
-            and (
-                isinstance(http_status, bool)
-                or not isinstance(http_status, int)
-                or not 100 <= http_status <= 599
-            )
+        if http_status is not None and (
+            isinstance(http_status, bool)
+            or not isinstance(http_status, int)
+            or not 100 <= http_status <= 599
         ):
-            raise LeanstralAdapterContractError(
-                "Leanstral generation HTTP status is invalid"
-            )
+            raise LeanstralAdapterContractError("Leanstral generation HTTP status is invalid")
         if request_payload_sha256 is not None:
             _digest(
                 request_payload_sha256,
@@ -6016,8 +5225,7 @@ class LeanstralAdapterConfig:
             isinstance(self.model_timeout_seconds, bool)
             or not isinstance(self.model_timeout_seconds, (int, float))
             or not math.isfinite(float(self.model_timeout_seconds))
-            or not 0 < float(self.model_timeout_seconds)
-            <= LEANSTRAL_MEASURED_TIMEOUT_SECONDS
+            or not 0 < float(self.model_timeout_seconds) <= LEANSTRAL_MEASURED_TIMEOUT_SECONDS
         ):
             raise LeanstralAdapterContractError(
                 "model_timeout_seconds must be positive and cannot exceed "
@@ -6026,8 +5234,7 @@ class LeanstralAdapterConfig:
         if (
             isinstance(self.model_token_limit, bool)
             or not isinstance(self.model_token_limit, int)
-            or not 0 < self.model_token_limit
-            <= LEANSTRAL_MEASURED_MAX_NEW_TOKENS
+            or not 0 < self.model_token_limit <= LEANSTRAL_MEASURED_MAX_NEW_TOKENS
         ):
             raise LeanstralAdapterContractError(
                 "model_token_limit must be positive and cannot exceed "
@@ -6055,9 +5262,7 @@ def _bounded_canonical(value: object, field_name: str, maximum: int) -> object:
     except ProtocolContractError as exc:
         raise LeanstralAdapterContractError(f"{field_name} is not strict JSON") from exc
     if len(encoded) > maximum:
-        raise LeanstralAdapterContractError(
-            f"{field_name} exceeds the {maximum} byte bound"
-        )
+        raise LeanstralAdapterContractError(f"{field_name} exceeds the {maximum} byte bound")
     return json.loads(encoded.decode("utf-8"))
 
 
@@ -6085,13 +5290,8 @@ def _leanstral_strict_json_value(value: object) -> object:
             ),
         }
     if isinstance(value, Mapping):
-        return {
-            str(key): _leanstral_strict_json_value(member)
-            for key, member in value.items()
-        }
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+        return {str(key): _leanstral_strict_json_value(member) for key, member in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_leanstral_strict_json_value(member) for member in value]
     return value
 
@@ -6122,9 +5322,7 @@ def _lean_declaration_binders(value: str) -> tuple[str, ...]:
                 stack.pop()
             end += 1
         if stack:
-            raise LeanstralAdapterContractError(
-                "compiled theorem contains an unbalanced binder"
-            )
+            raise LeanstralAdapterContractError("compiled theorem contains an unbalanced binder")
         binders.append(" ".join(value[cursor:end].split()))
         cursor = end
     return tuple(binders)
@@ -6135,14 +5333,12 @@ def _leanstral_input_semantic_context(
 ) -> dict[str, object]:
     """Return the durable semantic receipt with full upstream provenance."""
 
-    measured_proof_arm = (
-        _is_frozen_ablation_request(request)
-        and request.variant_id in {f"A{index}" for index in range(3, 13)}
-    )
-    requires_symai = (
-        measured_proof_arm
-        and request.variant_id in {f"A{index}" for index in range(4, 13)}
-    )
+    measured_proof_arm = _is_frozen_ablation_request(request) and request.variant_id in {
+        f"A{index}" for index in range(3, 13)
+    }
+    requires_symai = measured_proof_arm and request.variant_id in {
+        f"A{index}" for index in range(4, 13)
+    }
     required_present: tuple[StageName, ...] = ()
     required_success: tuple[StageName, ...] = ()
     if measured_proof_arm:
@@ -6173,15 +5369,11 @@ def _leanstral_model_semantic_context(
     if not isinstance(durable_artifacts, Sequence) or isinstance(
         durable_artifacts, (str, bytes, bytearray)
     ):
-        raise LeanstralAdapterContractError(
-            "Leanstral durable semantic context is malformed"
-        )
+        raise LeanstralAdapterContractError("Leanstral durable semantic context is malformed")
     projected: list[dict[str, object]] = []
     for durable in durable_artifacts:
         if not isinstance(durable, Mapping):
-            raise LeanstralAdapterContractError(
-                "Leanstral durable semantic artifact is malformed"
-            )
+            raise LeanstralAdapterContractError("Leanstral durable semantic artifact is malformed")
         stage_value = durable.get("stage")
         try:
             stage = StageName(str(stage_value))
@@ -6191,16 +5383,12 @@ def _leanstral_model_semantic_context(
             ) from exc
         artifact = request.artifact(stage)
         if artifact is None:
-            raise LeanstralAdapterContractError(
-                "Leanstral durable semantic artifact is missing"
-            )
+            raise LeanstralAdapterContractError("Leanstral durable semantic artifact is missing")
         if durable.get("artifact_sha256") != artifact.digest:
             raise LeanstralAdapterContractError(
                 "Leanstral durable semantic artifact identity changed"
             )
-        projected.append(
-            _semantic_artifact_projection(artifact, model_facing=True)
-        )
+        projected.append(_semantic_artifact_projection(artifact, model_facing=True))
     model_context = {
         "schema": LEANSTRAL_MODEL_SEMANTIC_CONTEXT_SCHEMA,
         "artifacts": projected,
@@ -6236,10 +5424,7 @@ def _compiled_leanstral_context(
         raise LeanstralAdapterContractError(
             "Leanstral fallback requires a compiled proof obligation"
         )
-    if (
-        compiled.get("schema")
-        != "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
-    ):
+    if compiled.get("schema") != "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1":
         raise LeanstralAdapterContractError(
             "Leanstral fallback received an unsupported compiled obligation"
         )
@@ -6270,20 +5455,14 @@ def _compiled_leanstral_context(
         compiled.get("source_template_sha256"), "source_template_sha256"
     )
     if hashlib.sha256(source_template.encode("utf-8")).hexdigest() != source_template_sha256:
-        raise LeanstralAdapterContractError(
-            "Leanstral compiled source template digest changed"
-        )
-    obligation_sha256 = _digest(
-        compiled.get("obligation_sha256"), "obligation_sha256"
-    )
+        raise LeanstralAdapterContractError("Leanstral compiled source template digest changed")
+    obligation_sha256 = _digest(compiled.get("obligation_sha256"), "obligation_sha256")
     declaration = re.search(
         rf"(?ms)^theorem\s+{re.escape(theorem_name)}\b"
         rf"(?P<declaration>.*?)\s*:=\s*by\s*$",
         source_template,
     )
-    declaration_body = (
-        "" if declaration is None else declaration.group("declaration").strip()
-    )
+    declaration_body = "" if declaration is None else declaration.group("declaration").strip()
     if ":" not in declaration_body:
         raise LeanstralAdapterContractError(
             "Leanstral fallback cannot identify the compiled theorem conclusion"
@@ -6299,9 +5478,7 @@ def _compiled_leanstral_context(
             "Leanstral fallback compiled theorem conclusion is empty"
         )
     source_digest = f"sha256:{source_template_sha256}"
-    template_id = (
-        "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
-    )
+    template_id = "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
 
     # Import the supervisor contract only when a real compiler-bound
     # Leanstral request is executed.  Importing this adapter module remains
@@ -6323,9 +5500,7 @@ def _compiled_leanstral_context(
 
         source_symbol = f"{request.case_id}.reviewed_source"
         source_text = (
-            request.input_data.get("text")
-            if isinstance(request.input_data, Mapping)
-            else None
+            request.input_data.get("text") if isinstance(request.input_data, Mapping) else None
         )
         source_excerpts = [
             source_type(
@@ -6358,9 +5533,7 @@ def _compiled_leanstral_context(
             strict_semantic_context = {
                 "schema": LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA,
                 "number_encoding": LEANSTRAL_JSON_NUMBER_SCHEMA,
-                "semantic_context": _leanstral_strict_json_value(
-                    model_semantic_context
-                ),
+                "semantic_context": _leanstral_strict_json_value(model_semantic_context),
             }
             semantic_suggestions = (
                 entry_type(
@@ -6496,18 +5669,10 @@ def _leanstral_input(
             "failure": repair_context["failure_text"],
             "failed_draft": _thaw_json(repair_context["failed_draft"]),
             "case_input_sha256": repair_context["case_input_sha256"],
-            "failed_leanstral_artifact_sha256": repair_context[
-                "failed_leanstral_artifact_sha256"
-            ],
-            "kernel_rejection_receipt_sha256": repair_context[
-                "kernel_rejection_receipt_sha256"
-            ],
-            "failure_text_sha256": repair_context[
-                "failure_text_sha256"
-            ],
-            "failed_draft_sha256": repair_context[
-                "failed_draft_sha256"
-            ],
+            "failed_leanstral_artifact_sha256": repair_context["failed_leanstral_artifact_sha256"],
+            "kernel_rejection_receipt_sha256": repair_context["kernel_rejection_receipt_sha256"],
+            "failure_text_sha256": repair_context["failure_text_sha256"],
+            "failed_draft_sha256": repair_context["failed_draft_sha256"],
         }
     raw_ids = raw.get("obligation_ids", raw.get("obligation_id"))
     if isinstance(raw_ids, str):
@@ -6549,9 +5714,7 @@ def _leanstral_input(
             raise LeanstralAdapterContractError("repair failed_draft cannot be empty")
         repair_attempt = 1
     elif supplied_attempt:
-        raise LeanstralAdapterContractError(
-            "repair_attempt 1 requires a repair payload"
-        )
+        raise LeanstralAdapterContractError("repair_attempt 1 requires a repair payload")
 
     context_capsule = raw.get(
         "context_capsule",
@@ -6559,9 +5722,7 @@ def _leanstral_input(
     )
     prompt = raw.get("prompt")
     if prompt is None and context_capsule is None:
-        compiled_context = _compiled_leanstral_context(
-            request, config, obligation_id
-        )
+        compiled_context = _compiled_leanstral_context(request, config, obligation_id)
         if compiled_context is not None:
             context_capsule, fixed_theorem = compiled_context
             raw["fixed_theorem"] = fixed_theorem
@@ -6572,7 +5733,9 @@ def _leanstral_input(
         elif context is not None and context_capsule is None:
             # Keep generic benchmark callers useful while still sending a
             # strict string prompt to the provider.
-            prompt = canonical_json(_bounded_canonical(context, "context", config.max_context_bytes))
+            prompt = canonical_json(
+                _bounded_canonical(context, "context", config.max_context_bytes)
+            )
         elif context_capsule is None:
             # Frozen corpus cases name their reviewed source input ``text``.
             # Preserve that exact source at the registered Leanstral boundary
@@ -6715,9 +5878,7 @@ def _validate_leanstral_draft(
                 f"Leanstral model draft cannot claim {field_name}"
             )
     if draft.get("assurance", "unverified") not in {"unverified", "none"}:
-        raise LeanstralDraftAdmissibilityError(
-            "Leanstral model draft must be unverified"
-        )
+        raise LeanstralDraftAdmissibilityError("Leanstral model draft must be unverified")
     supplied_digest = draft.get("output_sha256")
     calculated_digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     if supplied_digest is not None and supplied_digest != calculated_digest:
@@ -6751,8 +5912,7 @@ def _bind_leanstral_failure_route(
     present = _LEANSTRAL_FAILURE_ROUTE_FIELDS.intersection(boundary)
     if present:
         if present != _LEANSTRAL_FAILURE_ROUTE_FIELDS or any(
-            boundary.get(field) != expected[field]
-            for field in _LEANSTRAL_FAILURE_ROUTE_FIELDS
+            boundary.get(field) != expected[field] for field in _LEANSTRAL_FAILURE_ROUTE_FIELDS
         ):
             raise LeanstralAdapterContractError(
                 "Leanstral failure receipt drifted from the pinned route"
@@ -6762,11 +5922,7 @@ def _bind_leanstral_failure_route(
         raise LeanstralAdapterContractError(
             "Leanstral failure receipt has incomplete pinned provenance"
         )
-    body = {
-        key: value
-        for key, value in boundary.items()
-        if key != "receipt_sha256"
-    }
+    body = {key: value for key, value in boundary.items() if key != "receipt_sha256"}
     body.update(expected)
     body["provider_failure_receipt_sha256"] = boundary["receipt_sha256"]
     return _content_addressed_receipt(body)
@@ -6782,9 +5938,7 @@ def _validate_pinned_leanstral_failure_output(
 
     pinned = _leanstral_pinned_identity(pinned_identity)
     if not isinstance(output.data, Mapping):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral failure evidence is not an object"
-        )
+        raise LeanstralAdapterContractError("pinned Leanstral failure evidence is not an object")
     data = output.data
     safe_failure_class = data.get("safe_failure_class")
     boundary = data.get("generation_failure_boundary")
@@ -6794,14 +5948,8 @@ def _validate_pinned_leanstral_failure_output(
         or data.get("request_input_sha256") != request.input_sha256
         or not isinstance(boundary, Mapping)
     ):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral failure evidence is incomplete"
-        )
-    boundary_body = {
-        key: value
-        for key, value in boundary.items()
-        if key != "receipt_sha256"
-    }
+        raise LeanstralAdapterContractError("pinned Leanstral failure evidence is incomplete")
+    boundary_body = {key: value for key, value in boundary.items() if key != "receipt_sha256"}
     expected_route = {
         "endpoint": pinned["endpoint"],
         "provider": pinned["provider"],
@@ -6809,9 +5957,7 @@ def _validate_pinned_leanstral_failure_output(
         "cache_prompt": False,
     }
     expected_status = (
-        StageStatus.UNAVAILABLE
-        if safe_failure_class == "unavailable"
-        else StageStatus.FAILED
+        StageStatus.UNAVAILABLE if safe_failure_class == "unavailable" else StageStatus.FAILED
     )
     expected_code = (
         FailureCode.CAPABILITY_UNAVAILABLE
@@ -6823,27 +5969,15 @@ def _validate_pinned_leanstral_failure_output(
         boundary.get("schema") != LEANSTRAL_GENERATION_FAILURE_SCHEMA
         or boundary.get("safe_failure_class") != safe_failure_class
         or boundary.get("receipt_sha256")
-        != hashlib.sha256(
-            canonical_json(boundary_body).encode("utf-8")
-        ).hexdigest()
-        or any(
-            boundary.get(field) != expected
-            for field, expected in expected_route.items()
-        )
+        != hashlib.sha256(canonical_json(boundary_body).encode("utf-8")).hexdigest()
+        or any(boundary.get(field) != expected for field, expected in expected_route.items())
         or output.status is not expected_status
         or output.failure_code is not expected_code
-        or any(
-            identity.get(field) != expected
-            for field, expected in pinned.items()
-        )
-        or identity.get("leanstral_safe_failure_class")
-        != safe_failure_class
-        or identity.get("leanstral_failure_boundary_sha256")
-        != boundary.get("receipt_sha256")
+        or any(identity.get(field) != expected for field, expected in pinned.items())
+        or identity.get("leanstral_safe_failure_class") != safe_failure_class
+        or identity.get("leanstral_failure_boundary_sha256") != boundary.get("receipt_sha256")
     ):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral failure identity or receipt changed"
-        )
+        raise LeanstralAdapterContractError("pinned Leanstral failure identity or receipt changed")
 
 
 def _leanstral_failure(
@@ -6857,18 +5991,12 @@ def _leanstral_failure(
     started_cpu: float | None = None,
 ) -> StageOutput:
     if safe_failure_class not in _LEANSTRAL_SAFE_FAILURE_CLASSES:
-        raise LeanstralAdapterContractError(
-            "Leanstral safe failure class is not allow-listed"
-        )
+        raise LeanstralAdapterContractError("Leanstral safe failure class is not allow-listed")
     unavailable = safe_failure_class == "unavailable"
     if boundary_receipt is None:
         boundary_receipt = LeanstralGenerationFailure(
             safe_failure_class,
-            phase=(
-                "request_validation"
-                if model_calls == 0
-                else "provider"
-            ),
+            phase=("request_validation" if model_calls == 0 else "provider"),
         ).boundary_receipt
     boundary = dict(
         _bounded_canonical(
@@ -6877,22 +6005,14 @@ def _leanstral_failure(
             16 * 1024,
         )
     )
-    boundary_body = {
-        key: value
-        for key, value in boundary.items()
-        if key != "receipt_sha256"
-    }
+    boundary_body = {key: value for key, value in boundary.items() if key != "receipt_sha256"}
     if (
         boundary.get("schema") != LEANSTRAL_GENERATION_FAILURE_SCHEMA
         or boundary.get("safe_failure_class") != safe_failure_class
         or boundary.get("receipt_sha256")
-        != hashlib.sha256(
-            canonical_json(boundary_body).encode("utf-8")
-        ).hexdigest()
+        != hashlib.sha256(canonical_json(boundary_body).encode("utf-8")).hexdigest()
     ):
-        raise LeanstralAdapterContractError(
-            "Leanstral generation failure receipt is invalid"
-        )
+        raise LeanstralAdapterContractError("Leanstral generation failure receipt is invalid")
     if pinned_identity is not None:
         boundary = _bind_leanstral_failure_route(
             boundary,
@@ -6912,11 +6032,7 @@ def _leanstral_failure(
         )
     identity = {
         **dict(request.requested_identity),
-        **(
-            {}
-            if pinned_identity is None
-            else dict(_leanstral_pinned_identity(pinned_identity))
-        ),
+        **({} if pinned_identity is None else dict(_leanstral_pinned_identity(pinned_identity))),
         "leanstral_safe_failure_class": safe_failure_class,
         "leanstral_failure_boundary_sha256": failure_boundary_sha256,
     }
@@ -6939,15 +6055,11 @@ def _leanstral_failure(
             wall_time_ms=round(
                 0.0
                 if started_wall is None
-                else max(0.0, time.perf_counter() - started_wall)
-                * 1_000,
+                else max(0.0, time.perf_counter() - started_wall) * 1_000,
                 6,
             ),
             cpu_time_ms=round(
-                0.0
-                if started_cpu is None
-                else max(0.0, time.process_time() - started_cpu)
-                * 1_000,
+                0.0 if started_cpu is None else max(0.0, time.process_time() - started_cpu) * 1_000,
                 6,
             ),
             input_items=1,
@@ -6973,10 +6085,7 @@ def _leanstral_provider_model_calls(
     failure = getattr(error, "failure", None)
     message = getattr(failure, "message", None)
     if message in {
-        (
-            "Leanstral request has no positive model time budget "
-            "before its deadline"
-        ),
+        ("Leanstral request has no positive model time budget before its deadline"),
         "Leanstral request has no positive model token budget",
     }:
         return 0
@@ -7032,14 +6141,10 @@ def _strict_leanstral_http_object(
     """Read one bounded strict-JSON response from the frozen model service."""
 
     request_payload_sha256 = (
-        None
-        if request.data is None
-        else hashlib.sha256(request.data).hexdigest()
+        None if request.data is None else hashlib.sha256(request.data).hexdigest()
     )
     try:
-        with _leanstral_urlopen(
-            request, timeout=timeout_seconds
-        ) as response:
+        with _leanstral_urlopen(request, timeout=timeout_seconds) as response:
             if response.geturl() != request.full_url:
                 raise LeanstralGenerationFailure(
                     "provider_error",
@@ -7151,9 +6256,7 @@ def _leanstral_model_ids(value: Mapping[str, object]) -> tuple[str, ...]:
         if isinstance(item, str):
             model_id = item
         elif isinstance(item, Mapping):
-            model_id = str(
-                item.get("id") or item.get("model") or item.get("name") or ""
-            )
+            model_id = str(item.get("id") or item.get("model") or item.get("name") or "")
         else:
             continue
         if model_id:
@@ -7285,10 +6388,7 @@ def leanstral_strict_llm_generate(
             "malformed_request",
             phase="request_validation",
         )
-    if (
-        kwargs.get("provider") != expected_provider
-        or kwargs.get("model_name") != expected_model
-    ):
+    if kwargs.get("provider") != expected_provider or kwargs.get("model_name") != expected_model:
         raise LeanstralGenerationFailure(
             "malformed_request",
             phase="request_validation",
@@ -7521,8 +6621,7 @@ def leanstral_strict_llm_generate(
         ) from exc
     if (
         not isinstance(proposal, dict)
-        or set(proposal)
-        != {"schema", "theorem_id", "proposal_kind", "proof_text"}
+        or set(proposal) != {"schema", "theorem_id", "proposal_kind", "proof_text"}
         or proposal.get("schema") != LEANSTRAL_PROOF_OUTPUT_SCHEMA
         or proposal.get("theorem_id") != theorem_id
         or proposal.get("proposal_kind") != "proof"
@@ -7583,23 +6682,17 @@ def leanstral_strict_llm_generate(
                     "requested_model": expected_model,
                     "response_model": str(completion["model"]),
                     "cache_prompt": False,
-                    "prompt_sha256": hashlib.sha256(
-                        prompt.encode("utf-8")
-                    ).hexdigest(),
+                    "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
                     "request_payload_sha256": request_payload_sha256,
                     "response_envelope_sha256": hashlib.sha256(
                         canonical_json(completion).encode("utf-8")
                     ).hexdigest(),
-                    "raw_model_content_sha256": hashlib.sha256(
-                        output.encode("utf-8")
-                    ).hexdigest(),
+                    "raw_model_content_sha256": hashlib.sha256(output.encode("utf-8")).hexdigest(),
                     "raw_model_content_bytes": len(output.encode("utf-8")),
                     "normalized_proposal_sha256": hashlib.sha256(
                         normalized_output.encode("utf-8")
                     ).hexdigest(),
-                    "normalized_proposal_bytes": len(
-                        normalized_output.encode("utf-8")
-                    ),
+                    "normalized_proposal_bytes": len(normalized_output.encode("utf-8")),
                     "normalization": normalization,
                 }
             )
@@ -7723,9 +6816,7 @@ class _AuditedLeanstralProvider:
             separators=(",", ":"),
             sort_keys=True,
         ).encode("utf-8")
-        normalized_proposal_sha256 = hashlib.sha256(
-            normalized_proposal
-        ).hexdigest()
+        normalized_proposal_sha256 = hashlib.sha256(normalized_proposal).hexdigest()
         receipt = (
             self._generator.consume_receipt(prompt_sha256)
             if isinstance(prompt_sha256, str)
@@ -7752,11 +6843,7 @@ class _AuditedLeanstralProvider:
             "normalization",
             "receipt_sha256",
         }
-        receipt_body = {
-            key: value
-            for key, value in receipt.items()
-            if key != "receipt_sha256"
-        }
+        receipt_body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
         if (
             set(receipt) != expected_receipt_keys
             or receipt.get("schema") != LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
@@ -7766,16 +6853,11 @@ class _AuditedLeanstralProvider:
             or receipt.get("response_model") != self._generator.model
             or receipt.get("cache_prompt") is not False
             or receipt.get("prompt_sha256") != prompt_sha256
-            or receipt.get("normalized_proposal_sha256")
-            != normalized_proposal_sha256
-            or receipt.get("normalized_proposal_bytes")
-            != len(normalized_proposal)
+            or receipt.get("normalized_proposal_sha256") != normalized_proposal_sha256
+            or receipt.get("normalized_proposal_bytes") != len(normalized_proposal)
             or receipt.get("receipt_sha256")
-            != hashlib.sha256(
-                canonical_json(receipt_body).encode("utf-8")
-            ).hexdigest()
-            or receipt.get("normalization")
-            not in {"none", "strip_single_leading_by"}
+            != hashlib.sha256(canonical_json(receipt_body).encode("utf-8")).hexdigest()
+            or receipt.get("normalization") not in {"none", "strip_single_leading_by"}
             or isinstance(receipt.get("raw_model_content_bytes"), bool)
             or not isinstance(receipt.get("raw_model_content_bytes"), int)
             or int(receipt["raw_model_content_bytes"]) <= 0
@@ -7793,9 +6875,7 @@ class _AuditedLeanstralProvider:
             )
         metadata = draft.get("metadata") or {}
         if not isinstance(metadata, Mapping):
-            raise LeanstralAdapterContractError(
-                "Leanstral draft metadata is not an object"
-            )
+            raise LeanstralAdapterContractError("Leanstral draft metadata is not an object")
         if "benchmark_generation_boundary" in metadata:
             raise LeanstralAdapterContractError(
                 "Leanstral draft metadata collided with boundary provenance"
@@ -7818,9 +6898,7 @@ class _RequestIsolatedLeanstralProvider:
     ) -> None:
         self._factory = factory
         self._pinned_identity = (
-            None
-            if pinned_identity is None
-            else _leanstral_pinned_identity(pinned_identity)
+            None if pinned_identity is None else _leanstral_pinned_identity(pinned_identity)
         )
 
     @property
@@ -7863,17 +6941,13 @@ def create_pinned_leanstral_provider(
     """Create the supervisor provider with exact-route audit provenance."""
 
     if type(isolate_requests) is not bool:
-        raise LeanstralAdapterContractError(
-            "isolate_requests must be a boolean"
-        )
+        raise LeanstralAdapterContractError("isolate_requests must be a boolean")
     module = import_source_bound_ipfs_accelerate(
         "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
     )
     factory = getattr(module, "create_leanstral_proof_provider", None)
     if not callable(factory):
-        raise LeanstralAdapterContractError(
-            "Leanstral supervisor provider factory is unavailable"
-        )
+        raise LeanstralAdapterContractError("Leanstral supervisor provider factory is unavailable")
     pinned_identity = _leanstral_route_identity(
         endpoint=endpoint,
         provider=provider,
@@ -7974,9 +7048,7 @@ def _local_leanstral_handler(
             factory = getattr(module, "create_leanstral_proof_provider")
             provider = factory(provider_config) if provider_config is not None else factory()
             provider_holder["provider"] = provider
-        payload, _obligation_id, repair_attempt = _leanstral_input(
-            request, config
-        )
+        payload, _obligation_id, repair_attempt = _leanstral_input(request, config)
         provider_request = _leanstral_supervisor_request(
             request=request,
             payload=payload,
@@ -8019,9 +7091,7 @@ class LeanstralAdapter(StageAdapter):
         }:
             candidate_identity = getattr(provider, "pinned_identity", None)
             if candidate_identity is not None:
-                pinned_provider_identity = _leanstral_pinned_identity(
-                    candidate_identity
-                )
+                pinned_provider_identity = _leanstral_pinned_identity(candidate_identity)
         object.__setattr__(
             self,
             "pinned_provider_identity",
@@ -8033,10 +7103,9 @@ class LeanstralAdapter(StageAdapter):
             if callable(provider):
                 selected = provider  # type: ignore[assignment]
             elif callable(getattr(provider, "prove", None)):
+
                 def invoke(request: StageRequest) -> object:
-                    payload, _obligation_id, repair_attempt = (
-                        _leanstral_input(request, self.config)
-                    )
+                    payload, _obligation_id, repair_attempt = _leanstral_input(request, self.config)
                     # A provider object supplied by a benchmark test follows
                     # the same supervisor ProviderRequest boundary as the
                     # local provider, without importing it at module import.
@@ -8060,6 +7129,7 @@ class LeanstralAdapter(StageAdapter):
                             contracts=verification_contracts,
                         )
                     )
+
                 selected = invoke
                 selected_uses_case_request = True
             else:
@@ -8076,21 +7146,16 @@ class LeanstralAdapter(StageAdapter):
                 # handlers.  Preserve that compatibility when the caller has
                 # not supplied a Leanstral obligation contract; direct
                 # Leanstral benchmark requests still take the strict path.
-                if (
-                    handler is not None
-                    and (
-                        not isinstance(request.proof_input_data, Mapping)
-                        or not any(
-                            key in request.proof_input_data
-                            for key in ("obligation_id", "obligation_ids")
-                        )
+                if handler is not None and (
+                    not isinstance(request.proof_input_data, Mapping)
+                    or not any(
+                        key in request.proof_input_data
+                        for key in ("obligation_id", "obligation_ids")
                     )
                 ):
                     return selected(request)  # type: ignore[misc]
                 try:
-                    payload, obligation_id, repair_attempt = _leanstral_input(
-                        request, self.config
-                    )
+                    payload, obligation_id, repair_attempt = _leanstral_input(request, self.config)
                 except LeanstralGenerationFailure:
                     raise
                 except LeanstralAdapterContractError as exc:
@@ -8197,9 +7262,7 @@ class LeanstralAdapter(StageAdapter):
                     "resource_class": self.config.model_resource_class,
                 }
                 if isinstance(generation_boundary, Mapping):
-                    generation_boundary_sha256 = generation_boundary.get(
-                        "receipt_sha256"
-                    )
+                    generation_boundary_sha256 = generation_boundary.get("receipt_sha256")
                     if not isinstance(generation_boundary_sha256, str):
                         raise LeanstralAdapterContractError(
                             "Leanstral generation boundary is not content-addressed"
@@ -8208,9 +7271,7 @@ class LeanstralAdapter(StageAdapter):
                         generation_boundary_sha256,
                         "Leanstral generation boundary receipt_sha256",
                     )
-                    identity["generation_boundary_sha256"] = (
-                        generation_boundary_sha256
-                    )
+                    identity["generation_boundary_sha256"] = generation_boundary_sha256
                 return replace(output, data=evidence, effective_identity=identity)
             except LeanstralProviderRequestContractError:
                 return _leanstral_failure(
@@ -8334,8 +7395,7 @@ def run_leanstral_runtime_readiness_smoke(
     requested_provider = provider_identity.get("provider")
     requested_model = provider_identity.get("model")
     if not all(
-        isinstance(value, str) and value.strip()
-        for value in (requested_provider, requested_model)
+        isinstance(value, str) and value.strip() for value in (requested_provider, requested_model)
     ):
         raise LeanstralAdapterContractError(
             "Leanstral readiness identity requires provider and model"
@@ -8346,9 +7406,7 @@ def run_leanstral_runtime_readiness_smoke(
         "logic": "fol",
         "target": "identity",
     }
-    obligation_sha256 = hashlib.sha256(
-        canonical_json(proof_obligation).encode("utf-8")
-    ).hexdigest()
+    obligation_sha256 = hashlib.sha256(canonical_json(proof_obligation).encode("utf-8")).hexdigest()
     theorem_name = "hssl_leanstral_runtime_smoke"
     source_template = (
         "namespace HSSLBenchmark\n"
@@ -8357,9 +7415,7 @@ def run_leanstral_runtime_readiness_smoke(
         "end HSSLBenchmark\n"
     )
     compiled = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"),
         "compiler_version": "1",
         "obligation_id": obligation_id,
         "kind": "theorem",
@@ -8368,9 +7424,7 @@ def run_leanstral_runtime_readiness_smoke(
         "obligation_sha256": obligation_sha256,
         "theorem_name": theorem_name,
         "source_template": source_template,
-        "source_template_sha256": hashlib.sha256(
-            source_template.encode("utf-8")
-        ).hexdigest(),
+        "source_template_sha256": hashlib.sha256(source_template.encode("utf-8")).hexdigest(),
     }
     compiler = StageArtifact(
         stage=StageName.COMPILER,
@@ -8388,10 +7442,7 @@ def run_leanstral_runtime_readiness_smoke(
         ).hexdigest(),
         variant_id="A3",
         input_data={
-            "text": (
-                "Non-corpus readiness theorem: for every natural number x, "
-                "x equals x."
-            ),
+            "text": ("Non-corpus readiness theorem: for every natural number x, x equals x."),
             "obligation_id": obligation_id,
             "proof_obligation": proof_obligation,
         },

@@ -320,8 +320,7 @@ class ExternalProverRouterBridgeAdapter:
             proof_gate=proof_gate,
             graph_projection=graph_result,
             decoded_text=" ".join(
-                _record_formula_text(record)
-                for record in context["formula_records"]
+                _record_formula_text(record) for record in context["formula_records"]
             ),
             status=status,
             metadata={
@@ -469,10 +468,7 @@ def _proof_gate_from_router(
             if prover_used:
                 verified_by.add(f"external_provers:{prover_used}")
             else:
-                verified_by.update(
-                    f"external_provers:{name}"
-                    for name in completed_provers
-                )
+                verified_by.update(f"external_provers:{name}" for name in completed_provers)
         detail = {
             "available_provers": available,
             "compiled": compiled,
@@ -544,11 +540,7 @@ def _router_detail_compatibility_failure(detail: Mapping[str, Any]) -> bool:
 
 
 def _router_compatibility_soft_pass_gate(proof_gate: ProofGateResult) -> ProofGateResult:
-    verified_by = {
-        str(source).strip()
-        for source in proof_gate.verified_by
-        if str(source).strip()
-    }
+    verified_by = {str(source).strip() for source in proof_gate.verified_by if str(source).strip()}
     verified_by.add("external_provers:compat_softpass")
     return ProofGateResult(
         attempted_count=int(proof_gate.attempted_count or 0),
@@ -575,10 +567,7 @@ def _router_guidance_signal(compiler_guidance: Any) -> dict[str, Any]:
     routes = _router_guidance_routes(compiler_guidance)
     return {
         "active": True,
-        "prover_gate_hint": any(
-            route in _ROUTER_GUIDANCE_PROVER_ROUTE_HINTS
-            for route in routes
-        ),
+        "prover_gate_hint": any(route in _ROUTER_GUIDANCE_PROVER_ROUTE_HINTS for route in routes),
         "routes": tuple(sorted(routes)),
     }
 
@@ -756,9 +745,7 @@ def _router_guidance_has_passing_external_prover_evidence(
         or _router_guidance_quality_gate_passes(compiler_guidance.get("quality_gate"))
         or (
             _router_guidance_source_is_passing_distillation(compiler_guidance)
-            and _router_guidance_positive_support(
-                _router_guidance_support_value(compiler_guidance)
-            )
+            and _router_guidance_positive_support(_router_guidance_support_value(compiler_guidance))
         )
     ):
         return True
@@ -776,9 +763,7 @@ def _router_guidance_has_passing_external_prover_evidence(
     attribution = compiler_guidance.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
         for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
-            if _router_guidance_attribution_gaps_target_external_router(
-                attribution.get(key)
-            ):
+            if _router_guidance_attribution_gaps_target_external_router(attribution.get(key)):
                 return True
 
     for key in ("evidence", "hint_evidence"):
@@ -789,9 +774,8 @@ def _router_guidance_has_passing_external_prover_evidence(
         ):
             continue
         for item in evidence_items:
-            if (
-                isinstance(item, Mapping)
-                and _router_guidance_has_passing_external_prover_evidence(item)
+            if isinstance(item, Mapping) and _router_guidance_has_passing_external_prover_evidence(
+                item
             ):
                 return True
 
@@ -963,11 +947,7 @@ def _router_guidance_soft_pass_gate(
     *,
     guidance: Mapping[str, Any],
 ) -> ProofGateResult:
-    verified_by = {
-        str(source).strip()
-        for source in proof_gate.verified_by
-        if str(source).strip()
-    }
+    verified_by = {str(source).strip() for source in proof_gate.verified_by if str(source).strip()}
     verified_by.add("external_provers:guidance_softpass")
     details: list[dict[str, Any]] = []
     for detail in proof_gate.details:
@@ -1184,9 +1164,7 @@ def _record_formula_object(record: Mapping[str, Any]) -> Any:
 
 def _record_formula_resolution(record: Mapping[str, Any]) -> tuple[Any, bool]:
     for key in (
-        _ROUTER_FORMULA_PRIORITY_KEYS
-        + _ROUTER_FORMULA_CONTAINER_KEYS
-        + _ROUTER_FORMULA_TEXT_KEYS
+        _ROUTER_FORMULA_PRIORITY_KEYS + _ROUTER_FORMULA_CONTAINER_KEYS + _ROUTER_FORMULA_TEXT_KEYS
     ):
         if key not in record:
             continue
@@ -1288,9 +1266,7 @@ def _sanitize_router_formula_text(text: str) -> str:
 
 def _record_formula_text(record: Mapping[str, Any]) -> str:
     for key in (
-        _ROUTER_FORMULA_PRIORITY_KEYS
-        + _ROUTER_FORMULA_CONTAINER_KEYS
-        + _ROUTER_FORMULA_TEXT_KEYS
+        _ROUTER_FORMULA_PRIORITY_KEYS + _ROUTER_FORMULA_CONTAINER_KEYS + _ROUTER_FORMULA_TEXT_KEYS
     ):
         if key not in record:
             continue
@@ -1415,9 +1391,7 @@ def _route_formula_with_compat(
     timeout_ms = max(1, int(float(timeout or 0.0) * 1000.0))
     timeout_seconds = float(timeout or 0.0)
     guidance_kwargs = (
-        ({"compiler_guidance": compiler_guidance},)
-        if compiler_guidance is not None
-        else ()
+        ({"compiler_guidance": compiler_guidance},) if compiler_guidance is not None else ()
     ) + ({},)
     for method_name in ("route", "prove"):
         method = getattr(router, method_name, None)
@@ -1507,11 +1481,7 @@ def _route_formula_from_router_inventory(
             }
 
     first_completed = next(
-        (
-            name
-            for name, value in all_results.items()
-            if not isinstance(value, str)
-        ),
+        (name for name, value in all_results.items() if not isinstance(value, str)),
         "",
     )
     return {
@@ -1520,9 +1490,7 @@ def _route_formula_from_router_inventory(
         "proof_time": max(0.0, time.monotonic() - start),
         "prover_used": first_completed,
         "reason": (
-            f"Used {first_completed} (no proof)"
-            if first_completed
-            else "All provers failed"
+            f"Used {first_completed} (no proof)" if first_completed else "All provers failed"
         ),
         "strategy_used": strategy_text or "compat_selected_prover",
     }
@@ -1584,11 +1552,7 @@ def _router_prover_mapping(router: Any) -> dict[str, Any]:
     provers = getattr(router, "provers", None)
     if not isinstance(provers, Mapping):
         return {}
-    return {
-        str(name): prover
-        for name, prover in provers.items()
-        if str(name).strip()
-    }
+    return {str(name): prover for name, prover in provers.items() if str(name).strip()}
 
 
 def _router_available_provers(router: Any) -> list[str]:

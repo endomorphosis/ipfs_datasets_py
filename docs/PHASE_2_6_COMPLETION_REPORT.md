@@ -397,11 +397,13 @@ python scripts/validators/core_import_checker.py --report json --output imports.
 ```python
 # Caching
 from ipfs_datasets_py.caching import CacheManager
+
 cache = CacheManager()
 cache.set("key", "value", ttl=3600)
 
 # Relationship Analysis
 from ipfs_datasets_py.processors.relationships import EntityExtractor, GraphAnalyzer
+
 extractor = EntityExtractor()
 analyzer = GraphAnalyzer()
 entities = await extractor.extract_entities_for_mapping(corpus)

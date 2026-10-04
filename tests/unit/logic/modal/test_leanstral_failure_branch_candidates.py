@@ -102,9 +102,7 @@ def _response_from_prompt(task: LegalIRLeanTask, failures: list[dict]) -> dict:
     prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
     response = prompt["response_shape"]
     branch = prompt["failed_obligation_subtrees"][0]
-    response["candidates"][0]["candidate"] = branch["candidate_language"][
-        "grounded_candidate_seed"
-    ]
+    response["candidates"][0]["candidate"] = branch["candidate_language"]["grounded_candidate_seed"]
     response["candidates"][0]["confidence"] = 0.82
     return response
 
@@ -127,9 +125,10 @@ def test_prompt_contains_only_failed_subtree_and_registry_contract_id() -> None:
     assert branch["premise_hints"] == obligation["premise_hints"]
     assert branch["candidate_language"]["allowed_predicate_heads"]
     assert branch["candidate_language"]["must_differ_from_obligation"] is True
-    assert first["candidate_shape"]["candidate"] == branch[
-        "candidate_language"
-    ]["grounded_candidate_seed"]
+    assert (
+        first["candidate_shape"]["candidate"]
+        == branch["candidate_language"]["grounded_candidate_seed"]
+    )
     assert branch["candidate_language"]["minimum_distinct_grounding_symbols"] == 2
     assert task.source_span not in json.dumps(first)
     assert failures[1]["obligation_id"] not in json.dumps(first)
@@ -155,16 +154,27 @@ def test_strict_sanitizer_accepts_typed_failed_branch_candidate() -> None:
 @pytest.mark.parametrize(
     ("mutation", "reason"),
     [
-        (lambda candidate: candidate.update(proof_obligation_id="", proof_obligation_ids=[]), "missing_obligation_id"),
-        (lambda candidate: candidate.update(contract_id="legal-ir-view/invented/v99"), "unknown_contract_id"),
-        (lambda candidate: candidate.update(candidate="by simp [wellFormed]"), "freeform_proof_text"),
-        (lambda candidate: candidate.update(candidate="Please try a stronger premise next time."), "untyped_logic"),
+        (
+            lambda candidate: candidate.update(proof_obligation_id="", proof_obligation_ids=[]),
+            "missing_obligation_id",
+        ),
+        (
+            lambda candidate: candidate.update(contract_id="legal-ir-view/invented/v99"),
+            "unknown_contract_id",
+        ),
+        (
+            lambda candidate: candidate.update(candidate="by simp [wellFormed]"),
+            "freeform_proof_text",
+        ),
         (
             lambda candidate: candidate.update(
-                candidate=(
-                    f"{candidate['candidate']} and "
-                    "invented_predicate(subject:s1)"
-                )
+                candidate="Please try a stronger premise next time."
+            ),
+            "untyped_logic",
+        ),
+        (
+            lambda candidate: candidate.update(
+                candidate=(f"{candidate['candidate']} and invented_predicate(subject:s1)")
             ),
             "unknown_candidate_predicate",
         ),
@@ -201,9 +211,7 @@ def test_strict_sanitizer_rejects_obligation_restatement() -> None:
     failures = _failures(task)
     prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
     response = _response_from_prompt(task, failures)
-    response["candidates"][0]["candidate"] = (
-        prompt["failed_obligation_subtrees"][0]["statement"]
-    )
+    response["candidates"][0]["candidate"] = prompt["failed_obligation_subtrees"][0]["statement"]
 
     result = sanitize_leanstral_failure_branch_candidates(
         task,
@@ -220,9 +228,9 @@ def test_strict_sanitizer_rejects_generic_shape_template() -> None:
     failures = _failures(task)
     prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
     response = _response_from_prompt(task, failures)
-    response["candidates"][0]["candidate"] = prompt[
-        "failed_obligation_subtrees"
-    ][0]["candidate_language"]["shape_example"]
+    response["candidates"][0]["candidate"] = prompt["failed_obligation_subtrees"][0][
+        "candidate_language"
+    ]["shape_example"]
 
     result = sanitize_leanstral_failure_branch_candidates(
         task,

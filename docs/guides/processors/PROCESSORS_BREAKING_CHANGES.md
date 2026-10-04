@@ -39,11 +39,13 @@ from ipfs_datasets_py.processors.core import UniversalProcessor
 
 processor = UniversalProcessor()
 
+
 async def main():
     result = await processor.process("document.pdf")  # Must await
-    
+
     if result.success:
         print(f"Processed: {result.get_entity_count()} entities")
+
 
 anyio.run(main)  # Must run in async context
 ```
@@ -68,7 +70,7 @@ from ipfs_datasets_py.processors import (
     UniversalProcessor,
     ProcessorRegistry,
     ProcessingContext,
-    ProcessingResult
+    ProcessingResult,
 )
 
 # After (v2.x)
@@ -76,7 +78,7 @@ from ipfs_datasets_py.processors.core import (
     UniversalProcessor,
     ProcessorRegistry,
     ProcessingContext,
-    ProcessingResult
+    ProcessingResult,
 )
 ```
 
@@ -92,29 +94,30 @@ from ipfs_datasets_py.processors.core import (
 # Before (v1.x)
 class MyProcessor:
     def can_handle(self, context: ProcessingContext) -> bool:
-        return context.get_format() == 'myformat'
-    
+        return context.get_format() == "myformat"
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         # Process synchronously
         return result
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
-        return {'formats': ['myformat']}
+        return {"formats": ["myformat"]}
+
 
 # After (v2.x)
 class MyProcessor:
     async def can_handle(self, context: ProcessingContext) -> bool:
         # Can do async checks now (e.g., network requests)
-        return context.get_format() == 'myformat'
-    
+        return context.get_format() == "myformat"
+
     async def process(self, context: ProcessingContext) -> ProcessingResult:
         # Process asynchronously
         # Can use await for I/O operations
         return result
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
         # Still synchronous - returns static data
-        return {'formats': ['myformat']}
+        return {"formats": ["myformat"]}
 ```
 
 **Why:** Allows processors to perform async I/O operations efficiently.
@@ -143,18 +146,20 @@ results = processor.process_batch(["f1.pdf", "f2.pdf", "f3.pdf"])
 # After (v2.x)
 processor = UniversalProcessor()
 
+
 async def main():
     # Single file - must await
     result = await processor.process("file.pdf")
-    
+
     # Batch sequential
     results = await processor.process_batch(["f1.pdf", "f2.pdf", "f3.pdf"])
-    
+
     # Batch concurrent (NEW - much faster!)
     results = await processor.process_batch(
         ["f1.pdf", "f2.pdf", "f3.pdf"],
-        parallel=True  # Process concurrently
+        parallel=True,  # Process concurrently
     )
+
 
 anyio.run(main)
 ```
@@ -185,10 +190,12 @@ from ipfs_datasets_py.processors.core import UniversalProcessor
 
 processor = UniversalProcessor()
 
+
 async def main():
     result = await processor.process("document.pdf")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     anyio.run(main)  # Must wrap in async runner
 ```
 
@@ -233,17 +240,10 @@ count = register_all_adapters()  # Still synchronous
 
 ```python
 # All dataclasses remain the same
-ProcessingContext(
-    input_type=InputType.FILE,
-    source="document.pdf",
-    metadata={'format': 'pdf'}
-)
+ProcessingContext(input_type=InputType.FILE, source="document.pdf", metadata={"format": "pdf"})
 
 ProcessingResult(
-    success=True,
-    knowledge_graph={'entities': [], 'relationships': []},
-    vectors=[],
-    metadata={}
+    success=True, knowledge_graph={"entities": [], "relationships": []}, vectors=[], metadata={}
 )
 ```
 
@@ -295,7 +295,8 @@ ProcessingResult(
 
 ```python
 import warnings
-warnings.filterwarnings('error', category=DeprecationWarning)
+
+warnings.filterwarnings("error", category=DeprecationWarning)
 
 # Your code here - will raise errors on deprecation warnings
 ```
@@ -346,10 +347,12 @@ python -m ipfs_datasets_py.processors.cli benchmark your_file.pdf
 ```python
 # With anyio (recommended)
 import anyio
+
 anyio.run(main)
 
 # With asyncio (also works)
 import asyncio
+
 asyncio.run(main())
 ```
 

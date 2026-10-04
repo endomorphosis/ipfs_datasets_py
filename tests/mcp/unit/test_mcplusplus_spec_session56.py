@@ -3,6 +3,7 @@ PubSubBus↔P2PServiceManager bridge, pipeline metrics recorder, DID delegation 
 
 All 5 items from MASTER_IMPROVEMENT_PLAN_2026_v11.md "Next Steps" are exercised here.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,14 +18,17 @@ import pytest
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 def _fresh_registry():
     """Return a new isolated PolicyRegistry (not the global singleton)."""
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import PolicyRegistry
+
     return PolicyRegistry()
 
 
 def _make_intent(tool="test_tool", actor="alice"):
     from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineIntent
+
     return PipelineIntent(tool_name=tool, actor=actor, params={})
 
 
@@ -32,11 +36,13 @@ def _make_intent(tool="test_tool", actor="alice"):
 # 1. FilePolicyStore — persistent policy store
 # ===========================================================================
 
+
 class TestFilePolicyStore:
     """Tests for FilePolicyStore persistence across restarts."""
 
     def test_save_creates_json_file(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools")
         store = FilePolicyStore(str(tmp_path / "policies.json"), reg)
@@ -45,6 +51,7 @@ class TestFilePolicyStore:
 
     def test_save_stores_nl_text(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools")
         path = str(tmp_path / "policies.json")
@@ -59,6 +66,7 @@ class TestFilePolicyStore:
 
     def test_save_stores_source_cid(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore, _make_policy_cid
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools")
         path = str(tmp_path / "policies.json")
@@ -70,11 +78,13 @@ class TestFilePolicyStore:
 
     def test_load_returns_zero_when_file_absent(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         store = FilePolicyStore(str(tmp_path / "nonexistent.json"), _fresh_registry())
         assert store.load() == 0
 
     def test_load_returns_zero_on_bad_json(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         path = str(tmp_path / "bad.json")
         with open(path, "w") as f:
             f.write("not json!!!!")
@@ -83,6 +93,7 @@ class TestFilePolicyStore:
 
     def test_load_restores_policies(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools")
         reg.register("p2", "alice must not call delete_tools")
@@ -96,6 +107,7 @@ class TestFilePolicyStore:
 
     def test_load_recompiles_on_cid_mismatch(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools")
         path = str(tmp_path / "policies.json")
@@ -117,6 +129,7 @@ class TestFilePolicyStore:
 
     def test_load_skips_empty_nl_policy(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         path = str(tmp_path / "policies.json")
         with open(path, "w") as f:
             json.dump({"bad": {"nl_policy": "", "description": "", "source_cid": ""}}, f)
@@ -126,6 +139,7 @@ class TestFilePolicyStore:
 
     def test_save_creates_parent_dirs(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools")
         deep_path = str(tmp_path / "a" / "b" / "c" / "policies.json")
@@ -134,6 +148,7 @@ class TestFilePolicyStore:
 
     def test_roundtrip_preserves_description(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         reg = _fresh_registry()
         reg.register("p1", "admin may call admin_tools", description="Admin policy")
         path = str(tmp_path / "policies.json")
@@ -148,6 +163,7 @@ class TestFilePolicyStore:
 # 2. AsyncPolicyRegistrar — async concurrent policy registration
 # ===========================================================================
 
+
 class TestAsyncPolicyRegistrar:
     """Tests for AsyncPolicyRegistrar (anyio-based concurrent registration)."""
 
@@ -155,41 +171,58 @@ class TestAsyncPolicyRegistrar:
         """register_many works synchronously when anyio is not needed."""
         import asyncio
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import AsyncPolicyRegistrar
+
         reg = _fresh_registry()
         registrar = AsyncPolicyRegistrar(reg)
-        result = asyncio.run(registrar.register_many({
-            "p1": "admin may call admin_tools",
-            "p2": "alice must not call delete_tools",
-        }))
+        result = asyncio.run(
+            registrar.register_many(
+                {
+                    "p1": "admin may call admin_tools",
+                    "p2": "alice must not call delete_tools",
+                }
+            )
+        )
         assert set(result.keys()) == {"p1", "p2"}
         assert set(reg.list_names()) == {"p1", "p2"}
 
     def test_register_many_with_descriptions(self):
         import asyncio
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import AsyncPolicyRegistrar
+
         reg = _fresh_registry()
         registrar = AsyncPolicyRegistrar(reg)
-        asyncio.run(registrar.register_many(
-            {"p1": "admin may call admin_tools"},
-            descriptions={"p1": "Admin policy"},
-        ))
+        asyncio.run(
+            registrar.register_many(
+                {"p1": "admin may call admin_tools"},
+                descriptions={"p1": "Admin policy"},
+            )
+        )
         compiled = reg.get("p1")
         assert compiled is not None
         assert compiled.policy.description == "Admin policy"
 
     def test_register_many_returns_compiled_policies(self):
         import asyncio
-        from ipfs_datasets_py.mcp_server.nl_ucan_policy import AsyncPolicyRegistrar, CompiledUCANPolicy
+        from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
+            AsyncPolicyRegistrar,
+            CompiledUCANPolicy,
+        )
+
         reg = _fresh_registry()
         registrar = AsyncPolicyRegistrar(reg)
-        result = asyncio.run(registrar.register_many({
-            "p1": "admin may call admin_tools",
-        }))
+        result = asyncio.run(
+            registrar.register_many(
+                {
+                    "p1": "admin may call admin_tools",
+                }
+            )
+        )
         assert isinstance(result["p1"], CompiledUCANPolicy)
 
     def test_register_many_empty_dict(self):
         import asyncio
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import AsyncPolicyRegistrar
+
         reg = _fresh_registry()
         registrar = AsyncPolicyRegistrar(reg)
         result = asyncio.run(registrar.register_many({}))
@@ -199,13 +232,18 @@ class TestAsyncPolicyRegistrar:
         """Uses anyio task group when anyio is available."""
         import anyio
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import AsyncPolicyRegistrar
+
         reg = _fresh_registry()
         registrar = AsyncPolicyRegistrar(reg)
+
         async def _run():
-            return await registrar.register_many({
-                "p1": "admin may call admin_tools",
-                "p2": "alice must not call delete_tools",
-            })
+            return await registrar.register_many(
+                {
+                    "p1": "admin may call admin_tools",
+                    "p2": "alice must not call delete_tools",
+                }
+            )
+
         result = anyio.run(_run)
         assert len(result) == 2
         assert set(reg.list_names()) == {"p1", "p2"}
@@ -215,18 +253,26 @@ class TestAsyncPolicyRegistrar:
 # 3. PubSubBridge — PubSubBus ↔ P2PServiceManager bridge
 # ===========================================================================
 
+
 class TestPubSubBridge:
     """Tests for PubSubBridge connecting in-process bus to P2PServiceManager."""
 
     def _make_sm(self):
         events = []
+
         class FakeSM:
             def announce_capability(self, topic, payload):
                 events.append((topic, payload))
+
         return FakeSM(), events
 
     def test_connect_registers_handlers_on_all_topics(self):
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, _ = self._make_sm()
@@ -236,6 +282,7 @@ class TestPubSubBridge:
 
     def test_is_connected_after_connect(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, _ = self._make_sm()
@@ -244,7 +291,12 @@ class TestPubSubBridge:
         assert bridge.is_connected
 
     def test_publish_forwards_to_service_manager(self):
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, events = self._make_sm()
@@ -254,7 +306,12 @@ class TestPubSubBridge:
         assert any(t == topic for t, _ in events)
 
     def test_publish_receipt_disseminate(self):
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, events = self._make_sm()
@@ -264,7 +321,12 @@ class TestPubSubBridge:
         assert any(t == topic for t, _ in events)
 
     def test_disconnect_clears_handlers(self):
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, _ = self._make_sm()
@@ -275,6 +337,7 @@ class TestPubSubBridge:
 
     def test_disconnect_sets_is_connected_false(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, _ = self._make_sm()
@@ -283,7 +346,12 @@ class TestPubSubBridge:
         assert not bridge.is_connected
 
     def test_double_connect_is_ignored(self):
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         sm, _ = self._make_sm()
@@ -294,6 +362,7 @@ class TestPubSubBridge:
 
     def test_disconnect_when_not_connected_is_noop(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         bridge.disconnect()  # should not raise
@@ -301,20 +370,29 @@ class TestPubSubBridge:
 
     def test_get_global_bus_returns_pubsub_bus(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import get_global_bus, PubSubBus
+
         bus = get_global_bus()
         assert isinstance(bus, PubSubBus)
 
     def test_get_global_bus_is_singleton(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import get_global_bus
+
         assert get_global_bus() is get_global_bus()
 
     def test_service_manager_without_announce_capability(self):
         """Bridge works even if the SM lacks announce_capability (logs instead)."""
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
+
         class NoAnnounceSM:
             pass
+
         bridge.connect(NoAnnounceSM())
         # Publishing should not raise
         bus.publish(PubSubEventType.DECISION_DISSEMINATE.value, {"x": 1})
@@ -325,11 +403,16 @@ class TestPubSubBridge:
 # 4. PipelineMetricsRecorder — pipeline stage denials → monitoring
 # ===========================================================================
 
+
 class TestPipelineMetricsRecorder:
     """Tests for PipelineMetricsRecorder feeding denials into monitoring."""
 
     def test_allow_increments_allow_counts(self):
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+
         pipeline = make_default_pipeline()
         recorder = PipelineMetricsRecorder(pipeline)
         intent = _make_intent("some_tool", "alice")
@@ -341,18 +424,33 @@ class TestPipelineMetricsRecorder:
 
     def test_deny_increments_denial_counts(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            PipelineMetricsRecorder, DispatchPipeline,
-            PipelineResult, PipelineStage, PipelineIntent,
+            PipelineMetricsRecorder,
+            DispatchPipeline,
+            PipelineResult,
+            PipelineStage,
+            PipelineIntent,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import DecisionObject
+
         pipeline = DispatchPipeline()
 
         # Patch check() to return a deny
         def _deny_check(intent):
-            decision = DecisionObject(decision="deny", intent_cid="x", policy_cid="p",
-                                      proofs_checked=[], justification="test")
-            return PipelineResult(allowed=False, stage_outcomes=[], blocking_stage=PipelineStage.COMPLIANCE,
-                                  intent=intent, decision=decision)
+            decision = DecisionObject(
+                decision="deny",
+                intent_cid="x",
+                policy_cid="p",
+                proofs_checked=[],
+                justification="test",
+            )
+            return PipelineResult(
+                allowed=False,
+                stage_outcomes=[],
+                blocking_stage=PipelineStage.COMPLIANCE,
+                intent=intent,
+                decision=decision,
+            )
+
         pipeline.check = _deny_check  # type: ignore[method-assign]
 
         recorder = PipelineMetricsRecorder(pipeline)
@@ -362,7 +460,11 @@ class TestPipelineMetricsRecorder:
         assert stats["denial_counts"]["blocked_tool"] == 1
 
     def test_record_calls_collector_track_tool_execution(self):
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+
         collector = MagicMock()
         pipeline = make_default_pipeline()
         recorder = PipelineMetricsRecorder(pipeline, collector=collector)
@@ -376,17 +478,32 @@ class TestPipelineMetricsRecorder:
 
     def test_record_reports_failure_for_deny(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            PipelineMetricsRecorder, DispatchPipeline, PipelineResult, PipelineStage,
+            PipelineMetricsRecorder,
+            DispatchPipeline,
+            PipelineResult,
+            PipelineStage,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import DecisionObject
+
         collector = MagicMock()
         pipeline = DispatchPipeline()
 
         def _deny(intent):
-            d = DecisionObject(decision="deny", intent_cid="x", policy_cid="p",
-                               proofs_checked=[], justification="test")
-            return PipelineResult(allowed=False, stage_outcomes=[], blocking_stage=PipelineStage.COMPLIANCE,
-                                  intent=intent, decision=d)
+            d = DecisionObject(
+                decision="deny",
+                intent_cid="x",
+                policy_cid="p",
+                proofs_checked=[],
+                justification="test",
+            )
+            return PipelineResult(
+                allowed=False,
+                stage_outcomes=[],
+                blocking_stage=PipelineStage.COMPLIANCE,
+                intent=intent,
+                decision=d,
+            )
+
         pipeline.check = _deny  # type: ignore[method-assign]
 
         recorder = PipelineMetricsRecorder(pipeline, collector=collector)
@@ -396,7 +513,11 @@ class TestPipelineMetricsRecorder:
         assert success_val is False
 
     def test_get_stats_returns_both_counts(self):
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+
         pipeline = make_default_pipeline()
         recorder = PipelineMetricsRecorder(pipeline)
         recorder.check_and_record(_make_intent("tool_a"))
@@ -408,7 +529,11 @@ class TestPipelineMetricsRecorder:
         assert stats["total_allows"] == 3
 
     def test_reset_clears_counts(self):
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+
         pipeline = make_default_pipeline()
         recorder = PipelineMetricsRecorder(pipeline)
         recorder.check_and_record(_make_intent())
@@ -418,7 +543,11 @@ class TestPipelineMetricsRecorder:
         assert stats["total_denials"] == 0
 
     def test_collector_exception_does_not_raise(self):
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+
         collector = MagicMock()
         collector.track_tool_execution.side_effect = RuntimeError("boom")
         pipeline = make_default_pipeline()
@@ -427,12 +556,18 @@ class TestPipelineMetricsRecorder:
         recorder.check_and_record(_make_intent())
 
     def test_no_collector_no_error(self):
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+
         pipeline = make_default_pipeline()
         # collector=None, monitoring module patched to fail import
         recorder = PipelineMetricsRecorder(pipeline, collector=None)
-        with patch("ipfs_datasets_py.mcp_server.dispatch_pipeline.PipelineMetricsRecorder._get_collector",
-                   return_value=None):
+        with patch(
+            "ipfs_datasets_py.mcp_server.dispatch_pipeline.PipelineMetricsRecorder._get_collector",
+            return_value=None,
+        ):
             recorder.check_and_record(_make_intent())
         assert recorder.get_stats()["total_allows"] == 1
 
@@ -442,11 +577,13 @@ class TestPipelineMetricsRecorder:
 #    verify_delegation_signature
 # ===========================================================================
 
+
 class TestDIDDelegationIntegration:
     """Tests for DIDSignedDelegation + sign/verify helpers."""
 
     def _make_delegation(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import Capability, Delegation
+
         cap = Capability(resource="mcp:tool", ability="invoke")
         return Delegation(
             cid="did-test-cid",
@@ -457,12 +594,14 @@ class TestDIDDelegationIntegration:
 
     def test_sign_delegation_returns_did_signed_delegation(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation, DIDSignedDelegation
+
         d = self._make_delegation()
         signed = sign_delegation(d)
         assert isinstance(signed, DIDSignedDelegation)
 
     def test_sign_without_key_manager_returns_unsigned_sentinel(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation
+
         d = self._make_delegation()
         signed = sign_delegation(d)  # no manager in this env
         assert signed.signer_did == "did:key:unsigned"
@@ -470,6 +609,7 @@ class TestDIDDelegationIntegration:
 
     def test_sign_with_mock_key_manager(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation
+
         mgr = MagicMock()
         mgr.sign.return_value = b"\xde\xad\xbe\xef"
         mgr.did = "did:key:z6MkTest"
@@ -480,8 +620,11 @@ class TestDIDDelegationIntegration:
 
     def test_verify_with_mock_key_manager_success(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            sign_delegation, verify_delegation_signature, DIDSignedDelegation,
+            sign_delegation,
+            verify_delegation_signature,
+            DIDSignedDelegation,
         )
+
         mgr = MagicMock()
         mgr.sign.return_value = b"\xde\xad\xbe\xef"
         mgr.did = "did:key:z6MkTest"
@@ -493,8 +636,10 @@ class TestDIDDelegationIntegration:
 
     def test_verify_with_mock_key_manager_failure(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            sign_delegation, verify_delegation_signature,
+            sign_delegation,
+            verify_delegation_signature,
         )
+
         mgr = MagicMock()
         mgr.sign.return_value = b"\xde\xad\xbe\xef"
         mgr.did = "did:key:z6MkTest"
@@ -505,14 +650,24 @@ class TestDIDDelegationIntegration:
         assert ok is False
 
     def test_verify_empty_signature_returns_false(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import verify_delegation_signature, DIDSignedDelegation, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            verify_delegation_signature,
+            DIDSignedDelegation,
+            Delegation,
+            Capability,
+        )
+
         cap = Capability(resource="r", ability="a")
         d = Delegation(cid="c", issuer="i", audience="a", capabilities=[cap])
         signed = DIDSignedDelegation(delegation=d, signature="", signer_did="did:key:x")
         assert verify_delegation_signature(signed) is False
 
     def test_verify_without_manager_returns_false(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation, verify_delegation_signature
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            sign_delegation,
+            verify_delegation_signature,
+        )
+
         d = self._make_delegation()
         signed = sign_delegation(d)  # unsigned sentinel
         ok = verify_delegation_signature(signed)
@@ -520,10 +675,12 @@ class TestDIDDelegationIntegration:
 
     def test_did_signed_delegation_to_dict(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DIDSignedDelegation
+
         mgr = MagicMock()
         mgr.sign.return_value = b"\xab\xcd"
         mgr.did = "did:key:z6MkTest"
         from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation
+
         d = self._make_delegation()
         signed = sign_delegation(d, key_manager=mgr)
         dct = signed.to_dict()
@@ -533,6 +690,7 @@ class TestDIDDelegationIntegration:
 
     def test_sign_manager_exception_falls_back_to_unsigned(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation
+
         mgr = MagicMock()
         mgr.sign.side_effect = RuntimeError("key unavailable")
         mgr.did = "did:key:z6MkTest"
@@ -543,8 +701,10 @@ class TestDIDDelegationIntegration:
 
     def test_verify_manager_exception_returns_false(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            sign_delegation, verify_delegation_signature,
+            sign_delegation,
+            verify_delegation_signature,
         )
+
         sign_mgr = MagicMock()
         sign_mgr.sign.return_value = b"\x01\x02"
         sign_mgr.did = "did:key:z"
@@ -558,6 +718,7 @@ class TestDIDDelegationIntegration:
 
     def test_verified_field_default_false(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import sign_delegation
+
         d = self._make_delegation()
         signed = sign_delegation(d)
         assert signed.verified is False
@@ -567,21 +728,29 @@ class TestDIDDelegationIntegration:
 # 6. Integration — FilePolicyStore + AsyncPolicyRegistrar round-trip
 # ===========================================================================
 
+
 class TestIntegration:
     """Cross-component integration tests."""
 
     def test_file_store_and_async_registrar_share_registry(self, tmp_path):
         import asyncio
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            AsyncPolicyRegistrar, FilePolicyStore, PolicyRegistry,
+            AsyncPolicyRegistrar,
+            FilePolicyStore,
+            PolicyRegistry,
         )
+
         reg = PolicyRegistry()  # isolated, not the global singleton
         path = str(tmp_path / "shared.json")
         registrar = AsyncPolicyRegistrar(reg)
-        asyncio.run(registrar.register_many({
-            "pol_a": "admin may call admin_tools",
-            "pol_b": "alice must not call delete_tools",
-        }))
+        asyncio.run(
+            registrar.register_many(
+                {
+                    "pol_a": "admin may call admin_tools",
+                    "pol_b": "alice must not call delete_tools",
+                }
+            )
+        )
         FilePolicyStore(path, reg).save()
 
         reg2 = PolicyRegistry()  # fresh isolated registry
@@ -591,15 +760,26 @@ class TestIntegration:
 
     def test_pipeline_recorder_with_bridge_connected(self):
         """PipelineMetricsRecorder + PubSubBridge can run together."""
-        from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder, make_default_pipeline
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBridge, PubSubBus, PubSubEventType
+        from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
+            PipelineMetricsRecorder,
+            make_default_pipeline,
+        )
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            PubSubBridge,
+            PubSubBus,
+            PubSubEventType,
+        )
+
         pipeline = make_default_pipeline()
         recorder = PipelineMetricsRecorder(pipeline, collector=MagicMock())
         bus = PubSubBus()
         bridge = PubSubBridge(bus)
         events = []
+
         class SM:
-            def announce_capability(self, t, p): events.append(p)
+            def announce_capability(self, t, p):
+                events.append(p)
+
         bridge.connect(SM())
 
         intent = _make_intent()

@@ -3,6 +3,7 @@
 All domain logic lives at:
   ipfs_datasets_py.web_archiving.autoscraper_engine
 """
+
 from ipfs_datasets_py.web_archiving.autoscraper_engine import (  # noqa: F401
     batch_scrape_with_autoscraper,
     create_autoscraper_model,

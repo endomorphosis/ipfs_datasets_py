@@ -26,10 +26,14 @@ from unittest.mock import patch, MagicMock
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 def _obligation(prop="pay", agent="Contractor"):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-        DeonticFormula, DeonticOperator, LegalAgent,
+        DeonticFormula,
+        DeonticOperator,
+        LegalAgent,
     )
+
     agent_obj = LegalAgent(agent.lower(), agent, "organization")
     return DeonticFormula(
         operator=DeonticOperator.OBLIGATION,
@@ -42,13 +46,16 @@ def _obligation(prop="pay", agent="Contractor"):
 
 def _rule_set(formulas=None):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
     return DeonticRuleSet(name="test_rules", formulas=list(formulas or []), description="test")
 
 
 def _translation(formula_str="(assert true)"):
     from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-        TranslationResult, LogicTranslationTarget,
+        TranslationResult,
+        LogicTranslationTarget,
     )
+
     return TranslationResult(
         target=LogicTranslationTarget.Z3,
         translated_formula=formula_str,
@@ -57,7 +64,9 @@ def _translation(formula_str="(assert true)"):
 
 
 def _make_backend(tmp_dir):
-    from ipfs_datasets_py.logic.integration.reasoning._prover_backend_mixin import ProverBackendMixin
+    from ipfs_datasets_py.logic.integration.reasoning._prover_backend_mixin import (
+        ProverBackendMixin,
+    )
 
     class _Backend(ProverBackendMixin):
         def __init__(self, d):
@@ -69,13 +78,18 @@ def _make_backend(tmp_dir):
 
     return _Backend(tmp_dir)
 
+
 # ---------------------------------------------------------------------------
 # S1  ProverBackendMixin
 # ---------------------------------------------------------------------------
 
+
 class TestExecuteZ3Proof:
     def test_z3_sat_returns_success(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="sat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -83,7 +97,10 @@ class TestExecuteZ3Proof:
         assert result.status == ProofStatus.SUCCESS and result.prover == "z3"
 
     def test_z3_unsat_returns_success(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="unsat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -91,7 +108,10 @@ class TestExecuteZ3Proof:
         assert result.status == ProofStatus.SUCCESS
 
     def test_z3_unknown_output_returns_failure(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="unknown", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -99,7 +119,10 @@ class TestExecuteZ3Proof:
         assert result.status == ProofStatus.FAILURE
 
     def test_z3_nonzero_returncode_returns_error(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=1, stdout="", stderr="error msg")
         with patch("subprocess.run", return_value=mock):
@@ -107,14 +130,20 @@ class TestExecuteZ3Proof:
         assert result.status == ProofStatus.ERROR
 
     def test_z3_timeout_returns_timeout(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="z3", timeout=5)):
             result = b._execute_z3_proof(_obligation(), _translation())
         assert result.status == ProofStatus.TIMEOUT
 
     def test_z3_exception_returns_error(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=FileNotFoundError("z3 not found")):
             result = b._execute_z3_proof(_obligation(), _translation())
@@ -123,7 +152,10 @@ class TestExecuteZ3Proof:
 
 class TestExecuteCVC5Proof:
     def test_cvc5_sat(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="sat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -132,7 +164,10 @@ class TestExecuteCVC5Proof:
 
     def test_cvc5_unsat_also_returns_success(self, tmp_path):
         # _execute_cvc5_proof treats both "sat" and "unsat" as SUCCESS (solver ran OK)
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="unsat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -140,7 +175,10 @@ class TestExecuteCVC5Proof:
         assert result.status == ProofStatus.SUCCESS
 
     def test_cvc5_error_returncode(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=2, stdout="", stderr="cvc5 error")
         with patch("subprocess.run", return_value=mock):
@@ -148,14 +186,20 @@ class TestExecuteCVC5Proof:
         assert result.status == ProofStatus.ERROR
 
     def test_cvc5_timeout(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cvc5", 5)):
             result = b._execute_cvc5_proof(_obligation(), _translation())
         assert result.status == ProofStatus.TIMEOUT
 
     def test_cvc5_exception(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=RuntimeError("cvc5 crashed")):
             result = b._execute_cvc5_proof(_obligation(), _translation())
@@ -165,8 +209,10 @@ class TestExecuteCVC5Proof:
 class TestExecuteLeanProof:
     def _lean_tr(self):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         return TranslationResult(
             target=LogicTranslationTarget.LEAN,
             translated_formula="theorem test : True := True.intro",
@@ -175,7 +221,10 @@ class TestExecuteLeanProof:
         )
 
     def test_lean_success(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="ok", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -183,7 +232,10 @@ class TestExecuteLeanProof:
         assert result.status == ProofStatus.SUCCESS and result.prover == "lean"
 
     def test_lean_failure(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=1, stdout="", stderr="lean error")
         with patch("subprocess.run", return_value=mock):
@@ -191,14 +243,20 @@ class TestExecuteLeanProof:
         assert result.status == ProofStatus.ERROR
 
     def test_lean_timeout(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("lean", 5)):
             result = b._execute_lean_proof(_obligation(), self._lean_tr())
         assert result.status == ProofStatus.TIMEOUT
 
     def test_lean_exception(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=OSError("lean missing")):
             result = b._execute_lean_proof(_obligation(), self._lean_tr())
@@ -206,9 +264,13 @@ class TestExecuteLeanProof:
 
     def test_lean_no_proposition_id(self, tmp_path):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         tr = TranslationResult(
             target=LogicTranslationTarget.LEAN,
@@ -225,8 +287,10 @@ class TestExecuteLeanProof:
 class TestExecuteCoqProof:
     def _coq_tr(self):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         return TranslationResult(
             target=LogicTranslationTarget.COQ,
             translated_formula="(* test *)",
@@ -234,7 +298,10 @@ class TestExecuteCoqProof:
         )
 
     def test_coq_success(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="Proof accepted", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -242,7 +309,10 @@ class TestExecuteCoqProof:
         assert result.status == ProofStatus.SUCCESS and result.prover == "coq"
 
     def test_coq_failure(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=1, stdout="", stderr="coq error")
         with patch("subprocess.run", return_value=mock):
@@ -250,14 +320,20 @@ class TestExecuteCoqProof:
         assert result.status == ProofStatus.ERROR
 
     def test_coq_timeout(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("coq", 5)):
             result = b._execute_coq_proof(_obligation(), self._coq_tr())
         assert result.status == ProofStatus.TIMEOUT
 
     def test_coq_exception(self, tmp_path):
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=OSError("coq missing")):
             result = b._execute_coq_proof(_obligation(), self._coq_tr())
@@ -267,7 +343,10 @@ class TestExecuteCoqProof:
 class TestCheckZ3Consistency:
     def test_sat_means_consistent(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="sat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -276,7 +355,10 @@ class TestCheckZ3Consistency:
 
     def test_unsat_means_inconsistent(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="unsat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -285,7 +367,10 @@ class TestCheckZ3Consistency:
 
     def test_unexpected_output_is_error(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -294,7 +379,10 @@ class TestCheckZ3Consistency:
 
     def test_nonzero_returncode_is_error(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=1, stdout="", stderr="error")
         with patch("subprocess.run", return_value=mock):
@@ -303,7 +391,10 @@ class TestCheckZ3Consistency:
 
     def test_timeout(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("z3", 5)):
             result = b._check_z3_consistency(_rule_set([_obligation()]), time.time())
@@ -311,7 +402,10 @@ class TestCheckZ3Consistency:
 
     def test_exception(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=RuntimeError("z3 crashed")):
             result = b._check_z3_consistency(_rule_set([_obligation()]), time.time())
@@ -319,7 +413,10 @@ class TestCheckZ3Consistency:
 
     def test_empty_rule_set(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="sat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -330,7 +427,10 @@ class TestCheckZ3Consistency:
 class TestCheckCVC5Consistency:
     def test_sat(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="sat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -339,7 +439,10 @@ class TestCheckCVC5Consistency:
 
     def test_unsat(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="unsat", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -348,7 +451,10 @@ class TestCheckCVC5Consistency:
 
     def test_other_output(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         mock = MagicMock(returncode=0, stdout="???", stderr="")
         with patch("subprocess.run", return_value=mock):
@@ -357,7 +463,10 @@ class TestCheckCVC5Consistency:
 
     def test_timeout(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cvc5", 5)):
             result = b._check_cvc5_consistency(_rule_set([_obligation()]), time.time())
@@ -365,18 +474,24 @@ class TestCheckCVC5Consistency:
 
     def test_exception(self, tmp_path):
         import time
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         b = _make_backend(tmp_path)
         with patch("subprocess.run", side_effect=OSError("cvc5 missing")):
             result = b._check_cvc5_consistency(_rule_set([_obligation()]), time.time())
         assert result.status == ProofStatus.ERROR
 
+
 # ---------------------------------------------------------------------------
 # S2  NeurosymbolicReasoner
 # ---------------------------------------------------------------------------
 
+
 def _reasoner(use_modal=False, use_cec=False, use_nl=False):
     from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import NeurosymbolicReasoner
+
     return NeurosymbolicReasoner(use_modal=use_modal, use_cec=use_cec, use_nl=use_nl)
 
 
@@ -447,6 +562,7 @@ class TestNeurosymbolicReasonerParse:
 class TestNeurosymbolicReasonerAddKnowledge:
     def test_add_formula_object(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
         r = _reasoner()
         assert r.add_knowledge(parse_tdfol("P(a)")) is True
 
@@ -466,30 +582,35 @@ class TestNeurosymbolicReasonerAddKnowledge:
 class TestNeurosymbolicReasonerProve:
     def test_prove_unparseable_goal_error(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         r = _reasoner()
         result = r.prove("@@@###unparseable@@@")
         assert result.status == ProofStatus.ERROR
 
     def test_prove_formula_object_no_crash(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
         r = _reasoner()
         result = r.prove(parse_tdfol("P(a)"))
         assert result is not None
 
     def test_prove_with_string_given(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
         r = _reasoner()
         result = r.prove(parse_tdfol("Q(a)"), given=["forall x. Q(x)"])
         assert result is not None
 
     def test_prove_with_formula_given(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
         r = _reasoner()
         result = r.prove(parse_tdfol("Q(a)"), given=[parse_tdfol("forall x. Q(x)")])
         assert result is not None
 
     def test_prove_with_unparseable_given(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
         r = _reasoner()
         result = r.prove(parse_tdfol("Q(a)"), given=["@@@###", "forall x. Q(x)"])
         assert result is not None
@@ -498,6 +619,7 @@ class TestNeurosymbolicReasonerProve:
 class TestNeurosymbolicReasonerExplainQuery:
     def test_explain_formula_object(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
         r = _reasoner()
         exp = r.explain(parse_tdfol("P(a)"))
         assert isinstance(exp, str) and len(exp) > 0
@@ -526,40 +648,54 @@ class TestNeurosymbolicReasonerExplainQuery:
 class TestGetReasoner:
     def test_returns_instance(self):
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api as mod
+
         mod._global_reasoner = None
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import (
-            NeurosymbolicReasoner, get_reasoner,
+            NeurosymbolicReasoner,
+            get_reasoner,
         )
+
         assert isinstance(get_reasoner(), NeurosymbolicReasoner)
 
     def test_singleton(self):
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import get_reasoner
+
         assert get_reasoner() is get_reasoner()
 
 
 class TestReasoningCapabilities:
     def test_default_modal_provers(self):
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import ReasoningCapabilities
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import (
+            ReasoningCapabilities,
+        )
+
         caps = ReasoningCapabilities()
         assert caps.modal_provers and len(caps.modal_provers) > 0
 
     def test_custom_rule_counts(self):
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import ReasoningCapabilities
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import (
+            ReasoningCapabilities,
+        )
+
         caps = ReasoningCapabilities(tdfol_rules=50, cec_rules=90, total_rules=140)
         assert caps.tdfol_rules == 50 and caps.total_rules == 140
+
 
 # ---------------------------------------------------------------------------
 # S3  SymbolicContracts
 # ---------------------------------------------------------------------------
 
+
 class TestFOLInput:
     def test_basic(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         inp = FOLInput(text="All cats are animals")
         assert inp.text == "All cats are animals"
 
     def test_defaults(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         inp = FOLInput(text="Some birds can fly")
         assert inp.confidence_threshold == 0.7
         assert inp.output_format == "symbolic"
@@ -568,25 +704,33 @@ class TestFOLInput:
 
     def test_custom_threshold(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
-        assert FOLInput(text="All things must comply", confidence_threshold=0.9).confidence_threshold == 0.9
+
+        assert (
+            FOLInput(text="All things must comply", confidence_threshold=0.9).confidence_threshold
+            == 0.9
+        )
 
     def test_domain_predicates(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         inp = FOLInput(text="All animals are entities", domain_predicates=["Animal", "Cat"])
         assert "Animal" in inp.domain_predicates
 
     def test_prolog_format(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         assert FOLInput(text="All birds fly", output_format="prolog").output_format == "prolog"
 
     def test_tptp_format(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         assert FOLInput(text="All birds fly", output_format="tptp").output_format == "tptp"
 
 
 class TestFOLOutput:
     def test_basic(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         out = FOLOutput(
             fol_formula="forall x Cat(x)",
             confidence=0.9,
@@ -596,8 +740,10 @@ class TestFOLOutput:
 
     def test_has_list_defaults(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         out = FOLOutput(
-            fol_formula="P(x)", confidence=0.5,
+            fol_formula="P(x)",
+            confidence=0.5,
             logical_components={"quantifiers": [], "predicates": [], "entities": []},
         )
         assert hasattr(out, "reasoning_steps") and hasattr(out, "warnings")
@@ -606,64 +752,76 @@ class TestFOLOutput:
 class TestFOLSyntaxValidator:
     def test_valid_universal(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("forall x P(x) -> Q(x)")
         assert result["valid"] is True
 
     def test_valid_predicate(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("Animal(socrates)")
         assert result["valid"] is True
 
     def test_empty_formula_invalid(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("")
         assert result["valid"] is False and result["errors"]
 
     def test_whitespace_only_invalid(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         assert FOLSyntaxValidator().validate_formula("   ")["valid"] is False
 
     def test_unbalanced_parens(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("P(x")
         assert not result["valid"]
         assert any("paren" in e.lower() for e in result["errors"])
 
     def test_unbalanced_brackets(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("P(x) [extra")
         assert not result["valid"]
 
     def test_structure_analysis_in_result(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("forall x Animal(x)")
         assert "structure_analysis" in result
         assert result["structure_analysis"]["has_quantifiers"] is True
 
     def test_complex_connectives_detected(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("forall x (P(x) -> Q(x)) & R(x)")
         struct = result["structure_analysis"]
         assert struct["predicate_count"] >= 2 and len(struct["connectives"]) >= 1
 
     def test_existential_quantifier_detected(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("exists x Bird(x)")
         assert result["structure_analysis"]["has_quantifiers"] is True
 
     def test_free_variables_warning_present(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("P(x)")
         assert "warnings" in result
 
     def test_high_complexity_produces_warnings(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         f = "forall x forall y forall z (A(x,y) & B(y,z) -> C(x,z)) & (D(x) | E(y)) & F(z,x,y)"
         result = FOLSyntaxValidator().validate_formula(f)
         assert "warnings" in result
 
     def test_suggestions_for_single_char_predicates(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         result = FOLSyntaxValidator().validate_formula("P(x)")
         assert "suggestions" in result
 
@@ -671,22 +829,28 @@ class TestFOLSyntaxValidator:
 class TestValidationContext:
     def test_defaults(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import ValidationContext
+
         ctx = ValidationContext()
         assert ctx.strict_mode is True and ctx.max_complexity == 100 and ctx.custom_validators == []
 
     def test_custom(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import ValidationContext
+
         ctx = ValidationContext(strict_mode=False, max_complexity=50)
         assert ctx.strict_mode is False and ctx.max_complexity == 50
 
 
 class TestContractedFOLConverterFallback:
     def _conv(self):
-        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import ContractedFOLConverter
+        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
+            ContractedFOLConverter,
+        )
+
         return ContractedFOLConverter()
 
     def _inp(self, text, **kw):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         return FOLInput(text=text, **kw)
 
     def test_all_gives_universal(self):
@@ -730,48 +894,73 @@ class TestContractedFOLConverterFallback:
 class TestFOLHelpers:
     def test_create_fol_converter(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
-            create_fol_converter, ContractedFOLConverter,
+            create_fol_converter,
+            ContractedFOLConverter,
         )
+
         assert isinstance(create_fol_converter(), ContractedFOLConverter)
 
     def test_create_non_strict(self):
-        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import create_fol_converter
+        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
+            create_fol_converter,
+        )
+
         assert create_fol_converter(strict_validation=False) is not None
 
     def test_validate_fol_input(self):
-        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import validate_fol_input, FOLInput
+        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
+            validate_fol_input,
+            FOLInput,
+        )
+
         inp = validate_fol_input("All cats are animals")
         assert isinstance(inp, FOLInput) and "cats" in inp.text
 
     def test_validate_fol_input_with_kwargs(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import validate_fol_input
-        assert validate_fol_input("All things comply", confidence_threshold=0.8).confidence_threshold == 0.8
+
+        assert (
+            validate_fol_input("All things comply", confidence_threshold=0.8).confidence_threshold
+            == 0.8
+        )
 
     def test_test_contracts_no_error(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import test_contracts
+
         try:
             test_contracts()
         except SystemExit:
             pass
 
+
 # ---------------------------------------------------------------------------
 # S4  LogicIPLDStorage
 # ---------------------------------------------------------------------------
 
+
 class TestLogicProvenanceChain:
     def test_to_dict_source_path(self):
-        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicProvenanceChain
+        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
+            LogicProvenanceChain,
+        )
+
         chain = LogicProvenanceChain(source_document_path="/path/doc.pdf")
         d = chain.to_dict()
         assert d["source_document_path"] == "/path/doc.pdf"
 
     def test_default_empty_entity_list(self):
-        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicProvenanceChain
+        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
+            LogicProvenanceChain,
+        )
+
         chain = LogicProvenanceChain(source_document_path="/path/doc.pdf")
         assert chain.to_dict()["graphrag_entity_cids"] == []
 
     def test_timestamp_auto_set(self):
-        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicProvenanceChain
+        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
+            LogicProvenanceChain,
+        )
+
         chain = LogicProvenanceChain(source_document_path="/p.pdf")
         assert chain.creation_timestamp and len(chain.creation_timestamp) > 0
 
@@ -779,6 +968,7 @@ class TestLogicProvenanceChain:
 class TestLogicIPLDNode:
     def _node(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDNode
+
         return LogicIPLDNode(formula_id="test_001", deontic_formula=_obligation())
 
     def test_to_dict_formula_id(self):
@@ -792,30 +982,31 @@ class TestLogicIPLDNode:
 
     def test_to_dict_with_provenance(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDNode, LogicProvenanceChain,
+            LogicIPLDNode,
+            LogicProvenanceChain,
         )
+
         chain = LogicProvenanceChain(source_document_path="/d.pdf")
-        node = LogicIPLDNode(
-            formula_id="n2", deontic_formula=_obligation(), provenance_chain=chain
-        )
+        node = LogicIPLDNode(formula_id="n2", deontic_formula=_obligation(), provenance_chain=chain)
         d = node.to_dict()
         assert d["provenance_chain"] is not None
         assert "source_document_path" in d["provenance_chain"]
 
     def test_from_dict_round_trip(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDNode
+
         node = self._node()
         reconstructed = LogicIPLDNode.from_dict(node.to_dict())
         assert reconstructed.formula_id == node.formula_id
 
     def test_from_dict_with_provenance(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDNode, LogicProvenanceChain,
+            LogicIPLDNode,
+            LogicProvenanceChain,
         )
+
         chain = LogicProvenanceChain(source_document_path="/t.pdf", formula_cid="abc")
-        node = LogicIPLDNode(
-            formula_id="n3", deontic_formula=_obligation(), provenance_chain=chain
-        )
+        node = LogicIPLDNode(formula_id="n3", deontic_formula=_obligation(), provenance_chain=chain)
         r = LogicIPLDNode.from_dict(node.to_dict())
         assert r.provenance_chain is not None
         assert r.provenance_chain.source_document_path == "/t.pdf"
@@ -824,6 +1015,7 @@ class TestLogicIPLDNode:
 class TestLogicIPLDStorageFilesystem:
     def _storage(self, tmp_path):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
+
         return LogicIPLDStorage(storage_path=str(tmp_path / "ls"))
 
     def test_init_creates_dir(self, tmp_path):
@@ -852,8 +1044,10 @@ class TestLogicIPLDStorageFilesystem:
 
     def test_store_translation_returns_cid(self, tmp_path):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         s = self._storage(tmp_path)
         cid = s.store_logic_formula(_obligation())
         tr = TranslationResult(
@@ -866,8 +1060,10 @@ class TestLogicIPLDStorageFilesystem:
 
     def test_store_translation_updates_index(self, tmp_path):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         s = self._storage(tmp_path)
         cid = s.store_logic_formula(_obligation())
         tr = TranslationResult(
@@ -880,8 +1076,10 @@ class TestLogicIPLDStorageFilesystem:
 
     def test_store_translation_updates_node(self, tmp_path):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         s = self._storage(tmp_path)
         cid = s.store_logic_formula(_obligation())
         tr = TranslationResult(
@@ -911,15 +1109,18 @@ class TestLogicIPLDStorageFilesystem:
 
     def test_retrieve_translations_known(self, tmp_path):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         s = self._storage(tmp_path)
         cid = s.store_logic_formula(_obligation())
         s.store_translation_result(
-            cid, LogicTranslationTarget.LEAN,
+            cid,
+            LogicTranslationTarget.LEAN,
             TranslationResult(
                 target=LogicTranslationTarget.LEAN, translated_formula="t", success=True
-            )
+            ),
         )
         assert "lean" in s.retrieve_formula_translations(cid)
 
@@ -958,8 +1159,10 @@ class TestLogicIPLDStorageFilesystem:
 class TestLogicProvenanceTracker:
     def _setup(self, tmp_path):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDStorage, LogicProvenanceTracker,
+            LogicIPLDStorage,
+            LogicProvenanceTracker,
         )
+
         s = LogicIPLDStorage(storage_path=str(tmp_path / "ls"))
         return s, LogicProvenanceTracker(s)
 
@@ -1033,8 +1236,11 @@ class TestLogicProvenanceTracker:
 class TestCreateLogicStorageWithProvenance:
     def test_returns_tuple(self, tmp_path):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            create_logic_storage_with_provenance, LogicIPLDStorage, LogicProvenanceTracker,
+            create_logic_storage_with_provenance,
+            LogicIPLDStorage,
+            LogicProvenanceTracker,
         )
+
         s, t = create_logic_storage_with_provenance(str(tmp_path / "s"))
         assert isinstance(s, LogicIPLDStorage) and isinstance(t, LogicProvenanceTracker)
 
@@ -1042,5 +1248,6 @@ class TestCreateLogicStorageWithProvenance:
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
             create_logic_storage_with_provenance,
         )
+
         s, t = create_logic_storage_with_provenance(str(tmp_path / "s2"))
         assert t.logic_storage is s

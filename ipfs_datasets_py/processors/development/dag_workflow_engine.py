@@ -3,6 +3,7 @@ DAG Workflow Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/dag_workflow_planner.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -110,12 +111,14 @@ def plan_speculative_execution(
                 task = dag.get(task_id, {})
                 duration = task.get("estimated_duration", 0)
                 resources = task.get("resources", {})
-                group_plan["tasks"].append({
-                    "task_id": task_id,
-                    "name": task.get("name", task_id),
-                    "estimated_duration": duration,
-                    "required_resources": resources,
-                })
+                group_plan["tasks"].append(
+                    {
+                        "task_id": task_id,
+                        "name": task.get("name", task_id),
+                        "estimated_duration": duration,
+                        "required_resources": resources,
+                    }
+                )
                 max_duration = max(max_duration, duration)
                 for resource, amount in resources.items():
                     total_resources_needed[resource] = (
@@ -128,13 +131,15 @@ def plan_speculative_execution(
             for resource, needed in total_resources_needed.items():
                 available = available_resources.get(resource, 0)
                 if needed > available:
-                    result["bottlenecks"].append({
-                        "group_id": group_idx,
-                        "resource": resource,
-                        "needed": needed,
-                        "available": available,
-                        "shortage": needed - available,
-                    })
+                    result["bottlenecks"].append(
+                        {
+                            "group_id": group_idx,
+                            "resource": resource,
+                            "needed": needed,
+                            "available": available,
+                            "shortage": needed - available,
+                        }
+                    )
 
             result["execution_plan"].append(group_plan)
             cumulative_time += max_duration
@@ -145,13 +150,15 @@ def plan_speculative_execution(
                     for tid in future_group:
                         future_gpu_need += dag.get(tid, {}).get("resources", {}).get("gpu", 0)
                 if future_gpu_need > 0:
-                    result["gpu_provisioning_schedule"].append({
-                        "provision_at": cumulative_time,
-                        "gpus_needed": future_gpu_need,
-                        "reason": (
-                            f"Predicted need for groups {group_idx + 1} to {group_idx + 3}"
-                        ),
-                    })
+                    result["gpu_provisioning_schedule"].append(
+                        {
+                            "provision_at": cumulative_time,
+                            "gpus_needed": future_gpu_need,
+                            "reason": (
+                                f"Predicted need for groups {group_idx + 1} to {group_idx + 3}"
+                            ),
+                        }
+                    )
 
         return result
 
@@ -163,6 +170,7 @@ def plan_speculative_execution(
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _detect_cycle(dag: Dict[str, Any]) -> Tuple[bool, List[str]]:
     visited: Set[str] = set()
@@ -205,14 +213,13 @@ def _topological_sort(dag: Dict[str, Any]) -> List[str]:
     return result
 
 
-def _compute_parallel_groups(
-    dag: Dict[str, Any], execution_order: List[str]
-) -> List[List[str]]:
+def _compute_parallel_groups(dag: Dict[str, Any], execution_order: List[str]) -> List[List[str]]:
     groups: List[List[str]] = []
     remaining = set(execution_order)
     while remaining:
         current_group = [
-            task for task in remaining
+            task
+            for task in remaining
             if all(dep not in remaining for dep in dag[task]["dependencies"])
         ]
         if current_group:

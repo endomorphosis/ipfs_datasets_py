@@ -6,6 +6,7 @@ Covers:
 - OntologyOptimizer.export_history_csv()
 - OntologyMediator.get_action_stats()
 """
+
 from __future__ import annotations
 
 import csv
@@ -19,12 +20,14 @@ import pytest
 # ExtractionConfig.validate()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExtractionConfigValidate:
     """validate() should raise ValueError for invalid field combinations."""
 
     @pytest.fixture
     def valid_config(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         return ExtractionConfig()
 
     def test_default_config_is_valid(self, valid_config):
@@ -32,60 +35,70 @@ class TestExtractionConfigValidate:
 
     def test_confidence_threshold_too_high(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(confidence_threshold=1.1)
         with pytest.raises(ValueError, match="confidence_threshold"):
             cfg.validate()
 
     def test_confidence_threshold_negative(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(confidence_threshold=-0.1)
         with pytest.raises(ValueError, match="confidence_threshold"):
             cfg.validate()
 
     def test_max_confidence_zero_invalid(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(max_confidence=0.0)
         with pytest.raises(ValueError, match="max_confidence"):
             cfg.validate()
 
     def test_confidence_threshold_above_max_confidence(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(confidence_threshold=0.8, max_confidence=0.5)
         with pytest.raises(ValueError, match="confidence_threshold"):
             cfg.validate()
 
     def test_max_entities_negative(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(max_entities=-1)
         with pytest.raises(ValueError, match="max_entities"):
             cfg.validate()
 
     def test_max_relationships_negative(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(max_relationships=-5)
         with pytest.raises(ValueError, match="max_relationships"):
             cfg.validate()
 
     def test_window_size_zero(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(window_size=0)
         with pytest.raises(ValueError, match="window_size"):
             cfg.validate()
 
     def test_min_entity_length_zero(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(min_entity_length=0)
         with pytest.raises(ValueError, match="min_entity_length"):
             cfg.validate()
 
     def test_llm_fallback_threshold_out_of_range(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(llm_fallback_threshold=1.5)
         with pytest.raises(ValueError, match="llm_fallback_threshold"):
             cfg.validate()
 
     def test_valid_custom_config_passes(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(
             confidence_threshold=0.3,
             max_confidence=0.9,
@@ -101,20 +114,35 @@ class TestExtractionConfigValidate:
 # CriticScore.__sub__()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestCriticScoreSub:
     """CriticScore.__sub__() should compute per-dimension deltas."""
 
     @pytest.fixture
     def scores(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-        a = CriticScore(completeness=0.8, consistency=0.7, clarity=0.6,
-                        granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9)
-        b = CriticScore(completeness=0.6, consistency=0.5, clarity=0.4,
-                        granularity=0.3, relationship_coherence=0.7, domain_alignment=0.7)
+
+        a = CriticScore(
+            completeness=0.8,
+            consistency=0.7,
+            clarity=0.6,
+            granularity=0.5,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
+        )
+        b = CriticScore(
+            completeness=0.6,
+            consistency=0.5,
+            clarity=0.4,
+            granularity=0.3,
+            relationship_coherence=0.7,
+            domain_alignment=0.7,
+        )
         return a, b
 
     def test_sub_returns_critic_score(self, scores):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         a, b = scores
         delta = a - b
         assert isinstance(delta, CriticScore)
@@ -161,8 +189,15 @@ class TestCriticScoreSub:
 
     def test_identity_sub_gives_zero_deltas(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-        s = CriticScore(completeness=0.7, consistency=0.7, clarity=0.7,
-                        granularity=0.7, relationship_coherence=0.7, domain_alignment=0.7)
+
+        s = CriticScore(
+            completeness=0.7,
+            consistency=0.7,
+            clarity=0.7,
+            granularity=0.7,
+            relationship_coherence=0.7,
+            domain_alignment=0.7,
+        )
         delta = s - s
         for dim in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
             assert abs(getattr(delta, dim)) < 1e-9
@@ -172,14 +207,17 @@ class TestCriticScoreSub:
 # OntologyOptimizer.export_history_csv()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExportHistoryCsv:
     """export_history_csv() should return a CSV string or write to file."""
 
     @pytest.fixture
     def optimizer_with_history(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
-            OntologyOptimizer, OptimizationReport,
+            OntologyOptimizer,
+            OptimizationReport,
         )
+
         opt = OntologyOptimizer()
         for score in [0.5, 0.6, 0.75]:
             report = MagicMock(spec=OptimizationReport)
@@ -196,7 +234,12 @@ class TestExportHistoryCsv:
         csv_str = optimizer_with_history.export_history_csv()
         reader = csv.DictReader(io.StringIO(csv_str))
         assert set(reader.fieldnames or []) == {
-            "batch_from", "batch_to", "score_from", "score_to", "delta", "direction"
+            "batch_from",
+            "batch_to",
+            "score_from",
+            "score_to",
+            "delta",
+            "direction",
         }
 
     def test_csv_row_count_equals_pairs(self, optimizer_with_history):
@@ -221,6 +264,7 @@ class TestExportHistoryCsv:
 
     def test_empty_history_returns_header_only(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
         opt = OntologyOptimizer()
         csv_str = opt.export_history_csv()
         lines = [l for l in csv_str.splitlines() if l.strip()]
@@ -231,6 +275,7 @@ class TestExportHistoryCsv:
 # OntologyMediator.get_action_stats()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestMediatorGetActionStats:
     """get_action_stats() should track cumulative per-action counts."""
 
@@ -239,6 +284,7 @@ class TestMediatorGetActionStats:
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         return OntologyMediator(
             generator=OntologyGenerator(),
             critic=OntologyCritic(use_llm=False),
@@ -254,8 +300,10 @@ class TestMediatorGetActionStats:
         assert mediator.get_action_stats() == {}
 
     def test_action_counted_after_refine(self, mediator):
-        ontology = {"entities": [{"id": "e1", "text": "alice", "type": "Person",
-                                   "confidence": 0.8}], "relationships": []}
+        ontology = {
+            "entities": [{"id": "e1", "text": "alice", "type": "Person", "confidence": 0.8}],
+            "relationships": [],
+        }
         feedback = self._make_feedback(["rename entity casing"])
         mediator.refine_ontology(ontology, feedback, MagicMock())
         stats = mediator.get_action_stats()
@@ -263,8 +311,10 @@ class TestMediatorGetActionStats:
         assert stats["rename_entity"] >= 1
 
     def test_cumulative_counts_across_calls(self, mediator):
-        ontology = {"entities": [{"id": "e1", "text": "alice", "type": "Person",
-                                   "confidence": 0.8}], "relationships": []}
+        ontology = {
+            "entities": [{"id": "e1", "text": "alice", "type": "Person", "confidence": 0.8}],
+            "relationships": [],
+        }
         fb = self._make_feedback(["rename entity casing"])
         mediator.refine_ontology(ontology, fb, MagicMock())
         mediator.refine_ontology(ontology, fb, MagicMock())

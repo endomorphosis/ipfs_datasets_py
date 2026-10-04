@@ -105,9 +105,7 @@ def _nonblank(value: object, path: str) -> str:
 
 
 def _mapping(value: object, path: str) -> Mapping[str, Any]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise SpacyResidualDiagnosticsError(f"{path} must be an object")
     return value
 
@@ -126,9 +124,7 @@ def _coerce_ir(
         return value
     if isinstance(value, Mapping):
         return CanonicalRuleIR.from_dict(value)
-    raise SpacyResidualDiagnosticsError(
-        f"{field_name} must be CanonicalRuleIR or object"
-    )
+    raise SpacyResidualDiagnosticsError(f"{field_name} must be CanonicalRuleIR or object")
 
 
 def _is_empty_field_value(field_name: str, value: object) -> bool:
@@ -155,8 +151,7 @@ def production_path_is_typed_deontic_no_repair(
         and "typed_deontic" in arm_id
         and "no_repair" in arm_id
         and PRODUCTION_DEFAULT_CHANGED is False
-        and PRODUCTION_CONSTRUCTOR_IDENTITY
-        == "TypedDeonticCanonicalConstructor@1"
+        and PRODUCTION_CONSTRUCTOR_IDENTITY == "TypedDeonticCanonicalConstructor@1"
     )
 
 
@@ -195,35 +190,21 @@ class PolaritySignal:
     detail: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "field_path", _nonblank(self.field_path, "field_path")
-        )
+        object.__setattr__(self, "field_path", _nonblank(self.field_path, "field_path"))
         if self.signal_kind != SIGNAL_KIND_POLARITY:
-            raise SpacyResidualDiagnosticsError(
-                "PolaritySignal.signal_kind must be 'polarity'"
-            )
+            raise SpacyResidualDiagnosticsError("PolaritySignal.signal_kind must be 'polarity'")
         for name in ("reference_index", "candidate_index"):
             value = getattr(self, name)
             if value is not None and (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
             ):
-                raise SpacyResidualDiagnosticsError(
-                    f"{name} must be a nonnegative integer or null"
-                )
+                raise SpacyResidualDiagnosticsError(f"{name} must be a nonnegative integer or null")
         if not isinstance(self.modality_preserved, bool):
-            raise SpacyResidualDiagnosticsError(
-                "modality_preserved must be a boolean"
-            )
+            raise SpacyResidualDiagnosticsError("modality_preserved must be a boolean")
         for name in ("gold_modality", "candidate_modality", "detail"):
             value = getattr(self, name)
-            if value is not None and (
-                not isinstance(value, str) or not value.strip()
-            ):
-                raise SpacyResidualDiagnosticsError(
-                    f"{name} must be a nonblank string or null"
-                )
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise SpacyResidualDiagnosticsError(f"{name} must be a nonblank string or null")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -242,9 +223,7 @@ class PolaritySignal:
         data = _mapping(value, "polarity signal")
         return cls(
             field_path=_nonblank(data.get("field_path"), "field_path"),
-            signal_kind=str(
-                data.get("signal_kind") or SIGNAL_KIND_POLARITY
-            ),
+            signal_kind=str(data.get("signal_kind") or SIGNAL_KIND_POLARITY),
             reference_index=data.get("reference_index"),
             candidate_index=data.get("candidate_index"),
             gold_modality=data.get("gold_modality"),
@@ -269,18 +248,12 @@ class SpanSignal:
     detail: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "field_path", _nonblank(self.field_path, "field_path")
-        )
-        object.__setattr__(
-            self, "formula_id", _nonblank(self.formula_id, "formula_id")
-        )
+        object.__setattr__(self, "field_path", _nonblank(self.field_path, "field_path"))
+        object.__setattr__(self, "formula_id", _nonblank(self.formula_id, "formula_id"))
         if not isinstance(self.source_id, str):
             raise SpacyResidualDiagnosticsError("source_id must be a string")
         if self.signal_kind != SIGNAL_KIND_SPAN:
-            raise SpacyResidualDiagnosticsError(
-                "SpanSignal.signal_kind must be 'span'"
-            )
+            raise SpacyResidualDiagnosticsError("SpanSignal.signal_kind must be 'span'")
         if (
             isinstance(self.start_char, bool)
             or not isinstance(self.start_char, int)
@@ -289,23 +262,15 @@ class SpanSignal:
             or not isinstance(self.end_char, int)
             or self.end_char < self.start_char
         ):
-            raise SpacyResidualDiagnosticsError(
-                "source-span offsets are invalid"
-            )
+            raise SpacyResidualDiagnosticsError("source-span offsets are invalid")
         if not isinstance(self.source_span_sha256, str):
-            raise SpacyResidualDiagnosticsError(
-                "source_span_sha256 must be a string"
-            )
+            raise SpacyResidualDiagnosticsError("source_span_sha256 must be a string")
         if not isinstance(self.structural_signature, str):
-            raise SpacyResidualDiagnosticsError(
-                "structural_signature must be a string"
-            )
+            raise SpacyResidualDiagnosticsError("structural_signature must be a string")
         if self.detail is not None and (
             not isinstance(self.detail, str) or not self.detail.strip()
         ):
-            raise SpacyResidualDiagnosticsError(
-                "detail must be a nonblank string or null"
-            )
+            raise SpacyResidualDiagnosticsError("detail must be a nonblank string or null")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -330,9 +295,7 @@ class SpanSignal:
             start_char=int(data.get("start_char", 0)),
             end_char=int(data.get("end_char", 0)),
             source_span_sha256=str(data.get("source_span_sha256") or ""),
-            structural_signature=str(
-                data.get("structural_signature") or ""
-            ),
+            structural_signature=str(data.get("structural_signature") or ""),
             signal_kind=str(data.get("signal_kind") or SIGNAL_KIND_SPAN),
             detail=data.get("detail"),
         )
@@ -346,9 +309,7 @@ class SpanSignal:
         rule_index: int | None = None,
     ) -> "SpanSignal":
         if not isinstance(span, SourceSpanDiagnostic):
-            raise SpacyResidualDiagnosticsError(
-                "span must be SourceSpanDiagnostic"
-            )
+            raise SpacyResidualDiagnosticsError("span must be SourceSpanDiagnostic")
         if field_path is None:
             if rule_index is not None:
                 field_path = f"rules[{rule_index}]"
@@ -380,35 +341,25 @@ class MissingSlotSignal:
     detail: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "field_path", _nonblank(self.field_path, "field_path")
-        )
+        object.__setattr__(self, "field_path", _nonblank(self.field_path, "field_path"))
         if self.signal_kind != SIGNAL_KIND_MISSING_SLOT:
             raise SpacyResidualDiagnosticsError(
                 "MissingSlotSignal.signal_kind must be 'missing_slot'"
             )
-        if self.canonical_field is not None and (
-            self.canonical_field not in RULE_FIELDS
-        ):
+        if self.canonical_field is not None and (self.canonical_field not in RULE_FIELDS):
             raise SpacyResidualDiagnosticsError(
                 f"unknown canonical_field: {self.canonical_field!r}"
             )
         for name in ("reference_index", "candidate_index"):
             value = getattr(self, name)
             if value is not None and (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
             ):
-                raise SpacyResidualDiagnosticsError(
-                    f"{name} must be a nonnegative integer or null"
-                )
+                raise SpacyResidualDiagnosticsError(f"{name} must be a nonnegative integer or null")
         if self.detail is not None and (
             not isinstance(self.detail, str) or not self.detail.strip()
         ):
-            raise SpacyResidualDiagnosticsError(
-                "detail must be a nonblank string or null"
-            )
+            raise SpacyResidualDiagnosticsError("detail must be a nonblank string or null")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -433,12 +384,8 @@ class MissingSlotSignal:
             candidate_value=data.get("candidate_value"),
             reference_index=data.get("reference_index"),
             candidate_index=data.get("candidate_index"),
-            residual_kind=str(
-                data.get("residual_kind") or "field_mismatch"
-            ),
-            signal_kind=str(
-                data.get("signal_kind") or SIGNAL_KIND_MISSING_SLOT
-            ),
+            residual_kind=str(data.get("residual_kind") or "field_mismatch"),
+            signal_kind=str(data.get("signal_kind") or SIGNAL_KIND_MISSING_SLOT),
             detail=data.get("detail"),
         )
 
@@ -466,38 +413,23 @@ class CaseSpacyDiagnostics:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "case_id", _nonblank(self.case_id, "case_id"))
-        object.__setattr__(
-            self, "polarity_signals", tuple(self.polarity_signals)
-        )
+        object.__setattr__(self, "polarity_signals", tuple(self.polarity_signals))
         object.__setattr__(self, "span_signals", tuple(self.span_signals))
-        object.__setattr__(
-            self, "missing_slot_signals", tuple(self.missing_slot_signals)
-        )
-        if not all(
-            isinstance(item, PolaritySignal) for item in self.polarity_signals
-        ):
+        object.__setattr__(self, "missing_slot_signals", tuple(self.missing_slot_signals))
+        if not all(isinstance(item, PolaritySignal) for item in self.polarity_signals):
             raise SpacyResidualDiagnosticsError(
                 "polarity_signals must contain PolaritySignal values"
             )
         if not all(isinstance(item, SpanSignal) for item in self.span_signals):
-            raise SpacyResidualDiagnosticsError(
-                "span_signals must contain SpanSignal values"
-            )
-        if not all(
-            isinstance(item, MissingSlotSignal)
-            for item in self.missing_slot_signals
-        ):
+            raise SpacyResidualDiagnosticsError("span_signals must contain SpanSignal values")
+        if not all(isinstance(item, MissingSlotSignal) for item in self.missing_slot_signals):
             raise SpacyResidualDiagnosticsError(
                 "missing_slot_signals must contain MissingSlotSignal values"
             )
         preflight = dict(_mapping(self.polarity_preflight, "polarity_preflight"))
-        object.__setattr__(
-            self, "polarity_preflight", MappingProxyType(preflight)
-        )
+        object.__setattr__(self, "polarity_preflight", MappingProxyType(preflight))
         if not isinstance(self.polarity_gate_passed, bool):
-            raise SpacyResidualDiagnosticsError(
-                "polarity_gate_passed must be a boolean"
-            )
+            raise SpacyResidualDiagnosticsError("polarity_gate_passed must be a boolean")
         if not isinstance(self.evaluated, bool):
             raise SpacyResidualDiagnosticsError("evaluated must be a boolean")
         # Fail-closed alignment with ModalSpacyPolarityPreflight@1.
@@ -510,33 +442,25 @@ class CaseSpacyDiagnostics:
             None,
             POLARITY_PREFLIGHT_INTERFACE,
         }:
-            raise SpacyResidualDiagnosticsError(
-                "polarity_preflight.interface mismatch"
-            )
+            raise SpacyResidualDiagnosticsError("polarity_preflight.interface mismatch")
         if self.semantic_authority is not False:
             raise SpacyResidualDiagnosticsError(
                 "spaCy diagnostics must not claim semantic_authority"
             )
         if self.promotion_requires_full_gates is not True:
-            raise SpacyResidualDiagnosticsError(
-                "promotion_requires_full_gates must remain True"
-            )
+            raise SpacyResidualDiagnosticsError("promotion_requires_full_gates must remain True")
         object.__setattr__(
             self,
             "teacher_identity",
             _nonblank(self.teacher_identity, "teacher_identity"),
         )
-        object.__setattr__(
-            self, "teacher_role", _nonblank(self.teacher_role, "teacher_role")
-        )
+        object.__setattr__(self, "teacher_role", _nonblank(self.teacher_role, "teacher_role"))
         object.__setattr__(
             self,
             "production_arm_id",
             _nonblank(self.production_arm_id, "production_arm_id"),
         )
-        object.__setattr__(
-            self, "interface", _nonblank(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _nonblank(self.interface, "interface"))
         if self.frontend_status is not None:
             object.__setattr__(
                 self,
@@ -546,9 +470,7 @@ class CaseSpacyDiagnostics:
         if self.detail is not None and (
             not isinstance(self.detail, str) or not self.detail.strip()
         ):
-            raise SpacyResidualDiagnosticsError(
-                "detail must be a nonblank string or null"
-            )
+            raise SpacyResidualDiagnosticsError("detail must be a nonblank string or null")
 
     @property
     def signal_kinds_present(self) -> tuple[str, ...]:
@@ -586,20 +508,14 @@ class CaseSpacyDiagnostics:
             "has_polarity_inversion": self.has_polarity_inversion,
             "interface": self.interface,
             "missing_slot_signal_count": self.missing_slot_signal_count,
-            "missing_slot_signals": [
-                item.to_dict() for item in self.missing_slot_signals
-            ],
+            "missing_slot_signals": [item.to_dict() for item in self.missing_slot_signals],
             "polarity_gate_passed": self.polarity_gate_passed,
             "polarity_preflight": dict(self.polarity_preflight),
             "polarity_signal_count": self.polarity_signal_count,
-            "polarity_signals": [
-                item.to_dict() for item in self.polarity_signals
-            ],
+            "polarity_signals": [item.to_dict() for item in self.polarity_signals],
             "production_arm_id": self.production_arm_id,
             "promotion_requires_full_gates": self.promotion_requires_full_gates,
-            "residual_polarity_inversion_documented": (
-                self.residual_polarity_inversion_documented
-            ),
+            "residual_polarity_inversion_documented": (self.residual_polarity_inversion_documented),
             "semantic_authority": False,
             "signal_kinds_present": list(self.signal_kinds_present),
             "span_signal_count": self.span_signal_count,
@@ -614,21 +530,15 @@ class CaseSpacyDiagnostics:
         return cls(
             case_id=_nonblank(data.get("case_id"), "case_id"),
             polarity_signals=tuple(
-                item
-                if isinstance(item, PolaritySignal)
-                else PolaritySignal.from_dict(item)
+                item if isinstance(item, PolaritySignal) else PolaritySignal.from_dict(item)
                 for item in data.get("polarity_signals", ())
             ),
             span_signals=tuple(
-                item
-                if isinstance(item, SpanSignal)
-                else SpanSignal.from_dict(item)
+                item if isinstance(item, SpanSignal) else SpanSignal.from_dict(item)
                 for item in data.get("span_signals", ())
             ),
             missing_slot_signals=tuple(
-                item
-                if isinstance(item, MissingSlotSignal)
-                else MissingSlotSignal.from_dict(item)
+                item if isinstance(item, MissingSlotSignal) else MissingSlotSignal.from_dict(item)
                 for item in data.get("missing_slot_signals", ())
             ),
             polarity_preflight=_mapping(
@@ -642,19 +552,11 @@ class CaseSpacyDiagnostics:
                 data.get("residual_polarity_inversion_documented")
             ),
             semantic_authority=bool(data.get("semantic_authority", False)),
-            promotion_requires_full_gates=bool(
-                data.get("promotion_requires_full_gates", True)
-            ),
-            teacher_identity=str(
-                data.get("teacher_identity") or TEACHER_IDENTITY
-            ),
+            promotion_requires_full_gates=bool(data.get("promotion_requires_full_gates", True)),
+            teacher_identity=str(data.get("teacher_identity") or TEACHER_IDENTITY),
             teacher_role=str(data.get("teacher_role") or TEACHER_ROLE),
-            production_arm_id=str(
-                data.get("production_arm_id") or PRODUCTION_ARM_ID
-            ),
-            interface=str(
-                data.get("interface") or SPACY_RESIDUAL_DIAGNOSTICS_INTERFACE
-            ),
+            production_arm_id=str(data.get("production_arm_id") or PRODUCTION_ARM_ID),
+            interface=str(data.get("interface") or SPACY_RESIDUAL_DIAGNOSTICS_INTERFACE),
             detail=data.get("detail"),
         )
 
@@ -667,9 +569,7 @@ def compute_polarity_signals(
 
     gold = _coerce_ir(gold_ir, field_name="gold_ir")
     assert gold is not None
-    candidate = _coerce_ir(
-        candidate_ir, field_name="candidate_ir", allow_none=True
-    )
+    candidate = _coerce_ir(candidate_ir, field_name="candidate_ir", allow_none=True)
     if candidate is None:
         return (
             PolaritySignal(
@@ -703,11 +603,7 @@ def compute_polarity_signals(
                 gold_modality=gold_mod,
                 candidate_modality=cand_mod,
                 modality_preserved=preserved,
-                detail=(
-                    None
-                    if preserved
-                    else "modality not preserved on optimal assignment"
-                ),
+                detail=(None if preserved else "modality not preserved on optimal assignment"),
             )
         )
     for ref_index, rule in enumerate(gold.rules):
@@ -742,9 +638,7 @@ def compute_missing_slot_signals(
 
     gold = _coerce_ir(gold_ir, field_name="gold_ir")
     assert gold is not None
-    candidate = _coerce_ir(
-        candidate_ir, field_name="candidate_ir", allow_none=True
-    )
+    candidate = _coerce_ir(candidate_ir, field_name="candidate_ir", allow_none=True)
     if candidate is None:
         return tuple(
             MissingSlotSignal(
@@ -783,15 +677,9 @@ def compute_missing_slot_signals(
                 MissingSlotSignal(
                     field_path=f"rules[{ref_index}].{field_name}",
                     canonical_field=field_name,
-                    gold_value=(
-                        list(gold_value)
-                        if isinstance(gold_value, tuple)
-                        else gold_value
-                    ),
+                    gold_value=(list(gold_value) if isinstance(gold_value, tuple) else gold_value),
                     candidate_value=(
-                        list(cand_value)
-                        if isinstance(cand_value, tuple)
-                        else cand_value
+                        list(cand_value) if isinstance(cand_value, tuple) else cand_value
                     ),
                     reference_index=ref_index,
                     candidate_index=cand_index,
@@ -830,9 +718,7 @@ def compute_span_signals(
 ) -> tuple[SpanSignal, ...]:
     """Project constructor-private source spans into residual-row span signals."""
 
-    candidate = _coerce_ir(
-        candidate_ir, field_name="candidate_ir", allow_none=True
-    )
+    candidate = _coerce_ir(candidate_ir, field_name="candidate_ir", allow_none=True)
     signals: list[SpanSignal] = []
     for index, raw in enumerate(source_spans):
         if isinstance(raw, SourceSpanDiagnostic):
@@ -844,23 +730,15 @@ def compute_span_signals(
                 start_char=int(raw.get("start_char") or 0),
                 end_char=int(raw.get("end_char") or 0),
                 source_span_sha256=str(raw.get("source_span_sha256") or ""),
-                structural_signature=str(
-                    raw.get("structural_signature") or ""
-                ),
+                structural_signature=str(raw.get("structural_signature") or ""),
             )
         else:
             raise SpacyResidualDiagnosticsError(
                 "source_spans must be SourceSpanDiagnostic or objects"
             )
-        rule_index = index if candidate is not None and index < len(
-            candidate.rules
-        ) else None
-        signals.append(
-            SpanSignal.from_source_span(span, rule_index=rule_index)
-        )
-    signals.sort(
-        key=lambda item: (item.start_char, item.end_char, item.formula_id)
-    )
+        rule_index = index if candidate is not None and index < len(candidate.rules) else None
+        signals.append(SpanSignal.from_source_span(span, rule_index=rule_index))
+    signals.sort(key=lambda item: (item.start_char, item.end_char, item.formula_id))
     return tuple(signals)
 
 
@@ -884,9 +762,7 @@ def diagnose_ir_pair(
     case_id = _nonblank(case_id, "case_id")
     gold = _coerce_ir(gold_ir, field_name="gold_ir")
     assert gold is not None
-    candidate = _coerce_ir(
-        candidate_ir, field_name="candidate_ir", allow_none=True
-    )
+    candidate = _coerce_ir(candidate_ir, field_name="candidate_ir", allow_none=True)
     preflight = polarity_preflight(gold, candidate)
     # Teacher must never widen a closed gate.
     gate_passed = bool(preflight.get("gate_passed"))
@@ -927,9 +803,7 @@ def diagnose_modal_spacy_construction(
     """Diagnose one modal_spacy construction against gold (teacher path only)."""
 
     if not isinstance(construction, ModalSpacyConstruction):
-        raise SpacyResidualDiagnosticsError(
-            "construction must be ModalSpacyConstruction"
-        )
+        raise SpacyResidualDiagnosticsError("construction must be ModalSpacyConstruction")
     diagnostics = construction.diagnostics
     if not isinstance(diagnostics, ModalSpacyConstructorDiagnostics):
         raise SpacyResidualDiagnosticsError(
@@ -992,9 +866,7 @@ def diagnose_matrix_case(
             {},
         )
     )
-    return diagnose_modal_spacy_construction(
-        case.case_id, case.gold_ir, construction
-    )
+    return diagnose_modal_spacy_construction(case.case_id, case.gold_ir, construction)
 
 
 def spacy_cue_from_signals(
@@ -1016,9 +888,7 @@ def spacy_cue_from_signals(
     if missing_slot is not None:
         kinds.append(SIGNAL_KIND_MISSING_SLOT)
     if not kinds:
-        raise SpacyResidualDiagnosticsError(
-            "spacy cue requires at least one signal"
-        )
+        raise SpacyResidualDiagnosticsError("spacy cue requires at least one signal")
     cue: dict[str, object] = {
         "interface": SPACY_RESIDUAL_CUE_INTERFACE,
         "semantic_authority": False,
@@ -1029,14 +899,10 @@ def spacy_cue_from_signals(
         "signal_kinds": kinds,
         "polarity": None if polarity is None else polarity.to_dict(),
         "span": None if span is None else span.to_dict(),
-        "missing_slot": (
-            None if missing_slot is None else missing_slot.to_dict()
-        ),
+        "missing_slot": (None if missing_slot is None else missing_slot.to_dict()),
     }
     if polarity_preflight_gate_passed is not None:
-        cue["polarity_preflight_gate_passed"] = bool(
-            polarity_preflight_gate_passed
-        )
+        cue["polarity_preflight_gate_passed"] = bool(polarity_preflight_gate_passed)
     if case_id is not None:
         cue["case_id"] = _nonblank(case_id, "case_id")
     return cue
@@ -1048,20 +914,12 @@ def spacy_cues_by_field_path(
     """Project case diagnostics into field_path → spacy_cue for residual attach."""
 
     if not isinstance(diagnostics, CaseSpacyDiagnostics):
-        raise SpacyResidualDiagnosticsError(
-            "diagnostics must be CaseSpacyDiagnostics"
-        )
+        raise SpacyResidualDiagnosticsError("diagnostics must be CaseSpacyDiagnostics")
     by_path: dict[str, dict[str, object]] = {}
-    polarity_by_path = {
-        item.field_path: item for item in diagnostics.polarity_signals
-    }
+    polarity_by_path = {item.field_path: item for item in diagnostics.polarity_signals}
     span_by_path = {item.field_path: item for item in diagnostics.span_signals}
-    missing_by_path = {
-        item.field_path: item for item in diagnostics.missing_slot_signals
-    }
-    field_paths = sorted(
-        set(polarity_by_path) | set(span_by_path) | set(missing_by_path)
-    )
+    missing_by_path = {item.field_path: item for item in diagnostics.missing_slot_signals}
+    field_paths = sorted(set(polarity_by_path) | set(span_by_path) | set(missing_by_path))
     for path in field_paths:
         by_path[path] = spacy_cue_from_signals(
             polarity=polarity_by_path.get(path),
@@ -1086,9 +944,7 @@ def attach_spacy_cues_to_facets(
     attached: list[ResidualFacet] = []
     for facet in facets:
         if not isinstance(facet, ResidualFacet):
-            raise SpacyResidualDiagnosticsError(
-                "facets must be ResidualFacet values"
-            )
+            raise SpacyResidualDiagnosticsError("facets must be ResidualFacet values")
         cue = cues_by_field_path.get(facet.field_path)
         if cue is None:
             # Also try parent rule path for whole-rule span / missing-rule cues.
@@ -1133,13 +989,9 @@ def attach_spacy_diagnostics_to_case_residual(
     """Attach spaCy cues onto one case residual record's facets."""
 
     if not isinstance(case, CaseResidualRecord):
-        raise SpacyResidualDiagnosticsError(
-            "case must be CaseResidualRecord"
-        )
+        raise SpacyResidualDiagnosticsError("case must be CaseResidualRecord")
     if diagnostics.case_id != case.case_id:
-        raise SpacyResidualDiagnosticsError(
-            "diagnostics.case_id must match residual case_id"
-        )
+        raise SpacyResidualDiagnosticsError("diagnostics.case_id must match residual case_id")
     cues = spacy_cues_by_field_path(diagnostics)
     return CaseResidualRecord(
         case_id=case.case_id,
@@ -1174,28 +1026,18 @@ class SpacyPilotDiagnosticsMap:
     def __post_init__(self) -> None:
         object.__setattr__(self, "cases", tuple(self.cases))
         if not self.cases:
-            raise SpacyResidualDiagnosticsError(
-                "pilot diagnostics map requires case records"
-            )
-        if not all(
-            isinstance(item, CaseSpacyDiagnostics) for item in self.cases
-        ):
-            raise SpacyResidualDiagnosticsError(
-                "cases must be CaseSpacyDiagnostics records"
-            )
+            raise SpacyResidualDiagnosticsError("pilot diagnostics map requires case records")
+        if not all(isinstance(item, CaseSpacyDiagnostics) for item in self.cases):
+            raise SpacyResidualDiagnosticsError("cases must be CaseSpacyDiagnostics records")
         observed = tuple(item.case_id for item in self.cases)
         if len(set(observed)) != len(observed):
-            raise SpacyResidualDiagnosticsError(
-                "pilot diagnostics map case_ids must be unique"
-            )
+            raise SpacyResidualDiagnosticsError("pilot diagnostics map case_ids must be unique")
         if self.semantic_authority is not False:
             raise SpacyResidualDiagnosticsError(
                 "pilot diagnostics map must not claim semantic_authority"
             )
         if self.production_default_changed is not False:
-            raise SpacyResidualDiagnosticsError(
-                "production_default_changed must remain false"
-            )
+            raise SpacyResidualDiagnosticsError("production_default_changed must remain false")
         object.__setattr__(
             self,
             "production_arm_id",
@@ -1209,18 +1051,14 @@ class SpacyPilotDiagnosticsMap:
                 "production_constructor_identity",
             ),
         )
-        object.__setattr__(
-            self, "interface", _nonblank(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _nonblank(self.interface, "interface"))
         object.__setattr__(
             self,
             "schema_version",
             _nonblank(self.schema_version, "schema_version"),
         )
         if self.catalog_cid is not None:
-            object.__setattr__(
-                self, "catalog_cid", _nonblank(self.catalog_cid, "catalog_cid")
-            )
+            object.__setattr__(self, "catalog_cid", _nonblank(self.catalog_cid, "catalog_cid"))
 
     def by_case_id(self) -> Mapping[str, CaseSpacyDiagnostics]:
         return MappingProxyType({item.case_id: item for item in self.cases})
@@ -1231,15 +1069,11 @@ class SpacyPilotDiagnosticsMap:
 
     @property
     def polarity_gate_passed_case_ids(self) -> tuple[str, ...]:
-        return tuple(
-            item.case_id for item in self.cases if item.polarity_gate_passed
-        )
+        return tuple(item.case_id for item in self.cases if item.polarity_gate_passed)
 
     @property
     def polarity_gate_failed_case_ids(self) -> tuple[str, ...]:
-        return tuple(
-            item.case_id for item in self.cases if not item.polarity_gate_passed
-        )
+        return tuple(item.case_id for item in self.cases if not item.polarity_gate_passed)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -1248,16 +1082,10 @@ class SpacyPilotDiagnosticsMap:
             "catalog_cid": self.catalog_cid,
             "interface": self.interface,
             "pilot_case_ids": list(self.case_ids),
-            "polarity_gate_failed_case_ids": list(
-                self.polarity_gate_failed_case_ids
-            ),
-            "polarity_gate_passed_case_ids": list(
-                self.polarity_gate_passed_case_ids
-            ),
+            "polarity_gate_failed_case_ids": list(self.polarity_gate_failed_case_ids),
+            "polarity_gate_passed_case_ids": list(self.polarity_gate_passed_case_ids),
             "production_arm_id": self.production_arm_id,
-            "production_constructor_identity": (
-                self.production_constructor_identity
-            ),
+            "production_constructor_identity": (self.production_constructor_identity),
             "production_default_changed": False,
             "schema_version": self.schema_version,
             "semantic_authority": False,
@@ -1270,35 +1098,22 @@ class SpacyPilotDiagnosticsMap:
     def from_dict(cls, value: object) -> "SpacyPilotDiagnosticsMap":
         data = _mapping(value, "spaCy pilot diagnostics map")
         cases = tuple(
-            item
-            if isinstance(item, CaseSpacyDiagnostics)
-            else CaseSpacyDiagnostics.from_dict(item)
+            item if isinstance(item, CaseSpacyDiagnostics) else CaseSpacyDiagnostics.from_dict(item)
             for item in data.get("cases", ())
         )
         return cls(
             cases=cases,
             catalog_cid=data.get("catalog_cid"),
-            production_arm_id=str(
-                data.get("production_arm_id") or PRODUCTION_ARM_ID
-            ),
+            production_arm_id=str(data.get("production_arm_id") or PRODUCTION_ARM_ID),
             production_constructor_identity=str(
-                data.get("production_constructor_identity")
-                or PRODUCTION_CONSTRUCTOR_IDENTITY
+                data.get("production_constructor_identity") or PRODUCTION_CONSTRUCTOR_IDENTITY
             ),
-            production_default_changed=bool(
-                data.get("production_default_changed", False)
-            ),
+            production_default_changed=bool(data.get("production_default_changed", False)),
             semantic_authority=bool(data.get("semantic_authority", False)),
-            interface=str(
-                data.get("interface") or SPACY_PILOT_DIAGNOSTICS_MAP_INTERFACE
-            ),
-            schema_version=str(
-                data.get("schema_version") or SPACY_RESIDUAL_DIAGNOSTICS_SCHEMA
-            ),
+            interface=str(data.get("interface") or SPACY_PILOT_DIAGNOSTICS_MAP_INTERFACE),
+            schema_version=str(data.get("schema_version") or SPACY_RESIDUAL_DIAGNOSTICS_SCHEMA),
             task_id=str(data.get("task_id") or PLATEAU_BREAK_TASK_ID),
-            board_namespace=str(
-                data.get("board_namespace") or PLATEAU_BREAK_BOARD_NAMESPACE
-            ),
+            board_namespace=str(data.get("board_namespace") or PLATEAU_BREAK_BOARD_NAMESPACE),
         )
 
 
@@ -1306,13 +1121,8 @@ def diagnose_pilot_cases(
     *,
     cases: Sequence[MatrixCase] | None = None,
     constructor: ModalSpacyCanonicalConstructor | None = None,
-    candidate_ir_by_case: Mapping[
-        str, CanonicalRuleIR | Mapping[str, object] | None
-    ]
-    | None = None,
-    source_spans_by_case: Mapping[
-        str, Sequence[SourceSpanDiagnostic | Mapping[str, object]]
-    ]
+    candidate_ir_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object] | None] | None = None,
+    source_spans_by_case: Mapping[str, Sequence[SourceSpanDiagnostic | Mapping[str, object]]]
     | None = None,
     construct: bool = True,
     catalog_cid: str | None = None,
@@ -1325,9 +1135,7 @@ def diagnose_pilot_cases(
     """
 
     assert_production_default_unchanged()
-    matrix_cases = (
-        tuple(cases) if cases is not None else load_pilot_matrix_cases()
-    )
+    matrix_cases = tuple(cases) if cases is not None else load_pilot_matrix_cases()
     order = {case_id: index for index, case_id in enumerate(PILOT_CASE_IDS)}
     candidate_ir_by_case = dict(candidate_ir_by_case or {})
     source_spans_by_case = dict(source_spans_by_case or {})
@@ -1355,11 +1163,7 @@ def diagnose_pilot_cases(
     if catalog_cid is None:
         try:
             catalog = load_plateau_residual_catalog()
-            catalog_cid = (
-                str(catalog.get("catalog_cid"))
-                if catalog.get("catalog_cid")
-                else None
-            )
+            catalog_cid = str(catalog.get("catalog_cid")) if catalog.get("catalog_cid") else None
         except Exception:
             catalog_cid = None
     return SpacyPilotDiagnosticsMap(
@@ -1390,9 +1194,7 @@ def attach_spacy_diagnostics_to_catalog_cases(
         if diagnostics is None:
             cases_out.append(case_map)
             residual_rows.extend(
-                dict(item)
-                for item in case_map.get("residuals") or ()
-                if isinstance(item, Mapping)
+                dict(item) for item in case_map.get("residuals") or () if isinstance(item, Mapping)
             )
             continue
         cues = spacy_cues_by_field_path(diagnostics)
@@ -1434,9 +1236,7 @@ class SpacyDiagnosticReceipt:
     """Evidence receipt for the spaCy residual diagnostics teacher."""
 
     diagnostics_map: SpacyPilotDiagnosticsMap
-    nonzero_pilot_case_ids: tuple[str, ...] = field(
-        default_factory=lambda: NONZERO_PILOT_CASE_IDS
-    )
+    nonzero_pilot_case_ids: tuple[str, ...] = field(default_factory=lambda: NONZERO_PILOT_CASE_IDS)
     zero_residual_control_case_id: str = ZERO_RESIDUAL_CONTROL_CASE_ID
     residual_polarity_inversion_case_ids: tuple[str, ...] = field(
         default_factory=lambda: RESIDUAL_POLARITY_INVERSION_CASE_IDS
@@ -1446,9 +1246,7 @@ class SpacyDiagnosticReceipt:
 
     def __post_init__(self) -> None:
         if not isinstance(self.diagnostics_map, SpacyPilotDiagnosticsMap):
-            raise SpacyResidualDiagnosticsError(
-                "diagnostics_map must be SpacyPilotDiagnosticsMap"
-            )
+            raise SpacyResidualDiagnosticsError("diagnostics_map must be SpacyPilotDiagnosticsMap")
         object.__setattr__(
             self,
             "nonzero_pilot_case_ids",
@@ -1475,9 +1273,7 @@ class SpacyDiagnosticReceipt:
                 "interface": self.interface,
                 "schema_version": self.schema_version,
                 "nonzero_pilot_case_ids": list(self.nonzero_pilot_case_ids),
-                "zero_residual_control_case_id": (
-                    self.zero_residual_control_case_id
-                ),
+                "zero_residual_control_case_id": (self.zero_residual_control_case_id),
                 "residual_polarity_inversion_case_ids": list(
                     self.residual_polarity_inversion_case_ids
                 ),
@@ -1512,13 +1308,9 @@ def polarity_preflight_is_fail_closed(
     """
 
     preflight = polarity_preflight(gold_ir, candidate_ir)
-    diagnostics = diagnose_ir_pair(
-        "preflight-probe", gold_ir, candidate_ir
-    )
+    diagnostics = diagnose_ir_pair("preflight-probe", gold_ir, candidate_ir)
     if bool(preflight.get("gate_passed")):
-        return diagnostics.polarity_gate_passed is True and not (
-            diagnostics.has_polarity_inversion
-        )
+        return diagnostics.polarity_gate_passed is True and not (diagnostics.has_polarity_inversion)
     # Fail-closed: diagnostics must mirror the closed gate and never claim pass.
     return (
         diagnostics.polarity_gate_passed is False

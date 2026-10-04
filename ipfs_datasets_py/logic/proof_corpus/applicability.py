@@ -187,13 +187,9 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofApplicabilityError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofApplicabilityError(f"{field_name} must be a non-empty trimmed string")
     if len(value) > MAX_IDENTIFIER_CHARS:
-        raise ProofApplicabilityError(
-            f"{field_name} exceeds {MAX_IDENTIFIER_CHARS} characters"
-        )
+        raise ProofApplicabilityError(f"{field_name} exceeds {MAX_IDENTIFIER_CHARS} characters")
     return value
 
 
@@ -206,9 +202,7 @@ def _optional_text(value: Any, field_name: str) -> str:
 def _require_cid(value: Any, field_name: str) -> str:
     cid = _require_text(value, field_name)
     if not _CID_RE.fullmatch(cid):
-        raise ProofApplicabilityError(
-            f"{field_name} must be a CIDv1 base32 string"
-        )
+        raise ProofApplicabilityError(f"{field_name} must be a CIDv1 base32 string")
     return cid
 
 
@@ -221,9 +215,7 @@ def _optional_cid(value: Any, field_name: str) -> str:
 def _require_profile(value: Any, field_name: str) -> str:
     profile = _require_text(value, field_name)
     if not _PROFILE_RE.fullmatch(profile):
-        raise ProofApplicabilityError(
-            f"{field_name} must be a lowercase hyphenated identifier"
-        )
+        raise ProofApplicabilityError(f"{field_name} must be a lowercase hyphenated identifier")
     return profile
 
 
@@ -237,15 +229,11 @@ def _unique_texts(values: Any, field_name: str) -> tuple[str, ...]:
     if values in (None, ()):
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise ProofApplicabilityError(
-            f"{field_name} must be a sequence of strings"
-        )
+        raise ProofApplicabilityError(f"{field_name} must be a sequence of strings")
     try:
         items = tuple(_require_text(item, field_name) for item in values)
     except TypeError as exc:
-        raise ProofApplicabilityError(
-            f"{field_name} must be a sequence of strings"
-        ) from exc
+        raise ProofApplicabilityError(f"{field_name} must be a sequence of strings") from exc
     if len(items) != len(set(items)):
         raise ProofApplicabilityError(f"{field_name} values must be unique")
     return items
@@ -259,9 +247,7 @@ def _unique_cids(values: Any, field_name: str) -> tuple[str, ...]:
     try:
         items = tuple(_require_cid(item, field_name) for item in values)
     except TypeError as exc:
-        raise ProofApplicabilityError(
-            f"{field_name} must be a sequence of CIDs"
-        ) from exc
+        raise ProofApplicabilityError(f"{field_name} must be a sequence of CIDs") from exc
     if len(items) != len(set(items)):
         raise ProofApplicabilityError(f"{field_name} values must be unique")
     return items
@@ -275,9 +261,7 @@ def _positive_int(value: Any, field_name: str) -> int:
 
 def _non_negative_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ProofApplicabilityError(
-            f"{field_name} must be a non-negative integer"
-        )
+        raise ProofApplicabilityError(f"{field_name} must be a non-negative integer")
     return value
 
 
@@ -285,20 +269,15 @@ def _bounded_budget(value: Any, field_name: str) -> int:
     budget = _positive_int(value, field_name)
     if budget > MAX_SELECTION_BUDGET:
         raise ProofApplicabilityError(
-            f"{field_name} must be <= {MAX_SELECTION_BUDGET} (unbounded budgets "
-            "are rejected)"
+            f"{field_name} must be <= {MAX_SELECTION_BUDGET} (unbounded budgets are rejected)"
         )
     return budget
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProofApplicabilityError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProofApplicabilityError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -308,9 +287,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise ProofApplicabilityError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise ProofApplicabilityError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _reason_label(value: str) -> str:
@@ -343,15 +320,11 @@ def _unique_reasons(values: Any) -> tuple[str, ...]:
                 seen.add(label)
                 ordered.append(label)
     except TypeError as exc:
-        raise ProofApplicabilityError(
-            "reasons must be a sequence of strings"
-        ) from exc
+        raise ProofApplicabilityError("reasons must be a sequence of strings") from exc
     return tuple(ordered)
 
 
-def _safe_diagnostic_ids(
-    diagnostics: Mapping[str, Any], key: str
-) -> tuple[str, ...]:
+def _safe_diagnostic_ids(diagnostics: Mapping[str, Any], key: str) -> tuple[str, ...]:
     """Extract bounded public identifier lists from envelope diagnostics."""
 
     if key not in _SAFE_DIAGNOSTIC_LIST_KEYS:
@@ -435,16 +408,10 @@ class ProofApplicabilityQuery:
     query_schema_version: str = PROOF_APPLICABILITY_QUERY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "query_id", _require_text(self.query_id, "query_id")
-        )
-        object.__setattr__(
-            self, "at_time", _optional_text(self.at_time, "at_time")
-        )
+        object.__setattr__(self, "query_id", _require_text(self.query_id, "query_id"))
+        object.__setattr__(self, "at_time", _optional_text(self.at_time, "at_time"))
         object.__setattr__(self, "tenant", _optional_text(self.tenant, "tenant"))
-        object.__setattr__(
-            self, "visibility", _optional_text(self.visibility, "visibility")
-        )
+        object.__setattr__(self, "visibility", _optional_text(self.visibility, "visibility"))
         object.__setattr__(
             self,
             "corpus_root_cid",
@@ -461,9 +428,7 @@ class ProofApplicabilityQuery:
             _unique_cids(self.approved_parent_cids, "approved_parent_cids"),
         )
         if not isinstance(self.require_parent_lineage, bool):
-            raise ProofApplicabilityError(
-                "require_parent_lineage must be a bool"
-            )
+            raise ProofApplicabilityError("require_parent_lineage must be a bool")
         object.__setattr__(
             self,
             "jurisdiction",
@@ -474,17 +439,13 @@ class ProofApplicabilityQuery:
             "authority_id",
             _optional_text(self.authority_id, "authority_id"),
         )
-        object.__setattr__(
-            self, "subject_ids", _unique_texts(self.subject_ids, "subject_ids")
-        )
+        object.__setattr__(self, "subject_ids", _unique_texts(self.subject_ids, "subject_ids"))
         object.__setattr__(
             self,
             "resource_ids",
             _unique_texts(self.resource_ids, "resource_ids"),
         )
-        object.__setattr__(
-            self, "action_ids", _unique_texts(self.action_ids, "action_ids")
-        )
+        object.__setattr__(self, "action_ids", _unique_texts(self.action_ids, "action_ids"))
         object.__setattr__(
             self,
             "capability_ids",
@@ -495,12 +456,8 @@ class ProofApplicabilityQuery:
             "data_classes",
             _unique_texts(self.data_classes, "data_classes"),
         )
-        object.__setattr__(
-            self, "purpose_ids", _unique_texts(self.purpose_ids, "purpose_ids")
-        )
-        object.__setattr__(
-            self, "policy_id", _optional_text(self.policy_id, "policy_id")
-        )
+        object.__setattr__(self, "purpose_ids", _unique_texts(self.purpose_ids, "purpose_ids"))
+        object.__setattr__(self, "policy_id", _optional_text(self.policy_id, "policy_id"))
         object.__setattr__(
             self,
             "schema_version",
@@ -511,12 +468,8 @@ class ProofApplicabilityQuery:
             "logic_family",
             _optional_text(self.logic_family, "logic_family"),
         )
-        object.__setattr__(
-            self, "backend_id", _optional_text(self.backend_id, "backend_id")
-        )
-        object.__setattr__(
-            self, "circuit_id", _optional_text(self.circuit_id, "circuit_id")
-        )
+        object.__setattr__(self, "backend_id", _optional_text(self.backend_id, "backend_id"))
+        object.__setattr__(self, "circuit_id", _optional_text(self.circuit_id, "circuit_id"))
         object.__setattr__(self, "vk_id", _optional_text(self.vk_id, "vk_id"))
         object.__setattr__(
             self,
@@ -529,9 +482,7 @@ class ProofApplicabilityQuery:
                 "required_result_authority",
                 parse_result_authority(self.required_result_authority),
             )
-        kinds = _unique_texts(
-            self.required_attestation_kinds, "required_attestation_kinds"
-        )
+        kinds = _unique_texts(self.required_attestation_kinds, "required_attestation_kinds")
         object.__setattr__(
             self,
             "required_attestation_kinds",
@@ -559,8 +510,7 @@ class ProofApplicabilityQuery:
         )
         if self.query_schema_version != PROOF_APPLICABILITY_QUERY_SCHEMA_VERSION:
             raise ProofApplicabilityError(
-                f"unsupported applicability query schema: "
-                f"{self.query_schema_version!r}"
+                f"unsupported applicability query schema: {self.query_schema_version!r}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -654,12 +604,8 @@ class ProofApplicabilityQuery:
             visibility=payload.get("visibility", ""),
             corpus_root_cid=payload.get("corpus_root_cid", ""),
             revocation_root_cid=payload.get("revocation_root_cid", ""),
-            approved_parent_cids=tuple(
-                payload.get("approved_parent_cids", ()) or ()
-            ),
-            require_parent_lineage=bool(
-                payload.get("require_parent_lineage", False)
-            ),
+            approved_parent_cids=tuple(payload.get("approved_parent_cids", ()) or ()),
+            require_parent_lineage=bool(payload.get("require_parent_lineage", False)),
             jurisdiction=payload.get("jurisdiction", ""),
             authority_id=payload.get("authority_id", ""),
             subject_ids=tuple(payload.get("subject_ids", ()) or ()),
@@ -676,16 +622,10 @@ class ProofApplicabilityQuery:
             vk_id=payload.get("vk_id", ""),
             security_profile=payload.get("security_profile", ""),
             required_result_authority=authority,
-            required_attestation_kinds=tuple(
-                payload.get("required_attestation_kinds", ()) or ()
-            ),
+            required_attestation_kinds=tuple(payload.get("required_attestation_kinds", ()) or ()),
             domain=payload.get("domain", ""),
-            selection_budget=int(
-                payload.get("selection_budget", DEFAULT_MAX_SELECTED)
-            ),
-            max_candidates=int(
-                payload.get("max_candidates", DEFAULT_MAX_CANDIDATES)
-            ),
+            selection_budget=int(payload.get("selection_budget", DEFAULT_MAX_SELECTED)),
+            max_candidates=int(payload.get("max_candidates", DEFAULT_MAX_CANDIDATES)),
             reject_revoked=bool(payload.get("reject_revoked", True)),
             reject_superseded=bool(payload.get("reject_superseded", True)),
             query_schema_version=payload.get(
@@ -728,30 +668,18 @@ class HardFilterAssessment:
             _unique_texts(self.filter_dimensions, "filter_dimensions"),
         )
         if self.rank_score is not None:
-            object.__setattr__(
-                self, "rank_score", _finite_score(self.rank_score, "rank_score")
-            )
+            object.__setattr__(self, "rank_score", _finite_score(self.rank_score, "rank_score"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != HARD_FILTER_ASSESSMENT_SCHEMA_VERSION:
-            raise ProofApplicabilityError(
-                f"unsupported assessment schema: {self.schema_version!r}"
-            )
-        if (
-            self.disposition is FilterDisposition.ADMITTED
-            and self.reasons
-        ):
+            raise ProofApplicabilityError(f"unsupported assessment schema: {self.schema_version!r}")
+        if self.disposition is FilterDisposition.ADMITTED and self.reasons:
             # Admitted candidates may carry empty reasons only.
-            raise ProofApplicabilityError(
-                "admitted assessments must not carry filter reasons"
-            )
-        if (
-            self.disposition is not FilterDisposition.ADMITTED
-            and not self.reasons
-        ):
+            raise ProofApplicabilityError("admitted assessments must not carry filter reasons")
+        if self.disposition is not FilterDisposition.ADMITTED and not self.reasons:
             raise ProofApplicabilityError(
                 "filtered/rejected assessments require at least one reason"
             )
@@ -793,9 +721,7 @@ class HardFilterAssessment:
             reasons=tuple(payload.get("reasons", ()) or ()),
             filter_dimensions=tuple(payload.get("filter_dimensions", ()) or ()),
             rank_score=payload.get("rank_score"),
-            schema_version=payload.get(
-                "schema_version", HARD_FILTER_ASSESSMENT_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", HARD_FILTER_ASSESSMENT_SCHEMA_VERSION),
         )
 
 
@@ -820,9 +746,7 @@ class RankedCandidate:
             "rank_index",
             _non_negative_int(self.rank_index, "rank_index"),
         )
-        object.__setattr__(
-            self, "rank_score", _finite_score(self.rank_score, "rank_score")
-        )
+        object.__setattr__(self, "rank_score", _finite_score(self.rank_score, "rank_score"))
         features_raw = dict(_as_mapping(self.score_features, "score_features"))
         if len(features_raw) > DEFAULT_MAX_RANK_SCORE_FEATURES:
             raise ProofApplicabilityError(
@@ -877,9 +801,7 @@ class RankedCandidate:
             rank_index=int(payload.get("rank_index", 0)),
             rank_score=float(payload.get("rank_score", 0.0)),
             score_features=dict(payload.get("score_features", {}) or {}),
-            schema_version=payload.get(
-                "schema_version", RANKED_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", RANKED_CANDIDATE_SCHEMA_VERSION),
         )
 
 
@@ -913,9 +835,7 @@ class ProofApplicabilityResult:
     interface: str = PROOF_APPLICABILITY_FILTER_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "query_id", _require_text(self.query_id, "query_id")
-        )
+        object.__setattr__(self, "query_id", _require_text(self.query_id, "query_id"))
         object.__setattr__(
             self,
             "disposition",
@@ -924,23 +844,15 @@ class ProofApplicabilityResult:
         assessments = tuple(self.assessments)
         for item in assessments:
             if not isinstance(item, HardFilterAssessment):
-                raise ProofApplicabilityError(
-                    "assessments must be HardFilterAssessment instances"
-                )
+                raise ProofApplicabilityError("assessments must be HardFilterAssessment instances")
         # Stable order by envelope CID.
-        assessments = tuple(
-            sorted(assessments, key=lambda item: item.envelope_cid)
-        )
+        assessments = tuple(sorted(assessments, key=lambda item: item.envelope_cid))
         object.__setattr__(self, "assessments", assessments)
-        object.__setattr__(
-            self, "admitted_cids", _unique_cids(self.admitted_cids, "admitted_cids")
-        )
+        object.__setattr__(self, "admitted_cids", _unique_cids(self.admitted_cids, "admitted_cids"))
         ranked = tuple(self.ranked)
         for item in ranked:
             if not isinstance(item, RankedCandidate):
-                raise ProofApplicabilityError(
-                    "ranked must be RankedCandidate instances"
-                )
+                raise ProofApplicabilityError("ranked must be RankedCandidate instances")
         object.__setattr__(self, "ranked", ranked)
         object.__setattr__(
             self,
@@ -980,20 +892,14 @@ class ProofApplicabilityResult:
 
         reason_counts_raw = dict(_as_mapping(self.reason_counts, "reason_counts"))
         reason_counts: dict[str, int] = {}
-        for key, value in sorted(
-            reason_counts_raw.items(), key=lambda pair: str(pair[0])
-        ):
+        for key, value in sorted(reason_counts_raw.items(), key=lambda pair: str(pair[0])):
             label = _reason_label(str(key))
-            reason_counts[label] = _non_negative_int(
-                value, f"reason_counts[{label}]"
-            )
+            reason_counts[label] = _non_negative_int(value, f"reason_counts[{label}]")
         object.__setattr__(self, "reason_counts", MappingProxyType(reason_counts))
 
         budgets_raw = dict(_as_mapping(self.budgets, "budgets"))
         budgets: dict[str, int] = {}
-        for key, value in sorted(
-            budgets_raw.items(), key=lambda pair: str(pair[0])
-        ):
+        for key, value in sorted(budgets_raw.items(), key=lambda pair: str(pair[0])):
             key_text = _require_text(str(key), "budgets key")
             budgets[key_text] = _non_negative_int(value, f"budgets[{key_text}]")
         object.__setattr__(self, "budgets", MappingProxyType(budgets))
@@ -1001,9 +907,7 @@ class ProofApplicabilityResult:
         object.__setattr__(self, "gaps", _unique_reasons(self.gaps))
 
         if not isinstance(self.retrieval_rank_used_for_authority, bool):
-            raise ProofApplicabilityError(
-                "retrieval_rank_used_for_authority must be a bool"
-            )
+            raise ProofApplicabilityError("retrieval_rank_used_for_authority must be a bool")
         if self.retrieval_rank_used_for_authority:
             raise ProofApplicabilityError(
                 "ranking never establishes applicability or proof authority"
@@ -1017,9 +921,7 @@ class ProofApplicabilityResult:
             )
         for candidate in self.ranked:
             if candidate.envelope_cid not in admitted_set:
-                raise ProofApplicabilityError(
-                    "ranked candidates must be hard-filter admitted"
-                )
+                raise ProofApplicabilityError("ranked candidates must be hard-filter admitted")
 
         object.__setattr__(
             self,
@@ -1038,8 +940,7 @@ class ProofApplicabilityResult:
         )
         if self.schema_version != PROOF_APPLICABILITY_RESULT_SCHEMA_VERSION:
             raise ProofApplicabilityError(
-                f"unsupported applicability result schema: "
-                f"{self.schema_version!r}"
+                f"unsupported applicability result schema: {self.schema_version!r}"
             )
         if self.interface != PROOF_APPLICABILITY_FILTER_INTERFACE:
             raise ProofApplicabilityError(
@@ -1048,17 +949,11 @@ class ProofApplicabilityResult:
 
         # Count consistency (fail closed on internal drift).
         if self.selected_count != len(self.selected_cids):
-            raise ProofApplicabilityError(
-                "selected_count does not match selected_cids"
-            )
+            raise ProofApplicabilityError("selected_count does not match selected_cids")
         if self.ranked_count != len(self.ranked):
-            raise ProofApplicabilityError(
-                "ranked_count does not match ranked entries"
-            )
+            raise ProofApplicabilityError("ranked_count does not match ranked entries")
         if self.rejected_count != len(self.rejected_cids):
-            raise ProofApplicabilityError(
-                "rejected_count does not match rejected_cids"
-            )
+            raise ProofApplicabilityError("rejected_count does not match rejected_cids")
 
     @property
     def ranking_establishes_applicability(self) -> bool:
@@ -1135,14 +1030,10 @@ class ProofApplicabilityResult:
             query_id=payload.get("query_id", ""),
             disposition=payload.get("disposition", SelectionDisposition.EMPTY),
             assessments=tuple(
-                HardFilterAssessment.from_dict(item)
-                for item in (payload.get("assessments") or ())
+                HardFilterAssessment.from_dict(item) for item in (payload.get("assessments") or ())
             ),
             admitted_cids=tuple(payload.get("admitted_cids", ()) or ()),
-            ranked=tuple(
-                RankedCandidate.from_dict(item)
-                for item in (payload.get("ranked") or ())
-            ),
+            ranked=tuple(RankedCandidate.from_dict(item) for item in (payload.get("ranked") or ())),
             selected_cids=tuple(payload.get("selected_cids", ()) or ()),
             rejected_cids=tuple(payload.get("rejected_cids", ()) or ()),
             considered_count=int(payload.get("considered_count", 0)),
@@ -1156,12 +1047,8 @@ class ProofApplicabilityResult:
             retrieval_rank_used_for_authority=False,
             query_digest=payload.get("query_digest", ""),
             policy_digest=payload.get("policy_digest", ""),
-            schema_version=payload.get(
-                "schema_version", PROOF_APPLICABILITY_RESULT_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", PROOF_APPLICABILITY_FILTER_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", PROOF_APPLICABILITY_RESULT_SCHEMA_VERSION),
+            interface=payload.get("interface", PROOF_APPLICABILITY_FILTER_INTERFACE),
         )
 
 
@@ -1205,13 +1092,9 @@ def hard_filter_envelope(
     """Apply all hard filters to one envelope (before any ranking)."""
 
     if not isinstance(envelope, AttestedProofEnvelope):
-        raise ProofApplicabilityError(
-            "envelope must be an AttestedProofEnvelope"
-        )
+        raise ProofApplicabilityError("envelope must be an AttestedProofEnvelope")
     if not isinstance(query, ProofApplicabilityQuery):
-        raise ProofApplicabilityError(
-            "query must be a ProofApplicabilityQuery"
-        )
+        raise ProofApplicabilityError("query must be a ProofApplicabilityQuery")
 
     envelope.verify_integrity()
     reasons: list[str] = []
@@ -1378,9 +1261,7 @@ def hard_filter_envelope(
             revoked_set.add(_require_cid(item, "revoked_target_cids"))
     if revocation_snapshot is not None:
         if not isinstance(revocation_snapshot, ProofRevocationSnapshot):
-            raise ProofApplicabilityError(
-                "revocation_snapshot must be a ProofRevocationSnapshot"
-            )
+            raise ProofApplicabilityError("revocation_snapshot must be a ProofRevocationSnapshot")
         if (
             query.revocation_root_cid
             and revocation_snapshot.corpus_root_cid
@@ -1425,10 +1306,7 @@ def hard_filter_envelope(
         dimensions.append("circuit")
         if not circuit.circuit_id:
             reasons.append("missing_circuit")
-        elif (
-            circuit.circuit_id != query.circuit_id
-            and circuit.circuit_ref != query.circuit_id
-        ):
+        elif circuit.circuit_id != query.circuit_id and circuit.circuit_ref != query.circuit_id:
             reasons.append("circuit_mismatch")
     if query.vk_id:
         dimensions.append("vk")
@@ -1454,10 +1332,7 @@ def hard_filter_envelope(
         dimensions.append("proof_authority")
         assert isinstance(query.required_result_authority, AuthorityKind)
         if envelope.result_authority is not query.required_result_authority:
-            reasons.append(
-                "result_authority_mismatch:"
-                f"{envelope.result_authority.value}"
-            )
+            reasons.append(f"result_authority_mismatch:{envelope.result_authority.value}")
     if query.required_attestation_kinds:
         dimensions.append("attestation_kind")
         kind_value = envelope.attestation_kind.value
@@ -1468,17 +1343,11 @@ def hard_filter_envelope(
     if trust_policy is not None:
         dimensions.append("trust_policy")
         if not isinstance(trust_policy, ProofTrustPolicy):
-            raise ProofApplicabilityError(
-                "trust_policy must be a ProofTrustPolicy"
-            )
+            raise ProofApplicabilityError("trust_policy must be a ProofTrustPolicy")
         try:
-            evaluation = trust_policy.evaluate(
-                envelope, at_time=query.at_time or ""
-            )
+            evaluation = trust_policy.evaluate(envelope, at_time=query.at_time or "")
         except ProofTrustPolicyError as exc:
-            raise ProofApplicabilityError(
-                f"trust policy evaluation failed: {exc}"
-            ) from exc
+            raise ProofApplicabilityError(f"trust policy evaluation failed: {exc}") from exc
         if evaluation.status is not TrustEvaluationStatus.ACCEPT:
             for reason in evaluation.reasons:
                 reasons.append(f"trust_policy:{_reason_label(reason)}")
@@ -1511,13 +1380,8 @@ def hard_filter_envelope(
             "simulation",
             "membership",
         )
-        hard = any(
-            any(token in reason for token in hard_tokens)
-            for reason in ordered_reasons
-        )
-        disposition = (
-            FilterDisposition.REJECTED if hard else FilterDisposition.FILTERED
-        )
+        hard = any(any(token in reason for token in hard_tokens) for reason in ordered_reasons)
+        disposition = FilterDisposition.REJECTED if hard else FilterDisposition.FILTERED
         return HardFilterAssessment(
             envelope_cid=envelope.envelope_cid or envelope.content_cid,
             disposition=disposition,
@@ -1542,13 +1406,11 @@ def _advisory_rank_score(
     cid = envelope.envelope_cid or envelope.content_cid
     features: dict[str, float] = {}
     if advisory_scores and cid in advisory_scores:
-        features["advisory"] = _finite_score(
-            advisory_scores[cid], "advisory_scores"
-        )
+        features["advisory"] = _finite_score(advisory_scores[cid], "advisory_scores")
     # Deterministic tie-break feature from CID suffix (not authority).
-    features["cid_order"] = float(
-        int(hashlib.sha256(cid.encode("utf-8")).hexdigest()[:8], 16)
-    ) / 0xFFFFFFFF
+    features["cid_order"] = (
+        float(int(hashlib.sha256(cid.encode("utf-8")).hexdigest()[:8], 16)) / 0xFFFFFFFF
+    )
     # Prefer complete coverage only as a soft presentation signal.
     if envelope.coverage and getattr(envelope.coverage, "complete", False):
         features["coverage_complete"] = 1.0
@@ -1578,12 +1440,8 @@ class ProofApplicabilityFilter:
     schema_version: str = PROOF_APPLICABILITY_FILTER_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if self.trust_policy is not None and not isinstance(
-            self.trust_policy, ProofTrustPolicy
-        ):
-            raise ProofApplicabilityError(
-                "trust_policy must be a ProofTrustPolicy or None"
-            )
+        if self.trust_policy is not None and not isinstance(self.trust_policy, ProofTrustPolicy):
+            raise ProofApplicabilityError("trust_policy must be a ProofTrustPolicy or None")
         if self.revocation_snapshot is not None and not isinstance(
             self.revocation_snapshot, ProofRevocationSnapshot
         ):
@@ -1596,13 +1454,9 @@ class ProofApplicabilityFilter:
             _unique_cids(self.revoked_target_cids, "revoked_target_cids"),
         )
         if self.interface != PROOF_APPLICABILITY_FILTER_INTERFACE:
-            raise ProofApplicabilityError(
-                f"unsupported filter interface: {self.interface!r}"
-            )
+            raise ProofApplicabilityError(f"unsupported filter interface: {self.interface!r}")
         if self.schema_version != PROOF_APPLICABILITY_FILTER_SCHEMA_VERSION:
-            raise ProofApplicabilityError(
-                f"unsupported filter schema: {self.schema_version!r}"
-            )
+            raise ProofApplicabilityError(f"unsupported filter schema: {self.schema_version!r}")
 
     def filter_one(
         self,
@@ -1639,22 +1493,16 @@ class ProofApplicabilityFilter:
         """
 
         if not isinstance(query, ProofApplicabilityQuery):
-            raise ProofApplicabilityError(
-                "query must be a ProofApplicabilityQuery"
-            )
+            raise ProofApplicabilityError("query must be a ProofApplicabilityQuery")
         if isinstance(envelopes, (str, bytes, bytearray)):
-            raise ProofApplicabilityError(
-                "envelopes must be a sequence of AttestedProofEnvelope"
-            )
+            raise ProofApplicabilityError("envelopes must be a sequence of AttestedProofEnvelope")
 
         # Deterministic candidate order by envelope CID before budgets.
         ordered: list[AttestedProofEnvelope] = []
         seen_cids: set[str] = set()
         for item in envelopes:
             if not isinstance(item, AttestedProofEnvelope):
-                raise ProofApplicabilityError(
-                    "envelopes must be AttestedProofEnvelope instances"
-                )
+                raise ProofApplicabilityError("envelopes must be AttestedProofEnvelope instances")
             item.verify_integrity()
             cid = item.envelope_cid or item.content_cid
             if cid in seen_cids:
@@ -1705,9 +1553,7 @@ class ProofApplicabilityFilter:
                 )
             )
 
-        selected_cids = tuple(
-            item.envelope_cid for item in ranked[: query.selection_budget]
-        )
+        selected_cids = tuple(item.envelope_cid for item in ranked[: query.selection_budget])
         budget_exhausted = len(ranked) > query.selection_budget
 
         gaps: list[str] = []
@@ -1748,9 +1594,7 @@ class ProofApplicabilityFilter:
             "admitted": len(admitted),
             "selected": len(selected_cids),
         }
-        if isinstance(
-            getattr(self.trust_policy, "budget", None), PolicyBudget
-        ):
+        if isinstance(getattr(self.trust_policy, "budget", None), PolicyBudget):
             assert self.trust_policy is not None
             budget = self.trust_policy.budget
             assert isinstance(budget, PolicyBudget)
@@ -1758,18 +1602,14 @@ class ProofApplicabilityFilter:
             budgets["policy_timeout_ms"] = budget.timeout_ms
 
         filtered_count = sum(
-            1
-            for item in assessments
-            if item.disposition is FilterDisposition.FILTERED
+            1 for item in assessments if item.disposition is FilterDisposition.FILTERED
         )
         # rejected_count tracks hard rejects + soft filters for trace totals.
         return ProofApplicabilityResult(
             query_id=query.query_id,
             disposition=disposition,
             assessments=tuple(assessments),
-            admitted_cids=tuple(
-                env.envelope_cid or env.content_cid for env in admitted
-            ),
+            admitted_cids=tuple(env.envelope_cid or env.content_cid for env in admitted),
             ranked=tuple(ranked),
             selected_cids=selected_cids,
             rejected_cids=tuple(rejected_cids),

@@ -16,9 +16,7 @@ def test_packaged_workspace_bundle_roundtrip(tmp_path: Path) -> None:
         {
             "workspace_id": "ws-packaged-01",
             "workspace_name": "Workspace Packaged",
-            "documents": [
-                {"id": "doc_1", "title": "Memo", "text": "Notes from the workspace."}
-            ],
+            "documents": [{"id": "doc_1", "title": "Memo", "text": "Notes from the workspace."}],
         }
     )
     package = WorkspaceDatasetPackager().package(

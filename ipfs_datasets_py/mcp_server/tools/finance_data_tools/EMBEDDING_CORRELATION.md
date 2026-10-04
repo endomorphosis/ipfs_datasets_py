@@ -59,13 +59,13 @@ News Articles (Text + Images)
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-    VectorEmbeddingAnalyzer
+    VectorEmbeddingAnalyzer,
 )
 
 analyzer = VectorEmbeddingAnalyzer(
     text_model="sentence-transformers/all-mpnet-base-v2",
     image_model="openai/clip-vit-base-patch32",
-    enable_multimodal=True
+    enable_multimodal=True,
 )
 
 # Generate text embedding
@@ -74,7 +74,7 @@ article = {
     "title": "Tech company announces breakthrough",
     "content": "The company unveiled...",
     "source": "reuters",
-    "published_date": "2024-01-15T10:00:00Z"
+    "published_date": "2024-01-15T10:00:00Z",
 }
 
 doc_embedding = analyzer.embed_document(article)
@@ -89,12 +89,9 @@ article_with_images = {
     "article_id": "art_002",
     "title": "CEO presents new product",
     "content": "At the launch event...",
-    "images": [
-        "https://example.com/image1.jpg",
-        "https://example.com/image2.jpg"
-    ],
+    "images": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"],
     "source": "bloomberg",
-    "published_date": "2024-01-16T14:30:00Z"
+    "published_date": "2024-01-16T14:30:00Z",
 }
 
 doc_embedding = analyzer.embed_document(article_with_images)
@@ -110,9 +107,7 @@ Multiple fusion strategies available:
 ```python
 # Text gets 60% weight, images split remaining 40%
 fused = analyzer.fuse_embeddings(
-    text_embedding=text_emb,
-    image_embeddings=[img_emb1, img_emb2],
-    fusion_method="weighted_average"
+    text_embedding=text_emb, image_embeddings=[img_emb1, img_emb2], fusion_method="weighted_average"
 )
 ```
 
@@ -120,9 +115,7 @@ fused = analyzer.fuse_embeddings(
 ```python
 # Simply concatenate all embeddings
 fused = analyzer.fuse_embeddings(
-    text_embedding=text_emb,
-    image_embeddings=[img_emb1, img_emb2],
-    fusion_method="concatenate"
+    text_embedding=text_emb, image_embeddings=[img_emb1, img_emb2], fusion_method="concatenate"
 )
 ```
 
@@ -133,16 +126,16 @@ fused = analyzer.fuse_embeddings(
 stock_data = {
     "symbol": "TECH",
     "price_before": 100.0,  # Price before article
-    "price_after": 105.5,   # Price 24h after
+    "price_after": 105.5,  # Price 24h after
     "volume_before": 1000000,
-    "volume_after": 1500000
+    "volume_after": 1500000,
 }
 
 # Correlate embedding with market movement
 correlation = analyzer.correlate_with_market(
     doc_embedding=doc_embedding,
     stock_data=stock_data,
-    time_window=24  # hours
+    time_window=24,  # hours
 )
 
 print(f"Price change: {correlation.price_change:.2f}%")
@@ -155,10 +148,7 @@ print(f"Latent factors: {correlation.latent_factors}")
 
 ```python
 # Cluster documents by embedding similarity
-clusters = analyzer.cluster_embeddings(
-    n_clusters=10,
-    method="kmeans"
-)
+clusters = analyzer.cluster_embeddings(n_clusters=10, method="kmeans")
 
 print(f"Found {len(clusters)} clusters")
 for cluster_id, doc_ids in clusters.items():
@@ -180,9 +170,7 @@ for cluster_id, impact in cluster_impacts.items():
 # Find similar articles
 query_embedding = doc_embedding.fused_embedding
 similar_docs = analyzer.find_similar_embeddings(
-    query_embedding=query_embedding,
-    top_k=10,
-    threshold=0.7
+    query_embedding=query_embedding, top_k=10, threshold=0.7
 )
 
 for doc, similarity in similar_docs:
@@ -195,33 +183,37 @@ for doc, similarity in similar_docs:
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-    analyze_embedding_market_correlation
+    analyze_embedding_market_correlation,
 )
 import json
 
 # Prepare data
-news_data = json.dumps([
-    {
-        "article_id": "art_001",
-        "title": "Tech breakthrough announced",
-        "content": "Company reveals...",
-        "images": ["url1.jpg", "url2.jpg"],
-        "source": "reuters",
-        "published_date": "2024-01-15T10:00:00Z"
-    },
-    # ... more articles
-])
+news_data = json.dumps(
+    [
+        {
+            "article_id": "art_001",
+            "title": "Tech breakthrough announced",
+            "content": "Company reveals...",
+            "images": ["url1.jpg", "url2.jpg"],
+            "source": "reuters",
+            "published_date": "2024-01-15T10:00:00Z",
+        },
+        # ... more articles
+    ]
+)
 
-stock_data = json.dumps([
-    {
-        "symbol": "TECH",
-        "price_before": 100.0,
-        "price_after": 105.5,
-        "volume_before": 1000000,
-        "volume_after": 1500000
-    },
-    # ... more stocks
-])
+stock_data = json.dumps(
+    [
+        {
+            "symbol": "TECH",
+            "price_before": 100.0,
+            "price_after": 105.5,
+            "volume_before": 1000000,
+            "volume_after": 1500000,
+        },
+        # ... more stocks
+    ]
+)
 
 # Analyze correlations
 result = analyze_embedding_market_correlation(
@@ -229,7 +221,7 @@ result = analyze_embedding_market_correlation(
     stock_data_json=stock_data,
     enable_multimodal=True,
     time_window=24,
-    n_clusters=10
+    n_clusters=10,
 )
 
 analysis = json.loads(result)
@@ -282,19 +274,14 @@ print(json.dumps(analysis, indent=2))
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-    find_predictive_embedding_patterns
+    find_predictive_embedding_patterns,
 )
 
 # Analyze historical data for patterns
-historical_data = json.dumps({
-    "embeddings": [...],
-    "market_outcomes": [...]
-})
+historical_data = json.dumps({"embeddings": [...], "market_outcomes": [...]})
 
 patterns = find_predictive_embedding_patterns(
-    historical_embeddings_json=historical_data,
-    min_correlation=0.5,
-    lookback_days=30
+    historical_embeddings_json=historical_data, min_correlation=0.5, lookback_days=30
 )
 
 print(json.loads(patterns))
@@ -311,7 +298,7 @@ Traditional sentiment only captures positive/negative. Embedding analysis captur
 
 ```python
 # Traditional sentiment: "This is positive news"
-# Embedding analysis: "Articles in cluster 5 with high factor_42 
+# Embedding analysis: "Articles in cluster 5 with high factor_42
 #                      consistently precede 3%+ moves within 24h"
 ```
 
@@ -337,10 +324,7 @@ Extract predictive signals from article images:
 # show 2x higher correlation with same-day price moves than other times
 
 # Find these patterns:
-patterns = analyzer.find_temporal_patterns(
-    embeddings=doc_embeddings,
-    market_data=stock_data
-)
+patterns = analyzer.find_temporal_patterns(embeddings=doc_embeddings, market_data=stock_data)
 ```
 
 ### 4. Cross-Company Correlation
@@ -349,10 +333,7 @@ patterns = analyzer.find_temporal_patterns(
 # Find when news about Company A correlates with moves in Company B
 # Based on embedding similarity (not explicit mentions)
 
-analyzer.find_cross_company_correlations(
-    min_similarity=0.8,
-    min_correlation=0.5
-)
+analyzer.find_cross_company_correlations(min_similarity=0.8, min_correlation=0.5)
 ```
 
 ## Advanced Features
@@ -362,10 +343,7 @@ analyzer.find_cross_company_correlations(
 ```python
 # Extract and interpret latent factors
 doc_embedding = analyzer.embed_document(article)
-latent_factors = analyzer._extract_latent_factors(
-    doc_embedding.fused_embedding,
-    top_k=10
-)
+latent_factors = analyzer._extract_latent_factors(doc_embedding.fused_embedding, top_k=10)
 
 # Interpret factors by finding common terms in high-scoring docs
 for factor_name, value in latent_factors.items():
@@ -381,16 +359,15 @@ for factor_name, value in latent_factors.items():
 import matplotlib.pyplot as plt
 
 embeddings_2d = reduce_dimensionality(
-    [emb.fused_embedding for emb in analyzer.embeddings.values()],
-    method="umap"
+    [emb.fused_embedding for emb in analyzer.embeddings.values()], method="umap"
 )
 
 # Color by market impact
 colors = [corr.price_change for corr in analyzer.correlations]
 
-plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=colors, cmap='RdYlGn')
-plt.colorbar(label='Price Change %')
-plt.title('News Embedding Space Colored by Market Impact')
+plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=colors, cmap="RdYlGn")
+plt.colorbar(label="Price Change %")
+plt.title("News Embedding Space Colored by Market Impact")
 plt.show()
 ```
 
@@ -399,16 +376,12 @@ plt.show()
 ```python
 # Track how embedding patterns evolve over time
 embedding_timeseries = analyzer.create_embedding_timeseries(
-    symbol="TECH",
-    start_date="2024-01-01",
-    end_date="2024-06-01"
+    symbol="TECH", start_date="2024-01-01", end_date="2024-06-01"
 )
 
 # Correlate with price timeseries
 correlation_over_time = analyzer.compute_rolling_correlation(
-    embedding_timeseries,
-    price_timeseries,
-    window="7d"
+    embedding_timeseries, price_timeseries, window="7d"
 )
 ```
 
@@ -446,17 +419,10 @@ pip install umap-learn matplotlib seaborn
 
 ```python
 # Batch processing
-analyzer.embed_documents_batch(
-    articles=article_list,
-    batch_size=32,
-    use_gpu=True
-)
+analyzer.embed_documents_batch(articles=article_list, batch_size=32, use_gpu=True)
 
 # Caching
-analyzer.enable_embedding_cache(
-    cache_dir="/path/to/cache",
-    cache_embeddings=True
-)
+analyzer.enable_embedding_cache(cache_dir="/path/to/cache", cache_embeddings=True)
 
 # Parallel processing
 analyzer.set_num_workers(4)
@@ -467,11 +433,9 @@ analyzer.set_num_workers(4)
 ### With News Scrapers
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.finance_data_tools.news_scrapers import (
-    fetch_financial_news
-)
+from ipfs_datasets_py.mcp_server.tools.finance_data_tools.news_scrapers import fetch_financial_news
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-    VectorEmbeddingAnalyzer
+    VectorEmbeddingAnalyzer,
 )
 
 # Scrape news
@@ -480,7 +444,7 @@ news_json = fetch_financial_news(
     start_date="2024-01-01",
     end_date="2024-01-31",
     sources="reuters,bloomberg",
-    max_articles=1000
+    max_articles=1000,
 )
 articles = json.loads(news_json)["articles"]
 
@@ -498,10 +462,10 @@ this MCP wrapper re-exports the same analyzer.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-    GraphRAGNewsAnalyzer
+    GraphRAGNewsAnalyzer,
 )
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-    VectorEmbeddingAnalyzer
+    VectorEmbeddingAnalyzer,
 )
 
 # Combine approaches

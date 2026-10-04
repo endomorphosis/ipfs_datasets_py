@@ -53,9 +53,7 @@ class _FakeProverAdapter:
                     confidence=1.0 if self.is_valid else 0.0,
                     proof_time=0.001,
                     details={"formula": getattr(statement, "formula", "")},
-                    error_message=None
-                    if self.is_valid
-                    else self.status.value,
+                    error_message=None if self.is_valid else self.status.value,
                 )
             ],
             agreement_rate=1.0 if self.is_valid else 0.0,
@@ -281,9 +279,7 @@ def test_verifier_reproduces_introspection_packet_span_attestations() -> None:
     for formula in sample.modal_ir.formulas:
         start = formula.provenance.start_char
         end = formula.provenance.end_char
-        span_text_hash = hashlib.sha256(
-            sample.text[start:end].encode("utf-8")
-        ).hexdigest()
+        span_text_hash = hashlib.sha256(sample.text[start:end].encode("utf-8")).hexdigest()
         payload = {
             "end_char": end,
             "formula_id": formula.formula_id,

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 from functools import cache
 import os
 import subprocess
@@ -23,15 +17,16 @@ _PID = os.getpid()
 _BYTE_MAPPING = {
     "B": 1,
     "KiB": 1024,
-    "MiB": 1024 ** 2,
-    "GiB": 1024 ** 3,
-    "TiB": 1024 ** 4,
-    "PiB": 1024 ** 5,
-    "EiB": 1024 ** 6,
-    "ZiB": 1024 ** 7,
-    "YiB": 1024 ** 8,
-    "bit": 1 / 8
+    "MiB": 1024**2,
+    "GiB": 1024**3,
+    "TiB": 1024**4,
+    "PiB": 1024**5,
+    "EiB": 1024**6,
+    "ZiB": 1024**7,
+    "YiB": 1024**8,
+    "bit": 1 / 8,
 }
+
 
 class Software:
     """
@@ -71,24 +66,25 @@ class Software:
         _get_shared_memory_usage_in_mb() -> float:
             Returns the shared memory usage of the current process in megabytes, if available.
     """
+
     # Decorator to create class properties
     class _classproperty:
         """Helper decorator to turn class methods into properties."""
+
         def __init__(self, func):
             self.func = func
-        
+
         def __get__(self, instance, owner):
             return self.func(owner)
 
     class _cached_class_property:
         """Helper decorator to turn class methods into cached properties."""
+
         def __init__(self, func):
             self.func = func
-            self.cache_attr = f'_cached_{func.__name__}'
+            self.cache_attr = f"_cached_{func.__name__}"
 
         def __get__(self, instance, owner):
             if not hasattr(owner, self.cache_attr):
                 setattr(owner, self.cache_attr, self.func(owner))
             return getattr(owner, self.cache_attr)
-        
-    

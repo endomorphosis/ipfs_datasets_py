@@ -14,9 +14,7 @@ and analysing email data.
 ## Usage
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.email_tools import (
-    connect_imap, export_emails, analyze_inbox
-)
+from ipfs_datasets_py.mcp_server.tools.email_tools import connect_imap, export_emails, analyze_inbox
 
 # Connect to IMAP
 conn = await connect_imap(
@@ -24,7 +22,7 @@ conn = await connect_imap(
     port=993,
     username="user@gmail.com",
     password="app_password",
-    use_ssl=True
+    use_ssl=True,
 )
 
 # Export a folder
@@ -34,14 +32,11 @@ export = await export_emails(
     output_path="/data/emails.jsonl",
     output_format="jsonl",
     date_after="2024-01-01",
-    max_count=1000
+    max_count=1000,
 )
 
 # Analyse inbox
-analysis = await analyze_inbox(
-    connection_id=conn["connection_id"],
-    folder="INBOX"
-)
+analysis = await analyze_inbox(connection_id=conn["connection_id"], folder="INBOX")
 # Returns: {"total_messages": 5231, "top_senders": [...], "attachments": {...}}
 ```
 

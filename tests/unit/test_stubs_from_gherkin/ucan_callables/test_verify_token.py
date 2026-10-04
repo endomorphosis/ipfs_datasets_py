@@ -5,10 +5,12 @@ Feature: UCANManager.verify_token()
   Tests the verify_token() method of UCANManager.
   This callable verifies the validity of a UCAN token.
 """
+
 import pytest
 
 
 # Fixtures for Background
+
 
 @pytest.fixture
 def a_ucanmanager_instance_is_initialized():
@@ -39,10 +41,15 @@ def the_token_is_signed_and_not_expired():
 
 # Test scenarios
 
-def test_verify_token_succeeds_for_valid_token(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+
+def test_verify_token_succeeds_for_valid_token(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token succeeds for valid token
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -53,10 +60,14 @@ def test_verify_token_succeeds_for_valid_token(a_ucanmanager_instance_is_initial
     pass
 
 
-def test_valid_token_first_element_is_true(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_valid_token_first_element_is_true(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Valid token first element is True
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -67,10 +78,14 @@ def test_valid_token_first_element_is_true(a_ucanmanager_instance_is_initialized
     pass
 
 
-def test_valid_token_second_element_is_none(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_valid_token_second_element_is_none(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Valid token second element is None
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -81,10 +96,14 @@ def test_valid_token_second_element_is_none(a_ucanmanager_instance_is_initialize
     pass
 
 
-def test_verify_token_fails_when_token_not_found(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_token_not_found(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when token not found
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -95,10 +114,14 @@ def test_verify_token_fails_when_token_not_found(a_ucanmanager_instance_is_initi
     pass
 
 
-def test_verify_token_fails_when_token_is_revoked(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_token_is_revoked(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when token is revoked
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -110,10 +133,14 @@ def test_verify_token_fails_when_token_is_revoked(a_ucanmanager_instance_is_init
     pass
 
 
-def test_revoked_token_error_contains_token_revoked(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_revoked_token_error_contains_token_revoked(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Revoked token error contains Token revoked
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -125,10 +152,14 @@ def test_revoked_token_error_contains_token_revoked(a_ucanmanager_instance_is_in
     pass
 
 
-def test_revoked_token_error_contains_revoked_by_did(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_revoked_token_error_contains_revoked_by_did(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Revoked token error contains revoked_by DID
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -140,10 +171,14 @@ def test_revoked_token_error_contains_revoked_by_did(a_ucanmanager_instance_is_i
     pass
 
 
-def test_revoked_token_error_contains_revocation_reason(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_revoked_token_error_contains_revocation_reason(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Revoked token error contains revocation reason
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -155,10 +190,14 @@ def test_revoked_token_error_contains_revocation_reason(a_ucanmanager_instance_i
     pass
 
 
-def test_verify_token_fails_when_token_is_expired(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_token_is_expired(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when token is expired
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -170,10 +209,14 @@ def test_verify_token_fails_when_token_is_expired(a_ucanmanager_instance_is_init
     pass
 
 
-def test_verify_token_fails_when_token_not_yet_valid(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_token_not_yet_valid(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when token not yet valid
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -185,10 +228,14 @@ def test_verify_token_fails_when_token_not_yet_valid(a_ucanmanager_instance_is_i
     pass
 
 
-def test_verify_token_fails_when_issuer_not_found(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_issuer_not_found(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when issuer not found
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -200,10 +247,14 @@ def test_verify_token_fails_when_issuer_not_found(a_ucanmanager_instance_is_init
     pass
 
 
-def test_issuer_not_found_error_contains_issuer(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_issuer_not_found_error_contains_issuer(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Issuer not found error contains Issuer
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -215,10 +266,14 @@ def test_issuer_not_found_error_contains_issuer(a_ucanmanager_instance_is_initia
     pass
 
 
-def test_verify_token_fails_when_signature_missing(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_signature_missing(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when signature missing
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -230,10 +285,14 @@ def test_verify_token_fails_when_signature_missing(a_ucanmanager_instance_is_ini
     pass
 
 
-def test_verify_token_validates_proof_token_when_present(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_validates_proof_token_when_present(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token validates proof token when present
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -246,10 +305,14 @@ def test_verify_token_validates_proof_token_when_present(a_ucanmanager_instance_
     pass
 
 
-def test_proof_validation_succeeds_when_proof_is_valid(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_proof_validation_succeeds_when_proof_is_valid(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Proof validation succeeds when proof is valid
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -262,10 +325,14 @@ def test_proof_validation_succeeds_when_proof_is_valid(a_ucanmanager_instance_is
     pass
 
 
-def test_verify_token_fails_when_proof_token_invalid(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_proof_token_invalid(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when proof token invalid
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -278,10 +345,14 @@ def test_verify_token_fails_when_proof_token_invalid(a_ucanmanager_instance_is_i
     pass
 
 
-def test_invalid_proof_error_contains_proof_verification_failed(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_invalid_proof_error_contains_proof_verification_failed(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Invalid proof error contains Proof verification failed
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -294,10 +365,14 @@ def test_invalid_proof_error_contains_proof_verification_failed(a_ucanmanager_in
     pass
 
 
-def test_verify_token_checks_proof_token_delegation_rights(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_checks_proof_token_delegation_rights(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token checks proof token delegation rights
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -310,10 +385,14 @@ def test_verify_token_checks_proof_token_delegation_rights(a_ucanmanager_instanc
     pass
 
 
-def test_verify_token_requires_delegation_capability_in_proof(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_requires_delegation_capability_in_proof(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token requires delegation capability in proof
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -326,10 +405,14 @@ def test_verify_token_requires_delegation_capability_in_proof(a_ucanmanager_inst
     pass
 
 
-def test_verify_token_fails_when_manager_not_initialized(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_is_signed_and_not_expired):
+def test_verify_token_fails_when_manager_not_initialized(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_is_signed_and_not_expired,
+):
     """
     Scenario: Verify token fails when manager not initialized
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token is signed and not expired
@@ -339,4 +422,3 @@ def test_verify_token_fails_when_manager_not_initialized(a_ucanmanager_instance_
     """
     # TODO: Implement test
     pass
-

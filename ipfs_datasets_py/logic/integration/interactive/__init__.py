@@ -11,5 +11,5 @@ Components:
 from .interactive_fol_constructor import InteractiveFOLConstructor
 
 __all__ = [
-    'InteractiveFOLConstructor',
+    "InteractiveFOLConstructor",
 ]

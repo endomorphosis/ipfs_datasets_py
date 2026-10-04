@@ -334,8 +334,8 @@ reasoner.add_knowledge("All humans are mortal")
 reasoner.add_knowledge("Socrates is human")
 
 result = reasoner.query("Is Socrates mortal?")
-print(result['answer'])  # "Yes..."
-print(result['success'])  # True
+print(result["answer"])  # "Yes..."
+print(result["success"])  # True
 ```
 
 ### Example 4: Check System Capabilities
@@ -345,12 +345,12 @@ from ipfs_datasets_py.logic.integration import get_reasoner
 reasoner = get_reasoner()
 caps = reasoner.get_capabilities()
 
-print(f"TDFOL rules: {caps['tdfol_rules']}")           # 40
-print(f"CEC rules: {caps['cec_rules']}")               # 87
+print(f"TDFOL rules: {caps['tdfol_rules']}")  # 40
+print(f"CEC rules: {caps['cec_rules']}")  # 87
 print(f"Total rules: {caps['total_inference_rules']}")  # 127
-print(f"Modal provers: {caps['modal_provers']}")        # ['K', 'S4', 'S5', 'D', 'CognitiveCalculus']
-print(f"Grammar: {caps['grammar_available']}")          # True
-print(f"NL: {caps['natural_language']}")                # True
+print(f"Modal provers: {caps['modal_provers']}")  # ['K', 'S4', 'S5', 'D', 'CognitiveCalculus']
+print(f"Grammar: {caps['grammar_available']}")  # True
+print(f"NL: {caps['natural_language']}")  # True
 ```
 
 ---
@@ -402,7 +402,7 @@ from ipfs_datasets_py.logic.integration import (
     NeurosymbolicReasoner,
     create_enhanced_prover,
     create_modal_aware_prover,
-    parse_nl
+    parse_nl,
 )
 
 # All imports successful = integration working

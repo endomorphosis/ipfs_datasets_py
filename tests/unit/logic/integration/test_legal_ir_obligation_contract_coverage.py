@@ -42,9 +42,7 @@ def _document() -> dict[str, object]:
             }
         ],
         "frame_logic": {
-            "triples": [
-                {"subject": "agency", "predicate": "acts_on", "object": "record"}
-            ]
+            "triples": [{"subject": "agency", "predicate": "acts_on", "object": "record"}]
         },
     }
 
@@ -62,14 +60,13 @@ def test_every_contract_emits_every_declared_local_and_cross_view_family() -> No
             for obligation in obligations
             if obligation.metadata["contract_id"] == contract.contract_id
         ]
-        emitted_families = {
-            obligation.metadata["obligation_family"] for obligation in emitted
-        }
+        emitted_families = {obligation.metadata["obligation_family"] for obligation in emitted}
 
         assert set(contract.obligation_families) <= emitted_families
         assert set(contract.cross_view_obligation_families) <= emitted_families
         assert any(
-            obligation.metadata["coverage_scope"] in {
+            obligation.metadata["coverage_scope"]
+            in {
                 "required_field",
                 "local_semantics",
             }
@@ -79,10 +76,7 @@ def test_every_contract_emits_every_declared_local_and_cross_view_family() -> No
             obligation.metadata["coverage_scope"] == "cross_view_consistency"
             for obligation in emitted
         )
-        assert all(
-            obligation.legal_ir_view == contract.target_component
-            for obligation in emitted
-        )
+        assert all(obligation.legal_ir_view == contract.target_component for obligation in emitted)
 
 
 def test_every_required_contract_field_has_an_individual_obligation() -> None:
@@ -107,9 +101,7 @@ def test_every_required_contract_field_has_an_individual_obligation() -> None:
                     for field in contract.required_fields
                     if field.path == obligation.metadata["required_field"]
                 )
-                assert obligation.metadata["required_field_types"] == list(
-                    requirement.value_types
-                )
+                assert obligation.metadata["required_field_types"] == list(requirement.value_types)
                 assert obligation.metadata["allow_empty"] is requirement.allow_empty
 
 
@@ -146,9 +138,7 @@ def test_cross_view_obligations_name_all_peer_contracts_and_preservation_rules()
             if obligation.metadata["contract_id"] == contract.contract_id
             and obligation.metadata["coverage_scope"] == "cross_view_consistency"
         ]
-        expected_peer_ids = {
-            peer.contract_id for peer in contracts if peer is not contract
-        }
+        expected_peer_ids = {peer.contract_id for peer in contracts if peer is not contract}
         assert cross_view
         for obligation in cross_view:
             assert set(obligation.metadata["related_contract_ids"]) == expected_peer_ids

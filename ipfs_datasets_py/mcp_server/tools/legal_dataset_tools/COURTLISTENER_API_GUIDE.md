@@ -39,9 +39,7 @@ The scraper will automatically use this token if set.
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import search_recap_documents
 
 result = await search_recap_documents(
-    court='ca9',
-    document_type='opinion',
-    api_token='your_token_here'
+    court="ca9", document_type="opinion", api_token="your_token_here"
 )
 ```
 
@@ -56,14 +54,10 @@ Then read it in your script:
 import os
 from pathlib import Path
 
-token_file = Path.home() / '.config' / 'courtlistener' / 'token'
+token_file = Path.home() / ".config" / "courtlistener" / "token"
 api_token = token_file.read_text().strip() if token_file.exists() else None
 
-result = await search_recap_documents(
-    court='ca9',
-    document_type='opinion',
-    api_token=api_token
-)
+result = await search_recap_documents(court="ca9", document_type="opinion", api_token=api_token)
 ```
 
 ## Common Issues and Solutions
@@ -83,18 +77,14 @@ result = await search_recap_documents(
 ```python
 # Try a broader search
 result = await search_recap_documents(
-    query='*',  # Wildcard to get all documents
-    court='ca9',
-    filed_after='2023-01-01',  # Wider date range
-    limit=10
+    query="*",  # Wildcard to get all documents
+    court="ca9",
+    filed_after="2023-01-01",  # Wider date range
+    limit=10,
 )
 
 # Or search without court filter
-result = await search_recap_documents(
-    document_type='opinion',
-    filed_after='2024-01-01',
-    limit=10
-)
+result = await search_recap_documents(document_type="opinion", filed_after="2024-01-01", limit=10)
 ```
 
 ### Issue 2: API Rate Limiting
@@ -107,9 +97,9 @@ result = await search_recap_documents(
 1. Add delays between requests:
 ```python
 result = await scrape_recap_archive(
-    courts=['ca9'],
+    courts=["ca9"],
     rate_limit_delay=2.0,  # Wait 2 seconds between requests
-    max_documents=10
+    max_documents=10,
 )
 ```
 
@@ -158,8 +148,8 @@ curl https://www.courtlistener.com/api/rest/v3/search/?court=ca9
 # txnd = N.D. Texas (Northern District)
 
 result = await search_recap_documents(
-    court='nysd',  # Try different court
-    filed_after='2023-01-01'
+    court="nysd",  # Try different court
+    filed_after="2023-01-01",
 )
 ```
 
@@ -223,22 +213,19 @@ Full list: https://www.courtlistener.com/api/rest-info/#court-codes
 import anyio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import search_recap_documents
 
+
 async def test_connection():
     """Test basic connection to CourtListener API."""
     print("Testing CourtListener API connection...")
-    
+
     # Try a simple search
-    result = await search_recap_documents(
-        query='*',
-        court='ca9',
-        limit=5
-    )
-    
-    if result['status'] == 'error':
+    result = await search_recap_documents(query="*", court="ca9", limit=5)
+
+    if result["status"] == "error":
         print(f"❌ Error: {result['error']}")
         return False
-    
-    if result['count'] > 0:
+
+    if result["count"] > 0:
         print(f"✅ Success! Found {result['count']} documents")
         print(f"First case: {result['documents'][0]['case_name']}")
         return True
@@ -246,6 +233,7 @@ async def test_connection():
         print("⚠️  Connection OK but no documents found")
         print("Try different search parameters")
         return False
+
 
 # Run test
 success = anyio.run(test_connection)

@@ -123,12 +123,14 @@ def test_learned_head_perturbation_moves_only_learned_metrics(monkeypatch) -> No
     assert metric_lineage_from_block(compiler_before).path == (
         DETERMINISTIC_COMPILER_IR_METRIC_PATH
     )
-    assert compiler_before["compiler_ir_cross_entropy_loss"] == compiler_after[
-        "compiler_ir_cross_entropy_loss"
-    ]
-    assert compiler_before["compiler_ir_cosine_similarity"] == compiler_after[
-        "compiler_ir_cosine_similarity"
-    ]
+    assert (
+        compiler_before["compiler_ir_cross_entropy_loss"]
+        == compiler_after["compiler_ir_cross_entropy_loss"]
+    )
+    assert (
+        compiler_before["compiler_ir_cosine_similarity"]
+        == compiler_after["compiler_ir_cosine_similarity"]
+    )
 
 
 def test_deterministic_compiler_mutation_moves_only_compiler_metrics(monkeypatch) -> None:
@@ -163,12 +165,11 @@ def test_deterministic_compiler_mutation_moves_only_compiler_metrics(monkeypatch
         samples=[_sample()],
         state_hash="learned-stable",
     )
-    assert learned_before["view_cross_entropy_loss"] == learned_after[
-        "view_cross_entropy_loss"
-    ]
-    assert metric_lineage_from_block(learned_before).digest == metric_lineage_from_block(
-        learned_after
-    ).digest
+    assert learned_before["view_cross_entropy_loss"] == learned_after["view_cross_entropy_loss"]
+    assert (
+        metric_lineage_from_block(learned_before).digest
+        == metric_lineage_from_block(learned_after).digest
+    )
 
 
 def test_unexplained_invariant_metrics_across_material_states_are_rejected() -> None:
@@ -225,7 +226,4 @@ def test_stale_or_cross_path_cache_reuse_is_prevented(monkeypatch) -> None:
     assert stale_reads
     assert codec.calls == 1
     assert recomputed["persistent_cache_hit"] is False
-    assert metric_lineage_from_block(recomputed).path == (
-        DETERMINISTIC_COMPILER_IR_METRIC_PATH
-    )
-
+    assert metric_lineage_from_block(recomputed).path == (DETERMINISTIC_COMPILER_IR_METRIC_PATH)

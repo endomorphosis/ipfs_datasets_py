@@ -142,4 +142,3 @@ def test_verifier_rejects_mismatched_circuit_ref_and_circuit_version():
     )
 
     assert verifier.verify_proof(proof) is False
-

@@ -94,25 +94,31 @@
 ```python
 # Add to ipfs_datasets_py/knowledge_graphs/cypher/functions.py
 
+
 def fn_range(start: int, end: int, step: int = 1) -> List[int]:
     """Generate range of numbers."""
     return list(range(start, end, step))
+
 
 def fn_head(lst: List) -> Any:
     """Get first element of list."""
     return lst[0] if lst else None
 
+
 def fn_tail(lst: List) -> List:
     """Get all but first element."""
     return lst[1:] if len(lst) > 1 else []
+
 
 def fn_last(lst: List) -> Any:
     """Get last element of list."""
     return lst[-1] if lst else None
 
+
 def fn_reverse(lst: List) -> List:
     """Reverse list."""
     return list(reversed(lst))
+
 
 def fn_reduce(lst: List, expr: str, accumulator: str, initial: Any) -> Any:
     """Reduce list with accumulator."""
@@ -139,17 +145,21 @@ def fn_type(relationship: Relationship) -> str:
     """Get relationship type."""
     return relationship.type
 
+
 def fn_id(entity: Union[Node, Relationship]) -> str:
     """Get entity ID."""
     return entity.id
+
 
 def fn_properties(entity: Union[Node, Relationship]) -> Dict:
     """Get all properties."""
     return dict(entity)
 
+
 def fn_labels(node: Node) -> List[str]:
     """Get node labels."""
     return node.labels
+
 
 def fn_keys(obj: Union[Dict, Node, Relationship]) -> List[str]:
     """Get keys/property names."""
@@ -172,23 +182,56 @@ def fn_keys(obj: Union[Dict, Node, Relationship]) -> List[str]:
 ```python
 import math
 
+
 # Trigonometric
-def fn_sin(n: float) -> float: return math.sin(n)
-def fn_cos(n: float) -> float: return math.cos(n)
-def fn_tan(n: float) -> float: return math.tan(n)
-def fn_asin(n: float) -> float: return math.asin(n)
-def fn_acos(n: float) -> float: return math.acos(n)
-def fn_atan(n: float) -> float: return math.atan(n)
-def fn_atan2(y: float, x: float) -> float: return math.atan2(y, x)
+def fn_sin(n: float) -> float:
+    return math.sin(n)
+
+
+def fn_cos(n: float) -> float:
+    return math.cos(n)
+
+
+def fn_tan(n: float) -> float:
+    return math.tan(n)
+
+
+def fn_asin(n: float) -> float:
+    return math.asin(n)
+
+
+def fn_acos(n: float) -> float:
+    return math.acos(n)
+
+
+def fn_atan(n: float) -> float:
+    return math.atan(n)
+
+
+def fn_atan2(y: float, x: float) -> float:
+    return math.atan2(y, x)
+
 
 # Logarithmic
-def fn_log(n: float) -> float: return math.log(n)
-def fn_log10(n: float) -> float: return math.log10(n)
-def fn_exp(n: float) -> float: return math.exp(n)
+def fn_log(n: float) -> float:
+    return math.log(n)
+
+
+def fn_log10(n: float) -> float:
+    return math.log10(n)
+
+
+def fn_exp(n: float) -> float:
+    return math.exp(n)
+
 
 # Constants
-def fn_pi() -> float: return math.pi
-def fn_e() -> float: return math.e
+def fn_pi() -> float:
+    return math.pi
+
+
+def fn_e() -> float:
+    return math.e
 ```
 
 **Tests:** Create `tests/unit/knowledge_graphs/test_extended_math_functions.py`
@@ -234,119 +277,91 @@ from typing import Dict, Any, Optional
 from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDBackend
 from ipfs_datasets_py.search.graph_query.budgets import ExecutionBudgets
 
+
 class UnifiedQueryEngine:
     """
     Single entry point for all query types.
-    
+
     Replaces fragmented implementations with unified architecture.
     """
-    
+
     def __init__(self, backend: IPLDBackend):
         self.backend = backend
         self.graph_engine = GraphEngine(backend)
         self.ir_executor = IRExecutor(backend)
         self.hybrid_search = HybridSearchEngine(backend)
         self.budget_manager = BudgetManager()
-    
+
     def execute_cypher(
-        self,
-        query: str,
-        params: Dict[str, Any],
-        budgets: ExecutionBudgets
+        self, query: str, params: Dict[str, Any], budgets: ExecutionBudgets
     ) -> Result:
         """
         Execute Cypher query with budget enforcement.
-        
+
         Args:
             query: Cypher query string
             params: Query parameters
             budgets: Execution budgets
-            
+
         Returns:
             Query results
         """
         # Parse Cypher → AST → IR
         ir = self.cypher_compiler.compile(query, params)
         return self.execute_ir(ir, budgets)
-    
-    def execute_ir(
-        self,
-        ir: QueryIR,
-        budgets: ExecutionBudgets
-    ) -> ExecutionResult:
+
+    def execute_ir(self, ir: QueryIR, budgets: ExecutionBudgets) -> ExecutionResult:
         """
         Execute IR-based query.
-        
+
         Args:
             ir: Intermediate representation
             budgets: Execution budgets
-            
+
         Returns:
             Execution results with counters
         """
         with self.budget_manager.track(budgets):
             return self.ir_executor.execute(ir)
-    
+
     def execute_hybrid(
-        self,
-        query: str,
-        embeddings: Dict[str, Any],
-        budgets: ExecutionBudgets,
-        k: int = 10
+        self, query: str, embeddings: Dict[str, Any], budgets: ExecutionBudgets, k: int = 10
     ) -> HybridResult:
         """
         Execute hybrid vector+graph search.
-        
+
         Args:
             query: Search query
             embeddings: Vector embeddings
             budgets: Execution budgets
             k: Number of results
-            
+
         Returns:
             Hybrid search results
         """
         # Combine vector similarity with graph traversal
-        vector_results = self.hybrid_search.vector_search(
-            query, embeddings, k
-        )
-        graph_results = self.hybrid_search.expand_graph(
-            vector_results, depth=2
-        )
-        return self.hybrid_search.fuse_results(
-            vector_results, graph_results, alpha=0.7
-        )
-    
+        vector_results = self.hybrid_search.vector_search(query, embeddings, k)
+        graph_results = self.hybrid_search.expand_graph(vector_results, depth=2)
+        return self.hybrid_search.fuse_results(vector_results, graph_results, alpha=0.7)
+
     def execute_graphrag(
-        self,
-        question: str,
-        context: Dict[str, Any],
-        budgets: ExecutionBudgets
+        self, question: str, context: Dict[str, Any], budgets: ExecutionBudgets
     ) -> GraphRAGResult:
         """
         Execute full GraphRAG pipeline with LLM reasoning.
-        
+
         Args:
             question: User question
             context: Context including embeddings
             budgets: Execution budgets
-            
+
         Returns:
             GraphRAG results with reasoning
         """
         # Use hybrid search + LLM reasoning
-        search_results = self.execute_hybrid(
-            question,
-            context.get('embeddings', {}),
-            budgets
-        )
-        reasoning = self.llm_reasoner.reason(
-            question, search_results
-        )
-        return GraphRAGResult(
-            results=search_results,
-            reasoning=reasoning
-        )
+        search_results = self.execute_hybrid(question, context.get("embeddings", {}), budgets)
+        reasoning = self.llm_reasoner.reason(question, search_results)
+        return GraphRAGResult(results=search_results, reasoning=reasoning)
 ```
 
 **Files to Create:**
@@ -380,11 +395,11 @@ class UnifiedQueryEngine:
 from ipfs_datasets_py.search.graph_query.budgets import (
     ExecutionBudgets,
     ExecutionCounters,
-    budgets_from_preset
+    budgets_from_preset,
 )
 
 # Standard usage
-budgets = budgets_from_preset('moderate')
+budgets = budgets_from_preset("moderate")
 result = engine.execute_cypher(query, params, budgets)
 ```
 
@@ -403,32 +418,21 @@ class HybridSearchEngine:
     """
     Hybrid search combining vector similarity and graph traversal.
     """
-    
-    def vector_search(
-        self,
-        query: str,
-        embeddings: Dict[str, Any],
-        k: int = 10
-    ) -> List[Node]:
+
+    def vector_search(self, query: str, embeddings: Dict[str, Any], k: int = 10) -> List[Node]:
         """Vector similarity search."""
         # Use vector index for fast similarity search
         pass
-    
+
     def expand_graph(
-        self,
-        seed_nodes: List[Node],
-        depth: int = 2,
-        rel_types: Optional[List[str]] = None
+        self, seed_nodes: List[Node], depth: int = 2, rel_types: Optional[List[str]] = None
     ) -> List[Path]:
         """Expand from seed nodes via graph traversal."""
         # Use graph engine for multi-hop traversal
         pass
-    
+
     def fuse_results(
-        self,
-        vector_results: List[Node],
-        graph_results: List[Path],
-        alpha: float = 0.7
+        self, vector_results: List[Node], graph_results: List[Path], alpha: float = 0.7
     ) -> HybridResult:
         """Fuse vector and graph results with weighted combination."""
         # Combine with reciprocal rank fusion
@@ -449,14 +453,14 @@ class HybridSearchEngine:
 class ContentProcessor:
     """
     Focus ONLY on content extraction.
-    
+
     No query logic - use unified engine instead.
     """
-    
+
     def process_website(self, url: str) -> Dict:
         """
         Extract content from website.
-        
+
         Returns:
             Content data (text, media, metadata)
         """
@@ -464,12 +468,12 @@ class ContentProcessor:
         # Extract text, media
         # Archive content
         # Return raw data (no queries!)
-        return {'text': ..., 'media': ..., 'archived': ...}
-    
+        return {"text": ..., "media": ..., "archived": ...}
+
     def extract_entities(self, text: str) -> List[Entity]:
         """
         Extract entities from text.
-        
+
         Returns:
             Entity list (no graph operations!)
         """
@@ -538,19 +542,17 @@ class ContentProcessor:
 
 SCHEMA_ORG_VOCABULARY = {
     # Types
-    'Person': 'http://schema.org/Person',
-    'Organization': 'http://schema.org/Organization',
-    'Place': 'http://schema.org/Place',
-    'Product': 'http://schema.org/Product',
-    'Event': 'http://schema.org/Event',
-    
+    "Person": "http://schema.org/Person",
+    "Organization": "http://schema.org/Organization",
+    "Place": "http://schema.org/Place",
+    "Product": "http://schema.org/Product",
+    "Event": "http://schema.org/Event",
     # Properties
-    'name': 'http://schema.org/name',
-    'email': 'http://schema.org/email',
-    'telephone': 'http://schema.org/telephone',
-    'address': 'http://schema.org/address',
-    'birthDate': 'http://schema.org/birthDate',
-    
+    "name": "http://schema.org/name",
+    "email": "http://schema.org/email",
+    "telephone": "http://schema.org/telephone",
+    "address": "http://schema.org/address",
+    "birthDate": "http://schema.org/birthDate",
     # ... 100+ more terms
 }
 ```
@@ -571,30 +573,26 @@ SCHEMA_ORG_VOCABULARY = {
 class SHACLValidator:
     """
     SHACL (Shapes Constraint Language) validator.
-    
+
     Validates RDF data against shape constraints.
     """
-    
-    def validate(
-        self,
-        data_graph: Graph,
-        shapes_graph: ShapesGraph
-    ) -> ValidationReport:
+
+    def validate(self, data_graph: Graph, shapes_graph: ShapesGraph) -> ValidationReport:
         """
         Validate RDF data against SHACL shapes.
-        
+
         Args:
             data_graph: RDF data to validate
             shapes_graph: SHACL shapes defining constraints
-            
+
         Returns:
             Validation report with violations
         """
         violations = []
-        
+
         for shape in shapes_graph.shapes:
             target_nodes = self._get_target_nodes(shape, data_graph)
-            
+
             for node in target_nodes:
                 # Check each constraint
                 for constraint in shape.constraints:
@@ -605,23 +603,19 @@ class SHACLValidator:
                                 source_shape=shape,
                                 focus_node=node,
                                 path=constraint.path,
-                                message=constraint.message
+                                message=constraint.message,
                             )
                         )
-        
+
         return ValidationReport(violations)
-    
-    def _check_constraint(
-        self,
-        node: Node,
-        constraint: Constraint
-    ) -> bool:
+
+    def _check_constraint(self, node: Node, constraint: Constraint) -> bool:
         """Check single constraint."""
-        if constraint.type == 'minCount':
+        if constraint.type == "minCount":
             return self._check_min_count(node, constraint)
-        elif constraint.type == 'maxCount':
+        elif constraint.type == "maxCount":
             return self._check_max_count(node, constraint)
-        elif constraint.type == 'datatype':
+        elif constraint.type == "datatype":
             return self._check_datatype(node, constraint)
         # ... more constraint types
 ```

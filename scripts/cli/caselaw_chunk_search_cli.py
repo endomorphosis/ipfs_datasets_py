@@ -104,7 +104,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--collection-name", help="FAISS collection name (vector mode)")
     parser.add_argument("--top-k", type=int, default=5, help="Number of results to return")
-    parser.add_argument("--mode", choices=["vector", "cid"], default="vector", help="Run vector search mode or direct CID lookup mode")
+    parser.add_argument(
+        "--mode",
+        choices=["vector", "cid"],
+        default="vector",
+        help="Run vector search mode or direct CID lookup mode",
+    )
 
     parser.add_argument(
         "--query-vector-json",
@@ -165,7 +170,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Max chunk snippet characters",
     )
 
-    parser.add_argument("--venv-dir", default=".venv", help="Venv directory used by legal API runner")
+    parser.add_argument(
+        "--venv-dir", default=".venv", help="Venv directory used by legal API runner"
+    )
     parser.add_argument(
         "--auto-setup-venv",
         action="store_true",
@@ -280,7 +287,7 @@ def _query_sparse_chunks_by_cids(args: argparse.Namespace, cids: List[str]) -> D
                         last_exc = exc
                         message = str(exc)
                         if "HTTP 429" in message and attempt < retries - 1:
-                            time.sleep(1.5 * (2 ** attempt))
+                            time.sleep(1.5 * (2**attempt))
                             continue
                         raise
                 if last_exc is not None:
@@ -375,7 +382,9 @@ def main() -> None:
         if not args.collection_name:
             parser.error("--collection-name is required in vector mode")
         if not args.query_vector_json and not args.query_vector_file and not args.zero_vector:
-            parser.error("Provide one of --query-vector-json, --query-vector-file, or --zero-vector")
+            parser.error(
+                "Provide one of --query-vector-json, --query-vector-file, or --zero-vector"
+            )
         result = asyncio.run(_run(args))
     else:
         cids = _load_cids(args)

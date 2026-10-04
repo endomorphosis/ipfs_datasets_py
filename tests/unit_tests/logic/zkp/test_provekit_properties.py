@@ -145,11 +145,14 @@ class TestCanonicalizationDeterminism:
 
 
 class TestPublicInputDeterminism:
-    @pytest.mark.parametrize("theorem,axioms", [
-        ("Q", ["P", "P -> Q"]),
-        ("R", ["P", "P -> Q", "Q -> R"]),
-        ("Socrates is mortal", ["All humans are mortal", "Socrates is human"]),
-    ])
+    @pytest.mark.parametrize(
+        "theorem,axioms",
+        [
+            ("Q", ["P", "P -> Q"]),
+            ("R", ["P", "P -> Q", "Q -> R"]),
+            ("Socrates is mortal", ["All humans are mortal", "Socrates is human"]),
+        ],
+    )
     def test_build_record_deterministic(self, theorem: str, axioms: List[str]) -> None:
         r1 = _make_record(theorem, axioms)
         r2 = _make_record(theorem, axioms)
@@ -200,13 +203,18 @@ class TestPublicInputDeterminism:
 
 
 class TestProverTomlDeterminism:
-    @pytest.mark.parametrize("theorem,axioms", [
-        ("Q", ["P", "P -> Q"]),
-        ("R", ["P", "P -> Q", "Q -> R"]),
-    ])
+    @pytest.mark.parametrize(
+        "theorem,axioms",
+        [
+            ("Q", ["P", "P -> Q"]),
+            ("R", ["P", "P -> Q", "Q -> R"]),
+        ],
+    )
     def test_prover_toml_deterministic(self, theorem: str, axioms: List[str]) -> None:
         record = _make_record(theorem, axioms)
-        assert render_knowledge_of_axioms_prover_toml(record) == render_knowledge_of_axioms_prover_toml(record)
+        assert render_knowledge_of_axioms_prover_toml(
+            record
+        ) == render_knowledge_of_axioms_prover_toml(record)
 
     def test_prover_toml_ends_with_newline(self) -> None:
         record = _make_record("Q", ["P", "P -> Q"])
@@ -216,8 +224,8 @@ class TestProverTomlDeterminism:
         record = _make_record("Q", ["P", "P -> Q"])
         rendered = render_knowledge_of_axioms_prover_toml(record)
         for key in KNOWLEDGE_OF_AXIOMS_FIELD_ORDER:
-            assert f'{key} = ' in rendered, f"Missing: {key}"
-            assert f'witness_{key} = ' in rendered, f"Missing witness: witness_{key}"
+            assert f"{key} = " in rendered, f"Missing: {key}"
+            assert f"witness_{key} = " in rendered, f"Missing witness: witness_{key}"
 
     def test_prover_toml_values_are_non_negative_integers(self) -> None:
         record = _make_record("Q", ["P", "P -> Q"])
@@ -390,7 +398,9 @@ class TestProverTomlFailureCases:
     def test_prover_toml_different_inputs_produce_different_output(self) -> None:
         r1 = _make_record("Q", ["P", "P -> Q"])
         r2 = _make_record("R", ["P", "P -> Q", "Q -> R"])
-        assert render_knowledge_of_axioms_prover_toml(r1) != render_knowledge_of_axioms_prover_toml(r2)
+        assert render_knowledge_of_axioms_prover_toml(r1) != render_knowledge_of_axioms_prover_toml(
+            r2
+        )
 
     def test_prover_toml_axiom_change_changes_output(self) -> None:
         r1 = _make_record("Q", ["P", "P -> Q"])
@@ -466,6 +476,7 @@ class TestHypothesisProperties:
     @settings(max_examples=30, suppress_health_check=[HealthCheck.too_slow])
     def test_axiom_order_independence(self, axioms: list) -> None:
         import random as _random
+
         shuffled = list(axioms)
         _random.shuffle(shuffled)
         assert axioms_commitment_hex(axioms) == axioms_commitment_hex(shuffled)
@@ -561,9 +572,8 @@ class TestHypothesisProperties:
         """
         record = build_provekit_public_input_record(theorem=theorem, private_axioms=axioms)
         rendered = render_knowledge_of_axioms_prover_toml(record)
-        values_text = "\n".join(
-            line.partition(" = ")[2]
-            for line in rendered.strip().split("\n")
-        )
+        values_text = "\n".join(line.partition(" = ")[2] for line in rendered.strip().split("\n"))
         for axiom in axioms:
-            assert axiom not in values_text, f"Private axiom leaked into Prover.toml value: {axiom!r}"
+            assert axiom not in values_text, (
+                f"Private axiom leaked into Prover.toml value: {axiom!r}"
+            )

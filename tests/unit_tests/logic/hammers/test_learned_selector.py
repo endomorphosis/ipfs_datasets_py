@@ -174,9 +174,7 @@ def make_artifact(**overrides) -> LearnedModelArtifact:
 
 
 def enabled_config(*, model_path: str, digest: str) -> LearnedSelectorConfig:
-    return LearnedSelectorConfig(
-        enabled=True, model_path=model_path, pinned_model_digest=digest
-    )
+    return LearnedSelectorConfig(enabled=True, model_path=model_path, pinned_model_digest=digest)
 
 
 ALLOW_POLICY = HammerPolicy(allow_learned_premise_selector=True)
@@ -215,15 +213,11 @@ class TestLearnedModelArtifact:
 
     def test_weights_key_not_in_feature_names_rejected(self):
         with pytest.raises(ModelArtifactError):
-            LearnedModelArtifact.create(
-                model_id="bad", weights={"not_a_feature": 1.0}
-            )
+            LearnedModelArtifact.create(model_id="bad", weights={"not_a_feature": 1.0})
 
     def test_non_finite_weight_rejected(self):
         with pytest.raises(ValueError):
-            LearnedModelArtifact.create(
-                model_id="bad", weights={"symbol_score": float("nan")}
-            )
+            LearnedModelArtifact.create(model_id="bad", weights={"symbol_score": float("nan")})
 
     def test_verify_digest_detects_tampering(self):
         artifact = make_artifact()
@@ -363,9 +357,7 @@ class TestExtractLearnedFeatures:
         manifest = populate_manifest(make_manifest())
         goal = make_goal()
         similar = extract_learned_features(goal, manifest.get_theorem("Nat.add_comm"), manifest)
-        different = extract_learned_features(
-            goal, manifest.get_theorem("Set.union_comm"), manifest
-        )
+        different = extract_learned_features(goal, manifest.get_theorem("Set.union_comm"), manifest)
         assert similar["symbol_score"] > different["symbol_score"]
 
     def test_shared_symbol_count_matches_intersection_size(self):
@@ -680,8 +672,8 @@ class TestSelectPremisesGatedFallbacks:
 
         class ExplodingArtifact(LearnedModelArtifact):
             def validate(self) -> None:  # bypass the normal finite-weight
-                return None            # check so the bad weight below can
-                                        # reach score_with_model and raise.
+                return None  # check so the bad weight below can
+                # reach score_with_model and raise.
 
         # A non-numeric weight value: `score_with_model` computes
         # `weight * features.get(name, 0.0)`, and multiplying a string by a
@@ -696,7 +688,9 @@ class TestSelectPremisesGatedFallbacks:
             bias=0.0,
         )
         artifact.model_digest = artifact.compute_digest()
-        config = enabled_config(model_path=str(tmp_path / "unused.json"), digest=artifact.model_digest)
+        config = enabled_config(
+            model_path=str(tmp_path / "unused.json"), digest=artifact.model_digest
+        )
 
         outcome = select_premises_gated(
             manifest,
@@ -863,7 +857,9 @@ class TestFixtureIntegration:
     def _fixture_dir():
         import pathlib
 
-        return pathlib.Path(__file__).resolve().parents[4] / "tests" / "fixtures" / "logic" / "hammers"
+        return (
+            pathlib.Path(__file__).resolve().parents[4] / "tests" / "fixtures" / "logic" / "hammers"
+        )
 
     def test_shipped_model_fixture_is_valid_and_digest_verified(self):
         fixture_dir = self._fixture_dir()

@@ -25,9 +25,7 @@ SNAPSHOT = REPOSITORY_ROOT / gate.DEFAULT_PILOT_REASSESSMENT_SNAPSHOT
 
 @pytest.fixture(scope="module")
 def report() -> dict[str, object]:
-    return gate.load_pilot_reassessment_report(
-        ARTIFACT, repository_root=REPOSITORY_ROOT
-    )
+    return gate.load_pilot_reassessment_report(ARTIFACT, repository_root=REPOSITORY_ROOT)
 
 
 def test_hssl_g140_evidence_symbol_is_ast_visible_and_complete() -> None:
@@ -92,9 +90,7 @@ def test_checked_artifact_recomputes_all_560_source_receipts(
     assert reports["efficiency"]["wall_time_ms_total"] > 0
     assert reports["efficiency"]["resource_leases"] == 1580
     assert reports["statistics"]["paired_observations_per_candidate"] == 40
-    assert reports["safety"][
-        "kernel_verified_invalid_control_false_positive_count"
-    ] == 0
+    assert reports["safety"]["kernel_verified_invalid_control_false_positive_count"] == 0
 
 
 def test_no_arm_is_invented_when_materiality_and_quality_do_not_pass(
@@ -106,14 +102,10 @@ def test_no_arm_is_invented_when_materiality_and_quality_do_not_pass(
 
     assert len(candidates) == 12
     assert all(item["efficacy"]["kernel_verified_rate"] == 0.0 for item in candidates)
-    assert all(
-        item["cost"]["wall_time_ms_mean_per_coordinate"] > 0
-        for item in candidates
-    )
+    assert all(item["cost"]["wall_time_ms_mean_per_coordinate"] > 0 for item in candidates)
     assert all(item["eligible"] is False for item in candidates)
     assert all(
-        "independent semantic-quality evidence unavailable"
-        in item["ineligibility_reasons"]
+        "independent semantic-quality evidence unavailable" in item["ineligibility_reasons"]
         for item in candidates
     )
     assert pareto["eligible_candidate_ids"] == []
@@ -147,15 +139,12 @@ def test_deep_freeze_binds_every_selection_input(
         "source",
     }
     assert all(item["frozen"] is True for item in inputs.values())
-    assert all(
-        len(item["binding_sha256"]) == 64 for item in inputs.values()
+    assert all(len(item["binding_sha256"]) == 64 for item in inputs.values())
+    without_digest = {key: value for key, value in freeze.items() if key != "freeze_sha256"}
+    assert (
+        freeze["freeze_sha256"]
+        == hashlib.sha256(canonical_json(without_digest).encode("utf-8")).hexdigest()
     )
-    without_digest = {
-        key: value for key, value in freeze.items() if key != "freeze_sha256"
-    }
-    assert freeze["freeze_sha256"] == hashlib.sha256(
-        canonical_json(without_digest).encode("utf-8")
-    ).hexdigest()
 
 
 def test_artifact_and_snapshot_are_strict_canonical_json(
@@ -167,13 +156,11 @@ def test_artifact_and_snapshot_are_strict_canonical_json(
 
     assert artifact_text == canonical_json(report) + "\n"
     assert snapshot_text == canonical_json(snapshot) + "\n"
-    assert snapshot["results"]["artifact"]["bytes_sha256"] == hashlib.sha256(
-        ARTIFACT.read_bytes()
-    ).hexdigest()
     assert (
-        snapshot["results"]["artifact"]["semantic_sha256"]
-        == report["artifact_sha256"]
+        snapshot["results"]["artifact"]["bytes_sha256"]
+        == hashlib.sha256(ARTIFACT.read_bytes()).hexdigest()
     )
+    assert snapshot["results"]["artifact"]["semantic_sha256"] == report["artifact_sha256"]
     assert snapshot["results"]["holdout_authorized"] is False
 
 
@@ -182,13 +169,16 @@ def test_published_snapshot_recomputation_preserves_checked_in_bytes(
 ) -> None:
     expected = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
 
-    assert gate._snapshot(
-        report,
-        ARTIFACT,
-        repository=REPOSITORY_ROOT,
-        benchmark_root=gate.DEFAULT_BENCHMARK_ROOT,
-        captured_on=expected["captured_on"],
-    ) == expected
+    assert (
+        gate._snapshot(
+            report,
+            ARTIFACT,
+            repository=REPOSITORY_ROOT,
+            benchmark_root=gate.DEFAULT_BENCHMARK_ROOT,
+            captured_on=expected["captured_on"],
+        )
+        == expected
+    )
 
 
 def _fresh_snapshot_report(
@@ -210,9 +200,7 @@ def _fresh_snapshot_report(
             "selected_variant_ids": list(selected_variant_ids),
             "selected_count": len(selected_variant_ids),
             "reason": (
-                "eligible shortlist frozen"
-                if selected_variant_ids
-                else "no candidate passed"
+                "eligible shortlist frozen" if selected_variant_ids else "no candidate passed"
             ),
         },
         "decision": {
@@ -249,20 +237,12 @@ def test_fresh_external_snapshot_is_portable_and_truthfully_dated(
         benchmark_root=benchmark_root,
     )
 
-    assert snapshot["captured_on"] == (
-        datetime.now(timezone.utc).date().isoformat()
-    )
-    assert snapshot["results"]["artifact"]["path"] == (
-        "results/pilot-shortlist-v2.json"
-    )
+    assert snapshot["captured_on"] == (datetime.now(timezone.utc).date().isoformat())
+    assert snapshot["results"]["artifact"]["path"] == ("results/pilot-shortlist-v2.json")
     assert str(tmp_path) not in canonical_json(snapshot)
-    assert "--artifact results/pilot-shortlist-v2.json" in (
-        snapshot["benchmark_script"]
-    )
+    assert "--artifact results/pilot-shortlist-v2.json" in (snapshot["benchmark_script"])
 
-    future = (
-        datetime.now(timezone.utc).date() + timedelta(days=1)
-    ).isoformat()
+    future = (datetime.now(timezone.utc).date() + timedelta(days=1)).isoformat()
     with pytest.raises(
         gate.PilotReassessmentError,
         match="capture date is invalid",
@@ -307,12 +287,10 @@ def test_fresh_success_snapshot_notes_match_nonempty_shortlist(
     ]
     assert snapshot["results"]["holdout_authorized"] is True
     assert snapshot["notes"][-1] == (
-        "The frozen shortlist contains 2 eligible arms; "
-        "paired holdout execution is authorized."
+        "The frozen shortlist contains 2 eligible arms; paired holdout execution is authorized."
     )
     assert all(
-        "No eligible arm passed" not in note
-        and "Zero kernel acceptances" not in note
+        "No eligible arm passed" not in note and "Zero kernel acceptances" not in note
         for note in snapshot["notes"]
     )
 
@@ -366,9 +344,7 @@ def test_digest_tampering_is_rejected_before_source_recomputation(
     tampered["status"] = "complete"
 
     with pytest.raises(gate.PilotReassessmentError, match="digest changed"):
-        gate.validate_pilot_reassessment_report(
-            tampered, repository_root=REPOSITORY_ROOT
-        )
+        gate.validate_pilot_reassessment_report(tampered, repository_root=REPOSITORY_ROOT)
 
 
 def test_required_report_cli_validates_v2_artifact() -> None:

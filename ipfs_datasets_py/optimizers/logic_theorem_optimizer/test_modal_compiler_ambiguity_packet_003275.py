@@ -133,10 +133,7 @@ def test_compiler_preserves_packet_003275_compiler_ambiguity_evidence_margins() 
             "expected_type": "adaptive_temporal_frame_outvoted_margin_low",
             "expected_effective_threshold": 0.1515,
             "expected_pair_buffer": 0.0015,
-            "text": (
-                "Within the district boundaries, the Secretary shall act under "
-                "this section."
-            ),
+            "text": ("Within the district boundaries, the Secretary shall act under this section."),
         },
         {
             "sample_id": "us-code-42-1396r-8ca1c32fe259da1a",
@@ -148,10 +145,7 @@ def test_compiler_preserves_packet_003275_compiler_ambiguity_evidence_margins() 
             "expected_type": "adaptive_epistemic_deontic_outvoted_margin_low",
             "expected_effective_threshold": 0.15,
             "expected_pair_buffer": 0.0,
-            "text": (
-                "The agency may determine whether payment is available under "
-                "this section."
-            ),
+            "text": ("The agency may determine whether payment is available under this section."),
         },
         {
             "sample_id": "us-code-2-46f-1-b790635993472104",
@@ -164,17 +158,12 @@ def test_compiler_preserves_packet_003275_compiler_ambiguity_evidence_margins() 
             "expected_effective_threshold": 0.1515,
             "expected_pair_buffer": 0.0015,
             "runner_up_family": ModalLogicFamily.DEONTIC.value,
-            "text": (
-                "Within 90 days after submission, the Secretary shall publish "
-                "the report."
-            ),
+            "text": ("Within 90 days after submission, the Secretary shall publish the report."),
         },
     )
 
     for case in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -186,9 +175,7 @@ def test_compiler_preserves_packet_003275_compiler_ambiguity_evidence_margins() 
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
 
@@ -211,14 +198,8 @@ def test_compiler_preserves_packet_003275_compiler_ambiguity_evidence_margins() 
         assert ambiguity.severity == case["severity"]
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12

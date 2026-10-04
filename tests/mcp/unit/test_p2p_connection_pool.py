@@ -4,6 +4,7 @@ Tests acquire_connection, release_connection, clear_connection_pool, and
 get_pool_stats without requiring a live P2P network — the pool is purely
 in-memory/dict-based.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -14,6 +15,7 @@ from ipfs_datasets_py.mcp_server.p2p_service_manager import P2PServiceManager
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_manager(pool_max_size: int = 5) -> P2PServiceManager:
     """Return a fresh P2PServiceManager with the given pool size."""
@@ -35,6 +37,7 @@ class _FakeConn:
 # ---------------------------------------------------------------------------
 # acquire_connection
 # ---------------------------------------------------------------------------
+
 
 class TestAcquireConnection:
     def test_acquire_miss_returns_none(self):
@@ -71,6 +74,7 @@ class TestAcquireConnection:
 # release_connection
 # ---------------------------------------------------------------------------
 
+
 class TestReleaseConnection:
     def test_release_adds_to_pool(self):
         mgr = _make_manager()
@@ -105,6 +109,7 @@ class TestReleaseConnection:
 # clear_connection_pool
 # ---------------------------------------------------------------------------
 
+
 class TestClearConnectionPool:
     def test_clear_returns_count_of_evicted(self):
         mgr = _make_manager()
@@ -137,6 +142,7 @@ class TestClearConnectionPool:
 # get_pool_stats
 # ---------------------------------------------------------------------------
 
+
 class TestGetPoolStats:
     def test_stats_has_required_keys(self):
         mgr = _make_manager()
@@ -152,8 +158,8 @@ class TestGetPoolStats:
     def test_hit_rate_computed_after_attempts(self):
         mgr = _make_manager()
         mgr._connection_pool["p1"] = _FakeConn("p1")
-        mgr.acquire_connection("p1")   # hit
-        mgr.acquire_connection("p2")   # miss
+        mgr.acquire_connection("p1")  # hit
+        mgr.acquire_connection("p2")  # miss
         stats = mgr.get_pool_stats()
         assert stats["hits"] == 1
         assert stats["misses"] == 1

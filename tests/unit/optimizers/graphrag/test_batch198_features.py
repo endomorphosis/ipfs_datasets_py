@@ -13,11 +13,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_trimmed_mean(trim)
     - OntologyMediator.action_entropy_change()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -30,11 +32,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid)
 
 
@@ -47,6 +51,7 @@ def _make_rel_mock(source_id, target_id):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -56,16 +61,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -76,21 +84,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.score_z_score ──────────────────────────────────────────
+
 
 class TestScoreZScore:
     def test_empty_returns_zero(self):
@@ -130,6 +144,7 @@ class TestScoreZScore:
 
 # ── OntologyOptimizer.score_mad ──────────────────────────────────────────────
 
+
 class TestScoreMad:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -155,6 +170,7 @@ class TestScoreMad:
 
 
 # ── OntologyOptimizer.history_quantile ───────────────────────────────────────
+
 
 class TestHistoryQuantile:
     def test_empty_returns_zero(self):
@@ -182,6 +198,7 @@ class TestHistoryQuantile:
 
 # ── OntologyGenerator.entity_id_list ─────────────────────────────────────────
 
+
 class TestEntityIdList:
     def test_empty_returns_empty_list(self):
         g = _make_generator()
@@ -200,6 +217,7 @@ class TestEntityIdList:
 
 
 # ── OntologyGenerator.relationship_source_ids ────────────────────────────────
+
 
 class TestRelationshipSourceIds:
     def test_no_relationships_returns_empty(self):
@@ -222,6 +240,7 @@ class TestRelationshipSourceIds:
 
 # ── OntologyGenerator.relationship_target_ids ────────────────────────────────
 
+
 class TestRelationshipTargetIds:
     def test_no_relationships_returns_empty(self):
         g = _make_generator()
@@ -237,6 +256,7 @@ class TestRelationshipTargetIds:
 
 # ── LogicValidator.hub_nodes ─────────────────────────────────────────────────
 
+
 class TestHubNodes:
     def test_empty_returns_empty_list(self):
         v = _make_validator()
@@ -249,29 +269,34 @@ class TestHubNodes:
 
     def test_hub_node_identified(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "hub", "target": "a"},
-            {"source": "hub", "target": "b"},
-            {"source": "c", "target": "hub"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "hub", "target": "a"},
+                {"source": "hub", "target": "b"},
+                {"source": "c", "target": "hub"},
+            ]
+        }
         # hub: degree 3 (2 out + 1 in) >= 3
         assert v.hub_nodes(onto, min_degree=3) == ["hub"]
 
     def test_returns_sorted(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "z", "target": "y"},
-            {"source": "z", "target": "x"},
-            {"source": "a", "target": "z"},
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "a"},
-            {"source": "c", "target": "a"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "z", "target": "y"},
+                {"source": "z", "target": "x"},
+                {"source": "a", "target": "z"},
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "a"},
+                {"source": "c", "target": "a"},
+            ]
+        }
         result = v.hub_nodes(onto, min_degree=3)
         assert result == sorted(result)
 
 
 # ── OntologyPipeline.run_score_count_above_mean ──────────────────────────────
+
 
 class TestRunScoreCountAboveMean:
     def test_empty_returns_zero(self):
@@ -294,6 +319,7 @@ class TestRunScoreCountAboveMean:
 
 # ── OntologyPipeline.run_score_trimmed_mean ─────────────────────────────────
 
+
 class TestRunScoreTrimmedMean:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -313,6 +339,7 @@ class TestRunScoreTrimmedMean:
 
 
 # ── OntologyLearningAdapter.feedback_trimmed_mean ────────────────────────────
+
 
 class TestFeedbackTrimmedMean:
     def test_empty_returns_zero(self):
@@ -341,6 +368,7 @@ class TestFeedbackTrimmedMean:
 
 
 # ── OntologyMediator.action_entropy_change ──────────────────────────────────
+
 
 class TestActionEntropyChange:
     def test_empty_history_returns_zero(self):

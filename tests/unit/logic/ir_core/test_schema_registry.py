@@ -152,9 +152,7 @@ def test_migration_path_is_shortest_and_stable_across_registration_order() -> No
         MigrationSpec("via-a-last", V2, V3, lambda value: dict(value)),
     )
     first = IRSchemaRegistry(_schemas(V1, V2, V2_ALT, V3), migrations=edges)
-    second = IRSchemaRegistry(
-        _schemas(V3, V2_ALT, V2, V1), migrations=tuple(reversed(edges))
-    )
+    second = IRSchemaRegistry(_schemas(V3, V2_ALT, V2, V1), migrations=tuple(reversed(edges)))
 
     first_path = first.resolve_migration_path(V1, V3)
     second_path = second.resolve_migration_path(V1, V3)
@@ -168,9 +166,7 @@ def test_migration_path_is_shortest_and_stable_across_registration_order() -> No
 
     direct = MigrationSpec("direct", V1, V3, lambda value: dict(value))
     first.register_migration(direct)
-    assert tuple(
-        item.migration_id for item in first.resolve_migration_path(V1, V3)
-    ) == ("direct",)
+    assert tuple(item.migration_id for item in first.resolve_migration_path(V1, V3)) == ("direct",)
 
 
 def test_missing_path_and_migration_cycles_are_rejected_atomically() -> None:
@@ -185,9 +181,7 @@ def test_missing_path_and_migration_cycles_are_rejected_atomically() -> None:
     with pytest.raises(MigrationPathError):
         registry.resolve_migration_path(V3, V1)
     with pytest.raises(MigrationCycleError, match="cycle"):
-        registry.register_migration(
-            MigrationSpec("v3-v1", V3, V1, lambda value: dict(value))
-        )
+        registry.register_migration(MigrationSpec("v3-v1", V3, V1, lambda value: dict(value)))
     assert (V3, V1) not in registry.migrations
 
     with pytest.raises(MigrationCycleError):
@@ -199,9 +193,7 @@ def test_migration_is_non_mutating_and_receipt_binds_both_payload_digests() -> N
     source = {"name": "one", "nested": {"values": [1, 2]}}
     original = {"name": "one", "nested": {"values": [1, 2]}}
 
-    result = registry.migrate(
-        source, source_schema_id=V1, destination_schema_id=V3
-    )
+    result = registry.migrate(source, source_schema_id=V1, destination_schema_id=V3)
 
     assert source == original
     assert result.payload == {
@@ -215,9 +207,7 @@ def test_migration_is_non_mutating_and_receipt_binds_both_payload_digests() -> N
     assert result.receipt.migration_ids == ("widget-v1-v2", "widget-v2-v3")
     assert not result.receipt.loss_report.lossy
     assert result.receipt.verifies(source, result.payload)
-    assert not result.receipt.verifies(
-        {**source, "name": "tampered"}, result.payload
-    )
+    assert not result.receipt.verifies({**source, "name": "tampered"}, result.payload)
     assert result.receipt.receipt_digest.startswith("sha256:")
     with pytest.raises(MigrationExecutionError, match="schema_id"):
         replace(result.receipt, schema_id="ir-core-migration-receipt/v999")
@@ -310,9 +300,7 @@ def test_nondeterministic_transform_is_rejected() -> None:
 
     registry = IRSchemaRegistry(
         _schemas(V1, V2),
-        migrations=(
-            MigrationSpec("unstable", V1, V2, nondeterministic),
-        ),
+        migrations=(MigrationSpec("unstable", V1, V2, nondeterministic),),
     )
 
     with pytest.raises(NondeterministicMigrationError):
@@ -337,9 +325,7 @@ def test_same_schema_migration_produces_a_zero_step_bound_receipt() -> None:
     registry = IRSchemaRegistry(_schemas(V1))
     source = {"name": "unchanged"}
 
-    result = registry.migrate(
-        source, source_schema_id=V1, destination_schema_id=V1
-    )
+    result = registry.migrate(source, source_schema_id=V1, destination_schema_id=V1)
 
     assert result.payload == source
     assert result.receipt.schema_path == (V1,)

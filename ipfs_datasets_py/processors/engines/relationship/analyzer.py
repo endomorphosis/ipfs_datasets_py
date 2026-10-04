@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from ipfs_datasets_py.processors.relationship_analyzer import RelationshipAnalyzer
 
 __all__ = [
-    'RelationshipAnalyzer',
+    "RelationshipAnalyzer",
 ]
 
 # Type annotations for static analysis

@@ -3,6 +3,7 @@ Vector Store Engine
 
 Business logic (mock services) for vector store operations.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ class _AwaitableDict(dict):
     def __await__(self):
         async def _wrap():
             return self
+
         return _wrap().__await__()
 
 
@@ -59,9 +61,7 @@ class MockVectorStoreService:
             raise ValueError(f"Index '{index_name}' not found")
         return self.indexes[index_name]
 
-    async def add_vectors(
-        self, collection: str, vectors: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def add_vectors(self, collection: str, vectors: List[Dict[str, Any]]) -> Dict[str, Any]:
         if collection not in self.collections:
             self.collections[collection] = []
         self.collections[collection].extend(vectors)
@@ -79,12 +79,14 @@ class MockVectorStoreService:
             return {"results": [], "collection": collection}
         results = []
         for i, vector in enumerate(self.collections[collection][:top_k]):
-            results.append({
-                "id": vector.get("id", f"vec_{i}"),
-                "score": 0.9 - (i * 0.1),
-                "metadata": vector.get("metadata", {}),
-                "vector": vector.get("vector", []),
-            })
+            results.append(
+                {
+                    "id": vector.get("id", f"vec_{i}"),
+                    "score": 0.9 - (i * 0.1),
+                    "metadata": vector.get("metadata", {}),
+                    "vector": vector.get("vector", []),
+                }
+            )
         return {"results": results, "collection": collection, "query_time_ms": 50}
 
     async def get_metadata(self, collection: str, vector_id: str) -> Dict[str, Any]:
@@ -152,9 +154,11 @@ class MockVectorStoreService:
         if ids:
             vectors = [v for v in vectors if v.get("id") not in set(ids)]
         elif filter:
+
             def matches(vec: Dict[str, Any]) -> bool:
                 metadata = vec.get("metadata", {})
                 return all(metadata.get(k) == v for k, v in filter.items())
+
             vectors = [v for v in vectors if not matches(v)]
         deleted_count = original_count - len(vectors)
         self.collections[collection] = vectors
@@ -166,7 +170,15 @@ class MockVectorStoreService:
     ) -> Dict[str, Any]:
         await anyio.sleep(0)
         if name in self.indexes or name in self.collections:
-            return {"status": "success", "index_name": name, "optimized": True,
-                    "options": options or {}}
-        return {"status": "success", "index_name": name, "optimized": False,
-                "options": options or {}}
+            return {
+                "status": "success",
+                "index_name": name,
+                "optimized": True,
+                "options": options or {},
+            }
+        return {
+            "status": "success",
+            "index_name": name,
+            "optimized": False,
+            "options": options or {},
+        }

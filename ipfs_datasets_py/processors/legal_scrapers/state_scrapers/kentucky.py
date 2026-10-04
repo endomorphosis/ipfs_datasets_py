@@ -22,7 +22,9 @@ class KentuckyScraper(BaseStateScraper):
     _KY_SECTION_URL_RE = re.compile(r"/law/statutes/statute\.aspx\?id=\d+$", re.IGNORECASE)
     _KY_CHAPTER_URL_RE = re.compile(r"/law/statutes/chapter\.aspx\?id=\d+$", re.IGNORECASE)
     _CHAPTER_LABEL_RE = re.compile(r"^\s*chapter\s+(\d+[A-Za-z]?)\b", re.IGNORECASE)
-    _SECTION_LABEL_RE = re.compile(r"^\s*(?:KRS\s+)?(?:§\s*)?(\d+\.\d+[A-Za-z0-9\.-]*|\.\d+[A-Za-z0-9\.-]*)\b")
+    _SECTION_LABEL_RE = re.compile(
+        r"^\s*(?:KRS\s+)?(?:§\s*)?(\d+\.\d+[A-Za-z0-9\.-]*|\.\d+[A-Za-z0-9\.-]*)\b"
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -37,18 +39,16 @@ class KentuckyScraper(BaseStateScraper):
                         statute.section_number = m.group(1)
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Kentucky's legislative website."""
         return "https://apps.legislature.ky.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Kentucky."""
-        return [{
-            "name": "Kentucky Revised Statutes",
-            "url": self._KY_STATUTES_BASE,
-            "type": "Code"
-        }]
+        return [
+            {"name": "Kentucky Revised Statutes", "url": self._KY_STATUTES_BASE, "type": "Code"}
+        ]
 
     async def _fetch_official_ky_bytes(self, url: str, timeout_seconds: int = 5) -> bytes:
         """Fetch Kentucky's official KRS pages directly.
@@ -89,7 +89,9 @@ class KentuckyScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
         return payload
 
     async def _fetch_html(self, url: str, timeout_seconds: int = 5) -> str:
@@ -135,7 +137,9 @@ class KentuckyScraper(BaseStateScraper):
         if value.startswith("%PDF-") or " startxref " in value[:4000] or " endobj " in value[:4000]:
             return True
         sample = value[:2000]
-        controlish = sum(1 for char in sample if char == "\ufffd" or (ord(char) < 32 and char not in "\n\r\t"))
+        controlish = sum(
+            1 for char in sample if char == "\ufffd" or (ord(char) < 32 and char not in "\n\r\t")
+        )
         return bool(sample) and (controlish / len(sample)) > 0.05
 
     async def _discover_chapter_links(self) -> List[Tuple[str, str, str]]:
@@ -220,7 +224,9 @@ class KentuckyScraper(BaseStateScraper):
                 raw_bytes=raw_bytes,
             )
             if isinstance(document_extraction, dict):
-                extracted_text = self._normalize_legal_text(str(document_extraction.get("text") or ""))
+                extracted_text = self._normalize_legal_text(
+                    str(document_extraction.get("text") or "")
+                )
                 method = str(document_extraction.get("method") or "document_processor")
             else:
                 try:
@@ -236,7 +242,11 @@ class KentuckyScraper(BaseStateScraper):
 
         section_name = self._section_name_from_label(section_label, section_number)
         if extracted_text:
-            first_line = re.sub(r"\s+", " ", extracted_text.splitlines()[0] if "\n" in extracted_text else extracted_text[:240]).strip()
+            first_line = re.sub(
+                r"\s+",
+                " ",
+                extracted_text.splitlines()[0] if "\n" in extracted_text else extracted_text[:240],
+            ).strip()
             parsed_name = self._section_name_from_label(first_line, section_number)
             if parsed_name:
                 section_name = parsed_name[:200]
@@ -244,10 +254,14 @@ class KentuckyScraper(BaseStateScraper):
         effective_date = None
         history: List[str] = []
         if extracted_text:
-            effective_match = re.search(r"\bEffective:\s*(.*?)(?:\s+History:|$)", extracted_text, re.IGNORECASE | re.DOTALL)
+            effective_match = re.search(
+                r"\bEffective:\s*(.*?)(?:\s+History:|$)", extracted_text, re.IGNORECASE | re.DOTALL
+            )
             if effective_match:
                 effective_date = effective_match.group(1).strip()
-            history_match = re.search(r"\bHistory:\s*(.+)$", extracted_text, re.IGNORECASE | re.DOTALL)
+            history_match = re.search(
+                r"\bHistory:\s*(.+)$", extracted_text, re.IGNORECASE | re.DOTALL
+            )
             if history_match:
                 history = [self._normalize_legal_text(history_match.group(1))]
 
@@ -274,7 +288,7 @@ class KentuckyScraper(BaseStateScraper):
                 "skip_hydrate": bool(extracted_text) or method == "failed_pdf_extraction",
             },
         )
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -282,11 +296,11 @@ class KentuckyScraper(BaseStateScraper):
         max_statutes: int | None = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Kentucky's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -322,7 +336,9 @@ class KentuckyScraper(BaseStateScraper):
         last_heartbeat = time.monotonic()
         total_sections_seen = 0
 
-        for chapter_index, (chapter_url, chapter_label, chapter_number) in enumerate(chapter_links, start=1):
+        for chapter_index, (chapter_url, chapter_label, chapter_number) in enumerate(
+            chapter_links, start=1
+        ):
             if limit is not None and len(statutes) >= limit:
                 break
 
@@ -347,7 +363,12 @@ class KentuckyScraper(BaseStateScraper):
                 chapter_label,
                 len(section_links),
             )
-            for section_index, (section_url, section_label, section_number, discovered_chapter_label) in enumerate(section_links, start=1):
+            for section_index, (
+                section_url,
+                section_label,
+                section_number,
+                discovered_chapter_label,
+            ) in enumerate(section_links, start=1):
                 if limit is not None and len(statutes) >= limit:
                     break
                 total_sections_seen += 1
@@ -388,7 +409,9 @@ class KentuckyScraper(BaseStateScraper):
                         exc,
                     )
                     continue
-                if statute is not None and self._KY_SECTION_URL_RE.search(str(statute.source_url or "")):
+                if statute is not None and self._KY_SECTION_URL_RE.search(
+                    str(statute.source_url or "")
+                ):
                     statute.structured_data = {
                         **(statute.structured_data or {}),
                         "chapter_url": chapter_url,

@@ -24,6 +24,7 @@ from ipfs_datasets_py.knowledge_graphs.migration.formats import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_small_graph(n_nodes: int = 5, n_rels: int = 4) -> GraphData:
     nodes = [
         NodeData(id=f"n{i}", labels=["Person"], properties={"name": f"User{i}", "age": 20 + i})
@@ -31,8 +32,10 @@ def _make_small_graph(n_nodes: int = 5, n_rels: int = 4) -> GraphData:
     ]
     rels = [
         RelationshipData(
-            id=f"r{i}", type="KNOWS",
-            start_node=f"n{i}", end_node=f"n{i+1}",
+            id=f"r{i}",
+            type="KNOWS",
+            start_node=f"n{i}",
+            end_node=f"n{i + 1}",
             properties={"since": 2020 + i},
         )
         for i in range(n_rels)
@@ -43,6 +46,7 @@ def _make_small_graph(n_nodes: int = 5, n_rels: int = 4) -> GraphData:
 # ---------------------------------------------------------------------------
 # H2: Format registry
 # ---------------------------------------------------------------------------
+
 
 class TestFormatRegistry:
     """The format registry must support registration, lookup, and listing."""
@@ -170,6 +174,7 @@ class TestFormatRegistry:
 # ---------------------------------------------------------------------------
 # F2: Streaming export
 # ---------------------------------------------------------------------------
+
 
 class TestStreamingExport:
     """GraphData.export_streaming() must produce correct JSON-Lines output."""

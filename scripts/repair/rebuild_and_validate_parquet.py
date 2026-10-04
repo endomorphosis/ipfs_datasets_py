@@ -143,7 +143,9 @@ def rebuild_and_validate(
     report_path: Path,
 ) -> Dict[str, Any]:
     table = _load_source_table(source=source, source_format=source_format)
-    table = _normalize_cid_column(table=table, cid_column=cid_column, drop_empty_cids=drop_empty_cids)
+    table = _normalize_cid_column(
+        table=table, cid_column=cid_column, drop_empty_cids=drop_empty_cids
+    )
 
     shards = _write_shards(
         table=table,
@@ -172,16 +174,42 @@ def rebuild_and_validate(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Rebuild source data into valid parquet shards and validate them")
-    parser.add_argument("--source", required=True, help="Source file/directory (parquet/csv/json/jsonl)")
-    parser.add_argument("--out-dir", required=True, help="Output directory for rebuilt parquet shards")
-    parser.add_argument("--source-format", default=None, choices=["parquet", "csv", "json"], help="Optional source format override")
+    parser = argparse.ArgumentParser(
+        description="Rebuild source data into valid parquet shards and validate them"
+    )
+    parser.add_argument(
+        "--source", required=True, help="Source file/directory (parquet/csv/json/jsonl)"
+    )
+    parser.add_argument(
+        "--out-dir", required=True, help="Output directory for rebuilt parquet shards"
+    )
+    parser.add_argument(
+        "--source-format",
+        default=None,
+        choices=["parquet", "csv", "json"],
+        help="Optional source format override",
+    )
     parser.add_argument("--cid-column", default="cid", help="CID column name")
-    parser.add_argument("--drop-empty-cids", action="store_true", help="Drop rows where CID is null/empty")
-    parser.add_argument("--compression", default="zstd", choices=["zstd", "snappy", "gzip", "brotli", "none"], help="Parquet compression codec")
-    parser.add_argument("--max-rows-per-file", type=int, default=500_000, help="Maximum rows per output shard")
-    parser.add_argument("--row-group-size", type=int, default=100_000, help="Rows per parquet row group")
-    parser.add_argument("--report-path", default="outputs/parquet_rebuild_report.json", help="Path to validation report JSON")
+    parser.add_argument(
+        "--drop-empty-cids", action="store_true", help="Drop rows where CID is null/empty"
+    )
+    parser.add_argument(
+        "--compression",
+        default="zstd",
+        choices=["zstd", "snappy", "gzip", "brotli", "none"],
+        help="Parquet compression codec",
+    )
+    parser.add_argument(
+        "--max-rows-per-file", type=int, default=500_000, help="Maximum rows per output shard"
+    )
+    parser.add_argument(
+        "--row-group-size", type=int, default=100_000, help="Rows per parquet row group"
+    )
+    parser.add_argument(
+        "--report-path",
+        default="outputs/parquet_rebuild_report.json",
+        help="Path to validation report JSON",
+    )
     args = parser.parse_args()
 
     source = Path(args.source).expanduser().resolve()
@@ -202,12 +230,17 @@ def main() -> None:
         report_path=report_path,
     )
 
-    print(json.dumps({
-        "all_ok": report["all_ok"],
-        "shard_count": report["shard_count"],
-        "source_rows": report["source_rows"],
-        "report_path": str(report_path),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "all_ok": report["all_ok"],
+                "shard_count": report["shard_count"],
+                "source_rows": report["source_rows"],
+                "report_path": str(report_path),
+            },
+            indent=2,
+        )
+    )
 
     if not report["all_ok"]:
         raise SystemExit(2)

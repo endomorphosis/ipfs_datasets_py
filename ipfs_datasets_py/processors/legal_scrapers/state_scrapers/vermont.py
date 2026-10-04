@@ -16,19 +16,15 @@ from .registry import StateScraperRegistry
 
 class VermontScraper(BaseStateScraper):
     """Scraper for Vermont state laws from https://legislature.vermont.gov"""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Vermont's legislative website."""
         return "https://legislature.vermont.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Vermont."""
-        return [{
-            "name": "Vermont Statutes",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "Vermont Statutes", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -36,11 +32,11 @@ class VermontScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Vermont's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -76,7 +72,9 @@ class VermontScraper(BaseStateScraper):
             f"{self.get_base_url()}/statutes/section/01/001/00001",
             f"{self.get_base_url()}/statutes/section/13/053/02301",
         ]
-        return await self._scrape_section_urls(code_name, [(url, "") for url in section_urls], max_statutes=max_statutes)
+        return await self._scrape_section_urls(
+            code_name, [(url, "") for url in section_urls], max_statutes=max_statutes
+        )
 
     async def _scrape_official_index(
         self,
@@ -104,7 +102,11 @@ class VermontScraper(BaseStateScraper):
                 if limit is not None and len(statutes) >= limit:
                     break
                 section_links = await self._discover_section_links(chapter_url)
-                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                if (
+                    chapter_index == 1
+                    or chapter_index % 10 == 0
+                    or chapter_index == len(chapter_links)
+                ):
                     self.logger.info(
                         "Vermont official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
                         title_label or title_url,
@@ -119,7 +121,11 @@ class VermontScraper(BaseStateScraper):
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 )
                 statutes.extend(parsed)
-                checkpoint.maybe_write(statutes, title_label=title_label or title_url, chapter_label=chapter_label or chapter_url)
+                checkpoint.maybe_write(
+                    statutes,
+                    title_label=title_label or title_url,
+                    chapter_label=chapter_label or chapter_url,
+                )
         checkpoint.write(statutes, title_label="complete", chapter_label="complete")
         return statutes[:limit] if limit is not None else statutes
 
@@ -130,7 +136,9 @@ class VermontScraper(BaseStateScraper):
             return []
 
         index_url = f"{self.get_base_url()}/statutes/"
-        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            index_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -153,7 +161,9 @@ class VermontScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            title_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -176,7 +186,9 @@ class VermontScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            chapter_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -209,7 +221,9 @@ class VermontScraper(BaseStateScraper):
         for source_url, section_label in section_urls:
             if limit is not None and len(statutes) >= limit:
                 break
-            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                source_url, timeout_seconds=15
+            )
             if not payload:
                 continue
             soup = BeautifulSoup(payload, "html.parser")
@@ -217,11 +231,19 @@ class VermontScraper(BaseStateScraper):
             for tag in main(["script", "style", "nav", "header", "footer", "aside"]):
                 tag.decompose()
             text = self._normalize_legal_text(main.get_text(" ", strip=True))
-            match = re.search(r"\bCite as:\s*([0-9A-Za-z.]+)\s+V\.S\.A\.\s+§\s*([0-9A-Za-z.-]+)", text)
+            match = re.search(
+                r"\bCite as:\s*([0-9A-Za-z.]+)\s+V\.S\.A\.\s+§\s*([0-9A-Za-z.-]+)", text
+            )
             title_number = match.group(1) if match else ""
-            section_number = match.group(2) if match else self._derive_section_number_from_url(source_url)
+            section_number = (
+                match.group(2) if match else self._derive_section_number_from_url(source_url)
+            )
             heading = main.find(["h1", "h2", "h3"]) or soup.find(["h1", "h2", "h3"])
-            section_name = heading.get_text(" ", strip=True) if heading else (section_label or f"Section {section_number}")
+            section_name = (
+                heading.get_text(" ", strip=True)
+                if heading
+                else (section_label or f"Section {section_number}")
+            )
             bold = main.find("b")
             if bold:
                 section_name = bold.get_text(" ", strip=True)
@@ -239,9 +261,14 @@ class VermontScraper(BaseStateScraper):
                     full_text=text,
                     legal_area=self._identify_legal_area(section_name or text),
                     source_url=source_url,
-                    official_cite=f"{title_number} V.S.A. § {section_number}" if title_number else f"Vt. Stat. Ann. § {section_number}",
+                    official_cite=f"{title_number} V.S.A. § {section_number}"
+                    if title_number
+                    else f"Vt. Stat. Ann. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_vermont_statutes_html", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_vermont_statutes_html",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes
@@ -259,14 +286,20 @@ class _VermontCheckpoint:
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
-            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path = (
+                Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            )
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self.state_code = state_code.upper()
-        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.interval = max(
+            1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500))
+        )
         self.last_count = 0
         self.last_write_ts = 0.0
 
-    def maybe_write(self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str) -> None:
+    def maybe_write(
+        self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str
+    ) -> None:
         count = len(statutes)
         if not self.path or count <= 0:
             return
@@ -274,7 +307,9 @@ class _VermontCheckpoint:
             return
         self.write(statutes, title_label=title_label, chapter_label=chapter_label)
 
-    def write(self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str) -> None:
+    def write(
+        self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str
+    ) -> None:
         if not self.path or not statutes:
             return
         payload = {

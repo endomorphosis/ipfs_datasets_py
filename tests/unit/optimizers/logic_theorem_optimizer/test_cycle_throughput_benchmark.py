@@ -131,20 +131,14 @@ def test_freezes_complete_matched_cold_and_warm_cycle_evidence() -> None:
         "complete": True,
         "missing_measurements": [],
     }
-    assert document["warm"]["measurements"]["cycle"]["samples_per_second"] == pytest.approx(
-        3 / 250
-    )
+    assert document["warm"]["measurements"]["cycle"]["samples_per_second"] == pytest.approx(3 / 250)
     assert document["comparison"]["cycle_speedup_ratio"] == 2.0
     assert document["cold"]["measurements"]["resources"]["cuda_telemetry_available"] is True
-    assert document["cold"]["measurements"]["state"]["cardinality"][
-        "vector_scalar_count"
-    ] == 101
+    assert document["cold"]["measurements"]["state"]["cardinality"]["vector_scalar_count"] == 101
     assert document["cold"]["measurements"]["io"]["bytes_written"] == 800
     assert document["warm"]["measurements"]["lanes"]["leanstral"]["reuse_count"] == 1
     assert document["cold"]["measurements"]["lanes"]["hammer"]["attempt_count"] == 9
-    assert document["cold"]["measurements"]["lanes"]["codex"][
-        "accepted_patch_count"
-    ] == 2
+    assert document["cold"]["measurements"]["lanes"]["codex"]["accepted_patch_count"] == 2
     assert set(document["cold"]["measurements"]["family_guardrails"]) == set(
         LEGAL_IR_EVALUATION_FAMILIES
     )
@@ -155,9 +149,7 @@ def test_freezes_complete_matched_cold_and_warm_cycle_evidence() -> None:
 
 
 def test_phase_accounting_distinguishes_all_time_kinds() -> None:
-    document = build_cycle_throughput_baseline(
-        [_summary("cold")], cache_state="cold"
-    ).to_dict()
+    document = build_cycle_throughput_baseline([_summary("cold")], cache_state="cold").to_dict()
     phases = document["measurements"]["phases"]
     breakdown = document["measurements"]["time_breakdown"]
 
@@ -167,9 +159,10 @@ def test_phase_accounting_distinguishes_all_time_kinds() -> None:
     assert phases["state_persistence"]["primary_time_kind"] == "persistence"
     assert phases["solver_execution"]["primary_time_kind"] == "child_process"
     assert breakdown["classification_is_exclusive"] is True
-    assert all(breakdown[f"{kind}_seconds"] > 0 for kind in (
-        "useful_compute", "wait", "serialization", "persistence", "child_process"
-    ))
+    assert all(
+        breakdown[f"{kind}_seconds"] > 0
+        for kind in ("useful_compute", "wait", "serialization", "persistence", "child_process")
+    )
 
 
 def test_cold_and_warm_must_replay_same_ordered_canonical_sample() -> None:
@@ -184,9 +177,10 @@ def test_sample_manifest_is_source_free_and_order_sensitive() -> None:
     manifest = canonical_sample_manifest(SAMPLE_IDS)
 
     assert not any(sample_id in json.dumps(manifest) for sample_id in SAMPLE_IDS)
-    assert manifest["sample_digest"] != canonical_sample_manifest(tuple(reversed(SAMPLE_IDS)))[
-        "sample_digest"
-    ]
+    assert (
+        manifest["sample_digest"]
+        != canonical_sample_manifest(tuple(reversed(SAMPLE_IDS)))["sample_digest"]
+    )
 
 
 def test_missing_evidence_fails_closed_but_can_be_diagnosed() -> None:
@@ -196,9 +190,7 @@ def test_missing_evidence_fails_closed_but_can_be_diagnosed() -> None:
     with pytest.raises(BaselineEvidenceError, match=r"io\.bytes_read"):
         build_cycle_throughput_baseline([summary], cache_state="cold")
 
-    diagnostic = build_cycle_throughput_baseline(
-        [summary], cache_state="cold", strict=False
-    )
+    diagnostic = build_cycle_throughput_baseline([summary], cache_state="cold", strict=False)
     assert diagnostic.complete is False
     assert "io.bytes_written" in diagnostic.to_dict()["completeness"]["missing_measurements"]
 
@@ -212,9 +204,12 @@ def test_digest_is_stable_across_telemetry_ids_and_timestamps_and_detects_tamper
     )
 
     assert first.evidence_digest == second.evidence_digest
-    assert content_digest(
-        {key: value for key, value in first.to_dict().items() if key != "evidence_digest"}
-    ) == first.evidence_digest
+    assert (
+        content_digest(
+            {key: value for key, value in first.to_dict().items() if key != "evidence_digest"}
+        )
+        == first.evidence_digest
+    )
 
     tampered = first.to_dict()
     tampered["measurements"]["cycle"]["mean_seconds"] = 1.0
@@ -223,9 +218,7 @@ def test_digest_is_stable_across_telemetry_ids_and_timestamps_and_detects_tamper
 
 
 def test_artifacts_are_immutable_content_addressed_and_idempotent(tmp_path: Path) -> None:
-    baseline = build_matched_cycle_throughput_baseline(
-        [_summary("cold")], [_summary("warm")]
-    )
+    baseline = build_matched_cycle_throughput_baseline([_summary("cold")], [_summary("warm")])
 
     first = write_content_addressed_baselines(baseline, tmp_path)
     second = write_content_addressed_baselines(baseline, tmp_path)
@@ -233,7 +226,7 @@ def test_artifacts_are_immutable_content_addressed_and_idempotent(tmp_path: Path
     assert first == second
     assert set(first) == {"cold", "warm", "matched"}
     assert baseline.cold.evidence_digest in first["cold"].name
-    assert json.loads(first["matched"].read_text(encoding="utf-8"))[
-        "evidence_digest"
-    ] == baseline.evidence_digest
-
+    assert (
+        json.loads(first["matched"].read_text(encoding="utf-8"))["evidence_digest"]
+        == baseline.evidence_digest
+    )

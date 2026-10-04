@@ -61,9 +61,7 @@ HAMMER_CANDIDATE_SELECTOR_INTERFACE: Final = "HammerCandidateSelector@1"
 SELECTIVE_REPAIR_POLICY_INTERFACE: Final = "SelectiveRepairPolicy@1"
 SELECTIVE_REPAIR_RECEIPT_INTERFACE: Final = "SelectiveRepairCausalReceipt@1"
 SELECTIVE_REPAIR_ACTIVATION_INTERFACE: Final = "SelectiveRepairActivation@1"
-SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE: Final = (
-    "SelectiveRepairCoordinateReceipt@1"
-)
+SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE: Final = "SelectiveRepairCoordinateReceipt@1"
 STRUCTURAL_VALIDATION_INTERFACE: Final = "StructuralCandidateValidation@1"
 SELECTIVE_REPAIR_PROVIDER_ID: Final = "leanstral-local"
 REPAIR_MAX_TOKENS: Final = CONSTRUCTOR_MAX_TOKENS
@@ -165,9 +163,7 @@ class RepairTrigger:
         ):
             raise ContractError("repair trigger rule_index must be nonnegative")
         if self.canonical_field not in RULE_FIELDS:
-            raise ContractError(
-                f"unknown repair trigger field: {self.canonical_field!r}"
-            )
+            raise ContractError(f"unknown repair trigger field: {self.canonical_field!r}")
         if not isinstance(self.kind, RepairTriggerKind):
             try:
                 object.__setattr__(self, "kind", RepairTriggerKind(self.kind))
@@ -182,9 +178,7 @@ class RepairTrigger:
             raise ContractError("repair confidence must be from zero to one")
         if self.kind is RepairTriggerKind.LOW_CONFIDENCE:
             if self.confidence is None:
-                raise ContractError(
-                    "low-confidence trigger requires a confidence"
-                )
+                raise ContractError("low-confidence trigger requires a confidence")
             object.__setattr__(self, "confidence", float(self.confidence))
         if self.evidence is not None:
             cleaned = " ".join(self.evidence.split())
@@ -214,12 +208,8 @@ class SelectiveRepairPolicy:
     low_confidence_threshold: float = DEFAULT_LOW_CONFIDENCE_THRESHOLD
     max_repair_slots: int = DEFAULT_MAX_REPAIR_SLOTS
     candidate_count: int = DEFAULT_CANDIDATE_COUNT
-    eligible_triggers: tuple[RepairTriggerKind, ...] = tuple(
-        RepairTriggerKind
-    )
-    structural_constraints: tuple[str, ...] = (
-        DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    eligible_triggers: tuple[RepairTriggerKind, ...] = tuple(RepairTriggerKind)
+    structural_constraints: tuple[str, ...] = DECLARED_STRUCTURAL_CONSTRAINTS
     selection_rules: tuple[str, ...] = DECLARED_SELECTION_RULES
 
     def __post_init__(self) -> None:
@@ -229,9 +219,7 @@ class SelectiveRepairPolicy:
             or not math.isfinite(float(self.low_confidence_threshold))
             or not 0.0 <= float(self.low_confidence_threshold) <= 1.0
         ):
-            raise ContractError(
-                "low_confidence_threshold must be from zero to one"
-            )
+            raise ContractError("low_confidence_threshold must be from zero to one")
         object.__setattr__(
             self,
             "low_confidence_threshold",
@@ -239,39 +227,26 @@ class SelectiveRepairPolicy:
         )
         for name in ("max_repair_slots", "candidate_count"):
             value = getattr(self, name)
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 1
-            ):
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 raise ContractError(f"{name} must be a positive integer")
         if self.max_repair_slots > len(RULE_FIELDS) * 16:
             raise ContractError("max_repair_slots exceeds the canonical bound")
         if self.candidate_count > 8:
             raise ContractError("candidate_count exceeds the call bound")
         try:
-            eligible = tuple(
-                RepairTriggerKind(item) for item in self.eligible_triggers
-            )
+            eligible = tuple(RepairTriggerKind(item) for item in self.eligible_triggers)
         except (TypeError, ValueError) as exc:
             raise ContractError("eligible repair trigger is invalid") from exc
         if not eligible or len(set(eligible)) != len(eligible):
-            raise ContractError(
-                "eligible_triggers must be nonempty and unique"
-            )
+            raise ContractError("eligible_triggers must be nonempty and unique")
         object.__setattr__(self, "eligible_triggers", eligible)
         if tuple(self.selection_rules) != DECLARED_SELECTION_RULES:
-            raise ContractError(
-                "selection_rules must equal the frozen declared rules"
-            )
+            raise ContractError("selection_rules must equal the frozen declared rules")
         constraints = tuple(self.structural_constraints)
         if (
             not constraints
             or len(set(constraints)) != len(constraints)
-            or any(
-                item not in DECLARED_STRUCTURAL_CONSTRAINTS
-                for item in constraints
-            )
+            or any(item not in DECLARED_STRUCTURAL_CONSTRAINTS for item in constraints)
         ):
             raise ContractError(
                 "structural_constraints must be a unique nonempty subset "
@@ -286,9 +261,7 @@ class SelectiveRepairPolicy:
     def to_dict(self) -> dict[str, object]:
         return {
             "candidate_count": self.candidate_count,
-            "eligible_triggers": [
-                item.value for item in self.eligible_triggers
-            ],
+            "eligible_triggers": [item.value for item in self.eligible_triggers],
             "interface": SELECTIVE_REPAIR_POLICY_INTERFACE,
             "low_confidence_threshold": self.low_confidence_threshold,
             "max_repair_slots": self.max_repair_slots,
@@ -307,51 +280,35 @@ class SelectiveRepairPolicy:
             raise ContractError("repair triggers must be a sequence")
         try:
             normalized = tuple(
-                item
-                if isinstance(item, RepairTrigger)
-                else RepairTrigger(**dict(item))  # type: ignore[arg-type]
+                item if isinstance(item, RepairTrigger) else RepairTrigger(**dict(item))  # type: ignore[arg-type]
                 for item in triggers
             )
         except (TypeError, ValueError) as exc:
-            raise ContractError(
-                "repair triggers must be RepairTrigger records"
-            ) from exc
+            raise ContractError("repair triggers must be RepairTrigger records") from exc
         if len(normalized) > self.max_repair_slots:
             raise ContractError("repair triggers exceed the preregistered bound")
         paths: set[str] = set()
         for trigger in normalized:
             if trigger.rule_index >= len(baseline.rules):
-                raise ContractError(
-                    f"repair trigger {trigger.path} is outside the baseline"
-                )
+                raise ContractError(f"repair trigger {trigger.path} is outside the baseline")
             if trigger.kind not in self.eligible_triggers:
-                raise ContractError(
-                    f"repair trigger {trigger.kind.value} was not preregistered"
-                )
+                raise ContractError(f"repair trigger {trigger.kind.value} was not preregistered")
             if trigger.path in paths:
-                raise ContractError(
-                    f"duplicate repair trigger for {trigger.path}"
-                )
+                raise ContractError(f"duplicate repair trigger for {trigger.path}")
             paths.add(trigger.path)
             current = getattr(
                 baseline.rules[trigger.rule_index],
                 trigger.canonical_field,
             )
-            if (
-                trigger.kind is RepairTriggerKind.MISSING
-                and current not in ("", ())
-            ):
-                raise ContractError(
-                    f"missing trigger targets nonempty slot {trigger.path}"
-                )
+            if trigger.kind is RepairTriggerKind.MISSING and current not in ("", ()):
+                raise ContractError(f"missing trigger targets nonempty slot {trigger.path}")
             if (
                 trigger.kind is RepairTriggerKind.LOW_CONFIDENCE
                 and trigger.confidence is not None
                 and trigger.confidence >= self.low_confidence_threshold
             ):
                 raise ContractError(
-                    f"{trigger.path} confidence is not below the "
-                    "preregistered threshold"
+                    f"{trigger.path} confidence is not below the preregistered threshold"
                 )
         return tuple(
             sorted(
@@ -383,11 +340,7 @@ class ModelCallRecord:
     def __post_init__(self) -> None:
         if not self.call_id or not self.prompt_sha256 or not self.schema_sha256:
             raise ContractError("model call identity digests must be nonempty")
-        if (
-            isinstance(self.ordinal, bool)
-            or not isinstance(self.ordinal, int)
-            or self.ordinal < 0
-        ):
+        if isinstance(self.ordinal, bool) or not isinstance(self.ordinal, int) or self.ordinal < 0:
             raise ContractError("model call ordinal must be nonnegative")
         if self.endpoint != LEANSTRAL_ENDPOINT or self.model != LEANSTRAL_MODEL:
             raise ContractError("model call drifted from frozen Leanstral")
@@ -399,13 +352,9 @@ class ModelCallRecord:
                 or self.failure_reason is not None
                 or self.failure_detail is not None
             ):
-                raise ContractError(
-                    "returned model call requires only a response digest"
-                )
+                raise ContractError("returned model call requires only a response digest")
         elif self.failure_reason is None or self.response_sha256 is not None:
-            raise ContractError(
-                "failed model call requires a reason and no response digest"
-            )
+            raise ContractError("failed model call requires a reason and no response digest")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -414,9 +363,7 @@ class ModelCallRecord:
             "endpoint": self.endpoint,
             "failure_detail": self.failure_detail,
             "failure_reason": (
-                self.failure_reason.value
-                if self.failure_reason is not None
-                else None
+                self.failure_reason.value if self.failure_reason is not None else None
             ),
             "max_tokens": REPAIR_MAX_TOKENS,
             "model": self.model,
@@ -428,9 +375,7 @@ class ModelCallRecord:
             "schema_sha256": self.schema_sha256,
             "seed": 0,
             "status": self.status.value,
-            "system_sha256": hashlib.sha256(
-                _REPAIR_SYSTEM.encode("utf-8")
-            ).hexdigest(),
+            "system_sha256": hashlib.sha256(_REPAIR_SYSTEM.encode("utf-8")).hexdigest(),
             "temperature": 0,
         }
 
@@ -462,20 +407,13 @@ class StructuralValidationRequest:
             self.candidate_ir, CanonicalRuleIR
         ):
             raise ContractError("structural validation requires canonical IRs")
-        object.__setattr__(
-            self, "allowed_field_paths", tuple(self.allowed_field_paths)
-        )
-        object.__setattr__(
-            self, "changed_field_paths", tuple(self.changed_field_paths)
-        )
+        object.__setattr__(self, "allowed_field_paths", tuple(self.allowed_field_paths))
+        object.__setattr__(self, "changed_field_paths", tuple(self.changed_field_paths))
         object.__setattr__(self, "constraints", tuple(self.constraints))
         if not self.allowed_field_paths:
-            raise ContractError(
-                "structural validation requires bounded allowed fields"
-            )
+            raise ContractError("structural validation requires bounded allowed fields")
         if not self.constraints or any(
-            item not in DECLARED_STRUCTURAL_CONSTRAINTS
-            for item in self.constraints
+            item not in DECLARED_STRUCTURAL_CONSTRAINTS for item in self.constraints
         ):
             raise ContractError("structural validation constraint is invalid")
 
@@ -513,20 +451,13 @@ class StructuralValidationReceipt:
         if (
             not self.constraints
             or len(set(self.constraints)) != len(self.constraints)
-            or any(
-                item not in DECLARED_STRUCTURAL_CONSTRAINTS
-                for item in self.constraints
-            )
+            or any(item not in DECLARED_STRUCTURAL_CONSTRAINTS for item in self.constraints)
         ):
-            raise ContractError(
-                "receipt constraints must be declared structural constraints"
-            )
+            raise ContractError("receipt constraints must be declared structural constraints")
         if not isinstance(self.passed, bool):
             raise ContractError("structural validation passed must be boolean")
         if self.semantic_authority is not False:
-            raise ContractError(
-                "Hammer/cvc5/Lean cannot claim semantic authority"
-            )
+            raise ContractError("Hammer/cvc5/Lean cannot claim semantic authority")
         if self.detail is not None and not self.detail.strip():
             raise ContractError("structural validation detail must be nonblank")
 
@@ -542,9 +473,7 @@ class StructuralValidationReceipt:
         }
 
 
-StructuralValidatorCallable = Callable[
-    [StructuralValidationRequest], StructuralValidationReceipt
-]
+StructuralValidatorCallable = Callable[[StructuralValidationRequest], StructuralValidationReceipt]
 
 
 @dataclass(frozen=True, slots=True)
@@ -554,9 +483,7 @@ class StructuralValidatorBinding:
     validator_id: str
     tool: StructuralTool
     constraints: tuple[str, ...]
-    validate: StructuralValidatorCallable = field(
-        repr=False, compare=False, hash=False
-    )
+    validate: StructuralValidatorCallable = field(repr=False, compare=False, hash=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.validator_id, str) or not self.validator_id.strip():
@@ -570,14 +497,9 @@ class StructuralValidatorBinding:
         if (
             not self.constraints
             or len(set(self.constraints)) != len(self.constraints)
-            or any(
-                item not in DECLARED_STRUCTURAL_CONSTRAINTS
-                for item in self.constraints
-            )
+            or any(item not in DECLARED_STRUCTURAL_CONSTRAINTS for item in self.constraints)
         ):
-            raise ContractError(
-                "validator constraints must be declared structural constraints"
-            )
+            raise ContractError("validator constraints must be declared structural constraints")
         if not callable(self.validate):
             raise ContractError("structural validator must be callable")
 
@@ -600,39 +522,21 @@ class CandidateEvaluation:
     def __post_init__(self) -> None:
         if not self.call_id or not self.response_sha256:
             raise ContractError("candidate call and response identities are required")
-        if (
-            isinstance(self.ordinal, bool)
-            or not isinstance(self.ordinal, int)
-            or self.ordinal < 0
-        ):
+        if isinstance(self.ordinal, bool) or not isinstance(self.ordinal, int) or self.ordinal < 0:
             raise ContractError("candidate ordinal must be nonnegative")
-        if not isinstance(self.schema_valid, bool) or not isinstance(
-            self.nonempty, bool
-        ):
+        if not isinstance(self.schema_valid, bool) or not isinstance(self.nonempty, bool):
             raise ContractError("candidate validity flags must be booleans")
         if self.schema_valid != isinstance(self.canonical_ir, CanonicalRuleIR):
-            raise ContractError(
-                "schema-valid candidate disposition must retain canonical IR"
-            )
-        if self.nonempty != bool(
-            self.canonical_ir is not None and not self.canonical_ir.is_empty
-        ):
+            raise ContractError("schema-valid candidate disposition must retain canonical IR")
+        if self.nonempty != bool(self.canonical_ir is not None and not self.canonical_ir.is_empty):
             raise ContractError("candidate nonempty disposition is inconsistent")
         object.__setattr__(self, "field_changes", tuple(self.field_changes))
-        object.__setattr__(
-            self, "structural_receipts", tuple(self.structural_receipts)
-        )
-        object.__setattr__(
-            self, "rejection_reasons", tuple(self.rejection_reasons)
-        )
-        if not all(
-            isinstance(item, CanonicalFieldChange)
-            for item in self.field_changes
-        ):
+        object.__setattr__(self, "structural_receipts", tuple(self.structural_receipts))
+        object.__setattr__(self, "rejection_reasons", tuple(self.rejection_reasons))
+        if not all(isinstance(item, CanonicalFieldChange) for item in self.field_changes):
             raise ContractError("candidate field changes are invalid")
         if not all(
-            isinstance(item, StructuralValidationReceipt)
-            for item in self.structural_receipts
+            isinstance(item, StructuralValidationReceipt) for item in self.structural_receipts
         ):
             raise ContractError("candidate structural receipts are invalid")
         if not isinstance(self.accepted, bool):
@@ -663,23 +567,17 @@ class CandidateEvaluation:
             "accepted": self.accepted,
             "call_id": self.call_id,
             "canonical_ir": (
-                self.canonical_ir.to_dict()
-                if self.canonical_ir is not None
-                else None
+                self.canonical_ir.to_dict() if self.canonical_ir is not None else None
             ),
             "changed_field_paths": list(self.changed_field_paths),
             "changed_fields": list(self.changed_fields),
-            "field_changes": [
-                item.to_dict() for item in self.field_changes
-            ],
+            "field_changes": [item.to_dict() for item in self.field_changes],
             "nonempty": self.nonempty,
             "ordinal": self.ordinal,
             "rejection_reasons": list(self.rejection_reasons),
             "response_sha256": self.response_sha256,
             "schema_valid": self.schema_valid,
-            "structural_receipts": [
-                item.to_dict() for item in self.structural_receipts
-            ],
+            "structural_receipts": [item.to_dict() for item in self.structural_receipts],
         }
 
 
@@ -698,12 +596,8 @@ class CandidateSelection:
             raise ContractError("candidate ordinals must be unique")
         if tuple(self.selection_rules) != DECLARED_SELECTION_RULES:
             raise ContractError("candidate selection rules drifted")
-        accepted = {
-            item.ordinal for item in self.evaluations if item.accepted
-        }
-        if self.selected_ordinal is not None and (
-            self.selected_ordinal not in accepted
-        ):
+        accepted = {item.ordinal for item in self.evaluations if item.accepted}
+        if self.selected_ordinal is not None and (self.selected_ordinal not in accepted):
             raise ContractError("selected candidate was not accepted")
         if accepted and self.selected_ordinal is None:
             raise ContractError("accepted candidates require a selection")
@@ -717,18 +611,12 @@ class CandidateSelection:
                 ),
             )
             if self.selected_ordinal != expected.ordinal:
-                raise ContractError(
-                    "selected candidate violates the preregistered ranking"
-                )
+                raise ContractError("selected candidate violates the preregistered ranking")
 
     @property
     def selected(self) -> CandidateEvaluation | None:
         return next(
-            (
-                item
-                for item in self.evaluations
-                if item.ordinal == self.selected_ordinal
-            ),
+            (item for item in self.evaluations if item.ordinal == self.selected_ordinal),
             None,
         )
 
@@ -741,15 +629,9 @@ class CandidateSelection:
 
 
 def _change_path(change: CanonicalFieldChange) -> str:
-    if (
-        change.baseline_rule_index is None
-        or change.guided_rule_index is None
-    ):
+    if change.baseline_rule_index is None or change.guided_rule_index is None:
         return change.path
-    return (
-        f"rules[{change.baseline_rule_index}]."
-        f"{change.canonical_field}"
-    )
+    return f"rules[{change.baseline_rule_index}].{change.canonical_field}"
 
 
 def _failed_structural_receipt(
@@ -780,26 +662,16 @@ class HammerCandidateSelector:
         if not isinstance(self._policy, SelectiveRepairPolicy):
             raise ContractError("selector policy must be SelectiveRepairPolicy")
         self._validators = tuple(validators)
-        if not all(
-            isinstance(item, StructuralValidatorBinding)
-            for item in self._validators
-        ):
-            raise ContractError(
-                "validators must be StructuralValidatorBinding records"
-            )
+        if not all(isinstance(item, StructuralValidatorBinding) for item in self._validators):
+            raise ContractError("validators must be StructuralValidatorBinding records")
         identities = [item.validator_id for item in self._validators]
         if len(set(identities)) != len(identities):
             raise ContractError("structural validator identities must be unique")
-        covered = {
-            constraint
-            for binding in self._validators
-            for constraint in binding.constraints
-        }
+        covered = {constraint for binding in self._validators for constraint in binding.constraints}
         expected = set(self._policy.structural_constraints)
         if covered and covered != expected:
             raise ContractError(
-                "validator bindings must cover exactly the preregistered "
-                "structural constraints"
+                "validator bindings must cover exactly the preregistered structural constraints"
             )
 
     @property
@@ -816,10 +688,10 @@ class HammerCandidateSelector:
 
     @property
     def identity(self) -> str:
-        validators = ",".join(
-            f"{item.tool.value}:{item.validator_id}"
-            for item in self._validators
-        ) or "unavailable"
+        validators = (
+            ",".join(f"{item.tool.value}:{item.validator_id}" for item in self._validators)
+            or "unavailable"
+        )
         return f"{self.interface}:{self._policy.digest}:{validators}"
 
     def select(
@@ -833,51 +705,38 @@ class HammerCandidateSelector:
 
         if not isinstance(baseline_ir, CanonicalRuleIR):
             raise ContractError("selector baseline must be CanonicalRuleIR")
-        normalized_triggers = self._policy.validate_triggers(
-            baseline_ir, triggers
-        )
+        normalized_triggers = self._policy.validate_triggers(baseline_ir, triggers)
         allowed_paths = tuple(item.path for item in normalized_triggers)
         evaluations: list[CandidateEvaluation] = []
         for candidate in candidates:
             if not isinstance(candidate, ModelCandidate):
-                raise ContractError(
-                    "selector candidates must be ModelCandidate records"
-                )
+                raise ContractError("selector candidates must be ModelCandidate records")
             reasons: list[str] = []
             receipts: list[StructuralValidationReceipt] = []
             changes: tuple[CanonicalFieldChange, ...] = ()
             canonical_ir: CanonicalRuleIR | None = None
             try:
-                canonical_ir = CanonicalRuleIR.from_dict(
-                    candidate.payload, allowed_atom_vocabulary
-                )
+                canonical_ir = CanonicalRuleIR.from_dict(candidate.payload, allowed_atom_vocabulary)
                 schema_valid = True
             except (ContractError, TypeError, ValueError) as exc:
                 schema_valid = False
                 reasons.append(f"schema_invalid:{_detail(exc, 'invalid IR')}")
-            nonempty = bool(
-                canonical_ir is not None and not canonical_ir.is_empty
-            )
+            nonempty = bool(canonical_ir is not None and not canonical_ir.is_empty)
             if schema_valid and not nonempty:
                 reasons.append("empty_candidate")
             if canonical_ir is not None:
-                changes = canonical_field_changes(
-                    baseline_ir, canonical_ir
-                )
+                changes = canonical_field_changes(baseline_ir, canonical_ir)
                 if len(canonical_ir.rules) != len(baseline_ir.rules):
                     reasons.append("rule_cardinality_changed")
                 if any(
-                    item.baseline_rule_index is None
-                    or item.guided_rule_index is None
+                    item.baseline_rule_index is None or item.guided_rule_index is None
                     for item in changes
                 ):
                     reasons.append("rule_added_or_removed")
                 changed_paths = tuple(_change_path(item) for item in changes)
                 outside = sorted(set(changed_paths) - set(allowed_paths))
                 if outside:
-                    reasons.append(
-                        "untriggered_fields_changed:" + ",".join(outside)
-                    )
+                    reasons.append("untriggered_fields_changed:" + ",".join(outside))
                 if not changes:
                     reasons.append("no_triggered_field_changed")
 
@@ -890,9 +749,7 @@ class HammerCandidateSelector:
                         "baseline_ir": baseline_ir,
                         "candidate_ir": canonical_ir,
                         "allowed_field_paths": allowed_paths,
-                        "changed_field_paths": tuple(
-                            _change_path(item) for item in changes
-                        ),
+                        "changed_field_paths": tuple(_change_path(item) for item in changes),
                     }
                     for binding in self._validators:
                         validation_request = StructuralValidationRequest(
@@ -901,33 +758,24 @@ class HammerCandidateSelector:
                         )
                         try:
                             receipt = binding.validate(validation_request)
-                            if not isinstance(
-                                receipt, StructuralValidationReceipt
-                            ):
-                                raise ContractError(
-                                    "validator returned a non-receipt"
-                                )
+                            if not isinstance(receipt, StructuralValidationReceipt):
+                                raise ContractError("validator returned a non-receipt")
                             if (
                                 receipt.validator_id != binding.validator_id
                                 or receipt.tool is not binding.tool
                                 or receipt.constraints != binding.constraints
                             ):
-                                raise ContractError(
-                                    "validator receipt drifted from its binding"
-                                )
+                                raise ContractError("validator receipt drifted from its binding")
                         except BaseException as exc:
                             if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                                 raise
                             receipt = _failed_structural_receipt(
                                 binding,
-                                "structural validator failed: "
-                                + type(exc).__name__,
+                                "structural validator failed: " + type(exc).__name__,
                             )
                         receipts.append(receipt)
                         if not receipt.passed:
-                            reasons.append(
-                                f"structural_rejection:{binding.validator_id}"
-                            )
+                            reasons.append(f"structural_rejection:{binding.validator_id}")
 
             evaluations.append(
                 CandidateEvaluation(
@@ -1028,9 +876,7 @@ class SelectiveRepairReceipt:
             "baseline_identity",
             "selector_identity",
         ):
-            if not isinstance(getattr(self, name), str) or not getattr(
-                self, name
-            ).strip():
+            if not isinstance(getattr(self, name), str) or not getattr(self, name).strip():
                 raise ContractError(f"{name} must be nonblank")
         if self.baseline_retained is not True:
             raise ContractError("the unrepaired baseline must be retained")
@@ -1038,9 +884,7 @@ class SelectiveRepairReceipt:
         object.__setattr__(self, "model_calls", tuple(self.model_calls))
         if not all(isinstance(item, RepairTrigger) for item in self.triggers):
             raise ContractError("receipt triggers are invalid")
-        if not all(
-            isinstance(item, ModelCallRecord) for item in self.model_calls
-        ):
+        if not all(isinstance(item, ModelCallRecord) for item in self.model_calls):
             raise ContractError("receipt model calls are invalid")
         if len(self.model_calls) > self.policy.candidate_count:
             raise ContractError("receipt exceeds the preregistered call count")
@@ -1057,18 +901,11 @@ class SelectiveRepairReceipt:
             raise ContractError("accepted repair requires selected candidate")
         if self.selection is not None:
             returned = {
-                item.call_id
-                for item in self.model_calls
-                if item.status is ModelCallStatus.RETURNED
+                item.call_id for item in self.model_calls if item.status is ModelCallStatus.RETURNED
             }
-            evaluated = {
-                item.call_id for item in self.selection.evaluations
-            }
+            evaluated = {item.call_id for item in self.selection.evaluations}
             if returned != evaluated:
-                raise ContractError(
-                    "every returned model call must have one candidate "
-                    "evaluation"
-                )
+                raise ContractError("every returned model call must have one candidate evaluation")
         if self.detail is not None and not self.detail.strip():
             raise ContractError("repair receipt detail must be nonblank")
 
@@ -1080,9 +917,7 @@ class SelectiveRepairReceipt:
     def changed_fields(self) -> tuple[str, ...]:
         changed = {
             field
-            for evaluation in (
-                self.selection.evaluations if self.selection is not None else ()
-            )
+            for evaluation in (self.selection.evaluations if self.selection is not None else ())
             for field in evaluation.changed_fields
         }
         return tuple(item for item in RULE_FIELDS if item in changed)
@@ -1121,11 +956,7 @@ class SelectiveRepairReceipt:
             "policy_sha256": self.policy.digest,
             "repair_attempted": self.repair_attempted,
             "score_disposition": self.score_disposition,
-            "selection": (
-                self.selection.to_dict()
-                if self.selection is not None
-                else None
-            ),
+            "selection": (self.selection.to_dict() if self.selection is not None else None),
             "selector_identity": self.selector_identity,
             "status": self.status.value,
             "triggers": [item.to_dict() for item in self.triggers],
@@ -1249,9 +1080,7 @@ class SelectiveLeanstralRepair:
 
             base_constructor = TypedDeonticCanonicalConstructor()
         if not isinstance(base_constructor, RoundTripConstructor):
-            raise ContractError(
-                "base_constructor must implement RoundTripConstructor"
-            )
+            raise ContractError("base_constructor must implement RoundTripConstructor")
         self._policy = policy or (
             selector.policy if selector is not None else SelectiveRepairPolicy()
         )
@@ -1261,22 +1090,16 @@ class SelectiveLeanstralRepair:
         if not isinstance(self._selector, HammerCandidateSelector):
             raise ContractError("selector must be HammerCandidateSelector")
         if self._selector.policy != self._policy:
-            raise ContractError(
-                "repair and selector policies must be the same preregistration"
-            )
+            raise ContractError("repair and selector policies must be the same preregistration")
         self._client = client or LeanstralClient()
         if (
             self._client.endpoint.rstrip("/") != LEANSTRAL_ENDPOINT
             or self._client.model != LEANSTRAL_MODEL
         ):
-            raise ContractError(
-                "repair client must bind the frozen Leanstral endpoint/model"
-            )
+            raise ContractError("repair client must bind the frozen Leanstral endpoint/model")
         detector = trigger_detector or MissingCanonicalSlotDetector()
         if not isinstance(detector, RepairTriggerDetector):
-            raise ContractError(
-                "trigger_detector must expose a stable identity and detect"
-            )
+            raise ContractError("trigger_detector must expose a stable identity and detect")
         if not detector.identity.strip():
             raise ContractError("trigger detector identity must be nonblank")
         self._base_constructor = base_constructor
@@ -1340,17 +1163,10 @@ class SelectiveLeanstralRepair:
         retained = baseline_result or ConstructorResult(
             ComponentStatus.SUCCESS, canonical_ir=baseline_ir
         )
-        if (
-            retained.status is not ComponentStatus.SUCCESS
-            or retained.canonical_ir != baseline_ir
-        ):
-            raise ContractError(
-                "baseline_result must be the successful supplied baseline"
-            )
+        if retained.status is not ComponentStatus.SUCCESS or retained.canonical_ir != baseline_ir:
+            raise ContractError("baseline_result must be the successful supplied baseline")
         try:
-            baseline_ir.validate_vocabulary(
-                request.allowed_atom_vocabulary
-            )
+            baseline_ir.validate_vocabulary(request.allowed_atom_vocabulary)
             if baseline_ir.is_empty:
                 raise ContractError("repair baseline must be nonempty")
         except ContractError as exc:
@@ -1364,9 +1180,7 @@ class SelectiveLeanstralRepair:
                 ),
             )
         try:
-            normalized = self._policy.validate_triggers(
-                baseline_ir, triggers
-            )
+            normalized = self._policy.validate_triggers(baseline_ir, triggers)
         except ContractError as exc:
             result = _failure_result(FailureReason.INVALID_OUTPUT, str(exc))
             return SelectiveRepairConstruction(
@@ -1379,9 +1193,7 @@ class SelectiveLeanstralRepair:
                         for item in (
                             triggers
                             if isinstance(triggers, Sequence)
-                            and not isinstance(
-                                triggers, (str, bytes, bytearray)
-                            )
+                            and not isinstance(triggers, (str, bytes, bytearray))
                             else ()
                         )
                         if isinstance(item, RepairTrigger)
@@ -1539,9 +1351,7 @@ class SelectiveLeanstralRepair:
         assert baseline.canonical_ir is not None
         if triggers is None:
             try:
-                triggers = self._trigger_detector.detect(
-                    request, baseline.canonical_ir
-                )
+                triggers = self._trigger_detector.detect(request, baseline.canonical_ir)
             except BaseException as exc:
                 if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                     raise
@@ -1616,9 +1426,7 @@ class ActivationFixtureCase:
         object.__setattr__(self, "expected_kinds", tuple(self.expected_kinds))
         object.__setattr__(self, "expected_fields", tuple(self.expected_fields))
         if not self.triggers:
-            raise ContractError(
-                "activation fixture cases must declare at least one trigger"
-            )
+            raise ContractError("activation fixture cases must declare at least one trigger")
         if not all(isinstance(item, RepairTrigger) for item in self.triggers):
             raise ContractError("activation fixture triggers are invalid")
         if not self.expected_kinds:
@@ -1626,22 +1434,16 @@ class ActivationFixtureCase:
         try:
             kinds = tuple(RepairTriggerKind(item) for item in self.expected_kinds)
         except (TypeError, ValueError) as exc:
-            raise ContractError(
-                "activation fixture expected_kinds is invalid"
-            ) from exc
+            raise ContractError("activation fixture expected_kinds is invalid") from exc
         object.__setattr__(self, "expected_kinds", kinds)
         fields = tuple(self.expected_fields)
         if not fields or any(field not in RULE_FIELDS for field in fields):
             raise ContractError("activation fixture expected_fields is invalid")
         object.__setattr__(self, "expected_fields", fields)
         if len(self.baseline_ir.rules) != len(self.repaired_ir.rules):
-            raise ContractError(
-                "activation fixture repaired IR must preserve rule count"
-            )
+            raise ContractError("activation fixture repaired IR must preserve rule count")
 
-    def constructor_request(
-        self, config: Mapping[str, object] | None = None
-    ) -> ConstructorRequest:
+    def constructor_request(self, config: Mapping[str, object] | None = None) -> ConstructorRequest:
         return ConstructorRequest(
             self.source_text,
             self.vocabulary,
@@ -1708,10 +1510,7 @@ def activation_fixture_pack() -> tuple[ActivationFixtureCase, ...]:
             rule_index=0,
             canonical_field="temporal",
             kind=RepairTriggerKind.MISSING,
-            evidence=(
-                "activation fixture forces empty temporal despite "
-                "after_30_days source cue"
-            ),
+            evidence=("activation fixture forces empty temporal despite after_30_days source cue"),
         ),
     )
 
@@ -1741,9 +1540,7 @@ def activation_fixture_pack() -> tuple[ActivationFixtureCase, ...]:
             canonical_field="object",
             kind=RepairTriggerKind.LOW_CONFIDENCE,
             confidence=0.2,
-            evidence=(
-                "activation fixture forces low-confidence object attachment"
-            ),
+            evidence=("activation fixture forces low-confidence object attachment"),
         ),
     )
 
@@ -1774,17 +1571,14 @@ def activation_fixture_pack() -> tuple[ActivationFixtureCase, ...]:
             rule_index=0,
             canonical_field="modality",
             kind=RepairTriggerKind.CONTRADICTORY,
-            evidence=(
-                "activation fixture forces obligation/prohibition contradiction"
-            ),
+            evidence=("activation fixture forces obligation/prohibition contradiction"),
         ),
         RepairTrigger(
             rule_index=0,
             canonical_field="exceptions",
             kind=RepairTriggerKind.MISSING,
             evidence=(
-                "activation fixture forces missing exception slot for "
-                "unless_required_by_law"
+                "activation fixture forces missing exception slot for unless_required_by_law"
             ),
         ),
     )
@@ -1792,9 +1586,7 @@ def activation_fixture_pack() -> tuple[ActivationFixtureCase, ...]:
     return (
         ActivationFixtureCase(
             case_id="missing_temporal",
-            source_text=(
-                "The controller must delete the records after 30 days."
-            ),
+            source_text=("The controller must delete the records after 30 days."),
             vocabulary=vocabulary,
             baseline_ir=missing_temporal_baseline,
             repaired_ir=missing_temporal_repaired,
@@ -1804,9 +1596,7 @@ def activation_fixture_pack() -> tuple[ActivationFixtureCase, ...]:
         ),
         ActivationFixtureCase(
             case_id="low_confidence_object",
-            source_text=(
-                "The controller must retain the records if requested."
-            ),
+            source_text=("The controller must retain the records if requested."),
             vocabulary=vocabulary,
             baseline_ir=low_confidence_baseline,
             repaired_ir=low_confidence_repaired,
@@ -1863,9 +1653,7 @@ class SelectiveRepairCoordinateReceipt:
         object.__setattr__(self, "trigger_fields", tuple(self.trigger_fields))
         object.__setattr__(self, "changed_fields", tuple(self.changed_fields))
         if self.repair_applied and not self.repair_triggered:
-            raise ContractError(
-                "repair cannot be applied without being triggered"
-            )
+            raise ContractError("repair cannot be applied without being triggered")
         if self.detail is not None and not str(self.detail).strip():
             raise ContractError("coordinate receipt detail must be nonblank")
 
@@ -1903,16 +1691,11 @@ class SelectiveRepairActivationReport:
     def __post_init__(self) -> None:
         if not isinstance(self.fixture_pack_id, str) or not self.fixture_pack_id.strip():
             raise ContractError("fixture_pack_id must be nonblank")
-        object.__setattr__(
-            self, "coordinate_receipts", tuple(self.coordinate_receipts)
-        )
+        object.__setattr__(self, "coordinate_receipts", tuple(self.coordinate_receipts))
         if not self.coordinate_receipts:
-            raise ContractError(
-                "activation report requires at least one coordinate receipt"
-            )
+            raise ContractError("activation report requires at least one coordinate receipt")
         if not all(
-            isinstance(item, SelectiveRepairCoordinateReceipt)
-            for item in self.coordinate_receipts
+            isinstance(item, SelectiveRepairCoordinateReceipt) for item in self.coordinate_receipts
         ):
             raise ContractError("activation report receipts are invalid")
         if not isinstance(self.validation_passed, bool):
@@ -1930,9 +1713,7 @@ class SelectiveRepairActivationReport:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "coordinate_receipts": [
-                item.to_dict() for item in self.coordinate_receipts
-            ],
+            "coordinate_receipts": [item.to_dict() for item in self.coordinate_receipts],
             "detail": self.detail,
             "fixture_pack_id": self.fixture_pack_id,
             "interface": SELECTIVE_REPAIR_ACTIVATION_INTERFACE,
@@ -1956,9 +1737,7 @@ def coordinate_receipt_from_construction(
         raise ContractError("construction must be SelectiveRepairConstruction")
     receipt = construction.receipt
     triggers = receipt.triggers
-    repair_triggered = bool(triggers) and receipt.status is not (
-        RepairAttemptStatus.NOT_TRIGGERED
-    )
+    repair_triggered = bool(triggers) and receipt.status is not (RepairAttemptStatus.NOT_TRIGGERED)
     # NOT_TRIGGERED already implies empty triggers; also count explicit triggers
     # retained on failed validation as triggered evidence.
     if triggers:
@@ -1970,8 +1749,7 @@ def coordinate_receipt_from_construction(
     only_triggered = True
     if receipt.selection is not None:
         structural_validations = sum(
-            len(item.structural_receipts)
-            for item in receipt.selection.evaluations
+            len(item.structural_receipts) for item in receipt.selection.evaluations
         )
         selected = receipt.selection.selected
         if selected is not None:
@@ -1981,11 +1759,7 @@ def coordinate_receipt_from_construction(
                 if allowed_trigger_paths is not None
                 else (item.path for item in triggers)
             )
-            outside = [
-                path
-                for path in selected.changed_field_paths
-                if path not in allowed
-            ]
+            outside = [path for path in selected.changed_field_paths if path not in allowed]
             only_triggered = not outside
         else:
             # Inspect all evaluations when nothing was accepted.
@@ -2044,9 +1818,7 @@ class FixedBaselineConstructor:
                 failure_detail="request must be ConstructorRequest",
             )
         try:
-            self._baseline_ir.validate_vocabulary(
-                request.allowed_atom_vocabulary
-            )
+            self._baseline_ir.validate_vocabulary(request.allowed_atom_vocabulary)
         except ContractError as exc:
             return ConstructorResult(
                 ComponentStatus.FAILED,
@@ -2073,9 +1845,7 @@ class FixtureTriggerDetector:
     def __init__(self, triggers: Sequence[RepairTrigger]) -> None:
         self._triggers = tuple(triggers)
         if not self._triggers:
-            raise ContractError(
-                "fixture trigger detector requires nonempty triggers"
-            )
+            raise ContractError("fixture trigger detector requires nonempty triggers")
         if not all(isinstance(item, RepairTrigger) for item in self._triggers):
             raise ContractError("fixture triggers must be RepairTrigger records")
 
@@ -2127,13 +1897,10 @@ def _default_activation_validators() -> tuple[StructuralValidatorBinding, ...]:
 def run_selective_repair_activation(
     *,
     cases: Sequence[ActivationFixtureCase] | None = None,
-    client_factory: Callable[
-        [ActivationFixtureCase], CompletionClient
-    ] | None = None,
+    client_factory: Callable[[ActivationFixtureCase], CompletionClient] | None = None,
     require_triggers: bool = True,
-    trigger_detector_factory: Callable[
-        [ActivationFixtureCase], RepairTriggerDetector
-    ] | None = None,
+    trigger_detector_factory: Callable[[ActivationFixtureCase], RepairTriggerDetector]
+    | None = None,
     validators: Sequence[StructuralValidatorBinding] | None = None,
     policy: SelectiveRepairPolicy | None = None,
 ) -> SelectiveRepairActivationReport:
@@ -2153,9 +1920,7 @@ def run_selective_repair_activation(
     if not isinstance(active_policy, SelectiveRepairPolicy):
         raise ContractError("policy must be SelectiveRepairPolicy")
     validator_bindings = (
-        tuple(validators)
-        if validators is not None
-        else _default_activation_validators()
+        tuple(validators) if validators is not None else _default_activation_validators()
     )
 
     def _default_client(case: ActivationFixtureCase) -> CompletionClient:
@@ -2170,9 +1935,7 @@ def run_selective_repair_activation(
         return _Client()  # type: ignore[return-value]
 
     client_for = client_factory or _default_client
-    detector_for = trigger_detector_factory or (
-        lambda case: FixtureTriggerDetector(case.triggers)
-    )
+    detector_for = trigger_detector_factory or (lambda case: FixtureTriggerDetector(case.triggers))
 
     receipts: list[SelectiveRepairCoordinateReceipt] = []
     observed_kinds: set[RepairTriggerKind] = set()
@@ -2188,9 +1951,7 @@ def run_selective_repair_activation(
             ),
             trigger_detector=detector,
         )
-        construction = repairer.construct_with_diagnostics(
-            case.constructor_request()
-        )
+        construction = repairer.construct_with_diagnostics(case.constructor_request())
         coordinate = coordinate_receipt_from_construction(
             case.case_id,
             construction,
@@ -2207,18 +1968,14 @@ def run_selective_repair_activation(
     if require_triggers:
         if not any(item.repair_triggered for item in receipts):
             validation_errors.append(
-                "selective arm produced zero triggers on the activation "
-                "fixture pack"
+                "selective arm produced zero triggers on the activation fixture pack"
             )
         missing_kinds = [
-            kind.value
-            for kind in REQUIRED_ACTIVATION_TRIGGER_KINDS
-            if kind not in observed_kinds
+            kind.value for kind in REQUIRED_ACTIVATION_TRIGGER_KINDS if kind not in observed_kinds
         ]
         if missing_kinds:
             validation_errors.append(
-                "fixture pack did not fire required trigger kinds: "
-                + ", ".join(missing_kinds)
+                "fixture pack did not fire required trigger kinds: " + ", ".join(missing_kinds)
             )
         for item in receipts:
             if item.repair_triggered and not item.repair_attempted:
@@ -2227,9 +1984,7 @@ def run_selective_repair_activation(
                     "structural repair was attempted"
                 )
             if item.repair_applied and not item.only_triggered_fields_changed:
-                validation_errors.append(
-                    f"{item.case_id}: repair changed untriggered fields"
-                )
+                validation_errors.append(f"{item.case_id}: repair changed untriggered fields")
 
     passed = not validation_errors
     detail = None if passed else "; ".join(validation_errors)
@@ -2250,19 +2005,11 @@ def validate_selective_repair_activation(
     if report is None:
         report = run_selective_repair_activation(**kwargs)  # type: ignore[arg-type]
     if not isinstance(report, SelectiveRepairActivationReport):
-        raise ContractError(
-            "report must be SelectiveRepairActivationReport"
-        )
+        raise ContractError("report must be SelectiveRepairActivationReport")
     if not report.validation_passed:
-        raise ContractError(
-            report.detail
-            or "selective repair activation validation failed"
-        )
+        raise ContractError(report.detail or "selective repair activation validation failed")
     if not report.any_trigger:
-        raise ContractError(
-            "selective arm with zero triggers on the fixture pack fails "
-            "validation"
-        )
+        raise ContractError("selective arm with zero triggers on the fixture pack fails validation")
     return report
 
 
@@ -2319,4 +2066,3 @@ __all__ = [
     "run_selective_repair_activation",
     "validate_selective_repair_activation",
 ]
-

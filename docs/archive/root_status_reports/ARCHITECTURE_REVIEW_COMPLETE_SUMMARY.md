@@ -49,16 +49,18 @@ Provides standardized interface for all logic conversion operations:
 ```python
 from ipfs_datasets_py.logic.common import LogicConverter, ValidationResult
 
+
 class MyConverter(LogicConverter[str, str]):
     def validate_input(self, text: str) -> ValidationResult:
         result = ValidationResult(valid=True)
         if not text:
             result.add_error("Input cannot be empty")
         return result
-    
+
     def _convert_impl(self, text: str, options: Dict[str, Any]) -> str:
         # Your conversion logic
         return converted_result
+
 
 # Usage
 converter = MyConverter()
@@ -80,11 +82,9 @@ if result.success:
 Compose multi-step conversions:
 
 ```python
-pipeline = ChainedConverter([
-    NaturalLanguageToFOLConverter(),
-    FOLToTDFOLConverter(),
-    TDFOLToSMTConverter()
-])
+pipeline = ChainedConverter(
+    [NaturalLanguageToFOLConverter(), FOLToTDFOLConverter(), TDFOLToSMTConverter()]
+)
 
 result = pipeline.convert("Alice must pay Bob")
 ```

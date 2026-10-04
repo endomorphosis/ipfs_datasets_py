@@ -56,6 +56,7 @@ def _rels(pairs: list[tuple[str, str, str]]):
 # Completeness
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestCompletenessEvaluator:
     def test_empty_ontology_returns_zero(self, critic, ctx):
         score = critic._evaluate_completeness({}, ctx, None)
@@ -98,6 +99,7 @@ class TestCompletenessEvaluator:
 # Consistency
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestConsistencyEvaluator:
     def test_empty_ontology_is_perfect(self, critic, ctx):
         score = critic._evaluate_consistency({}, ctx)
@@ -112,7 +114,9 @@ class TestConsistencyEvaluator:
 
     def test_dangling_refs_penalise_score(self, critic, ctx):
         ents = _ents(2)
-        bad_rels = [{"id": "r0", "source_id": "MISSING_1", "target_id": "MISSING_2", "type": "related_to"}]
+        bad_rels = [
+            {"id": "r0", "source_id": "MISSING_1", "target_id": "MISSING_2", "type": "related_to"}
+        ]
         ontology = {"entities": ents, "relationships": bad_rels}
         score = critic._evaluate_consistency(ontology, ctx)
         assert score < 0.8
@@ -176,6 +180,7 @@ class TestConsistencyEvaluator:
 # Clarity
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestClarityEvaluator:
     def test_empty_ontology_returns_zero(self, critic, ctx):
         score = critic._evaluate_clarity({}, ctx)
@@ -207,6 +212,7 @@ class TestClarityEvaluator:
 # Granularity
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestGranularityEvaluator:
     def test_empty_ontology_returns_zero(self, critic, ctx):
         score = critic._evaluate_granularity({}, ctx)
@@ -214,7 +220,12 @@ class TestGranularityEvaluator:
 
     def test_entities_with_many_props_score_high(self, critic, ctx):
         ents = [
-            {"id": f"e{i}", "type": "X", "text": f"e{i}", "properties": {"a": 1, "b": 2, "c": 3, "d": 4}}
+            {
+                "id": f"e{i}",
+                "type": "X",
+                "text": f"e{i}",
+                "properties": {"a": 1, "b": 2, "c": 3, "d": 4},
+            }
             for i in range(5)
         ]
         pairs = [(f"e{i}", f"e{(i + 1) % 5}", "related_to") for i in range(5)]
@@ -238,6 +249,7 @@ class TestGranularityEvaluator:
 # ──────────────────────────────────────────────────────────────────────────────
 # Domain Alignment
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestDomainAlignmentEvaluator:
     def test_empty_entities_returns_half(self, critic, ctx):
@@ -297,6 +309,7 @@ class TestDomainAlignmentEvaluator:
 # Full evaluate_ontology smoke test
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestEvaluateOntologySmoke:
     def test_full_evaluation_returns_score_in_range(self, critic, ctx):
         ents = _ents(6, with_props=True)
@@ -308,21 +321,35 @@ class TestEvaluateOntologySmoke:
     def test_full_evaluation_has_all_dimensions(self, critic, ctx):
         ontology = {"entities": _ents(3), "relationships": []}
         result = critic.evaluate_ontology(ontology, ctx)
-        for dim in ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"):
+        for dim in (
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ):
             assert hasattr(result, dim), f"Missing dimension: {dim}"
 
     def test_evaluate_returns_critic_result(self, critic, ctx):
         from ipfs_datasets_py.optimizers.common import CriticResult
+
         ontology = {"entities": _ents(3), "relationships": []}
         result = critic.evaluate(ontology, ctx)
         assert isinstance(result, CriticResult)
         assert 0.0 <= result.score <= 1.0
         assert set(result.dimensions.keys()) == {
-            "completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
         }
 
 
 # ── New: clarity improvements (short-name penalty + confidence coverage) ─────
+
 
 class TestClarityImprovements:
     @pytest.fixture
@@ -332,7 +359,9 @@ class TestClarityImprovements:
     @pytest.fixture
     def ctx(self):
         return OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
 
@@ -360,15 +389,26 @@ class TestClarityImprovements:
 
     def test_good_entities_score_above_midpoint(self, critic, ctx):
         ents = [
-            {"id": "e1", "text": "Alice Smith", "type": "Person",
-             "confidence": 0.9, "properties": {"role": "CEO"}},
-            {"id": "e2", "text": "Acme Corp", "type": "Organization",
-             "confidence": 0.85, "properties": {"sector": "tech"}},
+            {
+                "id": "e1",
+                "text": "Alice Smith",
+                "type": "Person",
+                "confidence": 0.9,
+                "properties": {"role": "CEO"},
+            },
+            {
+                "id": "e2",
+                "text": "Acme Corp",
+                "type": "Organization",
+                "confidence": 0.85,
+                "properties": {"sector": "tech"},
+            },
         ]
         assert self._call(critic, ctx, ents) > 0.5
 
 
 # ── New: completeness source coverage ────────────────────────────────────────
+
 
 class TestCompletenessSourceCoverage:
     @pytest.fixture
@@ -378,7 +418,9 @@ class TestCompletenessSourceCoverage:
     @pytest.fixture
     def ctx(self):
         return OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
 
@@ -420,6 +462,7 @@ class TestCompletenessSourceCoverage:
 
 # ── Intelligent recommendation generation ────────────────────────────────────
 
+
 class TestIntelligentRecommendations:
     """Test that recommendations are specific and reference actual ontology facts."""
 
@@ -430,12 +473,21 @@ class TestIntelligentRecommendations:
     @pytest.fixture
     def ctx(self):
         return OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
 
     def _recs(self, critic, ctx, ents, rels=None, **score_overrides):
-        scores = dict(completeness=0.3, consistency=0.3, clarity=0.3, granularity=0.3, relationship_coherence=0.3, domain_alignment=0.3)
+        scores = dict(
+            completeness=0.3,
+            consistency=0.3,
+            clarity=0.3,
+            granularity=0.3,
+            relationship_coherence=0.3,
+            domain_alignment=0.3,
+        )
         scores.update(score_overrides)
         ont = {"entities": ents, "relationships": rels or []}
         return critic._generate_recommendations(ont, ctx, **scores)
@@ -474,14 +526,23 @@ class TestIntelligentRecommendations:
         assert any("propert" in r.lower() for r in recs)
 
     def test_domain_alignment_recs_mention_domain(self, critic, ctx):
-        recs = self._recs(critic, ctx, [{"id": "e1", "text": "foo", "type": "X"}], domain_alignment=0.1)
+        recs = self._recs(
+            critic, ctx, [{"id": "e1", "text": "foo", "type": "X"}], domain_alignment=0.1
+        )
         assert any("general" in r.lower() or "domain" in r.lower() for r in recs)
 
     def test_high_scores_produce_no_recommendations(self, critic, ctx):
         ents = [{"id": f"e{i}", "text": f"entity{i}", "type": "T"} for i in range(5)]
         recs = self._recs(
-            critic, ctx, ents,
-            completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9
+            critic,
+            ctx,
+            ents,
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
         )
         assert len(recs) == 0
 
@@ -489,6 +550,7 @@ class TestIntelligentRecommendations:
 # ──────────────────────────────────────────────────────────────────────────────
 # Relationship Coherence
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestRelationshipCoherenceEvaluator:
     """Tests for the relationship_coherence dimension evaluator."""
@@ -534,7 +596,12 @@ class TestRelationshipCoherenceEvaluator:
         """Good variety of relationship types should boost distribution score."""
         ents = _ents(6)
         diverse_rels = [
-            {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{(i+1) % 6}", "type": f"rel_type_{i}"}
+            {
+                "id": f"r{i}",
+                "source_id": f"e{i}",
+                "target_id": f"e{(i + 1) % 6}",
+                "type": f"rel_type_{i}",
+            }
             for i in range(6)
         ]
         ontology = {"entities": ents, "relationships": diverse_rels}
@@ -545,7 +612,12 @@ class TestRelationshipCoherenceEvaluator:
         """Using the same type for all relationships lowers distribution score."""
         ents = _ents(6)
         monotonous_rels = [
-            {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{(i+1) % 6}", "type": "same_type"}
+            {
+                "id": f"r{i}",
+                "source_id": f"e{i}",
+                "target_id": f"e{(i + 1) % 6}",
+                "type": "same_type",
+            }
             for i in range(6)
         ]
         ontology = {"entities": ents, "relationships": monotonous_rels}
@@ -614,9 +686,14 @@ class TestRelationshipCoherenceEvaluator:
         ]
         ontology = {"entities": ents, "relationships": generic_rels}
         recs = critic._generate_recommendations(
-            ontology, ctx,
-            completeness=0.8, consistency=0.8, clarity=0.8,
-            granularity=0.8, relationship_coherence=0.3, domain_alignment=0.8
+            ontology,
+            ctx,
+            completeness=0.8,
+            consistency=0.8,
+            clarity=0.8,
+            granularity=0.8,
+            relationship_coherence=0.3,
+            domain_alignment=0.8,
         )
         assert any("generic" in r.lower() or "relationship" in r.lower() for r in recs)
 
@@ -666,7 +743,7 @@ class TestGetWorstEntity:
     def test_entities_as_objects_with_attributes(self, critic):
         """Should work with Entity objects, not just dicts."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
-        
+
         ontology = {
             "entities": [
                 Entity(id="e1", text="Alice", type="Person", confidence=0.9),
@@ -711,7 +788,7 @@ class TestGetWorstEntity:
     def test_mixed_dict_and_object_entities(self, critic):
         """Should handle a mix of dict and Entity object formats."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
-        
+
         ontology = {
             "entities": [
                 {"id": "e1", "confidence": 0.6},
@@ -720,5 +797,3 @@ class TestGetWorstEntity:
             ]
         }
         assert critic.get_worst_entity(ontology) == "e2"
-
-

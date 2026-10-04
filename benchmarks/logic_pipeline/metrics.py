@@ -120,9 +120,7 @@ _LEANSTRAL_FAILURE_CLASS_BY_G210_CODE: Final = MappingProxyType(
     {
         "leanstral_output_limit": LeanstralFailureClass.OUTPUT_LIMIT,
         "leanstral_schema_invalid": LeanstralFailureClass.SCHEMA,
-        "leanstral_forbidden_construct": (
-            LeanstralFailureClass.FORBIDDEN_CONSTRUCT
-        ),
+        "leanstral_forbidden_construct": (LeanstralFailureClass.FORBIDDEN_CONSTRUCT),
         "leanstral_provider_failure": LeanstralFailureClass.PROVIDER,
         "leanstral_timeout": LeanstralFailureClass.TIMEOUT,
     }
@@ -138,9 +136,7 @@ def classify_leanstral_failure_code(
         return LeanstralFailureClass.NONE
     failure_class = _LEANSTRAL_FAILURE_CLASS_BY_G210_CODE.get(failure_code)
     if failure_class is None:
-        raise MetricsContractError(
-            "Leanstral G210 failure code is not split and preregistered"
-        )
+        raise MetricsContractError("Leanstral G210 failure code is not split and preregistered")
     return failure_class
 
 
@@ -168,16 +164,12 @@ def HSSLEV2108F34() -> str:
 
 
 def _mapping(value: object, field_name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise MetricsContractError(f"{field_name} must be an object with string keys")
     return value
 
 
-def _exact_keys(
-    value: Mapping[str, object], expected: set[str], field_name: str
-) -> None:
+def _exact_keys(value: Mapping[str, object], expected: set[str], field_name: str) -> None:
     actual = set(value)
     if actual == expected:
         return
@@ -192,22 +184,14 @@ def _exact_keys(
 
 
 def _safe_id(value: object, field_name: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
-        raise MetricsContractError(
-            f"{field_name} must be a safe 1-128 character identifier"
-        )
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
+        raise MetricsContractError(f"{field_name} must be a safe 1-128 character identifier")
     return value
 
 
 def _digest(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise MetricsContractError(
-            f"{field_name} must be a lowercase SHA-256 digest"
-        )
+        raise MetricsContractError(f"{field_name} must be a lowercase SHA-256 digest")
     return value
 
 
@@ -220,19 +204,14 @@ def _cid(
     try:
         return validate_cid(value, codecs=codecs)
     except ValueError as exc:
-        raise MetricsContractError(
-            f"{field_name} must be a canonical CIDv1"
-        ) from exc
+        raise MetricsContractError(f"{field_name} must be a canonical CIDv1") from exc
 
 
 def _plain_json(value: object) -> object:
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, Mapping):
-        return {
-            str(key): _plain_json(item)
-            for key, item in value.items()
-        }
+        return {str(key): _plain_json(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_plain_json(item) for item in value]
     return value
@@ -259,18 +238,13 @@ def _enum(enum_type: type[Split] | type[CacheMode], value: object, field_name: s
     try:
         return enum_type(value)
     except ValueError as exc:
-        raise MetricsContractError(
-            f"unsupported {field_name}: {value!r}"
-        ) from exc
+        raise MetricsContractError(f"unsupported {field_name}: {value!r}") from exc
 
 
 def _digest_tuple(value: object, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, (list, tuple)):
         raise MetricsContractError(f"{field_name} must be an array")
-    result = tuple(
-        _digest(item, f"{field_name}[]")
-        for item in value
-    )
+    result = tuple(_digest(item, f"{field_name}[]") for item in value)
     if len(result) != len(set(result)):
         raise MetricsContractError(f"{field_name} must not contain duplicates")
     return result
@@ -280,12 +254,10 @@ def _telemetry_mapping(
     value: object, field_name: str, *, lane: bool = False
 ) -> Mapping[str, int | float]:
     data = _mapping(value, field_name)
-    expected = (
-        set(_LANE_MEASUREMENT_FIELDS) if lane else set(_TELEMETRY_FIELDS)
-    )
+    expected = set(_LANE_MEASUREMENT_FIELDS) if lane else set(_TELEMETRY_FIELDS)
     _exact_keys(data, expected, field_name)
     result: dict[str, int | float] = {}
-    for name in (("stage_count",) if lane else ()):
+    for name in ("stage_count",) if lane else ():
         result[name] = _integer(data[name], f"{field_name}.{name}")
     for name in _TELEMETRY_FIELDS:
         if name in _FLOAT_TELEMETRY_FIELDS:
@@ -352,9 +324,7 @@ class KernelBoundAggregate:
     result_digests: tuple[str, ...]
     verified_result_digests: tuple[str, ...]
     telemetry_totals: Mapping[str, int | float]
-    resource_lane_measurements: Mapping[
-        str, Mapping[str, int | float]
-    ]
+    resource_lane_measurements: Mapping[str, Mapping[str, int | float]]
 
     def __post_init__(self) -> None:
         if self.schema != KERNEL_BOUND_AGGREGATE_SCHEMA:
@@ -392,13 +362,9 @@ class KernelBoundAggregate:
             "kernel_verified_completion_rate",
         )
         if rate > 1:
-            raise MetricsContractError(
-                "kernel_verified_completion_rate must be <= 1"
-            )
+            raise MetricsContractError("kernel_verified_completion_rate must be <= 1")
         eligible_count = self.verified_count + self.nonverified_count
-        expected_rate = (
-            0.0 if eligible_count == 0 else self.verified_count / eligible_count
-        )
+        expected_rate = 0.0 if eligible_count == 0 else self.verified_count / eligible_count
         if not math.isclose(rate, expected_rate, rel_tol=0.0, abs_tol=1e-15):
             raise MetricsContractError(
                 "kernel_verified_completion_rate does not match status counts"
@@ -411,25 +377,17 @@ class KernelBoundAggregate:
             "verified_result_digests",
         )
         if len(result_digests) != self.total_count:
-            raise MetricsContractError(
-                "result_digests length does not match total_count"
-            )
+            raise MetricsContractError("result_digests length does not match total_count")
         if len(verified_digests) != self.verified_count:
             raise MetricsContractError(
                 "verified_result_digests length does not match verified_count"
             )
         if not set(verified_digests).issubset(result_digests):
-            raise MetricsContractError(
-                "verified_result_digests must be a subset of result_digests"
-            )
+            raise MetricsContractError("verified_result_digests must be a subset of result_digests")
 
-        telemetry = _telemetry_mapping(
-            self.telemetry_totals, "telemetry_totals"
-        )
+        telemetry = _telemetry_mapping(self.telemetry_totals, "telemetry_totals")
         lanes = _lane_mapping(self.resource_lane_measurements)
-        lane_stage_count = sum(
-            int(item["stage_count"]) for item in lanes.values()
-        )
+        lane_stage_count = sum(int(item["stage_count"]) for item in lanes.values())
         if lane_stage_count < self.total_count:
             raise MetricsContractError(
                 "resource-lane stage count cannot be smaller than result count"
@@ -442,14 +400,10 @@ class KernelBoundAggregate:
                 rel_tol=0.0,
                 abs_tol=1e-9,
             ):
-                raise MetricsContractError(
-                    f"resource-lane {name} does not match telemetry total"
-                )
+                raise MetricsContractError(f"resource-lane {name} does not match telemetry total")
 
         object.__setattr__(self, "result_digests", result_digests)
-        object.__setattr__(
-            self, "verified_result_digests", verified_digests
-        )
+        object.__setattr__(self, "verified_result_digests", verified_digests)
         object.__setattr__(self, "telemetry_totals", telemetry)
         object.__setattr__(self, "resource_lane_measurements", lanes)
 
@@ -494,29 +448,17 @@ class KernelBoundAggregate:
         )
         return cls(
             schema=data["schema"],  # type: ignore[arg-type]
-            protocol_sha256=_digest(
-                data["protocol_sha256"], "protocol_sha256"
-            ),
+            protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
             run_id=_safe_id(data["run_id"], "run_id"),
-            case_manifest_sha256=_digest(
-                data["case_manifest_sha256"], "case_manifest_sha256"
-            ),
+            case_manifest_sha256=_digest(data["case_manifest_sha256"], "case_manifest_sha256"),
             variant_id=_safe_id(data["variant_id"], "variant_id"),
             split=_enum(Split, data["split"], "split"),
             cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),
-            environment_sha256=_digest(
-                data["environment_sha256"], "environment_sha256"
-            ),
+            environment_sha256=_digest(data["environment_sha256"], "environment_sha256"),
             total_count=_integer(data["total_count"], "total_count"),
-            verified_count=_integer(
-                data["verified_count"], "verified_count"
-            ),
-            nonverified_count=_integer(
-                data["nonverified_count"], "nonverified_count"
-            ),
-            excluded_count=_integer(
-                data["excluded_count"], "excluded_count"
-            ),
+            verified_count=_integer(data["verified_count"], "verified_count"),
+            nonverified_count=_integer(data["nonverified_count"], "nonverified_count"),
+            excluded_count=_integer(data["excluded_count"], "excluded_count"),
             infrastructure_failure_count=_integer(
                 data["infrastructure_failure_count"],
                 "infrastructure_failure_count",
@@ -525,37 +467,24 @@ class KernelBoundAggregate:
                 data["kernel_verified_completion_rate"],
                 "kernel_verified_completion_rate",
             ),
-            result_digests=_digest_tuple(
-                data["result_digests"], "result_digests"
-            ),
+            result_digests=_digest_tuple(data["result_digests"], "result_digests"),
             verified_result_digests=_digest_tuple(
                 data["verified_result_digests"],
                 "verified_result_digests",
             ),
-            telemetry_totals=_telemetry_mapping(
-                data["telemetry_totals"], "telemetry_totals"
-            ),
-            resource_lane_measurements=_lane_mapping(
-                data["resource_lane_measurements"]
-            ),
+            telemetry_totals=_telemetry_mapping(data["telemetry_totals"], "telemetry_totals"),
+            resource_lane_measurements=_lane_mapping(data["resource_lane_measurements"]),
         )
 
     @property
     def digest(self) -> str:
-        return hashlib.sha256(
-            canonical_json(self.to_dict()).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
 
 
 def _result_environment_sha256(result: CaseResultRecord) -> str:
-    environments = {
-        stage.provenance.environment_sha256
-        for stage in result.stages
-    }
+    environments = {stage.provenance.environment_sha256 for stage in result.stages}
     if len(environments) != 1 or None in environments:
-        raise MetricsContractError(
-            "case result does not bind one complete environment identity"
-        )
+        raise MetricsContractError("case result does not bind one complete environment identity")
     return _digest(next(iter(environments)), "environment_sha256")
 
 
@@ -571,46 +500,28 @@ def validate_kernel_bound_result(
     """
 
     if not isinstance(result, CaseResultRecord):
-        raise MetricsContractError(
-            "metrics require complete CaseResultRecord values"
-        )
+        raise MetricsContractError("metrics require complete CaseResultRecord values")
     if expected_environment_sha256 is not None:
         _digest(expected_environment_sha256, "expected_environment_sha256")
     try:
-        result.validate_provenance(
-            expected_environment_sha256=expected_environment_sha256
-        )
+        result.validate_provenance(expected_environment_sha256=expected_environment_sha256)
         kernel = next(
-            (
-                stage
-                for stage in result.stages
-                if stage.stage is StageName.KERNEL
-            ),
+            (stage for stage in result.stages if stage.stage is StageName.KERNEL),
             None,
         )
         if kernel is not None:
-            graph_invoked = kernel.provenance.effective_identity.get(
-                "graph_invoked"
-            )
+            graph_invoked = kernel.provenance.effective_identity.get("graph_invoked")
             graph_bound = any(
-                type(
-                    stage.provenance.effective_identity.get(
-                        "graph_invoked"
-                    )
-                )
-                is bool
+                type(stage.provenance.effective_identity.get("graph_invoked")) is bool
                 for stage in result.stages
             )
             has_native_receipt = (
                 isinstance(kernel.data, Mapping)
-                and kernel.data.get("schema")
-                == NATIVE_KERNEL_RECEIPT_SCHEMA
+                and kernel.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
             )
             if graph_invoked is True:
                 validate_native_kernel_stage_receipt(kernel)
-            elif graph_invoked is False and (
-                kernel.kernel_accepted or has_native_receipt
-            ):
+            elif graph_invoked is False and (kernel.kernel_accepted or has_native_receipt):
                 raise ProtocolContractError(
                     "suppressed kernel stage contains native receipt authority"
                 )
@@ -627,9 +538,7 @@ def validate_kernel_bound_result(
         expected_environment_sha256 is not None
         and environment_sha256 != expected_environment_sha256
     ):
-        raise MetricsContractError(
-            f"case result {result.case_id!r} uses a stale environment"
-        )
+        raise MetricsContractError(f"case result {result.case_id!r} uses a stale environment")
     return result
 
 
@@ -644,9 +553,7 @@ def aggregate_case_results(
     try:
         records = tuple(results)
     except TypeError as exc:
-        raise MetricsContractError(
-            "results must be an iterable of case results"
-        ) from exc
+        raise MetricsContractError("results must be an iterable of case results") from exc
     if not records:
         raise MetricsContractError("cannot aggregate an empty result collection")
 
@@ -673,49 +580,32 @@ def aggregate_case_results(
             record,
             expected_environment_sha256=environment_sha256,
         )
-        if any(
-            getattr(validated, name) != getattr(first, name)
-            for name in identity_fields
-        ):
+        if any(getattr(validated, name) != getattr(first, name) for name in identity_fields):
             raise MetricsContractError(
-                "case results must belong to the same run, manifest, variant, "
-                "split, and cache arm"
+                "case results must belong to the same run, manifest, variant, split, and cache arm"
             )
         if validated.case_id in by_case:
-            raise MetricsContractError(
-                f"duplicate case result: {validated.case_id!r}"
-            )
+            raise MetricsContractError(f"duplicate case result: {validated.case_id!r}")
         if validated.digest in seen_digests:
-            raise MetricsContractError(
-                f"duplicate case-result digest: {validated.digest}"
-            )
+            raise MetricsContractError(f"duplicate case-result digest: {validated.digest}")
         by_case[validated.case_id] = validated
         seen_digests.add(validated.digest)
 
     ordered = tuple(by_case[case_id] for case_id in sorted(by_case))
-    verified = tuple(
-        record for record in ordered
-        if record.status is OutcomeStatus.VERIFIED
-    )
+    verified = tuple(record for record in ordered if record.status is OutcomeStatus.VERIFIED)
     nonverified_count = sum(
-        record.status in {OutcomeStatus.NOT_VERIFIED, OutcomeStatus.REJECTED}
-        for record in ordered
+        record.status in {OutcomeStatus.NOT_VERIFIED, OutcomeStatus.REJECTED} for record in ordered
     )
     excluded_count = sum(
-        record.status in {OutcomeStatus.UNAVAILABLE, OutcomeStatus.EXCLUDED}
-        for record in ordered
+        record.status in {OutcomeStatus.UNAVAILABLE, OutcomeStatus.EXCLUDED} for record in ordered
     )
     infrastructure_failure_count = sum(
-        record.status is OutcomeStatus.INFRASTRUCTURE_FAILURE
-        for record in ordered
+        record.status is OutcomeStatus.INFRASTRUCTURE_FAILURE for record in ordered
     )
     eligible_count = len(verified) + nonverified_count
 
     telemetry_totals = _zero_telemetry()
-    lanes = {
-        lane.value: _zero_telemetry(include_stage_count=True)
-        for lane in ResourceLane
-    }
+    lanes = {lane.value: _zero_telemetry(include_stage_count=True) for lane in ResourceLane}
     for record in ordered:
         for stage in record.stages:
             _add_telemetry(telemetry_totals, stage.telemetry)
@@ -833,9 +723,7 @@ class EfficiencyComponentCost:
             "useful_component_calls",
             "failed_attempts",
         ):
-            object.__setattr__(
-                self, field_name, _integer(getattr(self, field_name), field_name)
-            )
+            object.__setattr__(self, field_name, _integer(getattr(self, field_name), field_name))
         solver, solver_reason = _nullable_measurement(
             self.solver_processes,
             self.solver_processes_missing_reason,
@@ -849,23 +737,14 @@ class EfficiencyComponentCost:
             integer=False,
         )
         if self.useful_component_calls > self.component_calls:
-            raise MetricsContractError(
-                "useful_component_calls cannot exceed component_calls"
-            )
+            raise MetricsContractError("useful_component_calls cannot exceed component_calls")
         object.__setattr__(self, "solver_processes", solver)
-        object.__setattr__(
-            self, "solver_processes_missing_reason", solver_reason
-        )
+        object.__setattr__(self, "solver_processes_missing_reason", solver_reason)
         object.__setattr__(self, "accelerator_minutes", accelerator)
-        object.__setattr__(
-            self, "accelerator_minutes_missing_reason", accelerator_reason
-        )
+        object.__setattr__(self, "accelerator_minutes_missing_reason", accelerator_reason)
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            field_name: getattr(self, field_name)
-            for field_name in self.__dataclass_fields__
-        }
+        return {field_name: getattr(self, field_name) for field_name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -875,13 +754,9 @@ class EfficiencyComponentCost:
             component_id=_safe_id(data["component_id"], "component_id"),
             model_calls=_integer(data["model_calls"], "model_calls"),
             solver_processes=data["solver_processes"],  # type: ignore[arg-type]
-            solver_processes_missing_reason=data[
-                "solver_processes_missing_reason"
-            ],  # type: ignore[arg-type]
+            solver_processes_missing_reason=data["solver_processes_missing_reason"],  # type: ignore[arg-type]
             accelerator_minutes=data["accelerator_minutes"],  # type: ignore[arg-type]
-            accelerator_minutes_missing_reason=data[
-                "accelerator_minutes_missing_reason"
-            ],  # type: ignore[arg-type]
+            accelerator_minutes_missing_reason=data["accelerator_minutes_missing_reason"],  # type: ignore[arg-type]
             retries=_integer(data["retries"], "retries"),
             component_calls=_integer(data["component_calls"], "component_calls"),
             useful_component_calls=_integer(
@@ -911,27 +786,20 @@ class EfficiencyResourceReceipt:
         if (
             not isinstance(self.component_costs, tuple)
             or not self.component_costs
-            or any(
-                not isinstance(item, EfficiencyComponentCost)
-                for item in self.component_costs
-            )
+            or any(not isinstance(item, EfficiencyComponentCost) for item in self.component_costs)
         ):
             raise MetricsContractError(
                 "component_costs must be a nonempty tuple of component costs"
             )
         component_ids = tuple(item.component_id for item in self.component_costs)
         if component_ids != tuple(sorted(component_ids)):
-            raise MetricsContractError(
-                "component_costs must use canonical component-id order"
-            )
+            raise MetricsContractError("component_costs must use canonical component-id order")
         if len(component_ids) != len(set(component_ids)):
             raise MetricsContractError("component_costs contain duplicate components")
 
     @property
     def digest(self) -> str:
-        return hashlib.sha256(
-            canonical_json(self.to_dict()).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -951,18 +819,10 @@ class EfficiencyResourceReceipt:
             raise MetricsContractError("component_costs must be an array")
         return cls(
             schema=_text(data["schema"], "schema"),
-            case_result_sha256=_digest(
-                data["case_result_sha256"], "case_result_sha256"
-            ),
-            environment_sha256=_digest(
-                data["environment_sha256"], "environment_sha256"
-            ),
-            measurement_sha256=_digest(
-                data["measurement_sha256"], "measurement_sha256"
-            ),
-            component_costs=tuple(
-                EfficiencyComponentCost.from_dict(item) for item in costs
-            ),
+            case_result_sha256=_digest(data["case_result_sha256"], "case_result_sha256"),
+            environment_sha256=_digest(data["environment_sha256"], "environment_sha256"),
+            measurement_sha256=_digest(data["measurement_sha256"], "measurement_sha256"),
+            component_costs=tuple(EfficiencyComponentCost.from_dict(item) for item in costs),
         )
 
 
@@ -981,28 +841,17 @@ class EfficiencyEscalation:
         if self.schema != EFFICIENCY_ESCALATION_SCHEMA:
             raise MetricsContractError("unsupported efficiency escalation schema")
         _safe_id(self.chain_id, "chain_id")
-        object.__setattr__(
-            self, "step_index", _integer(self.step_index, "step_index")
-        )
+        object.__setattr__(self, "step_index", _integer(self.step_index, "step_index"))
         _safe_id(self.variant_id, "variant_id")
         if self.parent_variant_id is not None:
             _safe_id(self.parent_variant_id, "parent_variant_id")
             if self.parent_variant_id == self.variant_id:
                 raise MetricsContractError("an escalation cannot parent itself")
-        if (
-            not isinstance(self.added_components, tuple)
-            or not self.added_components
-        ):
+        if not isinstance(self.added_components, tuple) or not self.added_components:
             raise MetricsContractError("added_components must be a nonempty tuple")
-        components = tuple(
-            _safe_id(item, "added_components[]") for item in self.added_components
-        )
-        if components != tuple(sorted(components)) or len(components) != len(
-            set(components)
-        ):
-            raise MetricsContractError(
-                "added_components must be unique and canonically ordered"
-            )
+        components = tuple(_safe_id(item, "added_components[]") for item in self.added_components)
+        if components != tuple(sorted(components)) or len(components) != len(set(components)):
+            raise MetricsContractError("added_components must be unique and canonically ordered")
         object.__setattr__(self, "added_components", components)
 
     def to_dict(self) -> dict[str, object]:
@@ -1028,9 +877,7 @@ class EfficiencyEscalation:
             chain_id=_safe_id(data["chain_id"], "chain_id"),
             step_index=_integer(data["step_index"], "step_index"),
             variant_id=_safe_id(data["variant_id"], "variant_id"),
-            parent_variant_id=(
-                None if parent is None else _safe_id(parent, "parent_variant_id")
-            ),
+            parent_variant_id=(None if parent is None else _safe_id(parent, "parent_variant_id")),
             added_components=tuple(components),  # type: ignore[arg-type]
         )
 
@@ -1057,54 +904,31 @@ class EfficiencyObservation:
             raise MetricsContractError("unsupported efficiency-observation schema")
         result = validate_kernel_bound_result(self.case_result)
         if not isinstance(self.resource_receipt, EfficiencyResourceReceipt):
-            raise MetricsContractError(
-                "resource_receipt must be an EfficiencyResourceReceipt"
-            )
+            raise MetricsContractError("resource_receipt must be an EfficiencyResourceReceipt")
         environment_sha256 = _result_environment_sha256(result)
         if self.resource_receipt.case_result_sha256 != result.digest:
-            raise MetricsContractError(
-                "resource receipt does not bind the case-result digest"
-            )
+            raise MetricsContractError("resource receipt does not bind the case-result digest")
         if self.resource_receipt.environment_sha256 != environment_sha256:
-            raise MetricsContractError(
-                "resource receipt does not bind the case-result environment"
-            )
+            raise MetricsContractError("resource receipt does not bind the case-result environment")
         _boolean(self.invalid_control, "invalid_control")
-        useful = sum(
-            item.useful_component_calls
-            for item in self.resource_receipt.component_costs
-        )
+        useful = sum(item.useful_component_calls for item in self.resource_receipt.component_costs)
         if useful and result.status is not OutcomeStatus.VERIFIED:
-            raise MetricsContractError(
-                "useful component calls require a kernel-verified result"
-            )
+            raise MetricsContractError("useful component calls require a kernel-verified result")
 
         by_stage = {stage.stage.value: stage for stage in result.stages}
         graph_bound = any(
-            type(
-                stage.provenance.effective_identity.get(
-                    "graph_invoked"
-                )
-            )
-            is bool
+            type(stage.provenance.effective_identity.get("graph_invoked")) is bool
             for stage in result.stages
         )
         selected_candidate_source: str | None = None
         if graph_bound:
             kernel = next(
-                (
-                    stage
-                    for stage in result.stages
-                    if stage.stage is StageName.KERNEL
-                ),
+                (stage for stage in result.stages if stage.stage is StageName.KERNEL),
                 None,
             )
             if (
                 kernel is not None
-                and kernel.provenance.effective_identity.get(
-                    "graph_invoked"
-                )
-                is True
+                and kernel.provenance.effective_identity.get("graph_invoked") is True
             ):
                 accepted = validate_native_kernel_stage_receipt(kernel)
                 candidate_source = (
@@ -1131,13 +955,10 @@ class EfficiencyObservation:
                     )
                 continue
             setup = extract_symai_cache_setup_telemetry(stage)
-            inclusive_retries = stage.telemetry.retries + (
-                0 if setup is None else setup.retries
-            )
+            inclusive_retries = stage.telemetry.retries + (0 if setup is None else setup.retries)
             if (
                 cost.model_calls
-                != stage.telemetry.model_calls
-                + (0 if setup is None else setup.model_calls)
+                != stage.telemetry.model_calls + (0 if setup is None else setup.model_calls)
                 or cost.retries != inclusive_retries
             ):
                 raise MetricsContractError(
@@ -1145,29 +966,18 @@ class EfficiencyObservation:
                     "case-result telemetry"
                 )
             if graph_bound:
-                graph_invoked = (
-                    stage.provenance.effective_identity.get(
-                        "graph_invoked"
-                    )
-                    is True
-                )
+                graph_invoked = stage.provenance.effective_identity.get("graph_invoked") is True
                 if stage.stage is StageName.SYMAI:
                     try:
-                        expected_component_calls = (
-                            symai_backend_invocation_count(stage)
-                        )
+                        expected_component_calls = symai_backend_invocation_count(stage)
                     except ProtocolContractError as exc:
                         raise MetricsContractError(
                             "SyMAI backend invocation accounting is invalid"
                         ) from exc
                 else:
                     expected_component_calls = int(graph_invoked)
-                expected_failed_attempts = (
-                    inclusive_retries
-                    + int(
-                        graph_invoked
-                        and stage.status is not StageStatus.SUCCESS
-                    )
+                expected_failed_attempts = inclusive_retries + int(
+                    graph_invoked and stage.status is not StageStatus.SUCCESS
                 )
                 expected_useful_calls = int(
                     graph_invoked
@@ -1176,10 +986,8 @@ class EfficiencyObservation:
                 )
                 if (
                     cost.component_calls != expected_component_calls
-                    or cost.failed_attempts
-                    != expected_failed_attempts
-                    or cost.useful_component_calls
-                    != expected_useful_calls
+                    or cost.failed_attempts != expected_failed_attempts
+                    or cost.useful_component_calls != expected_useful_calls
                 ):
                     raise MetricsContractError(
                         f"{cost.component_id} component-call attribution "
@@ -1189,9 +997,7 @@ class EfficiencyObservation:
 
     @property
     def digest(self) -> str:
-        return hashlib.sha256(
-            canonical_json(self.to_dict()).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -1218,19 +1024,12 @@ class EfficiencyObservation:
         try:
             result = CaseResultRecord.from_dict(data["case_result"])
         except ProtocolContractError as exc:
-            raise MetricsContractError(
-                f"invalid efficiency case result: {exc}"
-            ) from exc
+            raise MetricsContractError(f"invalid efficiency case result: {exc}") from exc
         receipt = EfficiencyResourceReceipt.from_dict(data["resource_receipt"])
         if _digest(data["case_result_sha256"], "case_result_sha256") != result.digest:
             raise MetricsContractError("case_result_sha256 does not match case_result")
-        if (
-            _digest(data["resource_receipt_sha256"], "resource_receipt_sha256")
-            != receipt.digest
-        ):
-            raise MetricsContractError(
-                "resource_receipt_sha256 does not match resource_receipt"
-            )
+        if _digest(data["resource_receipt_sha256"], "resource_receipt_sha256") != receipt.digest:
+            raise MetricsContractError("resource_receipt_sha256 does not match resource_receipt")
         return cls(
             schema=_text(data["schema"], "schema"),
             case_result=result,
@@ -1255,9 +1054,7 @@ def _validate_escalations(
     escalations: Iterable[EfficiencyEscalation],
 ) -> tuple[EfficiencyEscalation, ...]:
     records = tuple(escalations)
-    if not records or any(
-        not isinstance(item, EfficiencyEscalation) for item in records
-    ):
+    if not records or any(not isinstance(item, EfficiencyEscalation) for item in records):
         raise MetricsContractError("escalations must contain escalation records")
     ordered = tuple(sorted(records, key=lambda item: item.step_index))
     if ordered != records:
@@ -1272,13 +1069,9 @@ def _validate_escalations(
     for index, item in enumerate(ordered):
         expected_parent = None if index == 0 else ordered[index - 1].variant_id
         if item.parent_variant_id != expected_parent:
-            raise MetricsContractError(
-                "escalation parents must form one contiguous chain"
-            )
+            raise MetricsContractError("escalation parents must form one contiguous chain")
         if seen_components & set(item.added_components):
-            raise MetricsContractError(
-                "an operational component cannot be added more than once"
-            )
+            raise MetricsContractError("an operational component cannot be added more than once")
         seen_components.update(item.added_components)
     return ordered
 
@@ -1379,9 +1172,7 @@ def _paired_value(
             "gross_verified_gain_count": len(wins),
             "gross_verified_gain_rate": None if not count else len(wins) / count,
             "verified_regression_count": len(regressions),
-            "verified_regression_rate": (
-                None if not count else len(regressions) / count
-            ),
+            "verified_regression_rate": (None if not count else len(regressions) / count),
             "net_verified_gain_count": net,
             "net_verified_delta": None if not count else net / count,
             "candidate_only_verified_case_ids": wins,
@@ -1413,12 +1204,8 @@ def _value_per_cost(
             reason = None
         result[axis] = {
             "denominator": denominator,
-            "gross_verified_gains_per_unit": (
-                None if reason else gross / float(denominator)
-            ),
-            "net_verified_gain_per_unit": (
-                None if reason else net / float(denominator)
-            ),
+            "gross_verified_gains_per_unit": (None if reason else gross / float(denominator)),
+            "net_verified_gain_per_unit": (None if reason else net / float(denominator)),
             "undefined_reason": reason,
         }
     return result
@@ -1429,9 +1216,7 @@ def _failure_burden(
 ) -> dict[str, object]:
     records = tuple(observations)
     status_counts = {
-        status.value: sum(
-            item.case_result.status is status for item in records
-        )
+        status.value: sum(item.case_result.status is status for item in records)
         for status in OutcomeStatus
     }
     failure_codes: dict[str, int] = {}
@@ -1445,9 +1230,7 @@ def _failure_burden(
             )
         for stage in result.stages:
             setup = extract_symai_cache_setup_telemetry(stage)
-            retries += stage.telemetry.retries + (
-                0 if setup is None else setup.retries
-            )
+            retries += stage.telemetry.retries + (0 if setup is None else setup.retries)
             if stage.failure_code is not None:
                 failed_stages += 1
     return {
@@ -1460,14 +1243,10 @@ def _failure_burden(
             status_counts[OutcomeStatus.UNAVAILABLE.value]
             + status_counts[OutcomeStatus.EXCLUDED.value]
         ),
-        "infrastructure_failure_count": status_counts[
-            OutcomeStatus.INFRASTRUCTURE_FAILURE.value
-        ],
+        "infrastructure_failure_count": status_counts[OutcomeStatus.INFRASTRUCTURE_FAILURE.value],
         "failed_stage_count": failed_stages,
         "retry_count": retries,
-        "failure_code_counts": {
-            key: failure_codes[key] for key in sorted(failure_codes)
-        },
+        "failure_code_counts": {key: failure_codes[key] for key in sorted(failure_codes)},
     }
 
 
@@ -1525,22 +1304,14 @@ def _pareto_points(
                 "unnecessary_call_rate": candidate["unnecessary_call_rate"],
                 "failed_attempts": candidate["failed_attempts"],
             }
-            no_worse = (
-                float(other["kernel_verified_rate"])
-                >= float(candidate["kernel_verified_rate"])
-                and all(
-                    float(other_values[axis]) <= float(candidate_values[axis])
-                    for axis in minimize
-                )
+            no_worse = float(other["kernel_verified_rate"]) >= float(
+                candidate["kernel_verified_rate"]
+            ) and all(
+                float(other_values[axis]) <= float(candidate_values[axis]) for axis in minimize
             )
-            strictly_better = (
-                float(other["kernel_verified_rate"])
-                > float(candidate["kernel_verified_rate"])
-                or any(
-                    float(other_values[axis]) < float(candidate_values[axis])
-                    for axis in minimize
-                )
-            )
+            strictly_better = float(other["kernel_verified_rate"]) > float(
+                candidate["kernel_verified_rate"]
+            ) or any(float(other_values[axis]) < float(candidate_values[axis]) for axis in minimize)
             if no_worse and strictly_better:
                 dominated_by.append(str(other["variant_id"]))
         candidate["dominated_by"] = sorted(dominated_by)
@@ -1559,9 +1330,7 @@ def analyze_delegation_efficiency(
     steps = _validate_escalations(escalations)
     records = tuple(observations)
     if any(not isinstance(item, EfficiencyObservation) for item in records):
-        raise MetricsContractError(
-            "observations must contain EfficiencyObservation values"
-        )
+        raise MetricsContractError("observations must contain EfficiencyObservation values")
     if not records:
         if not allow_empty:
             raise MetricsContractError("measured efficiency analysis requires observations")
@@ -1688,9 +1457,7 @@ def analyze_delegation_efficiency(
         }
 
     by_variant = {step.variant_id: step for step in steps}
-    matrix: dict[str, dict[str, EfficiencyObservation]] = {
-        step.variant_id: {} for step in steps
-    }
+    matrix: dict[str, dict[str, EfficiencyObservation]] = {step.variant_id: {} for step in steps}
     identity: tuple[object, ...] | None = None
     environment_sha256: str | None = None
     input_by_case: dict[str, str] = {}
@@ -1721,15 +1488,11 @@ def analyze_delegation_efficiency(
                 "split, or cache identities"
             )
         if observation.resource_receipt.environment_sha256 != environment_sha256:
-            raise MetricsContractError(
-                "efficiency observations cannot pool environments"
-            )
+            raise MetricsContractError("efficiency observations cannot pool environments")
         input_sha256 = result.stages[0].provenance.input_sha256
         previous_input = input_by_case.setdefault(result.case_id, input_sha256)
         if previous_input != input_sha256:
-            raise MetricsContractError(
-                f"case {result.case_id!r} mixes input identities"
-            )
+            raise MetricsContractError(f"case {result.case_id!r} mixes input identities")
         row[result.case_id] = observation
 
     case_ids = tuple(sorted(next(iter(matrix.values()))))
@@ -1744,10 +1507,7 @@ def analyze_delegation_efficiency(
         active_components.update(step.added_components)
         components_by_variant[step.variant_id] = set(active_components)
         for observation in matrix[step.variant_id].values():
-            actual = {
-                item.component_id
-                for item in observation.resource_receipt.component_costs
-            }
+            actual = {item.component_id for item in observation.resource_receipt.component_costs}
             if actual != active_components:
                 raise MetricsContractError(
                     f"{step.variant_id} resource receipt components do not match "
@@ -1764,8 +1524,7 @@ def analyze_delegation_efficiency(
             if observation.case_result.status in _MEASURED_OUTCOMES
         )
         verified = sum(
-            item.case_result.status is OutcomeStatus.VERIFIED
-            for item in measured_current
+            item.case_result.status is OutcomeStatus.VERIFIED for item in measured_current
         )
         final = {
             "measured_case_count": len(measured_current),
@@ -1775,12 +1534,9 @@ def analyze_delegation_efficiency(
                 None if not measured_current else verified / len(measured_current)
             ),
         }
-        total_cost = _sum_component_costs(
-            measured_current, components_by_variant[step.variant_id]
-        )
+        total_cost = _sum_component_costs(measured_current, components_by_variant[step.variant_id])
         safety_count = sum(
-            item.invalid_control
-            and item.case_result.terminal_kernel_accepted
+            item.invalid_control and item.case_result.terminal_kernel_accepted
             for item in current.values()
         )
         row: dict[str, object] = {
@@ -1788,9 +1544,7 @@ def analyze_delegation_efficiency(
             "step_index": step.step_index,
             "parent_variant_id": step.parent_variant_id,
             "added_components": list(step.added_components),
-            "observation_sha256s": [
-                current[case_id].digest for case_id in case_ids
-            ],
+            "observation_sha256s": [current[case_id].digest for case_id in case_ids],
             "final": final,
             "total_cost": total_cost,
             "failure_burden": _failure_burden(current.values()),
@@ -1803,43 +1557,28 @@ def analyze_delegation_efficiency(
             "cumulative": None,
         }
         if step.parent_variant_id is not None:
-            marginal_pair, measured_ids = _paired_value(
-                matrix[step.parent_variant_id], current
-            )
+            marginal_pair, measured_ids = _paired_value(matrix[step.parent_variant_id], current)
             marginal_observations = tuple(current[item] for item in measured_ids)
-            marginal_cost = _sum_component_costs(
-                marginal_observations, set(step.added_components)
-            )
+            marginal_cost = _sum_component_costs(marginal_observations, set(step.added_components))
             row["marginal"] = {
                 "baseline_variant_id": step.parent_variant_id,
                 "candidate_variant_id": step.variant_id,
                 "pair": marginal_pair,
                 "incremental_cost": marginal_cost,
-                "value_per_cost": _value_per_cost(
-                    marginal_pair, marginal_cost
-                ),
+                "value_per_cost": _value_per_cost(marginal_pair, marginal_cost),
             }
-            cumulative_pair, cumulative_ids = _paired_value(
-                matrix[root.variant_id], current
-            )
-            cumulative_observations = tuple(
-                current[item] for item in cumulative_ids
-            )
+            cumulative_pair, cumulative_ids = _paired_value(matrix[root.variant_id], current)
+            cumulative_observations = tuple(current[item] for item in cumulative_ids)
             added_since_root = (
-                components_by_variant[step.variant_id]
-                - components_by_variant[root.variant_id]
+                components_by_variant[step.variant_id] - components_by_variant[root.variant_id]
             )
-            cumulative_cost = _sum_component_costs(
-                cumulative_observations, added_since_root
-            )
+            cumulative_cost = _sum_component_costs(cumulative_observations, added_since_root)
             row["cumulative"] = {
                 "baseline_variant_id": root.variant_id,
                 "candidate_variant_id": step.variant_id,
                 "pair": cumulative_pair,
                 "incremental_cost": cumulative_cost,
-                "value_per_cost": _value_per_cost(
-                    cumulative_pair, cumulative_cost
-                ),
+                "value_per_cost": _value_per_cost(cumulative_pair, cumulative_cost),
             }
         step_rows.append(row)
 
@@ -1857,9 +1596,7 @@ def analyze_delegation_efficiency(
         "environment_sha256": environment_sha256,
         "escalations": step_rows,
         "pareto_points": points,
-        "frontier_variant_ids": [
-            item["variant_id"] for item in points if item["frontier"]
-        ],
+        "frontier_variant_ids": [item["variant_id"] for item in points if item["frontier"]],
         "safety_is_hard_constraint": True,
         "scalar_complexity_score": None,
     }
@@ -1874,15 +1611,11 @@ def _validated_causal_selection_receipt(
         None,
     )
     if not callable(validator):
-        raise MetricsContractError(
-            "the G210 causal proof selection contract is unavailable"
-        )
+        raise MetricsContractError("the G210 causal proof selection contract is unavailable")
     try:
         validated = validator(value)
     except ProtocolContractError as exc:
-        raise MetricsContractError(
-            f"invalid causal proof selection receipt: {exc}"
-        ) from exc
+        raise MetricsContractError(f"invalid causal proof selection receipt: {exc}") from exc
     return _mapping(validated, "causal proof selection receipt")
 
 
@@ -1891,12 +1624,8 @@ def _causal_optional_candidates(
 ) -> tuple[Mapping[str, object], ...]:
     raw = selection.get("optional_candidates")
     if not isinstance(raw, (list, tuple)):
-        raise MetricsContractError(
-            "causal proof optional_candidates must be an array"
-        )
-    candidates = tuple(
-        _mapping(item, "causal proof optional candidate") for item in raw
-    )
+        raise MetricsContractError("causal proof optional_candidates must be an array")
+    candidates = tuple(_mapping(item, "causal proof optional candidate") for item in raw)
     sources = tuple(item.get("source") for item in candidates)
     route_indexes = tuple(item.get("route_index") for item in candidates)
     if (
@@ -1915,57 +1644,35 @@ def _leanstral_failure_class(
     candidate: Mapping[str, object] | None,
 ) -> LeanstralFailureClass:
     stage = next(
-        (
-            item
-            for item in result.stages
-            if item.stage is StageName.LEANSTRAL
-        ),
+        (item for item in result.stages if item.stage is StageName.LEANSTRAL),
         None,
     )
     invoked = candidate is not None and candidate.get("invoked") is True
-    selection_failure_code = (
-        None if candidate is None else candidate.get("failure_code")
-    )
+    selection_failure_code = None if candidate is None else candidate.get("failure_code")
     if stage is None:
         if invoked:
-            raise MetricsContractError(
-                "invoked Leanstral candidate lacks a stage receipt"
-            )
+            raise MetricsContractError("invoked Leanstral candidate lacks a stage receipt")
         return LeanstralFailureClass.NONE
     if not invoked:
         if selection_failure_code is not None:
-            raise MetricsContractError(
-                "suppressed Leanstral route carries a failure claim"
-            )
+            raise MetricsContractError("suppressed Leanstral route carries a failure claim")
         return LeanstralFailureClass.NONE
     if stage.status is StageStatus.SUCCESS:
         if selection_failure_code is not None:
-            raise MetricsContractError(
-                "successful Leanstral stage carries a failure claim"
-            )
+            raise MetricsContractError("successful Leanstral stage carries a failure claim")
         return LeanstralFailureClass.NONE
     if selection_failure_code is None:
-        raise MetricsContractError(
-            "failed Leanstral stage lacks its selection failure code"
-        )
-    data = (
-        stage.data
-        if isinstance(stage.data, Mapping)
-        else MappingProxyType({})
-    )
+        raise MetricsContractError("failed Leanstral stage lacks its selection failure code")
+    data = stage.data if isinstance(stage.data, Mapping) else MappingProxyType({})
     safe_class = data.get("safe_failure_class")
     failure_class = _LEANSTRAL_FAILURE_CLASS_BY_SAFE_CLASS.get(safe_class)
     if failure_class is None:
         raise MetricsContractError(
             "invoked failed Leanstral stage lacks a split G210 failure class"
         )
-    selection_class = classify_leanstral_failure_code(
-        str(selection_failure_code)
-    )
+    selection_class = classify_leanstral_failure_code(str(selection_failure_code))
     if selection_class is not failure_class:
-        raise MetricsContractError(
-            "Leanstral selection and stage failure classes disagree"
-        )
+        raise MetricsContractError("Leanstral selection and stage failure classes disagree")
     return failure_class
 
 
@@ -1987,21 +1694,15 @@ def _stage_component_measurement(
     )
     if stage is None:
         if invoked:
-            raise MetricsContractError(
-                f"invoked {component_id} lacks a stage receipt"
-            )
+            raise MetricsContractError(f"invoked {component_id} lacks a stage receipt")
         wall_time_ms = 0.0
         model_calls = 0
         retries = 0
         peak_memory_bytes = 0
     else:
-        graph_invoked = stage.provenance.effective_identity.get(
-            "graph_invoked"
-        )
+        graph_invoked = stage.provenance.effective_identity.get("graph_invoked")
         if type(graph_invoked) is not bool:
-            raise MetricsContractError(
-                f"{component_id} stage lacks an exact graph_invoked marker"
-            )
+            raise MetricsContractError(f"{component_id} stage lacks an exact graph_invoked marker")
         if graph_invoked is not invoked:
             raise MetricsContractError(
                 f"{component_id} selection invocation disagrees with graph receipt"
@@ -2020,12 +1721,8 @@ def _stage_component_measurement(
             wall_time_ms = stage.telemetry.wall_time_ms + (
                 0.0 if setup is None else setup.wall_time_ms
             )
-            model_calls = stage.telemetry.model_calls + (
-                0 if setup is None else setup.model_calls
-            )
-            retries = stage.telemetry.retries + (
-                0 if setup is None else setup.retries
-            )
+            model_calls = stage.telemetry.model_calls + (0 if setup is None else setup.model_calls)
+            retries = stage.telemetry.retries + (0 if setup is None else setup.retries)
             peak_memory_bytes = max(
                 stage.telemetry.peak_memory_bytes,
                 0 if setup is None else setup.peak_memory_bytes,
@@ -2056,14 +1753,10 @@ def _replay_causal_kernel_sidecars(
 ) -> Mapping[str, Mapping[str, object]]:
     raw_sidecars = selection.get("kernel_receipts")
     if not isinstance(raw_sidecars, (list, tuple)):
-        raise MetricsContractError(
-            "causal selection kernel_receipts must be an array"
-        )
+        raise MetricsContractError("causal selection kernel_receipts must be an array")
     stage = kernel_stage
     if not isinstance(stage, _contracts.StageRecord):
-        raise MetricsContractError(
-            "causal sidecar replay requires a kernel StageRecord"
-        )
+        raise MetricsContractError("causal sidecar replay requires a kernel StageRecord")
     expected_environment = _result_environment_sha256(result)
     candidate_bindings: dict[str, tuple[str, str]] = {}
     compiler = _mapping(
@@ -2099,9 +1792,7 @@ def _replay_causal_kernel_sidecars(
             codecs=("raw", "dag-json"),
         )
         if candidate_cid in candidate_bindings:
-            raise MetricsContractError(
-                "causal checked candidate identity is duplicated"
-            )
+            raise MetricsContractError("causal checked candidate identity is duplicated")
         candidate_bindings[candidate_cid] = (
             str(candidate["source"]),
             artifact_cid,
@@ -2118,10 +1809,7 @@ def _replay_causal_kernel_sidecars(
             "protocol_cid": selection["protocol_cid"],
             "variant_profile_cid": selection["variant_profile_cid"],
         }
-        if any(
-            sidecar.get(field) != expected
-            for field, expected in expected_fields.items()
-        ):
+        if any(sidecar.get(field) != expected for field, expected in expected_fields.items()):
             raise MetricsContractError(
                 "causal kernel sidecar coordinate or profile binding changed"
             )
@@ -2135,60 +1823,35 @@ def _replay_causal_kernel_sidecars(
             "causal sidecar receipt_cid",
         )
         if candidate_cid in by_candidate or receipt_cid in receipt_cids:
-            raise MetricsContractError(
-                "causal kernel sidecars repeat a candidate or receipt"
-            )
+            raise MetricsContractError("causal kernel sidecars repeat a candidate or receipt")
         binding = candidate_bindings.get(candidate_cid)
         if binding is None:
-            raise MetricsContractError(
-                "causal kernel sidecar lacks a selected candidate binding"
-            )
+            raise MetricsContractError("causal kernel sidecar lacks a selected candidate binding")
         expected_source, artifact_cid = binding
-        artifact_sha256 = sha256_digest_for_cid(
-            artifact_cid, codecs=("raw", "dag-json")
-        )
-        receipt = _mapping(
-            sidecar.get("receipt"), "causal sidecar native receipt"
-        )
+        artifact_sha256 = sha256_digest_for_cid(artifact_cid, codecs=("raw", "dag-json"))
+        receipt = _mapping(sidecar.get("receipt"), "causal sidecar native receipt")
         if cid_for_dag_json(_plain_json(receipt)) != receipt_cid:
-            raise MetricsContractError(
-                "causal sidecar native receipt CID changed"
-            )
+            raise MetricsContractError("causal sidecar native receipt CID changed")
         try:
             stage_status = StageStatus(sidecar.get("stage_status"))
         except (TypeError, ValueError) as exc:
-            raise MetricsContractError(
-                "causal sidecar stage_status is invalid"
-            ) from exc
+            raise MetricsContractError("causal sidecar stage_status is invalid") from exc
         raw_failure_code = sidecar.get("failure_code")
         try:
-            failure_code = (
-                None
-                if raw_failure_code is None
-                else FailureCode(raw_failure_code)
-            )
+            failure_code = None if raw_failure_code is None else FailureCode(raw_failure_code)
         except (TypeError, ValueError) as exc:
-            raise MetricsContractError(
-                "causal sidecar failure_code is invalid"
-            ) from exc
+            raise MetricsContractError("causal sidecar failure_code is invalid") from exc
         accepted = sidecar.get("kernel_accepted")
         if type(accepted) is not bool:
-            raise MetricsContractError(
-                "causal sidecar kernel_accepted must be boolean"
-            )
+            raise MetricsContractError("causal sidecar kernel_accepted must be boolean")
         raw_consumed = sidecar.get("consumed_artifact_sha256s")
         if not isinstance(raw_consumed, (list, tuple)):
-            raise MetricsContractError(
-                "causal sidecar consumed artifacts must be an array"
-            )
+            raise MetricsContractError("causal sidecar consumed artifacts must be an array")
         consumed = tuple(
-            _digest(item, "causal sidecar consumed_artifact_sha256s[]")
-            for item in raw_consumed
+            _digest(item, "causal sidecar consumed_artifact_sha256s[]") for item in raw_consumed
         )
         if len(consumed) != len(set(consumed)):
-            raise MetricsContractError(
-                "causal sidecar consumed artifacts contain duplicates"
-            )
+            raise MetricsContractError("causal sidecar consumed artifacts contain duplicates")
         if (
             receipt.get("candidate_source") != expected_source
             or receipt.get("candidate_artifact_sha256") != artifact_sha256
@@ -2204,29 +1867,23 @@ def _replay_causal_kernel_sidecars(
             or not isinstance(attempts[0], Mapping)
             or attempts[0].get("attempt_index") != 0
             or attempts[0].get("candidate_source") != expected_source
-            or attempts[0].get("candidate_artifact_sha256")
-            != artifact_sha256
+            or attempts[0].get("candidate_artifact_sha256") != artifact_sha256
         ):
             raise MetricsContractError(
-                "causal native sidecar must contain one targeted candidate "
-                "attempt"
+                "causal native sidecar must contain one targeted candidate attempt"
             )
         if (
             receipt.get("protocol_sha256") != result.protocol_sha256
             or receipt.get("run_id") != result.run_id
             or receipt.get("case_id") != result.case_id
-            or receipt.get("case_manifest_sha256")
-            != result.case_manifest_sha256
+            or receipt.get("case_manifest_sha256") != result.case_manifest_sha256
             or receipt.get("variant_id") != result.variant_id
             or receipt.get("split") != result.split.value
             or receipt.get("cache_mode") != result.cache_mode.value
-            or receipt.get("input_sha256")
-            != stage.provenance.input_sha256
+            or receipt.get("input_sha256") != stage.provenance.input_sha256
             or receipt.get("environment_sha256") != expected_environment
         ):
-            raise MetricsContractError(
-                "causal native receipt differs from the CaseResult binding"
-            )
+            raise MetricsContractError("causal native receipt differs from the CaseResult binding")
         receipt_sha256 = receipt.get("receipt_sha256")
         try:
             replayed = validate_native_kernel_receipt(
@@ -2254,13 +1911,9 @@ def _replay_causal_kernel_sidecars(
                 failure_code=failure_code,
             )
         except ProtocolContractError as exc:
-            raise MetricsContractError(
-                f"causal native sidecar failed replay: {exc}"
-            ) from exc
+            raise MetricsContractError(f"causal native sidecar failed replay: {exc}") from exc
         if replayed is not accepted:
-            raise MetricsContractError(
-                "causal native sidecar authority changed during replay"
-            )
+            raise MetricsContractError("causal native sidecar authority changed during replay")
         by_candidate[candidate_cid] = MappingProxyType(
             {
                 "candidate_cid": candidate_cid,
@@ -2271,9 +1924,7 @@ def _replay_causal_kernel_sidecars(
         )
         receipt_cids.add(receipt_cid)
     if set(by_candidate) != set(candidate_bindings):
-        raise MetricsContractError(
-            "causal checked candidate lacks a native-kernel sidecar"
-        )
+        raise MetricsContractError("causal checked candidate lacks a native-kernel sidecar")
     return MappingProxyType(by_candidate)
 
 
@@ -2292,9 +1943,7 @@ def _causal_case_body(
         ("variant_id", validated_result.variant_id),
     ):
         if selection.get(field) != expected:
-            raise MetricsContractError(
-                f"causal selection {field} differs from the case result"
-            )
+            raise MetricsContractError(f"causal selection {field} differs from the case result")
     source_cid = _cid(
         selection.get("source_cid"),
         "causal selection source_cid",
@@ -2324,41 +1973,27 @@ def _causal_case_body(
         "causal selection receipt_cid",
     )
     selection_body = {
-        key: _plain_json(item)
-        for key, item in selection.items()
-        if key != "receipt_cid"
+        key: _plain_json(item) for key, item in selection.items() if key != "receipt_cid"
     }
     if cid_for_dag_json(selection_body) != selection_cid:
-        raise MetricsContractError(
-            "causal selection receipt CID does not match its body"
-        )
+        raise MetricsContractError("causal selection receipt CID does not match its body")
 
     kernel = next(
-        (
-            stage
-            for stage in validated_result.stages
-            if stage.stage is StageName.KERNEL
-        ),
+        (stage for stage in validated_result.stages if stage.stage is StageName.KERNEL),
         None,
     )
     if kernel is None:
-        raise MetricsContractError(
-            "causal rescue accounting requires a native-kernel stage"
-        )
+        raise MetricsContractError("causal rescue accounting requires a native-kernel stage")
     try:
         kernel_accepted = validate_native_kernel_stage_receipt(kernel)
     except ProtocolContractError as exc:
-        raise MetricsContractError(
-            f"causal native-kernel receipt is invalid: {exc}"
-        ) from exc
+        raise MetricsContractError(f"causal native-kernel receipt is invalid: {exc}") from exc
     sidecars = _replay_causal_kernel_sidecars(
         validated_result,
         selection,
         kernel,
     )
-    native_receipt_cids = sorted(
-        str(item["receipt_cid"]) for item in sidecars.values()
-    )
+    native_receipt_cids = sorted(str(item["receipt_cid"]) for item in sidecars.values())
 
     compiler = _mapping(
         selection.get("compiler_reference"),
@@ -2366,9 +2001,7 @@ def _causal_case_body(
     )
     compiler_state = compiler.get("state")
     if compiler_state not in {"absent", "rejected", "accepted"}:
-        raise MetricsContractError(
-            "causal compiler reference state is invalid"
-        )
+        raise MetricsContractError("causal compiler reference state is invalid")
     compiler_candidate_cid = compiler.get("candidate_cid")
     if compiler_candidate_cid is not None:
         compiler_candidate_cid = _cid(
@@ -2377,38 +2010,27 @@ def _causal_case_body(
             codecs=("raw",),
         )
     compiler_check = (
-        None
-        if compiler_candidate_cid is None
-        else sidecars.get(compiler_candidate_cid)
+        None if compiler_candidate_cid is None else sidecars.get(compiler_candidate_cid)
     )
     expected_compiler_state = (
         "absent"
         if compiler_candidate_cid is None
         else (
             "accepted"
-            if compiler_check is not None
-            and compiler_check.get("accepted") is True
+            if compiler_check is not None and compiler_check.get("accepted") is True
             else "rejected"
         )
     )
     if compiler_state != expected_compiler_state:
-        raise MetricsContractError(
-            "compiler reference state disagrees with native-kernel evidence"
-        )
+        raise MetricsContractError("compiler reference state disagrees with native-kernel evidence")
     if compiler_candidate_cid is not None and compiler_check is None:
-        raise MetricsContractError(
-            "compiler reference lacks its replayed native sidecar"
-        )
+        raise MetricsContractError("compiler reference lacks its replayed native sidecar")
     if (
         compiler_check is not None
-        and _mapping(
-            compiler_check["receipt"], "compiler native receipt"
-        ).get("candidate_source")
+        and _mapping(compiler_check["receipt"], "compiler native receipt").get("candidate_source")
         != StageName.COMPILER.value
     ):
-        raise MetricsContractError(
-            "compiler sidecar validated a non-compiler candidate"
-        )
+        raise MetricsContractError("compiler sidecar validated a non-compiler candidate")
     if compiler.get("kernel_checked") is not (compiler_check is not None):
         raise MetricsContractError(
             "compiler kernel-check flag disagrees with native-kernel evidence"
@@ -2416,45 +2038,23 @@ def _causal_case_body(
     if compiler.get("kernel_receipt_cid") != (
         None if compiler_check is None else compiler_check["receipt_cid"]
     ):
-        raise MetricsContractError(
-            "compiler kernel receipt CID disagrees with its sidecar"
-        )
-    if compiler.get("accepted") is not (
-        compiler_state == "accepted"
-    ):
-        raise MetricsContractError(
-            "compiler acceptance disagrees with its reference state"
-        )
+        raise MetricsContractError("compiler kernel receipt CID disagrees with its sidecar")
+    if compiler.get("accepted") is not (compiler_state == "accepted"):
+        raise MetricsContractError("compiler acceptance disagrees with its reference state")
 
     optionals = _causal_optional_candidates(selection)
     component_measurements: list[dict[str, object]] = []
     compiler_stage = next(
-        (
-            item
-            for item in validated_result.stages
-            if item.stage is StageName.COMPILER
-        ),
+        (item for item in validated_result.stages if item.stage is StageName.COMPILER),
         None,
     )
     if compiler_stage is None:
-        raise MetricsContractError(
-            "causal compiler reference lacks its immutable stage receipt"
-        )
-    compiler_process_invoked = (
-        compiler_stage.provenance.effective_identity.get(
-            "graph_invoked"
-        )
-    )
+        raise MetricsContractError("causal compiler reference lacks its immutable stage receipt")
+    compiler_process_invoked = compiler_stage.provenance.effective_identity.get("graph_invoked")
     if compiler_process_invoked is not True:
-        raise MetricsContractError(
-            "causal compiler reference lacks explicit process exposure"
-        )
-    if (
-        compiler.get("invoked") is True
-    ) is not (compiler_candidate_cid is not None):
-        raise MetricsContractError(
-            "compiler candidate-presence marker disagrees with its bytes"
-        )
+        raise MetricsContractError("causal compiler reference lacks explicit process exposure")
+    if (compiler.get("invoked") is True) is not (compiler_candidate_cid is not None):
+        raise MetricsContractError("compiler candidate-presence marker disagrees with its bytes")
     component_measurements.append(
         _stage_component_measurement(
             validated_result,
@@ -2470,9 +2070,7 @@ def _causal_case_body(
 
     selected_source = selection.get("selected_source")
     selected_candidate_cid = selection.get("selected_candidate_cid")
-    selected_kernel_receipt_cid = selection.get(
-        "selected_kernel_receipt_cid"
-    )
+    selected_kernel_receipt_cid = selection.get("selected_kernel_receipt_cid")
     selected_check: Mapping[str, object] | None = None
     if selected_candidate_cid is not None:
         selected_candidate_cid = _cid(
@@ -2483,15 +2081,15 @@ def _causal_case_body(
         selected_check = sidecars.get(selected_candidate_cid)
     if kernel_accepted:
         if (
-            selected_source not in {
+            selected_source
+            not in {
                 StageName.COMPILER.value,
                 StageName.HAMMER.value,
                 StageName.LEANSTRAL.value,
             }
             or selected_check is None
             or selected_check.get("accepted") is not True
-            or selected_kernel_receipt_cid
-            != selected_check.get("receipt_cid")
+            or selected_kernel_receipt_cid != selected_check.get("receipt_cid")
         ):
             raise MetricsContractError(
                 "selected causal candidate differs from native-kernel authority"
@@ -2504,21 +2102,15 @@ def _causal_case_body(
             selected_kernel_receipt_cid,
         )
     ):
-        raise MetricsContractError(
-            "rejected native-kernel result cannot select a proof candidate"
-        )
+        raise MetricsContractError("rejected native-kernel result cannot select a proof candidate")
     terminal_selection_cid = kernel.provenance.effective_identity.get(
         "causal_selection_receipt_cid"
     )
-    terminal_body = (
-        {
-            key: _plain_json(item)
-            for key, item in _mapping(
-                kernel.data, "causal terminal kernel receipt"
-            ).items()
-            if key != "routing_policy"
-        }
-    )
+    terminal_body = {
+        key: _plain_json(item)
+        for key, item in _mapping(kernel.data, "causal terminal kernel receipt").items()
+        if key != "routing_policy"
+    }
     if terminal_selection_cid != selection_cid:
         raise MetricsContractError(
             "terminal CaseResult is not bound to the causal selection receipt"
@@ -2529,22 +2121,13 @@ def _causal_case_body(
         expected_terminal_cid = (
             selected_kernel_receipt_cid
             if selected_kernel_receipt_cid is not None
-            else _mapping(
-                raw_sidecars[-1], "terminal causal sidecar"
-            )["receipt_cid"]
+            else _mapping(raw_sidecars[-1], "terminal causal sidecar")["receipt_cid"]
         )
         expected_terminal = next(
-            (
-                item
-                for item in sidecars.values()
-                if item["receipt_cid"] == expected_terminal_cid
-            ),
+            (item for item in sidecars.values() if item["receipt_cid"] == expected_terminal_cid),
             None,
         )
-        if (
-            expected_terminal is None
-            or terminal_body != _plain_json(expected_terminal["receipt"])
-        ):
+        if expected_terminal is None or terminal_body != _plain_json(expected_terminal["receipt"]):
             raise MetricsContractError(
                 "terminal native receipt differs from the causal check sequence"
             )
@@ -2553,11 +2136,7 @@ def _causal_case_body(
     case_rescues: list[str] = []
     overlaps: list[str] = []
     continuation_after_model_failure: list[str] = []
-    prior_candidate_cids = (
-        set()
-        if compiler_candidate_cid is None
-        else {compiler_candidate_cid}
-    )
+    prior_candidate_cids = set() if compiler_candidate_cid is None else {compiler_candidate_cid}
     prior_model_failure = False
     prior_accepted = compiler_state == "accepted"
     for route_index, candidate in enumerate(optionals):
@@ -2566,9 +2145,7 @@ def _causal_case_body(
         checked = candidate.get("kernel_checked") is True
         accepted = candidate.get("accepted") is True
         trigger_eligible = candidate.get("trigger_eligible") is True
-        causal_credit_eligible = (
-            candidate.get("causal_credit_eligible") is True
-        )
+        causal_credit_eligible = candidate.get("causal_credit_eligible") is True
         candidate_cid = candidate.get("candidate_cid")
         if candidate_cid is not None:
             candidate_cid = _cid(
@@ -2576,61 +2153,32 @@ def _causal_case_body(
                 f"{source} candidate_cid",
                 codecs=("raw",),
             )
-        check = (
-            sidecars.get(candidate_cid)
-            if checked and candidate_cid is not None
-            else None
-        )
+        check = sidecars.get(candidate_cid) if checked and candidate_cid is not None else None
         if checked and check is None:
-            raise MetricsContractError(
-                f"{source} kernel-check flag disagrees with native receipt"
-            )
-        if accepted is not (
-            check is not None and check.get("accepted") is True
-        ):
-            raise MetricsContractError(
-                f"{source} acceptance disagrees with native receipt"
-            )
+            raise MetricsContractError(f"{source} kernel-check flag disagrees with native receipt")
+        if accepted is not (check is not None and check.get("accepted") is True):
+            raise MetricsContractError(f"{source} acceptance disagrees with native receipt")
         if (
             check is not None
-            and _mapping(
-                check["receipt"], f"{source} native receipt"
-            ).get("candidate_source")
+            and _mapping(check["receipt"], f"{source} native receipt").get("candidate_source")
             != source
         ):
-            raise MetricsContractError(
-                f"{source} sidecar validated a different candidate source"
-            )
-        if candidate.get("kernel_receipt_cid") != (
-            None if check is None else check["receipt_cid"]
-        ):
-            raise MetricsContractError(
-                f"{source} kernel receipt CID disagrees with its sidecar"
-            )
+            raise MetricsContractError(f"{source} sidecar validated a different candidate source")
+        if candidate.get("kernel_receipt_cid") != (None if check is None else check["receipt_cid"]):
+            raise MetricsContractError(f"{source} kernel receipt CID disagrees with its sidecar")
         if checked and not invoked:
-            raise MetricsContractError(
-                f"{source} cannot be kernel checked without invocation"
-            )
+            raise MetricsContractError(f"{source} cannot be kernel checked without invocation")
         if trigger_eligible and not eligible_reference:
             raise MetricsContractError(
                 f"{source} escalation was eligible after compiler acceptance"
             )
         if causal_credit_eligible is not (
-            eligible_reference
-            and not prior_model_failure
-            and not prior_accepted
+            eligible_reference and not prior_model_failure and not prior_accepted
         ):
-            raise MetricsContractError(
-                f"{source} causal-credit eligibility is not route-derived"
-            )
-        overlap = (
-            candidate_cid is not None
-            and candidate_cid in prior_candidate_cids
-        )
+            raise MetricsContractError(f"{source} causal-credit eligibility is not route-derived")
+        overlap = candidate_cid is not None and candidate_cid in prior_candidate_cids
         if candidate.get("overlap") is not overlap:
-            raise MetricsContractError(
-                f"{source} overlap differs from raw candidate CIDs"
-            )
+            raise MetricsContractError(f"{source} overlap differs from raw candidate CIDs")
         continuation_kind = _text(
             candidate.get("continuation_kind"),
             f"{source} continuation_kind",
@@ -2645,8 +2193,7 @@ def _causal_case_body(
                     if source == StageName.LEANSTRAL.value
                     else "post_solver_failure_continuation"
                 )
-                if failure_code is not None
-                and route_index + 1 < len(optionals)
+                if failure_code is not None and route_index + 1 < len(optionals)
                 else (
                     "terminal_producer_failure"
                     if failure_code is not None
@@ -2667,9 +2214,7 @@ def _causal_case_body(
             )
         )
         if continuation_kind != expected_continuation:
-            raise MetricsContractError(
-                f"{source} continuation classification is not recomputable"
-            )
+            raise MetricsContractError(f"{source} continuation classification is not recomputable")
         after_model_failure = continuation_kind in {
             "after_model_failure",
             "model_failure_continuation",
@@ -2689,18 +2234,12 @@ def _causal_case_body(
             and not prior_model_failure
         )
         if candidate.get("causal_rescue") is not causal_rescue:
-            raise MetricsContractError(
-                f"{source} causal-rescue claim is not source causal"
-            )
+            raise MetricsContractError(f"{source} causal-rescue claim is not source causal")
         expected_credit = 1_000_000 if causal_rescue else 0
         if candidate.get("marginal_credit_millionths") != expected_credit:
-            raise MetricsContractError(
-                f"{source} marginal credit disagrees with causal rescue"
-            )
+            raise MetricsContractError(f"{source} marginal credit disagrees with causal rescue")
         if overlap and expected_credit:
-            raise MetricsContractError(
-                "byte-identical overlap cannot receive marginal efficacy"
-            )
+            raise MetricsContractError("byte-identical overlap cannot receive marginal efficacy")
         if causal_rescue:
             case_rescues.append(source)
         if overlap:
@@ -2731,13 +2270,9 @@ def _causal_case_body(
         )
 
     if len(case_rescues) > 1:
-        raise MetricsContractError(
-            "one case cannot credit more than one causal rescue"
-        )
+        raise MetricsContractError("one case cannot credit more than one causal rescue")
     if case_rescues and selected_source != case_rescues[0]:
-        raise MetricsContractError(
-            "causal rescue does not match the native-kernel selected source"
-        )
+        raise MetricsContractError("causal rescue does not match the native-kernel selected source")
     case_result_value = _plain_json(validated_result.to_dict())
     case_result_cid = cid_for_dag_json(case_result_value)
     return {
@@ -2755,13 +2290,9 @@ def _causal_case_body(
         "native_kernel_receipt_cids": native_receipt_cids,
         "compiler_reference_state": compiler_state,
         "eligible_reference": eligible_reference,
-        "causal_rescue_source": (
-            None if not case_rescues else case_rescues[0]
-        ),
+        "causal_rescue_source": (None if not case_rescues else case_rescues[0]),
         "overlap_sources": overlaps,
-        "model_failure_continuation_sources": (
-            continuation_after_model_failure
-        ),
+        "model_failure_continuation_sources": (continuation_after_model_failure),
         "component_measurements": component_measurements,
     }
 
@@ -2773,9 +2304,7 @@ def build_causal_rescue_case_receipt(
     """Build a source- and native-kernel-bound G210 case measurement."""
 
     if not isinstance(case_result, CaseResultRecord):
-        raise MetricsContractError(
-            "causal rescue accounting requires a CaseResultRecord"
-        )
+        raise MetricsContractError("causal rescue accounting requires a CaseResultRecord")
     selection = _validated_causal_selection_receipt(selection_receipt)
     body = _causal_case_body(case_result, selection)
     return {**body, "receipt_cid": cid_for_dag_json(body)}
@@ -2810,23 +2339,17 @@ def validate_causal_rescue_case_receipt(
     }
     _exact_keys(data, expected, "causal rescue case receipt")
     if data.get("schema") != CAUSAL_RESCUE_CASE_RECEIPT_SCHEMA:
-        raise MetricsContractError(
-            "unsupported causal rescue case-receipt schema"
-        )
+        raise MetricsContractError("unsupported causal rescue case-receipt schema")
     try:
         result = CaseResultRecord.from_dict(data["case_result"])
     except ProtocolContractError as exc:
-        raise MetricsContractError(
-            f"invalid causal rescue case result: {exc}"
-        ) from exc
+        raise MetricsContractError(f"invalid causal rescue case result: {exc}") from exc
     rebuilt = build_causal_rescue_case_receipt(
         result,
         data["selection_receipt"],
     )
     if _plain_json(data) != rebuilt:
-        raise MetricsContractError(
-            "causal rescue case receipt fields or CID changed"
-        )
+        raise MetricsContractError("causal rescue case receipt fields or CID changed")
     return rebuilt
 
 
@@ -2836,13 +2359,8 @@ def _causal_component_aggregate(
 ) -> dict[str, object]:
     rows: list[tuple[str, Mapping[str, object], Mapping[str, object]]] = []
     for receipt in receipts:
-        selection = _mapping(
-            receipt["selection_receipt"], "selection_receipt"
-        )
-        optional = {
-            str(item["source"]): item
-            for item in _causal_optional_candidates(selection)
-        }
+        selection = _mapping(receipt["selection_receipt"], "selection_receipt")
+        optional = {str(item["source"]): item for item in _causal_optional_candidates(selection)}
         measurements = {
             str(item["component_id"]): item
             for item in (
@@ -2865,51 +2383,32 @@ def _causal_component_aggregate(
             if predicate(candidate, measurement)
         )
 
-    eligible = cids(
-        lambda candidate, measurement: candidate["trigger_eligible"] is True
-    )
+    eligible = cids(lambda candidate, measurement: candidate["trigger_eligible"] is True)
     credit_eligible = cids(
-        lambda candidate, measurement: (
-            candidate["causal_credit_eligible"] is True
-        )
+        lambda candidate, measurement: candidate["causal_credit_eligible"] is True
     )
-    invoked = cids(
-        lambda candidate, measurement: measurement["invoked"] is True
-    )
+    invoked = cids(lambda candidate, measurement: measurement["invoked"] is True)
     escalated = sorted(set(eligible).intersection(invoked))
     suppressed = cids(
         lambda candidate, measurement: (
-            candidate["trigger_eligible"] is False
-            and measurement["invoked"] is False
+            candidate["trigger_eligible"] is False and measurement["invoked"] is False
         )
     )
-    checked = cids(
-        lambda candidate, measurement: measurement["kernel_checks"] == 1
-    )
-    accepted = cids(
-        lambda candidate, measurement: candidate["accepted"] is True
-    )
-    rescued = cids(
-        lambda candidate, measurement: measurement["unique_wins"] == 1
-    )
-    overlap = cids(
-        lambda candidate, measurement: (
-            measurement["overlap_zero_marginal"] is True
-        )
-    )
-    unnecessary = cids(
-        lambda candidate, measurement: (
-            measurement["unnecessary_work"] is True
-        )
-    )
+    checked = cids(lambda candidate, measurement: measurement["kernel_checks"] == 1)
+    accepted = cids(lambda candidate, measurement: candidate["accepted"] is True)
+    rescued = cids(lambda candidate, measurement: measurement["unique_wins"] == 1)
+    overlap = cids(lambda candidate, measurement: measurement["overlap_zero_marginal"] is True)
+    unnecessary = cids(lambda candidate, measurement: measurement["unnecessary_work"] is True)
     continuations = cids(
-        lambda candidate, measurement: measurement["continuation_kind"]
-        in {
-            "after_model_failure",
-            "model_failure_continuation",
-            "post_model_failure_continuation",
-            "selected_post_model_failure_continuation",
-        }
+        lambda candidate, measurement: (
+            measurement["continuation_kind"]
+            in {
+                "after_model_failure",
+                "model_failure_continuation",
+                "post_model_failure_continuation",
+                "selected_post_model_failure_continuation",
+            }
+        )
     )
     failure_classes = {
         member.value: cids(
@@ -2947,30 +2446,13 @@ def _causal_component_aggregate(
         "overlap_count": len(overlap),
         "unnecessary_work_count": len(unnecessary),
         "model_failure_continuation_count": len(continuations),
-        "failure_class_counts": {
-            key: len(value) for key, value in failure_classes.items()
-        },
-        "wall_time_ms": math.fsum(
-            float(measurement["wall_time_ms"])
-            for _, _, measurement in rows
-        ),
-        "component_calls": sum(
-            int(measurement["component_calls"])
-            for _, _, measurement in rows
-        ),
-        "model_calls": sum(
-            int(measurement["model_calls"])
-            for _, _, measurement in rows
-        ),
-        "retries": sum(
-            int(measurement["retries"])
-            for _, _, measurement in rows
-        ),
+        "failure_class_counts": {key: len(value) for key, value in failure_classes.items()},
+        "wall_time_ms": math.fsum(float(measurement["wall_time_ms"]) for _, _, measurement in rows),
+        "component_calls": sum(int(measurement["component_calls"]) for _, _, measurement in rows),
+        "model_calls": sum(int(measurement["model_calls"]) for _, _, measurement in rows),
+        "retries": sum(int(measurement["retries"]) for _, _, measurement in rows),
         "peak_memory_bytes": max(
-            (
-                int(measurement["peak_memory_bytes"])
-                for _, _, measurement in rows
-            ),
+            (int(measurement["peak_memory_bytes"]) for _, _, measurement in rows),
             default=0,
         ),
         "rate_populations": {
@@ -2980,9 +2462,7 @@ def _causal_component_aggregate(
             },
             "suppression": {
                 "event_receipt_cids": suppressed,
-                "population_receipt_cids": sorted(
-                    item[0] for item in rows
-                ),
+                "population_receipt_cids": sorted(item[0] for item in rows),
             },
             "causal_rescue": {
                 "event_receipt_cids": rescued,
@@ -3009,13 +2489,9 @@ def aggregate_causal_rescue_receipts(
 ) -> dict[str, object]:
     """Aggregate G210 receipts without changing native proof authority."""
 
-    receipts = tuple(
-        validate_causal_rescue_case_receipt(value) for value in values
-    )
+    receipts = tuple(validate_causal_rescue_case_receipt(value) for value in values)
     if not receipts:
-        raise MetricsContractError(
-            "causal rescue aggregation requires case receipts"
-        )
+        raise MetricsContractError("causal rescue aggregation requires case receipts")
     identities = {
         (
             item["protocol_cid"],
@@ -3027,14 +2503,11 @@ def aggregate_causal_rescue_receipts(
     }
     if len(identities) != 1:
         raise MetricsContractError(
-            "causal rescue aggregation cannot pool protocol, profile, run, "
-            "or variant identities"
+            "causal rescue aggregation cannot pool protocol, profile, run, or variant identities"
         )
     case_ids = [str(item["case_id"]) for item in receipts]
     if len(case_ids) != len(set(case_ids)):
-        raise MetricsContractError(
-            "causal rescue aggregation contains duplicate cases"
-        )
+        raise MetricsContractError("causal rescue aggregation contains duplicate cases")
     ordered = tuple(sorted(receipts, key=lambda item: str(item["case_id"])))
     protocol_cid, profile_cid, run_id, variant_id = identities.pop()
     optional_sources = tuple(
@@ -3057,9 +2530,7 @@ def aggregate_causal_rescue_receipts(
             )
         )
         if current_sources != optional_sources:
-            raise MetricsContractError(
-                "causal aggregate mixed optional route profiles"
-            )
+            raise MetricsContractError("causal aggregate mixed optional route profiles")
     body = {
         "schema": CAUSAL_RESCUE_AGGREGATE_SCHEMA,
         "protocol_cid": protocol_cid,
@@ -3068,9 +2539,7 @@ def aggregate_causal_rescue_receipts(
         "variant_id": variant_id,
         "case_count": len(ordered),
         "case_ids": [item["case_id"] for item in ordered],
-        "case_receipt_cids": sorted(
-            str(item["receipt_cid"]) for item in ordered
-        ),
+        "case_receipt_cids": sorted(str(item["receipt_cid"]) for item in ordered),
         "case_receipts": [_plain_json(item) for item in ordered],
         "proof_authority": "native_kernel",
         "components": {
@@ -3103,27 +2572,17 @@ def validate_causal_rescue_aggregate(
     }
     _exact_keys(data, expected, "causal rescue aggregate")
     if data.get("schema") != CAUSAL_RESCUE_AGGREGATE_SCHEMA:
-        raise MetricsContractError(
-            "unsupported causal rescue aggregate schema"
-        )
+        raise MetricsContractError("unsupported causal rescue aggregate schema")
     aggregate_cid = _cid(
         data.get("aggregate_cid"),
         "causal rescue aggregate_cid",
     )
-    body = {
-        key: _plain_json(item)
-        for key, item in data.items()
-        if key != "aggregate_cid"
-    }
+    body = {key: _plain_json(item) for key, item in data.items() if key != "aggregate_cid"}
     if cid_for_dag_json(body) != aggregate_cid:
-        raise MetricsContractError(
-            "causal rescue aggregate CID does not match its body"
-        )
+        raise MetricsContractError("causal rescue aggregate CID does not match its body")
     case_receipts = data.get("case_receipts")
     if not isinstance(case_receipts, list):
-        raise MetricsContractError(
-            "causal rescue case_receipts must be an array"
-        )
+        raise MetricsContractError("causal rescue case_receipts must be an array")
     rebuilt = aggregate_causal_rescue_receipts(case_receipts)
     if _plain_json(data) != rebuilt:
         raise MetricsContractError(

@@ -5,6 +5,7 @@ Methods under test:
   - LogicValidator.unreachable_entities(ontology, source)
   - OntologyLearningAdapter.feedback_zscore(value)
 """
+
 import pytest
 
 
@@ -12,11 +13,17 @@ import pytest
 # OntologyCritic.dimension_covariance
 # ---------------------------------------------------------------------------
 
+
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -25,6 +32,7 @@ def _make_score(**kwargs):
 class TestDimensionCovariance:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         self.critic = OntologyCritic(use_llm=False)
 
     @pytest.mark.parametrize(
@@ -34,19 +42,28 @@ class TestDimensionCovariance:
             ([_make_score()], "completeness", "clarity", lambda cov: cov == pytest.approx(0.0)),
             # both dimensions move together
             (
-                [_make_score(completeness=0.2, consistency=0.2), _make_score(completeness=0.8, consistency=0.8)],
+                [
+                    _make_score(completeness=0.2, consistency=0.2),
+                    _make_score(completeness=0.8, consistency=0.8),
+                ],
                 "completeness",
                 "consistency",
                 lambda cov: cov > 0,
             ),
             (
-                [_make_score(completeness=0.2, consistency=0.8), _make_score(completeness=0.8, consistency=0.2)],
+                [
+                    _make_score(completeness=0.2, consistency=0.8),
+                    _make_score(completeness=0.8, consistency=0.2),
+                ],
                 "completeness",
                 "consistency",
                 lambda cov: cov < 0,
             ),
             (
-                [_make_score(completeness=0.5, consistency=0.5), _make_score(completeness=0.5, consistency=0.7)],
+                [
+                    _make_score(completeness=0.5, consistency=0.5),
+                    _make_score(completeness=0.5, consistency=0.7),
+                ],
                 "completeness",
                 "consistency",
                 lambda cov: cov == pytest.approx(0.0),
@@ -66,8 +83,10 @@ class TestDimensionCovariance:
 # LogicValidator.unreachable_entities
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -79,13 +98,19 @@ class TestUnreachableEntities:
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "A", "object_id": "C"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "A", "object_id": "C"},
+                    ],
                 },
                 "A",
                 lambda result: result == [],
             ),
             (
-                {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": [{"subject_id": "A", "object_id": "B"}]},
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}],
+                },
                 "A",
                 lambda result: "C" in result,
             ),
@@ -123,13 +148,18 @@ class TestUnreachableEntities:
 # OntologyLearningAdapter.feedback_zscore
 # ---------------------------------------------------------------------------
 
+
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from unittest.mock import MagicMock
+
     r = MagicMock()
     r.final_score = score
     a._feedback.append(r)

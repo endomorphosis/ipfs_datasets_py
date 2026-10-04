@@ -343,7 +343,7 @@ def test_noir_padding_entries_are_zero():
     witness = _simple_witness()  # 2-step trace
     inputs = witness.to_noir_trace_field_inputs()
 
-    for pad_step in inputs["trace_steps"][witness.trace_length:]:
+    for pad_step in inputs["trace_steps"][witness.trace_length :]:
         assert pad_step["kind"] == 0
         assert pad_step["atom_field"] == 0
         assert pad_step["antecedent_field"] == 0
@@ -413,6 +413,7 @@ def test_no_private_axiom_text_in_public_metadata():
 
     # Serialize to string for leak check.
     import json
+
     metadata_str = json.dumps(metadata)
     assert "confidential_axiom" not in metadata_str
 
@@ -425,6 +426,7 @@ def test_no_private_axiom_text_in_noir_inputs():
     inputs = witness.to_noir_trace_field_inputs()
 
     import json
+
     inputs_str = json.dumps(inputs)
     assert "private_rule" not in inputs_str
 

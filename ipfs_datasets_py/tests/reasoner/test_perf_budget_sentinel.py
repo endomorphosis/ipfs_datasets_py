@@ -1,4 +1,5 @@
 """Tests for WS12-06: Performance Budget Sentinel."""
+
 from __future__ import annotations
 
 import sys
@@ -25,6 +26,7 @@ from benchmark_hybrid_v2_reasoner import BENCHMARK_SCHEMA_VERSION, PHASES, run_b
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def benchmark_results():
     """Run benchmark once per module to keep test suite fast."""
@@ -34,6 +36,7 @@ def benchmark_results():
 # ---------------------------------------------------------------------------
 # run_benchmark tests
 # ---------------------------------------------------------------------------
+
 
 class TestRunBenchmark:
     def test_returns_all_phases(self, benchmark_results):
@@ -71,6 +74,7 @@ class TestRunBenchmark:
 # ---------------------------------------------------------------------------
 # assert_budgets tests
 # ---------------------------------------------------------------------------
+
 
 class TestAssertBudgets:
     def test_passes_with_generous_budget(self, benchmark_results):
@@ -122,6 +126,7 @@ class TestAssertBudgets:
 # BudgetViolation tests
 # ---------------------------------------------------------------------------
 
+
 class TestBudgetViolation:
     def test_fields_present(self):
         v = BudgetViolation(
@@ -149,6 +154,7 @@ class TestBudgetViolation:
 # ---------------------------------------------------------------------------
 # BudgetAssertionError machine_readable tests
 # ---------------------------------------------------------------------------
+
 
 class TestBudgetAssertionErrorMachineReadable:
     def test_machine_readable_violation_keys(self, benchmark_results):

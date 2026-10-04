@@ -1,4 +1,3 @@
-
 import anyio
 import concurrent.futures
 import itertools
@@ -16,9 +15,11 @@ class Resource(BaseModel):
     pipeline: Any
     prefer: str = "processor"
 
+
 class ProcessInput(BaseModel):
     resource: Resource
     prefer: str = "processor"
+
 
 class ThreadInput(BaseModel):
     resource: Resource
@@ -26,16 +27,15 @@ class ThreadInput(BaseModel):
 
 
 class FilePathQueue:
-
     def __init__(self, configs: Configs):
         self.batch_size = configs.batch_size
-        self.process_queue: 'AnyioQueue[ProcessInput]' = AnyioQueue(maxsize=configs.max_queue_size)
-        self.thread_queue: 'AnyioQueue[ThreadInput]' = AnyioQueue(maxsize=configs.max_queue_size)
-        
+        self.process_queue: "AnyioQueue[ProcessInput]" = AnyioQueue(maxsize=configs.max_queue_size)
+        self.thread_queue: "AnyioQueue[ThreadInput]" = AnyioQueue(maxsize=configs.max_queue_size)
+
     async def core_resource_manager_interface(self, resource: Optional[Resource]):
         """
         Get a steady stream of resources from the Core Resource Manager.
-        
+
         """
         while True:
             if resource:
@@ -52,17 +52,12 @@ class FilePathQueue:
             The thread queue is for resources that will be run in a Thread Pool, since they may be I/O bound due to API calls.
         """
         if resource.prefer == "thread":
-            await self.thread_queue.get(
-                ThreadInput(resource=resource)
-            )
+            await self.thread_queue.get(ThreadInput(resource=resource))
         else:
-            await self.process_queue.get(
-                ProcessInput(resource=resource)
-            )
+            await self.process_queue.get(ProcessInput(resource=resource))
 
-    def get_queues(self) -> tuple['AnyioQueue[ProcessInput]', 'AnyioQueue[ThreadInput]']:
+    def get_queues(self) -> tuple["AnyioQueue[ProcessInput]", "AnyioQueue[ThreadInput]"]:
         return self.process_queue, self.thread_queue
-
 
     def send_to_the_core(self) -> AsyncGenerator[Resource, None]:
         """

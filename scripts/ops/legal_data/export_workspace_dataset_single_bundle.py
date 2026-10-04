@@ -22,9 +22,13 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Rerun the export with /home/barberb/HACC/.venv when available to ensure CUDA-enabled embeddings.",
     )
-    parser.add_argument("--output-parquet", required=True, help="Path to the output single-bundle parquet file.")
+    parser.add_argument(
+        "--output-parquet", required=True, help="Path to the output single-bundle parquet file."
+    )
     parser.add_argument("--input-json", default="", help="Path to a workspace JSON payload.")
-    parser.add_argument("--input-directory", default="", help="Path to a directory corpus to ingest.")
+    parser.add_argument(
+        "--input-directory", default="", help="Path to a directory corpus to ingest."
+    )
     parser.add_argument(
         "--input-type",
         choices=[
@@ -38,26 +42,61 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         default="",
         help="Explicit source type when using --input-path.",
     )
-    parser.add_argument("--input-path", default="", help="Generic input path used with --input-type.")
+    parser.add_argument(
+        "--input-path", default="", help="Generic input path used with --input-type."
+    )
     parser.add_argument("--workspace-id", default="", help="Optional workspace id override.")
     parser.add_argument("--workspace-name", default="", help="Optional workspace name override.")
-    parser.add_argument("--source-type", default="", help="Optional workspace source type override.")
-    parser.add_argument("--strict-evidence-mode", action="store_true", help="Restrict to the plain_text+ retrieval subset.")
-    parser.add_argument("--vector-dimension", type=int, default=16, help="Vector dimension for local hashed embeddings.")
-    parser.add_argument("--embeddings-provider", default="", help="Embeddings router provider override.")
+    parser.add_argument(
+        "--source-type", default="", help="Optional workspace source type override."
+    )
+    parser.add_argument(
+        "--strict-evidence-mode",
+        action="store_true",
+        help="Restrict to the plain_text+ retrieval subset.",
+    )
+    parser.add_argument(
+        "--vector-dimension",
+        type=int,
+        default=16,
+        help="Vector dimension for local hashed embeddings.",
+    )
+    parser.add_argument(
+        "--embeddings-provider", default="", help="Embeddings router provider override."
+    )
     parser.add_argument("--embeddings-model", default="", help="Embeddings model name override.")
-    parser.add_argument("--embeddings-device", default="", help="Embeddings device override (cpu/cuda).")
-    parser.add_argument("--embeddings-batch-size", type=int, default=128, help="Batch size for embeddings_router.")
-    parser.add_argument("--embeddings-parallel-batches", type=int, default=1, help="Parallel batch workers for embeddings_router.")
+    parser.add_argument(
+        "--embeddings-device", default="", help="Embeddings device override (cpu/cuda)."
+    )
+    parser.add_argument(
+        "--embeddings-batch-size", type=int, default=128, help="Batch size for embeddings_router."
+    )
+    parser.add_argument(
+        "--embeddings-parallel-batches",
+        type=int,
+        default=1,
+        help="Parallel batch workers for embeddings_router.",
+    )
     parser.add_argument(
         "--embeddings-chunking-strategy",
         default="",
         help="Chunking strategy for embeddings (semantic, sentences, fixed, sliding_window).",
     )
-    parser.add_argument("--embeddings-chunk-size", type=int, default=512, help="Chunk size for embeddings chunking.")
-    parser.add_argument("--embeddings-chunk-overlap", type=int, default=50, help="Chunk overlap for embeddings chunking.")
+    parser.add_argument(
+        "--embeddings-chunk-size", type=int, default=512, help="Chunk size for embeddings chunking."
+    )
+    parser.add_argument(
+        "--embeddings-chunk-overlap",
+        type=int,
+        default=50,
+        help="Chunk overlap for embeddings chunking.",
+    )
     parser.add_argument("--glob-pattern", default="*", help="Glob used for directory ingestion.")
-    parser.add_argument("--write-normalized-json", default="", help="Optional path to persist the normalized dataset JSON.")
+    parser.add_argument(
+        "--write-normalized-json",
+        default="",
+        help="Optional path to persist the normalized dataset JSON.",
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output.")
     return parser.parse_args(args)
 
@@ -79,7 +118,9 @@ def _auto_cuda_device(requested: str | None, *, enable: bool) -> str | None:
 
 def _build_strict_subset(workspace_payload: dict, builder: WorkspaceDatasetBuilder) -> dict:
     preview = builder.preview_retrieval_index(workspace_payload, min_evidence_quality="plain_text")
-    selected_ids = {str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])}
+    selected_ids = {
+        str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])
+    }
     strict_docs = [
         document
         for document in list(workspace_payload.get("documents") or [])
@@ -96,7 +137,9 @@ def _build_strict_subset(workspace_payload: dict, builder: WorkspaceDatasetBuild
         **workspace_payload,
         "documents": strict_docs,
         "metadata": metadata,
-        "source_type": str(workspace_payload.get("source_type") or "workspace_plain_text_plus_bundle"),
+        "source_type": str(
+            workspace_payload.get("source_type") or "workspace_plain_text_plus_bundle"
+        ),
     }
 
 
@@ -155,7 +198,9 @@ def _resolve_workspace_input_type(args: argparse.Namespace) -> tuple[str, str]:
     input_path = str(args.input_path or "").strip()
     if input_path:
         return _detect_workspace_input_type(input_path), "auto"
-    raise ValueError("An input source is required. Provide --input-json, --input-directory, or --input-path.")
+    raise ValueError(
+        "An input source is required. Provide --input-json, --input-directory, or --input-path."
+    )
 
 
 def _load_dataset(args: argparse.Namespace, builder: WorkspaceDatasetBuilder):
@@ -193,7 +238,9 @@ def _load_dataset(args: argparse.Namespace, builder: WorkspaceDatasetBuilder):
         else:
             raise ValueError(f"Unsupported --input-type: {resolved_input_type}")
     else:
-        raise ValueError("An input source is required. Provide --input-json, --input-directory, or --input-path.")
+        raise ValueError(
+            "An input source is required. Provide --input-json, --input-directory, or --input-path."
+        )
 
     return _apply_overrides(dataset, args, builder)
 
@@ -210,7 +257,12 @@ def main(args: list[str] | None = None) -> int:
     output_parquet = Path(parsed.output_parquet).expanduser()
     output_parquet.parent.mkdir(parents=True, exist_ok=True)
 
-    auto_cuda = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA", "")).strip().lower() in {"1", "true", "yes", "on"}
+    auto_cuda = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     embeddings_device = _auto_cuda_device(
         str(parsed.embeddings_device or "").strip() or None,
         enable=auto_cuda,
@@ -246,7 +298,9 @@ def main(args: list[str] | None = None) -> int:
         "vector_provider": str((dataset.vector_index or {}).get("provider") or ""),
         "vector_model": str((dataset.vector_index or {}).get("model_name") or ""),
         "vector_device": str((dataset.vector_index or {}).get("device") or ""),
-        "vector_chunking_strategy": str((dataset.vector_index or {}).get("chunking_strategy") or ""),
+        "vector_chunking_strategy": str(
+            (dataset.vector_index or {}).get("chunking_strategy") or ""
+        ),
         "vector_chunk_size": (dataset.vector_index or {}).get("chunk_size"),
         "vector_chunk_overlap": (dataset.vector_index or {}).get("chunk_overlap"),
         "vector_batch_size": (dataset.vector_index or {}).get("batch_size"),

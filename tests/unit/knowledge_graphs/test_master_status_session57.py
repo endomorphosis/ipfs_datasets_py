@@ -19,22 +19,19 @@ import pytest
 _MISSING = object()
 
 _plotly_available = bool(importlib.util.find_spec("plotly"))
-_skip_no_plotly = pytest.mark.skipif(
-    not _plotly_available, reason="plotly not installed"
-)
+_skip_no_plotly = pytest.mark.skipif(not _plotly_available, reason="plotly not installed")
 _matplotlib_available = bool(importlib.util.find_spec("matplotlib"))
 _skip_no_matplotlib = pytest.mark.skipif(
     not _matplotlib_available, reason="matplotlib not installed"
 )
 _scipy_available = bool(importlib.util.find_spec("scipy"))
-_skip_no_scipy = pytest.mark.skipif(
-    not _scipy_available, reason="scipy not installed"
-)
+_skip_no_scipy = pytest.mark.skipif(not _scipy_available, reason="scipy not installed")
 
 
 # ---------------------------------------------------------------------------
 # Helpers (shared pattern from session 52)
 # ---------------------------------------------------------------------------
+
 
 def _reload_with_absent_dep(module_name: str, absent_deps: list) -> object:
     """
@@ -87,6 +84,7 @@ def _reload_with_absent_dep(module_name: str, absent_deps: list) -> object:
 # visualization.py lines 29-31: plotly ImportError except block
 # ---------------------------------------------------------------------------
 
+
 class TestVisualizationPlotlyImportError:
     """
     GIVEN plotly is unavailable
@@ -121,9 +119,7 @@ class TestVisualizationPlotlyImportError:
             VIZ_MODULE,
             absent_deps=["plotly", "plotly.graph_objects"],
         )
-        assert fresh.go is None, (
-            "go must be None when plotly is not importable"
-        )
+        assert fresh.go is None, "go must be None when plotly is not importable"
 
     def test_plotly_unavailable_render_raises(self):
         """
@@ -138,6 +134,7 @@ class TestVisualizationPlotlyImportError:
         )
         # Need a LineageGraph instance; import from the already-loaded module
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
         t = LineageTracker()
         vis_cls = fresh.LineageVisualizer
         v = vis_cls(t.graph)
@@ -152,6 +149,7 @@ class TestVisualizationPlotlyImportError:
         THEN PLOTLY_AVAILABLE is True.
         """
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as viz_mod
+
         assert viz_mod.PLOTLY_AVAILABLE is True
 
     @_skip_no_plotly
@@ -162,6 +160,7 @@ class TestVisualizationPlotlyImportError:
         THEN go is the plotly.graph_objects module.
         """
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as viz_mod
+
         assert viz_mod.go is not None
 
     @_skip_no_plotly
@@ -174,6 +173,7 @@ class TestVisualizationPlotlyImportError:
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as viz_mod
         import plotly.graph_objects as real_go
+
         # Ensure viz_mod uses the real plotly module (not a stale mock from session38
         # test_render_plotly_ghost_node_gets_gray_color which sets viz_mod.go=MagicMock()
         # and never restores it)
@@ -204,6 +204,7 @@ class TestVisualizationPlotlyImportError:
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as viz_mod
         import plotly.graph_objects as real_go
+
         # Ensure viz_mod uses the real plotly module (not a stale mock from session38
         # test_render_plotly_ghost_node_gets_gray_color which sets viz_mod.go=MagicMock()
         # and never restores it)
@@ -231,6 +232,7 @@ class TestVisualizationPlotlyImportError:
 # setup.py: scipy/matplotlib/plotly added to knowledge_graphs extras
 # ---------------------------------------------------------------------------
 
+
 class TestSetupPyScipy:
     """
     Verify that scipy, matplotlib, and plotly are declared in setup.py
@@ -240,6 +242,7 @@ class TestSetupPyScipy:
     @staticmethod
     def _read_setup_py() -> str:
         import pathlib
+
         root = pathlib.Path(__file__).resolve()
         for _ in range(10):
             candidate = root / "setup.py"
@@ -299,6 +302,7 @@ class TestSetupPyScipy:
 # ---------------------------------------------------------------------------
 # Verify scipy enables hierarchical (kamada_kawai) layout in render_networkx
 # ---------------------------------------------------------------------------
+
 
 class TestVisualizationHierarchicalLayout:
     """

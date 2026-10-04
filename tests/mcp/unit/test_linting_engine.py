@@ -4,6 +4,7 @@ Tests for linting_engine.py — Phase 5 core module extraction.
 Validates that LintIssue, LintResult, PythonLinter, and DatasetLinter
 work correctly after being extracted from linting_tools.py.
 """
+
 import tempfile
 from pathlib import Path
 import pytest
@@ -13,23 +14,26 @@ import pytest
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def python_linter():
     from ipfs_datasets_py.mcp_server.tools.development_tools.linting_engine import PythonLinter
+
     return PythonLinter()
 
 
 @pytest.fixture
 def dataset_linter():
     from ipfs_datasets_py.mcp_server.tools.development_tools.linting_engine import DatasetLinter
+
     return DatasetLinter()
 
 
 @pytest.fixture
 def tmp_py_file():
     """Create a temporary Python file for tests."""
-    with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as f:
-        f.write("x = 1  \n")      # trailing whitespace
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+        f.write("x = 1  \n")  # trailing whitespace
         f.write("y = 2\n")
         name = f.name
     yield Path(name)
@@ -39,7 +43,7 @@ def tmp_py_file():
 @pytest.fixture
 def clean_py_file():
     """A clean Python file with no issues."""
-    with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
         f.write("x = 1\n")
         f.write("y = 2\n")
         name = f.name
@@ -50,6 +54,7 @@ def clean_py_file():
 # ---------------------------------------------------------------------------
 # TestLintIssue
 # ---------------------------------------------------------------------------
+
 
 class TestLintIssue:
     """Tests for the LintIssue dataclass."""
@@ -88,8 +93,12 @@ class TestLintIssue:
         from ipfs_datasets_py.mcp_server.tools.development_tools.linting_engine import LintIssue
 
         issue = LintIssue(
-            file_path="f.py", line_number=1, column=None,
-            rule_id="E101", severity="error", message="Indentation error",
+            file_path="f.py",
+            line_number=1,
+            column=None,
+            rule_id="E101",
+            severity="error",
+            message="Indentation error",
         )
         assert issue.fix_suggestion is None
 
@@ -97,6 +106,7 @@ class TestLintIssue:
 # ---------------------------------------------------------------------------
 # TestLintResult
 # ---------------------------------------------------------------------------
+
 
 class TestLintResult:
     """Tests for the LintResult dataclass."""
@@ -127,6 +137,7 @@ class TestLintResult:
 # ---------------------------------------------------------------------------
 # TestPythonLinter
 # ---------------------------------------------------------------------------
+
 
 class TestPythonLinter:
     """Tests for PythonLinter core class."""
@@ -170,8 +181,7 @@ class TestPythonLinter:
         """
         result = python_linter.lint_file(clean_py_file, fix_issues=False)
 
-        basic_rule_ids = {i.rule_id for i in result.issues
-                         if i.rule_id in ("W291", "W292", "W293")}
+        basic_rule_ids = {i.rule_id for i in result.issues if i.rule_id in ("W291", "W292", "W293")}
         assert len(basic_rule_ids) == 0
 
     def test_lint_detects_missing_final_newline(self, python_linter):
@@ -180,7 +190,7 @@ class TestPythonLinter:
         WHEN: Linting with fix_issues=True (detection + fix combined)
         THEN: Returns a W292 issue
         """
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("x = 1")  # no trailing newline
             path = Path(f.name)
 
@@ -228,6 +238,7 @@ class TestPythonLinter:
 # TestDatasetLinter
 # ---------------------------------------------------------------------------
 
+
 class TestDatasetLinter:
     """Tests for DatasetLinter core class."""
 
@@ -237,7 +248,7 @@ class TestDatasetLinter:
         WHEN: lint_dataset_code() is called
         THEN: Returns DS002 issue
         """
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write('cid = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"\n')
             path = Path(f.name)
 
@@ -254,7 +265,7 @@ class TestDatasetLinter:
         WHEN: lint_dataset_code() is called
         THEN: Returns no issues
         """
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("def add(a, b):\n    return a + b\n")
             path = Path(f.name)
 
@@ -270,13 +281,8 @@ class TestDatasetLinter:
         WHEN: lint_dataset_code() is called
         THEN: No DS001 issue returned
         """
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as f:
-            f.write(
-                "try:\n"
-                "    ds = obj.load_dataset('squad')\n"
-                "except Exception as e:\n"
-                "    pass\n"
-            )
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("try:\n    ds = obj.load_dataset('squad')\nexcept Exception as e:\n    pass\n")
             path = Path(f.name)
 
         try:
@@ -291,6 +297,7 @@ class TestDatasetLinter:
 # TestLintingEngineImports (Phase 5 backward compatibility)
 # ---------------------------------------------------------------------------
 
+
 class TestLintingEngineImports:
     """Verify backward-compatible imports from linting_tools still work."""
 
@@ -301,6 +308,7 @@ class TestLintingEngineImports:
         THEN: Import succeeds (backward compatibility)
         """
         from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import LintIssue
+
         assert LintIssue is not None
 
     def test_python_linter_importable_from_tools(self):
@@ -310,6 +318,7 @@ class TestLintingEngineImports:
         THEN: Import succeeds (backward compatibility)
         """
         from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import PythonLinter
+
         assert PythonLinter is not None
 
     def test_dataset_linter_importable_from_tools(self):
@@ -319,6 +328,7 @@ class TestLintingEngineImports:
         THEN: Import succeeds (backward compatibility)
         """
         from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import DatasetLinter
+
         assert DatasetLinter is not None
 
 

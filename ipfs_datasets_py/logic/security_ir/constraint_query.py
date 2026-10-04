@@ -78,19 +78,13 @@ from .xaman.config import XAMAN_VOCABULARY
 SECURITY_CONSTRAINT_QUERY_INTERFACE: Final = "SecurityConstraintQuery@1"
 SECURITY_APPLICABILITY_EVIDENCE_INTERFACE: Final = "SecurityApplicabilityEvidence@1"
 SECURITY_CONSTRAINT_QUERY_SCHEMA_VERSION: Final = "security-constraint-query/v1"
-SECURITY_APPLICABILITY_EVIDENCE_SCHEMA_VERSION: Final = (
-    "security-applicability-evidence/v1"
-)
+SECURITY_APPLICABILITY_EVIDENCE_SCHEMA_VERSION: Final = "security-applicability-evidence/v1"
 SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION: Final = "security-constraint-record/v1"
-SECURITY_CONSTRAINT_SELECTION_SCHEMA_VERSION: Final = (
-    "security-constraint-selection/v1"
-)
+SECURITY_CONSTRAINT_SELECTION_SCHEMA_VERSION: Final = "security-constraint-selection/v1"
 SECURITY_EVIDENCE_BINDING_SCHEMA_VERSION: Final = "security-evidence-binding/v1"
 
 SECURITY_CONSTRAINT_QUERY_IDENTITY_DOMAIN: Final = "security-constraint-query"
-SECURITY_APPLICABILITY_EVIDENCE_IDENTITY_DOMAIN: Final = (
-    "security-applicability-evidence"
-)
+SECURITY_APPLICABILITY_EVIDENCE_IDENTITY_DOMAIN: Final = "security-applicability-evidence"
 SECURITY_CONSTRAINT_SELECTION_IDENTITY_DOMAIN: Final = "security-constraint-selection"
 
 MAX_COLLECTION_ITEMS: Final = 1_024
@@ -180,8 +174,7 @@ _OPPOSED_EFFECT_PAIRS: Final[frozenset[frozenset[str]]] = frozenset(
 )
 
 _DEFAULT_KNOWN_EXTENSION_VOCABS: Final[frozenset[str]] = frozenset(
-    KNOWN_SECURITY_EXTENSION_VOCABULARIES
-    | {EXCHANGE_VOCABULARY, XAMAN_VOCABULARY}
+    KNOWN_SECURITY_EXTENSION_VOCABULARIES | {EXCHANGE_VOCABULARY, XAMAN_VOCABULARY}
 )
 
 
@@ -277,14 +270,10 @@ class SecurityArtifactFamily(str, Enum):
 # ---------------------------------------------------------------------------
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise SecurityConstraintQueryError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise SecurityConstraintQueryError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _text(
@@ -297,9 +286,7 @@ def _text(
     if not isinstance(value, str):
         raise SecurityConstraintQueryError(f"{name} must be a string")
     if value != value.strip() or "\x00" in value:
-        raise SecurityConstraintQueryError(
-            f"{name} must not contain surrounding whitespace or NUL"
-        )
+        raise SecurityConstraintQueryError(f"{name} must not contain surrounding whitespace or NUL")
     if not allow_empty and not value:
         raise SecurityConstraintQueryError(f"{name} must not be empty")
     if len(value) > max_chars:
@@ -331,9 +318,7 @@ def _digest_or_empty(value: Any, name: str) -> str:
     if not text:
         return ""
     if not _DIGEST_RE.fullmatch(text):
-        raise SecurityConstraintQueryError(
-            f"{name} must be a sha256:<hex> digest or empty"
-        )
+        raise SecurityConstraintQueryError(f"{name} must be a sha256:<hex> digest or empty")
     return text
 
 
@@ -409,9 +394,7 @@ def _enum_value(value: Any, enum_cls: type[Enum], name: str) -> Any:
     if isinstance(value, enum_cls):
         return value
     if not isinstance(value, str):
-        raise SecurityConstraintQueryError(
-            f"{name} must be a string or {enum_cls.__name__}"
-        )
+        raise SecurityConstraintQueryError(f"{name} must be a string or {enum_cls.__name__}")
     try:
         return enum_cls(value)
     except ValueError as exc:
@@ -555,9 +538,7 @@ def _authority_kind(value: Any) -> AuthorityKind:
     try:
         return AuthorityKind(raw)
     except ValueError as exc:
-        raise SecurityConstraintQueryError(
-            f"unsupported required_authority: {value!r}"
-        ) from exc
+        raise SecurityConstraintQueryError(f"unsupported required_authority: {value!r}") from exc
 
 
 def _scope_contains(
@@ -629,12 +610,8 @@ class SecurityEvidenceBinding:
     schema_version: str = SECURITY_EVIDENCE_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "evidence_id", _identifier(self.evidence_id, "evidence_id")
-        )
-        object.__setattr__(
-            self, "artifact_family", _artifact_family(self.artifact_family)
-        )
+        object.__setattr__(self, "evidence_id", _identifier(self.evidence_id, "evidence_id"))
+        object.__setattr__(self, "artifact_family", _artifact_family(self.artifact_family))
         object.__setattr__(
             self,
             "content_digest",
@@ -645,17 +622,13 @@ class SecurityEvidenceBinding:
             "observed_at",
             _datetime_text(self.observed_at, "observed_at") if self.observed_at else "",
         )
-        object.__setattr__(
-            self, "environment_kind", _environment_kind(self.environment_kind)
-        )
+        object.__setattr__(self, "environment_kind", _environment_kind(self.environment_kind))
         object.__setattr__(
             self,
             "environment_id",
             _optional_identifier(self.environment_id, "environment_id"),
         )
-        object.__setattr__(
-            self, "authority_kind", _authority_kind(self.authority_kind)
-        )
+        object.__setattr__(self, "authority_kind", _authority_kind(self.authority_kind))
         # Authority must agree with artifact family.
         expected = _ARTIFACT_TO_AUTHORITY[self.artifact_family.value]
         if self.authority_kind is not expected:
@@ -669,9 +642,7 @@ class SecurityEvidenceBinding:
                 "max_age_seconds",
                 _non_negative_int(self.max_age_seconds, "max_age_seconds"),
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SECURITY_EVIDENCE_BINDING_SCHEMA_VERSION:
             raise SecurityConstraintQueryError(
                 f"unsupported evidence binding schema: {self.schema_version!r}"
@@ -716,9 +687,7 @@ class SecurityEvidenceBinding:
         return cls(
             evidence_id=value.get("evidence_id", ""),
             artifact_family=family,
-            content_digest=value.get(
-                "content_digest", value.get("digest", "")
-            ),
+            content_digest=value.get("content_digest", value.get("digest", "")),
             observed_at=value.get("observed_at", ""),
             environment_kind=value.get("environment_kind", "unspecified"),
             environment_id=value.get("environment_id", ""),
@@ -730,9 +699,7 @@ class SecurityEvidenceBinding:
                 ),
             ),
             max_age_seconds=value.get("max_age_seconds"),
-            schema_version=value.get(
-                "schema_version", SECURITY_EVIDENCE_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SECURITY_EVIDENCE_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -794,9 +761,7 @@ class SecurityConstraintRecord:
     schema_version: str = SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "constraint_id", _identifier(self.constraint_id, "constraint_id")
-        )
+        object.__setattr__(self, "constraint_id", _identifier(self.constraint_id, "constraint_id"))
         object.__setattr__(self, "effect", _effect_atom(self.effect))
         for name in (
             "principals",
@@ -853,9 +818,7 @@ class SecurityConstraintRecord:
                 object.__setattr__(self, "evidence_digests", ())
         else:
             seq = _sequence(digests, "evidence_digests")
-            normalized = tuple(
-                _digest_or_empty(item, "evidence_digests") for item in seq
-            )
+            normalized = tuple(_digest_or_empty(item, "evidence_digests") for item in seq)
             if any(not item for item in normalized):
                 raise SecurityConstraintQueryError(
                     "evidence_digests entries must be sha256 digests"
@@ -863,9 +826,7 @@ class SecurityConstraintRecord:
             if len(normalized) != len(set(normalized)):
                 raise SecurityConstraintQueryError("evidence_digests must be unique")
             object.__setattr__(self, "evidence_digests", tuple(sorted(normalized)))
-        object.__setattr__(
-            self, "environment_kind", _environment_kind(self.environment_kind)
-        )
+        object.__setattr__(self, "environment_kind", _environment_kind(self.environment_kind))
         object.__setattr__(
             self,
             "threat_model_id",
@@ -876,20 +837,14 @@ class SecurityConstraintRecord:
             "threat_model_version",
             _optional_text(self.threat_model_version, "threat_model_version"),
         )
-        object.__setattr__(
-            self, "policy_id", _optional_identifier(self.policy_id, "policy_id")
-        )
+        object.__setattr__(self, "policy_id", _optional_identifier(self.policy_id, "policy_id"))
         object.__setattr__(
             self,
             "policy_version",
             _optional_text(self.policy_version, "policy_version"),
         )
-        object.__setattr__(
-            self, "artifact_family", _artifact_family(self.artifact_family)
-        )
-        object.__setattr__(
-            self, "required_authority", _authority_kind(self.required_authority)
-        )
+        object.__setattr__(self, "artifact_family", _artifact_family(self.artifact_family))
+        object.__setattr__(self, "required_authority", _authority_kind(self.required_authority))
         expected = _ARTIFACT_TO_AUTHORITY[self.artifact_family.value]
         if self.required_authority is not expected:
             raise SecurityConstraintQueryError(
@@ -900,20 +855,14 @@ class SecurityConstraintRecord:
             object.__setattr__(
                 self,
                 "max_evidence_age_seconds",
-                _non_negative_int(
-                    self.max_evidence_age_seconds, "max_evidence_age_seconds"
-                ),
+                _non_negative_int(self.max_evidence_age_seconds, "max_evidence_age_seconds"),
             )
         object.__setattr__(
             self,
             "premise_taint",
-            _enum_value(
-                self.premise_taint, SecurityPremiseTaintStatus, "premise_taint"
-            ),
+            _enum_value(self.premise_taint, SecurityPremiseTaintStatus, "premise_taint"),
         )
-        object.__setattr__(
-            self, "trusted_source", _bool(self.trusted_source, "trusted_source")
-        )
+        object.__setattr__(self, "trusted_source", _bool(self.trusted_source, "trusted_source"))
         object.__setattr__(self, "reviewed", _bool(self.reviewed, "reviewed"))
         object.__setattr__(
             self,
@@ -925,18 +874,10 @@ class SecurityConstraintRecord:
             "declaration_digest",
             _digest_or_empty(self.declaration_digest, "declaration_digest"),
         )
-        object.__setattr__(
-            self, "conflict_key", _optional_text(self.conflict_key, "conflict_key")
-        )
-        object.__setattr__(
-            self, "statement", _optional_text(self.statement, "statement")
-        )
-        object.__setattr__(
-            self, "precedence", _non_negative_int(self.precedence, "precedence")
-        )
-        object.__setattr__(
-            self, "priority", _non_negative_int(self.priority, "priority")
-        )
+        object.__setattr__(self, "conflict_key", _optional_text(self.conflict_key, "conflict_key"))
+        object.__setattr__(self, "statement", _optional_text(self.statement, "statement"))
+        object.__setattr__(self, "precedence", _non_negative_int(self.precedence, "precedence"))
+        object.__setattr__(self, "priority", _non_negative_int(self.priority, "priority"))
         if self.retrieval_rank is not None:
             object.__setattr__(
                 self,
@@ -947,20 +888,14 @@ class SecurityConstraintRecord:
             if not isinstance(self.retrieval_score, (int, float)) or isinstance(
                 self.retrieval_score, bool
             ):
-                raise SecurityConstraintQueryError(
-                    "retrieval_score must be a finite number"
-                )
+                raise SecurityConstraintQueryError("retrieval_score must be a finite number")
             score = float(self.retrieval_score)
             if score != score or score in (float("inf"), float("-inf")):
                 raise SecurityConstraintQueryError("retrieval_score must be finite")
             object.__setattr__(self, "retrieval_score", score)
-        object.__setattr__(
-            self, "mandatory", _bool(self.mandatory, "mandatory", default=True)
-        )
+        object.__setattr__(self, "mandatory", _bool(self.mandatory, "mandatory", default=True))
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION:
             raise SecurityConstraintQueryError(
                 f"unsupported security constraint record schema: {self.schema_version!r}"
@@ -1153,9 +1088,7 @@ class SecurityConstraintRecord:
             extension_vocabularies=value.get("extension_vocabularies", ()),
             source_ref_ids=value.get("source_ref_ids", ()),
             provenance_ids=value.get("provenance_ids", ()),
-            premise_taint=value.get(
-                "premise_taint", SecurityPremiseTaintStatus.UNKNOWN.value
-            ),
+            premise_taint=value.get("premise_taint", SecurityPremiseTaintStatus.UNKNOWN.value),
             trusted_source=value.get("trusted_source", False),
             reviewed=value.get("reviewed", False),
             declaration_id=value.get("declaration_id", ""),
@@ -1170,9 +1103,7 @@ class SecurityConstraintRecord:
             retrieval_score=value.get("retrieval_score"),
             mandatory=value.get("mandatory", True),
             metadata=value.get("metadata", {}),
-            schema_version=value.get(
-                "schema_version", SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION),
         )
 
 
@@ -1196,15 +1127,11 @@ class SecurityConstraintAssessment:
     record: SecurityConstraintRecord | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "constraint_id", _identifier(self.constraint_id, "constraint_id")
-        )
+        object.__setattr__(self, "constraint_id", _identifier(self.constraint_id, "constraint_id"))
         object.__setattr__(
             self,
             "disposition",
-            _enum_value(
-                self.disposition, SecurityConstraintDisposition, "disposition"
-            ),
+            _enum_value(self.disposition, SecurityConstraintDisposition, "disposition"),
         )
         object.__setattr__(self, "active", _bool(self.active, "active"))
         object.__setattr__(
@@ -1216,26 +1143,17 @@ class SecurityConstraintAssessment:
             self,
             "matched_dimensions",
             tuple(
-                sorted(
-                    set(_text(item, "matched_dimensions") for item in self.matched_dimensions)
-                )
+                sorted(set(_text(item, "matched_dimensions") for item in self.matched_dimensions))
             ),
         )
         object.__setattr__(
             self,
             "rejected_dimensions",
             tuple(
-                sorted(
-                    set(
-                        _text(item, "rejected_dimensions")
-                        for item in self.rejected_dimensions
-                    )
-                )
+                sorted(set(_text(item, "rejected_dimensions") for item in self.rejected_dimensions))
             ),
         )
-        object.__setattr__(
-            self, "defeated_by", _unique_sorted_ids(self.defeated_by, "defeated_by")
-        )
+        object.__setattr__(self, "defeated_by", _unique_sorted_ids(self.defeated_by, "defeated_by"))
         object.__setattr__(
             self,
             "conflicts_with",
@@ -1247,22 +1165,12 @@ class SecurityConstraintAssessment:
                 "retrieval_rank",
                 _non_negative_int(self.retrieval_rank, "retrieval_rank"),
             )
-        object.__setattr__(
-            self, "precedence", _non_negative_int(self.precedence, "precedence")
-        )
-        object.__setattr__(
-            self, "priority", _non_negative_int(self.priority, "priority")
-        )
+        object.__setattr__(self, "precedence", _non_negative_int(self.precedence, "precedence"))
+        object.__setattr__(self, "priority", _non_negative_int(self.priority, "priority"))
         object.__setattr__(self, "effect", _effect_atom(self.effect))
-        object.__setattr__(
-            self, "artifact_family", _artifact_family(self.artifact_family)
-        )
-        if self.record is not None and not isinstance(
-            self.record, SecurityConstraintRecord
-        ):
-            raise SecurityConstraintQueryError(
-                "record must be a SecurityConstraintRecord"
-            )
+        object.__setattr__(self, "artifact_family", _artifact_family(self.artifact_family))
+        if self.record is not None and not isinstance(self.record, SecurityConstraintRecord):
+            raise SecurityConstraintQueryError("record must be a SecurityConstraintRecord")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1303,9 +1211,7 @@ class SecurityContradiction:
         )
         ids = _unique_sorted_ids(self.constraint_ids, "constraint_ids")
         if len(ids) < 2:
-            raise SecurityConstraintQueryError(
-                "contradiction requires at least two constraint_ids"
-            )
+            raise SecurityConstraintQueryError("contradiction requires at least two constraint_ids")
         object.__setattr__(self, "constraint_ids", ids)
         object.__setattr__(self, "kind", _identifier(self.kind, "kind"))
         object.__setattr__(
@@ -1390,9 +1296,7 @@ class SecurityConstraintQuery:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "query_id", _identifier(self.query_id, "query_id"))
-        object.__setattr__(
-            self, "principal_id", _identifier(self.principal_id, "principal_id")
-        )
+        object.__setattr__(self, "principal_id", _identifier(self.principal_id, "principal_id"))
         as_of = _datetime_text(self.as_of, "as_of")
         if not as_of:
             raise SecurityConstraintQueryError("as_of is required")
@@ -1442,15 +1346,9 @@ class SecurityConstraintQuery:
                 object.__setattr__(self, name, _optional_text(raw, name))
             else:
                 object.__setattr__(self, name, _optional_identifier(raw, name))
-        object.__setattr__(
-            self, "environment_kind", _environment_kind(self.environment_kind)
-        )
-        object.__setattr__(
-            self, "artifact_family", _artifact_family(self.artifact_family)
-        )
-        object.__setattr__(
-            self, "required_authority", _authority_kind(self.required_authority)
-        )
+        object.__setattr__(self, "environment_kind", _environment_kind(self.environment_kind))
+        object.__setattr__(self, "artifact_family", _artifact_family(self.artifact_family))
+        object.__setattr__(self, "required_authority", _authority_kind(self.required_authority))
         expected = _ARTIFACT_TO_AUTHORITY[self.artifact_family.value]
         if self.required_authority is not expected:
             raise SecurityConstraintQueryError(
@@ -1496,9 +1394,7 @@ class SecurityConstraintQuery:
                 "forbid_abstract_live_substitution": True,
                 "require_evidence_binding": False,
             }
-            object.__setattr__(
-                self, name, _bool(getattr(self, name), name, default=defaults[name])
-            )
+            object.__setattr__(self, name, _bool(getattr(self, name), name, default=defaults[name]))
         vocabs = self.known_extension_vocabularies
         if not vocabs:
             object.__setattr__(
@@ -1518,9 +1414,7 @@ class SecurityConstraintQuery:
             _enum_value(self.world_policy_kind, WorldPolicyKind, "world_policy_kind"),
         )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SECURITY_CONSTRAINT_QUERY_SCHEMA_VERSION:
             raise SecurityConstraintQueryError(
                 f"unsupported security constraint query schema: {self.schema_version!r}"
@@ -1645,9 +1539,7 @@ class SecurityConstraintQuery:
             raise SecurityConstraintQueryError(
                 f"unknown security constraint query interface: {interface!r}"
             )
-        family = value.get(
-            "artifact_family", SecurityArtifactFamily.EVIDENCE_GATE.value
-        )
+        family = value.get("artifact_family", SecurityArtifactFamily.EVIDENCE_GATE.value)
         authority = value.get("required_authority")
         if authority is None:
             authority = _ARTIFACT_TO_AUTHORITY.get(
@@ -1687,20 +1579,12 @@ class SecurityConstraintQuery:
             require_reviewed=value.get("require_reviewed", True),
             require_trusted_source=value.get("require_trusted_source", True),
             require_provenance=value.get("require_provenance", True),
-            forbid_abstract_live_substitution=value.get(
-                "forbid_abstract_live_substitution", True
-            ),
+            forbid_abstract_live_substitution=value.get("forbid_abstract_live_substitution", True),
             require_evidence_binding=value.get("require_evidence_binding", False),
-            known_extension_vocabularies=tuple(
-                value.get("known_extension_vocabularies", ())
-            ),
-            world_policy_kind=value.get(
-                "world_policy_kind", WorldPolicyKind.CLOSED.value
-            ),
+            known_extension_vocabularies=tuple(value.get("known_extension_vocabularies", ())),
+            world_policy_kind=value.get("world_policy_kind", WorldPolicyKind.CLOSED.value),
             metadata=value.get("metadata", {}),
-            schema_version=value.get(
-                "schema_version", SECURITY_CONSTRAINT_QUERY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SECURITY_CONSTRAINT_QUERY_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -1721,9 +1605,7 @@ class SecurityConstraintQuery:
     ) -> "SecurityConstraintSelectionResult":
         """Select applicable Security constraints under hard filters and authority rules."""
 
-        return select_applicable_security_constraints(
-            self, candidates, evidence=evidence
-        )
+        return select_applicable_security_constraints(self, candidates, evidence=evidence)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1768,9 +1650,7 @@ class SecurityApplicabilityEvidence:
     schema_version: str = SECURITY_APPLICABILITY_EVIDENCE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "evidence_id", _identifier(self.evidence_id, "evidence_id")
-        )
+        object.__setattr__(self, "evidence_id", _identifier(self.evidence_id, "evidence_id"))
         object.__setattr__(
             self,
             "status",
@@ -1806,26 +1686,18 @@ class SecurityApplicabilityEvidence:
             _unique_sorted_ids(self.rejected_selector_ids, "rejected_selector_ids"),
         )
         if set(self.matched_selector_ids) - known:
-            raise SecurityConstraintQueryError(
-                "matched_selector_ids reference unknown selectors"
-            )
+            raise SecurityConstraintQueryError("matched_selector_ids reference unknown selectors")
         if set(self.rejected_selector_ids) - known:
-            raise SecurityConstraintQueryError(
-                "rejected_selector_ids reference unknown selectors"
-            )
+            raise SecurityConstraintQueryError("rejected_selector_ids reference unknown selectors")
         if set(self.matched_selector_ids) & set(self.rejected_selector_ids):
-            raise SecurityConstraintQueryError(
-                "selector IDs cannot be both matched and rejected"
-            )
+            raise SecurityConstraintQueryError("selector IDs cannot be both matched and rejected")
         gaps = tuple(
             item
             if isinstance(item, CoverageGap)
             else CoverageGap.from_dict(_mapping(item, "coverage gap"))
             for item in _sequence(self.coverage_gaps, "coverage_gaps")
         )
-        object.__setattr__(
-            self, "coverage_gaps", tuple(sorted(gaps, key=lambda item: item.gap_id))
-        )
+        object.__setattr__(self, "coverage_gaps", tuple(sorted(gaps, key=lambda item: item.gap_id)))
         assessments = tuple(
             item
             if isinstance(item, SecurityConstraintAssessment)
@@ -1838,9 +1710,7 @@ class SecurityApplicabilityEvidence:
             tuple(sorted(assessments, key=lambda item: item.constraint_id)),
         )
         contradictions = tuple(
-            item
-            if isinstance(item, SecurityContradiction)
-            else SecurityContradiction(**dict(item))  # type: ignore[arg-type]
+            item if isinstance(item, SecurityContradiction) else SecurityContradiction(**dict(item))  # type: ignore[arg-type]
             for item in _sequence(self.contradictions, "contradictions")
         )
         object.__setattr__(
@@ -1851,9 +1721,7 @@ class SecurityApplicabilityEvidence:
         object.__setattr__(
             self,
             "selected_constraint_ids",
-            _unique_sorted_ids(
-                self.selected_constraint_ids, "selected_constraint_ids"
-            ),
+            _unique_sorted_ids(self.selected_constraint_ids, "selected_constraint_ids"),
         )
         for name in (
             "considered_count",
@@ -1861,15 +1729,11 @@ class SecurityApplicabilityEvidence:
             "selected_count",
             "selection_budget",
         ):
-            object.__setattr__(
-                self, name, _non_negative_int(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _non_negative_int(getattr(self, name), name))
         object.__setattr__(
             self,
             "selection_method",
-            _enum_value(
-                self.selection_method, PremiseSelectionMethod, "selection_method"
-            ),
+            _enum_value(self.selection_method, PremiseSelectionMethod, "selection_method"),
         )
         object.__setattr__(
             self,
@@ -1880,14 +1744,10 @@ class SecurityApplicabilityEvidence:
             ),
         )
         if self.retrieval_rank_used_for_authority:
-            raise SecurityConstraintQueryError(
-                "retrieval rank must never select authority"
-            )
+            raise SecurityConstraintQueryError("retrieval rank must never select authority")
         keys = tuple(
             _identifier(item, "authority_selection_keys")
-            for item in _sequence(
-                self.authority_selection_keys, "authority_selection_keys"
-            )
+            for item in _sequence(self.authority_selection_keys, "authority_selection_keys")
         )
         if "retrieval_rank" in keys or "retrieval_score" in keys:
             raise SecurityConstraintQueryError(
@@ -1938,14 +1798,10 @@ class SecurityApplicabilityEvidence:
                     SelectedPremiseSet.from_dict(self.selected_premises),
                 )
             else:
-                raise SecurityConstraintQueryError(
-                    "selected_premises must be SelectedPremiseSet"
-                )
+                raise SecurityConstraintQueryError("selected_premises must be SelectedPremiseSet")
         object.__setattr__(self, "notes", _optional_text(self.notes, "notes"))
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SECURITY_APPLICABILITY_EVIDENCE_SCHEMA_VERSION:
             raise SecurityConstraintQueryError(
                 f"unsupported security applicability evidence schema: {self.schema_version!r}"
@@ -1964,10 +1820,7 @@ class SecurityApplicabilityEvidence:
                 raise SecurityConstraintQueryError(
                     "APPLICABLE evidence cannot retain unresolved contradictions"
                 )
-        if (
-            self.status is SecuritySelectionDisposition.COVERAGE_GAP
-            and not self.coverage_gaps
-        ):
+        if self.status is SecuritySelectionDisposition.COVERAGE_GAP and not self.coverage_gaps:
             raise SecurityConstraintQueryError(
                 "COVERAGE_GAP status requires at least one coverage gap"
             )
@@ -2022,9 +1875,7 @@ class SecurityApplicabilityEvidence:
             "selected_constraint_ids": list(self.selected_constraint_ids),
             "selected_count": self.selected_count,
             "selected_premises": (
-                self.selected_premises.to_dict()
-                if self.selected_premises is not None
-                else None
+                self.selected_premises.to_dict() if self.selected_premises is not None else None
             ),
             "selection_budget": self.selection_budget,
             "selection_method": self.selection_method.value,
@@ -2112,9 +1963,7 @@ class SecurityApplicabilityEvidence:
                 f"unknown security applicability evidence interface: {interface!r}"
             )
         if value.get("retrieval_rank_used_for_authority"):
-            raise SecurityConstraintQueryError(
-                "retrieval rank must never select authority"
-            )
+            raise SecurityConstraintQueryError("retrieval rank must never select authority")
         if value.get("artifact_families_distinct") is False:
             raise SecurityConstraintQueryError(
                 "theorem/monitor/evidence_gate/policy artifacts must remain distinct"
@@ -2135,20 +1984,14 @@ class SecurityApplicabilityEvidence:
                         disposition=mapping.get("disposition", ""),
                         active=bool(mapping.get("active", False)),
                         reason_codes=tuple(mapping.get("reason_codes", ())),
-                        matched_dimensions=tuple(
-                            mapping.get("matched_dimensions", ())
-                        ),
-                        rejected_dimensions=tuple(
-                            mapping.get("rejected_dimensions", ())
-                        ),
+                        matched_dimensions=tuple(mapping.get("matched_dimensions", ())),
+                        rejected_dimensions=tuple(mapping.get("rejected_dimensions", ())),
                         defeated_by=tuple(mapping.get("defeated_by", ())),
                         conflicts_with=tuple(mapping.get("conflicts_with", ())),
                         retrieval_rank=mapping.get("retrieval_rank"),
                         precedence=int(mapping.get("precedence", 0)),
                         priority=int(mapping.get("priority", 0)),
-                        effect=mapping.get(
-                            "effect", SecurityConstraintEffect.UNSPECIFIED.value
-                        ),
+                        effect=mapping.get("effect", SecurityConstraintEffect.UNSPECIFIED.value),
                         artifact_family=mapping.get(
                             "artifact_family",
                             SecurityArtifactFamily.EVIDENCE_GATE.value,
@@ -2174,9 +2017,7 @@ class SecurityApplicabilityEvidence:
                         kind=mapping.get("kind", "conflict"),
                         reason_codes=tuple(mapping.get("reason_codes", ())),
                         resolved=bool(mapping.get("resolved", False)),
-                        winning_constraint_id=mapping.get(
-                            "winning_constraint_id", ""
-                        ),
+                        winning_constraint_id=mapping.get("winning_constraint_id", ""),
                         notes=mapping.get("notes", ""),
                     )
                 )
@@ -2250,16 +2091,12 @@ class SecurityConstraintSelectionResult:
         object.__setattr__(
             self,
             "disposition",
-            _enum_value(
-                self.disposition, SecuritySelectionDisposition, "disposition"
-            ),
+            _enum_value(self.disposition, SecuritySelectionDisposition, "disposition"),
         )
         if not isinstance(self.query, SecurityConstraintQuery):
             raise SecurityConstraintQueryError("query must be SecurityConstraintQuery")
         if not isinstance(self.evidence, SecurityApplicabilityEvidence):
-            raise SecurityConstraintQueryError(
-                "evidence must be SecurityApplicabilityEvidence"
-            )
+            raise SecurityConstraintQueryError("evidence must be SecurityApplicabilityEvidence")
         object.__setattr__(
             self,
             "assessments",
@@ -2275,9 +2112,7 @@ class SecurityConstraintSelectionResult:
             "contradictions",
             tuple(sorted(self.contradictions, key=lambda item: item.contradiction_id)),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SECURITY_CONSTRAINT_SELECTION_SCHEMA_VERSION:
             raise SecurityConstraintQueryError(
                 f"unsupported selection schema: {self.schema_version!r}"
@@ -2636,9 +2471,7 @@ def _hard_filter_record(
                 # Keep collecting reasons for review-required records only on hard mismatches.
                 if disposition is not SecurityConstraintDisposition.REVIEW_REQUIRED:
                     break
-            result = _scope_contains(
-                allowed, query_value, query_values=query_values
-            )
+            result = _scope_contains(allowed, query_value, query_values=query_values)
             if result is True:
                 matched.append(dimension)
             elif result is False:
@@ -2842,9 +2675,7 @@ def _add_assessment_reason(
     return replace(assessment, reason_codes=merged, **updates)
 
 
-def _opposed_effects(
-    left: SecurityConstraintEffect, right: SecurityConstraintEffect
-) -> bool:
+def _opposed_effects(left: SecurityConstraintEffect, right: SecurityConstraintEffect) -> bool:
     return frozenset({left.value, right.value}) in _OPPOSED_EFFECT_PAIRS
 
 
@@ -2887,9 +2718,7 @@ def _resolve_relationships(
                         target,
                         disposition=SecurityConstraintDisposition.SUPERSEDED,
                         active=False,
-                        defeated_by=tuple(
-                            sorted(set((*target.defeated_by, winner_id)))
-                        ),
+                        defeated_by=tuple(sorted(set((*target.defeated_by, winner_id)))),
                     ),
                     "express_supersession",
                 )
@@ -2905,11 +2734,7 @@ def _resolve_relationships(
                 )
 
     def active_items() -> list[SecurityConstraintAssessment]:
-        return [
-            assessments[key]
-            for key in sorted(assessments)
-            if assessments[key].active
-        ]
+        return [assessments[key] for key in sorted(assessments) if assessments[key].active]
 
     # Competing constraints on the same applicability key.
     by_key: dict[str, list[SecurityConstraintAssessment]] = {}
@@ -2933,9 +2758,7 @@ def _resolve_relationships(
                     continue
                 if left.precedence != right.precedence:
                     winner, loser = (
-                        (left, right)
-                        if left.precedence > right.precedence
-                        else (right, left)
+                        (left, right) if left.precedence > right.precedence else (right, left)
                     )
                     assessments[loser.constraint_id] = _add_assessment_reason(
                         replace(
@@ -2943,9 +2766,7 @@ def _resolve_relationships(
                             disposition=SecurityConstraintDisposition.SUPERSEDED,
                             active=False,
                             defeated_by=tuple(
-                                sorted(
-                                    set((*loser.defeated_by, winner.constraint_id))
-                                )
+                                sorted(set((*loser.defeated_by, winner.constraint_id)))
                             ),
                         ),
                         "higher_precedence_constraint",
@@ -2967,9 +2788,7 @@ def _resolve_relationships(
                     )
                 elif left.priority != right.priority:
                     winner, loser = (
-                        (left, right)
-                        if left.priority > right.priority
-                        else (right, left)
+                        (left, right) if left.priority > right.priority else (right, left)
                     )
                     assessments[loser.constraint_id] = _add_assessment_reason(
                         replace(
@@ -2977,9 +2796,7 @@ def _resolve_relationships(
                             disposition=SecurityConstraintDisposition.SUPERSEDED,
                             active=False,
                             defeated_by=tuple(
-                                sorted(
-                                    set((*loser.defeated_by, winner.constraint_id))
-                                )
+                                sorted(set((*loser.defeated_by, winner.constraint_id)))
                             ),
                         ),
                         "higher_priority_constraint",
@@ -3015,9 +2832,7 @@ def _resolve_relationships(
                                     sorted(
                                         set(
                                             (
-                                                *assessments[
-                                                    item.constraint_id
-                                                ].conflicts_with,
+                                                *assessments[item.constraint_id].conflicts_with,
                                                 peer,
                                             )
                                         )
@@ -3064,19 +2879,21 @@ def _overall_disposition(
 
     if SecurityConstraintDisposition.STALE in dispositions and not active:
         # Only escalate when no clean applicable set remains.
-        if all(
-            item.disposition
-            in {
-                SecurityConstraintDisposition.STALE,
-                SecurityConstraintDisposition.NOT_APPLICABLE,
-                SecurityConstraintDisposition.SUPERSEDED,
-                SecurityConstraintDisposition.DEFEATED,
-            }
-            for item in assessments
-        ) or not active:
-            stale_only = any(
-                item.disposition is SecurityConstraintDisposition.STALE
+        if (
+            all(
+                item.disposition
+                in {
+                    SecurityConstraintDisposition.STALE,
+                    SecurityConstraintDisposition.NOT_APPLICABLE,
+                    SecurityConstraintDisposition.SUPERSEDED,
+                    SecurityConstraintDisposition.DEFEATED,
+                }
                 for item in assessments
+            )
+            or not active
+        ):
+            stale_only = any(
+                item.disposition is SecurityConstraintDisposition.STALE for item in assessments
             )
             if stale_only and not active:
                 return SecuritySelectionDisposition.STALE
@@ -3116,16 +2933,16 @@ def _overall_disposition(
                 return SecuritySelectionDisposition.REVIEW_REQUIRED
             return SecuritySelectionDisposition.REVIEW_REQUIRED
 
-    if any(
-        item.disposition is SecurityConstraintDisposition.INDETERMINATE
-        for item in assessments
-    ) and not active:
+    if (
+        any(item.disposition is SecurityConstraintDisposition.INDETERMINATE for item in assessments)
+        and not active
+    ):
         return SecuritySelectionDisposition.INDETERMINATE
 
-    if any(
-        item.disposition is SecurityConstraintDisposition.MISMATCHED
-        for item in assessments
-    ) and not active:
+    if (
+        any(item.disposition is SecurityConstraintDisposition.MISMATCHED for item in assessments)
+        and not active
+    ):
         return SecuritySelectionDisposition.NOT_APPLICABLE
 
     if active:
@@ -3171,9 +2988,7 @@ def select_applicable_security_constraints(
         if isinstance(item, SecurityConstraintRecord):
             records.append(item)
         else:
-            records.append(
-                SecurityConstraintRecord.from_dict(_mapping(item, "candidate"))
-            )
+            records.append(SecurityConstraintRecord.from_dict(_mapping(item, "candidate")))
 
     records = sorted(records, key=lambda item: item.constraint_id)
     if len({item.constraint_id for item in records}) != len(records):
@@ -3184,9 +2999,7 @@ def select_applicable_security_constraints(
         if isinstance(item, SecurityEvidenceBinding):
             evidence_bindings.append(item)
         else:
-            evidence_bindings.append(
-                SecurityEvidenceBinding.from_dict(_mapping(item, "evidence"))
-            )
+            evidence_bindings.append(SecurityEvidenceBinding.from_dict(_mapping(item, "evidence")))
     if len({item.evidence_id for item in evidence_bindings}) != len(evidence_bindings):
         raise SecurityConstraintQueryError("evidence_ids must be unique")
     evidence_by_id = {item.evidence_id: item for item in evidence_bindings}
@@ -3206,9 +3019,7 @@ def select_applicable_security_constraints(
             known_vocabs=known_vocabs,
         )
 
-    assessments_map, contradictions = _resolve_relationships(
-        assessments_map, record_by_id
-    )
+    assessments_map, contradictions = _resolve_relationships(assessments_map, record_by_id)
 
     # Bounded selection by precedence / priority only.
     active = [item for item in assessments_map.values() if item.active]
@@ -3238,19 +3049,13 @@ def select_applicable_security_constraints(
             CoverageGap(
                 gap_id="gap:empty-corpus",
                 kind=CoverageGapKind.MISSING_AUTHORITY,
-                description=(
-                    "No Security constraint candidates were provided for selection"
-                ),
+                description=("No Security constraint candidates were provided for selection"),
                 subject_ids=(),
             )
         )
 
-    assessments = tuple(
-        sorted(assessments_map.values(), key=lambda item: item.constraint_id)
-    )
-    contradiction_tuple = tuple(
-        sorted(contradictions, key=lambda item: item.contradiction_id)
-    )
+    assessments = tuple(sorted(assessments_map.values(), key=lambda item: item.constraint_id))
+    contradiction_tuple = tuple(sorted(contradictions, key=lambda item: item.contradiction_id))
     disposition = _overall_disposition(
         assessments,
         contradiction_tuple,

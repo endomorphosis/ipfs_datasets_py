@@ -9,6 +9,7 @@ Reusable by:
 - CLI commands
 - Direct Python imports
 """
+
 from .stock_scraper_engine import (
     StockDataPoint,
     CorporateAction,

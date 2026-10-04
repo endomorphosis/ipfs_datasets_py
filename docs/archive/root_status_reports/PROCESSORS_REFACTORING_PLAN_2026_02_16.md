@@ -78,6 +78,7 @@ async def profile(self, operation_name: str = "processing"):
 # BEFORE
 import asyncio
 
+
 async def retry_with_backoff(func, *args, **kwargs):
     await asyncio.sleep(delay)
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -87,9 +88,10 @@ async def retry_with_backoff(func, *args, **kwargs):
 # AFTER
 import anyio
 
+
 async def retry_with_backoff(func, *args, **kwargs):
     await anyio.sleep(delay)
-    
+
     # Use task groups for structured concurrency
     async with anyio.create_task_group() as tg:
         for task in tasks:
@@ -123,6 +125,7 @@ ipfs_datasets_py/processors/
 # BEFORE
 import asyncio
 
+
 async def process_batch(self, inputs: list) -> list[ProcessingResult]:
     tasks = [self.process(inp) for inp in inputs]
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -132,12 +135,14 @@ async def process_batch(self, inputs: list) -> list[ProcessingResult]:
 # AFTER
 import anyio
 
+
 async def process_batch(self, inputs: list) -> list[ProcessingResult]:
     results = []
     async with anyio.create_task_group() as tg:
         for inp in inputs:
             tg.start_soon(self._process_and_collect, inp, results)
     return results
+
 
 async def _process_and_collect(self, inp, results: list):
     result = await self.process(inp)
@@ -384,7 +389,7 @@ warnings.warn(
     "multimedia.convert_to_txt_based_on_mime_type is deprecated. "
     "Use ipfs_datasets_py.processors.file_converter instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Re-export for backward compatibility (temporary)
@@ -398,10 +403,12 @@ For code using the old APIs:
 # Legacy API
 from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type import convert_file
 
+
 # Adapter redirects to new system
 def convert_file(input_path, output_path, **kwargs):
     warnings.warn("Use file_converter.FileConverter instead", DeprecationWarning)
     from ipfs_datasets_py.processors.file_converter import FileConverter
+
     converter = FileConverter()
     return converter.convert(input_path, output_path, **kwargs)
 ```
@@ -554,21 +561,22 @@ ipfs_datasets_py/processors/
    # ipfs_datasets_py/processors/pdf_processor.py
    """
    DEPRECATED: This module has moved to specialized.pdf.pdf_processor
-   
+
    This file will be removed in v3.0.0
    """
+
    import warnings
-   
+
    warnings.warn(
        "pdf_processor has moved to ipfs_datasets_py.processors.specialized.pdf "
        "This import will be removed in v3.0.0",
        DeprecationWarning,
-       stacklevel=2
+       stacklevel=2,
    )
-   
+
    from .specialized.pdf.pdf_processor import PDFProcessor
-   
-   __all__ = ['PDFProcessor']
+
+   __all__ = ["PDFProcessor"]
    ```
 
 3. **Update `__init__.py`**
@@ -644,20 +652,19 @@ import argparse
 from pathlib import Path
 
 MIGRATIONS = {
-    r"from ipfs_datasets_py\.processors import PDFProcessor": 
-        "from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor",
-    r"from ipfs_datasets_py\.processors import BatchProcessor":
-        "from ipfs_datasets_py.processors.specialized.batch import BatchProcessor",
+    r"from ipfs_datasets_py\.processors import PDFProcessor": "from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor",
+    r"from ipfs_datasets_py\.processors import BatchProcessor": "from ipfs_datasets_py.processors.specialized.batch import BatchProcessor",
     # ... more mappings
 }
+
 
 def migrate_file(filepath: Path, dry_run: bool = True):
     content = filepath.read_text()
     updated = content
-    
+
     for old_pattern, new_import in MIGRATIONS.items():
         updated = re.sub(old_pattern, new_import, updated)
-    
+
     if updated != content:
         if dry_run:
             print(f"Would update: {filepath}")
@@ -666,6 +673,7 @@ def migrate_file(filepath: Path, dry_run: bool = True):
             print(f"Updated: {filepath}")
         return True
     return False
+
 
 # ... rest of script
 ```
@@ -891,9 +899,11 @@ multimedia/
 """
 Test architectural boundaries and dependency rules.
 """
+
 import ast
 import pytest
 from pathlib import Path
+
 
 def get_imports(filepath: Path) -> set[str]:
     """Extract all imports from a Python file."""
@@ -908,11 +918,12 @@ def get_imports(filepath: Path) -> set[str]:
                 imports.add(node.module)
     return imports
 
+
 def test_core_has_no_internal_dependencies():
     """Core modules should not import from specialized, domains, or infrastructure."""
     core_dir = Path("ipfs_datasets_py/processors/core")
     forbidden = {"specialized", "domains", "infrastructure", "adapters"}
-    
+
     for py_file in core_dir.glob("*.py"):
         if py_file.name == "__init__.py":
             continue
@@ -921,13 +932,15 @@ def test_core_has_no_internal_dependencies():
             if any(f".{forbidden_name}." in imp for forbidden_name in forbidden):
                 pytest.fail(f"{py_file.name} imports from {forbidden}: {imp}")
 
+
 def test_adapters_only_depend_on_core():
     """Adapters should only import from core layer."""
     adapters_dir = Path("ipfs_datasets_py/processors/adapters")
     allowed = {"core", "typing", "dataclasses", "abc"}
-    
+
     # ... similar test
-    
+
+
 def test_no_circular_dependencies():
     """No circular dependencies between modules."""
     # Use tools like `pydeps` or custom analysis
@@ -948,7 +961,7 @@ Processes example inputs and returns standardized results.
 
 Usage:
     from ipfs_datasets_py.processors.specialized.example import ExampleProcessor
-    
+
     processor = ExampleProcessor()
     result = await processor.process(input_data)
 """
@@ -965,7 +978,7 @@ from ...core.protocol import (
     ProcessorProtocol,
     ProcessingResult,
     ProcessingStatus,
-    ProcessingMetadata
+    ProcessingMetadata,
 )
 
 logger = logging.getLogger(__name__)
@@ -974,6 +987,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExampleConfig:
     """Configuration for ExampleProcessor."""
+
     option1: str = "default"
     option2: int = 42
 
@@ -981,26 +995,26 @@ class ExampleConfig:
 class ExampleProcessor(ProcessorProtocol):
     """
     Processes example inputs.
-    
+
     Implements the ProcessorProtocol interface for integration with
     UniversalProcessor and adapter layer.
     """
-    
+
     def __init__(self, config: Optional[ExampleConfig] = None):
         """Initialize processor."""
         self.config = config or ExampleConfig()
         self.logger = logger
-    
+
     async def process(self, input_data: Any) -> ProcessingResult:
         """
         Process input data.
-        
+
         Args:
             input_data: Input to process
-            
+
         Returns:
             ProcessingResult with knowledge graph and vectors
-            
+
         Raises:
             ProcessorError: If processing fails
         """
@@ -1009,20 +1023,17 @@ class ExampleProcessor(ProcessorProtocol):
             async with anyio.create_task_group() as tg:
                 # Use anyio for async operations
                 pass
-            
+
             return ProcessingResult(
                 status=ProcessingStatus.SUCCESS,
                 knowledge_graph=...,
                 vectors=...,
-                metadata=ProcessingMetadata(...)
+                metadata=ProcessingMetadata(...),
             )
         except Exception as e:
             self.logger.error(f"Processing failed: {e}")
-            return ProcessingResult(
-                status=ProcessingStatus.FAILED,
-                error=str(e)
-            )
-    
+            return ProcessingResult(status=ProcessingStatus.FAILED, error=str(e))
+
     def can_handle(self, input_data: Any) -> bool:
         """Check if this processor can handle the input."""
         # Detection logic
@@ -1079,16 +1090,18 @@ class ExampleProcessor(ProcessorProtocol):
 import anyio
 import pytest
 
+
 @pytest.mark.anyio
 async def test_all_processors_use_anyio():
     """Verify all processors work with anyio runtime."""
     from ipfs_datasets_py.processors.core import UniversalProcessor
-    
+
     processor = UniversalProcessor()
     result = await processor.process("test input")
     assert result.status == "success"
 
-@pytest.mark.anyio  
+
+@pytest.mark.anyio
 async def test_concurrent_processing():
     """Test multiple processors running concurrently."""
     async with anyio.create_task_group() as tg:
@@ -1322,6 +1335,7 @@ async def process_item(item, results):
 ```python
 import anyio
 
+
 async def with_timeout():
     try:
         with anyio.fail_after(30):  # 30 second timeout
@@ -1336,6 +1350,7 @@ import anyio
 
 limiter = anyio.CapacityLimiter(10)  # Max 10 concurrent
 
+
 async def limited_operation():
     async with limiter:
         await expensive_operation()
@@ -1345,6 +1360,7 @@ async def limited_operation():
 ```python
 import anyio
 
+
 async def wait_a_bit():
     await anyio.sleep(1.0)
 ```
@@ -1352,6 +1368,7 @@ async def wait_a_bit():
 #### Thread Pool (replaces loop.run_in_executor)
 ```python
 import anyio
+
 
 async def run_blocking():
     result = await anyio.to_thread.run_sync(blocking_function, arg1, arg2)
@@ -1362,17 +1379,20 @@ async def run_blocking():
 ```python
 import anyio
 
+
 async def producer_consumer():
     send_stream, receive_stream = anyio.create_memory_object_stream(max_buffer_size=100)
-    
+
     async with anyio.create_task_group() as tg:
         tg.start_soon(producer, send_stream)
         tg.start_soon(consumer, receive_stream)
+
 
 async def producer(send_stream):
     async with send_stream:
         for i in range(10):
             await send_stream.send(i)
+
 
 async def consumer(receive_stream):
     async with receive_stream:

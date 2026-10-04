@@ -32,7 +32,7 @@ from typing import (
 
 class Entity(TypedDict):
     """Represents an extracted entity in the ontology.
-    
+
     Attributes:
         id: Unique identifier for the entity
         text: Original text of the entity
@@ -42,6 +42,7 @@ class Entity(TypedDict):
         context: Optional context where entity was found
         source_span: Optional (start, end) character offsets in source text
     """
+
     id: str
     text: str
     type: str
@@ -53,7 +54,7 @@ class Entity(TypedDict):
 
 class Relationship(TypedDict):
     """Represents an inferred relationship between entities.
-    
+
     Attributes:
         id: Unique identifier for the relationship
         source_id: ID of source entity
@@ -64,6 +65,7 @@ class Relationship(TypedDict):
         context: Optional context where relationship was inferred
         distance: Optional co-occurrence distance that influenced inference
     """
+
     id: str
     source_id: str
     target_id: str
@@ -76,7 +78,7 @@ class Relationship(TypedDict):
 
 class OntologyMetadata(TypedDict):
     """Metadata about an ontology generation.
-    
+
     Attributes:
         source: Source data identifier
         domain: Domain of the ontology (e.g., "legal", "medical")
@@ -85,6 +87,7 @@ class OntologyMetadata(TypedDict):
         version: Version identifier
         config: Extraction configuration used
     """
+
     source: str
     domain: str
     strategy: str
@@ -95,7 +98,7 @@ class OntologyMetadata(TypedDict):
 
 class Ontology(TypedDict):
     """Complete ontology representation.
-    
+
     Attributes:
         entities: List of extracted entities
         relationships: List of inferred relationships
@@ -104,6 +107,7 @@ class Ontology(TypedDict):
         version: Ontology schema version
         statistics: Optional statistics about the ontology
     """
+
     entities: List[Entity]
     relationships: List[Relationship]
     metadata: NotRequired[OntologyMetadata]
@@ -119,7 +123,7 @@ class Ontology(TypedDict):
 
 class EntityExtractionResult(TypedDict):
     """Result of entity extraction from a text document.
-    
+
     Attributes:
         entities: List of extracted entities
         text: Source text that was processed
@@ -127,6 +131,7 @@ class EntityExtractionResult(TypedDict):
         extraction_method: Which method was used (rule_based, llm_based, hybrid)
         processing_time_ms: Time taken for extraction
     """
+
     entities: List[Entity]
     text: str
     confidence_scores: NotRequired[Dict[str, str]]
@@ -136,13 +141,14 @@ class EntityExtractionResult(TypedDict):
 
 class RelationshipExtractionResult(TypedDict):
     """Result of relationship inference from extracted entities.
-    
+
     Attributes:
         relationships: List of inferred relationships
         entity_pairs_analyzed: Number of entity pairs considered
         inference_method: Method used (co-occurrence, linguistic, rule_based)
         processing_time_ms: Time taken for inference
     """
+
     relationships: List[Relationship]
     entity_pairs_analyzed: NotRequired[int]
     inference_method: NotRequired[str]
@@ -156,13 +162,14 @@ class RelationshipExtractionResult(TypedDict):
 
 class DimensionalScore(TypedDict):
     """Score on a single quality dimension.
-    
+
     Attributes:
         dimension_name: Name of the dimension (e.g., "completeness", "consistency")
         score: Score value (typically 0-1)
         explanation: Human-readable explanation
         recommendations: Optional list of improvement suggestions
     """
+
     dimension_name: str
     score: float
     explanation: str
@@ -171,7 +178,7 @@ class DimensionalScore(TypedDict):
 
 class CriticRecommendation(TypedDict):
     """A specific recommendation for ontology improvement.
-    
+
     Attributes:
         action: Type of action (e.g., "add_entity", "remove_relationship", "merge_entities")
         description: Human-readable description
@@ -179,6 +186,7 @@ class CriticRecommendation(TypedDict):
         priority: Priority level (low, medium, high)
         estimated_impact: Estimated quality improvement if applied (0-1)
     """
+
     action: str
     description: str
     affected_ids: List[str]
@@ -195,6 +203,7 @@ class RefinementAction(TypedDict):
         score: CriticScore or score-like payload for the round.
         action: Short description of the action taken.
     """
+
     round: int
     ontology: Dict[str, Any]
     score: Any
@@ -208,6 +217,7 @@ class ActionLogEntry(TypedDict):
         action: Short description of the action taken.
         round: Round number when action was taken (0-based).
     """
+
     action: str
     round: int
 
@@ -220,6 +230,7 @@ class ActionSummaryEntry(TypedDict):
         count: Number of times action was applied.
         rank: 1-based rank (1 = most frequent).
     """
+
     action: str
     count: int
     rank: int
@@ -227,7 +238,7 @@ class ActionSummaryEntry(TypedDict):
 
 class CriticScore(TypedDict):
     """Complete evaluation results from the ontology critic.
-    
+
     Attributes:
         overall: Overall quality score (0-1)
         dimensions: Individual dimension scores
@@ -240,6 +251,7 @@ class CriticScore(TypedDict):
         relationship_coherence: Relationship coherence score (0-1)
         timestamp: ISO timestamp of evaluation
     """
+
     overall: float
     dimensions: NotRequired[List[DimensionalScore]]
     recommendations: NotRequired[List[CriticRecommendation]]
@@ -259,13 +271,14 @@ class CriticScore(TypedDict):
 
 class SessionRound(TypedDict):
     """A single round of the refinement cycle.
-    
+
     Attributes:
         round_num: Round number (1-indexed)
         ontology: Generated ontology for this round
         score: Critic score for this round
         changes: Description of changes from previous round
     """
+
     round_num: int
     ontology: Ontology
     score: NotRequired[CriticScore]
@@ -274,7 +287,7 @@ class SessionRound(TypedDict):
 
 class OntologySession(TypedDict):
     """Session state for ontology generation and refinement.
-    
+
     Attributes:
         session_id: Unique session identifier
         data_source: Source data being processed
@@ -286,6 +299,7 @@ class OntologySession(TypedDict):
         start_time_ms: Session start time (milliseconds)
         end_time_ms: Session end time (milliseconds)
     """
+
     session_id: str
     data_source: str
     domain: str
@@ -299,7 +313,7 @@ class OntologySession(TypedDict):
 
 class GenerationContext(TypedDict):
     """Context for ontology generation.
-    
+
     Attributes:
         data_source: Source data identifier
         data_type: Type of data (text, pdf, html, json)
@@ -308,6 +322,7 @@ class GenerationContext(TypedDict):
         base_ontology: Optional base ontology to extend
         config: Extraction configuration parameters
     """
+
     data_source: str
     data_type: str
     domain: str
@@ -323,7 +338,7 @@ class GenerationContext(TypedDict):
 
 class EntityStatistics(TypedDict):
     """Statistics about extracted entities.
-    
+
     Attributes:
         total_count: Total number of entities
         unique_types: Number of distinct entity types
@@ -333,6 +348,7 @@ class EntityStatistics(TypedDict):
         confidence_max: Maximum confidence score
         confidence_distribution: Histogram of confidence scores
     """
+
     total_count: int
     unique_types: NotRequired[int]
     type_distribution: NotRequired[Dict[str, int]]
@@ -344,7 +360,7 @@ class EntityStatistics(TypedDict):
 
 class RelationshipStatistics(TypedDict):
     """Statistics about inferred relationships.
-    
+
     Attributes:
         total_count: Total number of relationships
         unique_types: Number of distinct relationship types
@@ -355,6 +371,7 @@ class RelationshipStatistics(TypedDict):
         density: Graph density (actual edges / possible edges)
         average_degree: Average node degree
     """
+
     total_count: int
     unique_types: NotRequired[int]
     type_distribution: NotRequired[Dict[str, int]]
@@ -367,13 +384,14 @@ class RelationshipStatistics(TypedDict):
 
 class OntologyStatistics(TypedDict):
     """Complete statistics over an ontology.
-    
+
     Attributes:
         entities: Entity statistics
         relationships: Relationship statistics
         graph_metrics: Optional graph theory metrics
         processing_time_ms: Time to generate ontology
     """
+
     entities: NotRequired[EntityStatistics]
     relationships: NotRequired[RelationshipStatistics]
     graph_metrics: NotRequired[Dict[str, Any]]
@@ -382,13 +400,14 @@ class OntologyStatistics(TypedDict):
 
 class PerformanceMetrics(TypedDict):
     """Performance metrics for optimization operations.
-    
+
     Attributes:
         processing_time_ms: Time taken (milliseconds)
         memory_peak_mb: Peak memory usage (megabytes)
         entities_per_second: Extraction throughput
         relationships_per_second: Relationship inference throughput
     """
+
     processing_time_ms: float
     memory_peak_mb: NotRequired[float]
     entities_per_second: NotRequired[float]
@@ -397,13 +416,14 @@ class PerformanceMetrics(TypedDict):
 
 class QualityMetrics(TypedDict):
     """Quality metrics for an ontology.
-    
+
     Attributes:
         overall_score: Overall quality score (0-1)
         dimension_scores: Scores for each quality dimension
         test_pass_rate: Percentage of validation tests passed (0-1)
         coverage_ratio: Entities with relationships / total entities
     """
+
     overall_score: float
     dimension_scores: NotRequired[Dict[str, float]]
     test_pass_rate: NotRequired[float]
@@ -417,7 +437,7 @@ class QualityMetrics(TypedDict):
 
 class PipelineStageResult(TypedDict):
     """Result from a single stage of the optimization pipeline.
-    
+
     Attributes:
         stage_name: Name of the stage (generate, evaluate, optimize, validate)
         status: Success status (success, partial, failed)
@@ -426,6 +446,7 @@ class PipelineStageResult(TypedDict):
         errors: List of any errors encountered
         warnings: List of any warnings
     """
+
     stage_name: str
     status: Literal["success", "partial", "failed"]
     ontology: NotRequired[Ontology]
@@ -436,7 +457,7 @@ class PipelineStageResult(TypedDict):
 
 class RefinementCycleResult(TypedDict):
     """Result of a complete refinement cycle.
-    
+
     Attributes:
         session_id: Session identifier
         initial_ontology: Starting ontology
@@ -447,6 +468,7 @@ class RefinementCycleResult(TypedDict):
         final_score: Score after refinement
         improvement: Improvement percentage
     """
+
     session_id: str
     initial_ontology: NotRequired[Ontology]
     final_ontology: Ontology
@@ -464,7 +486,7 @@ class RefinementCycleResult(TypedDict):
 
 class ExtractionConfigDict(TypedDict):
     """Configuration for entity/relationship extraction.
-    
+
     Attributes:
         confidence_threshold: Minimum confidence to keep entities (0-1)
         max_entities: Maximum entities per run (0 = unlimited)
@@ -479,6 +501,7 @@ class ExtractionConfigDict(TypedDict):
         custom_rules: Custom extraction rules
         llm_fallback_threshold: LLM fallback threshold
     """
+
     confidence_threshold: NotRequired[float]
     max_entities: NotRequired[int]
     max_relationships: NotRequired[int]
@@ -495,7 +518,7 @@ class ExtractionConfigDict(TypedDict):
 
 class OptimizerConfig(TypedDict):
     """Configuration for an ontology optimizer.
-    
+
     Attributes:
         domain: Domain for generation
         max_rounds: Maximum refinement rounds
@@ -504,6 +527,7 @@ class OptimizerConfig(TypedDict):
         generation_strategy: Entity extraction strategy
         validation_level: Validation rigor level
     """
+
     domain: str
     max_rounds: NotRequired[int]
     convergence_threshold: NotRequired[float]

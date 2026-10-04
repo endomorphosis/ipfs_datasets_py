@@ -514,11 +514,13 @@ Edit `.github/scripts/generate_workflow_fix.py`:
 
 ```python
 def _fix_new_error(self) -> List[Dict[str, Any]]:
-    return [{
-        'file': 'path/to/file',
-        'action': 'your_action',
-        'changes': {...},
-    }]
+    return [
+        {
+            "file": "path/to/file",
+            "action": "your_action",
+            "changes": {...},
+        }
+    ]
 ```
 
 ## Security

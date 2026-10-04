@@ -13,13 +13,13 @@ from ipfs_datasets_py.mcp_server.tools.media_tools.ytdlp_download import (
     ytdlp_download_playlist,
     ytdlp_extract_info,
     ytdlp_search_videos,
-    ytdlp_batch_download
+    ytdlp_batch_download,
 )
 
 
 class TestYtdlpDownloadVideo:
     """Test the ytdlp_download_video MCP tool."""
-    
+
     def test_ytdlp_download_video_with_valid_url_and_default_params(self):
         """
         GIVEN valid YouTube video URL
@@ -30,7 +30,9 @@ class TestYtdlpDownloadVideo:
             - Video download execution
             - Return dict with status, total_requested, successful_downloads, failed_downloads, results, message
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_valid_url_and_default_params test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_valid_url_and_default_params test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_custom_output_dir(self):
         """
@@ -41,7 +43,9 @@ class TestYtdlpDownloadVideo:
             - Download to specified directory
             - Return success dict with custom output path
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_custom_output_dir test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_custom_output_dir test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_audio_only_option(self):
         """
@@ -52,7 +56,9 @@ class TestYtdlpDownloadVideo:
             - Audio-only download
             - Return success dict with audio file metadata
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_audio_only_option test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_audio_only_option test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_custom_quality_and_format(self):
         """
@@ -63,7 +69,9 @@ class TestYtdlpDownloadVideo:
             - Download with specified quality and audio format
             - Return success dict with format metadata
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_custom_quality_and_format test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_custom_quality_and_format test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_multiple_urls(self):
         """
@@ -73,7 +81,9 @@ class TestYtdlpDownloadVideo:
             - Multiple URL processing
             - Return dict with total_requested matching URL count
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_multiple_urls test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_multiple_urls test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_none_url(self):
         """
@@ -83,7 +93,9 @@ class TestYtdlpDownloadVideo:
             - Return error dict with status="error"
             - Error message indicating Invalid URL
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_none_url test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_none_url test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_empty_url(self):
         """
@@ -93,7 +105,9 @@ class TestYtdlpDownloadVideo:
             - Return error dict with status="error"
             - Error message indicating Invalid URL
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_empty_url test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_empty_url test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_invalid_url_format(self):
         """
@@ -104,7 +118,9 @@ class TestYtdlpDownloadVideo:
             - Return error dict with status="error"
             - Error message indicating Invalid URL
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_invalid_url_format test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_invalid_url_format test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_custom_options(self):
         """
@@ -115,7 +131,9 @@ class TestYtdlpDownloadVideo:
             - Custom options applied to download
             - Return success dict with custom options processed
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_custom_options test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_custom_options test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_timeout_option(self):
         """
@@ -126,7 +144,9 @@ class TestYtdlpDownloadVideo:
             - Download with timeout applied
             - Return success dict or timeout error
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_timeout_option test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_timeout_option test needs to be implemented"
+        )
 
     def test_ytdlp_download_video_with_missing_dependencies(self):
         """
@@ -138,12 +158,14 @@ class TestYtdlpDownloadVideo:
             - Return error dict with status="error"
             - Error message indicating yt-dlp not available
         """
-        raise NotImplementedError("test_ytdlp_download_video_with_missing_dependencies test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_video_with_missing_dependencies test needs to be implemented"
+        )
 
 
 class TestYtdlpDownloadPlaylist:
     """Test the ytdlp_download_playlist MCP tool."""
-    
+
     def test_ytdlp_download_playlist_with_valid_url_and_default_params(self):
         """
         GIVEN valid YouTube playlist URL
@@ -154,7 +176,9 @@ class TestYtdlpDownloadPlaylist:
             - Playlist download execution
             - Return dict with status, playlist_info, total_videos, message
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_valid_url_and_default_params test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_valid_url_and_default_params test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_max_downloads_limit(self):
         """
@@ -165,7 +189,9 @@ class TestYtdlpDownloadPlaylist:
             - Download limited to 5 videos
             - Return success dict with max_downloads applied
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_max_downloads_limit test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_max_downloads_limit test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_custom_output_dir(self):
         """
@@ -176,7 +202,9 @@ class TestYtdlpDownloadPlaylist:
             - Downloads to specified directory
             - Return success dict with custom output path
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_custom_output_dir test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_custom_output_dir test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_index_range(self):
         """
@@ -187,7 +215,9 @@ class TestYtdlpDownloadPlaylist:
             - Download limited to specified range
             - Return success dict with range parameters applied
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_index_range test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_index_range test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_quality_and_info_json(self):
         """
@@ -198,7 +228,9 @@ class TestYtdlpDownloadPlaylist:
             - Download with best quality and info JSON
             - Return success dict with quality and info options applied
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_quality_and_info_json test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_quality_and_info_json test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_none_url(self):
         """
@@ -208,7 +240,9 @@ class TestYtdlpDownloadPlaylist:
             - Return error dict with status="error"
             - Error message indicating Invalid playlist URL
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_none_url test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_none_url test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_empty_url(self):
         """
@@ -218,7 +252,9 @@ class TestYtdlpDownloadPlaylist:
             - Return error dict with status="error"
             - Error message indicating Invalid playlist URL
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_empty_url test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_empty_url test needs to be implemented"
+        )
 
     def test_ytdlp_download_playlist_with_invalid_url_format(self):
         """
@@ -229,12 +265,14 @@ class TestYtdlpDownloadPlaylist:
             - Return error dict with status="error"
             - Error message indicating Invalid playlist URL
         """
-        raise NotImplementedError("test_ytdlp_download_playlist_with_invalid_url_format test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_download_playlist_with_invalid_url_format test needs to be implemented"
+        )
 
 
 class TestYtdlpExtractInfo:
     """Test the ytdlp_extract_info MCP tool."""
-    
+
     def test_ytdlp_extract_info_with_valid_url_and_default_params(self):
         """
         GIVEN valid YouTube video URL
@@ -245,7 +283,9 @@ class TestYtdlpExtractInfo:
             - Info extraction execution
             - Return dict with status, info, message
         """
-        raise NotImplementedError("test_ytdlp_extract_info_with_valid_url_and_default_params test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_extract_info_with_valid_url_and_default_params test needs to be implemented"
+        )
 
     def test_ytdlp_extract_info_with_extract_flat_option(self):
         """
@@ -256,7 +296,9 @@ class TestYtdlpExtractInfo:
             - Flat extraction without detailed video info
             - Return success dict with playlist entries
         """
-        raise NotImplementedError("test_ytdlp_extract_info_with_extract_flat_option test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_extract_info_with_extract_flat_option test needs to be implemented"
+        )
 
     def test_ytdlp_extract_info_with_download_disabled(self):
         """
@@ -267,7 +309,9 @@ class TestYtdlpExtractInfo:
             - Info extraction without download
             - Return success dict with video metadata only
         """
-        raise NotImplementedError("test_ytdlp_extract_info_with_download_disabled test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_extract_info_with_download_disabled test needs to be implemented"
+        )
 
     def test_ytdlp_extract_info_with_none_url(self):
         """
@@ -277,7 +321,9 @@ class TestYtdlpExtractInfo:
             - Return error dict with status="error"
             - Error message indicating invalid URL
         """
-        raise NotImplementedError("test_ytdlp_extract_info_with_none_url test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_extract_info_with_none_url test needs to be implemented"
+        )
 
     def test_ytdlp_extract_info_with_empty_url(self):
         """
@@ -287,7 +333,9 @@ class TestYtdlpExtractInfo:
             - Return error dict with status="error"
             - Error message indicating invalid URL
         """
-        raise NotImplementedError("test_ytdlp_extract_info_with_empty_url test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_extract_info_with_empty_url test needs to be implemented"
+        )
 
     def test_ytdlp_extract_info_with_invalid_url_format(self):
         """
@@ -298,12 +346,14 @@ class TestYtdlpExtractInfo:
             - Return error dict with status="error"
             - Error message indicating invalid URL
         """
-        raise NotImplementedError("test_ytdlp_extract_info_with_invalid_url_format test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_extract_info_with_invalid_url_format test needs to be implemented"
+        )
 
 
 class TestYtdlpSearchVideos:
     """Test the ytdlp_search_videos MCP tool."""
-    
+
     def test_ytdlp_search_videos_with_valid_query_and_default_params(self):
         """
         GIVEN valid search query string
@@ -314,7 +364,9 @@ class TestYtdlpSearchVideos:
             - Video search execution
             - Return dict with status, results, message
         """
-        raise NotImplementedError("test_ytdlp_search_videos_with_valid_query_and_default_params test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_search_videos_with_valid_query_and_default_params test needs to be implemented"
+        )
 
     def test_ytdlp_search_videos_with_max_results_limit(self):
         """
@@ -325,7 +377,9 @@ class TestYtdlpSearchVideos:
             - Search limited to 10 results
             - Return success dict with max_results applied
         """
-        raise NotImplementedError("test_ytdlp_search_videos_with_max_results_limit test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_search_videos_with_max_results_limit test needs to be implemented"
+        )
 
     def test_ytdlp_search_videos_with_platform_filter(self):
         """
@@ -336,7 +390,9 @@ class TestYtdlpSearchVideos:
             - Search limited to specified platform
             - Return success dict with platform filtering applied
         """
-        raise NotImplementedError("test_ytdlp_search_videos_with_platform_filter test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_search_videos_with_platform_filter test needs to be implemented"
+        )
 
     def test_ytdlp_search_videos_with_none_query(self):
         """
@@ -346,7 +402,9 @@ class TestYtdlpSearchVideos:
             - Return error dict with status="error"
             - Error message indicating invalid query
         """
-        raise NotImplementedError("test_ytdlp_search_videos_with_none_query test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_search_videos_with_none_query test needs to be implemented"
+        )
 
     def test_ytdlp_search_videos_with_empty_query(self):
         """
@@ -356,7 +414,9 @@ class TestYtdlpSearchVideos:
             - Return error dict with status="error"
             - Error message indicating invalid query
         """
-        raise NotImplementedError("test_ytdlp_search_videos_with_empty_query test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_search_videos_with_empty_query test needs to be implemented"
+        )
 
     def test_ytdlp_search_videos_with_no_results(self):
         """
@@ -366,12 +426,14 @@ class TestYtdlpSearchVideos:
             - Search execution with no results
             - Return success dict with empty results
         """
-        raise NotImplementedError("test_ytdlp_search_videos_with_no_results test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_search_videos_with_no_results test needs to be implemented"
+        )
 
 
 class TestYtdlpBatchDownload:
     """Test the ytdlp_batch_download MCP tool."""
-    
+
     def test_ytdlp_batch_download_with_valid_urls_and_default_params(self):
         """
         GIVEN valid list of YouTube URLs
@@ -382,7 +444,9 @@ class TestYtdlpBatchDownload:
             - Batch download execution
             - Return dict with status, total_requested, successful_downloads, failed_downloads, message
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_valid_urls_and_default_params test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_valid_urls_and_default_params test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_max_concurrent_limit(self):
         """
@@ -393,7 +457,9 @@ class TestYtdlpBatchDownload:
             - Concurrent downloads limited to 2
             - Return success dict with concurrency applied
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_max_concurrent_limit test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_max_concurrent_limit test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_custom_output_dir(self):
         """
@@ -404,7 +470,9 @@ class TestYtdlpBatchDownload:
             - Downloads to specified directory
             - Return success dict with custom output path
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_custom_output_dir test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_custom_output_dir test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_quality_option(self):
         """
@@ -415,7 +483,9 @@ class TestYtdlpBatchDownload:
             - Downloads with best quality
             - Return success dict with quality applied
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_quality_option test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_quality_option test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_none_urls(self):
         """
@@ -425,7 +495,9 @@ class TestYtdlpBatchDownload:
             - Return error dict with status="error"
             - Error message indicating invalid URLs
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_none_urls test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_none_urls test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_empty_urls(self):
         """
@@ -435,7 +507,9 @@ class TestYtdlpBatchDownload:
             - Return error dict with status="error"
             - Error message indicating invalid URLs
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_empty_urls test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_empty_urls test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_mixed_valid_invalid_urls(self):
         """
@@ -445,7 +519,9 @@ class TestYtdlpBatchDownload:
             - Batch processing with partial success
             - Return success dict with both successful and failed downloads
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_mixed_valid_invalid_urls test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_mixed_valid_invalid_urls test needs to be implemented"
+        )
 
     def test_ytdlp_batch_download_with_all_invalid_urls(self):
         """
@@ -455,7 +531,9 @@ class TestYtdlpBatchDownload:
             - Batch processing with all failures
             - Return success dict with failed_downloads = total_requested
         """
-        raise NotImplementedError("test_ytdlp_batch_download_with_all_invalid_urls test needs to be implemented")
+        raise NotImplementedError(
+            "test_ytdlp_batch_download_with_all_invalid_urls test needs to be implemented"
+        )
 
 
 if __name__ == "__main__":

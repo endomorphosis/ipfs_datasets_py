@@ -12,10 +12,7 @@ def test_missing_nltk_fallback_does_not_write_to_stdout(
     monkeypatch,
 ) -> None:
     module_path = (
-        Path(__file__).resolve().parents[2]
-        / "ipfs_datasets_py"
-        / "utils"
-        / "text_processing.py"
+        Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "utils" / "text_processing.py"
     )
     original_import = builtins.__import__
 

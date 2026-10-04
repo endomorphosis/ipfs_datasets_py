@@ -28,7 +28,9 @@ def test_enforce_export_version_gate(symbol: str, version: str, should_raise: bo
         lto._enforce_export_version_gate(symbol, current_version=version)
 
 
-def test_getattr_blocks_deprecated_exports_at_removal_version(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_getattr_blocks_deprecated_exports_at_removal_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(lto, "__version__", "0.4.0")
 
     with pytest.raises(ImportError):
@@ -38,7 +40,9 @@ def test_getattr_blocks_deprecated_exports_at_removal_version(monkeypatch: pytes
         getattr(lto, "LogicExtractor")
 
 
-def test_getattr_allows_deprecated_exports_before_removal_version(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_getattr_allows_deprecated_exports_before_removal_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(lto, "__version__", "0.3.9")
 
     theorem_session = getattr(lto, "TheoremSession")

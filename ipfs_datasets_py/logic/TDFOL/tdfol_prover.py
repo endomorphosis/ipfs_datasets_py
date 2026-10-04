@@ -53,6 +53,7 @@ try:
         CECDelegateStrategy,
         StrategySelector,
     )
+
     HAVE_STRATEGIES = True
 except ImportError:
     HAVE_STRATEGIES = False
@@ -146,15 +147,15 @@ def _try_load_modal_tableaux() -> bool:
 
 class TemporalNecessitationRule:
     """Rule: If ⊢ φ, then ⊢ □φ (Necessitation for temporal logic)."""
-    
+
     def __init__(self):
         self.name = "TemporalNecessitation"
-    
+
     def can_apply(self, formula: Formula, kb: TDFOLKnowledgeBase) -> bool:
         """Check if formula is derivable in KB."""
         # Simplified: check if formula is an axiom or theorem
         return formula in kb.axioms or formula in kb.theorems
-    
+
     def apply(self, formula: Formula) -> Formula:
         """Apply necessitation: φ → □φ."""
         return TemporalFormula(TemporalOperator.ALWAYS, formula)
@@ -162,14 +163,14 @@ class TemporalNecessitationRule:
 
 class DeonticNecessitationRule:
     """Rule: If ⊢ φ, then ⊢ O(φ) (Necessitation for deontic logic)."""
-    
+
     def __init__(self):
         self.name = "DeonticNecessitation"
-    
+
     def can_apply(self, formula: Formula, kb: TDFOLKnowledgeBase) -> bool:
         """Check if formula is a tautology or derivable."""
         return formula in kb.axioms or formula in kb.theorems
-    
+
     def apply(self, formula: Formula) -> Formula:
         """Apply necessitation: φ → O(φ)."""
         return DeonticFormula(DeonticOperator.OBLIGATION, formula)
@@ -177,18 +178,21 @@ class DeonticNecessitationRule:
 
 class TemporalDistributionRule:
     """Rule: □(φ → ψ) → (□φ → □ψ) (K axiom for temporal logic)."""
-    
+
     def __init__(self):
         self.name = "TemporalDistribution"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Check if formula matches pattern □(φ → ψ)."""
         if not isinstance(formula, TemporalFormula):
             return False
         if formula.operator != TemporalOperator.ALWAYS:
             return False
-        return isinstance(formula.formula, BinaryFormula) and formula.formula.operator == LogicOperator.IMPLIES
-    
+        return (
+            isinstance(formula.formula, BinaryFormula)
+            and formula.formula.operator == LogicOperator.IMPLIES
+        )
+
     def apply(self, formula: TemporalFormula, always_antecedent: TemporalFormula) -> Formula:
         """Apply distribution: □(φ → ψ), □φ ⊢ □ψ."""
         # Extract φ and ψ from □(φ → ψ)
@@ -201,18 +205,21 @@ class TemporalDistributionRule:
 
 class DeonticDistributionRule:
     """Rule: O(φ → ψ) → (O(φ) → O(ψ)) (K axiom for deontic logic)."""
-    
+
     def __init__(self):
         self.name = "DeonticDistribution"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Check if formula matches pattern O(φ → ψ)."""
         if not isinstance(formula, DeonticFormula):
             return False
         if formula.operator != DeonticOperator.OBLIGATION:
             return False
-        return isinstance(formula.formula, BinaryFormula) and formula.formula.operator == LogicOperator.IMPLIES
-    
+        return (
+            isinstance(formula.formula, BinaryFormula)
+            and formula.formula.operator == LogicOperator.IMPLIES
+        )
+
     def apply(self, formula: DeonticFormula, obligation_antecedent: DeonticFormula) -> Formula:
         """Apply distribution: O(φ → ψ), O(φ) ⊢ O(ψ)."""
         # Extract φ and ψ from O(φ → ψ)
@@ -225,14 +232,14 @@ class DeonticDistributionRule:
 
 class TemporalTRule:
     """Rule: □φ → φ (T axiom - truth axiom for temporal logic)."""
-    
+
     def __init__(self):
         self.name = "TemporalTAxiom"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Check if formula is □φ."""
         return isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS
-    
+
     def apply(self, formula: TemporalFormula) -> Formula:
         """Apply T axiom: □φ ⊢ φ."""
         return formula.formula
@@ -240,14 +247,16 @@ class TemporalTRule:
 
 class DeonticDRule:
     """Rule: O(φ) → P(φ) (D axiom - obligation implies permission)."""
-    
+
     def __init__(self):
         self.name = "DeonticDAxiom"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Check if formula is O(φ)."""
-        return isinstance(formula, DeonticFormula) and formula.operator == DeonticOperator.OBLIGATION
-    
+        return (
+            isinstance(formula, DeonticFormula) and formula.operator == DeonticOperator.OBLIGATION
+        )
+
     def apply(self, formula: DeonticFormula) -> Formula:
         """Apply D axiom: O(φ) ⊢ P(φ)."""
         return DeonticFormula(DeonticOperator.PERMISSION, formula.formula)
@@ -255,14 +264,14 @@ class DeonticDRule:
 
 class TemporalEventuallyIntroduction:
     """Rule: φ → ◊φ (Introduction of eventual truth)."""
-    
+
     def __init__(self):
         self.name = "EventuallyIntroduction"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Any formula can be made eventually true."""
         return True
-    
+
     def apply(self, formula: Formula) -> Formula:
         """Apply: φ ⊢ ◊φ."""
         return TemporalFormula(TemporalOperator.EVENTUALLY, formula)
@@ -270,14 +279,14 @@ class TemporalEventuallyIntroduction:
 
 class PermissionIntroduction:
     """Rule: φ → P(φ) (Weak permission introduction)."""
-    
+
     def __init__(self):
         self.name = "PermissionIntroduction"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Any true formula is permitted."""
         return True
-    
+
     def apply(self, formula: Formula) -> Formula:
         """Apply: φ ⊢ P(φ)."""
         return DeonticFormula(DeonticOperator.PERMISSION, formula)
@@ -285,14 +294,16 @@ class PermissionIntroduction:
 
 class ProhibitionElimination:
     """Rule: F(φ) → ¬P(φ) (Prohibition eliminates permission)."""
-    
+
     def __init__(self):
         self.name = "ProhibitionElimination"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Check if formula is F(φ)."""
-        return isinstance(formula, DeonticFormula) and formula.operator == DeonticOperator.PROHIBITION
-    
+        return (
+            isinstance(formula, DeonticFormula) and formula.operator == DeonticOperator.PROHIBITION
+        )
+
     def apply(self, formula: DeonticFormula) -> Formula:
         """Apply: F(φ) ⊢ ¬P(φ)."""
         permission = DeonticFormula(DeonticOperator.PERMISSION, formula.formula)
@@ -301,25 +312,28 @@ class ProhibitionElimination:
 
 class UntilUnfoldingRule:
     """Rule: φ U ψ ↔ ψ ∨ (φ ∧ X(φ U ψ)) (Unfold until operator)."""
-    
+
     def __init__(self):
         self.name = "UntilUnfolding"
-    
+
     def can_apply(self, formula: Formula) -> bool:
         """Check if formula is φ U ψ."""
-        return isinstance(formula, BinaryTemporalFormula) and formula.operator == TemporalOperator.UNTIL
-    
+        return (
+            isinstance(formula, BinaryTemporalFormula)
+            and formula.operator == TemporalOperator.UNTIL
+        )
+
     def apply(self, formula: BinaryTemporalFormula) -> Formula:
         """Apply unfolding: φ U ψ ⊢ ψ ∨ (φ ∧ X(φ U ψ))."""
         phi = formula.left
         psi = formula.right
-        
+
         # Create X(φ U ψ)
         next_until = TemporalFormula(TemporalOperator.NEXT, formula)
-        
+
         # Create φ ∧ X(φ U ψ)
         conjunction = BinaryFormula(LogicOperator.AND, phi, next_until)
-        
+
         # Create ψ ∨ (φ ∧ X(φ U ψ))
         return BinaryFormula(LogicOperator.OR, psi, conjunction)
 
@@ -331,16 +345,16 @@ class UntilUnfoldingRule:
 
 class TDFOLProver:
     """Theorem prover for TDFOL formulas."""
-    
+
     def __init__(
         self,
         kb: Optional[TDFOLKnowledgeBase] = None,
         enable_cache: bool = True,
-        strategy: Optional['ProverStrategy'] = None
+        strategy: Optional["ProverStrategy"] = None,
     ):
         """
         Initialize the prover with a knowledge base.
-        
+
         Args:
             kb: Knowledge base with axioms and theorems
             enable_cache: Whether to enable proof caching for performance
@@ -349,11 +363,12 @@ class TDFOLProver:
         """
         self.kb = kb or TDFOLKnowledgeBase()
         self.enable_cache = enable_cache
-        
+
         # Initialize proof cache if enabled
         if self.enable_cache:
             try:
                 from ..common.proof_cache import get_global_cache
+
                 self.proof_cache = get_global_cache()
                 logger.info("TDFOL proof cache enabled")
             except Exception as e:
@@ -361,7 +376,7 @@ class TDFOLProver:
                 self.proof_cache = None
         else:
             self.proof_cache = None
-        
+
         # Import and initialize all TDFOL rules for backward compatibility.
         # The rule objects are static, so the module-level cache avoids repeated
         # setup in bridge/prover metric loops while keeping prover KB state local.
@@ -370,10 +385,17 @@ class TDFOLProver:
         except Exception as e:
             logger.warning(f"Failed to load TDFOL rules: {e}")
             self.tdfol_rules = []
-        
-        self.temporal_rules = [r for r in self.tdfol_rules if 'Temporal' in r.name]
-        self.deontic_rules = [r for r in self.tdfol_rules if 'Deontic' in r.name or 'Permission' in r.name or 'Obligation' in r.name or 'Prohibition' in r.name]
-        
+
+        self.temporal_rules = [r for r in self.tdfol_rules if "Temporal" in r.name]
+        self.deontic_rules = [
+            r
+            for r in self.tdfol_rules
+            if "Deontic" in r.name
+            or "Permission" in r.name
+            or "Obligation" in r.name
+            or "Prohibition" in r.name
+        ]
+
         # Initialize proving strategies
         if HAVE_STRATEGIES:
             if strategy is not None:
@@ -385,10 +407,7 @@ class TDFOLProver:
                 # Use automatic strategy selection
                 try:
                     strategies = [
-                        ForwardChainingStrategy(
-                            rules=self.tdfol_rules,
-                            max_iterations=100
-                        ),
+                        ForwardChainingStrategy(rules=self.tdfol_rules, max_iterations=100),
                         ModalTableauxStrategy(),
                         CECDelegateStrategy(),
                     ]
@@ -404,7 +423,7 @@ class TDFOLProver:
             logger.warning("Proving strategies not available, using legacy proving methods")
             self.selector = None
             self.strategy = None
-        
+
         # Try to use CEC prover if available (for legacy path only)
         self.cec_engine = None
         if not HAVE_STRATEGIES or self.selector is None:
@@ -421,7 +440,7 @@ class TDFOLProver:
                 logger.debug("CEC inference engine initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize CEC engine: {e}")
-    
+
     def _initialize_temporal_rules(self) -> List[Any]:
         """Initialize temporal logic inference rules."""
         return [
@@ -431,7 +450,7 @@ class TDFOLProver:
             TemporalEventuallyIntroduction(),
             UntilUnfoldingRule(),
         ]
-    
+
     def _initialize_deontic_rules(self) -> List[Any]:
         """Initialize deontic logic inference rules."""
         return [
@@ -441,24 +460,25 @@ class TDFOLProver:
             PermissionIntroduction(),
             ProhibitionElimination(),
         ]
-    
+
     def prove(self, goal: Formula, timeout_ms: int = 5000) -> ProofResult:
         """
         Prove a formula using available methods.
-        
+
         This method uses the strategy pattern for proving. If a custom strategy
         was provided at initialization, it uses that strategy. Otherwise, it uses
         the StrategySelector to automatically choose the best strategy based on
         the formula characteristics.
-        
+
         Args:
             goal: Formula to prove
             timeout_ms: Timeout in milliseconds
-        
+
         Returns:
             ProofResult with status and proof steps
         """
         import time
+
         start_time = time.time()
 
         # Guard: None is not a valid formula
@@ -467,7 +487,7 @@ class TDFOLProver:
                 status=ProofStatus.ERROR,
                 formula=None,
                 method="validation",
-                message="Cannot prove None: goal formula must not be None"
+                message="Cannot prove None: goal formula must not be None",
             )
 
         # Check cache first (O(1) lookup)
@@ -478,7 +498,7 @@ class TDFOLProver:
             if cached_result is not None:
                 logger.debug(f"Cache hit for formula: {goal}")
                 return cached_result
-        
+
         # Try direct lookup in KB
         if goal in self.kb.axioms:
             result = ProofResult(
@@ -486,26 +506,26 @@ class TDFOLProver:
                 formula=goal,
                 proof_steps=[ProofStep(goal, "Axiom in knowledge base")],
                 time_ms=(time.time() - start_time) * 1000,
-                method="axiom_lookup"
+                method="axiom_lookup",
             )
             # Cache the result
             if self.proof_cache is not None:
                 self.proof_cache.set(goal, result, _kb_context)
             return result
-        
+
         if goal in self.kb.theorems:
             result = ProofResult(
                 status=ProofStatus.PROVED,
                 formula=goal,
                 proof_steps=[ProofStep(goal, "Theorem in knowledge base")],
                 time_ms=(time.time() - start_time) * 1000,
-                method="theorem_lookup"
+                method="theorem_lookup",
             )
             # Cache the result
             if self.proof_cache is not None:
                 self.proof_cache.set(goal, result, _kb_context)
             return result
-        
+
         # Use strategy pattern if available
         if HAVE_STRATEGIES and (self.selector is not None or self.strategy is not None):
             # Select strategy
@@ -516,34 +536,36 @@ class TDFOLProver:
             else:
                 # Auto-select strategy
                 strategy = self.selector.select_strategy(goal, self.kb)
-                logger.debug(f"Auto-selected strategy: {strategy.name} (priority: {strategy.get_priority()})")
-            
+                logger.debug(
+                    f"Auto-selected strategy: {strategy.name} (priority: {strategy.get_priority()})"
+                )
+
             # Reserve a small wrapper budget so wall-clock runtime stays within
             # the caller-visible timeout, not just the delegated strategy budget.
             strategy_timeout_ms = max(int(timeout_ms) - 5, 1)
 
             # Prove using strategy
             result = strategy.prove(goal, self.kb, strategy_timeout_ms)
-            
+
             # Cache successful proof
             if result.is_proved() and self.proof_cache is not None:
                 self.proof_cache.set(goal, result, _kb_context)
-            
+
             return result
-        
+
         # Fallback: strategies not available
         logger.error("Strategies not available - cannot prove formula")
         return ProofResult(
             status=ProofStatus.ERROR,
             formula=goal,
             method="error",
-            message="Proving strategies not available. Please ensure strategies module is properly installed."
+            message="Proving strategies not available. Please ensure strategies module is properly installed.",
         )
-    
+
     def add_axiom(self, formula: Formula, name: Optional[str] = None) -> None:
         """Add an axiom to the knowledge base."""
         self.kb.add_axiom(formula, name)
-    
+
     def add_theorem(self, formula: Formula, name: Optional[str] = None) -> None:
         """Add a theorem to the knowledge base."""
         self.kb.add_theorem(formula, name)
@@ -560,11 +582,11 @@ class TDFOLProver:
         """Return True if formula contains a deontic operator at any depth."""
         if isinstance(formula, DeonticFormula):
             return True
-        for attr in ('formula', 'left', 'right', 'operand'):
+        for attr in ("formula", "left", "right", "operand"):
             child = getattr(formula, attr, None)
             if child is not None and self._has_deontic_operators(child):
                 return True
-        if hasattr(formula, 'formulas'):
+        if hasattr(formula, "formulas"):
             for child in formula.formulas:
                 if self._has_deontic_operators(child):
                     return True
@@ -574,11 +596,11 @@ class TDFOLProver:
         """Return True if formula contains a temporal operator at any depth."""
         if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
             return True
-        for attr in ('formula', 'left', 'right', 'operand'):
+        for attr in ("formula", "left", "right", "operand"):
             child = getattr(formula, attr, None)
             if child is not None and self._has_temporal_operators(child):
                 return True
-        if hasattr(formula, 'formulas'):
+        if hasattr(formula, "formulas"):
             for child in formula.formulas:
                 if self._has_temporal_operators(child):
                     return True
@@ -587,23 +609,25 @@ class TDFOLProver:
     def _has_nested_temporal(self, formula: Formula) -> bool:
         """Return True if formula has temporal operators nested inside another temporal operator."""
         if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
-            inner = getattr(formula, 'formula', None) or getattr(formula, 'left', None)
+            inner = getattr(formula, "formula", None) or getattr(formula, "left", None)
             if inner is not None and self._has_temporal_operators(inner):
                 return True
-        for attr in ('formula', 'left', 'right', 'operand'):
+        for attr in ("formula", "left", "right", "operand"):
             child = getattr(formula, attr, None)
             if child is not None and self._has_nested_temporal(child):
                 return True
-        if hasattr(formula, 'formulas'):
+        if hasattr(formula, "formulas"):
             for child in formula.formulas:
                 if self._has_nested_temporal(child):
                     return True
         return False
 
-    def _traverse_formula(self, formula: Formula, predicate, max_depth: int = 100, _depth: int = 0) -> bool:
+    def _traverse_formula(
+        self, formula: Formula, predicate, max_depth: int = 100, _depth: int = 0
+    ) -> bool:
         """
         Traverse formula tree depth-first; return True if predicate matches any node.
-        
+
         Args:
             formula: Root formula to traverse.
             predicate: Callable(formula) -> bool.
@@ -614,22 +638,22 @@ class TDFOLProver:
             return False
         if predicate(formula):
             return True
-        for attr in ('formula', 'left', 'right', 'operand'):
+        for attr in ("formula", "left", "right", "operand"):
             child = getattr(formula, attr, None)
             if child is not None and isinstance(child, Formula):
                 if self._traverse_formula(child, predicate, max_depth, _depth + 1):
                     return True
-        if hasattr(formula, 'formulas'):
+        if hasattr(formula, "formulas"):
             for child in formula.formulas:
                 if isinstance(child, Formula):
                     if self._traverse_formula(child, predicate, max_depth, _depth + 1):
                         return True
         return False
 
-    def _cec_prove(self, formula: Formula, timeout_ms: int = 5000) -> 'ProofResult':
+    def _cec_prove(self, formula: Formula, timeout_ms: int = 5000) -> "ProofResult":
         """
         Attempt proof via CEC engine (stub – returns UNKNOWN when engine unavailable).
-        
+
         Returns ProofResult with status UNKNOWN and method 'cec_prover'.
         """
         return ProofResult(

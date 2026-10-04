@@ -116,7 +116,10 @@ def test_represents_temporal_lifecycle_and_serializes_stably() -> None:
     assert graph.authority_by_id["OAR"].emergency_power
     assert graph.law_version_by_id["law:ors-192-001-v1"].superseded_by == "law:ors-192-001-v2"
     assert graph.law_version_by_id["law:ors-repealed"].repealed_by == "change:repeal-192-999"
-    assert graph.change_by_id["change:amend-192-001"].change_kind is LegalIRTemporalChangeKind.AMENDMENT
+    assert (
+        graph.change_by_id["change:amend-192-001"].change_kind
+        is LegalIRTemporalChangeKind.AMENDMENT
+    )
 
     validation = validate_legal_ir_temporal_authority_graph(graph)
     assert validation.valid, validation.to_dict()
@@ -196,8 +199,14 @@ def test_repeal_sunset_emergency_and_jurisdiction_are_fail_closed() -> None:
     )
 
     assert repealed.decisions[0].status is LegalIRTemporalApplicabilityStatus.REPEALED
-    assert emergency_expired.decisions[0].status is LegalIRTemporalApplicabilityStatus.EMERGENCY_EXPIRED
-    assert wrong_jurisdiction.decisions[0].status is LegalIRTemporalApplicabilityStatus.WRONG_JURISDICTION
+    assert (
+        emergency_expired.decisions[0].status
+        is LegalIRTemporalApplicabilityStatus.EMERGENCY_EXPIRED
+    )
+    assert (
+        wrong_jurisdiction.decisions[0].status
+        is LegalIRTemporalApplicabilityStatus.WRONG_JURISDICTION
+    )
     assert sunset.decisions[0].status is LegalIRTemporalApplicabilityStatus.EXPIRED
     assert {issue.code for issue in emergency_expired.diagnostics} == {
         LegalIRTemporalDiagnosticType.EMERGENCY_RULE_EXPIRED.value
@@ -207,7 +216,9 @@ def test_repeal_sunset_emergency_and_jurisdiction_are_fail_closed() -> None:
 def test_authority_hierarchy_preempts_lower_rank_for_same_conflict_key() -> None:
     builder = LegalIRTemporalAuthorityGraphBuilder()
     builder.add_authority("USC", jurisdiction="US", authority_type="statute", hierarchy_rank=100)
-    builder.add_authority("CITY", jurisdiction="OR.PORTLAND", authority_type="ordinance", hierarchy_rank=10)
+    builder.add_authority(
+        "CITY", jurisdiction="OR.PORTLAND", authority_type="ordinance", hierarchy_rank=10
+    )
     builder.add_law_version(
         "42 U.S.C. 1983",
         law_version_id="law:federal",
@@ -233,7 +244,9 @@ def test_authority_hierarchy_preempts_lower_rank_for_same_conflict_key() -> None
 
     assert result.applicable_law_version_ids == ("law:federal",)
     city = graph.law_version_by_id["law:city"]
-    city_decision = next(item for item in result.decisions if item.law_version_id == city.law_version_id)
+    city_decision = next(
+        item for item in result.decisions if item.law_version_id == city.law_version_id
+    )
     assert city_decision.status is LegalIRTemporalApplicabilityStatus.AUTHORITY_PREEMPTED
     assert LegalIRTemporalDiagnosticType.LOWER_AUTHORITY_PREEMPTED in city_decision.diagnostic_types
 
@@ -307,7 +320,11 @@ def test_hammer_obligations_cover_deontic_and_factual_temporal_scope() -> None:
                 {
                     "formula_id": "f-deontic",
                     "operator": {"family": "deontic", "system": "KD", "symbol": "shall"},
-                    "predicate": {"name": "publish_notice", "arguments": ["agency"], "role": "obligation"},
+                    "predicate": {
+                        "name": "publish_notice",
+                        "arguments": ["agency"],
+                        "role": "obligation",
+                    },
                     "provenance": {"source_id": "doc-obligations", "citation": "ORS 192.001"},
                     "authority_context": {
                         "citation": "ORS 192.001",
@@ -318,7 +335,11 @@ def test_hammer_obligations_cover_deontic_and_factual_temporal_scope() -> None:
                 {
                     "formula_id": "f-factual",
                     "operator": {"family": "modal", "system": "K", "symbol": "is"},
-                    "predicate": {"name": "confidential_report", "arguments": ["report"], "role": "factual"},
+                    "predicate": {
+                        "name": "confidential_report",
+                        "arguments": ["report"],
+                        "role": "factual",
+                    },
                     "provenance": {"source_id": "doc-obligations", "citation": "ORS 192.002"},
                     "authority_context": {
                         "citation": "ORS 192.002",
@@ -332,7 +353,9 @@ def test_hammer_obligations_cover_deontic_and_factual_temporal_scope() -> None:
 
     obligations = generate_legal_ir_proof_obligations(sample)
     temporal_obligations = [
-        obligation for obligation in obligations if obligation.legal_ir_view == "temporal_authority.ir"
+        obligation
+        for obligation in obligations
+        if obligation.legal_ir_view == "temporal_authority.ir"
     ]
     premises = export_legal_ir_premises(sample, obligations=obligations)
 
@@ -344,6 +367,8 @@ def test_hammer_obligations_cover_deontic_and_factual_temporal_scope() -> None:
         obligation.metadata["applicability_status"] == "applicable"
         for obligation in temporal_obligations
     )
-    assert "date:2025-04-01" in "\n".join(obligation.statement for obligation in temporal_obligations)
+    assert "date:2025-04-01" in "\n".join(
+        obligation.statement for obligation in temporal_obligations
+    )
     assert any(premise.name == "temporal_authority_window_applies" for premise in premises)
     assert any(premise.name.startswith("temporal_authority_fact_") for premise in premises)

@@ -13,7 +13,9 @@ MCP tools for server administration, endpoint management, and system configurati
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.admin_tools import (
-    system_health, system_status, manage_endpoints
+    system_health,
+    system_status,
+    manage_endpoints,
 )
 
 # System health snapshot

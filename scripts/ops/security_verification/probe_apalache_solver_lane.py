@@ -32,7 +32,7 @@ def _load_json(path: Path) -> dict[str, Any] | None:
     if not path.is_file():
         return None
     try:
-        payload = json.loads(path.read_text(encoding='utf-8'))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return None
     return payload if isinstance(payload, dict) else None
@@ -53,7 +53,7 @@ def build_apalache_solver_lane_report(
     root = Path(repo_root) if repo_root is not None else _repo_root()
     model = _resolve(root, tla_model_path)
     report_path = _resolve(root, tla_report_path)
-    tla_source = model.read_text(encoding='utf-8') if model.is_file() else ''
+    tla_source = model.read_text(encoding="utf-8") if model.is_file() else ""
     xaman_tla_report = _load_json(report_path)
     apalache_executable = discover_apalache_executable()
     apalache_version = read_apalache_version(apalache_executable)
@@ -65,7 +65,7 @@ def build_apalache_solver_lane_report(
             version_output=apalache_version,
         )
     elif xaman_tla_report is not None:
-        apalache_runs = xaman_tla_report.get('apalache', {}).get('runs')
+        apalache_runs = xaman_tla_report.get("apalache", {}).get("runs")
 
     return _build_lane_report(
         repo_root=root,
@@ -79,10 +79,10 @@ def build_apalache_solver_lane_report(
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--out', type=Path, default=DEFAULT_OUT)
-    parser.add_argument('--tla-model', type=Path, default=TLA_MODEL)
-    parser.add_argument('--tla-report', type=Path, default=TLA_REPORT)
-    parser.add_argument('--run-model-check', action='store_true')
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--tla-model", type=Path, default=TLA_MODEL)
+    parser.add_argument("--tla-report", type=Path, default=TLA_REPORT)
+    parser.add_argument("--run-model-check", action="store_true")
     args = parser.parse_args(argv)
 
     report = build_apalache_solver_lane_report(
@@ -91,10 +91,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         run_model_check=args.run_model_check,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-    print(json.dumps({'out': args.out.as_posix(), 'overall_status': report['overall_status']}, sort_keys=True))
+    args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(
+        json.dumps(
+            {"out": args.out.as_posix(), "overall_status": report["overall_status"]}, sort_keys=True
+        )
+    )
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

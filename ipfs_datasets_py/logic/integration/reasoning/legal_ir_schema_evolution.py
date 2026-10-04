@@ -63,28 +63,18 @@ from .legal_ir_view_contracts import (
 
 
 LEGAL_IR_SCHEMA_EVOLUTION_SCHEMA_VERSION: Final = "legal-ir-schema-evolution-v1"
-LEGAL_IR_SCHEMA_EVOLUTION_REGISTRY_VERSION: Final = (
-    "legal-ir-schema-evolution-registry-v1"
-)
+LEGAL_IR_SCHEMA_EVOLUTION_REGISTRY_VERSION: Final = "legal-ir-schema-evolution-registry-v1"
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION: Final = "legal-ir-leanstral-audit-request-v1"
 LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION: Final = "legal-ir-leanstral-audit-response-v2"
-LEANSTRAL_AUDIT_RESPONSE_LEGACY_SCHEMA_VERSION: Final = (
-    "legal-ir-leanstral-audit-response-v1"
-)
+LEANSTRAL_AUDIT_RESPONSE_LEGACY_SCHEMA_VERSION: Final = "legal-ir-leanstral-audit-response-v1"
 LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION: Final = "legal-ir-leanstral-audit-cache-v1"
-LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION: Final = (
-    "legal-ir-leanstral-artifact-cache-index-v1"
-)
-LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION: Final = (
-    "legal-ir-leanstral-rule-gap-report-v1"
-)
+LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION: Final = "legal-ir-leanstral-artifact-cache-index-v1"
+LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION: Final = "legal-ir-leanstral-rule-gap-report-v1"
 LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION: Final = (
     "legal-ir-leanstral-patch-feedback-report-v1"
 )
-LEANSTRAL_METRIC_ATTRIBUTION_SCHEMA_VERSION: Final = (
-    "legal-ir-leanstral-metric-attribution-v1"
-)
+LEANSTRAL_METRIC_ATTRIBUTION_SCHEMA_VERSION: Final = "legal-ir-leanstral-metric-attribution-v1"
 MODAL_COMPILER_REPAIR_SCHEMA_VERSION: Final = "legal-ir-modal-compiler-repair-v1"
 MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION: Final = "legal-ir-modal-decompiler-repair-v1"
 LEGAL_IR_TARGET_DISK_CACHE_VERSION: Final = "legal-ir-target-disk-cache-v2"
@@ -168,9 +158,7 @@ class LegalIRSchemaVersion:
     migration_targets: tuple[str, ...] = ()
     downgrade_targets: tuple[str, ...] = ()
     feature_gates: tuple[str, ...] = ()
-    deprecation: LegalIRDeprecationPolicy = field(
-        default_factory=LegalIRDeprecationPolicy
-    )
+    deprecation: LegalIRDeprecationPolicy = field(default_factory=LegalIRDeprecationPolicy)
     description: str = ""
 
     @property
@@ -247,9 +235,8 @@ class LegalIRSchemaCompatibilityResult:
 
     @property
     def reusable(self) -> bool:
-        return (
-            self.compatibility is LegalIRSchemaCompatibility.COMPATIBLE
-            and not any(issue.severity == "error" for issue in self.issues)
+        return self.compatibility is LegalIRSchemaCompatibility.COMPATIBLE and not any(
+            issue.severity == "error" for issue in self.issues
         )
 
     @property
@@ -455,7 +442,8 @@ class LegalIRSchemaRegistry(Mapping[str, LegalIRSchemaVersion]):
     def manifest(self) -> dict[str, Any]:
         return {
             "feature_gates": [
-                gate.to_dict() for gate in sorted(self._gates.values(), key=lambda item: item.gate_id)
+                gate.to_dict()
+                for gate in sorted(self._gates.values(), key=lambda item: item.gate_id)
             ],
             "migrations": [
                 migration.to_dict()
@@ -660,9 +648,7 @@ def assert_legal_ir_schema_compatible(
     )
     if not result.reusable:
         codes = ",".join(issue.code for issue in result.issues) or result.compatibility.value
-        raise LegalIRSchemaCompatibilityError(
-            f"LegalIR schema compatibility rejected: {codes}"
-        )
+        raise LegalIRSchemaCompatibilityError(f"LegalIR schema compatibility rejected: {codes}")
     return result
 
 
@@ -702,9 +688,7 @@ def migrate_legal_ir_schema(
     )
     if not final_result.reusable:
         codes = ",".join(issue.code for issue in final_result.issues)
-        raise LegalIRSchemaCompatibilityError(
-            f"migrated LegalIR artifact is not reusable: {codes}"
-        )
+        raise LegalIRSchemaCompatibilityError(f"migrated LegalIR artifact is not reusable: {codes}")
     return migrated
 
 
@@ -1405,13 +1389,18 @@ def _lineage_mapping(payload: Mapping[str, Any]) -> dict[str, Any]:
     lineage = payload.get("metric_lineage") or payload.get("lineage")
     result = dict(lineage) if isinstance(lineage, Mapping) else {}
     for key, value in payload.items():
-        if key.endswith("_id") or key.endswith("_ids") or key in {
-            "compiler_commit",
-            "audit_request_ids",
-            "learned_export_id",
-            "proof_receipt_ids",
-            "receipt_ids",
-        }:
+        if (
+            key.endswith("_id")
+            or key.endswith("_ids")
+            or key
+            in {
+                "compiler_commit",
+                "audit_request_ids",
+                "learned_export_id",
+                "proof_receipt_ids",
+                "receipt_ids",
+            }
+        ):
             result.setdefault(str(key), value)
     return result
 

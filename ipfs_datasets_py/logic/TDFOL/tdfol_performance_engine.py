@@ -3,6 +3,7 @@ TDFOL Performance Engine
 
 Business logic for TDFOL performance metrics, profiling, and dashboard generation.
 """
+
 from __future__ import annotations
 
 import json
@@ -16,20 +17,21 @@ try:
     from ipfs_datasets_py.logic.TDFOL.performance_metrics import (
         MetricsCollector,
         get_global_collector,
-        StatisticalSummary
+        StatisticalSummary,
     )
     from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
         PerformanceProfiler,
         ProfilingStats,
         Bottleneck,
-        ReportFormat
+        ReportFormat,
     )
     from ipfs_datasets_py.logic.TDFOL.performance_dashboard import (
         PerformanceDashboard,
-        ProofMetrics
+        ProofMetrics,
     )
     from ipfs_datasets_py.logic.TDFOL.tdfol_prover import TDFOLProver
     from ipfs_datasets_py.logic.TDFOL.tdfol_parser import TDFOLParser
+
     TDFOL_AVAILABLE = True
     IMPORT_ERROR = ""
 except ImportError as e:
@@ -73,8 +75,11 @@ class TDFOLPerformanceEngine:
     def get_metrics(self) -> Dict[str, Any]:
         """Get current TDFOL performance metrics."""
         if not TDFOL_AVAILABLE:
-            return {"error": "TDFOL not available", "details": IMPORT_ERROR,
-                    "suggestion": "Install TDFOL dependencies"}
+            return {
+                "error": "TDFOL not available",
+                "details": IMPORT_ERROR,
+                "suggestion": "Install TDFOL dependencies",
+            }
         try:
             dashboard = self._get_dashboard()
             collector = self._get_collector()
@@ -98,8 +103,11 @@ class TDFOLPerformanceEngine:
             }
         except Exception as e:
             logger.error(f"Failed to get TDFOL metrics: {e}", exc_info=True)
-            return {"error": "Failed to retrieve metrics", "details": str(e),
-                    "suggestion": "Check TDFOL dashboard initialization"}
+            return {
+                "error": "Failed to retrieve metrics",
+                "details": str(e),
+                "suggestion": "Check TDFOL dashboard initialization",
+            }
 
     def profile_operation(
         self,
@@ -118,6 +126,7 @@ class TDFOLPerformanceEngine:
             kb = None
             if kb_formulas:
                 from ipfs_datasets_py.logic.TDFOL.tdfol_optimization import KnowledgeBase
+
                 kb = KnowledgeBase()
                 for kb_formula_str in kb_formulas:
                     kb.add(parser.parse(kb_formula_str))
@@ -149,8 +158,11 @@ class TDFOLPerformanceEngine:
             }
         except Exception as e:
             logger.error(f"Failed to profile operation: {e}", exc_info=True)
-            return {"error": "Profiling failed", "details": str(e),
-                    "suggestion": "Check formula syntax and KB formulas"}
+            return {
+                "error": "Profiling failed",
+                "details": str(e),
+                "suggestion": "Check formula syntax and KB formulas",
+            }
 
     def generate_dashboard(
         self,
@@ -187,8 +199,11 @@ class TDFOLPerformanceEngine:
             return result
         except Exception as e:
             logger.error(f"Failed to generate dashboard: {e}", exc_info=True)
-            return {"error": "Dashboard generation failed", "details": str(e),
-                    "suggestion": "Check permissions and disk space"}
+            return {
+                "error": "Dashboard generation failed",
+                "details": str(e),
+                "suggestion": "Check permissions and disk space",
+            }
 
     def export_statistics(
         self,
@@ -236,8 +251,10 @@ class TDFOLPerformanceEngine:
         try:
             profiler = self._get_profiler()
             if not profiler.history:
-                return {"warning": "No profiling data available",
-                        "suggestion": "Run profile_operation first"}
+                return {
+                    "warning": "No profiling data available",
+                    "suggestion": "Run profile_operation first",
+                }
             latest = profiler.history[-1]
             report: Dict[str, Any] = {
                 "format": report_format,
@@ -247,9 +264,7 @@ class TDFOLPerformanceEngine:
             }
             if report_format == "html":
                 profiler.generate_report(format=ReportFormat.HTML)
-                report["html_path"] = str(
-                    profiler.output_dir / "profiling_report.html"
-                )
+                report["html_path"] = str(profiler.output_dir / "profiling_report.html")
             return report
         except Exception as e:
             logger.error(f"Failed to get profiler report: {e}", exc_info=True)
@@ -279,8 +294,10 @@ class TDFOLPerformanceEngine:
                 if "error" not in result:
                     results[strategy] = result["timing"]
             if not results:
-                return {"error": "No strategies successfully profiled",
-                        "suggestion": "Check formula syntax and strategy names"}
+                return {
+                    "error": "No strategies successfully profiled",
+                    "suggestion": "Check formula syntax and strategy names",
+                }
             best_strategy = min(results.items(), key=lambda x: x[1]["mean_time_ms"])
             worst_strategy = max(results.items(), key=lambda x: x[1]["mean_time_ms"])
             speedup = worst_strategy[1]["mean_time_ms"] / best_strategy[1]["mean_time_ms"]
@@ -318,8 +335,10 @@ class TDFOLPerformanceEngine:
             elif profiler.baseline:
                 baseline = profiler.baseline
             else:
-                return {"warning": "No baseline available",
-                        "suggestion": "Provide baseline_path or run profiler with baseline"}
+                return {
+                    "warning": "No baseline available",
+                    "suggestion": "Provide baseline_path or run profiler with baseline",
+                }
             collector = self._get_collector()
             current_stats = collector.get_statistics()
             regressions = []
@@ -327,17 +346,17 @@ class TDFOLPerformanceEngine:
                 if metric_name in current_stats.get("timing", {}):
                     current_value = current_stats["timing"][metric_name].get("mean", 0)
                     if current_value > baseline_value * (1 + threshold_percent / 100):
-                        regression_percent = (
-                            (current_value - baseline_value) / baseline_value * 100
+                        regression_percent = (current_value - baseline_value) / baseline_value * 100
+                        regressions.append(
+                            {
+                                "metric": metric_name,
+                                "baseline": baseline_value,
+                                "current": current_value,
+                                "regression_percent": regression_percent,
+                                "threshold_percent": threshold_percent,
+                                "severity": "critical" if regression_percent > 20 else "warning",
+                            }
                         )
-                        regressions.append({
-                            "metric": metric_name,
-                            "baseline": baseline_value,
-                            "current": current_value,
-                            "regression_percent": regression_percent,
-                            "threshold_percent": threshold_percent,
-                            "severity": "critical" if regression_percent > 20 else "warning",
-                        })
             result: Dict[str, Any] = {
                 "regressions_found": len(regressions) > 0,
                 "regression_count": len(regressions),
@@ -347,9 +366,7 @@ class TDFOLPerformanceEngine:
                 "current_metrics": len(current_stats.get("timing", {})),
             }
             if regressions:
-                result["recommendation"] = (
-                    f"Investigate {len(regressions)} performance regressions"
-                )
+                result["recommendation"] = f"Investigate {len(regressions)} performance regressions"
             else:
                 result["status"] = "All metrics within baseline threshold"
             return result
@@ -367,6 +384,7 @@ class TDFOLPerformanceEngine:
                 metrics_count = len(self._dashboard.proof_metrics)
             self._dashboard = PerformanceDashboard()
             from ipfs_datasets_py.logic.TDFOL.performance_metrics import reset_global_collector
+
             reset_global_collector()
             self._collector = get_global_collector()
             return {
@@ -402,9 +420,7 @@ class TDFOLPerformanceEngine:
         for operation_name, stats in timing_stats.items():
             if isinstance(stats, dict) and "mean" in stats:
                 safe_name = operation_name.replace(".", "_").replace("-", "_")
-                lines.append(
-                    f'tdfol_operation_mean_ms{{operation="{safe_name}"}} {stats["mean"]}'
-                )
+                lines.append(f'tdfol_operation_mean_ms{{operation="{safe_name}"}} {stats["mean"]}')
                 if "p95" in stats:
                     lines.append(
                         f'tdfol_operation_p95_ms{{operation="{safe_name}"}} {stats["p95"]}'
@@ -421,7 +437,5 @@ class TDFOLPerformanceEngine:
         for operation_name, stats in memory_stats.items():
             if isinstance(stats, dict) and "mean" in stats:
                 safe_name = operation_name.replace(".", "_").replace("-", "_")
-                lines.append(
-                    f'tdfol_memory_mean_mb{{operation="{safe_name}"}} {stats["mean"]}'
-                )
+                lines.append(f'tdfol_memory_mean_mb{{operation="{safe_name}"}} {stats["mean"]}')
         return "\n".join(lines)

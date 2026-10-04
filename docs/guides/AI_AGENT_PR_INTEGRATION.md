@@ -60,7 +60,9 @@ Create a GitHub pull request from an AI agent workflow with automatic attributio
 
 **Example:**
 ```python
-from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import create_ai_agent_pr
+from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import (
+    create_ai_agent_pr,
+)
 
 result = create_ai_agent_pr(
     owner="myorg",
@@ -69,20 +71,16 @@ result = create_ai_agent_pr(
     title="Add new analysis feature",
     description="Implements XYZ analysis functionality",
     changes_summary=[
-        {
-            "file": "analyzer.py",
-            "action": "modified",
-            "description": "Added XYZ analysis method"
-        },
+        {"file": "analyzer.py", "action": "modified", "description": "Added XYZ analysis method"},
         {
             "file": "test_analyzer.py",
             "action": "added",
-            "description": "Added comprehensive tests for XYZ"
-        }
+            "description": "Added comprehensive tests for XYZ",
+        },
     ],
     agent_name="GitHub Copilot",
     labels=["ai-generated", "enhancement"],
-    draft=False
+    draft=False,
 )
 
 if result["success"]:
@@ -111,13 +109,13 @@ result = update_ai_agent_pr(
             {
                 "file": "new_module.py",
                 "action": "added",
-                "description": "New module per review feedback"
+                "description": "New module per review feedback",
             }
         ],
         "add_labels": ["ready-for-review"],
-        "remove_labels": ["draft"]
+        "remove_labels": ["draft"],
     },
-    agent_name="Claude Code"
+    agent_name="Claude Code",
 )
 ```
 
@@ -133,12 +131,11 @@ Analyze code changes before creating a PR.
 **Example:**
 ```python
 result = analyze_code_for_pr(
-    file_paths=["analyzer.py", "test_analyzer.py"],
-    analysis_type="comprehensive"
+    file_paths=["analyzer.py", "test_analyzer.py"], analysis_type="comprehensive"
 )
 
 # Check recommendations
-for rec in result['pr_recommendations']:
+for rec in result["pr_recommendations"]:
     print(f"{rec['type']}: {rec['message']}")
 ```
 
@@ -150,7 +147,9 @@ When using GitHub Copilot with this package as an MCP server:
 
 ```python
 # In your Copilot workspace
-from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import create_ai_agent_pr
+from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import (
+    create_ai_agent_pr,
+)
 
 # After making changes and committing to a branch
 result = create_ai_agent_pr(
@@ -160,7 +159,7 @@ result = create_ai_agent_pr(
     title="Copilot: Add feature X",
     description="Implemented feature X with tests",
     changes_summary=changes,  # Your changes list
-    agent_name="GitHub Copilot"
+    agent_name="GitHub Copilot",
 )
 ```
 
@@ -169,7 +168,9 @@ result = create_ai_agent_pr(
 ```python
 # In Claude Code/MCP session
 import ipfs_datasets_py
-from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import create_ai_agent_pr
+from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import (
+    create_ai_agent_pr,
+)
 
 result = create_ai_agent_pr(
     owner="myorg",
@@ -179,7 +180,7 @@ result = create_ai_agent_pr(
     description="Refactored XYZ module to improve maintainability",
     changes_summary=[...],
     agent_name="Claude Code",
-    draft=True  # Start as draft for human review
+    draft=True,  # Start as draft for human review
 )
 ```
 
@@ -187,7 +188,9 @@ result = create_ai_agent_pr(
 
 ```python
 # In Gemini Code workspace
-from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import create_ai_agent_pr
+from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import (
+    create_ai_agent_pr,
+)
 
 result = create_ai_agent_pr(
     owner="myorg",
@@ -196,7 +199,7 @@ result = create_ai_agent_pr(
     title="Gemini Code: Optimize performance",
     description="Applied performance optimizations",
     changes_summary=[...],
-    agent_name="Gemini Code"
+    agent_name="Gemini Code",
 )
 ```
 
@@ -248,24 +251,23 @@ Complete workflow for AI agents:
 ```python
 from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import (
     analyze_code_for_pr,
-    create_ai_agent_pr
+    create_ai_agent_pr,
 )
 
 # 1. Analyze code changes
 analysis = analyze_code_for_pr(
-    file_paths=["new_file.py", "modified_file.py"],
-    analysis_type="comprehensive"
+    file_paths=["new_file.py", "modified_file.py"], analysis_type="comprehensive"
 )
 
 # 2. Check for issues
-if analysis['issues']:
+if analysis["issues"]:
     print(f"Found {len(analysis['issues'])} issues to fix")
     # Fix issues...
 
 # 3. Create PR with changes
 changes_summary = [
     {"file": "new_file.py", "action": "added", "description": "New module"},
-    {"file": "modified_file.py", "action": "modified", "description": "Updated logic"}
+    {"file": "modified_file.py", "action": "modified", "description": "Updated logic"},
 ]
 
 result = create_ai_agent_pr(
@@ -276,10 +278,10 @@ result = create_ai_agent_pr(
     description="Automated code improvements based on analysis",
     changes_summary=changes_summary,
     agent_name="My AI Agent",
-    labels=["ai-generated", "automated"]
+    labels=["ai-generated", "automated"],
 )
 
-if result['success']:
+if result["success"]:
     print(f"✅ PR created: {result['pr_url']}")
     print(f"PR number: {result.get('pr_number')}")
 ```
@@ -290,7 +292,9 @@ To verify existing tools are working:
 
 ```python
 # Check GitHub CLI
-from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import github_cli_status
+from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import (
+    github_cli_status,
+)
 
 status = github_cli_status()
 print(f"GitHub CLI installed: {status['status']['installed']}")
@@ -298,10 +302,7 @@ print(f"GitHub CLI installed: {status['status']['installed']}")
 # Check test generator
 from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import test_generator
 
-result = test_generator(
-    file_path="my_module.py",
-    test_framework="pytest"
-)
+result = test_generator(file_path="my_module.py", test_framework="pytest")
 print(f"Test generated: {result['success']}")
 
 # Check linting tools
@@ -324,19 +325,23 @@ print(f"Linting completed: {result['success']}")
 
 ### GitHub CLI not installed
 ```python
-from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import github_cli_install
+from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import (
+    github_cli_install,
+)
 
 result = github_cli_install(force=True)
-if result['success']:
+if result["success"]:
     print("GitHub CLI installed successfully")
 ```
 
 ### Authentication issues
 ```python
-from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import github_cli_auth_status
+from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import (
+    github_cli_auth_status,
+)
 
 status = github_cli_auth_status()
-if not status['status']['authenticated']:
+if not status["status"]["authenticated"]:
     print("Please authenticate: gh auth login")
 ```
 

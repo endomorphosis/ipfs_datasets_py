@@ -243,22 +243,21 @@ def test_all_domain_adapters_emit_immutable_source_grounded_shared_contracts() -
         assert isinstance(artifact.source_map, Provenance)
         artifact.source_map.validate()
         assert artifact.formulas
-        bindings = {
-            binding.subject_id: binding
-            for binding in artifact.source_map.bindings
-        }
+        bindings = {binding.subject_id: binding for binding in artifact.source_map.bindings}
         assert all(formula.source_ref_ids for formula in artifact.formulas)
         assert all(
-            set(formula.source_ref_ids)
-            <= set(bindings[formula.formula_id].source_ref_ids)
+            set(formula.source_ref_ids) <= set(bindings[formula.formula_id].source_ref_ids)
             for formula in artifact.formulas
         )
         assert FormalizationSample.from_json(sample.to_json()) == sample
         assert FormalizationArtifact.from_json(artifact.to_json()) == artifact
-        assert adapter.compile(  # type: ignore[attr-defined]
-            sample,
-            adapter.default_config(sample),  # type: ignore[attr-defined]
-        ).digest == artifact.digest
+        assert (
+            adapter.compile(  # type: ignore[attr-defined]
+                sample,
+                adapter.default_config(sample),  # type: ignore[attr-defined]
+            ).digest
+            == artifact.digest
+        )
         with pytest.raises(FrozenInstanceError):
             artifact.domain = "mutated"  # type: ignore[misc]
         artifacts.append(artifact)
@@ -269,9 +268,7 @@ def test_all_domain_adapters_emit_immutable_source_grounded_shared_contracts() -
         "intent",
     }
     assert len({artifact.digest for artifact in artifacts}) == 3
-    view_sets = [
-        set(artifact.view_registry.view_ids) for artifact in artifacts
-    ]
+    view_sets = [set(artifact.view_registry.view_ids) for artifact in artifacts]
     assert all(
         view_sets[left].isdisjoint(view_sets[right])
         for left in range(len(view_sets))
@@ -288,9 +285,7 @@ def test_semantic_mutation_changes_each_domain_artifact_identity() -> None:
         (legal.adapt(_legal_fixture()), legal.adapt(_legal_fixture(predicate="withhold_notice"))),
         (
             security.adapt(_security_fixture()),
-            security.adapt(
-                _security_fixture(statement="All transaction bytes may be signed.")
-            ),
+            security.adapt(_security_fixture(statement="All transaction bytes may be signed.")),
         ),
         (
             intent.compile(_intent_fixture()),
@@ -323,9 +318,10 @@ def test_intent_schema_migration_is_exact_versioned_and_receipted() -> None:
     assert first.receipt.verifies(legacy, first.document.to_dict())
     assert first.source_version == LEGACY_INTENT_IR_SCHEMA_VERSION
     assert first.target_version == first.document.schema_version
-    assert {
-        diagnostic.code for diagnostic in first.diagnostics
-    } >= {"node_grounding_classified", "schema_version_upgraded"}
+    assert {diagnostic.code for diagnostic in first.diagnostics} >= {
+        "node_grounding_classified",
+        "schema_version_upgraded",
+    }
 
 
 def test_non_proof_authority_cannot_issue_a_theorem_receipt() -> None:

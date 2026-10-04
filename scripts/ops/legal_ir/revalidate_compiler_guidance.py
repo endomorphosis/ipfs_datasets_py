@@ -52,9 +52,7 @@ def _load_trust_store(path: Path | None) -> dict[str, str]:
         else:
             secret = str(raw_secret or "")
         if not secret:
-            raise GuidanceReplayError(
-                f"trust store secret is missing for signer {signer_id!r}"
-            )
+            raise GuidanceReplayError(f"trust store secret is missing for signer {signer_id!r}")
         signers[str(signer_id)] = secret
     return signers
 
@@ -84,9 +82,7 @@ def _receipt_lookup(path: Path | None) -> dict[str, Mapping[str, Any]]:
             if isinstance(receipt, Mapping)
         )
     else:
-        raise GuidanceReplayError(
-            "revalidation receipt bundle must contain an object or list"
-        )
+        raise GuidanceReplayError("revalidation receipt bundle must contain an object or list")
     for raw_key, raw_receipt in items:
         if not isinstance(raw_receipt, Mapping):
             raise GuidanceReplayError("each revalidation receipt must be an object")
@@ -215,9 +211,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         trusted_signers = _load_trust_store(args.trust_store)
         receipts = _receipt_lookup(args.revalidation_receipts)
-        expected_reports = (
-            None if args.allow_noncanonical_counts else args.expected_report_count
-        )
+        expected_reports = None if args.allow_noncanonical_counts else args.expected_report_count
         expected_candidates = (
             None if args.allow_noncanonical_counts else args.expected_candidate_count
         )
@@ -244,9 +238,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
 
         def revalidator(report, _context):
-            receipt = receipts.get(report.content_digest) or receipts.get(
-                report.report_id
-            )
+            receipt = receipts.get(report.content_digest) or receipts.get(report.report_id)
             if receipt is None:
                 raise GuidanceReplayError("no current receipt for candidate")
             return receipt

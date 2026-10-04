@@ -69,13 +69,8 @@ def _probe(
 
 
 def test_objective_evidence_and_required_capability_set_are_stable() -> None:
-    assert (
-        capabilities.HSSLEV0125F83()
-        == "runtime capabilities and identities"
-    )
-    assert capabilities.CAPABILITY_INVENTORY_SCHEMA.endswith(
-        "capability-inventory.v1"
-    )
+    assert capabilities.HSSLEV0125F83() == "runtime capabilities and identities"
+    assert capabilities.CAPABILITY_INVENTORY_SCHEMA.endswith("capability-inventory.v1")
     assert {kind.value for kind in capabilities.REQUIRED_CAPABILITY_KINDS} == {
         "spacy_pipeline",
         "symai",
@@ -119,9 +114,7 @@ def test_probe_inventory_contains_exactly_one_record_for_every_kind(
     assert tuple(record.kind for record in inventory.capabilities) == (
         capabilities.REQUIRED_CAPABILITY_KINDS
     )
-    assert set(inventory.by_kind) == set(
-        capabilities.REQUIRED_CAPABILITY_KINDS
-    )
+    assert set(inventory.by_kind) == set(capabilities.REQUIRED_CAPABILITY_KINDS)
     assert all(
         record.status is capabilities.CapabilityStatus.AVAILABLE
         for record in inventory.capabilities
@@ -150,9 +143,7 @@ def test_available_record_requires_identity_and_provenance() -> None:
             identity={},
             provenance=("probe",),
         )
-    with pytest.raises(
-        capabilities.CapabilityContractError, match="provenance"
-    ):
+    with pytest.raises(capabilities.CapabilityContractError, match="provenance"):
         capabilities.CapabilityRecord(
             kind=capabilities.CapabilityKind.HAMMER,
             status=capabilities.CapabilityStatus.AVAILABLE,
@@ -177,9 +168,7 @@ def test_degraded_spacy_preserves_requested_and_effective_identity(
         reason="requested pipeline is absent; blank English fallback is usable",
     )
 
-    record = _probe(tmp_path, probes=probes).by_kind[
-        capabilities.CapabilityKind.SPACY_PIPELINE
-    ]
+    record = _probe(tmp_path, probes=probes).by_kind[capabilities.CapabilityKind.SPACY_PIPELINE]
 
     assert record.status is capabilities.CapabilityStatus.DEGRADED
     assert record.identity["requested_model"] == "en_core_web_sm"
@@ -216,41 +205,28 @@ def test_missing_probe_is_recorded_unavailable_instead_of_omitted(
     del probes[capabilities.CapabilityKind.LEANSTRAL_SERVICE]
 
     inventory = _probe(tmp_path, probes=probes)
-    missing = inventory.by_kind[
-        capabilities.CapabilityKind.LEANSTRAL_SERVICE
-    ]
+    missing = inventory.by_kind[capabilities.CapabilityKind.LEANSTRAL_SERVICE]
 
-    assert len(inventory.capabilities) == len(
-        capabilities.REQUIRED_CAPABILITY_KINDS
-    )
+    assert len(inventory.capabilities) == len(capabilities.REQUIRED_CAPABILITY_KINDS)
     assert missing.status is capabilities.CapabilityStatus.UNAVAILABLE
     assert missing.reason
 
 
 def test_duplicate_and_incomplete_inventory_records_fail_closed() -> None:
-    records = tuple(
-        _record(kind) for kind in capabilities.REQUIRED_CAPABILITY_KINDS
-    )
-    with pytest.raises(
-        capabilities.CapabilityContractError, match="duplicate"
-    ):
+    records = tuple(_record(kind) for kind in capabilities.REQUIRED_CAPABILITY_KINDS)
+    with pytest.raises(capabilities.CapabilityContractError, match="duplicate"):
         capabilities.CapabilityInventory.create(
             "run-001",
             records + (records[0],),
         )
-    with pytest.raises(
-        capabilities.CapabilityContractError, match="missing|exactly"
-    ):
+    with pytest.raises(capabilities.CapabilityContractError, match="missing|exactly"):
         capabilities.CapabilityInventory.create("run-001", records[:-1])
 
 
 def test_inventory_is_deeply_immutable() -> None:
     inventory = capabilities.CapabilityInventory.create(
         "run-001",
-        tuple(
-            _record(kind)
-            for kind in capabilities.REQUIRED_CAPABILITY_KINDS
-        ),
+        tuple(_record(kind) for kind in capabilities.REQUIRED_CAPABILITY_KINDS),
     )
 
     with pytest.raises(FrozenInstanceError):
@@ -275,9 +251,7 @@ def test_inventory_round_trip_is_strict_and_digest_is_canonical() -> None:
         for kind in capabilities.REQUIRED_CAPABILITY_KINDS
     )
     first = capabilities.CapabilityInventory.create("run-001", records)
-    reordered = capabilities.CapabilityInventory.create(
-        "run-001", tuple(reversed(records))
-    )
+    reordered = capabilities.CapabilityInventory.create("run-001", tuple(reversed(records)))
 
     assert first == reordered
     assert capabilities.capability_inventory_sha256(first) == (
@@ -297,10 +271,7 @@ def test_inventory_round_trip_is_strict_and_digest_is_canonical() -> None:
 def test_inventory_deserialization_rejects_unknown_missing_and_invalid_fields() -> None:
     inventory = capabilities.CapabilityInventory.create(
         "run-001",
-        tuple(
-            _record(kind)
-            for kind in capabilities.REQUIRED_CAPABILITY_KINDS
-        ),
+        tuple(_record(kind) for kind in capabilities.REQUIRED_CAPABILITY_KINDS),
     )
     payload = inventory.to_dict()
 
@@ -316,9 +287,7 @@ def test_inventory_deserialization_rejects_unknown_missing_and_invalid_fields() 
 
     bad_status = json.loads(json.dumps(payload))
     bad_status["capabilities"][0]["status"] = "silently_substituted"
-    with pytest.raises(
-        capabilities.CapabilityContractError, match="status|unsupported"
-    ):
+    with pytest.raises(capabilities.CapabilityContractError, match="status|unsupported"):
         capabilities.CapabilityInventory.from_dict(bad_status)
 
     extra_record_field = json.loads(json.dumps(payload))
@@ -336,10 +305,7 @@ def test_secret_redaction_is_recursive_and_sanitizes_endpoint_credentials() -> N
             "password": "hunter2",
             "configured": True,
         },
-        "endpoint": (
-            "https://alice:password@example.test/v1?"
-            "api_key=query-secret&model=leanstral"
-        ),
+        "endpoint": ("https://alice:password@example.test/v1?api_key=query-secret&model=leanstral"),
     }
 
     redacted = capabilities.redact_secrets(raw)
@@ -443,9 +409,7 @@ def test_resource_scheduler_state_must_be_scoped_below_this_run_state(
     tmp_path: Path,
 ) -> None:
     probes = _available_probes()
-    probes[
-        capabilities.CapabilityKind.RESOURCE_SCHEDULER
-    ] = lambda _context: _record(
+    probes[capabilities.CapabilityKind.RESOURCE_SCHEDULER] = lambda _context: _record(
         capabilities.CapabilityKind.RESOURCE_SCHEDULER,
         identity={
             "implementation": "GlobalResourceScheduler",
@@ -483,9 +447,7 @@ def test_run_scoped_cache_and_scheduler_identities_are_accepted(
             identity={
                 "implementation": "GlobalResourceScheduler",
                 "schema": "legal-ir-global-resource-scheduler-v1",
-                "state_path": (
-                    context.run_paths.state / "resource-scheduler.json"
-                ).as_posix(),
+                "state_path": (context.run_paths.state / "resource-scheduler.json").as_posix(),
             },
         )
 
@@ -498,9 +460,7 @@ def test_run_scoped_cache_and_scheduler_identities_are_accepted(
         is capabilities.CapabilityStatus.AVAILABLE
     )
     assert (
-        inventory.by_kind[
-            capabilities.CapabilityKind.RESOURCE_SCHEDULER
-        ].status
+        inventory.by_kind[capabilities.CapabilityKind.RESOURCE_SCHEDULER].status
         is capabilities.CapabilityStatus.AVAILABLE
     )
 

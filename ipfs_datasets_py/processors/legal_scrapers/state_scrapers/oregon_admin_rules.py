@@ -23,7 +23,9 @@ except ImportError:
 _OAR_RULE_RE = re.compile(r"\b\d{3}-\d{3}-\d{4}\b")
 _ORS_CITATION_RE = re.compile(r"\b\d{1,3}\.\d{3}[a-z]?\b", re.IGNORECASE)
 _CHAPTER_ID_RE = re.compile(r"selectedChapter=([0-9]+)")
-_DIVISION_URL_RE = re.compile(r"displayDivisionRules\.action[^\"'\s>]*selectedDivision=[0-9]+", re.IGNORECASE)
+_DIVISION_URL_RE = re.compile(
+    r"displayDivisionRules\.action[^\"'\s>]*selectedDivision=[0-9]+", re.IGNORECASE
+)
 
 
 def _norm_space(value: str) -> str:
@@ -103,7 +105,10 @@ class OregonAdministrativeRulesScraper:
                 return []
             payload = self._decode_json(payload_bytes)
             chapter_ids = self.extract_chapter_ids_from_cdx(payload)
-            return [f"{self.OARD_BASE}/displayChapterRules.action?selectedChapter={cid}" for cid in chapter_ids]
+            return [
+                f"{self.OARD_BASE}/displayChapterRules.action?selectedChapter={cid}"
+                for cid in chapter_ids
+            ]
         except Exception:
             return []
 
@@ -117,7 +122,9 @@ class OregonAdministrativeRulesScraper:
 
     async def _discover_chapter_urls_from_seed(self, seed_url: str) -> List[str]:
         chapter_urls: List[str] = []
-        page_bytes = await self.parent._fetch_page_content_with_archival_fallback(seed_url, timeout_seconds=90)
+        page_bytes = await self.parent._fetch_page_content_with_archival_fallback(
+            seed_url, timeout_seconds=90
+        )
         if not page_bytes:
             return []
 
@@ -368,7 +375,9 @@ class OregonAdministrativeRulesScraper:
                 max_rules = 0
 
         for chapter_url in chapter_urls:
-            chapter_bytes = await self.parent._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
+            chapter_bytes = await self.parent._fetch_page_content_with_archival_fallback(
+                chapter_url, timeout_seconds=90
+            )
             if not chapter_bytes:
                 continue
 
@@ -379,7 +388,9 @@ class OregonAdministrativeRulesScraper:
                 continue
 
             for division_url in division_urls:
-                division_bytes = await self.parent._fetch_page_content_with_archival_fallback(division_url, timeout_seconds=90)
+                division_bytes = await self.parent._fetch_page_content_with_archival_fallback(
+                    division_url, timeout_seconds=90
+                )
                 if not division_bytes:
                     continue
 

@@ -222,9 +222,7 @@ def _executed_multiview_report() -> dict[str, object]:
             "external_prover_router": {
                 "ir_document": {
                     "views": {
-                        "prover_formulas": {
-                            "payload": {"records": [{"source_id": source_id}]}
-                        }
+                        "prover_formulas": {"payload": {"records": [{"source_id": source_id}]}}
                     }
                 },
                 "proof_gate": {
@@ -270,15 +268,15 @@ def test_multiview_projection_uses_only_executed_stages_and_hashes_source_spans(
 
 def test_multiview_projection_aligns_namespaced_tdfol_and_cec_records() -> None:
     report = _executed_multiview_report()
-    report["reports"]["fol_tdfol"]["ir_document"]["views"]["tdfol_formula"][
-        "payload"
-    ]["records"][0]["source_id"] = "deontic:formula-1"
-    report["reports"]["cec_dcec"]["ir_document"]["views"]["cec_events"][
-        "payload"
-    ]["events"][0]["source_id"] = "dcec:event-1"
-    report["reports"]["cec_dcec"]["ir_document"]["views"]["event_calculus"][
-        "payload"
-    ]["records"][0]["source_id"] = "dcec:event-1"
+    report["reports"]["fol_tdfol"]["ir_document"]["views"]["tdfol_formula"]["payload"]["records"][
+        0
+    ]["source_id"] = "deontic:formula-1"
+    report["reports"]["cec_dcec"]["ir_document"]["views"]["cec_events"]["payload"]["events"][0][
+        "source_id"
+    ] = "dcec:event-1"
+    report["reports"]["cec_dcec"]["ir_document"]["views"]["event_calculus"]["payload"]["records"][
+        0
+    ]["source_id"] = "dcec:event-1"
 
     payloads = legal_ir_contract_payloads_from_multiview_report(report)
 
@@ -347,9 +345,9 @@ def test_daemon_summary_and_hammer_artifact_include_stable_contract_fields() -> 
         },
     )
     assert summary["legal_ir_contract_coverage"] == 1.0
-    assert summary["legal_ir_contract_failure_counts"] == aggregate[
-        "legal_ir_contract_failure_counts"
-    ]
+    assert (
+        summary["legal_ir_contract_failure_counts"] == aggregate["legal_ir_contract_failure_counts"]
+    )
     assert summary["legal_ir_contract_view_family_gaps"] == {}
     assert summary["latest_legal_ir_contract_telemetry"][0]["sample_id"] == "sample-3"
 
@@ -377,9 +375,7 @@ def test_modal_ir_projection_uses_provenance_ids_and_reports_unobserved_lanes() 
             ],
             "frame_logic": {
                 "graph_id": "graph-1",
-                "triples": [
-                    {"subject": "agency", "predicate": "acts_on", "object": "record"}
-                ],
+                "triples": [{"subject": "agency", "predicate": "acts_on", "object": "record"}],
             },
         },
     }
@@ -442,9 +438,7 @@ def test_daemon_cycle_persists_and_embeds_per_sample_contract_telemetry(
             {
                 "adapter_count": 5,
                 "bridge_failures": {},
-                "contract_view_counts": {
-                    name: 1 for name in _views()
-                },
+                "contract_view_counts": {name: 1 for name in _views()},
                 "document_hash": "contract-projection-unit",
             },
         ),
@@ -473,13 +467,9 @@ def test_daemon_cycle_persists_and_embeds_per_sample_contract_telemetry(
     assert report["legal_ir_contract_coverage"] == 1.0
     assert report["legal_ir_contract_failure_counts"]["missing_required_fields"] == 0
     assert report["legal_ir_contract_view_family_gaps"] == {}
-    embedded = report["hammer_guidance_artifacts"][0][
-        "legal_ir_contract_telemetry"
-    ]
+    embedded = report["hammer_guidance_artifacts"][0]["legal_ir_contract_telemetry"]
     assert embedded["sample_id"] == "daemon-sample:metric-prefix:unit"
     assert embedded["source_references"] == ["prov:sha256:111"]
     persisted = json.loads(Path(report["output_path"]).read_text(encoding="utf-8"))
     assert persisted["legal_ir_contract_coverage"] == 1.0
-    assert persisted["hammer_guidance_artifacts"][0][
-        "legal_ir_contract_telemetry"
-    ] == embedded
+    assert persisted["hammer_guidance_artifacts"][0]["legal_ir_contract_telemetry"] == embedded

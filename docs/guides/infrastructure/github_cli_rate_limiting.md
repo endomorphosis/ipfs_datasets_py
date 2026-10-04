@@ -94,7 +94,7 @@ status = manager.get_active_agents()
 print(f"Active agents: {status['total']}")
 
 # Get available capacity
-available = status['available_slots']
+available = status["available_slots"]
 ```
 
 ### 3. Throttled Copilot Invoker
@@ -280,6 +280,7 @@ du -sh ~/.gh_cache/
 1. Check active agents:
    ```python
    from scripts.queue_manager import QueueManager
+
    manager = QueueManager(max_agents=3)
    print(manager.get_active_agents())
    ```

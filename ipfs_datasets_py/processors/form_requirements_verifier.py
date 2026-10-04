@@ -38,14 +38,15 @@ logger = logging.getLogger(__name__)
 # Result types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FieldVerificationResult:
     """Proof outcome for a single deontic formula / field obligation."""
 
     formula_id: str
     proposition: str
-    field_name: str          # extracted from formula variables["field"] if available
-    status: str              # "satisfied" | "violated" | "skipped" | "error"
+    field_name: str  # extracted from formula variables["field"] if available
+    status: str  # "satisfied" | "violated" | "skipped" | "error"
     prover: str
     proof_output: str = ""
     errors: List[str] = field(default_factory=list)
@@ -136,6 +137,7 @@ def _dataclass_asdict_unused(obj: Any) -> Any:
 # FormRequirementsVerifier
 # ---------------------------------------------------------------------------
 
+
 class FormRequirementsVerifier:
     """Verify that a set of field values satisfies all deontic obligations.
 
@@ -163,6 +165,7 @@ class FormRequirementsVerifier:
             from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
                 ProofExecutionEngine,
             )
+
             self._engine = ProofExecutionEngine(timeout=self.timeout)
         return self._engine
 
@@ -222,7 +225,7 @@ class FormRequirementsVerifier:
             return []
 
         records: List[ConflictRecord] = []
-        for f1, f2, description in (raw_conflicts or []):
+        for f1, f2, description in raw_conflicts or []:
             records.append(
                 ConflictRecord(
                     formula_id_a=f1.formula_id,
@@ -265,30 +268,32 @@ class FormRequirementsVerifier:
             engine = self._get_engine()
         except ImportError:
             logger.warning("ProofExecutionEngine unavailable; returning lightweight report")
-            return self._lightweight_verify(values, rule_set, form_id=form_id, source_pdf=source_pdf)
+            return self._lightweight_verify(
+                values, rule_set, form_id=form_id, source_pdf=source_pdf
+            )
 
         results: List[FieldVerificationResult] = []
         overall_pass = True
 
-        for formula in (rule_set.formulas or []):
+        for formula in rule_set.formulas or []:
             instantiated = self._instantiate_formula(formula, values)
             field_name = formula.variables.get("field", "")
 
             # Check if the obligation condition is flagged as violated
-            violated_inline = any(
-                "violated:" in cond for cond in instantiated.conditions
-            )
+            violated_inline = any("violated:" in cond for cond in instantiated.conditions)
             if violated_inline:
                 status = "violated"
                 overall_pass = False
-                results.append(FieldVerificationResult(
-                    formula_id=formula.formula_id,
-                    proposition=instantiated.proposition,
-                    field_name=field_name,
-                    status=status,
-                    prover="inline",
-                    errors=[c for c in instantiated.conditions if "violated:" in c],
-                ))
+                results.append(
+                    FieldVerificationResult(
+                        formula_id=formula.formula_id,
+                        proposition=instantiated.proposition,
+                        field_name=field_name,
+                        status=status,
+                        prover="inline",
+                        errors=[c for c in instantiated.conditions if "violated:" in c],
+                    )
+                )
                 continue
 
             t0 = time.time()
@@ -298,7 +303,10 @@ class FormRequirementsVerifier:
                     prover=self.prover,
                 )
                 elapsed = time.time() - t0
-                from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+                from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+                    ProofStatus,
+                )
+
                 if proof_result.status == ProofStatus.SUCCESS:
                     status = "satisfied"
                 elif proof_result.status == ProofStatus.FAILURE:
@@ -309,28 +317,32 @@ class FormRequirementsVerifier:
                     # TIMEOUT, ERROR, UNSUPPORTED — cannot determine; skip rather than fail
                     status = "skipped"
 
-                results.append(FieldVerificationResult(
-                    formula_id=formula.formula_id,
-                    proposition=instantiated.proposition,
-                    field_name=field_name,
-                    status=status,
-                    prover=proof_result.prover,
-                    proof_output=proof_result.proof_output,
-                    errors=proof_result.errors,
-                    execution_time=elapsed,
-                ))
+                results.append(
+                    FieldVerificationResult(
+                        formula_id=formula.formula_id,
+                        proposition=instantiated.proposition,
+                        field_name=field_name,
+                        status=status,
+                        prover=proof_result.prover,
+                        proof_output=proof_result.proof_output,
+                        errors=proof_result.errors,
+                        execution_time=elapsed,
+                    )
+                )
             except Exception as exc:
                 elapsed = time.time() - t0
                 logger.warning("Proof execution error for formula %s: %s", formula.formula_id, exc)
-                results.append(FieldVerificationResult(
-                    formula_id=formula.formula_id,
-                    proposition=instantiated.proposition,
-                    field_name=field_name,
-                    status="error",
-                    prover=self.prover,
-                    errors=[str(exc)],
-                    execution_time=elapsed,
-                ))
+                results.append(
+                    FieldVerificationResult(
+                        formula_id=formula.formula_id,
+                        proposition=instantiated.proposition,
+                        field_name=field_name,
+                        status="error",
+                        prover=self.prover,
+                        errors=[str(exc)],
+                        execution_time=elapsed,
+                    )
+                )
 
         conflicts = self._detect_conflicts(rule_set)
         if conflicts:
@@ -368,9 +380,12 @@ class FormRequirementsVerifier:
         results: List[FieldVerificationResult] = []
         overall_pass = True
 
-        for formula in (getattr(rule_set, "formulas", None) or []):
+        for formula in getattr(rule_set, "formulas", None) or []:
             try:
-                from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+                from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+                    DeonticOperator,
+                )
+
                 is_obligation = formula.operator == DeonticOperator.OBLIGATION
             except Exception:
                 is_obligation = True  # assume obligation when unsure
@@ -387,14 +402,16 @@ class FormRequirementsVerifier:
                 status = "satisfied"
                 errors = []
 
-            results.append(FieldVerificationResult(
-                formula_id=getattr(formula, "formula_id", ""),
-                proposition=getattr(formula, "proposition", str(formula)),
-                field_name=field_name,
-                status=status,
-                prover="lightweight",
-                errors=errors,
-            ))
+            results.append(
+                FieldVerificationResult(
+                    formula_id=getattr(formula, "formula_id", ""),
+                    proposition=getattr(formula, "proposition", str(formula)),
+                    field_name=field_name,
+                    status=status,
+                    prover="lightweight",
+                    errors=errors,
+                )
+            )
 
         conflicts = self._detect_conflicts(rule_set)
         if conflicts:

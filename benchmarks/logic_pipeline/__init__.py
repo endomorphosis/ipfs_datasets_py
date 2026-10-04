@@ -22,14 +22,10 @@ from typing import Final, Iterator
 BENCHMARK_ID: Final = "hammer-symai-spacy-leanstral"
 """Stable identifier used in manifests and cache namespaces."""
 
-SMOKE_MANIFEST_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.smoke-manifest.v1"
-)
+SMOKE_MANIFEST_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.smoke-manifest.v1"
 """Schema identifier for the deterministic package smoke manifest."""
 
-DEFAULT_BENCHMARK_ROOT: Final = (
-    Path("workspace") / "benchmarks" / BENCHMARK_ID
-)
+DEFAULT_BENCHMARK_ROOT: Final = Path("workspace") / "benchmarks" / BENCHMARK_ID
 """Base directory below which a required run id scopes all mutable data."""
 
 SMOKE_VARIANTS: Final = ("A0", "A1", "A7", "A8")
@@ -140,10 +136,7 @@ class RunPaths:
 
         return {
             "run_root": self.run_root.as_posix(),
-            **{
-                name: getattr(self, name).as_posix()
-                for name in RUN_DIRECTORY_NAMES
-            },
+            **{name: getattr(self, name).as_posix() for name in RUN_DIRECTORY_NAMES},
         }
 
     def materialize(self, *, mode: int = 0o700) -> None:
@@ -182,8 +175,7 @@ class ExecutionDefaults:
         )
         object.__setattr__(self, "variants", tuple(self.variants))
         if not self.variants or any(
-            not isinstance(variant, str) or not variant
-            for variant in self.variants
+            not isinstance(variant, str) or not variant for variant in self.variants
         ):
             raise ValueError("variants must contain at least one nonempty id")
         if len(set(self.variants)) != len(self.variants):

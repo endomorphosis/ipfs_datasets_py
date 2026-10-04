@@ -19,10 +19,17 @@ from pathlib import Path
 TEST_MODEL_NAME = "test-model"  # Example model name for testing
 
 # Import the tools from their new locations
-from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.embedding_tools import EmbeddingGenerationTool, BatchEmbeddingTool, MultimodalEmbeddingTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.embedding_tools import (
+    EmbeddingGenerationTool,
+    BatchEmbeddingTool,
+    MultimodalEmbeddingTool,
+)
+
 # Assuming storage tools are also migrated to ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools
 # from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.storage_tools import save_embeddings_tool, load_embeddings_tool # Assuming storage tools are migrated
-from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.search_tools import SemanticSearchTool # Removed BatchSearchTool as it's not in the migrated code
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.search_tools import (
+    SemanticSearchTool,
+)  # Removed BatchSearchTool as it's not in the migrated code
 
 # Assuming get_supported_models is available or mocked
 # from ipfs_datasets_py.embeddings.models import get_supported_models # Example updated import
@@ -31,53 +38,63 @@ from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.search_tools import Sema
 @pytest.mark.asyncio
 class TestEmbeddingTools:
     """Test suite for embedding MCP tools."""
-    
+
     # Patch the actual service path in the current project
-    @patch('ipfs_datasets_py.embeddings.create_embeddings.create_embeddings') # Updated patch target
-    async def test_generate_embedding_tool(self, mock_service_class, mock_embedding_service): # Renamed test to match tool
+    @patch(
+        "ipfs_datasets_py.embeddings.create_embeddings.create_embeddings"
+    )  # Updated patch target
+    async def test_generate_embedding_tool(
+        self, mock_service_class, mock_embedding_service
+    ):  # Renamed test to match tool
         """Test generating a single embedding from text."""
         # Instantiate the tool
         embedding_tool = EmbeddingGenerationTool(mock_embedding_service)
-        
+
         text = "Hello world"
-        
+
         # Call the execute method of the tool instance
         result = await embedding_tool.execute(
-            parameters={ # Pass parameters as a dictionary
+            parameters={  # Pass parameters as a dictionary
                 "text": text,
                 "model": TEST_MODEL_NAME,
-                "normalize": True
+                "normalize": True,
             }
         )
-        
+
         assert result["text"] == text
         assert result["model"] == TEST_MODEL_NAME
         assert "embedding" in result
         assert "dimension" in result
         assert result["normalized"] is True
-        
-        # Verify service was called correctly
-        mock_embedding_service.generate_embedding.assert_called_once_with(text, TEST_MODEL_NAME, True) # Updated mock method and arguments
 
-    @patch('ipfs_datasets_py.embeddings.create_embeddings.create_embeddings') # Updated patch target
-    async def test_generate_batch_embeddings_tool(self, mock_service_class, mock_embedding_service): # Renamed test to match tool
+        # Verify service was called correctly
+        mock_embedding_service.generate_embedding.assert_called_once_with(
+            text, TEST_MODEL_NAME, True
+        )  # Updated mock method and arguments
+
+    @patch(
+        "ipfs_datasets_py.embeddings.create_embeddings.create_embeddings"
+    )  # Updated patch target
+    async def test_generate_batch_embeddings_tool(
+        self, mock_service_class, mock_embedding_service
+    ):  # Renamed test to match tool
         """Test generating embeddings for multiple texts in batch."""
         # Instantiate the tool
         batch_embedding_tool = BatchEmbeddingTool(mock_embedding_service)
-        
+
         texts = ["Text 1", "Text 2", "Text 3"]
         batch_size = 2
-        
+
         # Call the execute method of the tool instance
         result = await batch_embedding_tool.execute(
-            parameters={ # Pass parameters as a dictionary
+            parameters={  # Pass parameters as a dictionary
                 "texts": texts,
                 "model": TEST_MODEL_NAME,
                 "normalize": True,
-                "batch_size": batch_size
+                "batch_size": batch_size,
             }
         )
-        
+
         assert result["texts"] == texts
         assert result["model"] == TEST_MODEL_NAME
         assert "embeddings" in result
@@ -85,9 +102,11 @@ class TestEmbeddingTools:
         assert "dimension" in result
         assert result["normalized"] is True
         assert result["batch_size"] == batch_size
-        
+
         # Verify service was called correctly
-        mock_embedding_service.generate_batch_embeddings.assert_called_once_with(texts, TEST_MODEL_NAME, True, batch_size) # Updated mock method and arguments
+        mock_embedding_service.generate_batch_embeddings.assert_called_once_with(
+            texts, TEST_MODEL_NAME, True, batch_size
+        )  # Updated mock method and arguments
 
     # Note: The original test `test_create_embeddings_from_file_tool` and `test_batch_create_embeddings_tool`
     # seem to be testing functions that are not directly exposed as MCP tools in the migrated structure.
@@ -96,8 +115,12 @@ class TestEmbeddingTools:
     # The `create_embeddings_from_file_tool_invalid_file` test is also for a non-migrated function.
 
     # Add a test for MultimodalEmbeddingTool
-    @patch('ipfs_datasets_py.embeddings.create_embeddings.create_embeddings') # Updated patch target
-    async def test_generate_multimodal_embedding_tool(self, mock_service_class, mock_embedding_service):
+    @patch(
+        "ipfs_datasets_py.embeddings.create_embeddings.create_embeddings"
+    )  # Updated patch target
+    async def test_generate_multimodal_embedding_tool(
+        self, mock_service_class, mock_embedding_service
+    ):
         """Test generating multimodal embeddings."""
         # Instantiate the tool
         multimodal_embedding_tool = MultimodalEmbeddingTool(mock_embedding_service)
@@ -111,7 +134,7 @@ class TestEmbeddingTools:
                 "content": content,
                 "model": model,
                 "fusion_strategy": fusion_strategy,
-                "normalize": True
+                "normalize": True,
             }
         )
 
@@ -124,8 +147,9 @@ class TestEmbeddingTools:
         assert "modalities" in result
 
         # Verify service was called correctly
-        mock_embedding_service.generate_multimodal_embedding.assert_called_once_with(content, model, fusion_strategy, True)
-
+        mock_embedding_service.generate_multimodal_embedding.assert_called_once_with(
+            content, model, fusion_strategy, True
+        )
 
     # Note: The original `test_list_available_models_tool` and `test_compare_embeddings_tool`
     # are for functions that might not be directly part of the core embedding service
@@ -200,6 +224,7 @@ class TestEmbeddingTools:
 @pytest.mark.asyncio
 class TestStorageTools:
     """Test suite for storage-related MCP tools."""
+
     # Note: Storage tools are not part of the initial core migration scope.
     # I will comment out these tests for now and address them if storage features are integrated later.
 
@@ -279,26 +304,34 @@ class TestSearchTools:
     """Test suite for search-related MCP tools."""
 
     # Patch the actual service path in the current project
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Updated patch target
-    async def test_semantic_search_tool(self, mock_service_class, mock_vector_service): # Updated mock fixture name
+    @patch("ipfs_datasets_py.search.search_embeddings.search_embeddings")  # Updated patch target
+    async def test_semantic_search_tool(
+        self, mock_service_class, mock_vector_service
+    ):  # Updated mock fixture name
         """Test semantic search functionality."""
         # Instantiate the tool
-        semantic_search_tool_instance = SemanticSearchTool(mock_vector_service) # Instantiate the tool
+        semantic_search_tool_instance = SemanticSearchTool(
+            mock_vector_service
+        )  # Instantiate the tool
 
-        mock_service_class.return_value = mock_vector_service # Ensure the patch returns the mock vector service
+        mock_service_class.return_value = (
+            mock_vector_service  # Ensure the patch returns the mock vector service
+        )
 
         query = "test query"
         top_k = 5
-        collection = "test_index" # Renamed from index_id to match tool schema
-        filter_metadata = {"category": "documents"} # Renamed from filter_metadata to match tool schema
+        collection = "test_index"  # Renamed from index_id to match tool schema
+        filter_metadata = {
+            "category": "documents"
+        }  # Renamed from filter_metadata to match tool schema
 
         # Call the execute method of the tool instance
-        result = await semantic_search_tool_instance.execute( # Updated call
-            parameters={ # Pass parameters as a dictionary
+        result = await semantic_search_tool_instance.execute(  # Updated call
+            parameters={  # Pass parameters as a dictionary
                 "query": query,
                 "top_k": top_k,
                 "collection": collection,
-                "filters": filter_metadata # Updated parameter name
+                "filters": filter_metadata,  # Updated parameter name
             }
         )
 
@@ -310,8 +343,7 @@ class TestSearchTools:
 
         # Verify service was called correctly
         # The semantic search tool calls index_knn on the vector service
-        #mock_vector_service.index_knn.assert_called_once_with([query], ANY) # Updated mock method and arguments (ANY for model)
-
+        # mock_vector_service.index_knn.assert_called_once_with([query], ANY) # Updated mock method and arguments (ANY for model)
 
     # Note: The original `test_batch_search_tool` and `test_search_tool_metadata_structure`
     # are for functions/metadata that might not be directly part of the core search service

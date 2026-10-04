@@ -26,7 +26,13 @@ class TestEnhancement12ToolsAvailability:
         WHEN checking if it exists
         THEN it should be found
         """
-        tools_path = Path(__file__).parent.parent.parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "legal_dataset_tools"
+        tools_path = (
+            Path(__file__).parent.parent.parent
+            / "ipfs_datasets_py"
+            / "mcp_server"
+            / "tools"
+            / "legal_dataset_tools"
+        )
         assert tools_path.exists(), "Legal dataset tools directory should exist"
         assert tools_path.is_dir(), "Legal dataset tools path should be a directory"
 
@@ -36,11 +42,17 @@ class TestEnhancement12ToolsAvailability:
         WHEN listing Enhancement 12 tool files
         THEN it should contain all 8 tool modules
         """
-        tools_path = Path(__file__).parent.parent.parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "legal_dataset_tools"
-        
+        tools_path = (
+            Path(__file__).parent.parent.parent
+            / "ipfs_datasets_py"
+            / "mcp_server"
+            / "tools"
+            / "legal_dataset_tools"
+        )
+
         if not tools_path.exists():
             pytest.skip("Legal dataset tools directory not found")
-        
+
         expected_tools = [
             "multi_engine_legal_search.py",
             "enhanced_query_expander.py",
@@ -49,9 +61,9 @@ class TestEnhancement12ToolsAvailability:
             "legal_graphrag_tool.py",
             "multilanguage_support_tool.py",
             "regulation_version_tracker_tool.py",
-            "legal_report_generator_tool.py"
+            "legal_report_generator_tool.py",
         ]
-        
+
         for tool_file in expected_tools:
             tool_path = tools_path / tool_file
             assert tool_path.exists(), f"Tool file {tool_file} should exist"
@@ -69,8 +81,9 @@ class TestMultiEngineLegalSearchTool:
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.multi_engine_legal_search import (
                 multi_engine_legal_search,
-                get_multi_engine_stats
+                get_multi_engine_stats,
             )
+
             assert multi_engine_legal_search is not None
             assert get_multi_engine_stats is not None
         except ImportError as e:
@@ -85,15 +98,13 @@ class TestMultiEngineLegalSearchTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.multi_engine_legal_search import (
-                multi_engine_legal_search
+                multi_engine_legal_search,
             )
-            
+
             result = await multi_engine_legal_search(
-                query="",
-                engines=["duckduckgo"],
-                max_results=5
+                query="", engines=["duckduckgo"], max_results=5
             )
-            
+
             assert result["status"] == "error"
             assert "message" in result
         except ImportError:
@@ -113,8 +124,9 @@ class TestEnhancedQueryExpanderTool:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.enhanced_query_expander import (
                 expand_legal_query,
                 get_legal_synonyms,
-                get_legal_relationships
+                get_legal_relationships,
             )
+
             assert expand_legal_query is not None
             assert get_legal_synonyms is not None
             assert get_legal_relationships is not None
@@ -130,15 +142,13 @@ class TestEnhancedQueryExpanderTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.enhanced_query_expander import (
-                expand_legal_query
+                expand_legal_query,
             )
-            
+
             result = await expand_legal_query(
-                query="EPA regulations",
-                strategy="balanced",
-                max_expansions=3
+                query="EPA regulations", strategy="balanced", max_expansions=3
             )
-            
+
             assert "status" in result
             if result["status"] == "success":
                 assert "expanded_queries" in result or "original_query" in result
@@ -158,8 +168,9 @@ class TestResultFilterTool:
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.result_filter import (
                 filter_legal_results,
-                get_filter_statistics
+                get_filter_statistics,
             )
+
             assert filter_legal_results is not None
             assert get_filter_statistics is not None
         except ImportError as e:
@@ -174,14 +185,11 @@ class TestResultFilterTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.result_filter import (
-                filter_legal_results
+                filter_legal_results,
             )
-            
-            result = await filter_legal_results(
-                results=[],
-                min_quality_score=0.5
-            )
-            
+
+            result = await filter_legal_results(results=[], min_quality_score=0.5)
+
             assert result["status"] == "error"
             assert "message" in result
         except ImportError:
@@ -196,19 +204,16 @@ class TestResultFilterTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.result_filter import (
-                filter_legal_results
+                filter_legal_results,
             )
-            
+
             sample_results = [
                 {"url": "https://example.gov/reg1", "title": "Test Reg 1", "snippet": "Content 1"},
-                {"url": "https://example.gov/reg2", "title": "Test Reg 2", "snippet": "Content 2"}
+                {"url": "https://example.gov/reg2", "title": "Test Reg 2", "snippet": "Content 2"},
             ]
-            
-            result = await filter_legal_results(
-                results=sample_results,
-                min_quality_score=0.0
-            )
-            
+
+            result = await filter_legal_results(results=sample_results, min_quality_score=0.0)
+
             assert "status" in result
             if result["status"] == "success":
                 assert "filtered_results" in result
@@ -230,8 +235,9 @@ class TestCitationExtractionTool:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.citation_extraction_tool import (
                 extract_legal_citations,
                 export_citations,
-                analyze_citation_network
+                analyze_citation_network,
             )
+
             assert extract_legal_citations is not None
             assert export_citations is not None
             assert analyze_citation_network is not None
@@ -252,8 +258,9 @@ class TestLegalGraphRAGTool:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_graphrag_tool import (
                 create_legal_knowledge_graph,
                 search_legal_graph,
-                visualize_legal_graph
+                visualize_legal_graph,
             )
+
             assert create_legal_knowledge_graph is not None
             assert search_legal_graph is not None
             assert visualize_legal_graph is not None
@@ -275,8 +282,9 @@ class TestMultiLanguageSupportTool:
                 detect_query_language,
                 translate_legal_query,
                 cross_language_legal_search,
-                get_legal_term_translations
+                get_legal_term_translations,
             )
+
             assert detect_query_language is not None
             assert translate_legal_query is not None
             assert cross_language_legal_search is not None
@@ -293,11 +301,11 @@ class TestMultiLanguageSupportTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.multilanguage_support_tool import (
-                detect_query_language
+                detect_query_language,
             )
-            
+
             result = await detect_query_language(query="")
-            
+
             assert result["status"] == "error"
             assert "message" in result
         except ImportError:
@@ -312,11 +320,11 @@ class TestMultiLanguageSupportTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.multilanguage_support_tool import (
-                detect_query_language
+                detect_query_language,
             )
-            
+
             result = await detect_query_language(query="EPA regulations")
-            
+
             assert "status" in result
             if result["status"] == "success":
                 assert "detected_language" in result
@@ -338,8 +346,9 @@ class TestRegulationVersionTrackerTool:
                 track_regulation_version,
                 get_regulation_at_date,
                 get_regulation_changes,
-                get_regulation_timeline
+                get_regulation_timeline,
             )
+
             assert track_regulation_version is not None
             assert get_regulation_at_date is not None
             assert get_regulation_changes is not None
@@ -356,15 +365,13 @@ class TestRegulationVersionTrackerTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.regulation_version_tracker_tool import (
-                track_regulation_version
+                track_regulation_version,
             )
-            
+
             result = await track_regulation_version(
-                regulation_id="",
-                content="test",
-                effective_date="2024-01-01"
+                regulation_id="", content="test", effective_date="2024-01-01"
             )
-            
+
             assert result["status"] == "error"
             assert "message" in result
         except ImportError:
@@ -385,8 +392,9 @@ class TestLegalReportGeneratorTool:
                 generate_legal_report,
                 export_legal_report,
                 generate_compliance_checklist,
-                schedule_report_generation
+                schedule_report_generation,
             )
+
             assert generate_legal_report is not None
             assert export_legal_report is not None
             assert generate_compliance_checklist is not None
@@ -403,14 +411,11 @@ class TestLegalReportGeneratorTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
-                generate_legal_report
+                generate_legal_report,
             )
-            
-            result = await generate_legal_report(
-                search_results=[],
-                template="research"
-            )
-            
+
+            result = await generate_legal_report(search_results=[], template="research")
+
             assert result["status"] == "error"
             assert "message" in result
         except ImportError:
@@ -425,20 +430,18 @@ class TestLegalReportGeneratorTool:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
-                generate_legal_report
+                generate_legal_report,
             )
-            
+
             sample_results = [
                 {"url": "https://example.gov/reg1", "title": "Test Reg 1", "snippet": "Content 1"},
-                {"url": "https://example.gov/reg2", "title": "Test Reg 2", "snippet": "Content 2"}
+                {"url": "https://example.gov/reg2", "title": "Test Reg 2", "snippet": "Content 2"},
             ]
-            
+
             result = await generate_legal_report(
-                search_results=sample_results,
-                template="research",
-                title="Test Report"
+                search_results=sample_results, template="research", title="Test Report"
             )
-            
+
             assert "status" in result
             if result["status"] == "success":
                 assert "report" in result or "title" in result
@@ -449,17 +452,25 @@ class TestLegalReportGeneratorTool:
 class TestThinWrapperPattern:
     """Test that all tools follow the thin wrapper pattern"""
 
-    def test_given_enhancement12_tools_when_checking_structure_then_follow_thin_wrapper_pattern(self):
+    def test_given_enhancement12_tools_when_checking_structure_then_follow_thin_wrapper_pattern(
+        self,
+    ):
         """
         GIVEN all Enhancement 12 tools
         WHEN checking their structure
         THEN they should follow thin wrapper pattern (imports from core processors)
         """
-        tools_path = Path(__file__).parent.parent.parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "legal_dataset_tools"
-        
+        tools_path = (
+            Path(__file__).parent.parent.parent
+            / "ipfs_datasets_py"
+            / "mcp_server"
+            / "tools"
+            / "legal_dataset_tools"
+        )
+
         if not tools_path.exists():
             pytest.skip("Legal dataset tools directory not found")
-        
+
         enhancement12_tools = [
             "multi_engine_legal_search.py",
             "enhanced_query_expander.py",
@@ -468,26 +479,25 @@ class TestThinWrapperPattern:
             "legal_graphrag_tool.py",
             "multilanguage_support_tool.py",
             "regulation_version_tracker_tool.py",
-            "legal_report_generator_tool.py"
+            "legal_report_generator_tool.py",
         ]
-        
+
         for tool_file in enhancement12_tools:
             tool_path = tools_path / tool_file
-            
+
             if not tool_path.exists():
                 continue
-            
-            with open(tool_path, 'r') as f:
+
+            with open(tool_path, "r") as f:
                 content = f.read()
-            
+
             # Check for import from processors.legal_scrapers
-            assert "from ipfs_datasets_py.processors.legal_scrapers import" in content, \
+            assert "from ipfs_datasets_py.processors.legal_scrapers import" in content, (
                 f"{tool_file} should import from processors.legal_scrapers"
-            
+            )
+
             # Check for async functions
-            assert "async def " in content, \
-                f"{tool_file} should contain async functions"
-            
+            assert "async def " in content, f"{tool_file} should contain async functions"
+
             # Check for docstrings
-            assert '"""' in content, \
-                f"{tool_file} should contain docstrings"
+            assert '"""' in content, f"{tool_file} should contain docstrings"

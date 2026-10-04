@@ -85,9 +85,15 @@ def _candidate_score(row: Dict[str, Any]) -> int:
         score += 40
     if "efiles.portlandoregon.gov" in url and "/file/document" in url:
         score += 35
-    if any(term in url for term in ("ordinance", "charter", "code", "pcc", "title", "chapter", "zoning")):
+    if any(
+        term in url
+        for term in ("ordinance", "charter", "code", "pcc", "title", "chapter", "zoning")
+    ):
         score += 25
-    if any(term in url for term in ("title33", "title%2033", "zoning%20code", "planning%20and%20zoning")):
+    if any(
+        term in url
+        for term in ("title33", "title%2033", "zoning%20code", "planning%20and%20zoning")
+    ):
         score += 25
     if "/archives/39969" in url:
         score -= 25
@@ -114,7 +120,9 @@ def _list_candidates(
     if not parquet_files:
         raise RuntimeError(f"No local municipal parquet files found under {municipal_dir}")
 
-    relation = "read_parquet([" + ", ".join(_sql_literal(str(path)) for path in parquet_files) + "])"
+    relation = (
+        "read_parquet([" + ", ".join(_sql_literal(str(path)) for path in parquet_files) + "])"
+    )
     filters = []
     if place_name:
         place = place_name.lower().removeprefix("city of ").strip()
@@ -124,9 +132,21 @@ def _list_candidates(
     if gnis:
         filters.append(f"gnis = {_sql_literal(gnis)}")
     if url_terms:
-        filters.append("(" + " OR ".join(f"lower(url) LIKE {_sql_literal('%' + term.lower() + '%')}" for term in url_terms) + ")")
+        filters.append(
+            "("
+            + " OR ".join(
+                f"lower(url) LIKE {_sql_literal('%' + term.lower() + '%')}" for term in url_terms
+            )
+            + ")"
+        )
     if mime_terms:
-        filters.append("(" + " OR ".join(f"lower(mime) LIKE {_sql_literal('%' + term.lower() + '%')}" for term in mime_terms) + ")")
+        filters.append(
+            "("
+            + " OR ".join(
+                f"lower(mime) LIKE {_sql_literal('%' + term.lower() + '%')}" for term in mime_terms
+            )
+            + ")"
+        )
     where = " AND ".join(filters) if filters else "TRUE"
     sql = f"""
         SELECT domain, url, collection, timestamp, mime, status,
@@ -142,7 +162,10 @@ def _list_candidates(
     rows = [dict(row) for row in duckdb.connect().execute(sql).fetchdf().to_dict("records")]
     for row in rows:
         row["candidate_score"] = _candidate_score(row)
-    rows.sort(key=lambda row: (int(row.get("candidate_score") or 0), str(row.get("timestamp") or "")), reverse=True)
+    rows.sort(
+        key=lambda row: (int(row.get("candidate_score") or 0), str(row.get("timestamp") or "")),
+        reverse=True,
+    )
 
     output_root.mkdir(parents=True, exist_ok=True)
     parquet_path = _write_records_parquet(output_root / "candidate_pointers.parquet", rows)
@@ -243,25 +266,73 @@ def _parse_args() -> argparse.Namespace:
             "records, parse archived HTML, and write extracted municipal-law pages."
         )
     )
-    parser.add_argument("--jurisdiction", default="Portland, OR", help='Human label such as "Portland, OR".')
-    parser.add_argument("--url", default="https://www.portland.gov/code", help="Seed/current municipal code URL.")
+    parser.add_argument(
+        "--jurisdiction", default="Portland, OR", help='Human label such as "Portland, OR".'
+    )
+    parser.add_argument(
+        "--url", default="https://www.portland.gov/code", help="Seed/current municipal code URL."
+    )
     parser.add_argument("--place-name", default="", help="Optional place override, e.g. Portland.")
-    parser.add_argument("--state-code", default="", help="Optional two-letter state override, e.g. OR.")
+    parser.add_argument(
+        "--state-code", default="", help="Optional two-letter state override, e.g. OR."
+    )
     parser.add_argument("--gnis", default="", help="Optional GNIS place id.")
-    parser.add_argument("--url-terms", default="code,ordinance,charter,municipal", help="Comma-separated URL terms.")
-    parser.add_argument("--mime-terms", default="", help="Optional comma-separated MIME filters, e.g. pdf,text/html.")
-    parser.add_argument("--max-results", type=int, default=100, help="Maximum index pointers to consider.")
-    parser.add_argument("--max-pages", type=int, default=25, help="Maximum WARC pages to fetch/extract.")
-    parser.add_argument("--max-body-bytes", type=int, default=2_000_000, help="Maximum extracted HTTP body bytes per WARC record.")
-    parser.add_argument("--dedupe-urls", action="store_true", help="Fetch only one latest/best WARC pointer per unique URL.")
-    parser.add_argument("--index-root", default="data/common_crawl_indexes", help="Local Common Crawl index root.")
-    parser.add_argument("--download-index", action="store_true", help="Download the municipal index parquet first.")
-    parser.add_argument("--repo-id", default=DEFAULT_REPO_ID, help="HF dataset repo containing the municipal index.")
-    parser.add_argument("--index-file", default=DEFAULT_INDEX_FILE, help="Path to the parquet file inside the HF repo.")
-    parser.add_argument("--output-root", default="workspace/municipal_common_crawl_laws", help="Output directory.")
-    parser.add_argument("--include-html", action="store_true", help="Include raw HTML in the pages parquet.")
-    parser.add_argument("--list-candidates", action="store_true", help="Only export scored pointer candidates; do not fetch WARC records.")
-    parser.add_argument("--candidate-limit", type=int, default=500, help="Maximum candidates exported by --list-candidates.")
+    parser.add_argument(
+        "--url-terms", default="code,ordinance,charter,municipal", help="Comma-separated URL terms."
+    )
+    parser.add_argument(
+        "--mime-terms",
+        default="",
+        help="Optional comma-separated MIME filters, e.g. pdf,text/html.",
+    )
+    parser.add_argument(
+        "--max-results", type=int, default=100, help="Maximum index pointers to consider."
+    )
+    parser.add_argument(
+        "--max-pages", type=int, default=25, help="Maximum WARC pages to fetch/extract."
+    )
+    parser.add_argument(
+        "--max-body-bytes",
+        type=int,
+        default=2_000_000,
+        help="Maximum extracted HTTP body bytes per WARC record.",
+    )
+    parser.add_argument(
+        "--dedupe-urls",
+        action="store_true",
+        help="Fetch only one latest/best WARC pointer per unique URL.",
+    )
+    parser.add_argument(
+        "--index-root", default="data/common_crawl_indexes", help="Local Common Crawl index root."
+    )
+    parser.add_argument(
+        "--download-index", action="store_true", help="Download the municipal index parquet first."
+    )
+    parser.add_argument(
+        "--repo-id", default=DEFAULT_REPO_ID, help="HF dataset repo containing the municipal index."
+    )
+    parser.add_argument(
+        "--index-file",
+        default=DEFAULT_INDEX_FILE,
+        help="Path to the parquet file inside the HF repo.",
+    )
+    parser.add_argument(
+        "--output-root", default="workspace/municipal_common_crawl_laws", help="Output directory."
+    )
+    parser.add_argument(
+        "--include-html", action="store_true", help="Include raw HTML in the pages parquet."
+    )
+    parser.add_argument(
+        "--list-candidates",
+        action="store_true",
+        help="Only export scored pointer candidates; do not fetch WARC records.",
+    )
+    parser.add_argument(
+        "--candidate-limit",
+        type=int,
+        default=500,
+        help="Maximum candidates exported by --list-candidates.",
+    )
     parser.add_argument("--json", action="store_true", help="Print the full run manifest as JSON.")
     return parser.parse_args()
 
@@ -281,7 +352,8 @@ async def _run(args: argparse.Namespace) -> Dict[str, Any]:
         candidates = _list_candidates(
             index_root=index_root,
             output_root=output_root,
-            place_name=str(args.place_name or "").strip() or str(args.jurisdiction).split(",", 1)[0].strip(),
+            place_name=str(args.place_name or "").strip()
+            or str(args.jurisdiction).split(",", 1)[0].strip(),
             state_code=str(args.state_code or "").strip().upper(),
             gnis=str(args.gnis or "").strip(),
             url_terms=_parse_csv(args.url_terms),
@@ -300,7 +372,9 @@ async def _run(args: argparse.Namespace) -> Dict[str, Any]:
         _write_json(output_root / "manifest.json", manifest)
         return manifest
 
-    loader = CommonCrawlIndexLoader(local_base_dir=index_root, use_hf_fallback=not bool(args.download_index))
+    loader = CommonCrawlIndexLoader(
+        local_base_dir=index_root, use_hf_fallback=not bool(args.download_index)
+    )
     scraper = MunicipalScraperFallbacks()
     result = await scraper._scrape_common_crawl(
         str(args.url),
@@ -317,7 +391,9 @@ async def _run(args: argparse.Namespace) -> Dict[str, Any]:
         dedupe_urls=bool(args.dedupe_urls),
     )
 
-    pages = _pages_for_parquet(result, output_root=output_root, include_html=bool(args.include_html))
+    pages = _pages_for_parquet(
+        result, output_root=output_root, include_html=bool(args.include_html)
+    )
     page_parquet = _write_records_parquet(output_root / "pages.parquet", pages)
     records = list(((result.get("data") or {}).get("pages") or []))
     pointer_rows = [dict(((page.get("metadata") or {}).get("cc_record") or {})) for page in records]

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from ipfs_datasets_py.logic.zkp.evm_harness import pack_public_inputs_uint256, validate_uint256_array
+from ipfs_datasets_py.logic.zkp.evm_harness import (
+    pack_public_inputs_uint256,
+    validate_uint256_array,
+)
 from ipfs_datasets_py.logic.zkp.evm_public_inputs import BN254_FR_MODULUS
 
 

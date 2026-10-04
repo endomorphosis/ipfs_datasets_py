@@ -31,22 +31,22 @@ def next_step(message: str, step: int = None, stop: bool = False) -> None:
         next_step("Analyzing results", step=3, stop=True)
     """
     # Define regex to match the "Step X" format in the message.
-    step_pattern = re.compile(r'^Step \d+', flags=re.IGNORECASE)
+    step_pattern = re.compile(r"^Step \d+", flags=re.IGNORECASE)
     match = re.match(step_pattern, message)
-    asterisks = '*' * len(message)
+    asterisks = "*" * len(message)
 
     if stop:
-        if match: # If the message contains "Step X", extract the step number.
-            step = int(re.search(r'\d+', match.group()).group())
+        if match:  # If the message contains "Step X", extract the step number.
+            step = int(re.search(r"\d+", match.group()).group())
         if match or step:
             current_step = step - 1
             result = input(f"{asterisks}\n{message}\n{asterisks}\nContinue to Step {step}? y/n: ")
-            if result != "y": # If the user does not enter 'y', raise a KeyboardInterrupt.
+            if result != "y":  # If the user does not enter 'y', raise a KeyboardInterrupt.
                 raise KeyboardInterrupt(f"Program stopped at Step {current_step}.")
             else:
                 print(message)
                 return
-        else: # If the message does not contain "Step X" and no step number is provided, prompt the user to continue.
+        else:  # If the message does not contain "Step X" and no step number is provided, prompt the user to continue.
             result = input(f"Continue next step? y/n: ")
             if result != "y":
                 raise KeyboardInterrupt(f"Program stopped at current step.")

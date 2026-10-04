@@ -23,4 +23,4 @@ try:
 except ImportError:
     ml = None
 
-__all__ = ['patent', 'geospatial', 'ml']
+__all__ = ["patent", "geospatial", "ml"]

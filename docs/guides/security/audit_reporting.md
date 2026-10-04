@@ -27,8 +27,8 @@ audit_logger = AuditLogger.get_instance()
 # Generate a comprehensive HTML report
 report_path = generate_comprehensive_audit_report(
     audit_logger=audit_logger,
-    report_format='html',
-    output_file='./audit_reports/comprehensive_report.html'
+    report_format="html",
+    output_file="./audit_reports/comprehensive_report.html",
 )
 
 print(f"Report generated at: {report_path}")
@@ -68,9 +68,7 @@ security_report = report_generator.generate_security_report()
 
 # Export as JSON
 report_generator.export_report(
-    report=security_report,
-    format='json',
-    output_file='./security_report.json'
+    report=security_report, format="json", output_file="./security_report.json"
 )
 ```
 
@@ -90,9 +88,7 @@ compliance_report = report_generator.generate_compliance_report()
 
 # Export as HTML
 report_generator.export_report(
-    report=compliance_report,
-    format='html',
-    output_file='./compliance_report.html'
+    report=compliance_report, format="html", output_file="./compliance_report.html"
 )
 ```
 
@@ -112,9 +108,7 @@ operational_report = report_generator.generate_operational_report()
 
 # Export as HTML
 report_generator.export_report(
-    report=operational_report,
-    format='html',
-    output_file='./operational_report.html'
+    report=operational_report, format="html", output_file="./operational_report.html"
 )
 ```
 
@@ -134,9 +128,7 @@ comprehensive_report = report_generator.generate_comprehensive_report()
 
 # Export as HTML
 report_generator.export_report(
-    report=comprehensive_report,
-    format='html',
-    output_file='./comprehensive_report.html'
+    report=comprehensive_report, format="html", output_file="./comprehensive_report.html"
 )
 ```
 
@@ -187,7 +179,7 @@ from ipfs_datasets_py.audit.audit_reporting import AuditComplianceAnalyzer
 # Initialize compliance analyzer
 analyzer = AuditComplianceAnalyzer(
     metrics_aggregator=metrics,
-    frameworks=['gdpr', 'hipaa']  # Analyze specific frameworks
+    frameworks=["gdpr", "hipaa"],  # Analyze specific frameworks
 )
 
 # Analyze compliance
@@ -198,7 +190,7 @@ summary = analyzer.get_compliance_summary()
 print(f"Overall compliance: {summary['overall_compliance_percentage']:.1f}%")
 
 # Review top issues
-for issue in summary['top_issues']:
+for issue in summary["top_issues"]:
     print(f"Compliance issue: {issue['requirement']} - {issue['recommendation']}")
 ```
 
@@ -216,7 +208,7 @@ report_generator = AuditReportGenerator(
     metrics_aggregator=metrics,
     pattern_detector=detector,
     compliance_analyzer=analyzer,
-    output_dir="./custom_reports"
+    output_dir="./custom_reports",
 )
 
 # Generate reports with the custom generator
@@ -258,9 +250,7 @@ Then use the PDF format:
 ```python
 # Export report as PDF
 report_generator.export_report(
-    report=comprehensive_report,
-    format='pdf',
-    output_file='./audit_report.pdf'
+    report=comprehensive_report, format="pdf", output_file="./audit_report.pdf"
 )
 ```
 
@@ -271,18 +261,14 @@ report_generator.export_report(
 The reporting system integrates with the audit visualization components to include charts and graphs in HTML reports:
 
 ```python
-from ipfs_datasets_py.audit.audit_visualization import (
-    AuditVisualizer, setup_audit_visualization
-)
+from ipfs_datasets_py.audit.audit_visualization import AuditVisualizer, setup_audit_visualization
 
 # Set up visualization
 metrics, visualizer, _ = setup_audit_visualization(audit_logger)
 
 # Set up reporting with visualization
 report_generator, _, _ = setup_audit_reporting(
-    audit_logger=audit_logger,
-    metrics_aggregator=metrics,
-    visualizer=visualizer
+    audit_logger=audit_logger, metrics_aggregator=metrics, visualizer=visualizer
 )
 ```
 
@@ -320,9 +306,7 @@ metrics, visualizer, _ = setup_audit_visualization(audit_logger)
 
 # Set up reporting
 report_generator, detector, analyzer = setup_audit_reporting(
-    audit_logger=audit_logger,
-    metrics_aggregator=metrics,
-    visualizer=visualizer
+    audit_logger=audit_logger, metrics_aggregator=metrics, visualizer=visualizer
 )
 
 # Generate reports
@@ -333,21 +317,15 @@ comprehensive_report = report_generator.generate_comprehensive_report()
 
 # Export reports in different formats
 report_generator.export_report(
-    report=security_report,
-    format='json',
-    output_file='./reports/security_report.json'
+    report=security_report, format="json", output_file="./reports/security_report.json"
 )
 
 report_generator.export_report(
-    report=compliance_report,
-    format='html',
-    output_file='./reports/compliance_report.html'
+    report=compliance_report, format="html", output_file="./reports/compliance_report.html"
 )
 
 report_generator.export_report(
-    report=comprehensive_report,
-    format='html',
-    output_file='./reports/comprehensive_report.html'
+    report=comprehensive_report, format="html", output_file="./reports/comprehensive_report.html"
 )
 ```
 

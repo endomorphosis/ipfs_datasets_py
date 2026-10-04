@@ -58,10 +58,7 @@ ipfs daemon
 from neo4j import GraphDatabase
 
 # Neo4j connection
-driver = GraphDatabase.driver(
-    "bolt://localhost:7687",
-    auth=("neo4j", "password")
-)
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 ```
 
 **After (IPFS):**
@@ -71,7 +68,7 @@ from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
 # IPFS connection - only URI changes!
 driver = GraphDatabase.driver(
     "ipfs://localhost:5001",  # Change to IPFS endpoint
-    auth=("user", "token")     # Optional auth token
+    auth=("user", "token"),  # Optional auth token
 )
 ```
 
@@ -96,19 +93,14 @@ with driver.session() as session:
     result = session.run("MATCH (n:Person) WHERE n.age > 30 RETURN n")
     for record in result:
         print(record["n"]["name"])
-    
+
     # Parameterized query
-    result = session.run(
-        "MATCH (p:Person {name: $name}) RETURN p",
-        name="Alice"
-    )
-    
+    result = session.run("MATCH (p:Person {name: $name}) RETURN p", name="Alice")
+
     # Explicit transaction
     with session.begin_transaction() as tx:
-        tx.run("CREATE (n:Person {name: $name, age: $age})", 
-               name="Bob", age=25)
-        tx.run("CREATE (n:Person {name: $name, age: $age})",
-               name="Charlie", age=35)
+        tx.run("CREATE (n:Person {name: $name, age: $age})", name="Bob", age=25)
+        tx.run("CREATE (n:Person {name: $name, age: $age})", name="Charlie", age=35)
         tx.commit()
 ```
 
@@ -145,21 +137,27 @@ with driver.session() as session:
 ```python
 # OPTIONAL MATCH (not yet supported)
 # Before:
-result = session.run("""
+result = session.run(
+    """
     MATCH (p:Person {name: $name})
     OPTIONAL MATCH (p)-[:KNOWS]->(f:Person)
     RETURN p, f
-""", name="Alice")
+""",
+    name="Alice",
+)
 
 # After: Use multiple queries
 person_result = session.run("MATCH (p:Person {name: $name}) RETURN p", name="Alice")
 person = person_result.single()
 
 if person:
-    friends_result = session.run("""
+    friends_result = session.run(
+        """
         MATCH (p:Person {name: $name})-[:KNOWS]->(f:Person)
         RETURN f
-    """, name="Alice")
+    """,
+        name="Alice",
+    )
     friends = list(friends_result)
 ```
 
@@ -192,6 +190,7 @@ result = session.run("""
 # After: Compute in application
 people = session.run("MATCH (p:Person) RETURN p")
 from collections import Counter
+
 dept_counts = Counter(p["p"]["department"] for p in people)
 ```
 
@@ -205,9 +204,9 @@ dept_counts = Counter(p["p"]["department"] for p in people)
 result = session.run("MATCH (n:Person) RETURN n")
 
 # All these work identically
-record = result.single()           # Get single record
-records = list(result)              # Get all records
-data = result.data()                # Get as list of dicts
+record = result.single()  # Get single record
+records = list(result)  # Get all records
+data = result.data()  # Get as list of dicts
 ```
 
 **Node and Relationship objects:**
@@ -215,16 +214,16 @@ data = result.data()                # Get as list of dicts
 ```python
 # Node properties
 node = record["n"]
-print(node["name"])          # Access property
-print(node.id)               # Node ID (CID in IPFS)
-print(node.labels)           # Node labels
+print(node["name"])  # Access property
+print(node.id)  # Node ID (CID in IPFS)
+print(node.labels)  # Node labels
 
 # Relationship properties
 rel = record["r"]
-print(rel.type)              # Relationship type
-print(rel["since"])          # Relationship property
-print(rel.start_node)        # Start node
-print(rel.end_node)          # End node
+print(rel.type)  # Relationship type
+print(rel["since"])  # Relationship property
+print(rel.start_node)  # Start node
+print(rel.end_node)  # End node
 ```
 
 ---
@@ -291,17 +290,20 @@ driver = GraphDatabase.driver("ipfs://localhost:5001")
 
 with driver.session() as session:
     # Regular graph query
-    result = session.run("""
+    result = session.run(
+        """
         MATCH (p:Person)-[:KNOWS]->(f:Person)
         WHERE p.name = $name
         RETURN f
-    """, name="Alice")
-    
+    """,
+        name="Alice",
+    )
+
     # Vector-augmented GraphRAG query (new!)
     result = session.run_graphrag(
         query="Find people similar to Alice",
         embeddings={"Alice": [0.1, 0.2, 0.3, ...]},
-        k=10  # Top 10 similar
+        k=10,  # Top 10 similar
     )
 ```
 
@@ -499,7 +501,7 @@ session.run("CREATE VECTOR INDEX person_embedding FOR (p:Person) ON (p.embedding
 # Configure cache size
 driver = GraphDatabase.driver(
     "ipfs://localhost:5001",
-    cache_size=10000  # Increase cache
+    cache_size=10000,  # Increase cache
 )
 ```
 
@@ -517,17 +519,16 @@ page_size = 1000
 offset = 0
 while True:
     result = session.run(
-        "MATCH (n:Person) RETURN n SKIP $offset LIMIT $limit",
-        offset=offset, limit=page_size
+        "MATCH (n:Person) RETURN n SKIP $offset LIMIT $limit", offset=offset, limit=page_size
     )
     records = list(result)
     if not records:
         break
-    
+
     # Process page
     for record in records:
         process(record["n"])
-    
+
     offset += page_size
 ```
 

@@ -48,9 +48,7 @@ def _hammer_payload() -> dict[str, object]:
         "status": "verified",
     }
     return {
-        "evidence_id": hashlib.sha256(
-            contracts.canonical_json(body).encode("utf-8")
-        ).hexdigest(),
+        "evidence_id": hashlib.sha256(contracts.canonical_json(body).encode("utf-8")).hexdigest(),
         **body,
     }
 
@@ -66,12 +64,8 @@ def _native_receipt(
         "candidate_source": source,
         "candidate_artifact_sha256": artifact_sha256,
         "source_sha256": hashlib.sha256(SOURCE_TEXT.encode()).hexdigest(),
-        "command_sha256": hashlib.sha256(
-            f"lean:{source}".encode()
-        ).hexdigest(),
-        "stdout_sha256": hashlib.sha256(
-            b"accepted" if accepted else b"rejected"
-        ).hexdigest(),
+        "command_sha256": hashlib.sha256(f"lean:{source}".encode()).hexdigest(),
+        "stdout_sha256": hashlib.sha256(b"accepted" if accepted else b"rejected").hexdigest(),
         "stderr_sha256": hashlib.sha256(b"").hexdigest(),
         "returncode": 0 if accepted else 1,
         "timed_out": False,
@@ -107,9 +101,7 @@ def _native_receipt(
         "candidate_source": source,
         "candidate_artifact_sha256": artifact_sha256,
         "source_sha256": attempt["source_sha256"],
-        "semantic_context_sha256": hashlib.sha256(
-            b"semantic-context"
-        ).hexdigest(),
+        "semantic_context_sha256": hashlib.sha256(b"semantic-context").hexdigest(),
         "semantic_artifact_sha256s": [artifact_sha256],
         "command_sha256": attempt["command_sha256"],
         "stdout_sha256": attempt["stdout_sha256"],
@@ -163,12 +155,8 @@ def _selection() -> dict[str, object]:
     compiler_artifact_sha = sha256_digest_for_cid(compiler.artifact_cid)
     hammer_artifact_sha = sha256_digest_for_cid(hammer.artifact_cid)
     receipts = {
-        "compiler": _native_receipt(
-            "compiler", compiler_artifact_sha, accepted=False
-        ),
-        "hammer": _native_receipt(
-            "hammer", hammer_artifact_sha, accepted=True
-        ),
+        "compiler": _native_receipt("compiler", compiler_artifact_sha, accepted=False),
+        "hammer": _native_receipt("hammer", hammer_artifact_sha, accepted=True),
     }
     artifacts = {
         "compiler": compiler_artifact_sha,
@@ -184,15 +172,9 @@ def _selection() -> dict[str, object]:
             accepted=accepted,
             receipt=receipts[candidate.source],
             stage_status=(
-                contracts.StageStatus.SUCCESS
-                if accepted
-                else contracts.StageStatus.FAILED
+                contracts.StageStatus.SUCCESS if accepted else contracts.StageStatus.FAILED
             ),
-            failure_code=(
-                None
-                if accepted
-                else contracts.FailureCode.KERNEL_REJECTION
-            ),
+            failure_code=(None if accepted else contracts.FailureCode.KERNEL_REJECTION),
             consumed_artifact_sha256s=(artifacts[candidate.source],),
         )
 
@@ -218,9 +200,7 @@ def _overlap_selection() -> dict[str, object]:
     compiler = _candidate("compiler", "byte-identical candidate")
     hammer = _candidate("hammer", "byte-identical candidate")
     compiler_artifact_sha = sha256_digest_for_cid(compiler.artifact_cid)
-    compiler_receipt = _native_receipt(
-        "compiler", compiler_artifact_sha, accepted=False
-    )
+    compiler_receipt = _native_receipt("compiler", compiler_artifact_sha, accepted=False)
 
     def check(
         candidate: runtime.CausalProofCandidate,
@@ -256,9 +236,7 @@ def _overlap_selection() -> dict[str, object]:
 def _compiler_accepts_selection() -> dict[str, object]:
     compiler = _candidate("compiler", "accepted compiler candidate")
     compiler_artifact_sha = sha256_digest_for_cid(compiler.artifact_cid)
-    compiler_receipt = _native_receipt(
-        "compiler", compiler_artifact_sha, accepted=True
-    )
+    compiler_receipt = _native_receipt("compiler", compiler_artifact_sha, accepted=True)
 
     def check(
         candidate: runtime.CausalProofCandidate,
@@ -329,20 +307,13 @@ def _case_result(
             "source_cid": SOURCE_CID,
             "graph_invoked": True,
         }
-        if (
-            stage_name is contracts.StageName.HAMMER
-            and omit_hammer_graph_invoked
-        ):
+        if stage_name is contracts.StageName.HAMMER and omit_hammer_graph_invoked:
             effective_identity.pop("graph_invoked")
         if stage_name is contracts.StageName.KERNEL:
             artifact_sha256 = (
                 kernel_artifact_sha256
                 if kernel_artifact_sha256 is not None
-                else (
-                    HAMMER_ARTIFACT_SHA
-                    if kernel_source == "hammer"
-                    else COMPILER_ARTIFACT_SHA
-                )
+                else (HAMMER_ARTIFACT_SHA if kernel_source == "hammer" else COMPILER_ARTIFACT_SHA)
             )
             effective_identity.update(
                 {
@@ -380,11 +351,7 @@ def _case_result(
             artifact_sha256 = (
                 kernel_artifact_sha256
                 if kernel_artifact_sha256 is not None
-                else (
-                    HAMMER_ARTIFACT_SHA
-                    if kernel_source == "hammer"
-                    else COMPILER_ARTIFACT_SHA
-                )
+                else (HAMMER_ARTIFACT_SHA if kernel_source == "hammer" else COMPILER_ARTIFACT_SHA)
             )
             data = _native_receipt(
                 kernel_source,
@@ -393,8 +360,7 @@ def _case_result(
             )
         stage_status = (
             contracts.StageStatus.FAILED
-            if stage_name is contracts.StageName.KERNEL
-            and not kernel_accepted
+            if stage_name is contracts.StageName.KERNEL and not kernel_accepted
             else contracts.StageStatus.SUCCESS
         )
         stages.append(
@@ -412,26 +378,20 @@ def _case_result(
                 provenance=provenance,
                 telemetry=telemetry,
                 data=data,
-                kernel_accepted=(
-                    stage_name is contracts.StageName.KERNEL
-                    and kernel_accepted
-                ),
+                kernel_accepted=(stage_name is contracts.StageName.KERNEL and kernel_accepted),
                 kernel_receipt_sha256=(
                     str(data["receipt_sha256"])  # type: ignore[index]
-                    if stage_name is contracts.StageName.KERNEL
-                    and kernel_accepted
+                    if stage_name is contracts.StageName.KERNEL and kernel_accepted
                     else None
                 ),
                 failure_code=(
                     contracts.FailureCode.KERNEL_REJECTION
-                    if stage_name is contracts.StageName.KERNEL
-                    and not kernel_accepted
+                    if stage_name is contracts.StageName.KERNEL and not kernel_accepted
                     else None
                 ),
                 failure_detail=(
                     "synthetic compiler reference rejected"
-                    if stage_name is contracts.StageName.KERNEL
-                    and not kernel_accepted
+                    if stage_name is contracts.StageName.KERNEL and not kernel_accepted
                     else None
                 ),
             )
@@ -446,11 +406,7 @@ def _artifact_sha_for_source(
     if source == "compiler":
         record = selection["compiler_reference"]
     else:
-        record = next(
-            item
-            for item in selection["optional_candidates"]
-            if item["source"] == source
-        )
+        record = next(item for item in selection["optional_candidates"] if item["source"] == source)
     return sha256_digest_for_cid(record["artifact_cid"])
 
 
@@ -459,22 +415,16 @@ def test_distinct_native_accepted_candidate_is_one_causal_unique_win() -> None:
     selection = _selection()
     case_result = _case_result(
         str(selection["receipt_cid"]),
-        kernel_artifact_sha256=_artifact_sha_for_source(
-            selection, "hammer"
-        ),
+        kernel_artifact_sha256=_artifact_sha_for_source(selection, "hammer"),
     )
 
-    receipt = metrics.build_causal_rescue_case_receipt(
-        case_result, selection
-    )
+    receipt = metrics.build_causal_rescue_case_receipt(case_result, selection)
     assert metrics.validate_causal_rescue_case_receipt(receipt) == receipt
     assert receipt["compiler_reference_state"] == "rejected"
     assert receipt["causal_rescue_source"] == "hammer"
     assert len(receipt["native_kernel_receipt_cids"]) == 2
     hammer = next(
-        item
-        for item in receipt["component_measurements"]
-        if item["component_id"] == "hammer"
+        item for item in receipt["component_measurements"] if item["component_id"] == "hammer"
     )
     assert hammer == {
         "component_id": "hammer",
@@ -502,13 +452,8 @@ def test_distinct_native_accepted_candidate_is_one_causal_unique_win() -> None:
     assert component["unnecessary_work_count"] == 0
 
     rate_bundle = statistics.build_causal_rescue_rate_bundle(aggregate)
-    assert (
-        statistics.validate_causal_rescue_rate_bundle(rate_bundle)
-        == rate_bundle
-    )
-    rates = {
-        item["metric_id"]: item for item in rate_bundle["rates"]
-    }
+    assert statistics.validate_causal_rescue_rate_bundle(rate_bundle) == rate_bundle
+    rates = {item["metric_id"]: item for item in rate_bundle["rates"]}
     assert rates["hammer_causal_rescue_rate"]["numerator"] == 1
     assert rates["hammer_causal_rescue_rate"]["denominator"] == 1
     assert rates["hammer_escalation_rate"]["numerator"] == 1
@@ -525,9 +470,7 @@ def test_suppressed_route_is_measured_over_scheduled_optional_routes() -> None:
         _case_result(
             str(selection["receipt_cid"]),
             kernel_source="compiler",
-            kernel_artifact_sha256=_artifact_sha_for_source(
-                selection, "compiler"
-            ),
+            kernel_artifact_sha256=_artifact_sha_for_source(selection, "compiler"),
             include_hammer=False,
         ),
         selection,
@@ -542,10 +485,7 @@ def test_suppressed_route_is_measured_over_scheduled_optional_routes() -> None:
     rates = {item["metric_id"]: item for item in rate_bundle["rates"]}
     suppression = rates["hammer_suppression_rate"]
     assert suppression["event_label"] == "scheduled_route_suppressed"
-    assert (
-        suppression["population_label"]
-        == "hammer_scheduled_optional_route"
-    )
+    assert suppression["population_label"] == "hammer_scheduled_optional_route"
     assert suppression["numerator"] == 1
     assert suppression["denominator"] == 1
 
@@ -555,9 +495,7 @@ def test_causal_receipt_tampering_cannot_create_marginal_efficacy() -> None:
     receipt = metrics.build_causal_rescue_case_receipt(
         _case_result(
             str(selection["receipt_cid"]),
-            kernel_artifact_sha256=_artifact_sha_for_source(
-                selection, "hammer"
-            ),
+            kernel_artifact_sha256=_artifact_sha_for_source(selection, "hammer"),
         ),
         selection,
     )
@@ -579,9 +517,7 @@ def test_component_accounting_requires_exact_invocation_marker() -> None:
         metrics.build_causal_rescue_case_receipt(
             _case_result(
                 str(selection["receipt_cid"]),
-                kernel_artifact_sha256=_artifact_sha_for_source(
-                    selection, "hammer"
-                ),
+                kernel_artifact_sha256=_artifact_sha_for_source(selection, "hammer"),
                 omit_hammer_graph_invoked=True,
             ),
             selection,
@@ -592,19 +528,13 @@ def test_candidate_artifact_cid_must_match_native_kernel_input() -> None:
     selection = _selection()
     case_result = _case_result(
         str(selection["receipt_cid"]),
-        kernel_artifact_sha256=_artifact_sha_for_source(
-            selection, "hammer"
-        ),
+        kernel_artifact_sha256=_artifact_sha_for_source(selection, "hammer"),
     )
     tampered = copy.deepcopy(selection)
     tampered["optional_candidates"][0]["artifact_cid"] = cid_for_dag_json(
         {"schema": "different-candidate-artifact.v1"}
     )
-    body = {
-        key: value
-        for key, value in tampered.items()
-        if key != "receipt_cid"
-    }
+    body = {key: value for key, value in tampered.items() if key != "receipt_cid"}
     tampered["receipt_cid"] = cid_for_dag_json(body)
 
     with pytest.raises(
@@ -621,18 +551,14 @@ def test_byte_identical_overlap_has_zero_marginal_and_unnecessary_work() -> None
             str(selection["receipt_cid"]),
             kernel_source="compiler",
             kernel_accepted=False,
-            kernel_artifact_sha256=_artifact_sha_for_source(
-                selection, "compiler"
-            ),
+            kernel_artifact_sha256=_artifact_sha_for_source(selection, "compiler"),
         ),
         selection,
     )
     assert receipt["causal_rescue_source"] is None
     assert receipt["overlap_sources"] == ["hammer"]
     hammer = next(
-        item
-        for item in receipt["component_measurements"]
-        if item["component_id"] == "hammer"
+        item for item in receipt["component_measurements"] if item["component_id"] == "hammer"
     )
     assert hammer["kernel_checks"] == 0
     assert hammer["unique_wins"] == 0
@@ -667,10 +593,7 @@ def test_leanstral_failure_codes_remain_separate(
     failure_code: str,
     expected: str,
 ) -> None:
-    assert (
-        metrics.classify_leanstral_failure_code(failure_code).value
-        == expected
-    )
+    assert metrics.classify_leanstral_failure_code(failure_code).value == expected
 
     with pytest.raises(
         metrics.MetricsContractError,

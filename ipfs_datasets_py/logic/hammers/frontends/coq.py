@@ -196,8 +196,7 @@ class CoqFrontend:
         ).strip()
         if not goal_text:
             raise GoalCaptureError(
-                "coqtop's `Show.` block contained no goal text: "
-                f"{block_match.group(0)!r}"
+                f"coqtop's `Show.` block contained no goal text: {block_match.group(0)!r}"
             )
 
         imports = _extract_coq_imports(source)
@@ -256,9 +255,7 @@ def _parse_coq_hypotheses(hyps_block: str) -> List[LocalHypothesis]:
         names = [n.strip() for n in names_part.split(",") if n.strip()]
         if not names:
             continue
-        hypotheses.append(
-            LocalHypothesis(names=names, type_text=type_part.strip(), raw=line)
-        )
+        hypotheses.append(LocalHypothesis(names=names, type_text=type_part.strip(), raw=line))
     return hypotheses
 
 
@@ -281,7 +278,11 @@ def _extract_coq_universe_context(
 
     type_bindings: Dict[str, str] = {}
     for hyp in hypotheses:
-        if hyp.type_text.startswith("Type") or hyp.type_text.startswith("Set") or hyp.type_text.startswith("Prop"):
+        if (
+            hyp.type_text.startswith("Type")
+            or hyp.type_text.startswith("Set")
+            or hyp.type_text.startswith("Prop")
+        ):
             name = hyp.names[0] if len(hyp.names) == 1 else ",".join(hyp.names)
             type_bindings[name] = hyp.type_text
 

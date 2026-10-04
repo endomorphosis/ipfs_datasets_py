@@ -37,9 +37,7 @@ from ipfs_datasets_py.logic.ir_core.protocols import (
 
 
 BACKEND_ADAPTER_VERSION: Final = "proof-backend-adapter/v1"
-SMT_ENCODINGS: Final = frozenset(
-    {"smtlib2", "smt-lib", "smt-lib2", "smt-expression/v1"}
-)
+SMT_ENCODINGS: Final = frozenset({"smtlib2", "smt-lib", "smt-lib2", "smt-expression/v1"})
 
 
 class BackendRegistryError(ValueError):
@@ -64,9 +62,7 @@ class MalformedBackendOutput(BackendRegistryError):
 
 def _text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise BackendRegistryError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise BackendRegistryError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -84,18 +80,11 @@ class CompiledBackendRequest:
         if (
             not isinstance(self.request_digest, str)
             or len(self.request_digest) != 64
-            or any(
-                character not in "0123456789abcdef"
-                for character in self.request_digest
-            )
+            or any(character not in "0123456789abcdef" for character in self.request_digest)
         ):
-            raise BackendRegistryError(
-                "compiled request_digest must be a lowercase SHA-256 digest"
-            )
+            raise BackendRegistryError("compiled request_digest must be a lowercase SHA-256 digest")
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
         if not isinstance(self.source, str) or not self.source.strip():
             raise BackendRegistryError("compiled source must be a non-empty string")
         if "\x00" in self.source:
@@ -103,9 +92,7 @@ class CompiledBackendRequest:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
 
     @property
@@ -144,17 +131,13 @@ class BackendRunnerOutput:
         for field_name in ("elapsed_ms", "steps", "peak_memory_bytes"):
             value = getattr(self, field_name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise MalformedBackendOutput(
-                    f"runner {field_name} must be a non-negative integer"
-                )
+                raise MalformedBackendOutput(f"runner {field_name} must be a non-negative integer")
         if not isinstance(self.solver_version, str):
             raise MalformedBackendOutput("runner solver_version must be a string")
 
 
 BackendCompiler = Callable[[BackendRequest], CompiledBackendRequest]
-BackendRunner = Callable[
-    [CompiledBackendRequest, BackendRequest], BackendRunnerOutput
-]
+BackendRunner = Callable[[CompiledBackendRequest, BackendRequest], BackendRunnerOutput]
 AvailabilityProbe = Callable[[], bool]
 
 _RESULT_CLASSES: Final[dict[QueryKind, type[BoundedResult]]] = {
@@ -173,9 +156,7 @@ def _string_sequence(value: Any, field_name: str) -> tuple[str, ...]:
         raise UnsupportedBackendRequest(f"{field_name} must be a sequence of strings")
     result = tuple(value)
     if not all(isinstance(item, str) and item.strip() for item in result):
-        raise UnsupportedBackendRequest(
-            f"{field_name} must contain non-empty strings"
-        )
+        raise UnsupportedBackendRequest(f"{field_name} must contain non-empty strings")
     return result
 
 
@@ -206,8 +187,7 @@ def compile_smtlib_request(
     if raw_source is not None:
         if encoding and encoding not in SMT_ENCODINGS - {"smt-expression/v1"}:
             raise UnsupportedBackendRequest(
-                f"{backend_id} cannot compile encoding {encoding!r}; "
-                "expected SMT-LIB2"
+                f"{backend_id} cannot compile encoding {encoding!r}; expected SMT-LIB2"
             )
         if not isinstance(raw_source, str) or not raw_source.strip():
             raise UnsupportedBackendRequest("SMT-LIB source must be a non-empty string")
@@ -218,17 +198,13 @@ def compile_smtlib_request(
             lines.append("(check-sat)")
     else:
         if encoding and encoding not in SMT_ENCODINGS:
-            raise UnsupportedBackendRequest(
-                f"{backend_id} cannot compile encoding {encoding!r}"
-            )
+            raise UnsupportedBackendRequest(f"{backend_id} cannot compile encoding {encoding!r}")
         formula = payload.get("goal", payload.get("formula"))
         if not isinstance(formula, str) or not formula.strip():
             raise UnsupportedBackendRequest(
                 "request payload must provide SMT-LIB source or a goal/formula"
             )
-        declarations = _string_sequence(
-            payload.get("declarations"), "declarations"
-        )
+        declarations = _string_sequence(payload.get("declarations"), "declarations")
         assumptions = _string_sequence(payload.get("assumptions"), "assumptions")
         logic = payload.get("smt_logic", "ALL")
         if not isinstance(logic, str) or not logic.strip():
@@ -329,9 +305,7 @@ def _make_outcome(
 ) -> tuple[BackendAttempt, BoundedResult]:
     """Build a fully bound attempt/result pair for every terminal path."""
 
-    normalized_diagnostics = tuple(
-        dict.fromkeys(_bounded_diagnostic(item) for item in diagnostics)
-    )
+    normalized_diagnostics = tuple(dict.fromkeys(_bounded_diagnostic(item) for item in diagnostics))
     bounded_usage = usage or ResourceUsage()
     digest = output_digest or _output_digest(
         backend_id=backend_id,
@@ -376,9 +350,7 @@ def _bounded_usage(
     return ResourceUsage(
         elapsed_ms=min(elapsed_ms, request.bounds.timeout_ms),
         steps=min(steps, request.bounds.max_steps),
-        peak_memory_bytes=min(
-            peak_memory_bytes, request.bounds.max_memory_bytes
-        ),
+        peak_memory_bytes=min(peak_memory_bytes, request.bounds.max_memory_bytes),
         output_bytes=min(output_bytes, request.bounds.max_output_bytes),
     )
 
@@ -389,9 +361,7 @@ def _classify_solver_stdout(stdout: str) -> str:
     tokens = [
         line.strip().lower()
         for line in stdout.splitlines()
-        if line.strip()
-        and not line.lstrip().startswith(";")
-        and line.strip().lower() != "success"
+        if line.strip() and not line.lstrip().startswith(";") and line.strip().lower() != "success"
     ]
     results = [token for token in tokens if token in {"sat", "unsat", "unknown"}]
     if len(results) != 1:
@@ -399,9 +369,7 @@ def _classify_solver_stdout(stdout: str) -> str:
             "solver output must contain exactly one sat, unsat, or unknown result"
         )
     if tokens.index(results[0]) != 0:
-        raise MalformedBackendOutput(
-            "solver output contains non-result text before its result"
-        )
+        raise MalformedBackendOutput("solver output contains non-result text before its result")
     return results[0]
 
 
@@ -449,12 +417,9 @@ class CallableProofBackend:
         return (
             isinstance(request, BackendRequest)
             and (
-                not request.requested_backend_id
-                or request.requested_backend_id == self.backend_id
+                not request.requested_backend_id or request.requested_backend_id == self.backend_id
             )
-            and self.capabilities.supports(
-                request.logic_family, request.query_kind
-            )
+            and self.capabilities.supports(request.logic_family, request.query_kind)
         )
 
     def is_available(self) -> bool:
@@ -516,22 +481,14 @@ class CallableProofBackend:
         try:
             compiled = self._compiler(request)
             if not isinstance(compiled, CompiledBackendRequest):
-                raise MalformedBackendOutput(
-                    "compiler did not return CompiledBackendRequest"
-                )
+                raise MalformedBackendOutput("compiler did not return CompiledBackendRequest")
             if compiled.request_digest != request.digest:
-                raise MalformedBackendOutput(
-                    "compiled request is not bound to the input request"
-                )
+                raise MalformedBackendOutput("compiled request is not bound to the input request")
             if compiled.backend_id != self.backend_id:
-                raise MalformedBackendOutput(
-                    "compiled request is bound to a different backend"
-                )
+                raise MalformedBackendOutput("compiled request is bound to a different backend")
             raw = self._runner(compiled, request)
             if not isinstance(raw, BackendRunnerOutput):
-                raise MalformedBackendOutput(
-                    "runner did not return BackendRunnerOutput"
-                )
+                raise MalformedBackendOutput("runner did not return BackendRunnerOutput")
         except UnsupportedBackendRequest as error:
             return self._terminal(
                 request,
@@ -547,8 +504,7 @@ class CallableProofBackend:
                 result_status=ResultStatus.UNKNOWN,
                 classification="timeout",
                 diagnostics=(
-                    str(error)
-                    or f"{self.backend_id} exceeded {request.bounds.timeout_ms} ms",
+                    str(error) or f"{self.backend_id} exceeded {request.bounds.timeout_ms} ms",
                 ),
                 usage=ResourceUsage(elapsed_ms=request.bounds.timeout_ms),
             )
@@ -570,9 +526,7 @@ class CallableProofBackend:
             )
 
         elapsed_ms = raw.elapsed_ms or int((time.monotonic() - started) * 1000)
-        output_bytes = len(raw.stdout.encode("utf-8")) + len(
-            raw.stderr.encode("utf-8")
-        )
+        output_bytes = len(raw.stdout.encode("utf-8")) + len(raw.stderr.encode("utf-8"))
         observed = ResourceUsage(
             elapsed_ms=elapsed_ms,
             steps=raw.steps,
@@ -581,13 +535,9 @@ class CallableProofBackend:
         )
         exceeded = observed.exceeds(request.bounds)
         if exceeded:
-            classification = (
-                "timeout" if "timeout_ms" in exceeded else "resource_limit_exceeded"
-            )
+            classification = "timeout" if "timeout_ms" in exceeded else "resource_limit_exceeded"
             attempt_status = (
-                AttemptStatus.TIMED_OUT
-                if classification == "timeout"
-                else AttemptStatus.FAILED
+                AttemptStatus.TIMED_OUT if classification == "timeout" else AttemptStatus.FAILED
             )
             digest = _output_digest(
                 backend_id=self.backend_id,
@@ -606,10 +556,7 @@ class CallableProofBackend:
                     else ResultStatus.ERROR
                 ),
                 classification=classification,
-                diagnostics=(
-                    f"{self.backend_id} exceeded request bounds: "
-                    + ", ".join(exceeded),
-                ),
+                diagnostics=(f"{self.backend_id} exceeded request bounds: " + ", ".join(exceeded),),
                 usage=_bounded_usage(
                     request,
                     elapsed_ms=elapsed_ms,
@@ -633,9 +580,7 @@ class CallableProofBackend:
                 attempt_status=AttemptStatus.FAILED,
                 result_status=ResultStatus.ERROR,
                 classification="backend_error",
-                diagnostics=(
-                    raw.stderr or f"{self.backend_id} exited with {raw.returncode}",
-                ),
+                diagnostics=(raw.stderr or f"{self.backend_id} exited with {raw.returncode}",),
                 usage=observed,
                 output_digest=digest,
             )
@@ -732,9 +677,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
         try:
             return self._backends[backend_id]
         except KeyError as error:
-            raise UnknownBackendError(
-                f"backend {backend_id!r} is not registered"
-            ) from error
+            raise UnknownBackendError(f"backend {backend_id!r} is not registered") from error
 
     def __iter__(self) -> Iterator[str]:
         return iter(sorted(self._backends))
@@ -747,10 +690,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
         """Return declarations without probing or executing backends."""
 
         return MappingProxyType(
-            {
-                backend_id: self._backends[backend_id].capabilities
-                for backend_id in self
-            }
+            {backend_id: self._backends[backend_id].capabilities for backend_id in self}
         )
 
     def capabilities_for(self, backend_id: str) -> BackendCapabilities:
@@ -764,9 +704,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
         if not isinstance(backend.capabilities, BackendCapabilities):
             raise TypeError("backend capabilities must be BackendCapabilities")
         if backend_id in self._backends:
-            raise DuplicateBackendError(
-                f"backend {backend_id!r} is already registered"
-            )
+            raise DuplicateBackendError(f"backend {backend_id!r} is already registered")
         self._backends[backend_id] = backend
 
     def supporting(self, request: BackendRequest) -> tuple[str, ...]:
@@ -778,10 +716,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
             backend_id
             for backend_id in self
             if (
-                (
-                    not request.requested_backend_id
-                    or request.requested_backend_id == backend_id
-                )
+                (not request.requested_backend_id or request.requested_backend_id == backend_id)
                 and self._backends[backend_id].capabilities.supports(
                     request.logic_family, request.query_kind
                 )
@@ -816,9 +751,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
             and request.requested_backend_id
             and backend_id != request.requested_backend_id
         ):
-            raise BackendRegistryError(
-                "backend_id conflicts with request.requested_backend_id"
-            )
+            raise BackendRegistryError("backend_id conflicts with request.requested_backend_id")
         if not selected_id:
             candidates = self.supporting(request)
             if not candidates:
@@ -828,9 +761,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
                 )
             selected_id = candidates[0]
         backend = self[selected_id]
-        if not backend.capabilities.supports(
-            request.logic_family, request.query_kind
-        ):
+        if not backend.capabilities.supports(request.logic_family, request.query_kind):
             return _make_outcome(
                 backend_id=backend.backend_id,
                 backend_version=backend.backend_version,

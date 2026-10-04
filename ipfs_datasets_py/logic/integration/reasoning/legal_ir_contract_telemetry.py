@@ -238,11 +238,7 @@ def _derive_modal_ir_payloads(sample_or_document: Any) -> dict[str, list[dict[st
     triples = [_mapping(item) for item in _sequence(frame_logic.get("triples"))]
     triples = [item for item in triples if item]
     all_references = sorted(
-        {
-            reference
-            for formula in formulas
-            for reference in _provenance_ids(_mapping(formula))
-        }
+        {reference for formula in formulas for reference in _provenance_ids(_mapping(formula))}
     )
     if triples:
         for index, triple in enumerate(triples):
@@ -251,7 +247,9 @@ def _derive_modal_ir_payloads(sample_or_document: Any) -> dict[str, list[dict[st
             result.setdefault("frame_logic", []).append(
                 {
                     "formula_id": _string(formula.get("formula_id")) or f"frame-triple-{index + 1}",
-                    "frame_id": _string(frame_logic.get("selected_frame") or frame_logic.get("graph_id"))
+                    "frame_id": _string(
+                        frame_logic.get("selected_frame") or frame_logic.get("graph_id")
+                    )
                     or f"frame-{index + 1}",
                     "object": triple.get("object", ""),
                     "predicate": triple.get("predicate", ""),
@@ -392,9 +390,7 @@ def _semantic_references(value: Any, *, prefix: str) -> list[str]:
                 or mapping.get("source_id")
                 or mapping.get("clause_id")
             )
-            references.append(
-                identifier or f"{prefix}:{_stable_hash(mapping)[:20]}"
-            )
+            references.append(identifier or f"{prefix}:{_stable_hash(mapping)[:20]}")
         elif _string(item):
             references.append(f"{prefix}:{_stable_hash(_string(item))[:20]}")
     return list(dict.fromkeys(references))
@@ -421,9 +417,7 @@ def legal_ir_contract_payloads_from_multiview_report(
         if _string(record.get("source_id"))
     }
     norms_by_source = {
-        _string(norm.get("source_id")): norm
-        for norm in norms
-        if _string(norm.get("source_id"))
+        _string(norm.get("source_id")): norm for norm in norms if _string(norm.get("source_id"))
     }
 
     for norm in norms:
@@ -434,12 +428,8 @@ def legal_ir_contract_payloads_from_multiview_report(
             {
                 "action": _string(norm.get("action") or norm.get("action_verb")),
                 "actor": _string(norm.get("actor")),
-                "conditions": _semantic_references(
-                    norm.get("conditions"), prefix="condition"
-                ),
-                "exceptions": _semantic_references(
-                    norm.get("exceptions"), prefix="exception"
-                ),
+                "conditions": _semantic_references(norm.get("conditions"), prefix="condition"),
+                "exceptions": _semantic_references(norm.get("exceptions"), prefix="exception"),
                 "formula_id": formula_id,
                 "norm_type": norm_type,
                 "object": _string(
@@ -451,13 +441,9 @@ def legal_ir_contract_payloads_from_multiview_report(
             }
         )
 
-    frame_document = _object_field(
-        _multiview_report(multiview, "deontic_norms"), "ir_document"
-    )
+    frame_document = _object_field(_multiview_report(multiview, "deontic_norms"), "ir_document")
     frame_id = _string(_object_field(frame_document, "document_id"))
-    frame_triples = _bridge_records(
-        multiview, "deontic_norms", "frame_logic", "triples"
-    )
+    frame_triples = _bridge_records(multiview, "deontic_norms", "frame_logic", "triples")
     for index, triple in enumerate(frame_triples):
         source_id = _string(triple.get("subject"))
         if source_id not in norms_by_source:
@@ -505,9 +491,7 @@ def legal_ir_contract_payloads_from_multiview_report(
             }
         )
 
-    cec_state_records = _bridge_records(
-        multiview, "cec_dcec", "event_calculus", "records"
-    )
+    cec_state_records = _bridge_records(multiview, "cec_dcec", "event_calculus", "records")
     state_by_source = {
         _string(record.get("source_id")): record
         for record in cec_state_records
@@ -559,9 +543,7 @@ def legal_ir_contract_payloads_from_multiview_report(
         "cec_dcec",
         "external_prover_router",
     ):
-        graph = _bridge_view_payload(
-            multiview, adapter_name, "neo4j_graph_data"
-        )
+        graph = _bridge_view_payload(multiview, adapter_name, "neo4j_graph_data")
         nodes = [_mapping(item) for item in _sequence(graph.get("nodes"))]
         raw_edges = [_mapping(item) for item in _sequence(graph.get("relationships"))]
         if not nodes or not raw_edges:
@@ -576,7 +558,12 @@ def legal_ir_contract_payloads_from_multiview_report(
         ]
         graph_metadata = _mapping(graph.get("metadata"))
         provenance = sorted(norms_by_source) or [
-            _string(_object_field(_object_field(_multiview_report(multiview, adapter_name), "ir_document"), "document_id"))
+            _string(
+                _object_field(
+                    _object_field(_multiview_report(multiview, adapter_name), "ir_document"),
+                    "document_id",
+                )
+            )
         ]
         result["knowledge_graphs"] = [
             {
@@ -591,9 +578,7 @@ def legal_ir_contract_payloads_from_multiview_report(
 
     external_report = _multiview_report(multiview, "external_prover_router")
     proof_gate = _object_field(external_report, "proof_gate")
-    proof_details = [
-        _mapping(item) for item in _sequence(_object_field(proof_gate, "details", ()))
-    ]
+    proof_details = [_mapping(item) for item in _sequence(_object_field(proof_gate, "details", ()))]
     prover_records = _bridge_records(
         multiview, "external_prover_router", "prover_formulas", "records"
     )
@@ -644,18 +629,12 @@ def legal_ir_contract_payloads_from_multiview_report(
             continue
         operator, norm_type, _ = _canonical_deontic_force(norm)
         action = _string(norm.get("action") or norm.get("action_verb"))
-        obj = _string(
-            norm.get("action_object") or norm.get("object") or norm.get("recipient")
-        )
+        obj = _string(norm.get("action_object") or norm.get("object") or norm.get("recipient"))
         result.setdefault("decompiler", []).append(
             {
                 "arguments": [_string(norm.get("actor")), obj],
-                "conditions": _semantic_references(
-                    norm.get("conditions"), prefix="condition"
-                ),
-                "exceptions": _semantic_references(
-                    norm.get("exceptions"), prefix="exception"
-                ),
+                "conditions": _semantic_references(norm.get("conditions"), prefix="condition"),
+                "exceptions": _semantic_references(norm.get("exceptions"), prefix="exception"),
                 "formula_id": formula_by_source.get(source_id) or f"{source_id}:deontic",
                 "operator": operator,
                 "predicate": {"arity": 2, "name": action},
@@ -853,7 +832,11 @@ def _decompiler_failures(
             candidates[0] if len(candidates) == 1 else None,
         )
         if source is None:
-            reason = "unknown_source_contract" if source_contract is None else "source_payload_unavailable"
+            reason = (
+                "unknown_source_contract"
+                if source_contract is None
+                else "source_payload_unavailable"
+            )
             failure_payload = [sample_id, formula_id, source_contract_id, "source_contract", reason]
             failures.append(
                 LegalIRDecompilerPreservationFailure(
@@ -922,9 +905,7 @@ class LegalIRContractSampleTelemetry:
 
     @property
     def legal_ir_contract_view_family_gaps(self) -> tuple[str, ...]:
-        return tuple(
-            view for view, item in self.contract_coverage.items() if not item["valid"]
-        )
+        return tuple(view for view, item in self.contract_coverage.items() if not item["valid"])
 
     @property
     def view_family_gaps(self) -> tuple[str, ...]:
@@ -936,7 +917,8 @@ class LegalIRContractSampleTelemetry:
         provenance = sum(
             count
             for code, count in self.validation_issue_counts.items()
-            if code in {
+            if code
+            in {
                 "empty_required_field",
                 "invalid_provenance_id",
                 "missing_provenance_id",
@@ -966,9 +948,7 @@ class LegalIRContractSampleTelemetry:
             ],
             "legal_ir_contract_coverage": round(self.legal_ir_contract_coverage, 12),
             "legal_ir_contract_failure_counts": self.legal_ir_contract_failure_counts,
-            "legal_ir_contract_view_family_gaps": list(
-                self.legal_ir_contract_view_family_gaps
-            ),
+            "legal_ir_contract_view_family_gaps": list(self.legal_ir_contract_view_family_gaps),
             "missing_required_fields": {
                 view: list(fields) for view, fields in self.missing_required_fields.items()
             },
@@ -1025,14 +1005,18 @@ def collect_legal_ir_contract_telemetry(
         if missing_fields:
             missing[contract.view.value] = missing_fields
         valid_count = sum(1 for validation in validations if validation.valid)
-        covered_fields = sorted(
-            set(contract.required_field_names)
-            - {
-                field_name
-                for validation in validations
-                for field_name in validation.missing_required_fields
-            }
-        ) if entries else []
+        covered_fields = (
+            sorted(
+                set(contract.required_field_names)
+                - {
+                    field_name
+                    for validation in validations
+                    for field_name in validation.missing_required_fields
+                }
+            )
+            if entries
+            else []
+        )
         coverage[contract.view.value] = {
             "contract_id": contract.contract_id,
             "covered_required_field_count": len(covered_fields),
@@ -1051,9 +1035,7 @@ def collect_legal_ir_contract_telemetry(
         missing_required_fields=missing,
         validation_issue_counts=dict(sorted(issue_counts.items())),
         cross_view_mismatches=_cross_view_mismatches(resolved_sample_id, payloads),
-        decompiler_preservation_failures=_decompiler_failures(
-            resolved_sample_id, payloads
-        ),
+        decompiler_preservation_failures=_decompiler_failures(resolved_sample_id, payloads),
         source_references=references,
     )
 
@@ -1098,7 +1080,9 @@ def summarize_legal_ir_contract_telemetry(
             }
         )
         gaps.update(str(view) for view in item.get("legal_ir_contract_view_family_gaps", []) or [])
-        references.update(str(value) for value in item.get("source_references", []) or [] if str(value))
+        references.update(
+            str(value) for value in item.get("source_references", []) or [] if str(value)
+        )
     coverage = sum(coverage_values) / len(coverage_values) if coverage_values else 0.0
     return {
         "contract_telemetry_schema_version": LEGAL_IR_CONTRACT_TELEMETRY_SCHEMA_VERSION,

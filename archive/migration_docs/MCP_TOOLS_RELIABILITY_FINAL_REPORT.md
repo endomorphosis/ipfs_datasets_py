@@ -76,16 +76,41 @@
 ```python
 # Added comprehensive exclusion filter
 excluded_names = {
-    'dataclass', 'asdict', 'field', 'abstractmethod', 'as_completed',
-    'wraps', 'partial', 'reduce', 'filter', 'map', 'zip', 'enumerate',
+    "dataclass",
+    "asdict",
+    "field",
+    "abstractmethod",
+    "as_completed",
+    "wraps",
+    "partial",
+    "reduce",
+    "filter",
+    "map",
+    "zip",
+    "enumerate",
     # ... and 50+ more standard library functions
 }
 
 # Added MCP tool pattern validation
 mcp_tool_patterns = [
-    'load_', 'save_', 'create_', 'generate_', 'process_', 'convert_',
-    'record_', 'search_', 'get_', 'pin_', 'extract_', 'index_',
-    'check_', 'query_', 'execute_', 'list_', 'use_', 'run_'
+    "load_",
+    "save_",
+    "create_",
+    "generate_",
+    "process_",
+    "convert_",
+    "record_",
+    "search_",
+    "get_",
+    "pin_",
+    "extract_",
+    "index_",
+    "check_",
+    "query_",
+    "execute_",
+    "list_",
+    "use_",
+    "run_",
 ]
 ```
 

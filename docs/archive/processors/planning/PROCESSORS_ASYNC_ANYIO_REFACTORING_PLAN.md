@@ -81,8 +81,9 @@ All adapters are already using the async protocol from `processors/protocol.py`.
 ```python
 import anyio
 
+
 async def process_file(path):
-    async with anyio.open_file(path, 'r') as f:
+    async with anyio.open_file(path, "r") as f:
         content = await f.read()
     return content
 ```
@@ -128,10 +129,12 @@ result = processor.process("document.pdf")  # Sync
 import anyio
 from ipfs_datasets_py.processors.core import UniversalProcessor
 
+
 async def main():
     processor = UniversalProcessor()
     result = await processor.process("document.pdf")  # Async
-    
+
+
 # Run with anyio (works with asyncio, trio, etc.)
 anyio.run(main)
 ```
@@ -159,6 +162,7 @@ async def my_application():
 def process_sync(input_data):
     """Synchronous wrapper for async process."""
     import anyio
+
     return anyio.run(process, input_data)
 ```
 

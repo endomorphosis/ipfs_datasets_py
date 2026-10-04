@@ -39,11 +39,11 @@ class Relationship:
             Convert the relationship to a dictionary representation.
         from_dict(data: Dict[str, Any], entity_map: Dict[str, Entity] = None) -> 'Relationship':
             Create a relationship from a dictionary representation.
-    
+
     Properties:
         source_id: ID of the source entity
         target_id: ID of the target entity
-    
+
     Examples:
         >>> person = Entity(entity_type="person", name="Alice")
         >>> org = Entity(entity_type="organization", name="ACME Corp")
@@ -53,6 +53,7 @@ class Relationship:
         >>> rel.source_id == person.entity_id
         True
     """
+
     relationship_id: RelationshipID = field(default_factory=lambda: str(uuid.uuid4()))
     relationship_type: RelationshipType = "related_to"
     source_entity: Optional[Entity] = None
@@ -65,7 +66,7 @@ class Relationship:
 
     def __post_init__(self):
         """Handle flexible constructor patterns.
-        
+
         This method fixes cases where the relationship was created with
         the old calling pattern: Relationship(source, target, type)
         """
@@ -75,7 +76,7 @@ class Relationship:
             source_entity = self.relationship_id
             target_entity = self.relationship_type
             relationship_type = self.source_entity
-            
+
             # Fix the fields
             self.relationship_id = str(uuid.uuid4())
             self.source_entity = source_entity
@@ -83,20 +84,22 @@ class Relationship:
             self.relationship_type = relationship_type
 
     @classmethod
-    def create(cls, source: Entity, target: Entity, relationship_type: str, **kwargs) -> 'Relationship':
+    def create(
+        cls, source: Entity, target: Entity, relationship_type: str, **kwargs
+    ) -> "Relationship":
         """Create relationship with intuitive parameter order.
-        
+
         This is the preferred way to create relationships.
-        
+
         Args:
             source: Source entity (head of the relationship)
             target: Target entity (tail of the relationship)
             relationship_type: Type of the relationship
             **kwargs: Additional keyword arguments (properties, confidence, etc.)
-        
+
         Returns:
             Relationship: The created relationship instance
-        
+
         Examples:
             >>> person = Entity(entity_type="person", name="Bob")
             >>> city = Entity(entity_type="location", name="New York")
@@ -108,13 +111,13 @@ class Relationship:
             source_entity=source,
             target_entity=target,
             relationship_type=relationship_type,
-            **kwargs
+            **kwargs,
         )
 
     @property
     def source_id(self) -> Optional[str]:
         """Get the ID of the source entity.
-        
+
         Returns:
             str: Entity ID of the source entity, or None if no source
         """
@@ -123,7 +126,7 @@ class Relationship:
     @property
     def target_id(self) -> Optional[str]:
         """Get the ID of the target entity.
-        
+
         Returns:
             str: Entity ID of the target entity, or None if no target
         """
@@ -153,7 +156,7 @@ class Relationship:
             "relationship_type": self.relationship_type,
             "properties": self.properties,
             "confidence": self.confidence,
-            "bidirectional": self.bidirectional
+            "bidirectional": self.bidirectional,
         }
 
         if self.source_text:
@@ -169,7 +172,9 @@ class Relationship:
         return rel_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], entity_map: Optional[Dict[str, Entity]] = None) -> 'Relationship':
+    def from_dict(
+        cls, data: Dict[str, Any], entity_map: Optional[Dict[str, Entity]] = None
+    ) -> "Relationship":
         """Create a relationship from a dictionary representation.
 
         Args:
@@ -212,5 +217,5 @@ class Relationship:
             properties=data.get("properties", {}),
             confidence=data.get("confidence", DEFAULT_CONFIDENCE),
             source_text=data.get("source_text"),
-            bidirectional=data.get("bidirectional", False)
+            bidirectional=data.get("bidirectional", False),
         )

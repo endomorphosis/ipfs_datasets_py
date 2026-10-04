@@ -76,9 +76,7 @@ from .receipt import (
 # ---------------------------------------------------------------------------
 
 INTENT_AUTHORIZATION_SERVICE_INTERFACE: Final = "IntentAuthorizationService@1"
-INTENT_AUTHORIZATION_SERVICE_SCHEMA_VERSION: Final = (
-    "intent-authorization-service/v1"
-)
+INTENT_AUTHORIZATION_SERVICE_SCHEMA_VERSION: Final = "intent-authorization-service/v1"
 AUTHORIZATION_BUDGET_SCHEMA_VERSION: Final = "authorization-budget/v1"
 AUTHORIZATION_TRACE_SCHEMA_VERSION: Final = "authorization-service-trace/v1"
 AUTHORIZATION_RESULT_SCHEMA_VERSION: Final = "authorization-service-result/v1"
@@ -92,6 +90,7 @@ DEFAULT_CAPABILITY_TTL_SECONDS: Final = 120
 MAX_DIAGNOSTICS: Final = 1_024
 MAX_IDENTIFIER_CHARS: Final = 256
 MAX_REASON_CHARS: Final = 512
+
 
 # Stage vocabulary preserved on every evaluation trace.
 class AuthorizationStage(str, Enum):
@@ -144,9 +143,7 @@ def _text(value: Any, name: str, *, allow_empty: bool = False) -> str:
         raise AuthorizationServiceError(f"{name} must be a non-empty trimmed string")
     if value and value != value.strip():
         raise AuthorizationServiceError(f"{name} must not have surrounding whitespace")
-    if len(value) > MAX_REASON_CHARS * 8 and name.endswith(
-        ("_id", "root", "ref", "cid")
-    ):
+    if len(value) > MAX_REASON_CHARS * 8 and name.endswith(("_id", "root", "ref", "cid")):
         raise AuthorizationServiceError(f"{name} exceeds maximum length")
     return value
 
@@ -176,22 +173,16 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise AuthorizationServiceError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise AuthorizationServiceError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _unique_sorted(values: Any, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise AuthorizationServiceError(f"{name} must be a sequence of strings")
     items = tuple(_text(item, f"{name} item") for item in values)
     if len(items) != len(set(items)):
@@ -238,12 +229,7 @@ def _ensure_bare_digest(value: str, *, fallback_seed: str = "") -> str:
 
 
 def _utc_now_iso() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _parse_iso8601(value: str) -> datetime:
@@ -325,9 +311,7 @@ class AuthorizationBudget:
         object.__setattr__(
             self,
             "max_solver_attempts",
-            _positive_int(
-                self.max_solver_attempts, "max_solver_attempts", minimum=0
-            ),
+            _positive_int(self.max_solver_attempts, "max_solver_attempts", minimum=0),
         )
         object.__setattr__(
             self,
@@ -347,16 +331,12 @@ class AuthorizationBudget:
         object.__setattr__(
             self,
             "receipt_ttl_seconds",
-            _positive_int(
-                self.receipt_ttl_seconds, "receipt_ttl_seconds", minimum=1
-            ),
+            _positive_int(self.receipt_ttl_seconds, "receipt_ttl_seconds", minimum=1),
         )
         object.__setattr__(
             self,
             "capability_ttl_seconds",
-            _positive_int(
-                self.capability_ttl_seconds, "capability_ttl_seconds", minimum=1
-            ),
+            _positive_int(self.capability_ttl_seconds, "capability_ttl_seconds", minimum=1),
         )
         for flag in (
             "allow_network",
@@ -372,9 +352,7 @@ class AuthorizationBudget:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != AUTHORIZATION_BUDGET_SCHEMA_VERSION:
-            raise AuthorizationBudgetError(
-                f"unsupported budget schema: {self.schema_version!r}"
-            )
+            raise AuthorizationBudgetError(f"unsupported budget schema: {self.schema_version!r}")
 
     def validate_side_effect_flags(self) -> None:
         """Fail closed if the budget requests a forbidden side effect."""
@@ -385,13 +363,11 @@ class AuthorizationBudget:
             )
         if self.allow_install:
             raise AuthorizationBudgetError(
-                "authorization budget forbids backend installation "
-                "(allow_install must be false)"
+                "authorization budget forbids backend installation (allow_install must be false)"
             )
         if self.allow_corpus_mutation:
             raise AuthorizationBudgetError(
-                "authorization budget forbids corpus mutation "
-                "(allow_corpus_mutation must be false)"
+                "authorization budget forbids corpus mutation (allow_corpus_mutation must be false)"
             )
         if self.allow_tool_execution:
             raise AuthorizationBudgetError(
@@ -451,26 +427,16 @@ class AuthorizationBudget:
             timeout_ms=int(value.get("timeout_ms", 30_000)),
             max_bytes=int(value.get("max_bytes", 8_000_000)),
             max_graph_depth=int(value.get("max_graph_depth", 8)),
-            receipt_ttl_seconds=int(
-                value.get("receipt_ttl_seconds", DEFAULT_RECEIPT_TTL_SECONDS)
-            ),
+            receipt_ttl_seconds=int(value.get("receipt_ttl_seconds", DEFAULT_RECEIPT_TTL_SECONDS)),
             capability_ttl_seconds=int(
-                value.get(
-                    "capability_ttl_seconds", DEFAULT_CAPABILITY_TTL_SECONDS
-                )
+                value.get("capability_ttl_seconds", DEFAULT_CAPABILITY_TTL_SECONDS)
             ),
             allow_network=bool(value.get("allow_network", False)),
             allow_install=bool(value.get("allow_install", False)),
-            allow_corpus_mutation=bool(
-                value.get("allow_corpus_mutation", False)
-            ),
-            allow_tool_execution=bool(
-                value.get("allow_tool_execution", False)
-            ),
+            allow_corpus_mutation=bool(value.get("allow_corpus_mutation", False)),
+            allow_tool_execution=bool(value.get("allow_tool_execution", False)),
             production_mode=bool(value.get("production_mode", True)),
-            schema_version=value.get(
-                "schema_version", AUTHORIZATION_BUDGET_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", AUTHORIZATION_BUDGET_SCHEMA_VERSION),
         )
 
 
@@ -494,9 +460,7 @@ class CancellationToken:
         if self.cancelled:
             label = self.reason or "cancelled"
             if stage:
-                raise AuthorizationCancelled(
-                    f"authorization cancelled at stage {stage}: {label}"
-                )
+                raise AuthorizationCancelled(f"authorization cancelled at stage {stage}: {label}")
             raise AuthorizationCancelled(f"authorization cancelled: {label}")
 
     def to_dict(self) -> dict[str, Any]:
@@ -527,22 +491,16 @@ class IntentLowerResult:
     schema_version: str = INTENT_LOWER_RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "intent_cid", _text(self.intent_cid, "intent_cid")
-        )
+        object.__setattr__(self, "intent_cid", _text(self.intent_cid, "intent_cid"))
         object.__setattr__(
             self,
             "intent_document_id",
-            _optional_identifier(
-                self.intent_document_id, "intent_document_id"
-            ),
+            _optional_identifier(self.intent_document_id, "intent_document_id"),
         )
         object.__setattr__(
             self,
             "formalization_artifact_id",
-            _optional_identifier(
-                self.formalization_artifact_id, "formalization_artifact_id"
-            ),
+            _optional_identifier(self.formalization_artifact_id, "formalization_artifact_id"),
         )
         actions = tuple(
             item
@@ -613,9 +571,7 @@ class EvidenceSelectionResult:
         object.__setattr__(
             self,
             "security_evidence_cids",
-            _unique_sorted(
-                self.security_evidence_cids, "security_evidence_cids"
-            ),
+            _unique_sorted(self.security_evidence_cids, "security_evidence_cids"),
         )
         object.__setattr__(
             self,
@@ -625,9 +581,7 @@ class EvidenceSelectionResult:
         object.__setattr__(
             self,
             "selected_evidence_cids",
-            _unique_sorted(
-                self.selected_evidence_cids, "selected_evidence_cids"
-            ),
+            _unique_sorted(self.selected_evidence_cids, "selected_evidence_cids"),
         )
         object.__setattr__(
             self,
@@ -639,9 +593,7 @@ class EvidenceSelectionResult:
             "simulated_rejected",
             _unique_sorted(self.simulated_rejected, "simulated_rejected"),
         )
-        object.__setattr__(
-            self, "gaps", _unique_sorted(self.gaps, "gaps")
-        )
+        object.__setattr__(self, "gaps", _unique_sorted(self.gaps, "gaps"))
         object.__setattr__(
             self,
             "verification_passed",
@@ -742,9 +694,7 @@ class EvidenceVerifier(Protocol):
 class EnvelopeNormalizer(Protocol):
     """Normalize a non-canonical source into an InvocationIntentEnvelope."""
 
-    def __call__(
-        self, source: Any
-    ) -> InvocationIntentEnvelope | Mapping[str, Any]: ...
+    def __call__(self, source: Any) -> InvocationIntentEnvelope | Mapping[str, Any]: ...
 
 
 @dataclass
@@ -762,9 +712,7 @@ class OfflineAuthorizationDependencies:
     evidence_selector: EvidenceSelector | None = None
     evidence_verifier: EvidenceVerifier | None = None
     portfolio_solver: JobSolver | None = None
-    precomputed_attempts: Sequence[PortfolioAttemptRecord | Mapping[str, Any]] | None = (
-        None
-    )
+    precomputed_attempts: Sequence[PortfolioAttemptRecord | Mapping[str, Any]] | None = None
     portfolio: AuthorizationPortfolio | None = None
     decision_policy: AuthorizationDecisionPolicy | None = None
     composer: AuthorizationQueryComposer | None = None
@@ -806,9 +754,7 @@ class AuthorizationServiceTrace:
     schema_version: str = AUTHORIZATION_TRACE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "stages", tuple(str(item) for item in self.stages)
-        )
+        object.__setattr__(self, "stages", tuple(str(item) for item in self.stages))
         object.__setattr__(
             self,
             "diagnostics",
@@ -821,9 +767,7 @@ class AuthorizationServiceTrace:
             if isinstance(self.stage_details, FrozenMap)
             else FrozenMap(self.stage_details),
         )
-        object.__setattr__(
-            self, "cancelled", _bool(self.cancelled, "cancelled")
-        )
+        object.__setattr__(self, "cancelled", _bool(self.cancelled, "cancelled"))
         object.__setattr__(
             self,
             "exception_type",
@@ -845,9 +789,7 @@ class AuthorizationServiceTrace:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != AUTHORIZATION_TRACE_SCHEMA_VERSION:
-            raise AuthorizationServiceError(
-                f"unsupported trace schema: {self.schema_version!r}"
-            )
+            raise AuthorizationServiceError(f"unsupported trace schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -884,9 +826,7 @@ class AuthorizationServiceResult:
     intent_lower: IntentLowerResult | None = None
     roots: BoundRoots | None = None
     context: BoundContext | None = None
-    trace: AuthorizationServiceTrace = field(
-        default_factory=AuthorizationServiceTrace
-    )
+    trace: AuthorizationServiceTrace = field(default_factory=AuthorizationServiceTrace)
     profile_id: str = ""
     producer_id: str = DEFAULT_PRODUCER_ID
     interface: str = INTENT_AUTHORIZATION_SERVICE_INTERFACE
@@ -907,9 +847,7 @@ class AuthorizationServiceResult:
                 f"{status.value!r} (expected {expected.value!r})"
             )
         object.__setattr__(self, "wire_status", wire)
-        object.__setattr__(
-            self, "reasons", _unique_sorted(self.reasons, "reasons")
-        )
+        object.__setattr__(self, "reasons", _unique_sorted(self.reasons, "reasons"))
         object.__setattr__(
             self,
             "reason_codes",
@@ -926,23 +864,17 @@ class AuthorizationServiceResult:
             _text(self.producer_id, "producer_id"),
         )
         if self.interface != INTENT_AUTHORIZATION_SERVICE_INTERFACE:
-            raise AuthorizationServiceError(
-                f"unsupported service interface: {self.interface!r}"
-            )
+            raise AuthorizationServiceError(f"unsupported service interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_RESULT_SCHEMA_VERSION:
             raise AuthorizationServiceError(
                 f"unsupported service result schema: {self.schema_version!r}"
             )
         # Hard safety: never claim allow when capability is present for non-allow.
         if self.capability is not None and not self.is_allow:
-            raise AuthorizationServiceError(
-                "capability present on non-allow result (fail closed)"
-            )
+            raise AuthorizationServiceError("capability present on non-allow result (fail closed)")
         if self.status is InternalDecisionStatus.ALLOW and self.decision is not None:
             if not self.decision.is_allow:
-                raise AuthorizationServiceError(
-                    "result status allow but decision is not allow"
-                )
+                raise AuthorizationServiceError("result status allow but decision is not allow")
 
     @property
     def is_allow(self) -> bool:
@@ -961,30 +893,14 @@ class AuthorizationServiceResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "bundle": None if self.bundle is None else self.bundle.to_dict(),
-            "capability": (
-                None if self.capability is None else self.capability.to_dict()
-            ),
+            "capability": (None if self.capability is None else self.capability.to_dict()),
             "context": None if self.context is None else self.context.to_dict(),
-            "decision": (
-                None if self.decision is None else self.decision.to_dict()
-            ),
-            "envelope": (
-                None if self.envelope is None else self.envelope.to_dict()
-            ),
-            "evidence": (
-                None if self.evidence is None else self.evidence.to_dict()
-            ),
-            "intent_lower": (
-                None
-                if self.intent_lower is None
-                else self.intent_lower.to_dict()
-            ),
+            "decision": (None if self.decision is None else self.decision.to_dict()),
+            "envelope": (None if self.envelope is None else self.envelope.to_dict()),
+            "evidence": (None if self.evidence is None else self.evidence.to_dict()),
+            "intent_lower": (None if self.intent_lower is None else self.intent_lower.to_dict()),
             "interface": self.interface,
-            "portfolio_run": (
-                None
-                if self.portfolio_run is None
-                else self.portfolio_run.to_dict()
-            ),
+            "portfolio_run": (None if self.portfolio_run is None else self.portfolio_run.to_dict()),
             "producer_id": self.producer_id,
             "profile_id": self.profile_id,
             "reason_codes": list(self.reason_codes),
@@ -1084,10 +1000,7 @@ def _resolve_roots(
             "(legal/security/intent refs or envelope.policy.corpus_roots)"
         )
 
-    rev = (
-        _optional_text(revocation_root, "revocation_root")
-        or envelope.policy.revocation_root
-    )
+    rev = _optional_text(revocation_root, "revocation_root") or envelope.policy.revocation_root
     # Empty revocation is allowed only when explicitly empty on both sides;
     # production profiles still bind the empty string (fail-closed consumers
     # revalidate at dispatch).
@@ -1110,12 +1023,8 @@ def bound_context_from_envelope(
     env_digest = ""
     env_id = ""
     if environment:
-        env_id = _optional_identifier(
-            environment.get("environment_id", ""), "environment_id"
-        )
-        raw_digest = environment.get("environment_digest") or environment.get(
-            "snapshot_digest", ""
-        )
+        env_id = _optional_identifier(environment.get("environment_id", ""), "environment_id")
+        raw_digest = environment.get("environment_digest") or environment.get("snapshot_digest", "")
         if raw_digest:
             env_digest = _ensure_bare_digest(str(raw_digest))
         else:
@@ -1138,14 +1047,10 @@ def bound_context_from_envelope(
     delegation_ids = tuple(link.link_id for link in envelope.delegation)
     delegation_digest = ""
     if envelope.delegation:
-        delegation_digest = stable_digest(
-            [link.to_dict() for link in envelope.delegation]
-        )
+        delegation_digest = stable_digest([link.to_dict() for link in envelope.delegation])
 
     return BoundContext(
-        request_digest=_ensure_bare_digest(
-            envelope.digest, fallback_seed=envelope.envelope_id
-        ),
+        request_digest=_ensure_bare_digest(envelope.digest, fallback_seed=envelope.envelope_id),
         arguments_digest=_ensure_bare_digest(
             envelope.arguments.commitment,
             fallback_seed=envelope.envelope_id + ":args",
@@ -1201,8 +1106,7 @@ def action_scopes_from_envelope(
                     capability_ids=capabilities,
                     domain=domain,
                     logic_family=logic_family,
-                    statement=action.description
-                    or f"Authorize {action.value}",
+                    statement=action.description or f"Authorize {action.value}",
                 )
             )
     elif effects:
@@ -1215,8 +1119,7 @@ def action_scopes_from_envelope(
                     capability_ids=capabilities,
                     domain=domain,
                     logic_family=logic_family,
-                    statement=effect.description
-                    or f"Authorize {effect.value}",
+                    statement=effect.description or f"Authorize {effect.value}",
                 )
             )
     else:
@@ -1239,9 +1142,7 @@ def _coerce_envelope(
     if isinstance(invocation, Mapping):
         # Treat as envelope document when it looks canonical.
         if "envelope_id" in invocation or "schema_version" in invocation:
-            return validate_invocation_envelope(
-                InvocationIntentEnvelope.from_dict(invocation)
-            )
+            return validate_invocation_envelope(InvocationIntentEnvelope.from_dict(invocation))
         if normalizer is None and deps.normalizer is None:
             raise AuthorizationServiceError(
                 "non-canonical invocation mapping requires an injected normalizer"
@@ -1252,9 +1153,7 @@ def _coerce_envelope(
         if isinstance(result, InvocationIntentEnvelope):
             return validate_invocation_envelope(result)
         if isinstance(result, Mapping):
-            return validate_invocation_envelope(
-                InvocationIntentEnvelope.from_dict(result)
-            )
+            return validate_invocation_envelope(InvocationIntentEnvelope.from_dict(result))
         raise AuthorizationServiceError(
             "normalizer must return InvocationIntentEnvelope or mapping"
         )
@@ -1270,12 +1169,8 @@ def _coerce_envelope(
     if isinstance(result, InvocationIntentEnvelope):
         return validate_invocation_envelope(result)
     if isinstance(result, Mapping):
-        return validate_invocation_envelope(
-            InvocationIntentEnvelope.from_dict(result)
-        )
-    raise AuthorizationServiceError(
-        "normalizer must return InvocationIntentEnvelope or mapping"
-    )
+        return validate_invocation_envelope(InvocationIntentEnvelope.from_dict(result))
+    raise AuthorizationServiceError("normalizer must return InvocationIntentEnvelope or mapping")
 
 
 def _coerce_intent_lower(value: Any) -> IntentLowerResult:
@@ -1285,24 +1180,16 @@ def _coerce_intent_lower(value: Any) -> IntentLowerResult:
         return IntentLowerResult(
             intent_cid=value.get("intent_cid", ""),
             intent_document_id=value.get("intent_document_id", ""),
-            formalization_artifact_id=value.get(
-                "formalization_artifact_id", ""
-            ),
+            formalization_artifact_id=value.get("formalization_artifact_id", ""),
             actions=tuple(value.get("actions", ())),
             native_views=tuple(value.get("native_views", ())),
             cross_view_links=tuple(value.get("cross_view_links", ())),
-            constraint_artifacts=tuple(
-                value.get("constraint_artifacts", ())
-            ),
+            constraint_artifacts=tuple(value.get("constraint_artifacts", ())),
             assumptions=tuple(value.get("assumptions", ())),
             diagnostics=tuple(value.get("diagnostics", ())),
-            schema_version=value.get(
-                "schema_version", INTENT_LOWER_RESULT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", INTENT_LOWER_RESULT_SCHEMA_VERSION),
         )
-    raise AuthorizationServiceError(
-        "intent lowerer must return IntentLowerResult or mapping"
-    )
+    raise AuthorizationServiceError("intent lowerer must return IntentLowerResult or mapping")
 
 
 def _coerce_evidence(value: Any) -> EvidenceSelectionResult:
@@ -1311,24 +1198,16 @@ def _coerce_evidence(value: Any) -> EvidenceSelectionResult:
     if isinstance(value, Mapping):
         return EvidenceSelectionResult(
             legal_evidence_cids=tuple(value.get("legal_evidence_cids", ())),
-            security_evidence_cids=tuple(
-                value.get("security_evidence_cids", ())
-            ),
+            security_evidence_cids=tuple(value.get("security_evidence_cids", ())),
             intent_evidence_cids=tuple(value.get("intent_evidence_cids", ())),
-            selected_evidence_cids=tuple(
-                value.get("selected_evidence_cids", ())
-            ),
+            selected_evidence_cids=tuple(value.get("selected_evidence_cids", ())),
             rejected_cids=tuple(value.get("rejected_cids", ())),
             simulated_rejected=tuple(value.get("simulated_rejected", ())),
             gaps=tuple(value.get("gaps", ())),
-            verification_passed=bool(
-                value.get("verification_passed", True)
-            ),
+            verification_passed=bool(value.get("verification_passed", True)),
             audit_digest=value.get("audit_digest", ""),
             diagnostics=tuple(value.get("diagnostics", ())),
-            schema_version=value.get(
-                "schema_version", EVIDENCE_SELECTION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", EVIDENCE_SELECTION_SCHEMA_VERSION),
         )
     raise AuthorizationServiceError(
         "evidence selector/verifier must return EvidenceSelectionResult or mapping"
@@ -1348,9 +1227,7 @@ def _default_lower(
     )
     actions = action_scopes_from_envelope(envelope)
     assumptions = tuple(
-        assumption.assumption_id
-        if hasattr(assumption, "assumption_id")
-        else str(assumption)
+        assumption.assumption_id if hasattr(assumption, "assumption_id") else str(assumption)
         for assumption in envelope.assumptions
     )
     return IntentLowerResult(
@@ -1430,15 +1307,10 @@ def _default_evidence(
                 ),
                 selected_evidence_cids=filtered_selected,
                 rejected_cids=tuple(
-                    sorted(
-                        set(selection.rejected_cids)
-                        | set(selection.simulated_rejected)
-                    )
+                    sorted(set(selection.rejected_cids) | set(selection.simulated_rejected))
                 ),
                 simulated_rejected=selection.simulated_rejected,
-                gaps=tuple(
-                    sorted(set(selection.gaps) | {"simulated_rejected_production"})
-                ),
+                gaps=tuple(sorted(set(selection.gaps) | {"simulated_rejected_production"})),
                 verification_passed=selection.verification_passed
                 and not selection.simulated_rejected,
                 audit_digest=selection.audit_digest,
@@ -1511,17 +1383,11 @@ class IntentAuthorizationService:
     schema_version: str = INTENT_AUTHORIZATION_SERVICE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "producer_id", _text(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _text(self.producer_id, "producer_id"))
         if self.interface != INTENT_AUTHORIZATION_SERVICE_INTERFACE:
-            raise AuthorizationServiceError(
-                f"unsupported service interface: {self.interface!r}"
-            )
+            raise AuthorizationServiceError(f"unsupported service interface: {self.interface!r}")
         if self.schema_version != INTENT_AUTHORIZATION_SERVICE_SCHEMA_VERSION:
-            raise AuthorizationServiceError(
-                f"unsupported service schema: {self.schema_version!r}"
-            )
+            raise AuthorizationServiceError(f"unsupported service schema: {self.schema_version!r}")
 
     def evaluate(
         self,
@@ -1533,10 +1399,7 @@ class IntentAuthorizationService:
         intent_corpus_ref: str = "",
         environment: Mapping[str, Any] | None = None,
         budget: AuthorizationBudget | Mapping[str, Any] | None = None,
-        profile: AdmissibilityProfile
-        | AdmissibilityProfileId
-        | str
-        | None = None,
+        profile: AdmissibilityProfile | AdmissibilityProfileId | str | None = None,
         deps: OfflineAuthorizationDependencies | None = None,
         cancellation: CancellationToken | None = None,
         derive_capability_on_allow: bool = False,
@@ -1595,9 +1458,7 @@ class IntentAuthorizationService:
             elif isinstance(budget, AuthorizationBudget):
                 budget_obj = budget
             else:
-                budget_obj = AuthorizationBudget.from_dict(
-                    _mapping(budget, "budget")
-                )
+                budget_obj = AuthorizationBudget.from_dict(_mapping(budget, "budget"))
             budget_obj.validate_side_effect_flags()
             trace.note("auth.service.budget.validated")
 
@@ -1608,9 +1469,7 @@ class IntentAuthorizationService:
                 raise AuthorizationServiceError(
                     "invocation is required (envelope, mapping, or normalizable source)"
                 )
-            envelope = _coerce_envelope(
-                invocation, normalizer=normalizer, deps=deps
-            )
+            envelope = _coerce_envelope(invocation, normalizer=normalizer, deps=deps)
             # Never execute tools/content — envelope is data only.
             trace.note(
                 "auth.service.normalize.accepted",
@@ -1619,9 +1478,7 @@ class IntentAuthorizationService:
 
             # ---- profile -------------------------------------------------
             requested_profile = (
-                profile
-                if profile is not None
-                else (envelope.policy.policy_profile or None)
+                profile if profile is not None else (envelope.policy.policy_profile or None)
             )
             resolution = resolve_profile_fail_closed(requested_profile)
             if not resolution.ok or resolution.profile is None:
@@ -1633,9 +1490,7 @@ class IntentAuthorizationService:
             if budget_obj.production_mode and profile_obj.accept_simulated_zkp:
                 # Production evaluation under a sim-accepting profile still
                 # refuses to authorize simulated evidence (stricter of the two).
-                trace.note(
-                    "auth.service.production_mode.overrides_simulated_acceptance"
-                )
+                trace.note("auth.service.production_mode.overrides_simulated_acceptance")
 
             # ---- roots ---------------------------------------------------
             roots = _resolve_roots(
@@ -1648,9 +1503,7 @@ class IntentAuthorizationService:
                 circuit_roots=circuit_roots,
                 vk_roots=vk_roots,
             )
-            context = bound_context_from_envelope(
-                envelope, environment=environment
-            )
+            context = bound_context_from_envelope(envelope, environment=environment)
             trace.note(
                 "auth.service.roots.bound",
                 f"auth.service.policy_root:{roots.policy_root}",
@@ -1662,15 +1515,11 @@ class IntentAuthorizationService:
             if deps.pre_lowered_intent is not None:
                 intent_lower = _coerce_intent_lower(deps.pre_lowered_intent)
             elif deps.intent_lowerer is not None:
-                intent_lower = _coerce_intent_lower(
-                    deps.intent_lowerer(envelope)
-                )
+                intent_lower = _coerce_intent_lower(deps.intent_lowerer(envelope))
             else:
                 intent_lower = _default_lower(envelope)
             if not intent_lower.actions:
-                raise AuthorizationServiceError(
-                    "intent lowering produced no action scopes"
-                )
+                raise AuthorizationServiceError("intent lowering produced no action scopes")
             trace.note(
                 "auth.service.lower.complete",
                 f"auth.service.intent_cid:{intent_lower.intent_cid}",
@@ -1707,9 +1556,7 @@ class IntentAuthorizationService:
                 )
             elif evidence.gaps and not evidence.all_selected:
                 status = InternalDecisionStatus.INDETERMINATE
-                reasons.append(
-                    "evidence coverage gaps: " + ",".join(evidence.gaps)
-                )
+                reasons.append("evidence coverage gaps: " + ",".join(evidence.gaps))
                 reason_codes.append("evidence.coverage_gap")
                 decision = _error_decision(
                     status=status,
@@ -1740,9 +1587,7 @@ class IntentAuthorizationService:
                     constraint_artifacts=intent_lower.constraint_artifacts,
                     assumptions=intent_lower.assumptions,
                     include_during_post=include_during_post,
-                    include_translation_reconstruction=(
-                        include_translation_reconstruction
-                    ),
+                    include_translation_reconstruction=(include_translation_reconstruction),
                     metadata=metadata or {},
                 )
                 trace.note(
@@ -1777,9 +1622,8 @@ class IntentAuthorizationService:
                 if portfolio_run.decision is not None:
                     decision = portfolio_run.decision
                 else:
-                    policy = (
-                        deps.decision_policy
-                        or AuthorizationDecisionPolicy.for_profile(profile_id)
+                    policy = deps.decision_policy or AuthorizationDecisionPolicy.for_profile(
+                        profile_id
                     )
                     decision = evaluate_authorization_decision(
                         bundle, portfolio_run.job_results, policy=policy
@@ -1797,8 +1641,7 @@ class IntentAuthorizationService:
                         profile_id=decision.profile_id,
                         selected_evidence_cids=evidence.all_selected,
                         residual_obligations=decision.residual_obligations,
-                        diagnostics=decision.diagnostics
-                        + ("auth.service.evidence.bound",),
+                        diagnostics=decision.diagnostics + ("auth.service.evidence.bound",),
                         metadata=decision.metadata,
                     )
                 status = decision.status
@@ -1820,23 +1663,17 @@ class IntentAuthorizationService:
             deadline = envelope.deadline if envelope is not None else issued_at
             try:
                 # Cap expiry at min(deadline, issued+ttl) without exceeding deadline.
-                ttl_expiry = _add_seconds_iso(
-                    issued_at, budget_obj.receipt_ttl_seconds
-                )
+                ttl_expiry = _add_seconds_iso(issued_at, budget_obj.receipt_ttl_seconds)
                 expiry = min(deadline, ttl_expiry)
             except (TypeError, ValueError):
                 expiry = deadline or issued_at
 
             attempt_digests: tuple[str, ...] = ()
             if portfolio_run is not None:
-                attempt_digests = tuple(
-                    item.digest for item in portfolio_run.attempts
-                )
+                attempt_digests = tuple(item.digest for item in portfolio_run.attempts)
             obligation_ids: tuple[str, ...] = ()
             if bundle is not None:
-                obligation_ids = tuple(
-                    sorted({job.job_id for job in bundle.jobs})
-                )
+                obligation_ids = tuple(sorted({job.job_id for job in bundle.jobs}))
 
             receipt_id = (
                 "receipt:"
@@ -1883,9 +1720,7 @@ class IntentAuthorizationService:
                 if receipt.permits_capability_derivation:
                     cap_expiry = min(
                         receipt.expiry,
-                        _add_seconds_iso(
-                            issued_at, budget_obj.capability_ttl_seconds
-                        ),
+                        _add_seconds_iso(issued_at, budget_obj.capability_ttl_seconds),
                     )
                     capability = derive_capability(
                         receipt,
@@ -1918,12 +1753,8 @@ class IntentAuthorizationService:
                 and budget_obj.production_mode
             ):
                 status = InternalDecisionStatus.INDETERMINATE
-                reasons = list(reasons) + [
-                    "simulated evidence cannot authorize in production"
-                ]
-                reason_codes = list(reason_codes) + [
-                    "evidence.simulated_production"
-                ]
+                reasons = list(reasons) + ["simulated evidence cannot authorize in production"]
+                reason_codes = list(reason_codes) + ["evidence.simulated_production"]
                 decision = _error_decision(
                     status=status,
                     reasons=reasons,
@@ -2039,17 +1870,13 @@ class IntentAuthorizationService:
         receipt: DecisionReceipt | None = None
         try:
             policy_digest = roots.digest if roots is not None else ("f" * 64)
-            bundle_digest = (
-                bundle.digest if bundle is not None else ("e" * 64)
-            )
+            bundle_digest = bundle.digest if bundle is not None else ("e" * 64)
             decision = _error_decision(
                 status=status,
                 reasons=reasons,
                 reason_codes=reason_codes,
                 profile_id=profile_id or "legal-strict",
-                selected_evidence_cids=(
-                    evidence.all_selected if evidence is not None else ()
-                ),
+                selected_evidence_cids=(evidence.all_selected if evidence is not None else ()),
                 diagnostics=tuple(trace.diagnostics[-8:]),
                 bundle_digest=bundle_digest
                 if len(bundle_digest) == 64
@@ -2061,9 +1888,7 @@ class IntentAuthorizationService:
             if roots is not None and context is not None:
                 issued_at = deps.now()
                 deadline = (
-                    envelope.deadline
-                    if envelope is not None
-                    else _add_seconds_iso(issued_at, 60)
+                    envelope.deadline if envelope is not None else _add_seconds_iso(issued_at, 60)
                 )
                 receipt = build_decision_receipt(
                     receipt_id="receipt:fail-closed:"
@@ -2085,9 +1910,7 @@ class IntentAuthorizationService:
                     producer_id=self.producer_id,
                 )
         except Exception as build_exc:  # noqa: BLE001
-            trace.note(
-                f"auth.service.fail_closed.receipt_error:{type(build_exc).__name__}"
-            )
+            trace.note(f"auth.service.fail_closed.receipt_error:{type(build_exc).__name__}")
             decision = None
             receipt = None
 

@@ -57,9 +57,13 @@ Successfully updated all imports across the codebase to use the new `data_transf
 ```python
 # Core serialization utilities
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
-from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import (
+    DatasetSerializer,
+)
 from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import jsonl_to_parquet
-from ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car import ipfs_parquet_to_car
+from ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car import (
+    ipfs_parquet_to_car,
+)
 ```
 
 ### Backward Compatibility

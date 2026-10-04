@@ -207,7 +207,7 @@ from ipfs_datasets_py.processors.storage.ipld import (
     KnowledgeGraph,
     VectorStore,
     DAGPBCodec,
-    OptimizedCodec
+    OptimizedCodec,
 )
 
 warnings.warn(
@@ -215,10 +215,10 @@ warnings.warn(
     "Use 'ipfs_datasets_py.processors.storage.ipld' instead. "
     "This import path will be removed in v2.0.0 (August 2026).",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
-__all__ = ['IPLDStorage', 'KnowledgeGraph', 'VectorStore', 'DAGPBCodec', 'OptimizedCodec']
+__all__ = ["IPLDStorage", "KnowledgeGraph", "VectorStore", "DAGPBCodec", "OptimizedCodec"]
 ```
 
 **1.4 Update Processor Imports** (2 hours)
@@ -291,7 +291,7 @@ from ipfs_datasets_py.processors.serialization import (
     DataInterchangeUtils,
     DatasetSerializer,
     convert_parquet_to_car,
-    convert_jsonl_to_parquet
+    convert_jsonl_to_parquet,
 )
 
 warnings.warn(
@@ -299,14 +299,20 @@ warnings.warn(
     "Use 'ipfs_datasets_py.processors.serialization' instead. "
     "This import path will be removed in v2.0.0 (August 2026).",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
-__all__ = ['DataInterchangeUtils', 'DatasetSerializer', 'convert_parquet_to_car', 'convert_jsonl_to_parquet']
+__all__ = [
+    "DataInterchangeUtils",
+    "DatasetSerializer",
+    "convert_parquet_to_car",
+    "convert_jsonl_to_parquet",
+]
 
 # Also create shims for root-level files
 # ipfs_datasets_py/data_transformation/car_conversion.py
 import warnings
+
 warnings.warn(..., DeprecationWarning, stacklevel=2)
 from ipfs_datasets_py.processors.serialization.car_conversion import *
 ```
@@ -360,7 +366,7 @@ warnings.warn(
     "Use 'ipfs_datasets_py.processors.ipfs.formats' instead. "
     "This import path will be removed in v2.0.0 (August 2026).",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 
@@ -401,7 +407,7 @@ warnings.warn(
     "Use 'ipfs_datasets_py.processors.auth.ucan' instead. "
     "This import path will be removed in v2.0.0 (August 2026).",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 
@@ -583,7 +589,7 @@ from ipfs_datasets_py.processors.storage.ipld import (
     KnowledgeGraph,
     VectorStore,
     DAGPBCodec,
-    OptimizedCodec
+    OptimizedCodec,
 )
 
 # Issue deprecation warning
@@ -593,10 +599,10 @@ warnings.warn(
     "This import path will be removed in v2.0.0 (August 2026). "
     "See docs/PROCESSORS_DATA_TRANSFORMATION_MIGRATION_GUIDE_V2.md for details.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
-__all__ = ['IPLDStorage', 'KnowledgeGraph', 'VectorStore', 'DAGPBCodec', 'OptimizedCodec']
+__all__ = ["IPLDStorage", "KnowledgeGraph", "VectorStore", "DAGPBCodec", "OptimizedCodec"]
 ```
 
 ---

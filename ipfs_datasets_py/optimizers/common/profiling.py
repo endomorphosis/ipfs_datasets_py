@@ -222,7 +222,10 @@ def profile_method(
     config: Optional[ProfilingConfig] = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        name = section_name or f"{getattr(func, '__module__', '')}.{getattr(func, '__qualname__', func.__name__)}"
+        name = (
+            section_name
+            or f"{getattr(func, '__module__', '')}.{getattr(func, '__qualname__', func.__name__)}"
+        )
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:

@@ -90,9 +90,7 @@ backend = CallableEmbeddingBackend(
     identity="ae-teacher@1",
     scorer=lambda ref, cand: EmbeddingPairMetrics(0.12, 0.91),
 )
-dual = compute_dual_metrics(
-    gold_ir, l1, reconstruction, l2, embedding_backend=backend
-)
+dual = compute_dual_metrics(gold_ir, l1, reconstruction, l2, embedding_backend=backend)
 assert dual.metric_mode.value == "dual"
 assert dual.promotion_primary_metric == "structural_end_to_end"
 ```

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class UnifiedDashboardDocumenter:
     """Creates comprehensive documentation of the unified dashboard interface."""
-    
+
     def __init__(self):
         self.output_dir = Path("unified_dashboard_documentation")
         self.output_dir.mkdir(exist_ok=True)
@@ -29,22 +29,22 @@ class UnifiedDashboardDocumenter:
             "screenshots_created": [],
             "interaction_tests": [],
             "accessibility_check": {},
-            "implementation_verification": {}
+            "implementation_verification": {},
         }
-    
+
     def analyze_html_structure(self) -> Dict[str, Any]:
         """Analyze the complete unified dashboard HTML structure."""
         logger.info("🔍 Analyzing unified dashboard HTML structure...")
-        
+
         # Read the unified dashboard HTML
         html_file = Path("unified_dashboard_complete.html")
         if not html_file.exists():
             logger.error("Unified dashboard HTML file not found")
             return {}
-        
-        with open(html_file, 'r', encoding='utf-8') as f:
+
+        with open(html_file, "r", encoding="utf-8") as f:
             html_content = f.read()
-        
+
         analysis = {
             "file_size": len(html_content),
             "title": "Unified Investigation Dashboard",
@@ -55,20 +55,16 @@ class UnifiedDashboardDocumenter:
             "unified_interface": True,
             "interactive_elements": [],
             "styling_approach": "investigation_themed",
-            "responsive_design": True
+            "responsive_design": True,
         }
-        
+
         # Check for unified navigation sections
-        navigation_sections = [
-            "Investigation Tools",
-            "Data Management", 
-            "Analysis Tools"
-        ]
-        
+        navigation_sections = ["Investigation Tools", "Data Management", "Analysis Tools"]
+
         for section in navigation_sections:
             if section in html_content:
                 analysis["unified_navigation_sections"].append(section)
-        
+
         # Check for entity-centric elements
         entity_elements = [
             "Investigation Hub",
@@ -78,201 +74,222 @@ class UnifiedDashboardDocumenter:
             "Timeline Analysis",
             "Pattern Detection",
             "Conflict Analysis",
-            "Data Provenance"
+            "Data Provenance",
         ]
-        
+
         for element in entity_elements:
             if element in html_content:
                 analysis["entity_centric_elements"].append(element)
-        
+
         # Check for investigation tools
         investigation_tools = [
             "Data Ingestion",
             "Corpus Browser",
             "Advanced Search",
-            "Source Management"
+            "Source Management",
         ]
-        
+
         for tool in investigation_tools:
             if tool in html_content:
                 analysis["investigation_tools"].append(tool)
-        
+
         # Verify role-specific buttons are NOT present
         role_indicators = [
             'id="data-scientist"',
             'id="historian"',
             'id="lawyer"',
             "btn-data-scientist",
-            "btn-historian", 
-            "btn-lawyer"
+            "btn-historian",
+            "btn-lawyer",
         ]
-        
+
         role_buttons_found = []
         for indicator in role_indicators:
             if indicator in html_content:
                 role_buttons_found.append(indicator)
-        
+
         analysis["role_buttons_present"] = len(role_buttons_found) > 0
         analysis["removed_elements"] = role_buttons_found  # Should be empty
-        
+
         # Check for interactive elements
         interactive_indicators = [
             "nav-item",
             "btn btn-primary",
             "form-input",
             "click",
-            "addEventListener"
+            "addEventListener",
         ]
-        
+
         for indicator in interactive_indicators:
             if indicator in html_content:
                 analysis["interactive_elements"].append(indicator)
-        
+
         self.documentation_results["interface_analysis"] = analysis
-        logger.info(f"✅ HTML analysis complete: {len(analysis['entity_centric_elements'])} entity-centric elements found")
-        
+        logger.info(
+            f"✅ HTML analysis complete: {len(analysis['entity_centric_elements'])} entity-centric elements found"
+        )
+
         return analysis
-    
+
     def create_visual_screenshots(self) -> List[Dict]:
         """Create visual representations of different dashboard views."""
         logger.info("📸 Creating visual documentation screenshots...")
-        
+
         screenshots = []
-        
+
         # Create overview of the interface
         overview_html = self._create_interface_overview()
         overview_path = self.output_dir / "01_unified_dashboard_overview.html"
-        with open(overview_path, 'w', encoding='utf-8') as f:
+        with open(overview_path, "w", encoding="utf-8") as f:
             f.write(overview_html)
-        
-        screenshots.append({
-            "name": "Unified Dashboard Overview",
-            "path": str(overview_path),
-            "description": "Complete unified investigation dashboard showing entity-centric navigation",
-            "view": "overview"
-        })
-        
+
+        screenshots.append(
+            {
+                "name": "Unified Dashboard Overview",
+                "path": str(overview_path),
+                "description": "Complete unified investigation dashboard showing entity-centric navigation",
+                "view": "overview",
+            }
+        )
+
         # Create navigation structure visualization
         navigation_html = self._create_navigation_showcase()
         navigation_path = self.output_dir / "02_unified_navigation_structure.html"
-        with open(navigation_path, 'w', encoding='utf-8') as f:
+        with open(navigation_path, "w", encoding="utf-8") as f:
             f.write(navigation_html)
-        
-        screenshots.append({
-            "name": "Unified Navigation Structure",
-            "path": str(navigation_path),
-            "description": "Detailed view of the unified navigation replacing role-specific buttons",
-            "view": "navigation"
-        })
-        
+
+        screenshots.append(
+            {
+                "name": "Unified Navigation Structure",
+                "path": str(navigation_path),
+                "description": "Detailed view of the unified navigation replacing role-specific buttons",
+                "view": "navigation",
+            }
+        )
+
         # Create data ingestion interface
         ingestion_html = self._create_ingestion_interface()
         ingestion_path = self.output_dir / "03_data_ingestion_interface.html"
-        with open(ingestion_path, 'w', encoding='utf-8') as f:
+        with open(ingestion_path, "w", encoding="utf-8") as f:
             f.write(ingestion_html)
-        
-        screenshots.append({
-            "name": "Data Ingestion Interface",
-            "path": str(ingestion_path),
-            "description": "Investigation data ingestion form with comprehensive options",
-            "view": "data_ingestion"
-        })
-        
+
+        screenshots.append(
+            {
+                "name": "Data Ingestion Interface",
+                "path": str(ingestion_path),
+                "description": "Investigation data ingestion form with comprehensive options",
+                "view": "data_ingestion",
+            }
+        )
+
         # Create mobile responsive view
         mobile_html = self._create_mobile_view()
         mobile_path = self.output_dir / "04_mobile_responsive_view.html"
-        with open(mobile_path, 'w', encoding='utf-8') as f:
+        with open(mobile_path, "w", encoding="utf-8") as f:
             f.write(mobile_html)
-        
-        screenshots.append({
-            "name": "Mobile Responsive View",
-            "path": str(mobile_path),
-            "description": "Dashboard optimized for mobile devices maintaining unified interface",
-            "view": "mobile"
-        })
-        
+
+        screenshots.append(
+            {
+                "name": "Mobile Responsive View",
+                "path": str(mobile_path),
+                "description": "Dashboard optimized for mobile devices maintaining unified interface",
+                "view": "mobile",
+            }
+        )
+
         # Create before/after comparison
         comparison_html = self._create_before_after_comparison()
         comparison_path = self.output_dir / "05_before_after_comparison.html"
-        with open(comparison_path, 'w', encoding='utf-8') as f:
+        with open(comparison_path, "w", encoding="utf-8") as f:
             f.write(comparison_html)
-        
-        screenshots.append({
-            "name": "Before/After Interface Comparison",
-            "path": str(comparison_path),
-            "description": "Comparison showing transformation from role-specific to unified interface",
-            "view": "comparison"
-        })
-        
+
+        screenshots.append(
+            {
+                "name": "Before/After Interface Comparison",
+                "path": str(comparison_path),
+                "description": "Comparison showing transformation from role-specific to unified interface",
+                "view": "comparison",
+            }
+        )
+
         self.documentation_results["screenshots_created"] = screenshots
         logger.info(f"✅ Created {len(screenshots)} visual documentation files")
-        
+
         return screenshots
-    
+
     def test_interface_interactions(self) -> List[Dict]:
         """Test interface interactions and JavaScript functionality."""
         logger.info("⚡ Testing interface interactions...")
-        
+
         interactions = []
-        
+
         # Test navigation switching
-        interactions.append({
-            "type": "navigation",
-            "test": "Tab switching between unified sections",
-            "expected": "Smooth transitions between Investigation Tools, Data Management, and Analysis Tools",
-            "status": "✅ Implemented",
-            "details": "JavaScript handles view switching with fade animations"
-        })
-        
+        interactions.append(
+            {
+                "type": "navigation",
+                "test": "Tab switching between unified sections",
+                "expected": "Smooth transitions between Investigation Tools, Data Management, and Analysis Tools",
+                "status": "✅ Implemented",
+                "details": "JavaScript handles view switching with fade animations",
+            }
+        )
+
         # Test form interactions
-        interactions.append({
-            "type": "form_submission",
-            "test": "Data ingestion form processing",
-            "expected": "Form validation and submission handling",
-            "status": "✅ Implemented", 
-            "details": "Complete form with validation for investigation setup"
-        })
-        
+        interactions.append(
+            {
+                "type": "form_submission",
+                "test": "Data ingestion form processing",
+                "expected": "Form validation and submission handling",
+                "status": "✅ Implemented",
+                "details": "Complete form with validation for investigation setup",
+            }
+        )
+
         # Test responsive design
-        interactions.append({
-            "type": "responsive",
-            "test": "Mobile and desktop layout adaptation",
-            "expected": "Interface adapts to different screen sizes",
-            "status": "✅ Implemented",
-            "details": "CSS media queries ensure proper scaling"
-        })
-        
+        interactions.append(
+            {
+                "type": "responsive",
+                "test": "Mobile and desktop layout adaptation",
+                "expected": "Interface adapts to different screen sizes",
+                "status": "✅ Implemented",
+                "details": "CSS media queries ensure proper scaling",
+            }
+        )
+
         # Test accessibility
-        interactions.append({
-            "type": "accessibility",
-            "test": "Keyboard navigation and screen reader support",
-            "expected": "Full keyboard accessibility",
-            "status": "⚠️ Partial",
-            "details": "Basic keyboard navigation implemented, could be enhanced"
-        })
-        
+        interactions.append(
+            {
+                "type": "accessibility",
+                "test": "Keyboard navigation and screen reader support",
+                "expected": "Full keyboard accessibility",
+                "status": "⚠️ Partial",
+                "details": "Basic keyboard navigation implemented, could be enhanced",
+            }
+        )
+
         self.documentation_results["interaction_tests"] = interactions
         logger.info(f"✅ Completed {len(interactions)} interaction tests")
-        
+
         return interactions
-    
+
     def verify_unified_implementation(self) -> Dict[str, Any]:
         """Verify that the unified interface has been properly implemented."""
         logger.info("🎯 Verifying unified interface implementation...")
-        
+
         analysis = self.documentation_results.get("interface_analysis", {})
-        
+
         verification = {
             "role_buttons_removed": not analysis.get("role_buttons_present", True),
-            "unified_navigation_implemented": len(analysis.get("unified_navigation_sections", [])) >= 3,
+            "unified_navigation_implemented": len(analysis.get("unified_navigation_sections", []))
+            >= 3,
             "entity_centric_design": len(analysis.get("entity_centric_elements", [])) >= 5,
             "investigation_tools_present": len(analysis.get("investigation_tools", [])) >= 3,
             "interactive_functionality": len(analysis.get("interactive_elements", [])) >= 4,
             "professional_styling": analysis.get("styling_approach") == "investigation_themed",
             "responsive_design": analysis.get("responsive_design", False),
-            "implementation_score": 0
+            "implementation_score": 0,
         }
-        
+
         # Calculate implementation score
         score = 0
         weight_map = {
@@ -282,15 +299,15 @@ class UnifiedDashboardDocumenter:
             "investigation_tools_present": 15,
             "interactive_functionality": 10,
             "professional_styling": 5,
-            "responsive_design": 5
+            "responsive_design": 5,
         }
-        
+
         for key, weight in weight_map.items():
             if verification.get(key, False):
                 score += weight
-        
+
         verification["implementation_score"] = score
-        
+
         # Overall status
         if score >= 95:
             verification["overall_status"] = "excellent"
@@ -300,19 +317,19 @@ class UnifiedDashboardDocumenter:
             verification["overall_status"] = "acceptable"
         else:
             verification["overall_status"] = "needs_improvement"
-        
+
         self.documentation_results["implementation_verification"] = verification
         logger.info(f"✅ Implementation verification complete: {score}/100 score")
-        
+
         return verification
-    
+
     def generate_comprehensive_report(self) -> str:
         """Generate comprehensive documentation report."""
         logger.info("📊 Generating comprehensive documentation report...")
-        
+
         # Ensure all analyses are complete
         self.verify_unified_implementation()
-        
+
         report_data = {
             "timestamp": time.time(),
             "dashboard_type": "Unified Investigation Dashboard",
@@ -321,34 +338,46 @@ class UnifiedDashboardDocumenter:
             "key_achievements": [
                 "Completely removed role-specific buttons (Data Scientist, Historian, Lawyer)",
                 "Implemented unified entity-centric navigation structure",
-                "Created comprehensive investigation tools suite", 
+                "Created comprehensive investigation tools suite",
                 "Built responsive design optimized for all device types",
                 "Integrated interactive JavaScript functionality",
-                "Applied professional investigation-themed styling"
+                "Applied professional investigation-themed styling",
             ],
             "summary_metrics": {
-                "implementation_score": self.documentation_results.get("implementation_verification", {}).get("implementation_score", 0),
-                "unified_elements": len(self.documentation_results.get("interface_analysis", {}).get("entity_centric_elements", [])),
-                "navigation_sections": len(self.documentation_results.get("interface_analysis", {}).get("unified_navigation_sections", [])),
-                "screenshots_created": len(self.documentation_results.get("screenshots_created", [])),
-                "interaction_tests": len(self.documentation_results.get("interaction_tests", []))
-            }
+                "implementation_score": self.documentation_results.get(
+                    "implementation_verification", {}
+                ).get("implementation_score", 0),
+                "unified_elements": len(
+                    self.documentation_results.get("interface_analysis", {}).get(
+                        "entity_centric_elements", []
+                    )
+                ),
+                "navigation_sections": len(
+                    self.documentation_results.get("interface_analysis", {}).get(
+                        "unified_navigation_sections", []
+                    )
+                ),
+                "screenshots_created": len(
+                    self.documentation_results.get("screenshots_created", [])
+                ),
+                "interaction_tests": len(self.documentation_results.get("interaction_tests", [])),
+            },
         }
-        
+
         # Save JSON report
         json_path = self.output_dir / "unified_dashboard_documentation_report.json"
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             json.dump(report_data, f, indent=2)
-        
+
         # Generate HTML report
         html_report = self._create_html_documentation_report(report_data)
         html_path = self.output_dir / "unified_dashboard_documentation_report.html"
-        with open(html_path, 'w') as f:
+        with open(html_path, "w") as f:
             f.write(html_report)
-        
+
         logger.info(f"✅ Documentation report generated: {html_path}")
         return str(html_path)
-    
+
     def _create_interface_overview(self) -> str:
         """Create interface overview HTML."""
         return """
@@ -451,7 +480,7 @@ class UnifiedDashboardDocumenter:
 </body>
 </html>
         """
-    
+
     def _create_navigation_showcase(self) -> str:
         """Create navigation structure showcase HTML."""
         return """
@@ -532,7 +561,7 @@ class UnifiedDashboardDocumenter:
 </body>
 </html>
         """
-    
+
     def _create_ingestion_interface(self) -> str:
         """Create data ingestion interface showcase."""
         return """
@@ -612,7 +641,7 @@ class UnifiedDashboardDocumenter:
 </body>
 </html>
         """
-    
+
     def _create_mobile_view(self) -> str:
         """Create mobile responsive view showcase."""
         return """
@@ -700,7 +729,7 @@ class UnifiedDashboardDocumenter:
 </body>
 </html>
         """
-    
+
     def _create_before_after_comparison(self) -> str:
         """Create comprehensive before/after comparison."""
         return """
@@ -884,13 +913,13 @@ class UnifiedDashboardDocumenter:
 </body>
 </html>
         """
-    
+
     def _create_html_documentation_report(self, report_data: Dict) -> str:
         """Create comprehensive HTML documentation report."""
         results = report_data["documentation_results"]
         metrics = report_data["summary_metrics"]
         achievements = report_data["key_achievements"]
-        
+
         return f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -1133,7 +1162,7 @@ class UnifiedDashboardDocumenter:
         <div class="header">
             <h1>🔍 Unified Investigation Dashboard</h1>
             <p>Complete Documentation & Analysis Report</p>
-            <div class="implementation-score">{metrics['implementation_score']}/100</div>
+            <div class="implementation-score">{metrics["implementation_score"]}/100</div>
             <p>Implementation Score</p>
         </div>
         
@@ -1143,19 +1172,19 @@ class UnifiedDashboardDocumenter:
         
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">{metrics['unified_elements']}</div>
+                <div class="metric-value">{metrics["unified_elements"]}</div>
                 <div class="metric-label">Unified Elements</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">{metrics['navigation_sections']}</div>
+                <div class="metric-value">{metrics["navigation_sections"]}</div>
                 <div class="metric-label">Navigation Sections</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">{metrics['screenshots_created']}</div>
+                <div class="metric-value">{metrics["screenshots_created"]}</div>
                 <div class="metric-label">Screenshots Created</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">{metrics['interaction_tests']}</div>
+                <div class="metric-value">{metrics["interaction_tests"]}</div>
                 <div class="metric-label">Interaction Tests</div>
             </div>
         </div>
@@ -1163,28 +1192,45 @@ class UnifiedDashboardDocumenter:
         <div class="section">
             <h2>🎯 Key Achievements</h2>
             <div class="achievements-grid">
-                {"".join([f'<div class="achievement-item">✅ {achievement}</div>' for achievement in achievements])}
+                {
+            "".join(
+                [
+                    f'<div class="achievement-item">✅ {achievement}</div>'
+                    for achievement in achievements
+                ]
+            )
+        }
             </div>
         </div>
         
         <div class="section">
             <h2>📸 Visual Documentation</h2>
             <div class="screenshots-grid">
-                {"".join([f'''
+                {
+            "".join(
+                [
+                    f'''
                 <div class="screenshot-card">
                     <div class="screenshot-header">{screenshot['name']}</div>
                     <div class="screenshot-content">
                         <div class="screenshot-desc">{screenshot['description']}</div>
                     </div>
                 </div>
-                ''' for screenshot in results.get('screenshots_created', [])])}
+                '''
+                    for screenshot in results.get("screenshots_created", [])
+                ]
+            )
+        }
             </div>
         </div>
         
         <div class="section">
             <h2>⚡ Interface Interaction Tests</h2>
             <div class="interaction-tests">
-                {"".join([f'''
+                {
+            "".join(
+                [
+                    f'''
                 <div class="interaction-item">
                     <div class="interaction-details">
                         <div class="interaction-title">{test['test']}</div>
@@ -1194,7 +1240,11 @@ class UnifiedDashboardDocumenter:
                         {test['status']}
                     </div>
                 </div>
-                ''' for test in results.get('interaction_tests', [])])}
+                '''
+                    for test in results.get("interaction_tests", [])
+                ]
+            )
+        }
             </div>
         </div>
         
@@ -1231,8 +1281,12 @@ class UnifiedDashboardDocumenter:
         <div class="section">
             <h2>📊 Technical Analysis Summary</h2>
             <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 0.75rem;">🎯 <strong>Transformation Status:</strong> {report_data['transformation_status']}</li>
-                <li style="margin-bottom: 0.75rem;">🔍 <strong>Interface Type:</strong> {report_data['dashboard_type']}</li>
+                <li style="margin-bottom: 0.75rem;">🎯 <strong>Transformation Status:</strong> {
+            report_data["transformation_status"]
+        }</li>
+                <li style="margin-bottom: 0.75rem;">🔍 <strong>Interface Type:</strong> {
+            report_data["dashboard_type"]
+        }</li>
                 <li style="margin-bottom: 0.75rem;">⚡ <strong>JavaScript Functionality:</strong> Complete with form validation and navigation</li>
                 <li style="margin-bottom: 0.75rem;">🎨 <strong>Styling Approach:</strong> Professional investigation theme with entity color coding</li>
                 <li style="margin-bottom: 0.75rem;">📱 <strong>Responsive Design:</strong> Mobile-first with full functionality across devices</li>
@@ -1250,23 +1304,23 @@ class UnifiedDashboardDocumenter:
 </body>
 </html>
         """
-    
+
     def run_complete_documentation(self) -> str:
         """Run complete documentation process."""
         try:
             logger.info("🚀 Starting comprehensive dashboard documentation...")
-            
+
             # Run all analyses
             self.analyze_html_structure()
             self.create_visual_screenshots()
             self.test_interface_interactions()
-            
+
             # Generate report
             report_path = self.generate_comprehensive_report()
-            
+
             logger.info("✅ Documentation completed successfully!")
             return report_path
-            
+
         except Exception as e:
             logger.error(f"❌ Documentation failed: {e}")
             return ""
@@ -1275,35 +1329,40 @@ class UnifiedDashboardDocumenter:
 def main():
     """Main documentation execution."""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    
+
     documenter = UnifiedDashboardDocumenter()
     report_path = documenter.run_complete_documentation()
-    
+
     if report_path:
         print(f"\n✅ Comprehensive documentation generated: {report_path}")
         print(f"📁 Documentation directory: {documenter.output_dir}")
-        
+
         # Print summary
         results = documenter.documentation_results
         interface_analysis = results.get("interface_analysis", {})
-        
+
         print(f"\n🎯 Documentation Summary:")
-        print(f"   • Role Buttons Removed: {'✅ Yes' if not interface_analysis.get('role_buttons_present', True) else '❌ No'}")
-        print(f"   • Unified Elements: {len(interface_analysis.get('entity_centric_elements', []))}")
-        print(f"   • Navigation Sections: {len(interface_analysis.get('unified_navigation_sections', []))}")
+        print(
+            f"   • Role Buttons Removed: {'✅ Yes' if not interface_analysis.get('role_buttons_present', True) else '❌ No'}"
+        )
+        print(
+            f"   • Unified Elements: {len(interface_analysis.get('entity_centric_elements', []))}"
+        )
+        print(
+            f"   • Navigation Sections: {len(interface_analysis.get('unified_navigation_sections', []))}"
+        )
         print(f"   • Screenshots Created: {len(results.get('screenshots_created', []))}")
         print(f"   • Interaction Tests: {len(results.get('interaction_tests', []))}")
-        
+
         verification = results.get("implementation_verification", {})
         score = verification.get("implementation_score", 0)
         print(f"   • Implementation Score: {score}/100")
-        
+
         status = "✅ EXCELLENT" if score >= 95 else "🎯 GOOD" if score >= 80 else "⚠️ NEEDS WORK"
         print(f"   • Overall Status: {status}")
-        
+
     else:
         print("❌ Documentation failed")
 

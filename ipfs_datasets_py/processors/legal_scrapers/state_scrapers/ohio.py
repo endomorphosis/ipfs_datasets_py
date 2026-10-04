@@ -7,22 +7,25 @@ from .registry import StateScraperRegistry
 
 class OhioScraper(BaseStateScraper):
     """Scraper for Ohio state laws from https://codes.ohio.gov"""
+
     _OH_TITLE_URL_RE = re.compile(r"/ohio-revised-code/title-(\d+)$", re.IGNORECASE)
     _OH_CHAPTER_URL_RE = re.compile(r"/ohio-revised-code/chapter-([0-9.]+)$", re.IGNORECASE)
     _OH_SECTION_URL_RE = re.compile(r"/ohio-revised-code/section-([0-9A-Za-z.]+)$", re.IGNORECASE)
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Ohio's legislative website."""
         return "https://codes.ohio.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Ohio."""
-        return [{
-            "name": "Ohio Revised Code",
-            "url": f"{self.get_base_url()}/ohio-revised-code",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Ohio Revised Code",
+                "url": f"{self.get_base_url()}/ohio-revised-code",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -30,11 +33,11 @@ class OhioScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Ohio's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -108,7 +111,9 @@ class OhioScraper(BaseStateScraper):
         for title_url in title_urls:
             if len(statutes) >= max_statutes:
                 break
-            title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
+            title_payload = await self._fetch_page_content_with_archival_fallback(
+                title_url, timeout_seconds=20
+            )
             if not title_payload:
                 continue
             title_soup = BeautifulSoup(title_payload, "html.parser")
@@ -127,7 +132,9 @@ class OhioScraper(BaseStateScraper):
             for chapter_url in chapter_urls:
                 if len(statutes) >= max_statutes or len(seen_sections) >= max_section_links:
                     break
-                chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+                chapter_payload = await self._fetch_page_content_with_archival_fallback(
+                    chapter_url, timeout_seconds=20
+                )
                 if not chapter_payload:
                     continue
                 chapter_soup = BeautifulSoup(chapter_payload, "html.parser")
@@ -156,14 +163,18 @@ class OhioScraper(BaseStateScraper):
         except ImportError:
             return None
 
-        payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            source_url, timeout_seconds=20
+        )
         if not payload:
             return None
         soup = BeautifulSoup(payload, "html.parser")
         for tag in soup(["script", "style", "nav", "header", "footer", "noscript"]):
             tag.decompose()
         heading = soup.find("h1")
-        section_name = self._normalize_legal_text(heading.get_text(" ", strip=True) if heading else "")
+        section_name = self._normalize_legal_text(
+            heading.get_text(" ", strip=True) if heading else ""
+        )
         main = soup.find("main") or soup.find("body") or soup
         text = self._normalize_legal_text(main.get_text(" ", strip=True))
         match = self._OH_SECTION_URL_RE.search(source_url)
@@ -208,7 +219,9 @@ class OhioScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         limit = max_statutes if max_statutes is not None else len(section_urls)
         for source_url in section_urls[: max(1, int(limit))]:
-            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                source_url, timeout_seconds=12
+            )
             if not payload:
                 continue
             soup = BeautifulSoup(payload, "html.parser")
@@ -217,7 +230,9 @@ class OhioScraper(BaseStateScraper):
             title = soup.find(["h1", "h2"])
             section_name = title.get_text(" ", strip=True) if title else ""
             text = self._normalize_legal_text(soup.get_text(" ", strip=True))
-            match = re.search(r"\bSection\s+(\d+[A-Za-z]?(?:\.\d+[A-Za-z]*)*)\b", text, re.IGNORECASE)
+            match = re.search(
+                r"\bSection\s+(\d+[A-Za-z]?(?:\.\d+[A-Za-z]*)*)\b", text, re.IGNORECASE
+            )
             section_number = match.group(1) if match else source_url.rsplit("section-", 1)[-1]
             if len(text) < 160:
                 continue
@@ -234,7 +249,10 @@ class OhioScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"Ohio Rev. Code Ann. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_direct_section", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_direct_section",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes

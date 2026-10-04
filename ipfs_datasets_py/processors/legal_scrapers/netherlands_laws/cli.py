@@ -9,7 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from .api import scrape
-from .builders.ipfs_indexes import build_all_indexes, build_bm25_index, build_knowledge_graph, build_vector_index
+from .builders.ipfs_indexes import (
+    build_all_indexes,
+    build_bm25_index,
+    build_knowledge_graph,
+    build_vector_index,
+)
 from .builders.ipfs_package import DEFAULT_REPO_ID as DEFAULT_BASE_REPO_ID
 from .builders.ipfs_package import build_ipfs_cid_package
 from .builders.normalized_package import DEFAULT_REPO_ID as DEFAULT_NORMALIZED_REPO_ID
@@ -33,7 +38,12 @@ from .operations import (
     sync_catalog_from_raw,
     validate_integrity,
 )
-from .paths import DEFAULT_BWBR_CATALOG_PATH, DEFAULT_HF_NAMESPACE, DEFAULT_HF_REPO_IDS, PACKAGE_RAW_OUTPUT_DIR
+from .paths import (
+    DEFAULT_BWBR_CATALOG_PATH,
+    DEFAULT_HF_NAMESPACE,
+    DEFAULT_HF_REPO_IDS,
+    PACKAGE_RAW_OUTPUT_DIR,
+)
 from .quality_audit import run_quality_audit
 from .upload import token_from_env, upload_datasets, verify_remote_datasets
 
@@ -96,7 +106,9 @@ def _summarize_scrape_result(result: dict[str, Any]) -> dict[str, Any]:
     if metadata.get("errors"):
         compact_metadata["errors"] = list(metadata.get("errors") or [])[:20]
     if metadata.get("non_article_producing_laws"):
-        compact_metadata["non_article_producing_laws"] = list(metadata.get("non_article_producing_laws") or [])[:20]
+        compact_metadata["non_article_producing_laws"] = list(
+            metadata.get("non_article_producing_laws") or []
+        )[:20]
     return {
         "status": result.get("status"),
         "metadata": compact_metadata,
@@ -117,19 +129,32 @@ def _parse_bool(value: str | bool) -> bool:
 def _add_common_build_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--source-dir", type=Path, help="Override source package directory.")
     parser.add_argument("--out-dir", type=Path, help="Override output directory.")
-    parser.add_argument("--repo-id", help="Override Hugging Face dataset repo id for generated metadata.")
+    parser.add_argument(
+        "--repo-id", help="Override Hugging Face dataset repo id for generated metadata."
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Netherlands laws scrape, packaging, indexing, and Hugging Face upload helpers.")
+    parser = argparse.ArgumentParser(
+        description="Netherlands laws scrape, packaging, indexing, and Hugging Face upload helpers."
+    )
     parser.add_argument("--json", action="store_true", default=True, help="Print JSON output.")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    scrape_parser = sub.add_parser("scrape", help="Scrape Netherlands laws into the package-managed raw output directory.")
+    scrape_parser = sub.add_parser(
+        "scrape", help="Scrape Netherlands laws into the package-managed raw output directory."
+    )
     scrape_parser.add_argument("--output-dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
     scrape_parser.add_argument("--document-url", action="append", dest="document_urls", default=[])
     scrape_parser.add_argument("--seed-url", action="append", dest="seed_urls", default=[])
-    scrape_parser.add_argument("--use-default-seeds", "--use_default_seeds", nargs="?", const=True, default=False, type=_parse_bool)
+    scrape_parser.add_argument(
+        "--use-default-seeds",
+        "--use_default_seeds",
+        nargs="?",
+        const=True,
+        default=False,
+        type=_parse_bool,
+    )
     scrape_parser.add_argument("--max-documents", "--max_documents", type=int)
     scrape_parser.add_argument("--max-seed-pages", "--max_seed_pages", type=int, default=25)
     scrape_parser.add_argument(
@@ -140,41 +165,82 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scrape_parser.add_argument("--crawl-depth", "--crawl_depth", type=int, default=1)
     scrape_parser.add_argument("--rate-limit-delay", "--rate_limit_delay", type=float, default=0.5)
-    scrape_parser.add_argument("--skip-existing", "--skip_existing", nargs="?", const=True, default=False, type=_parse_bool)
+    scrape_parser.add_argument(
+        "--skip-existing", "--skip_existing", nargs="?", const=True, default=False, type=_parse_bool
+    )
     scrape_parser.add_argument("--resume", nargs="?", const=True, default=False, type=_parse_bool)
-    scrape_parser.add_argument("--no-skip-existing", "--no_skip_existing", nargs="?", const=True, default=False, type=_parse_bool)
-    scrape_parser.add_argument("--from-catalog", "--from_catalog", action="store_true", help="Lease a queued BWBR batch from the persistent catalog.")
-    scrape_parser.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    scrape_parser.add_argument(
+        "--no-skip-existing",
+        "--no_skip_existing",
+        nargs="?",
+        const=True,
+        default=False,
+        type=_parse_bool,
+    )
+    scrape_parser.add_argument(
+        "--from-catalog",
+        "--from_catalog",
+        action="store_true",
+        help="Lease a queued BWBR batch from the persistent catalog.",
+    )
+    scrape_parser.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     scrape_parser.add_argument("--batch-size", "--batch_size", type=int, default=25)
     scrape_parser.add_argument("--worker-id", "--worker_id", default="default")
-    scrape_parser.add_argument("--stale-after-minutes", "--stale_after_minutes", type=int, default=120)
+    scrape_parser.add_argument(
+        "--stale-after-minutes", "--stale_after_minutes", type=int, default=120
+    )
 
-    discover = sub.add_parser("discover", help="Import official SRU discovery JSONL into the persistent BWBR catalog.")
+    discover = sub.add_parser(
+        "discover", help="Import official SRU discovery JSONL into the persistent BWBR catalog."
+    )
     discover.add_argument("--discovery-jsonl", "--discovery_jsonl", type=Path, required=True)
-    discover.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    discover.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     discover.add_argument("--discovery-source", "--discovery_source", default="official_bwb_sru")
     discover.add_argument("--max-retries", "--max_retries", type=int, default=3)
 
-    queue = sub.add_parser("queue", help="Queue discovered BWBR identifiers for resumable scraping.")
-    queue.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    queue = sub.add_parser(
+        "queue", help="Queue discovered BWBR identifiers for resumable scraping."
+    )
+    queue.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     queue.add_argument("--identifier", action="append", dest="identifiers")
     queue.add_argument("--limit", type=int)
-    queue.add_argument("--include-retryable-failures", "--include_retryable_failures", action="store_true")
+    queue.add_argument(
+        "--include-retryable-failures", "--include_retryable_failures", action="store_true"
+    )
 
-    retry = sub.add_parser("retry-failures", help="Queue only transient failed BWBR identifiers that still have retry budget.")
-    retry.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    retry = sub.add_parser(
+        "retry-failures",
+        help="Queue only transient failed BWBR identifiers that still have retry budget.",
+    )
+    retry.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     retry.add_argument("--limit", type=int)
 
-    resume = sub.add_parser("resume", help="Reset stale leases and process the next queued BWBR batch.")
-    resume.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    resume = sub.add_parser(
+        "resume", help="Reset stale leases and process the next queued BWBR batch."
+    )
+    resume.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     resume.add_argument("--raw-dir", "--raw_dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
     resume.add_argument("--batch-size", "--batch_size", type=int, default=25)
     resume.add_argument("--worker-id", "--worker_id", default="default")
     resume.add_argument("--rate-limit-delay", "--rate_limit_delay", type=float, default=0.5)
     resume.add_argument("--stale-after-minutes", "--stale_after_minutes", type=int, default=120)
 
-    sync_raw = sub.add_parser("sync-raw", help="Synchronize existing raw law rows into the persistent catalog.")
-    sync_raw.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    sync_raw = sub.add_parser(
+        "sync-raw", help="Synchronize existing raw law rows into the persistent catalog."
+    )
+    sync_raw.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     sync_raw.add_argument("--raw-dir", "--raw_dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
 
     build_normalized = sub.add_parser("build-normalized", help="Build the normalized package.")
@@ -211,39 +277,68 @@ def build_parser() -> argparse.ArgumentParser:
         help="Do not derive the CID-keyed logic/relationship summary table.",
     )
 
-    validate_unified = sub.add_parser("validate-unified", help="Validate the local unified WetWijzer corpus bundle.")
+    validate_unified = sub.add_parser(
+        "validate-unified", help="Validate the local unified WetWijzer corpus bundle."
+    )
     validate_unified.add_argument("--out-dir", "--out_dir", type=Path)
 
-    indexes = sub.add_parser("build-indexes", help="Build vector, BM25, and knowledge graph packages.")
+    indexes = sub.add_parser(
+        "build-indexes", help="Build vector, BM25, and knowledge graph packages."
+    )
     indexes.add_argument("--source-dir", type=Path)
 
-    rebuild_indexes = sub.add_parser("rebuild-indexes", help="Operational alias for rebuilding vector, BM25, and graph packages.")
+    rebuild_indexes = sub.add_parser(
+        "rebuild-indexes", help="Operational alias for rebuilding vector, BM25, and graph packages."
+    )
     rebuild_indexes.add_argument("--source-dir", type=Path)
 
-    rebuild_hf = sub.add_parser("rebuild-huggingface", help="Rebuild full packages or emit a changed-only incremental delta.")
-    rebuild_hf.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    rebuild_hf = sub.add_parser(
+        "rebuild-huggingface",
+        help="Rebuild full packages or emit a changed-only incremental delta.",
+    )
+    rebuild_hf.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     rebuild_hf.add_argument("--raw-dir", "--raw_dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
-    rebuild_hf.add_argument("--incremental", action="store_true", help="Write changed-only law/article/CID/index/graph delta rows.")
+    rebuild_hf.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Write changed-only law/article/CID/index/graph delta rows.",
+    )
     rebuild_hf.add_argument("--out-dir", "--out_dir", type=Path)
     rebuild_hf.add_argument("--identifier", action="append", dest="identifiers")
     rebuild_hf.add_argument("--limit", type=int)
 
     upload = sub.add_parser("upload", help="Upload or update Hugging Face dataset repositories.")
-    upload.add_argument("--target", action="append", help="Target key: all, base, vector, bm25, knowledge-graph, normalized.")
+    upload.add_argument(
+        "--target",
+        action="append",
+        help="Target key: all, base, vector, bm25, knowledge-graph, normalized.",
+    )
     upload.add_argument("--namespace", default=DEFAULT_HF_NAMESPACE)
     upload.add_argument("--token-env", default="HF_TOKEN")
     upload.add_argument("--private", action="store_true")
     upload.add_argument("--dry-run", action="store_true")
-    upload.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    upload.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
 
-    verify = sub.add_parser("verify-remote", help="Verify required files and manifests on Hugging Face.")
+    verify = sub.add_parser(
+        "verify-remote", help="Verify required files and manifests on Hugging Face."
+    )
     verify.add_argument("--target", action="append")
     verify.add_argument("--namespace", default=DEFAULT_HF_NAMESPACE)
     verify.add_argument("--token-env", default="HF_TOKEN")
-    verify.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    verify.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
 
-    verify_ops = sub.add_parser("verify", help="Run local integrity validation, or remote verification with --remote.")
-    verify_ops.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    verify_ops = sub.add_parser(
+        "verify", help="Run local integrity validation, or remote verification with --remote."
+    )
+    verify_ops.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     verify_ops.add_argument("--raw-dir", "--raw_dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
     verify_ops.add_argument("--remote", action="store_true")
     verify_ops.add_argument("--target", action="append")
@@ -251,13 +346,24 @@ def build_parser() -> argparse.ArgumentParser:
     verify_ops.add_argument("--token-env", default="HF_TOKEN")
     verify_ops.add_argument("--out-path", "--out_path", type=Path)
 
-    coverage = sub.add_parser("coverage-report", help="Write a machine-readable BWBR catalog coverage report.")
-    coverage.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    coverage = sub.add_parser(
+        "coverage-report", help="Write a machine-readable BWBR catalog coverage report."
+    )
+    coverage.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     coverage.add_argument("--out-path", "--out_path", type=Path)
-    coverage.add_argument("--no-remaining-identifiers", "--no_remaining_identifiers", action="store_true")
+    coverage.add_argument(
+        "--no-remaining-identifiers", "--no_remaining_identifiers", action="store_true"
+    )
 
-    reconcile = sub.add_parser("reconcile", help="Read-only local reconciliation report for a Netherlands corpus milestone.")
-    reconcile.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    reconcile = sub.add_parser(
+        "reconcile",
+        help="Read-only local reconciliation report for a Netherlands corpus milestone.",
+    )
+    reconcile.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     reconcile.add_argument("--raw-dir", "--raw_dir", type=Path)
     reconcile.add_argument("--package-dir", "--package_dir", type=Path)
     reconcile.add_argument("--unified-dir", "--unified_dir", type=Path)
@@ -265,23 +371,36 @@ def build_parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--coverage-report-path", "--coverage_report_path", type=Path)
     reconcile.add_argument("--integrity-report-path", "--integrity_report_path", type=Path)
     reconcile.add_argument("--out-path", "--out_path", type=Path)
-    reconcile.add_argument("--milestone-name", "--milestone_name", default="netherlands-legal-corpus")
+    reconcile.add_argument(
+        "--milestone-name", "--milestone_name", default="netherlands-legal-corpus"
+    )
 
     reconcile_milestone_parser = sub.add_parser(
         "reconcile-milestone",
         help="Alias for reconcile; read-only/no-network/no-scrape milestone report.",
     )
-    reconcile_milestone_parser.add_argument("--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH)
+    reconcile_milestone_parser.add_argument(
+        "--catalog-path", "--catalog_path", type=Path, default=DEFAULT_BWBR_CATALOG_PATH
+    )
     reconcile_milestone_parser.add_argument("--raw-dir", "--raw_dir", type=Path)
     reconcile_milestone_parser.add_argument("--package-dir", "--package_dir", type=Path)
     reconcile_milestone_parser.add_argument("--unified-dir", "--unified_dir", type=Path)
     reconcile_milestone_parser.add_argument("--reports-dir", "--reports_dir", type=Path)
-    reconcile_milestone_parser.add_argument("--coverage-report-path", "--coverage_report_path", type=Path)
-    reconcile_milestone_parser.add_argument("--integrity-report-path", "--integrity_report_path", type=Path)
+    reconcile_milestone_parser.add_argument(
+        "--coverage-report-path", "--coverage_report_path", type=Path
+    )
+    reconcile_milestone_parser.add_argument(
+        "--integrity-report-path", "--integrity_report_path", type=Path
+    )
     reconcile_milestone_parser.add_argument("--out-path", "--out_path", type=Path)
-    reconcile_milestone_parser.add_argument("--milestone-name", "--milestone_name", default="netherlands-legal-corpus")
+    reconcile_milestone_parser.add_argument(
+        "--milestone-name", "--milestone_name", default="netherlands-legal-corpus"
+    )
 
-    quality = sub.add_parser("quality-audit", help="Run duplicate, parser-noise, hierarchy, citation, status, packaging, and retrieval audits.")
+    quality = sub.add_parser(
+        "quality-audit",
+        help="Run duplicate, parser-noise, hierarchy, citation, status, packaging, and retrieval audits.",
+    )
     quality.add_argument("--base-dir", "--base_dir", type=Path)
     quality.add_argument("--vector-dir", "--vector_dir", type=Path)
     quality.add_argument("--bm25-dir", "--bm25_dir", type=Path)
@@ -307,7 +426,8 @@ def main(argv: list[str] | None = None) -> int:
                         batch_size=args.batch_size,
                         worker_id=args.worker_id,
                         rate_limit_delay=args.rate_limit_delay,
-                        skip_existing=(args.skip_existing or args.resume) and not args.no_skip_existing,
+                        skip_existing=(args.skip_existing or args.resume)
+                        and not args.no_skip_existing,
                         stale_after_minutes=args.stale_after_minutes,
                     )
                 )
@@ -320,7 +440,9 @@ def main(argv: list[str] | None = None) -> int:
                 seed_urls=args.seed_urls,
                 use_default_seeds=args.use_default_seeds,
                 max_documents=None if args.full_discovery else args.max_documents,
-                max_seed_pages=None if args.full_discovery or args.max_seed_pages == 0 else args.max_seed_pages,
+                max_seed_pages=None
+                if args.full_discovery or args.max_seed_pages == 0
+                else args.max_seed_pages,
                 crawl_depth=args.crawl_depth,
                 rate_limit_delay=args.rate_limit_delay,
                 skip_existing=(args.skip_existing or args.resume) and not args.no_skip_existing,
@@ -357,7 +479,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "resume":
-        reset = reset_interrupted_downloads(catalog_path=args.catalog_path, stale_after_minutes=args.stale_after_minutes)
+        reset = reset_interrupted_downloads(
+            catalog_path=args.catalog_path, stale_after_minutes=args.stale_after_minutes
+        )
         result = asyncio.run(
             scrape_queued_batch(
                 catalog_path=args.catalog_path,
@@ -377,27 +501,43 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "build-normalized":
-        out_dir = build_normalized_package(raw_dir=args.raw_dir, out_dir=args.out_dir, repo_id=args.repo_id)
+        out_dir = build_normalized_package(
+            raw_dir=args.raw_dir, out_dir=args.out_dir, repo_id=args.repo_id
+        )
         _print({"out_dir": str(out_dir)})
         return 0
 
     if args.command == "build-ipfs-package":
-        out_dir = build_ipfs_cid_package(raw_dir=args.raw_dir, out_dir=args.out_dir, repo_id=args.repo_id)
+        out_dir = build_ipfs_cid_package(
+            raw_dir=args.raw_dir, out_dir=args.out_dir, repo_id=args.repo_id
+        )
         _print({"out_dir": str(out_dir)})
         return 0
 
     if args.command == "build-vector-index":
-        out_dir = build_vector_index(source_dir=args.source_dir, out_dir=args.out_dir, repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["vector"])
+        out_dir = build_vector_index(
+            source_dir=args.source_dir,
+            out_dir=args.out_dir,
+            repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["vector"],
+        )
         _print({"out_dir": str(out_dir)})
         return 0
 
     if args.command == "build-bm25-index":
-        out_dir = build_bm25_index(source_dir=args.source_dir, out_dir=args.out_dir, repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["bm25"])
+        out_dir = build_bm25_index(
+            source_dir=args.source_dir,
+            out_dir=args.out_dir,
+            repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["bm25"],
+        )
         _print({"out_dir": str(out_dir)})
         return 0
 
     if args.command == "build-knowledge-graph":
-        out_dir = build_knowledge_graph(source_dir=args.source_dir, out_dir=args.out_dir, repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["knowledge-graph"])
+        out_dir = build_knowledge_graph(
+            source_dir=args.source_dir,
+            out_dir=args.out_dir,
+            repo_id=args.repo_id or DEFAULT_HF_REPO_IDS["knowledge-graph"],
+        )
         _print({"out_dir": str(out_dir)})
         return 0
 
@@ -471,7 +611,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "verify-remote":
-        verify_result = verify_remote_datasets(args.target, namespace=args.namespace, token=token_from_env(args.token_env))
+        verify_result = verify_remote_datasets(
+            args.target, namespace=args.namespace, token=token_from_env(args.token_env)
+        )
         if verify_result and all(item.get("ok") for item in verify_result):
             mark_verified(catalog_path=args.catalog_path)
         _print(verify_result)
@@ -479,7 +621,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "verify":
         if args.remote:
-            verify_result = verify_remote_datasets(args.target, namespace=args.namespace, token=token_from_env(args.token_env))
+            verify_result = verify_remote_datasets(
+                args.target, namespace=args.namespace, token=token_from_env(args.token_env)
+            )
             if verify_result and all(item.get("ok") for item in verify_result):
                 mark_verified(catalog_path=args.catalog_path)
             _print(verify_result)

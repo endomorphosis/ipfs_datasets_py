@@ -7,6 +7,7 @@ Targets (total 65 new tests):
   * core/_legacy_graph_engine.py 90% → 99%  (+9pp,  23 miss → ~3)
   * extraction/validator.py      79% → 99%  (+20pp, 38 miss → ~1)
 """
+
 from __future__ import annotations
 
 import sys
@@ -20,12 +21,14 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_neo4j_exporter(batch_size: int = 1000, **extra):
     """Create Neo4jExporter with a mocked neo4j module."""
     from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
         Neo4jExporter,
         ExportConfig,
     )
+
     mock_neo4j = MagicMock()
     with patch.dict(sys.modules, {"neo4j": mock_neo4j}):
         cfg = ExportConfig(
@@ -51,6 +54,7 @@ def _make_record(data: dict):
 # Neo4jExporter.__init__ — lines 112-113
 # ---------------------------------------------------------------------------
 
+
 class TestNeo4jExporterInit:
     """GIVEN a neo4j mock available WHEN Neo4jExporter is created THEN GraphDatabase stored."""
 
@@ -69,6 +73,7 @@ class TestNeo4jExporterInit:
 # Neo4jExporter._connect — lines 134-136, 139-143
 # ---------------------------------------------------------------------------
 
+
 class TestNeo4jExporterConnect:
     """GIVEN a mocked GraphDatabase driver WHEN _connect is called THEN connection established."""
 
@@ -84,6 +89,7 @@ class TestNeo4jExporterConnect:
     def test_connect_exception_wraps_in_migration_error(self):
         """GIVEN driver raises RuntimeError WHEN _connect THEN MigrationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exp, _ = _make_neo4j_exporter()
         exp._GraphDatabase.driver.side_effect = RuntimeError("connection refused")
         with pytest.raises(MigrationError):
@@ -92,6 +98,7 @@ class TestNeo4jExporterConnect:
     def test_connect_migration_error_re_raised(self):
         """GIVEN driver raises MigrationError WHEN _connect THEN same error propagates."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exp, _ = _make_neo4j_exporter()
         exp._GraphDatabase.driver.side_effect = MigrationError("direct migration error")
         with pytest.raises(MigrationError, match="direct migration error"):
@@ -100,6 +107,7 @@ class TestNeo4jExporterConnect:
     def test_connect_not_available_raises(self):
         """GIVEN _neo4j_available=False WHEN _connect THEN MigrationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exp, _ = _make_neo4j_exporter()
         exp._neo4j_available = False
         with pytest.raises(MigrationError, match="neo4j package not installed"):
@@ -109,6 +117,7 @@ class TestNeo4jExporterConnect:
 # ---------------------------------------------------------------------------
 # Neo4jExporter._export_nodes — lines 171-197, 200-201
 # ---------------------------------------------------------------------------
+
 
 class TestNeo4jExporterExportNodes:
     """GIVEN a driver session with records WHEN _export_nodes called THEN nodes collected."""
@@ -125,6 +134,7 @@ class TestNeo4jExporterExportNodes:
     def test_export_nodes_basic(self):
         """GIVEN 2 records WHEN _export_nodes THEN 2 nodes returned."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, _ = _make_neo4j_exporter(batch_size=10)
         records = [
             _make_record({"id": i, "labels": ["Person"], "properties": {"name": f"p{i}"}})
@@ -139,13 +149,11 @@ class TestNeo4jExporterExportNodes:
     def test_export_nodes_batch_flush_triggered(self):
         """GIVEN batch_size=2 and 3 records WHEN _export_nodes THEN batch flushed mid-way."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         cb = MagicMock()
         exp, cfg = _make_neo4j_exporter(batch_size=2)
         cfg.progress_callback = cb
-        records = [
-            _make_record({"id": i, "labels": ["X"], "properties": {}})
-            for i in range(3)
-        ]
+        records = [_make_record({"id": i, "labels": ["X"], "properties": {}}) for i in range(3)]
         self._setup_session(exp, records)
         gd = GraphData()
         count = exp._export_nodes(gd)
@@ -156,6 +164,7 @@ class TestNeo4jExporterExportNodes:
     def test_export_nodes_label_filter_query(self):
         """GIVEN node_labels filter WHEN _export_nodes THEN query includes WHERE clause."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.node_labels = ["Person"]
         records = [_make_record({"id": 1, "labels": ["Person"], "properties": {}})]
@@ -169,6 +178,7 @@ class TestNeo4jExporterExportNodes:
 # ---------------------------------------------------------------------------
 # Neo4jExporter._export_relationships — lines 226-262
 # ---------------------------------------------------------------------------
+
 
 class TestNeo4jExporterExportRelationships:
     """GIVEN session with relationships WHEN _export_relationships THEN rels collected."""
@@ -184,6 +194,7 @@ class TestNeo4jExporterExportRelationships:
     def test_export_rels_basic(self):
         """GIVEN 2 rel records WHEN _export_relationships THEN 2 relationships stored."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, _ = _make_neo4j_exporter(batch_size=10)
         records = [
             _make_record({"id": i, "type": "KNOWS", "start": 0, "end": 1, "properties": {}})
@@ -198,6 +209,7 @@ class TestNeo4jExporterExportRelationships:
     def test_export_rels_batch_flush(self):
         """GIVEN batch_size=2 and 3 records WHEN _export_relationships THEN flush triggered."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         cb = MagicMock()
         exp, cfg = _make_neo4j_exporter(batch_size=2)
         cfg.progress_callback = cb
@@ -213,6 +225,7 @@ class TestNeo4jExporterExportRelationships:
     def test_export_rels_type_filter_uses_where(self):
         """GIVEN relationship_types filter WHEN _export_relationships THEN WHERE in query."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.relationship_types = ["KNOWS"]
         records = [_make_record({"id": 1, "type": "KNOWS", "start": 0, "end": 2, "properties": {}})]
@@ -226,6 +239,7 @@ class TestNeo4jExporterExportRelationships:
 # ---------------------------------------------------------------------------
 # Neo4jExporter._export_schema — lines 274-322
 # ---------------------------------------------------------------------------
+
 
 class TestNeo4jExporterExportSchema:
     """GIVEN include_schema=True WHEN _export_schema THEN schema populated."""
@@ -256,6 +270,7 @@ class TestNeo4jExporterExportSchema:
     def test_schema_not_included_skips(self):
         """GIVEN include_schema=False WHEN _export_schema THEN returns immediately."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.include_schema = False
         gd = GraphData()
@@ -265,6 +280,7 @@ class TestNeo4jExporterExportSchema:
     def test_schema_labels_and_types_collected(self):
         """GIVEN include_schema=True WHEN _export_schema THEN labels+types stored."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.include_schema = True
         cfg.include_indexes = False
@@ -279,11 +295,16 @@ class TestNeo4jExporterExportSchema:
     def test_schema_indexes_collected(self):
         """GIVEN include_indexes=True WHEN _export_schema THEN indexes stored."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.include_schema = True
         cfg.include_indexes = True
         cfg.include_constraints = False
-        idx = [_make_record({"name": "idx1", "type": "BTREE", "labelsOrTypes": ["Person"], "properties": ["id"]})]
+        idx = [
+            _make_record(
+                {"name": "idx1", "type": "BTREE", "labelsOrTypes": ["Person"], "properties": ["id"]}
+            )
+        ]
         self._setup_session_for_schema(exp, idx, [], ["Person"], [])
         gd = GraphData()
         exp._export_schema(gd)
@@ -292,11 +313,16 @@ class TestNeo4jExporterExportSchema:
     def test_schema_constraints_collected(self):
         """GIVEN include_constraints=True WHEN _export_schema THEN constraints stored."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.include_schema = True
         cfg.include_indexes = False
         cfg.include_constraints = True
-        con = [_make_record({"name": "c1", "type": "UNIQUE", "labelsOrTypes": ["X"], "properties": ["id"]})]
+        con = [
+            _make_record(
+                {"name": "c1", "type": "UNIQUE", "labelsOrTypes": ["X"], "properties": ["id"]}
+            )
+        ]
         self._setup_session_for_schema(exp, [], con, [], [])
         gd = GraphData()
         exp._export_schema(gd)
@@ -305,6 +331,7 @@ class TestNeo4jExporterExportSchema:
     def test_schema_index_exception_logged_not_raised(self):
         """GIVEN SHOW INDEXES raises WHEN _export_schema THEN exception logged, continues."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.include_schema = True
         cfg.include_indexes = True
@@ -335,6 +362,7 @@ class TestNeo4jExporterExportSchema:
 # Neo4jExporter.export() — lines 355-391
 # ---------------------------------------------------------------------------
 
+
 class TestNeo4jExporterExport:
     """GIVEN a fully-mocked driver WHEN export() called THEN result reflects outcome."""
 
@@ -358,6 +386,7 @@ class TestNeo4jExporterExport:
     def test_export_migration_error_captured(self):
         """GIVEN _connect raises MigrationError WHEN export THEN result.success=False."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exp, _ = _make_neo4j_exporter()
         exp._connect = MagicMock(side_effect=MigrationError("connect failed"))
         exp._close = MagicMock()
@@ -380,12 +409,14 @@ class TestNeo4jExporterExport:
 # Neo4jExporter.export_to_graph_data() — lines 407-430
 # ---------------------------------------------------------------------------
 
+
 class TestNeo4jExporterExportToGraphData:
     """GIVEN _connect succeeds WHEN export_to_graph_data THEN GraphData returned."""
 
     def test_export_to_graph_data_success(self):
         """GIVEN successful internals WHEN export_to_graph_data THEN returns GraphData."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, _ = _make_neo4j_exporter()
         exp._connect = MagicMock(return_value=True)
         exp._export_nodes = MagicMock(return_value=1)
@@ -398,6 +429,7 @@ class TestNeo4jExporterExportToGraphData:
     def test_export_to_graph_data_migration_error_returns_none(self):
         """GIVEN _connect raises MigrationError WHEN export_to_graph_data THEN None."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exp, _ = _make_neo4j_exporter()
         exp._connect = MagicMock(side_effect=MigrationError("no conn"))
         exp._close = MagicMock()
@@ -407,6 +439,7 @@ class TestNeo4jExporterExportToGraphData:
     def test_export_to_graph_data_restores_output_file(self):
         """GIVEN output_file set WHEN export_to_graph_data THEN output_file restored after."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         exp, cfg = _make_neo4j_exporter()
         cfg.output_file = "/tmp/original.json"
         exp._connect = MagicMock(return_value=True)
@@ -422,11 +455,16 @@ class TestNeo4jExporterExportToGraphData:
 # IPFSImporter._connect — lines 131-148
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterConnect:
     """GIVEN IPFSImporter with mocked GraphDatabase WHEN _connect called THEN connection made."""
 
     def _make_importer(self):
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         cfg = ImportConfig()
         imp = IPFSImporter(cfg)
         return imp, cfg
@@ -445,6 +483,7 @@ class TestIPFSImporterConnect:
     def test_connect_exception_wraps_to_migration_error(self):
         """GIVEN driver constructor raises WHEN _connect THEN MigrationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         imp, _ = self._make_importer()
         imp._GraphDatabase = MagicMock()
         imp._GraphDatabase.driver.side_effect = RuntimeError("ipfs not running")
@@ -454,6 +493,7 @@ class TestIPFSImporterConnect:
     def test_connect_not_available_raises(self):
         """GIVEN _ipfs_available=False WHEN _connect THEN MigrationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         imp, _ = self._make_importer()
         imp._ipfs_available = False
         with pytest.raises(MigrationError, match="IPFS graph database not available"):
@@ -464,11 +504,16 @@ class TestIPFSImporterConnect:
 # IPFSImporter._load_graph_data — lines 175-192
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterLoadGraphData:
     """GIVEN config with input_file WHEN _load_graph_data THEN loads correctly."""
 
     def _make_importer(self, **cfg_kwargs):
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         cfg = ImportConfig(**cfg_kwargs)
         imp = IPFSImporter(cfg)
         return imp, cfg
@@ -476,6 +521,7 @@ class TestIPFSImporterLoadGraphData:
     def test_load_from_graph_data_directly(self):
         """GIVEN config.graph_data set WHEN _load_graph_data THEN returns it directly."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         gd = GraphData()
         imp, _ = self._make_importer(graph_data=gd)
         assert imp._load_graph_data() is gd
@@ -483,6 +529,7 @@ class TestIPFSImporterLoadGraphData:
     def test_load_from_file_success(self):
         """GIVEN config.input_file set WHEN _load_graph_data THEN loads from file."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         imp, cfg = self._make_importer(input_file="test.json")
         mock_gd = GraphData()
         with patch.object(GraphData, "load_from_file", return_value=mock_gd) as mocked:
@@ -493,6 +540,7 @@ class TestIPFSImporterLoadGraphData:
         """GIVEN load_from_file raises OSError WHEN _load_graph_data THEN MigrationError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         imp, cfg = self._make_importer(input_file="missing.json")
         with patch.object(GraphData, "load_from_file", side_effect=OSError("not found")):
             with pytest.raises(MigrationError):
@@ -501,6 +549,7 @@ class TestIPFSImporterLoadGraphData:
     def test_load_no_input_raises(self):
         """GIVEN no file or graph_data WHEN _load_graph_data THEN MigrationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         imp, _ = self._make_importer()
         with pytest.raises(MigrationError, match="No input file"):
             imp._load_graph_data()
@@ -510,11 +559,16 @@ class TestIPFSImporterLoadGraphData:
 # IPFSImporter._import_nodes — lines 265-270
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterImportNodes:
     """GIVEN a mock session WHEN _import_nodes called THEN nodes imported with progress/exceptions."""
 
     def _make_importer(self):
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         cfg = ImportConfig()
         imp = IPFSImporter(cfg)
         return imp, cfg
@@ -522,6 +576,7 @@ class TestIPFSImporterImportNodes:
     def test_import_nodes_progress_callback_triggered(self):
         """GIVEN 100 nodes and progress_callback WHEN _import_nodes THEN callback called."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
+
         imp, cfg = self._make_importer()
         cb = MagicMock()
         cfg.progress_callback = cb
@@ -540,6 +595,7 @@ class TestIPFSImporterImportNodes:
     def test_import_nodes_exception_increments_skipped(self):
         """GIVEN session.run raises WHEN _import_nodes THEN node skipped."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
+
         imp, _ = self._make_importer()
         imp._session = MagicMock()
         imp._session.run.side_effect = RuntimeError("cypher error")
@@ -554,11 +610,16 @@ class TestIPFSImporterImportNodes:
 # IPFSImporter._import_relationships — lines 299-325
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterImportRelationships:
     """GIVEN a mock session WHEN _import_relationships THEN rels imported/skipped."""
 
     def _make_importer(self):
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         cfg = ImportConfig()
         imp = IPFSImporter(cfg)
         return imp, cfg
@@ -566,6 +627,7 @@ class TestIPFSImporterImportRelationships:
     def test_import_rels_missing_node_skips(self):
         """GIVEN rel referencing absent node WHEN _import_relationships THEN skipped."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, RelationshipData
+
         imp, _ = self._make_importer()
         imp._session = MagicMock()
         gd = GraphData()
@@ -580,6 +642,7 @@ class TestIPFSImporterImportRelationships:
     def test_import_rels_success(self):
         """GIVEN nodes in map and session succeeds WHEN _import_relationships THEN imported."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, RelationshipData
+
         imp, _ = self._make_importer()
         imp._node_id_map = {"n1": 1, "n2": 2}
         imp._session = MagicMock()
@@ -594,6 +657,7 @@ class TestIPFSImporterImportRelationships:
     def test_import_rels_exception_increments_skipped(self):
         """GIVEN session.run raises WHEN _import_relationships THEN rel skipped."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, RelationshipData
+
         imp, _ = self._make_importer()
         imp._node_id_map = {"n1": 1, "n2": 2}
         imp._session = MagicMock()
@@ -609,6 +673,7 @@ class TestIPFSImporterImportRelationships:
     def test_import_rels_progress_callback_triggered(self):
         """GIVEN 100 rels and progress_callback WHEN _import_relationships THEN callback called."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, RelationshipData
+
         imp, cfg = self._make_importer()
         cb = MagicMock()
         cfg.progress_callback = cb
@@ -617,7 +682,13 @@ class TestIPFSImporterImportRelationships:
         gd = GraphData()
         for i in range(100):
             gd.relationships.append(
-                RelationshipData(id=f"r{i}", type="KNOWS", start_node=f"n{i}", end_node=f"n{i+1}", properties={})
+                RelationshipData(
+                    id=f"r{i}",
+                    type="KNOWS",
+                    start_node=f"n{i}",
+                    end_node=f"n{i + 1}",
+                    properties={},
+                )
             )
         imp._import_relationships(gd)
         cb.assert_called()
@@ -627,12 +698,17 @@ class TestIPFSImporterImportRelationships:
 # IPFSImporter._import_schema — lines 344-362
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterImportSchema:
     """GIVEN schema with indexes and constraints WHEN _import_schema THEN they are processed."""
 
     def _make_importer(self):
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import SchemaData
+
         cfg = ImportConfig(create_indexes=True, create_constraints=True)
         imp = IPFSImporter(cfg)
         imp._session = MagicMock()
@@ -641,6 +717,7 @@ class TestIPFSImporterImportSchema:
     def test_import_schema_no_schema_returns_early(self):
         """GIVEN graph_data.schema=None WHEN _import_schema THEN returns immediately."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         imp, _ = self._make_importer()
         gd = GraphData()
         gd.schema = None
@@ -649,21 +726,27 @@ class TestIPFSImporterImportSchema:
     def test_import_schema_with_indexes(self):
         """GIVEN schema with indexes WHEN _import_schema THEN indexes processed."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, SchemaData
+
         imp, cfg = self._make_importer()
         cfg.create_indexes = True
         gd = GraphData()
         gd.schema = SchemaData()
-        gd.schema.indexes = [{"name": "idx1", "type": "BTREE", "labels": ["Person"], "properties": ["id"]}]
+        gd.schema.indexes = [
+            {"name": "idx1", "type": "BTREE", "labels": ["Person"], "properties": ["id"]}
+        ]
         imp._import_schema(gd)  # Should not raise
 
     def test_import_schema_with_constraints(self):
         """GIVEN schema with constraints WHEN _import_schema THEN constraints processed."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, SchemaData
+
         imp, cfg = self._make_importer()
         cfg.create_constraints = True
         gd = GraphData()
         gd.schema = SchemaData()
-        gd.schema.constraints = [{"name": "c1", "type": "UNIQUE", "labels": ["X"], "properties": ["id"]}]
+        gd.schema.constraints = [
+            {"name": "c1", "type": "UNIQUE", "labels": ["X"], "properties": ["id"]}
+        ]
         imp._import_schema(gd)  # Should not raise
 
 
@@ -671,12 +754,16 @@ class TestIPFSImporterImportSchema:
 # IPFSImporter.import_data() — validation abort path
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterImportData:
     """GIVEN import_data called WHEN validation finds many errors THEN aborts."""
 
     def test_import_data_too_many_validation_errors_aborts(self):
         """GIVEN validate_data=True and 11+ errors WHEN import_data THEN returns failure."""
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
 
         gd = GraphData()
@@ -699,12 +786,14 @@ class TestIPFSImporterImportData:
 # _LegacyGraphEngine: StorageError paths
 # ---------------------------------------------------------------------------
 
+
 class TestLegacyGraphEngineStorageErrors:
     """GIVEN storage backend raises StorageError WHEN operations called THEN handled gracefully."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         mock_storage = MagicMock()
         eng = _LegacyGraphEngine(storage_backend=mock_storage)
         return eng, mock_storage
@@ -712,6 +801,7 @@ class TestLegacyGraphEngineStorageErrors:
     def test_get_node_storage_error_returns_none(self):
         """GIVEN CID key exists but storage raises StorageError WHEN get_node THEN None."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         eng, mock_storage = self._make_engine()
         node = eng.create_node(labels=["T"], properties={})
         node_id = node.id
@@ -725,6 +815,7 @@ class TestLegacyGraphEngineStorageErrors:
     def test_update_node_storage_error_logged_not_raised(self):
         """GIVEN storage raises StorageError WHEN update_node THEN node still returned."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         eng, mock_storage = self._make_engine()
         node = eng.create_node(labels=["T"], properties={"x": 1})
         mock_storage.store.side_effect = StorageError("fail")
@@ -734,6 +825,7 @@ class TestLegacyGraphEngineStorageErrors:
     def test_create_relationship_storage_error_logged_not_raised(self):
         """GIVEN storage raises StorageError WHEN create_relationship THEN rel still returned."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         eng, mock_storage = self._make_engine()
         mock_storage.store.side_effect = StorageError("fail")
         rel = eng.create_relationship("KNOWS", "n1", "n2")
@@ -753,6 +845,7 @@ class TestLegacyGraphEngineStorageErrors:
     def test_save_graph_storage_error_returns_none(self):
         """GIVEN storage.store_graph raises StorageError WHEN save_graph THEN None."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         eng, mock_storage = self._make_engine()
         eng.create_node(labels=["T"])
         mock_storage.store_graph.side_effect = StorageError("write fail")
@@ -762,6 +855,7 @@ class TestLegacyGraphEngineStorageErrors:
     def test_load_graph_storage_error_returns_false(self):
         """GIVEN storage.retrieve_graph raises StorageError WHEN load_graph THEN False."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         eng, mock_storage = self._make_engine()
         mock_storage.retrieve_graph.side_effect = StorageError("read fail")
         result = eng.load_graph("bafy123")
@@ -785,11 +879,13 @@ class TestLegacyGraphEngineStorageErrors:
 # _LegacyGraphEngine: find_nodes filter paths
 # ---------------------------------------------------------------------------
 
+
 class TestLegacyGraphEngineFindNodes:
     """GIVEN nodes with various labels/properties WHEN find_nodes THEN filters applied."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         return _LegacyGraphEngine()
 
     def test_find_nodes_label_filter_excludes_non_matching(self):
@@ -822,6 +918,7 @@ class TestLegacyGraphEngineFindNodes:
         eng._node_cache["fake"] = "not_a_node"
         results = eng.find_nodes()
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         assert all(isinstance(n, Node) for n in results)
 
 
@@ -829,11 +926,13 @@ class TestLegacyGraphEngineFindNodes:
 # _LegacyGraphEngine: get_relationships filter paths
 # ---------------------------------------------------------------------------
 
+
 class TestLegacyGraphEngineGetRelationships:
     """GIVEN relationships with cid: entries or non-Relationship values WHEN get_relationships THEN filtered."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         return _LegacyGraphEngine()
 
     def test_get_relationships_skips_cid_keys(self):
@@ -855,11 +954,13 @@ class TestLegacyGraphEngineGetRelationships:
 # _LegacyGraphEngine: traverse_pattern with label checks
 # ---------------------------------------------------------------------------
 
+
 class TestLegacyGraphEngineTraversePattern:
     """GIVEN pattern with labels in next step WHEN traverse_pattern THEN label filters applied."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         return _LegacyGraphEngine()
 
     def test_traverse_pattern_label_filter_excludes_non_matching(self):
@@ -894,11 +995,13 @@ class TestLegacyGraphEngineTraversePattern:
 # _LegacyGraphEngine: find_paths with cycle detection
 # ---------------------------------------------------------------------------
 
+
 class TestLegacyGraphEngineFindPaths:
     """GIVEN a graph with a cycle WHEN find_paths THEN cycle not followed indefinitely."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         return _LegacyGraphEngine()
 
     def test_find_paths_cycle_not_looped(self):
@@ -917,6 +1020,7 @@ class TestLegacyGraphEngineFindPaths:
 # ValidatedKnowledgeGraphExtractor (validator.py) — lines 311-435
 # ---------------------------------------------------------------------------
 
+
 class TestValidatedKGExtractor:
     """GIVEN KnowledgeGraphExtractorWithValidation WHEN extract_from_wikipedia THEN paths covered."""
 
@@ -924,6 +1028,7 @@ class TestValidatedKGExtractor:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         defaults = {"use_tracer": False, "validate_during_extraction": False}
         defaults.update(kwargs)
         return KnowledgeGraphExtractorWithValidation(**defaults)
@@ -931,6 +1036,7 @@ class TestValidatedKGExtractor:
     def _mock_kg(self, n_entities=0):
         """Create a mock KnowledgeGraph."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = MagicMock(spec=KnowledgeGraph)
         kg.entities = {}
         kg.relationships = {}
@@ -963,7 +1069,11 @@ class TestValidatedKGExtractor:
         mock_validator = MagicMock()
         mock_vr = MagicMock()
         mock_vr.to_dict.return_value = {"overall_coverage": 0.8}
-        mock_vr.data = {"entity_coverage": 0.8, "relationship_coverage": 0.7, "overall_coverage": 0.8}
+        mock_vr.data = {
+            "entity_coverage": 0.8,
+            "relationship_coverage": 0.7,
+            "overall_coverage": 0.8,
+        }
         mock_validator.validate_knowledge_graph.return_value = mock_vr
         v.validator = mock_validator
         v.validator_available = True
@@ -979,7 +1089,12 @@ class TestValidatedKGExtractor:
         mock_validator = MagicMock()
         mock_vr = MagicMock()
         mock_vr.to_dict.return_value = {}
-        mock_vr.data = {"property_coverage": 0.9, "relationship_coverage": 0.8, "overall_coverage": 0.85, "entity_name": "Test"}
+        mock_vr.data = {
+            "property_coverage": 0.9,
+            "relationship_coverage": 0.8,
+            "overall_coverage": 0.85,
+            "entity_name": "Test",
+        }
         mock_validator.validate_knowledge_graph.return_value = mock_vr
         v.validator = mock_validator
         v.validator_available = True
@@ -1044,7 +1159,12 @@ class TestValidatedKGExtractor:
         mock_validator = MagicMock()
         mock_vr = MagicMock()
         mock_vr.to_dict.return_value = {}
-        mock_vr.data = {"entity_name": "Main", "property_coverage": 0.9, "relationship_coverage": 0.8, "overall_coverage": 0.85}
+        mock_vr.data = {
+            "entity_name": "Main",
+            "property_coverage": 0.9,
+            "relationship_coverage": 0.8,
+            "overall_coverage": 0.85,
+        }
         mock_validator.validate_knowledge_graph.return_value = mock_vr
         path_result = MagicMock()
         path_result.is_valid = True
@@ -1065,6 +1185,8 @@ class TestValidatedKGExtractor:
         mock_kg.entities = {"e1": e1, "e2": e2}
         mock_kg.relationships = {}
         v.extractor.extract_from_wikipedia = MagicMock(return_value=mock_kg)
-        result = v.extract_from_wikipedia("Main", validation_depth=2, focus_validation_on_main_entity=True)
+        result = v.extract_from_wikipedia(
+            "Main", validation_depth=2, focus_validation_on_main_entity=True
+        )
         # path analysis should have been attempted
         mock_validator.find_entity_paths.assert_called_once()

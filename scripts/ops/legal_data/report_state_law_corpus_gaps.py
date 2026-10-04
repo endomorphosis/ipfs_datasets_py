@@ -18,11 +18,56 @@ from typing import Dict, List, Optional, Sequence
 from urllib.parse import urlparse
 
 STATES_50: List[str] = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
 ]
 
 
@@ -207,14 +252,22 @@ def build_summary(rows: Sequence[StateGapRow]) -> Dict[str, object]:
         "records_total": sum(r.records_total for r in rows),
         "real_rows_total": sum(r.real_rows for r in rows),
         "synthetic_rows_total": sum(r.synthetic_rows for r in rows),
-        "avg_real_ratio": round(sum(r.real_ratio for r in rows) / total_states, 3) if total_states else 0.0,
-        "avg_unique_source_urls": round(sum(r.unique_source_urls for r in rows) / total_states, 2) if total_states else 0.0,
+        "avg_real_ratio": round(sum(r.real_ratio for r in rows) / total_states, 3)
+        if total_states
+        else 0.0,
+        "avg_unique_source_urls": round(sum(r.unique_source_urls for r in rows) / total_states, 2)
+        if total_states
+        else 0.0,
     }
 
 
 def render_markdown(rows: Sequence[StateGapRow], summary: Dict[str, object], top_n: int) -> str:
-    by_real_ratio = sorted(rows, key=lambda r: (r.real_ratio, r.real_rows, r.records_total, r.state))
-    by_url_depth = sorted(rows, key=lambda r: (r.unique_source_urls, r.real_rows, r.records_total, r.state))
+    by_real_ratio = sorted(
+        rows, key=lambda r: (r.real_ratio, r.real_rows, r.records_total, r.state)
+    )
+    by_url_depth = sorted(
+        rows, key=lambda r: (r.unique_source_urls, r.real_rows, r.records_total, r.state)
+    )
 
     lines: List[str] = []
     lines.append("# State Laws Corpus Gap Report (50 States)")
@@ -227,16 +280,28 @@ def render_markdown(rows: Sequence[StateGapRow], summary: Dict[str, object], top
     lines.append(f"- Estimated synthetic rows: **{summary['synthetic_rows_total']}**")
     lines.append(f"- Avg real ratio: **{summary['avg_real_ratio']}**")
     lines.append(f"- Avg unique source URLs/state: **{summary['avg_unique_source_urls']}**")
-    lines.append(f"- Missing files: `{', '.join(summary['missing_files']) if summary['missing_files'] else 'None'}`")
-    lines.append(f"- Below 40 rows: `{', '.join(summary['below_40_records']) if summary['below_40_records'] else 'None'}`")
-    lines.append(f"- Real ratio < 0.5: `{', '.join(summary['low_real_ratio_below_0_5']) if summary['low_real_ratio_below_0_5'] else 'None'}`")
-    lines.append(f"- Unique source URLs < 20: `{', '.join(summary['low_unique_source_urls_below_20']) if summary['low_unique_source_urls_below_20'] else 'None'}`")
-    lines.append(f"- Web-archiving failed: `{', '.join(summary['webarch_failed']) if summary['webarch_failed'] else 'None'}`")
+    lines.append(
+        f"- Missing files: `{', '.join(summary['missing_files']) if summary['missing_files'] else 'None'}`"
+    )
+    lines.append(
+        f"- Below 40 rows: `{', '.join(summary['below_40_records']) if summary['below_40_records'] else 'None'}`"
+    )
+    lines.append(
+        f"- Real ratio < 0.5: `{', '.join(summary['low_real_ratio_below_0_5']) if summary['low_real_ratio_below_0_5'] else 'None'}`"
+    )
+    lines.append(
+        f"- Unique source URLs < 20: `{', '.join(summary['low_unique_source_urls_below_20']) if summary['low_unique_source_urls_below_20'] else 'None'}`"
+    )
+    lines.append(
+        f"- Web-archiving failed: `{', '.join(summary['webarch_failed']) if summary['webarch_failed'] else 'None'}`"
+    )
     lines.append("")
 
     lines.append(f"## Top {top_n} Lowest Real-Ratio States")
     lines.append("")
-    lines.append("| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch |")
+    lines.append(
+        "| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch |"
+    )
     lines.append("|---|---:|---:|---:|---:|---:|---:|:---:|")
     for r in by_real_ratio[:top_n]:
         lines.append(
@@ -256,7 +321,9 @@ def render_markdown(rows: Sequence[StateGapRow], summary: Dict[str, object], top
 
     lines.append("## Per-State Table")
     lines.append("")
-    lines.append("| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch | Method |")
+    lines.append(
+        "| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch | Method |"
+    )
     lines.append("|---|---:|---:|---:|---:|---:|---:|:---:|---|")
     for r in sorted(rows, key=lambda x: x.state):
         lines.append(
@@ -273,8 +340,7 @@ def main() -> int:
 
     webarch = load_webarch_results(verify_report) if verify_report else {}
     rows = [
-        read_state_row(jsonld_dir / f"STATE-{state}.jsonld", state, webarch)
-        for state in STATES_50
+        read_state_row(jsonld_dir / f"STATE-{state}.jsonld", state, webarch) for state in STATES_50
     ]
 
     summary = build_summary(rows)

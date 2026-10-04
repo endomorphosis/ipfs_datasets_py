@@ -76,7 +76,9 @@ def test_caption_rendering_and_pagination_helpers_work():
     )
 
     rendered = render_pleading_caption_block(caption)
-    pages = paginate_pleading_lines(["1. Fact one.", "2. Fact two.", "3. Fact three."], page_size=2, footer_label="Example")
+    pages = paginate_pleading_lines(
+        ["1. Fact one.", "2. Fact two.", "3. Fact three."], page_size=2, footer_label="Example"
+    )
 
     assert "IN THE UNITED STATES DISTRICT COURT" in rendered
     assert "COMPLAINT FOR BREACH OF CONTRACT" in rendered
@@ -87,8 +89,12 @@ def test_caption_rendering_and_pagination_helpers_work():
 def test_formal_document_summary_reports_missing_markers_and_validation():
     body = SAMPLE_DOCUMENT + "\nPRAYER FOR RELIEF\nPlaintiff requests relief.\n"
 
-    issues = validate_formal_document(body, required_markers=["MOTION TO COMPEL", "PRAYER FOR RELIEF"])
-    summary = summarize_formal_document(body, required_markers=["MOTION TO COMPEL", "PRAYER FOR RELIEF"])
+    issues = validate_formal_document(
+        body, required_markers=["MOTION TO COMPEL", "PRAYER FOR RELIEF"]
+    )
+    summary = summarize_formal_document(
+        body, required_markers=["MOTION TO COMPEL", "PRAYER FOR RELIEF"]
+    )
 
     assert issues == []
     assert summary["is_formally_valid"] is True

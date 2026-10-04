@@ -26,9 +26,10 @@ from pathlib import Path
 # Note: This test file uses the playwright-browser MCP tools instead of playwright-python
 # The playwright-browser tools are exposed via MCP and can be called from this test
 
+
 class TestLegalDatasetDashboard:
     """Test suite for Legal Dataset Tools dashboard UI."""
-    
+
     @pytest.fixture(autouse=True)
     async def setup_browser(self):
         """Setup browser and navigate to dashboard."""
@@ -37,7 +38,7 @@ class TestLegalDatasetDashboard:
         self.dashboard_url = "http://localhost:5000/mcp/caselaw"
         yield
         # Cleanup
-    
+
     async def test_recap_archive_tab_exists(self):
         """
         GIVEN the MCP dashboard is loaded
@@ -46,14 +47,14 @@ class TestLegalDatasetDashboard:
         """
         # Navigate to dashboard
         # Via MCP: playwright-browser_navigate(url=dashboard_url)
-        
+
         # Take snapshot
         # Via MCP: playwright-browser_snapshot()
-        
+
         # Verify RECAP Archive tab exists
         # Check for element with text "RECAP Archive" or id "dataset-recap-tab"
         assert True  # Placeholder - would verify tab exists
-    
+
     async def test_recap_archive_form_elements(self):
         """
         GIVEN the RECAP Archive tab is open
@@ -62,7 +63,7 @@ class TestLegalDatasetDashboard:
         """
         # Navigate and click RECAP Archive tab
         # Via MCP: playwright-browser_click(element="RECAP Archive tab", ref="...")
-        
+
         # Verify form elements exist:
         # - Court selection dropdown
         # - Document type checkboxes
@@ -71,9 +72,9 @@ class TestLegalDatasetDashboard:
         # - Include text checkbox
         # - Include metadata checkbox
         # - Start/Stop/Pause buttons
-        
+
         assert True  # Placeholder
-    
+
     async def test_recap_archive_scraping_workflow(self):
         """
         GIVEN the RECAP Archive form is filled
@@ -87,29 +88,29 @@ class TestLegalDatasetDashboard:
                     "name": "Court Selection",
                     "type": "combobox",
                     "ref": "#recapCourt",
-                    "value": "ca9"
+                    "value": "ca9",
                 },
                 {
                     "name": "Document Type",
                     "type": "checkbox",
                     "ref": "#recapDocTypeOpinion",
-                    "value": "true"
-                }
+                    "value": "true",
+                },
             ]
         }
-        
+
         # Click Start Scraping button
         # Via MCP: playwright-browser_click(element="Start Scraping", ref="#recapStartScraping")
-        
+
         # Wait for progress indicator
         # Via MCP: playwright-browser_wait_for(text="Running")
-        
+
         # Verify progress bar updates
         # Take screenshot
         # Via MCP: playwright-browser_take_screenshot(filename="recap_scraping_progress.png")
-        
+
         assert True  # Placeholder
-    
+
     async def test_uscode_dataset_builder(self):
         """
         GIVEN the US Code tab is open
@@ -118,15 +119,15 @@ class TestLegalDatasetDashboard:
         """
         # Click US Code & Federal Register tab
         # Via MCP: playwright-browser_click(element="US Code tab", ref="#dataset-uscode-tab")
-        
+
         # Fill title selection
         # Select titles 1, 15, 18
-        
+
         # Click Start Scraping
         # Verify API call is made
-        
+
         assert True  # Placeholder
-    
+
     async def test_state_laws_dataset_builder(self):
         """
         GIVEN the State Laws tab is open
@@ -135,13 +136,13 @@ class TestLegalDatasetDashboard:
         """
         # Click State Laws tab
         # Via MCP: playwright-browser_click(element="State Laws tab", ref="#dataset-state-tab")
-        
+
         # Select states CA, NY, TX
         # Select legal areas
         # Click Start Scraping
-        
+
         assert True  # Placeholder
-    
+
     async def test_municipal_laws_dataset_builder(self):
         """
         GIVEN the Municipal Laws tab is open
@@ -150,12 +151,12 @@ class TestLegalDatasetDashboard:
         """
         # Click Municipal Laws tab
         # Via MCP: playwright-browser_click(element="Municipal Laws tab", ref="#dataset-municipal-tab")
-        
+
         # Select cities NYC, LAX, CHI
         # Click Start Scraping
-        
+
         assert True  # Placeholder
-    
+
     async def test_javascript_sdk_integration(self):
         """
         GIVEN the dashboard page is loaded
@@ -166,9 +167,9 @@ class TestLegalDatasetDashboard:
         # Via MCP: playwright-browser_evaluate(
         #   function="async () => { const client = window.mcpClient; return await client.scrapeRECAPArchive({courts: ['ca9']}); }"
         # )
-        
+
         assert True  # Placeholder
-    
+
     async def test_progress_tracking_ui(self):
         """
         GIVEN a scraping job is running
@@ -178,9 +179,9 @@ class TestLegalDatasetDashboard:
         # Start scraping
         # Observe progress bar, status badge, elapsed time, document counter
         # All should update
-        
+
         assert True  # Placeholder
-    
+
     async def test_export_functionality(self):
         """
         GIVEN a dataset has been scraped
@@ -190,11 +191,11 @@ class TestLegalDatasetDashboard:
         # After scraping completes
         # Click Export as JSON button
         # Via MCP: playwright-browser_click(element="Export JSON", ref="#recapExportJson")
-        
+
         # Verify download initiated
-        
+
         assert True  # Placeholder
-    
+
     async def test_resume_capability_ui(self):
         """
         GIVEN a scraping job was interrupted
@@ -208,9 +209,9 @@ class TestLegalDatasetDashboard:
         # 4. Check for resume option
         # 5. Click resume
         # 6. Verify it continues
-        
+
         assert True  # Placeholder
-    
+
     async def test_incremental_update_ui(self):
         """
         GIVEN a dataset was previously scraped
@@ -221,9 +222,9 @@ class TestLegalDatasetDashboard:
         # Wait
         # Click Incremental Update button
         # Verify it only fetches new documents (smaller count)
-        
+
         assert True  # Placeholder
-    
+
     async def test_error_handling_ui(self):
         """
         GIVEN an error occurs during scraping
@@ -233,9 +234,9 @@ class TestLegalDatasetDashboard:
         # Trigger an error (e.g., invalid parameters)
         # Verify error badge appears
         # Verify error message is shown
-        
+
         assert True  # Placeholder
-    
+
     async def test_responsive_design(self):
         """
         GIVEN the dashboard is loaded
@@ -244,15 +245,15 @@ class TestLegalDatasetDashboard:
         """
         # Via MCP: playwright-browser_resize(width=1920, height=1080)
         # Take screenshot
-        
+
         # Via MCP: playwright-browser_resize(width=1024, height=768)
         # Take screenshot
-        
+
         # Via MCP: playwright-browser_resize(width=768, height=1024)
         # Take screenshot
-        
+
         assert True  # Placeholder
-    
+
     async def test_navigation_between_tabs(self):
         """
         GIVEN multiple dataset builder tabs exist
@@ -265,17 +266,17 @@ class TestLegalDatasetDashboard:
             "#dataset-uscode-tab",
             "#dataset-state-tab",
             "#dataset-municipal-tab",
-            "#dataset-recap-tab"
+            "#dataset-recap-tab",
         ]
-        
+
         for tab_ref in tabs:
             # Click tab
             # Verify tab content is visible
             # Take screenshot
             pass
-        
+
         assert True  # Placeholder
-    
+
     async def test_help_tooltips(self):
         """
         GIVEN help icons exist in the UI
@@ -286,9 +287,9 @@ class TestLegalDatasetDashboard:
         # Hover over each
         # Via MCP: playwright-browser_hover(element="help icon", ref="...")
         # Verify tooltip appears
-        
+
         assert True  # Placeholder
-    
+
     async def test_console_errors(self):
         """
         GIVEN the dashboard is loaded and used
@@ -298,9 +299,9 @@ class TestLegalDatasetDashboard:
         # Get console messages
         # Via MCP: playwright-browser_console_messages()
         # Verify no errors
-        
+
         assert True  # Placeholder
-    
+
     async def test_network_requests(self):
         """
         GIVEN scraping is initiated
@@ -310,13 +311,13 @@ class TestLegalDatasetDashboard:
         # Get network requests
         # Via MCP: playwright-browser_network_requests()
         # Verify POST to /api/mcp/dataset/recap/scrape
-        
+
         assert True  # Placeholder
 
 
 class TestLegalDatasetAPIIntegration:
     """Test API endpoints through the dashboard."""
-    
+
     async def test_recap_scrape_endpoint(self):
         """
         GIVEN the RECAP scrape endpoint
@@ -325,7 +326,7 @@ class TestLegalDatasetAPIIntegration:
         """
         # Would use fetch or SDK to call endpoint
         assert True  # Placeholder
-    
+
     async def test_export_endpoint(self):
         """
         GIVEN the export endpoint
@@ -333,7 +334,7 @@ class TestLegalDatasetAPIIntegration:
         THEN it should return export result
         """
         assert True  # Placeholder
-    
+
     async def test_jobs_list_endpoint(self):
         """
         GIVEN the jobs list endpoint
@@ -341,7 +342,7 @@ class TestLegalDatasetAPIIntegration:
         THEN it should return all saved jobs
         """
         assert True  # Placeholder
-    
+
     async def test_incremental_update_endpoint(self):
         """
         GIVEN the incremental update endpoint
@@ -353,7 +354,7 @@ class TestLegalDatasetAPIIntegration:
 
 class TestLegalDatasetAccessibility:
     """Test accessibility features of the dashboard."""
-    
+
     async def test_keyboard_navigation(self):
         """
         GIVEN the dashboard is loaded
@@ -363,7 +364,7 @@ class TestLegalDatasetAccessibility:
         # Tab through elements
         # Verify focus indicators
         assert True  # Placeholder
-    
+
     async def test_screen_reader_labels(self):
         """
         GIVEN form elements exist
@@ -372,7 +373,7 @@ class TestLegalDatasetAccessibility:
         """
         # Check for aria-label, aria-describedby
         assert True  # Placeholder
-    
+
     async def test_color_contrast(self):
         """
         GIVEN the dashboard UI

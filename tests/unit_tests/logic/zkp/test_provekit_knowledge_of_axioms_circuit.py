@@ -83,4 +83,3 @@ def test_circuit_does_not_claim_unbounded_logic_derivation():
     ]
     for term in forbidden_terms:
         assert term not in code
-

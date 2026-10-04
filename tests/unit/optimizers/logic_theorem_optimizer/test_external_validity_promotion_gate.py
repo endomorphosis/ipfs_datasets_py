@@ -198,7 +198,9 @@ def test_external_validity_gate_accepts_bound_complete_evidence() -> None:
     assert result.failures == []
     assert result.metrics["evidence_complete"] is True
     assert result.metrics["domain_status"]["external_benchmark_scores"] is True
-    assert result.metrics["bindings"]["promotion_id"]["canonical"] == COMMON_BINDINGS["promotion_id"]
+    assert (
+        result.metrics["bindings"]["promotion_id"]["canonical"] == COMMON_BINDINGS["promotion_id"]
+    )
     assert result.metrics["evidence_domains"]["multi_seed_statistics"]["metrics"]["seed_set"] == [
         "101",
         "103",
@@ -243,8 +245,7 @@ def test_external_validity_gate_recomputes_multi_seed_statistics() -> None:
 
     assert result.accepted is False
     assert (
-        "multi_seed_statistics:multi_seed_metric_seed_count:learned_quality:1<3"
-        in result.failures
+        "multi_seed_statistics:multi_seed_metric_seed_count:learned_quality:1<3" in result.failures
     )
 
 

@@ -235,21 +235,30 @@ class PortalImplementationSupervisor:
         if not stuck:
             return SupervisorLoopDecision.keep_running()
         self.rewrite_strategy(state, reason)
-        return SupervisorLoopDecision.recycle(reason, detail={"active_task_id": state.active_task_id})
+        return SupervisorLoopDecision.recycle(
+            reason, detail={"active_task_id": state.active_task_id}
+        )
 
     def _implementation_attempt_is_active(self, state: PortalTaskState, *, now_ts: float) -> bool:
         if not state.active_task_id or not state.implementation_in_progress:
             return False
-        if state.last_implementation_task_id and state.last_implementation_task_id != state.active_task_id:
+        if (
+            state.last_implementation_task_id
+            and state.last_implementation_task_id != state.active_task_id
+        ):
             return False
-        started_at = parse_timestamp(state.last_implementation_started_at or state.active_phase_started_at)
+        started_at = parse_timestamp(
+            state.last_implementation_started_at or state.active_phase_started_at
+        )
         if started_at is None:
             return False
         finished_at = parse_timestamp(state.last_implementation_finished_at)
         if finished_at is not None and finished_at >= started_at:
             return False
         grace_seconds = max(30.0, float(self.config.check_interval) * 2.0)
-        max_age_seconds = max(float(self.config.stale_seconds), float(self.config.implementation_timeout))
+        max_age_seconds = max(
+            float(self.config.stale_seconds), float(self.config.implementation_timeout)
+        )
         return max(0.0, now_ts - started_at.timestamp()) <= max_age_seconds + grace_seconds
 
     def _implementation_log_stall_reason(self, state: PortalTaskState, *, now_ts: float) -> str:
@@ -313,11 +322,17 @@ class PortalImplementationSupervisor:
         active_track = state.active_task_track.strip().lower()
         focus_tracks = [str(item).lower() for item in strategy.get("focus_tracks", DEFAULT_TRACKS)]
         generation = int(strategy.get("generation", 0)) + 1
-        deprioritized_tasks = list(dict.fromkeys([*strategy.get("deprioritized_tasks", []), state.active_task_id]))
-        blocked_tasks = [str(item) for item in strategy.get("blocked_tasks", []) if str(item).strip()]
+        deprioritized_tasks = list(
+            dict.fromkeys([*strategy.get("deprioritized_tasks", []), state.active_task_id])
+        )
+        blocked_tasks = [
+            str(item) for item in strategy.get("blocked_tasks", []) if str(item).strip()
+        ]
 
         if active_track and active_track in focus_tracks:
-            focus_tracks = [track for track in focus_tracks if track != active_track] + [active_track]
+            focus_tracks = [track for track in focus_tracks if track != active_track] + [
+                active_track
+            ]
 
         strategy.update(
             {
@@ -354,7 +369,10 @@ class PortalImplementationSupervisor:
             return defaults
         payload = load_json_dict(self.config.strategy_path)
         if payload is None:
-            logger.warning("Strategy file is missing or invalid JSON; using defaults: %s", self.config.strategy_path)
+            logger.warning(
+                "Strategy file is missing or invalid JSON; using defaults: %s",
+                self.config.strategy_path,
+            )
             return defaults.copy()
         return {**defaults, **payload}
 
@@ -380,7 +398,11 @@ class PortalImplementationSupervisor:
     def _build_daemon_command(self) -> list[str]:
         daemon_script_path = self.config.daemon_script_path
         if daemon_script_path is None:
-            command = [sys.executable, "-m", "ipfs_datasets_py.optimizers.todo_daemon.implementation_daemon"]
+            command = [
+                sys.executable,
+                "-m",
+                "ipfs_datasets_py.optimizers.todo_daemon.implementation_daemon",
+            ]
         else:
             command = [sys.executable, str(daemon_script_path)]
         command.extend(
@@ -465,7 +487,9 @@ class PortalImplementationSupervisor:
         if self.config.allowed_tracks:
             required_fragments.extend(["--allowed-tracks", ",".join(self.config.allowed_tracks)])
         if self.config.allowed_task_ids:
-            required_fragments.extend(["--allowed-task-ids", ",".join(self.config.allowed_task_ids)])
+            required_fragments.extend(
+                ["--allowed-task-ids", ",".join(self.config.allowed_task_ids)]
+            )
         if not all(fragment in command_line for fragment in required_fragments):
             return False
         has_implement_flag = "--implement" in command_line
@@ -493,7 +517,9 @@ class PortalImplementationSupervisor:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Supervise the portal implementation backlog daemon")
+    parser = argparse.ArgumentParser(
+        description="Supervise the portal implementation backlog daemon"
+    )
     parser.add_argument("--once", action="store_true", help="Run one supervisor check and exit")
     parser.add_argument(
         "--todo-path",
@@ -610,8 +636,18 @@ def main(argv: list[str] | None = None) -> None:
             implementation_log_stall_seconds=args.implementation_log_stall_seconds,
             use_ephemeral_worktree=args.implement and not args.no_ephemeral_worktree,
             worktree_root=args.worktree_root,
-            allowed_tracks=tuple(item.strip().lower() for value in args.allowed_tracks for item in value.split(",") if item.strip()),
-            allowed_task_ids=tuple(item.strip().lower() for value in args.allowed_task_ids for item in value.split(",") if item.strip()),
+            allowed_tracks=tuple(
+                item.strip().lower()
+                for value in args.allowed_tracks
+                for item in value.split(",")
+                if item.strip()
+            ),
+            allowed_task_ids=tuple(
+                item.strip().lower()
+                for value in args.allowed_task_ids
+                for item in value.split(",")
+                if item.strip()
+            ),
             repo_root=REPO_ROOT,
         )
     )

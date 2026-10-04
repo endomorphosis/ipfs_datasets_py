@@ -5,6 +5,7 @@ Strategic tests for working WebArchive functionality.
 This module tests the actual working methods in WebArchive and WebArchiveProcessor
 with proper test data and validation of the real implementations.
 """
+
 import pytest
 import tempfile
 import os
@@ -33,8 +34,8 @@ class TestWebArchiveWorkingFunctionality:
         """
         # Test the working WebArchive.__init__ method
         assert archive is not None
-        assert hasattr(archive, 'archived_items')
-        assert hasattr(archive, 'persistence_mode')
+        assert hasattr(archive, "archived_items")
+        assert hasattr(archive, "persistence_mode")
         assert archive.persistence_mode == "memory_only"
         assert isinstance(archive.archived_items, dict)
 
@@ -47,7 +48,7 @@ class TestWebArchiveWorkingFunctionality:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test WebArchive with persistent storage
             archive = WebArchive(storage_path=temp_dir)
-            
+
             assert archive is not None
             assert archive.storage_path == temp_dir
             assert archive.persistence_mode == "persistent"
@@ -60,7 +61,7 @@ class TestWebArchiveWorkingFunctionality:
         """
         # Test the working WebArchiveProcessor.__init__ method
         assert processor is not None
-        assert hasattr(processor, 'archive')
+        assert hasattr(processor, "archive")
         assert isinstance(processor.archive, WebArchive)
 
     def test_web_archive_url_validation_with_valid_urls(self, archive):
@@ -70,12 +71,8 @@ class TestWebArchiveWorkingFunctionality:
         THEN validation succeeds for well-formed URLs
         """
         # Test the working URL validation functionality
-        valid_urls = [
-            "https://example.com",
-            "http://test-site.org",
-            "https://docs.python.org/3/"
-        ]
-        
+        valid_urls = ["https://example.com", "http://test-site.org", "https://docs.python.org/3/"]
+
         for url in valid_urls:
             # This tests the internal URL validation used by archive_url
             try:
@@ -94,13 +91,8 @@ class TestWebArchiveWorkingFunctionality:
         THEN validation returns error status for invalid URLs
         """
         # Test URL validation with invalid formats
-        invalid_urls = [
-            "not_a_url",
-            "ftp://invalid-scheme.com",
-            "https://",
-            ""
-        ]
-        
+        invalid_urls = ["not_a_url", "ftp://invalid-scheme.com", "https://", ""]
+
         for url in invalid_urls:
             result = archive.archive_url(url)
             # Should return error dict for invalid URLs

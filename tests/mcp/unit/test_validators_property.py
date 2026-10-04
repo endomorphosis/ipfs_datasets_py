@@ -9,6 +9,7 @@ installed::
 
 Tests are collected normally by pytest; no special plugin is required.
 """
+
 from __future__ import annotations
 
 import string
@@ -75,21 +76,25 @@ pytestmark = pytest.mark.skipif(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def validator():
     from ipfs_datasets_py.mcp_server.validators import EnhancedParameterValidator
+
     return EnhancedParameterValidator()
 
 
 @pytest.fixture(scope="module")
 def exc_class():
     from ipfs_datasets_py.mcp_server.exceptions import ValidationError
+
     return ValidationError
 
 
 # ---------------------------------------------------------------------------
 # P1: validate_text_input — length invariants
 # ---------------------------------------------------------------------------
+
 
 class TestValidateTextInputProperties:
     """Property-based tests for text input validation."""
@@ -153,6 +158,7 @@ class TestValidateTextInputProperties:
 # P2: validate_numeric_range — bound invariants
 # ---------------------------------------------------------------------------
 
+
 class TestValidateNumericRangeProperties:
     """Property-based tests for numeric range validation."""
 
@@ -205,6 +211,7 @@ class TestValidateNumericRangeProperties:
 # ---------------------------------------------------------------------------
 # P3: validate_collection_name — length and alphabet invariants
 # ---------------------------------------------------------------------------
+
 
 class TestValidateCollectionNameProperties:
     """Property-based tests for collection name validation."""
@@ -269,6 +276,7 @@ class TestValidateCollectionNameProperties:
 # ---------------------------------------------------------------------------
 # P4: validate_url — scheme enforcement invariants
 # ---------------------------------------------------------------------------
+
 
 class TestValidateUrlProperties:
     """Property-based tests for URL validation."""

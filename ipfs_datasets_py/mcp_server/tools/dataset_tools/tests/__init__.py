@@ -9,10 +9,10 @@ from .test_logic_utils import test_predicate_extraction, test_fol_parsing, test_
 
 __all__ = [
     "test_text_to_fol_basic",
-    "test_text_to_fol_complex", 
+    "test_text_to_fol_complex",
     "test_legal_text_basic",
     "test_deontic_obligations",
     "test_predicate_extraction",
     "test_fol_parsing",
-    "test_deontic_parsing"
+    "test_deontic_parsing",
 ]

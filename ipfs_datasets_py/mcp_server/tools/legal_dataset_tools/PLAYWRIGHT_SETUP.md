@@ -40,6 +40,7 @@ brew install chromium
 from playwright.async_api import async_playwright
 import anyio
 
+
 async def verify():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -47,6 +48,7 @@ async def verify():
         await page.goto("https://www.google.com")
         print("Playwright is working!")
         await browser.close()
+
 
 anyio.run(verify)
 ```
@@ -72,11 +74,11 @@ Each Playwright-enabled scraper uses the `_playwright_scrape()` method from `Bas
 async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
     """Scrape using Playwright for JavaScript-rendered content."""
     return await self._playwright_scrape(
-        code_name, 
-        code_url, 
+        code_name,
+        code_url,
         "State Citation Format",
         wait_for_selector="a[href*='statute']",  # CSS selector to wait for
-        timeout=45000  # 45 seconds
+        timeout=45000,  # 45 seconds
     )
 ```
 
@@ -110,29 +112,28 @@ python3 test_all_states_with_parquet.py
 from state_scrapers import get_scraper_for_state
 import anyio
 
+
 async def test_dc():
     scraper = get_scraper_for_state("DC", "District of Columbia")
-    
+
     # Check if Playwright is available
     if scraper.has_playwright():
         print("✓ Playwright available")
     else:
         print("✗ Playwright not installed")
         return
-    
+
     # Get codes
     codes = scraper.get_code_list()
     print(f"Available codes: {len(codes)}")
-    
+
     # Scrape first code
-    statutes = await scraper.scrape_code(
-        code_name=codes[0]['name'],
-        code_url=codes[0]['url']
-    )
-    
+    statutes = await scraper.scrape_code(code_name=codes[0]["name"], code_url=codes[0]["url"])
+
     print(f"Scraped {len(statutes)} statutes")
     for statute in statutes[:3]:
         print(f"  - {statute.official_cite}")
+
 
 anyio.run(test_dc)
 ```
@@ -159,7 +160,7 @@ anyio.run(test_dc)
 
 3. **Set Appropriate Timeouts**: Balance between reliability and speed
    ```python
-   timeout=30000  # 30 seconds is usually sufficient
+   timeout = 30000  # 30 seconds is usually sufficient
    ```
 
 4. **Reuse Browser Context**: For multiple pages from same domain
@@ -199,11 +200,11 @@ chmod -R 755 ~/.cache/ms-playwright
 **Solution**: Increase timeout or adjust selector
 ```python
 return await self._playwright_scrape(
-    code_name, 
-    code_url, 
+    code_name,
+    code_url,
     citation_format,
     wait_for_selector="body",  # More generic selector
-    timeout=60000  # Increase timeout to 60 seconds
+    timeout=60000,  # Increase timeout to 60 seconds
 )
 ```
 

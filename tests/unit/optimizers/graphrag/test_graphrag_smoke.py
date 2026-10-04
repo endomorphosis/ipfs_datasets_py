@@ -31,9 +31,7 @@ def test_logic_validator_basic_consistency_check_without_tdfol() -> None:
 
     ontology = {
         "entities": [{"id": "e1", "type": "Thing", "text": "Alice"}],
-        "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "missing", "type": "rel"}
-        ],
+        "relationships": [{"id": "r1", "source_id": "e1", "target_id": "missing", "type": "rel"}],
     }
 
     result = validator.check_consistency(ontology)

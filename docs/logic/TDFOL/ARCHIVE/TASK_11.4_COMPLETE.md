@@ -195,19 +195,19 @@ Generated files:
 
 ### With OptimizedProver
 ```python
-from ipfs_datasets_py.logic.TDFOL import (
-    PerformanceDashboard,
-    OptimizedProver
-)
+from ipfs_datasets_py.logic.TDFOL import PerformanceDashboard, OptimizedProver
 
 dashboard = PerformanceDashboard()
 prover = OptimizedProver(kb, enable_cache=True)
 
 result = prover.prove(formula)
-dashboard.record_proof(result, metadata={
-    'strategy': prover.default_strategy.value,
-    'cache_hit': result._from_cache if hasattr(result, '_from_cache') else False
-})
+dashboard.record_proof(
+    result,
+    metadata={
+        "strategy": prover.default_strategy.value,
+        "cache_hit": result._from_cache if hasattr(result, "_from_cache") else False,
+    },
+)
 
 stats = dashboard.get_statistics()
 ```
@@ -223,8 +223,8 @@ dashboard = PerformanceDashboard()
 for formula in formulas:
     result = prover.prove(formula)
     cache_hit = cache.get(formula) is not None
-    
-    dashboard.record_proof(result, metadata={'cache_hit': cache_hit})
+
+    dashboard.record_proof(result, metadata={"cache_hit": cache_hit})
 
 print(f"Cache hit rate: {dashboard.get_statistics()['cache_hit_rate']:.1%}")
 ```

@@ -111,15 +111,9 @@ def test_modal_registry_packet_000926_family_pairs_are_supported() -> None:
             target_family,
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -156,9 +150,7 @@ def test_compiler_surfaces_packet_000926_explicit_ambiguity_margins() -> None:
 
     threshold = 0.15
     for sample_id, predicted_family, target_family, expected_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -193,13 +185,6 @@ def test_compiler_surfaces_packet_000926_explicit_ambiguity_margins() -> None:
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("adaptive_margin_direction") == "outvoted"
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

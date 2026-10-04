@@ -47,16 +47,28 @@ def build_parser() -> argparse.ArgumentParser:
         default="compile",
         help="Compiler operation to run.",
     )
-    parser.add_argument("--input", "-i", help="Input JSON/text file. Reads stdin when omitted or '-'.")
+    parser.add_argument(
+        "--input", "-i", help="Input JSON/text file. Reads stdin when omitted or '-'."
+    )
     parser.add_argument("--before", help="Before JSON/text file for diff.")
     parser.add_argument("--after", help="After JSON/text file for diff.")
     parser.add_argument("--output", "-o", help="Output JSON file. Writes stdout when omitted.")
     parser.add_argument("--iterations", type=int, default=3, help="Benchmark iterations.")
-    parser.add_argument("--max-workers", type=int, default=1, help="Maximum deterministic compiler workers.")
-    parser.add_argument("--learned-guidance", action="store_true", help="Explicitly activate learned guidance.")
-    parser.add_argument("--learned-guidance-artifact", help="JSON file with learned-guidance activation evidence.")
-    parser.add_argument("--lsp", action="store_true", help="Include LSP diagnostics in JSON output.")
-    parser.add_argument("--fail-on-warnings", action="store_true", help="Return diagnostic exit code for warnings.")
+    parser.add_argument(
+        "--max-workers", type=int, default=1, help="Maximum deterministic compiler workers."
+    )
+    parser.add_argument(
+        "--learned-guidance", action="store_true", help="Explicitly activate learned guidance."
+    )
+    parser.add_argument(
+        "--learned-guidance-artifact", help="JSON file with learned-guidance activation evidence."
+    )
+    parser.add_argument(
+        "--lsp", action="store_true", help="Include LSP diagnostics in JSON output."
+    )
+    parser.add_argument(
+        "--fail-on-warnings", action="store_true", help="Return diagnostic exit code for warnings."
+    )
     parser.add_argument("--compact", action="store_true", help="Emit compact JSON.")
     return parser
 

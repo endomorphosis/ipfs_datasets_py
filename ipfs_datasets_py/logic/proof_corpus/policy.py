@@ -136,8 +136,7 @@ def _json_ready(value: Any) -> Any:
     if callable(to_dict):
         return _json_ready(to_dict())
     raise ProofTrustPolicyError(
-        f"value of type {type(value).__name__} is not JSON-serializable "
-        "for the trust policy"
+        f"value of type {type(value).__name__} is not JSON-serializable for the trust policy"
     )
 
 
@@ -149,9 +148,7 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofTrustPolicyError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -164,9 +161,7 @@ def _optional_text(value: Any, field_name: str) -> str:
 def _require_cid(value: Any, field_name: str) -> str:
     cid = _require_text(value, field_name)
     if not _CID_RE.fullmatch(cid):
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a CIDv1 base32 string"
-        )
+        raise ProofTrustPolicyError(f"{field_name} must be a CIDv1 base32 string")
     return cid
 
 
@@ -179,9 +174,7 @@ def _optional_cid(value: Any, field_name: str) -> str:
 def _require_profile(value: Any, field_name: str) -> str:
     profile = _require_text(value, field_name)
     if not _PROFILE_RE.fullmatch(profile):
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a lowercase hyphenated identifier"
-        )
+        raise ProofTrustPolicyError(f"{field_name} must be a lowercase hyphenated identifier")
     return profile
 
 
@@ -195,15 +188,11 @@ def _unique_texts(values: Any, field_name: str) -> tuple[str, ...]:
     if values in (None, ()):
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a sequence of strings"
-        )
+        raise ProofTrustPolicyError(f"{field_name} must be a sequence of strings")
     try:
         items = tuple(_require_text(item, field_name) for item in values)
     except TypeError as exc:
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a sequence of strings"
-        ) from exc
+        raise ProofTrustPolicyError(f"{field_name} must be a sequence of strings") from exc
     if len(items) != len(set(items)):
         raise ProofTrustPolicyError(f"{field_name} values must be unique")
     return items
@@ -217,22 +206,16 @@ def _unique_cids(values: Any, field_name: str) -> tuple[str, ...]:
     try:
         items = tuple(_require_cid(item, field_name) for item in values)
     except TypeError as exc:
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a sequence of CIDs"
-        ) from exc
+        raise ProofTrustPolicyError(f"{field_name} must be a sequence of CIDs") from exc
     if len(items) != len(set(items)):
         raise ProofTrustPolicyError(f"{field_name} values must be unique")
     return items
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProofTrustPolicyError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProofTrustPolicyError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -242,9 +225,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise ProofTrustPolicyError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise ProofTrustPolicyError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _positive_int(value: Any, field_name: str) -> int:
@@ -255,9 +236,7 @@ def _positive_int(value: Any, field_name: str) -> int:
 
 def _non_negative_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ProofTrustPolicyError(
-            f"{field_name} must be a non-negative integer"
-        )
+        raise ProofTrustPolicyError(f"{field_name} must be a non-negative integer")
     return value
 
 
@@ -291,17 +270,13 @@ class PolicyBudget:
             "max_candidates",
             _positive_int(self.max_candidates, "max_candidates"),
         )
-        object.__setattr__(
-            self, "max_bytes", _positive_int(self.max_bytes, "max_bytes")
-        )
+        object.__setattr__(self, "max_bytes", _positive_int(self.max_bytes, "max_bytes"))
         object.__setattr__(
             self,
             "max_graph_depth",
             _positive_int(self.max_graph_depth, "max_graph_depth"),
         )
-        object.__setattr__(
-            self, "timeout_ms", _positive_int(self.timeout_ms, "timeout_ms")
-        )
+        object.__setattr__(self, "timeout_ms", _positive_int(self.timeout_ms, "timeout_ms"))
         object.__setattr__(
             self,
             "max_backend_attempts",
@@ -352,9 +327,7 @@ class PolicyBudget:
             max_graph_depth=int(payload.get("max_graph_depth", 32)),
             timeout_ms=int(payload.get("timeout_ms", 30_000)),
             max_backend_attempts=int(payload.get("max_backend_attempts", 8)),
-            schema_version=payload.get(
-                "schema_version", POLICY_BUDGET_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", POLICY_BUDGET_SCHEMA_VERSION),
         )
 
 
@@ -376,38 +349,28 @@ class TrustPolicyEvaluation:
             "status",
             _parse_enum(self.status, TrustEvaluationStatus, "status"),
         )
-        object.__setattr__(
-            self, "reasons", _unique_texts(self.reasons, "reasons")
-        )
+        object.__setattr__(self, "reasons", _unique_texts(self.reasons, "reasons"))
         object.__setattr__(
             self,
             "accepted_attestation_kind",
-            _optional_text(
-                self.accepted_attestation_kind, "accepted_attestation_kind"
-            ),
+            _optional_text(self.accepted_attestation_kind, "accepted_attestation_kind"),
         )
         object.__setattr__(
             self,
             "required_result_authority",
-            _optional_text(
-                self.required_result_authority, "required_result_authority"
-            ),
+            _optional_text(self.required_result_authority, "required_result_authority"),
         )
         object.__setattr__(
             self, "policy_digest", _optional_text(self.policy_digest, "policy_digest")
         )
-        object.__setattr__(
-            self, "envelope_cid", _optional_cid(self.envelope_cid, "envelope_cid")
-        )
+        object.__setattr__(self, "envelope_cid", _optional_cid(self.envelope_cid, "envelope_cid"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != POLICY_EVALUATION_SCHEMA_VERSION:
-            raise ProofTrustPolicyError(
-                f"unsupported evaluation schema: {self.schema_version!r}"
-            )
+            raise ProofTrustPolicyError(f"unsupported evaluation schema: {self.schema_version!r}")
 
     @property
     def accepted(self) -> bool:
@@ -455,9 +418,7 @@ class ProofTrustPolicy:
     solver_allowlist: tuple[str, ...] = ()
     compiler_allowlist: tuple[str, ...] = ()
     security_profile_allowlist: tuple[str, ...] = ()
-    attestation_kind_allowlist: tuple[str, ...] = (
-        AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-    )
+    attestation_kind_allowlist: tuple[str, ...] = (AttestationKind.DIRECT_PROOF_VERIFICATION.value,)
     # Verifier-execution may be admitted only when explicitly listed; never
     # membership/simulation/signature as theorem authority.
     authoritative_attestation_kinds: tuple[str, ...] = (
@@ -481,20 +442,14 @@ class ProofTrustPolicy:
     interface: str = PROOF_TRUST_POLICY_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "policy_id", _require_text(self.policy_id, "policy_id")
-        )
-        object.__setattr__(
-            self, "corpus_roots", _unique_cids(self.corpus_roots, "corpus_roots")
-        )
+        object.__setattr__(self, "policy_id", _require_text(self.policy_id, "policy_id"))
+        object.__setattr__(self, "corpus_roots", _unique_cids(self.corpus_roots, "corpus_roots"))
         object.__setattr__(
             self,
             "revocation_roots",
             _unique_cids(self.revocation_roots, "revocation_roots"),
         )
-        object.__setattr__(
-            self, "policy_roots", _unique_cids(self.policy_roots, "policy_roots")
-        )
+        object.__setattr__(self, "policy_roots", _unique_cids(self.policy_roots, "policy_roots"))
         object.__setattr__(
             self,
             "vk_registry_roots",
@@ -533,14 +488,10 @@ class ProofTrustPolicy:
 
         attestation_allow = tuple(
             parse_attestation_kind(item).value
-            for item in _unique_texts(
-                self.attestation_kind_allowlist, "attestation_kind_allowlist"
-            )
+            for item in _unique_texts(self.attestation_kind_allowlist, "attestation_kind_allowlist")
         )
         if not attestation_allow:
-            raise ProofTrustPolicyError(
-                "attestation_kind_allowlist must not be empty"
-            )
+            raise ProofTrustPolicyError("attestation_kind_allowlist must not be empty")
         object.__setattr__(self, "attestation_kind_allowlist", attestation_allow)
 
         authoritative = tuple(
@@ -551,9 +502,7 @@ class ProofTrustPolicy:
             )
         )
         if not authoritative:
-            raise ProofTrustPolicyError(
-                "authoritative_attestation_kinds must not be empty"
-            )
+            raise ProofTrustPolicyError("authoritative_attestation_kinds must not be empty")
         forbidden = set(authoritative) & _FORBIDDEN_THEOREM_KINDS
         if forbidden:
             raise ProofTrustPolicyError(
@@ -564,8 +513,7 @@ class ProofTrustPolicy:
         # policy cannot silently drop it in favour of weaker vouchers only.
         if AttestationKind.DIRECT_PROOF_VERIFICATION.value not in authoritative:
             raise ProofTrustPolicyError(
-                "authoritative_attestation_kinds must include "
-                "direct-proof-verification"
+                "authoritative_attestation_kinds must include direct-proof-verification"
             )
         object.__setattr__(self, "authoritative_attestation_kinds", authoritative)
 
@@ -577,9 +525,7 @@ class ProofTrustPolicy:
         object.__setattr__(
             self,
             "minimum_security_profile",
-            _optional_profile(
-                self.minimum_security_profile, "minimum_security_profile"
-            ),
+            _optional_profile(self.minimum_security_profile, "minimum_security_profile"),
         )
 
         for flag_name in (
@@ -603,15 +549,10 @@ class ProofTrustPolicy:
             )
         if self.accept_signature_as_theorem:
             raise ProofTrustPolicyError(
-                "accept_signature_as_theorem is forbidden; "
-                "signature evidence is non-substitutable"
+                "accept_signature_as_theorem is forbidden; signature evidence is non-substitutable"
             )
-        if self.accept_simulated and (
-            AttestationKind.SIMULATION.value in authoritative
-        ):
-            raise ProofTrustPolicyError(
-                "simulation cannot be listed as authoritative attestation"
-            )
+        if self.accept_simulated and (AttestationKind.SIMULATION.value in authoritative):
+            raise ProofTrustPolicyError("simulation cannot be listed as authoritative attestation")
 
         object.__setattr__(
             self, "world_mode", _parse_enum(self.world_mode, WorldMode, "world_mode")
@@ -634,9 +575,7 @@ class ProofTrustPolicy:
             "allowed_jurisdictions",
             tuple(
                 _require_profile(item, "allowed_jurisdictions")
-                for item in _unique_texts(
-                    self.allowed_jurisdictions, "allowed_jurisdictions"
-                )
+                for item in _unique_texts(self.allowed_jurisdictions, "allowed_jurisdictions")
             ),
         )
         object.__setattr__(
@@ -644,22 +583,16 @@ class ProofTrustPolicy:
             "allowed_tenants",
             _unique_texts(self.allowed_tenants, "allowed_tenants"),
         )
-        object.__setattr__(
-            self, "description", _optional_text(self.description, "description")
-        )
+        object.__setattr__(self, "description", _optional_text(self.description, "description"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PROOF_TRUST_POLICY_SCHEMA_VERSION:
-            raise ProofTrustPolicyError(
-                f"unsupported trust policy schema: {self.schema_version!r}"
-            )
+            raise ProofTrustPolicyError(f"unsupported trust policy schema: {self.schema_version!r}")
         if self.interface != PROOF_TRUST_POLICY_INTERFACE:
-            raise ProofTrustPolicyError(
-                f"unsupported trust policy interface: {self.interface!r}"
-            )
+            raise ProofTrustPolicyError(f"unsupported trust policy interface: {self.interface!r}")
 
         # Open-world cannot treat absence as fail-as-false permission.
         if self.world_mode is WorldMode.OPEN and self.conflict_rule is ConflictRule.DENY_OVERRIDES:
@@ -679,9 +612,7 @@ class ProofTrustPolicy:
             "allowed_jurisdictions": list(self.allowed_jurisdictions),
             "allowed_tenants": list(self.allowed_tenants),
             "attestation_kind_allowlist": list(self.attestation_kind_allowlist),
-            "authoritative_attestation_kinds": list(
-                self.authoritative_attestation_kinds
-            ),
+            "authoritative_attestation_kinds": list(self.authoritative_attestation_kinds),
             "backend_allowlist": list(self.backend_allowlist),
             "budget": self.budget.to_dict(),
             "circuit_allowlist": list(self.circuit_allowlist),
@@ -762,9 +693,7 @@ class ProofTrustPolicy:
             backend_allowlist=tuple(payload.get("backend_allowlist", ()) or ()),
             solver_allowlist=tuple(payload.get("solver_allowlist", ()) or ()),
             compiler_allowlist=tuple(payload.get("compiler_allowlist", ()) or ()),
-            security_profile_allowlist=tuple(
-                payload.get("security_profile_allowlist", ()) or ()
-            ),
+            security_profile_allowlist=tuple(payload.get("security_profile_allowlist", ()) or ()),
             attestation_kind_allowlist=tuple(
                 payload.get(
                     "attestation_kind_allowlist",
@@ -784,32 +713,18 @@ class ProofTrustPolicy:
             ),
             minimum_security_profile=payload.get("minimum_security_profile", ""),
             accept_simulated=bool(payload.get("accept_simulated", False)),
-            accept_membership_as_theorem=bool(
-                payload.get("accept_membership_as_theorem", False)
-            ),
-            accept_signature_as_theorem=bool(
-                payload.get("accept_signature_as_theorem", False)
-            ),
-            require_circuit_binding=bool(
-                payload.get("require_circuit_binding", True)
-            ),
+            accept_membership_as_theorem=bool(payload.get("accept_membership_as_theorem", False)),
+            accept_signature_as_theorem=bool(payload.get("accept_signature_as_theorem", False)),
+            require_circuit_binding=bool(payload.get("require_circuit_binding", True)),
             require_vk_binding=bool(payload.get("require_vk_binding", True)),
-            require_public_inputs=bool(
-                payload.get("require_public_inputs", True)
-            ),
+            require_public_inputs=bool(payload.get("require_public_inputs", True)),
             world_mode=payload.get("world_mode", WorldMode.CLOSED.value),
-            conflict_rule=payload.get(
-                "conflict_rule", ConflictRule.FAIL_CLOSED.value
-            ),
+            conflict_rule=payload.get("conflict_rule", ConflictRule.FAIL_CLOSED.value),
             budget=payload.get("budget"),
-            allowed_jurisdictions=tuple(
-                payload.get("allowed_jurisdictions", ()) or ()
-            ),
+            allowed_jurisdictions=tuple(payload.get("allowed_jurisdictions", ()) or ()),
             allowed_tenants=tuple(payload.get("allowed_tenants", ()) or ()),
             description=payload.get("description", ""),
-            schema_version=payload.get(
-                "schema_version", PROOF_TRUST_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PROOF_TRUST_POLICY_SCHEMA_VERSION),
             interface=payload.get("interface", PROOF_TRUST_POLICY_INTERFACE),
         )
 
@@ -847,9 +762,7 @@ class ProofTrustPolicy:
         """Evaluate *envelope* under this policy (fail closed)."""
 
         if not isinstance(envelope, AttestedProofEnvelope):
-            raise ProofTrustPolicyError(
-                "envelope must be an AttestedProofEnvelope"
-            )
+            raise ProofTrustPolicyError("envelope must be an AttestedProofEnvelope")
         envelope.verify_integrity()
         reasons: list[str] = []
 
@@ -907,7 +820,10 @@ class ProofTrustPolicy:
         if self.circuit_allowlist:
             circuit_id = getattr(circuit, "circuit_id", "") or ""
             circuit_ref = getattr(circuit, "circuit_ref", "") or ""
-            if circuit_id not in self.circuit_allowlist and circuit_ref not in self.circuit_allowlist:
+            if (
+                circuit_id not in self.circuit_allowlist
+                and circuit_ref not in self.circuit_allowlist
+            ):
                 reasons.append("circuit_not_allowlisted")
         if self.backend_allowlist:
             backend = envelope.backend_id or getattr(circuit, "backend_id", "")
@@ -920,15 +836,11 @@ class ProofTrustPolicy:
             if envelope.compiler_id not in self.compiler_allowlist:
                 reasons.append("compiler_not_allowlisted")
         if self.security_profile_allowlist:
-            profile = envelope.security_profile or getattr(
-                circuit, "security_profile", ""
-            )
+            profile = envelope.security_profile or getattr(circuit, "security_profile", "")
             if profile not in self.security_profile_allowlist:
                 reasons.append("security_profile_not_allowlisted")
         if self.minimum_security_profile:
-            profile = envelope.security_profile or getattr(
-                circuit, "security_profile", ""
-            )
+            profile = envelope.security_profile or getattr(circuit, "security_profile", "")
             if not profile:
                 reasons.append("missing_security_profile")
             elif profile != self.minimum_security_profile and (
@@ -943,9 +855,7 @@ class ProofTrustPolicy:
             if not getattr(circuit, "circuit_id", ""):
                 reasons.append("missing_circuit_binding")
         if self.require_vk_binding:
-            if not getattr(circuit, "vk_id", "") and not getattr(
-                circuit, "vk_digest", ""
-            ):
+            if not getattr(circuit, "vk_id", "") and not getattr(circuit, "vk_digest", ""):
                 reasons.append("missing_vk_binding")
         if self.require_public_inputs:
             public_inputs = dict(envelope.public_inputs) or dict(
@@ -1007,11 +917,7 @@ class ProofTrustPolicy:
                     "not_allowed",
                 )
             )
-            status = (
-                TrustEvaluationStatus.REJECT
-                if hard
-                else TrustEvaluationStatus.ABSTAIN
-            )
+            status = TrustEvaluationStatus.REJECT if hard else TrustEvaluationStatus.ABSTAIN
             evaluation = TrustPolicyEvaluation(
                 status=status,
                 reasons=tuple(ordered),
@@ -1048,12 +954,8 @@ def default_production_trust_policy(
         policy_id=policy_id,
         corpus_roots=tuple(corpus_roots),
         revocation_roots=tuple(revocation_roots),
-        attestation_kind_allowlist=(
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
-        authoritative_attestation_kinds=(
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
+        attestation_kind_allowlist=(AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
+        authoritative_attestation_kinds=(AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
         required_result_authority=AuthorityKind.THEOREM_PROOF,
         accept_simulated=False,
         require_circuit_binding=True,
@@ -1090,9 +992,7 @@ class CorpusCoveragePolicy:
     interface: str = CORPUS_COVERAGE_POLICY_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "policy_id", _require_text(self.policy_id, "policy_id")
-        )
+        object.__setattr__(self, "policy_id", _require_text(self.policy_id, "policy_id"))
         object.__setattr__(
             self,
             "required_domains",
@@ -1128,9 +1028,7 @@ class CorpusCoveragePolicy:
                 "minimum_covered_selector_count",
             ),
         )
-        object.__setattr__(
-            self, "description", _optional_text(self.description, "description")
-        )
+        object.__setattr__(self, "description", _optional_text(self.description, "description"))
         object.__setattr__(
             self,
             "schema_version",
@@ -1189,22 +1087,14 @@ class CorpusCoveragePolicy:
             policy_id=payload.get("policy_id", ""),
             required_domains=tuple(payload.get("required_domains", ()) or ()),
             required_families=tuple(payload.get("required_families", ()) or ()),
-            required_selectors=tuple(
-                payload.get("required_selectors", ()) or ()
-            ),
+            required_selectors=tuple(payload.get("required_selectors", ()) or ()),
             require_complete=bool(payload.get("require_complete", True)),
             max_gap_kinds=int(payload.get("max_gap_kinds", 0)),
             allowed_gap_kinds=tuple(payload.get("allowed_gap_kinds", ()) or ()),
-            minimum_covered_selector_count=int(
-                payload.get("minimum_covered_selector_count", 0)
-            ),
+            minimum_covered_selector_count=int(payload.get("minimum_covered_selector_count", 0)),
             description=payload.get("description", ""),
-            schema_version=payload.get(
-                "schema_version", CORPUS_COVERAGE_POLICY_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", CORPUS_COVERAGE_POLICY_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", CORPUS_COVERAGE_POLICY_SCHEMA_VERSION),
+            interface=payload.get("interface", CORPUS_COVERAGE_POLICY_INTERFACE),
         )
 
     def evaluate_coverage(
@@ -1244,8 +1134,7 @@ class CorpusCoveragePolicy:
                 reasons.append(f"missing_selector:{selector}")
         if (
             self.minimum_covered_selector_count
-            and len(coverage.covered_selectors)
-            < self.minimum_covered_selector_count
+            and len(coverage.covered_selectors) < self.minimum_covered_selector_count
         ):
             reasons.append("insufficient_covered_selectors")
 
@@ -1261,15 +1150,11 @@ class CorpusCoveragePolicy:
             policy_digest=self.policy_digest(),
         )
 
-    def evaluate_envelope(
-        self, envelope: AttestedProofEnvelope
-    ) -> TrustPolicyEvaluation:
+    def evaluate_envelope(self, envelope: AttestedProofEnvelope) -> TrustPolicyEvaluation:
         """Evaluate coverage declared on an attested proof envelope."""
 
         if not isinstance(envelope, AttestedProofEnvelope):
-            raise ProofTrustPolicyError(
-                "envelope must be an AttestedProofEnvelope"
-            )
+            raise ProofTrustPolicyError("envelope must be an AttestedProofEnvelope")
         return self.evaluate_coverage(
             envelope.coverage,
             domain=envelope.domain,

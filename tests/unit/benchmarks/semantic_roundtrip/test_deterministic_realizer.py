@@ -209,9 +209,7 @@ def test_realization_performs_no_file_or_native_record_lookup(
     result = CanonicalDeterministicRealizer().realize(request)
 
     assert result.status is ComponentStatus.SUCCESS
-    assert result.text == (
-        "Agency shall not publish records if public interest."
-    )
+    assert result.text == ("Agency shall not publish records if public interest.")
     assert "cache" not in result.text
 
 

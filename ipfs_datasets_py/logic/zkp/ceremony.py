@@ -44,7 +44,9 @@ class CeremonyValidation:
 
 def ceremony_cid(manifest: Mapping[str, Any]) -> str:
     """Return the deterministic content identifier for a ceremony manifest."""
-    encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
+        "utf-8"
+    )
     return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
 
 
@@ -54,13 +56,20 @@ def validate_groth16_mpc_ceremony(manifest: Mapping[str, Any]) -> CeremonyValida
     if manifest.get("schema") != MCPPP_GROTH16_MPC_CEREMONY_SCHEMA:
         reasons.append("unsupported_schema")
     profile = manifest.get("profile")
-    if not isinstance(profile, Mapping) or profile.get("capability") != "mcp++/event-dag" or profile.get("name") != MCPPP_PROFILE_F_NAME:
+    if (
+        not isinstance(profile, Mapping)
+        or profile.get("capability") != "mcp++/event-dag"
+        or profile.get("name") != MCPPP_PROFILE_F_NAME
+    ):
         reasons.append("invalid_profile_f_identity")
     if not isinstance(manifest.get("ceremonyId"), str) or not manifest["ceremonyId"]:
         reasons.append("missing_ceremony_id")
     if not isinstance(manifest.get("circuitId"), str) or not manifest["circuitId"]:
         reasons.append("missing_circuit_id")
-    if manifest.get("keyFormat") is not None and manifest.get("keyFormat") not in {"snarkjs-zkey", "arkworks-canonical"}:
+    if manifest.get("keyFormat") is not None and manifest.get("keyFormat") not in {
+        "snarkjs-zkey",
+        "arkworks-canonical",
+    }:
         reasons.append("invalid_key_format")
     if not _valid_artifact(manifest.get("circuitR1cs")):
         reasons.append("invalid_circuit_r1cs")
@@ -86,7 +95,9 @@ def validate_groth16_mpc_ceremony(manifest: Mapping[str, Any]) -> CeremonyValida
         reasons.append("missing_initial_zkey")
 
     participants: set[str] = set()
-    previous_output: str | None = initial_zkey.get("sha256") if isinstance(initial_zkey, Mapping) else None
+    previous_output: str | None = (
+        initial_zkey.get("sha256") if isinstance(initial_zkey, Mapping) else None
+    )
     for index, contribution in enumerate(contributions, start=1):
         if not isinstance(contribution, Mapping):
             reasons.append(f"invalid_contribution_{index}")
@@ -107,9 +118,15 @@ def validate_groth16_mpc_ceremony(manifest: Mapping[str, Any]) -> CeremonyValida
         if isinstance(output_hash, str):
             previous_output = output_hash
         attestation = contribution.get("attestation")
-        if not isinstance(attestation, Mapping) or not all(isinstance(attestation.get(key), str) and attestation[key] for key in ("algorithm", "signature", "signedAt", "statementCid")):
+        if not isinstance(attestation, Mapping) or not all(
+            isinstance(attestation.get(key), str) and attestation[key]
+            for key in ("algorithm", "signature", "signedAt", "statementCid")
+        ):
             reasons.append(f"missing_signed_attestation_{index}")
-        if contribution.get("transcriptVerifier") not in {"snarkjs-zkey-verify", "arkworks-mpc-verifier"} or not contribution.get("transcriptVerifiedAt"):
+        if contribution.get("transcriptVerifier") not in {
+            "snarkjs-zkey-verify",
+            "arkworks-mpc-verifier",
+        } or not contribution.get("transcriptVerifiedAt"):
             reasons.append(f"missing_transcript_verification_{index}")
 
     status = manifest.get("status")
@@ -146,7 +163,9 @@ def validate_groth16_mpc_ceremony(manifest: Mapping[str, Any]) -> CeremonyValida
 def assert_production_eligible_groth16_ceremony(manifest: Mapping[str, Any]) -> CeremonyValidation:
     result = validate_groth16_mpc_ceremony(manifest)
     if not result.production_eligible:
-        raise ValueError(f"Groth16 ceremony is not production eligible: {', '.join(result.reasons) or 'unknown'}")
+        raise ValueError(
+            f"Groth16 ceremony is not production eligible: {', '.join(result.reasons) or 'unknown'}"
+        )
     return result
 
 
@@ -181,10 +200,16 @@ def assert_arkworks_mpc_ceremony(
         or contribution.get("transcriptVerifier") != "arkworks-mpc-verifier"
         for contribution in contributions
     ):
-        raise ValueError("Arkworks ceremony requires arkworks-mpc-verifier evidence for every contribution")
+        raise ValueError(
+            "Arkworks ceremony requires arkworks-mpc-verifier evidence for every contribution"
+        )
     final_zkey = manifest.get("finalZkey")
     proving_key = manifest.get("provingKey")
-    if not isinstance(final_zkey, Mapping) or not isinstance(proving_key, Mapping) or final_zkey.get("sha256") != proving_key.get("sha256"):
+    if (
+        not isinstance(final_zkey, Mapping)
+        or not isinstance(proving_key, Mapping)
+        or final_zkey.get("sha256") != proving_key.get("sha256")
+    ):
         raise ValueError("Arkworks ceremony finalZkey must match the provingKey artifact")
 
     _assert_local_artifact_hash(
@@ -224,7 +249,9 @@ def _assert_local_artifact_hash(value: Any, path: str | Path, *, artifact_name: 
         raise ValueError(f"Arkworks {artifact_name} is unavailable: {artifact_path}")
     actual_hash = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
     if value["sha256"] != actual_hash:
-        raise ValueError(f"Arkworks ceremony {artifact_name} hash does not match the local artifact")
+        raise ValueError(
+            f"Arkworks ceremony {artifact_name} hash does not match the local artifact"
+        )
 
 
 __all__ = [

@@ -18,21 +18,21 @@ async def graph_add_relationship(
     target_id: str,
     relationship_type: str,
     properties: Optional[Dict[str, Any]] = None,
-    driver_url: Optional[str] = None
+    driver_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Add a relationship between entities in the knowledge graph.
-    
+
     This is a thin wrapper around KnowledgeGraphManager.add_relationship().
     All business logic is in ipfs_datasets_py.core_operations.knowledge_graph_manager
-    
+
     Args:
         source_id: Source entity identifier
         target_id: Target entity identifier
         relationship_type: Type of relationship (e.g., "KNOWS", "WORKS_AT")
         properties: Optional dictionary of relationship properties
         driver_url: Optional URL for the graph database driver
-    
+
     Returns:
         Dict containing:
         - status: "success" or "error"
@@ -52,5 +52,5 @@ async def graph_add_relationship(
             "status": "error",
             "message": str(e),
             "source_id": source_id,
-            "target_id": target_id
+            "target_id": target_id,
         }

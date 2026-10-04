@@ -44,9 +44,7 @@ _SIDECAR_SUFFIXES = {
     *_AUDIO_SUFFIXES,
     ".pdf",
 }
-_PHONE_RE = re.compile(
-    r"(?<!\w)(\+?\d[\d().\-\s]{6,}\d|\(\d{3}\)\s*\d{3}[-.\s]?\d{4})(?!\w)"
-)
+_PHONE_RE = re.compile(r"(?<!\w)(\+?\d[\d().\-\s]{6,}\d|\(\d{3}\)\s*\d{3}[-.\s]?\d{4})(?!\w)")
 _ISO_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})")
 
 
@@ -110,7 +108,11 @@ def _normalize_generated_text(text: str) -> str:
 
 def _ocr_image_path(path: Path) -> tuple[str, dict[str, Any]]:
     if not _command_exists("tesseract"):
-        return "", {"status": "unavailable", "backend": "tesseract_cli", "reason": "tesseract_not_installed"}
+        return "", {
+            "status": "unavailable",
+            "backend": "tesseract_cli",
+            "reason": "tesseract_not_installed",
+        }
     try:
         result = subprocess.run(
             ["tesseract", str(path), "stdout"],
@@ -141,13 +143,21 @@ def _transcribe_audio_path(path: Path) -> tuple[str, dict[str, Any]]:
         try:
             import requests
 
-            model = str(os.environ.get("OPENAI_AUDIO_TRANSCRIPTION_MODEL") or "gpt-4o-mini-transcribe").strip()
+            model = str(
+                os.environ.get("OPENAI_AUDIO_TRANSCRIPTION_MODEL") or "gpt-4o-mini-transcribe"
+            ).strip()
             with path.open("rb") as audio_fp:
                 response = requests.post(
                     "https://api.openai.com/v1/audio/transcriptions",
                     headers={"Authorization": f"Bearer {openai_api_key}"},
                     data={"model": model},
-                    files={"file": (path.name, audio_fp, mimetypes.guess_type(path.name)[0] or "application/octet-stream")},
+                    files={
+                        "file": (
+                            path.name,
+                            audio_fp,
+                            mimetypes.guess_type(path.name)[0] or "application/octet-stream",
+                        )
+                    },
                     timeout=900,
                 )
             response.raise_for_status()
@@ -204,7 +214,13 @@ def _transcribe_audio_path(path: Path) -> tuple[str, dict[str, Any]]:
                     "stderr": (result.stderr or "").strip()[:1000],
                 }
             transcript_path = temp_dir / f"{path.stem}.txt"
-            text = _normalize_generated_text(transcript_path.read_text(encoding="utf-8", errors="replace")) if transcript_path.exists() else ""
+            text = (
+                _normalize_generated_text(
+                    transcript_path.read_text(encoding="utf-8", errors="replace")
+                )
+                if transcript_path.exists()
+                else ""
+            )
             if text:
                 return text, {
                     "status": "success",
@@ -214,7 +230,12 @@ def _transcribe_audio_path(path: Path) -> tuple[str, dict[str, Any]]:
                 }
             return "", {"status": "empty", "backend": "whisper_cli", "model": model}
         except Exception as exc:
-            return "", {"status": "error", "backend": "whisper_cli", "model": model, "error": str(exc)}
+            return "", {
+                "status": "error",
+                "backend": "whisper_cli",
+                "model": model,
+                "error": str(exc),
+            }
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -238,7 +259,9 @@ def _mediator_evidence_record(bundle: dict[str, Any]) -> dict[str, Any]:
             f"Participants: {participants}\n"
             f"Transcript path: {bundle.get('transcript_path', '')}"
         ),
-        "attachment_names": [Path(path).name for path in list(bundle.get("attachment_paths") or [])],
+        "attachment_names": [
+            Path(path).name for path in list(bundle.get("attachment_paths") or [])
+        ],
         "metadata": {
             "event_id": bundle.get("event_id"),
             "event_type": bundle.get("event_type"),
@@ -351,7 +374,9 @@ def materialize_google_voice_events(
             if not enrichment_path:
                 continue
             try:
-                generated = Path(enrichment_path).read_text(encoding="utf-8", errors="replace").strip()
+                generated = (
+                    Path(enrichment_path).read_text(encoding="utf-8", errors="replace").strip()
+                )
             except Exception:
                 continue
             if not generated:
@@ -361,7 +386,10 @@ def materialize_google_voice_events(
             transcript_sections.append(f"{label}: {source_name}\n{generated}")
 
         transcript_path = bundle_dir / "transcript.txt"
-        transcript_path.write_text("\n\n".join(section for section in transcript_sections if section).strip() + "\n", encoding="utf-8")
+        transcript_path.write_text(
+            "\n\n".join(section for section in transcript_sections if section).strip() + "\n",
+            encoding="utf-8",
+        )
 
         event_payload = {
             **event,
@@ -374,7 +402,9 @@ def materialize_google_voice_events(
             "enrichment_count": len(enrichment_records),
         }
         event_json_path = bundle_dir / "event.json"
-        event_json_path.write_text(json.dumps(event_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        event_json_path.write_text(
+            json.dumps(event_payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         bundles.append(
             {
                 "source_type": "google_voice",
@@ -393,11 +423,15 @@ def materialize_google_voice_events(
                 "source_html_path": str(exported_html_path),
                 "attachment_paths": [item["path"] for item in attachment_records],
                 "attachments": attachment_records,
-                "enrichment_paths": [str(item.get("path") or "") for item in enrichment_records if item.get("path")],
+                "enrichment_paths": [
+                    str(item.get("path") or "") for item in enrichment_records if item.get("path")
+                ],
                 "enrichments": enrichment_records,
                 "text_content": transcript_path.read_text(encoding="utf-8", errors="replace"),
                 "deduped_gmail_message_ids": list(event.get("deduped_gmail_message_ids") or []),
-                "evidence_title": str(event.get("title") or event.get("event_type") or "Google Voice event"),
+                "evidence_title": str(
+                    event.get("title") or event.get("event_type") or "Google Voice event"
+                ),
                 "source_kind": str(event.get("source_kind") or source_kind),
             }
         )
@@ -537,11 +571,17 @@ def _read_text_file(path: Path) -> str:
 
 
 def _candidate_html_paths(root: Path) -> list[Path]:
-    voice_roots = [candidate for candidate in [root, root / "Takeout" / "Voice", root / "Voice"] if candidate.exists()]
+    voice_roots = [
+        candidate
+        for candidate in [root, root / "Takeout" / "Voice", root / "Voice"]
+        if candidate.exists()
+    ]
     html_paths: list[Path] = []
     for voice_root in voice_roots:
         html_paths.extend(
-            path for path in sorted(voice_root.rglob("*")) if path.is_file() and path.suffix.lower() in _HTML_SUFFIXES
+            path
+            for path in sorted(voice_root.rglob("*"))
+            if path.is_file() and path.suffix.lower() in _HTML_SUFFIXES
         )
     seen: set[Path] = set()
     deduped: list[Path] = []
@@ -643,7 +683,11 @@ def _build_export_event(root: Path, paths: list[Path], *, source_kind: str) -> d
         elif payload is not None:
             text_sections.append(json.dumps(payload, ensure_ascii=False))
 
-    title = _extract_title(html_text, html_path) if html_path else paths[0].parent.name.replace("_", " ")
+    title = (
+        _extract_title(html_text, html_path)
+        if html_path
+        else paths[0].parent.name.replace("_", " ")
+    )
     text_content = _normalize_whitespace("\n".join(section for section in text_sections if section))
     event_type = _guess_event_type(paths[0], title, text_content)
     timestamp = _extract_timestamp(title, text_content, *text_sections)
@@ -759,7 +803,9 @@ class GoogleVoiceProcessor:
 
     def _parse_export_groups(self, root: Path, *, source_kind: str) -> dict[str, Any]:
         groups = _group_export_files(root)
-        events = [_build_export_event(root, paths, source_kind=source_kind) for paths in groups if paths]
+        events = [
+            _build_export_event(root, paths, source_kind=source_kind) for paths in groups if paths
+        ]
         return {
             "status": "success",
             "source": str(root),
@@ -791,7 +837,7 @@ class GoogleVoiceProcessor:
                 for blob in blobs:
                     if not blob.name or blob.name.endswith("/"):
                         continue
-                    relative_name = blob.name[len(prefix):].lstrip("/") if prefix else blob.name
+                    relative_name = blob.name[len(prefix) :].lstrip("/") if prefix else blob.name
                     destination = stage_root / relative_name
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     blob.download_to_filename(str(destination))
@@ -854,7 +900,12 @@ class GoogleVoiceProcessor:
             timestamp = _extract_timestamp(
                 title,
                 text_content,
-                *(json.dumps(payload, ensure_ascii=False) if not isinstance(payload, str) else payload for payload in sidecar_payloads.values()),
+                *(
+                    json.dumps(payload, ensure_ascii=False)
+                    if not isinstance(payload, str)
+                    else payload
+                    for payload in sidecar_payloads.values()
+                ),
             )
             phone_numbers = _extract_phone_numbers(
                 title,
@@ -862,7 +913,9 @@ class GoogleVoiceProcessor:
                 *(str(payload) for payload in sidecar_payloads.values()),
             )
             event_type = _guess_event_type(html_path, title, text_content)
-            event_hash = hashlib.sha256(str(html_path.relative_to(root)).encode("utf-8")).hexdigest()[:16]
+            event_hash = hashlib.sha256(
+                str(html_path.relative_to(root)).encode("utf-8")
+            ).hexdigest()[:16]
             event = GoogleVoiceEvent(
                 event_id=f"gv:{event_hash}",
                 event_type=event_type,
@@ -1015,7 +1068,11 @@ class GoogleVoiceProcessor:
                 if child.is_file() and child.suffix.lower() == ".zip":
                     candidates.append(child)
                 elif child.is_dir():
-                    if (child / "Takeout" / "Voice").exists() or (child / "Voice").exists() or _looks_like_voice_path(child):
+                    if (
+                        (child / "Takeout" / "Voice").exists()
+                        or (child / "Voice").exists()
+                        or _looks_like_voice_path(child)
+                    ):
                         candidates.append(child)
 
             for candidate in candidates:
@@ -1049,7 +1106,9 @@ class GoogleVoiceProcessor:
                 if max_events is not None and len(processed) >= max_events:
                     break
 
-            state_file.write_text(json.dumps({"seen": seen}, indent=2, ensure_ascii=False), encoding="utf-8")
+            state_file.write_text(
+                json.dumps({"seen": seen}, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
             if once or (max_events is not None and len(processed) >= max_events):
                 break
             time.sleep(max(0.1, float(poll_interval)))

@@ -20,7 +20,12 @@ try:
     from ipfs_datasets_py.knowledge_graphs.migration.formats import FormatConverter
     from ipfs_datasets_py.knowledge_graphs.migration.schema_checker import SchemaChecker
     from ipfs_datasets_py.knowledge_graphs.migration.integrity_verifier import IntegrityVerifier
-    from ipfs_datasets_py.knowledge_graphs.extraction.schema import Entity, Relationship, KnowledgeGraph
+    from ipfs_datasets_py.knowledge_graphs.extraction.schema import (
+        Entity,
+        Relationship,
+        KnowledgeGraph,
+    )
+
     MIGRATION_AVAILABLE = True
 except ImportError as e:
     MIGRATION_AVAILABLE = False
@@ -31,6 +36,7 @@ except ImportError as e:
 # Task 3.1.1: Neo4j Export Tests (7 tests)
 # ============================================================================
 
+
 @pytest.mark.skipif(not MIGRATION_AVAILABLE, reason="Migration module not available")
 class TestNeo4jExporter:
     """Test Neo4j export functionality."""
@@ -40,14 +46,14 @@ class TestNeo4jExporter:
         # GIVEN: A knowledge graph with entities
         entities = [
             Entity(id="e1", text="Alice", type="PERSON", properties={"age": 30}),
-            Entity(id="e2", text="Bob", type="PERSON", properties={"age": 25})
+            Entity(id="e2", text="Bob", type="PERSON", properties={"age": 25}),
         ]
         kg = KnowledgeGraph(entities=entities, relationships=[])
-        
+
         # WHEN: Exporting to Neo4j format
         exporter = Neo4jExporter()
         result = exporter.export(kg)
-        
+
         # THEN: Result should contain nodes
         assert "nodes" in result
         assert len(result["nodes"]) == 2
@@ -59,17 +65,15 @@ class TestNeo4jExporter:
         # GIVEN: A knowledge graph with entities and relationships
         entities = [
             Entity(id="e1", text="Alice", type="PERSON"),
-            Entity(id="e2", text="Company X", type="ORGANIZATION")
+            Entity(id="e2", text="Company X", type="ORGANIZATION"),
         ]
-        relationships = [
-            Relationship(source="e1", target="e2", type="WORKS_AT", properties={})
-        ]
+        relationships = [Relationship(source="e1", target="e2", type="WORKS_AT", properties={})]
         kg = KnowledgeGraph(entities=entities, relationships=relationships)
-        
+
         # WHEN: Exporting to Neo4j format
         exporter = Neo4jExporter()
         result = exporter.export(kg)
-        
+
         # THEN: Result should contain both nodes and relationships
         assert "nodes" in result
         assert "relationships" in result
@@ -81,11 +85,11 @@ class TestNeo4jExporter:
         # GIVEN: A large knowledge graph
         entities = [Entity(id=f"e{i}", text=f"Entity{i}", type="PERSON") for i in range(150)]
         kg = KnowledgeGraph(entities=entities, relationships=[])
-        
+
         # WHEN: Exporting with batch size of 50
         exporter = Neo4jExporter(batch_size=50)
         result = exporter.export(kg)
-        
+
         # THEN: All entities should be exported
         assert len(result["nodes"]) == 150
 
@@ -93,7 +97,7 @@ class TestNeo4jExporter:
         """Test error handling for invalid entity."""
         # GIVEN: A knowledge graph with invalid entity
         entities = [{"invalid": "entity"}]  # Wrong format
-        
+
         # WHEN/THEN: Exporting should handle error gracefully
         exporter = Neo4jExporter()
         with pytest.raises((ValueError, TypeError, AttributeError)):
@@ -103,8 +107,10 @@ class TestNeo4jExporter:
         """Test error handling for connection failure."""
         # GIVEN: Neo4j exporter with invalid connection
         exporter = Neo4jExporter(uri="bolt://invalid:7687")
-        kg = KnowledgeGraph(entities=[Entity(id="e1", text="Test", type="PERSON")], relationships=[])
-        
+        kg = KnowledgeGraph(
+            entities=[Entity(id="e1", text="Test", type="PERSON")], relationships=[]
+        )
+
         # WHEN/THEN: Export with connection should handle error
         # Note: This tests graceful degradation
         try:
@@ -121,14 +127,14 @@ class TestNeo4jExporter:
             id="e1",
             text="Alice",
             type="PERSON",
-            properties={"age": 30, "city": "New York", "occupation": "Engineer"}
+            properties={"age": 30, "city": "New York", "occupation": "Engineer"},
         )
         kg = KnowledgeGraph(entities=[entity], relationships=[])
-        
+
         # WHEN: Exporting
         exporter = Neo4jExporter()
         result = exporter.export(kg)
-        
+
         # THEN: All properties should be preserved
         node = result["nodes"][0]
         assert node["properties"]["age"] == 30
@@ -140,14 +146,14 @@ class TestNeo4jExporter:
         # GIVEN: Knowledge graph with duplicate entity IDs
         entities = [
             Entity(id="e1", text="Alice", type="PERSON"),
-            Entity(id="e1", text="Alice Updated", type="PERSON")  # Duplicate ID
+            Entity(id="e1", text="Alice Updated", type="PERSON"),  # Duplicate ID
         ]
         kg = KnowledgeGraph(entities=entities, relationships=[])
-        
+
         # WHEN: Exporting
         exporter = Neo4jExporter()
         result = exporter.export(kg)
-        
+
         # THEN: Should handle duplicates (either merge or keep latest)
         assert len(result["nodes"]) <= 2
 
@@ -155,6 +161,7 @@ class TestNeo4jExporter:
 # ============================================================================
 # Task 3.1.2: IPFS Import Tests (7 tests)
 # ============================================================================
+
 
 @pytest.mark.skipif(not MIGRATION_AVAILABLE, reason="Migration module not available")
 class TestIPFSImporter:
@@ -165,14 +172,14 @@ class TestIPFSImporter:
         # GIVEN: Mock IPFS data
         mock_data = {
             "nodes": [{"id": "e1", "text": "Alice", "type": "PERSON"}],
-            "relationships": []
+            "relationships": [],
         }
-        
+
         # WHEN: Importing from CID
         importer = IPFSImporter()
-        with patch.object(importer, '_fetch_from_ipfs', return_value=json.dumps(mock_data)):
+        with patch.object(importer, "_fetch_from_ipfs", return_value=json.dumps(mock_data)):
             kg = importer.import_from_cid("QmTest123")
-        
+
         # THEN: Knowledge graph should be created
         assert kg is not None
         assert len(kg.entities) == 1
@@ -181,19 +188,16 @@ class TestIPFSImporter:
     def test_import_from_json_file(self):
         """Test import from local JSON file."""
         # GIVEN: Temporary JSON file with knowledge graph data
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            data = {
-                "nodes": [{"id": "e1", "text": "Bob", "type": "PERSON"}],
-                "relationships": []
-            }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            data = {"nodes": [{"id": "e1", "text": "Bob", "type": "PERSON"}], "relationships": []}
             json.dump(data, f)
             temp_file = f.name
-        
+
         try:
             # WHEN: Importing from file
             importer = IPFSImporter()
             kg = importer.import_from_file(temp_file)
-            
+
             # THEN: Knowledge graph should be created
             assert kg is not None
             assert len(kg.entities) == 1
@@ -207,18 +211,16 @@ class TestIPFSImporter:
         mock_data = {
             "nodes": [
                 {"id": "e1", "text": "Alice", "type": "PERSON"},
-                {"id": "e2", "text": "Company", "type": "ORG"}
+                {"id": "e2", "text": "Company", "type": "ORG"},
             ],
-            "relationships": [
-                {"source": "e1", "target": "e2", "type": "WORKS_AT"}
-            ]
+            "relationships": [{"source": "e1", "target": "e2", "type": "WORKS_AT"}],
         }
-        
+
         # WHEN: Importing
         importer = IPFSImporter()
-        with patch.object(importer, '_fetch_from_ipfs', return_value=json.dumps(mock_data)):
+        with patch.object(importer, "_fetch_from_ipfs", return_value=json.dumps(mock_data)):
             kg = importer.import_from_cid("QmTest123")
-        
+
         # THEN: Both entities and relationships should be imported
         assert len(kg.entities) == 2
         assert len(kg.relationships) == 1
@@ -228,7 +230,7 @@ class TestIPFSImporter:
         """Test error handling for invalid CID."""
         # GIVEN: Invalid CID
         invalid_cid = "invalid_cid_format"
-        
+
         # WHEN/THEN: Import should handle error
         importer = IPFSImporter()
         with pytest.raises((ValueError, Exception)):
@@ -238,10 +240,10 @@ class TestIPFSImporter:
         """Test error handling for malformed JSON."""
         # GIVEN: Malformed JSON data
         malformed_json = "{invalid json"
-        
+
         # WHEN/THEN: Import should handle error
         importer = IPFSImporter()
-        with patch.object(importer, '_fetch_from_ipfs', return_value=malformed_json):
+        with patch.object(importer, "_fetch_from_ipfs", return_value=malformed_json):
             with pytest.raises((json.JSONDecodeError, ValueError)):
                 importer.import_from_cid("QmTest123")
 
@@ -250,17 +252,15 @@ class TestIPFSImporter:
         # GIVEN: IPLD-formatted data
         ipld_data = {
             "@type": "KnowledgeGraph",
-            "entities": [
-                {"@type": "Entity", "id": "e1", "text": "Alice", "entityType": "PERSON"}
-            ],
-            "relationships": []
+            "entities": [{"@type": "Entity", "id": "e1", "text": "Alice", "entityType": "PERSON"}],
+            "relationships": [],
         }
-        
+
         # WHEN: Importing IPLD format
         importer = IPFSImporter()
-        with patch.object(importer, '_fetch_from_ipfs', return_value=json.dumps(ipld_data)):
+        with patch.object(importer, "_fetch_from_ipfs", return_value=json.dumps(ipld_data)):
             kg = importer.import_from_cid("QmTest123", format="ipld")
-        
+
         # THEN: Should parse IPLD format correctly
         assert kg is not None
         assert len(kg.entities) >= 1
@@ -269,21 +269,23 @@ class TestIPFSImporter:
         """Test that import preserves entity metadata."""
         # GIVEN: Data with rich metadata
         mock_data = {
-            "nodes": [{
-                "id": "e1",
-                "text": "Alice",
-                "type": "PERSON",
-                "properties": {"age": 30, "verified": True},
-                "metadata": {"source": "document1.pdf", "confidence": 0.95}
-            }],
-            "relationships": []
+            "nodes": [
+                {
+                    "id": "e1",
+                    "text": "Alice",
+                    "type": "PERSON",
+                    "properties": {"age": 30, "verified": True},
+                    "metadata": {"source": "document1.pdf", "confidence": 0.95},
+                }
+            ],
+            "relationships": [],
         }
-        
+
         # WHEN: Importing
         importer = IPFSImporter()
-        with patch.object(importer, '_fetch_from_ipfs', return_value=json.dumps(mock_data)):
+        with patch.object(importer, "_fetch_from_ipfs", return_value=json.dumps(mock_data)):
             kg = importer.import_from_cid("QmTest123")
-        
+
         # THEN: Metadata should be preserved
         assert kg.entities[0].properties.get("age") == 30
         assert kg.entities[0].properties.get("verified") is True
@@ -293,6 +295,7 @@ class TestIPFSImporter:
 # Task 3.1.3: Format Conversion Tests (6 tests)
 # ============================================================================
 
+
 @pytest.mark.skipif(not MIGRATION_AVAILABLE, reason="Migration module not available")
 class TestFormatConverter:
     """Test format conversion functionality."""
@@ -301,14 +304,13 @@ class TestFormatConverter:
         """Test conversion to JSON format."""
         # GIVEN: A knowledge graph
         kg = KnowledgeGraph(
-            entities=[Entity(id="e1", text="Alice", type="PERSON")],
-            relationships=[]
+            entities=[Entity(id="e1", text="Alice", type="PERSON")], relationships=[]
         )
-        
+
         # WHEN: Converting to JSON
         converter = FormatConverter()
         result = converter.to_json(kg)
-        
+
         # THEN: Result should be valid JSON
         assert isinstance(result, str)
         data = json.loads(result)
@@ -317,15 +319,14 @@ class TestFormatConverter:
     def test_convert_from_json(self):
         """Test conversion from JSON format."""
         # GIVEN: JSON string
-        json_str = json.dumps({
-            "entities": [{"id": "e1", "text": "Bob", "type": "PERSON"}],
-            "relationships": []
-        })
-        
+        json_str = json.dumps(
+            {"entities": [{"id": "e1", "text": "Bob", "type": "PERSON"}], "relationships": []}
+        )
+
         # WHEN: Converting from JSON
         converter = FormatConverter()
         kg = converter.from_json(json_str)
-        
+
         # THEN: Should create knowledge graph
         assert kg is not None
         assert len(kg.entities) == 1
@@ -336,30 +337,30 @@ class TestFormatConverter:
         kg = KnowledgeGraph(
             entities=[
                 Entity(id="e1", text="Alice", type="PERSON", properties={"age": 30}),
-                Entity(id="e2", text="Bob", type="PERSON", properties={"age": 25})
+                Entity(id="e2", text="Bob", type="PERSON", properties={"age": 25}),
             ],
-            relationships=[]
+            relationships=[],
         )
-        
+
         # WHEN: Converting to CSV
         converter = FormatConverter()
         result = converter.to_csv(kg)
-        
+
         # THEN: Result should be CSV format
         assert isinstance(result, str)
         assert "id" in result or "text" in result
-        lines = result.strip().split('\n')
+        lines = result.strip().split("\n")
         assert len(lines) >= 2  # Header + data
 
     def test_convert_from_csv(self):
         """Test conversion from CSV format."""
         # GIVEN: CSV string
         csv_str = "id,text,type\ne1,Alice,PERSON\ne2,Bob,PERSON"
-        
+
         # WHEN: Converting from CSV
         converter = FormatConverter()
         kg = converter.from_csv(csv_str)
-        
+
         # THEN: Should create knowledge graph
         assert kg is not None
         assert len(kg.entities) == 2
@@ -367,8 +368,10 @@ class TestFormatConverter:
     def test_unsupported_format_error_graphml(self):
         """Test error for unsupported GraphML format."""
         # GIVEN: A knowledge graph
-        kg = KnowledgeGraph(entities=[Entity(id="e1", text="Test", type="PERSON")], relationships=[])
-        
+        kg = KnowledgeGraph(
+            entities=[Entity(id="e1", text="Test", type="PERSON")], relationships=[]
+        )
+
         # WHEN/THEN: Converting to unsupported format should raise error
         converter = FormatConverter()
         with pytest.raises(NotImplementedError):
@@ -377,8 +380,10 @@ class TestFormatConverter:
     def test_unsupported_format_error_gexf(self):
         """Test error for unsupported GEXF format."""
         # GIVEN: A knowledge graph
-        kg = KnowledgeGraph(entities=[Entity(id="e1", text="Test", type="PERSON")], relationships=[])
-        
+        kg = KnowledgeGraph(
+            entities=[Entity(id="e1", text="Test", type="PERSON")], relationships=[]
+        )
+
         # WHEN/THEN: Converting to unsupported format should raise error
         converter = FormatConverter()
         with pytest.raises(NotImplementedError):
@@ -389,6 +394,7 @@ class TestFormatConverter:
 # Task 3.1.4: Schema Checking Tests (4 tests)
 # ============================================================================
 
+
 @pytest.mark.skipif(not MIGRATION_AVAILABLE, reason="Migration module not available")
 class TestSchemaChecker:
     """Test schema validation functionality."""
@@ -397,14 +403,13 @@ class TestSchemaChecker:
         """Test validation of valid schema."""
         # GIVEN: A valid knowledge graph
         kg = KnowledgeGraph(
-            entities=[Entity(id="e1", text="Alice", type="PERSON")],
-            relationships=[]
+            entities=[Entity(id="e1", text="Alice", type="PERSON")], relationships=[]
         )
-        
+
         # WHEN: Validating schema
         checker = SchemaChecker()
         result = checker.validate(kg)
-        
+
         # THEN: Validation should pass
         assert result is True or result.get("valid") is True
 
@@ -414,11 +419,11 @@ class TestSchemaChecker:
         try:
             invalid_entity = Entity(id="e1", text="", type="PERSON")  # Empty text
             kg = KnowledgeGraph(entities=[invalid_entity], relationships=[])
-            
+
             # WHEN: Validating schema
             checker = SchemaChecker()
             result = checker.validate(kg)
-            
+
             # THEN: Validation should fail or return warnings
             assert result is False or (isinstance(result, dict) and not result.get("valid", True))
         except ValueError:
@@ -431,13 +436,13 @@ class TestSchemaChecker:
         kg = KnowledgeGraph(
             entities=[Entity(id="e1", text="Alice", type="PERSON")],
             relationships=[],
-            metadata={"schema_version": "1.0"}
+            metadata={"schema_version": "1.0"},
         )
-        
+
         # WHEN: Checking if migration needed
         checker = SchemaChecker(current_version="2.0")
         needs_migration = checker.needs_migration(kg)
-        
+
         # THEN: Should detect migration is needed
         assert needs_migration is True or needs_migration == "1.0"
 
@@ -447,17 +452,17 @@ class TestSchemaChecker:
         kg = KnowledgeGraph(
             entities=[Entity(id="e1", text="Alice", type="PERSON")],
             relationships=[],
-            metadata={"schema_version": "1.0"}
+            metadata={"schema_version": "1.0"},
         )
-        
+
         # WHEN: Migrating schema
         checker = SchemaChecker()
         migrated_kg = checker.migrate(kg, target_version="2.0")
-        
+
         # THEN: Schema should be updated
         assert migrated_kg is not None
         # Version should be updated if tracked
-        if hasattr(migrated_kg, 'metadata') and migrated_kg.metadata:
+        if hasattr(migrated_kg, "metadata") and migrated_kg.metadata:
             version = migrated_kg.metadata.get("schema_version", "2.0")
             assert version == "2.0" or version > "1.0"
 
@@ -465,6 +470,7 @@ class TestSchemaChecker:
 # ============================================================================
 # Task 3.1.5: Integrity Verification Tests (3 tests)
 # ============================================================================
+
 
 @pytest.mark.skipif(not MIGRATION_AVAILABLE, reason="Migration module not available")
 class TestIntegrityVerifier:
@@ -475,17 +481,15 @@ class TestIntegrityVerifier:
         # GIVEN: A valid knowledge graph
         entities = [
             Entity(id="e1", text="Alice", type="PERSON"),
-            Entity(id="e2", text="Bob", type="PERSON")
+            Entity(id="e2", text="Bob", type="PERSON"),
         ]
-        relationships = [
-            Relationship(source="e1", target="e2", type="KNOWS", properties={})
-        ]
+        relationships = [Relationship(source="e1", target="e2", type="KNOWS", properties={})]
         kg = KnowledgeGraph(entities=entities, relationships=relationships)
-        
+
         # WHEN: Verifying integrity
         verifier = IntegrityVerifier()
         result = verifier.verify(kg)
-        
+
         # THEN: Should pass integrity check
         assert result is True or result.get("valid") is True
 
@@ -494,14 +498,16 @@ class TestIntegrityVerifier:
         # GIVEN: Knowledge graph with broken reference
         entities = [Entity(id="e1", text="Alice", type="PERSON")]
         relationships = [
-            Relationship(source="e1", target="e999", type="KNOWS", properties={})  # e999 doesn't exist
+            Relationship(
+                source="e1", target="e999", type="KNOWS", properties={}
+            )  # e999 doesn't exist
         ]
         kg = KnowledgeGraph(entities=entities, relationships=relationships)
-        
+
         # WHEN: Verifying integrity
         verifier = IntegrityVerifier()
         result = verifier.verify(kg)
-        
+
         # THEN: Should detect broken reference
         assert result is False or (isinstance(result, dict) and len(result.get("errors", [])) > 0)
 
@@ -509,15 +515,13 @@ class TestIntegrityVerifier:
         """Test repair of broken references."""
         # GIVEN: Knowledge graph with broken references
         entities = [Entity(id="e1", text="Alice", type="PERSON")]
-        relationships = [
-            Relationship(source="e1", target="e999", type="KNOWS", properties={})
-        ]
+        relationships = [Relationship(source="e1", target="e999", type="KNOWS", properties={})]
         kg = KnowledgeGraph(entities=entities, relationships=relationships)
-        
+
         # WHEN: Repairing
         verifier = IntegrityVerifier()
         repaired_kg = verifier.repair(kg)
-        
+
         # THEN: Broken references should be removed or fixed
         assert repaired_kg is not None
         # Should have fewer relationships after repair

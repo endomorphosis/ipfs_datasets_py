@@ -26,7 +26,11 @@ def parse_args() -> argparse.Namespace:
 
 def _load_states(path: Path) -> Dict[str, Dict[str, Any]]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return {str(row.get("state_code") or "").upper(): row for row in data.get("states", []) if isinstance(row, dict)}
+    return {
+        str(row.get("state_code") or "").upper(): row
+        for row in data.get("states", [])
+        if isinstance(row, dict)
+    }
 
 
 def _best_urls(*rows: Dict[str, Any]) -> List[str]:
@@ -106,14 +110,24 @@ def _render_md(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
     lines.append("")
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"- States with substantive corpus gaps but candidate pages found: **{summary['corpus_gap_with_candidate_pages']}**")
-    lines.append(f"- States blocked by transport/access: **{summary['blocked_or_transport_failures']}**")
-    lines.append(f"- States fetchable but still non-substantive: **{summary['fetchable_but_non_substantive']}**")
-    lines.append(f"- States where corpus already has substantive signal: **{summary['has_or_retains_substantive_signal']}**")
+    lines.append(
+        f"- States with substantive corpus gaps but candidate pages found: **{summary['corpus_gap_with_candidate_pages']}**"
+    )
+    lines.append(
+        f"- States blocked by transport/access: **{summary['blocked_or_transport_failures']}**"
+    )
+    lines.append(
+        f"- States fetchable but still non-substantive: **{summary['fetchable_but_non_substantive']}**"
+    )
+    lines.append(
+        f"- States where corpus already has substantive signal: **{summary['has_or_retains_substantive_signal']}**"
+    )
     lines.append("")
     lines.append("## Priority States")
     lines.append("")
-    lines.append("| State | Local JSONLD | Corpus Rows | Corpus Substantive | Probe Substantive | Final Category |")
+    lines.append(
+        "| State | Local JSONLD | Corpus Rows | Corpus Substantive | Probe Substantive | Final Category |"
+    )
     lines.append("|---|---:|---:|---:|---:|---|")
     for row in rows:
         if row["final_category"] not in {
@@ -131,7 +145,11 @@ def _render_md(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
     for row in rows:
         if not row["candidate_urls"]:
             continue
-        if row["final_category"] not in {"corpus_gap_with_candidate_pages", "has_substantive_signal", "corpus_has_signal_but_probe_thin"}:
+        if row["final_category"] not in {
+            "corpus_gap_with_candidate_pages",
+            "has_substantive_signal",
+            "corpus_has_signal_but_probe_thin",
+        }:
             continue
         lines.append(f"### {row['state_code']}")
         lines.append("")
@@ -169,13 +187,20 @@ def main() -> int:
         "full_summary": str(full_path),
         "deep_summaries": [str(path) for path in deep_paths],
         "states_total": len(merged_rows),
-        "corpus_gap_with_candidate_pages": sum(1 for row in merged_rows if row["final_category"] == "corpus_gap_with_candidate_pages"),
-        "blocked_or_transport_failures": sum(1 for row in merged_rows if row["final_category"] == "blocked_or_transport_failures"),
-        "fetchable_but_non_substantive": sum(1 for row in merged_rows if row["final_category"] == "fetchable_but_non_substantive"),
+        "corpus_gap_with_candidate_pages": sum(
+            1 for row in merged_rows if row["final_category"] == "corpus_gap_with_candidate_pages"
+        ),
+        "blocked_or_transport_failures": sum(
+            1 for row in merged_rows if row["final_category"] == "blocked_or_transport_failures"
+        ),
+        "fetchable_but_non_substantive": sum(
+            1 for row in merged_rows if row["final_category"] == "fetchable_but_non_substantive"
+        ),
         "has_or_retains_substantive_signal": sum(
             1
             for row in merged_rows
-            if row["final_category"] in {"has_substantive_signal", "corpus_has_signal_but_probe_thin"}
+            if row["final_category"]
+            in {"has_substantive_signal", "corpus_has_signal_but_probe_thin"}
         ),
     }
 
@@ -183,9 +208,18 @@ def main() -> int:
     out_md = Path(args.output_md).expanduser().resolve()
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_md.parent.mkdir(parents=True, exist_ok=True)
-    out_json.write_text(json.dumps({"summary": summary, "rows": merged_rows}, indent=2, sort_keys=True), encoding="utf-8")
+    out_json.write_text(
+        json.dumps({"summary": summary, "rows": merged_rows}, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     out_md.write_text(_render_md(summary, merged_rows), encoding="utf-8")
-    print(json.dumps({"summary": summary, "output_json": str(out_json), "output_md": str(out_md)}, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {"summary": summary, "output_json": str(out_json), "output_md": str(out_md)},
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

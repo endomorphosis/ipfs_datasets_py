@@ -19,10 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_fuzzing import
 )
 
 
-LEGAL_TEXT = (
-    "The agency shall provide notice unless emergency conditions exist "
-    "within 30 days."
-)
+LEGAL_TEXT = "The agency shall provide notice unless emergency conditions exist within 30 days."
 
 
 def test_fuzzer_generates_preserving_and_changing_mutations_for_all_legal_ir_surfaces() -> None:
@@ -36,14 +33,10 @@ def test_fuzzer_generates_preserving_and_changing_mutations_for_all_legal_ir_sur
         assert report.coverage_by_target[target][SEMANTICS_CHANGING] >= 1
 
     preserving = [
-        result
-        for result in report.results
-        if result.mutation.relation == SEMANTICS_PRESERVING
+        result for result in report.results if result.mutation.relation == SEMANTICS_PRESERVING
     ]
     changing = [
-        result
-        for result in report.results
-        if result.mutation.relation == SEMANTICS_CHANGING
+        result for result in report.results if result.mutation.relation == SEMANTICS_CHANGING
     ]
 
     assert preserving
@@ -105,22 +98,18 @@ def test_trusted_negative_candidates_are_verified_and_source_copy_safe() -> None
         candidate
         for candidate in report.trusted_negative_candidates
         if candidate.target == TARGET_DECOMPILER
-        and "unsafe_decompiler_source_copy_policy"
-        in candidate.verification["grammar_rejections"]
+        and "unsafe_decompiler_source_copy_policy" in candidate.verification["grammar_rejections"]
     )
     assert _contains_hash_only_redaction(unsafe.to_dict()["minimal_counterexample"])
 
 
 def test_unverified_mutations_are_not_stored_as_trusted_negatives() -> None:
-    fuzzer = LegalIRFuzzer(
-        config=LegalIRFuzzingConfig(targets=(TARGET_DETERMINISTIC_IR,))
-    )
+    fuzzer = LegalIRFuzzer(config=LegalIRFuzzingConfig(targets=(TARGET_DETERMINISTIC_IR,)))
     baseline = fuzzer._bundle_from_text(LEGAL_TEXT, sample_id="lir-fuzz-unverified")
     preserving = next(
         mutation
         for mutation in fuzzer.generate_mutations(baseline)
-        if mutation.target == TARGET_DETERMINISTIC_IR
-        and mutation.relation == SEMANTICS_PRESERVING
+        if mutation.target == TARGET_DETERMINISTIC_IR and mutation.relation == SEMANTICS_PRESERVING
     )
 
     result = fuzzer.evaluate_mutation(
@@ -147,8 +136,7 @@ def test_counterexample_minimizer_preserves_verification_predicate() -> None:
 
     minimized = minimize_legal_ir_counterexample(
         payload,
-        lambda item: isinstance(item, dict)
-        and item.get("source_copy_policy") == "raw_source",
+        lambda item: isinstance(item, dict) and item.get("source_copy_policy") == "raw_source",
     )
 
     assert minimized == {"source_copy_policy": "raw_source"}

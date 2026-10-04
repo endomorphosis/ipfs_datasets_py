@@ -75,36 +75,41 @@ def load_documents(directory: str) -> List[Dict[str, Any]]:
                 "id": file_path.stem,
                 "title": file_path.stem.replace("_", " ").title(),
                 "text": text,
-                "path": str(file_path)
+                "path": str(file_path),
             }
             documents.append(doc)
     return documents
 
+
 # Load sample documents
 documents = load_documents("../sample_docs")
 print(f"Loaded {len(documents)} documents")
+
 
 # Chunk documents for processing
 def chunk_document(doc, chunk_size=512, overlap=50):
     """Split document into overlapping chunks."""
     text = doc["text"]
     chunks = []
-    
+
     for i in range(0, len(text), chunk_size - overlap):
-        chunk_text = text[i:i + chunk_size]
+        chunk_text = text[i : i + chunk_size]
         if len(chunk_text) < 100:  # Skip very small chunks
             continue
-            
-        chunks.append({
-            "doc_id": doc["id"],
-            "title": doc["title"],
-            "text": chunk_text,
-            "chunk_index": len(chunks),
-            "start_char": i,
-            "end_char": i + len(chunk_text)
-        })
-    
+
+        chunks.append(
+            {
+                "doc_id": doc["id"],
+                "title": doc["title"],
+                "text": chunk_text,
+                "chunk_index": len(chunks),
+                "start_char": i,
+                "end_char": i + len(chunk_text),
+            }
+        )
+
     return chunks
+
 
 # Process all documents into chunks
 all_chunks = []
@@ -132,22 +137,24 @@ processed_pdfs = []
 
 for pdf_path in pdf_files:
     print(f"Processing PDF: {pdf_path}")
-    
+
     # Complete PDF processing pipeline:
-    # PDF Input → Decomposition → IPLD Structuring → OCR Processing → 
-    # LLM Optimization → Entity Extraction → Vector Embedding → 
+    # PDF Input → Decomposition → IPLD Structuring → OCR Processing →
+    # LLM Optimization → Entity Extraction → Vector Embedding →
     # IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
     result = pdf_integrator.ingest_pdf_into_graphrag(
         pdf_path=pdf_path,
         metadata={
             "source": pdf_path,
             "document_type": "research_paper",
-            "processing_date": "2025-06-26"
-        }
+            "processing_date": "2025-06-26",
+        },
     )
-    
+
     processed_pdfs.append(result)
-    print(f"✓ Processed {pdf_path}: {result['entities_added']} entities, {result['relationships_added']} relationships")
+    print(
+        f"✓ Processed {pdf_path}: {result['entities_added']} entities, {result['relationships_added']} relationships"
+    )
 
 # The PDF processing automatically:
 # 1. Extracts text using multi-engine OCR (Surya, Tesseract, EasyOCR fallback)
@@ -183,6 +190,7 @@ def generate_embeddings(chunks, model):
     embeddings = model.encode(texts)
     return embeddings
 
+
 # Create embeddings
 print("Generating embeddings...")
 chunk_embeddings = generate_embeddings(all_chunks, embedding_model)
@@ -196,7 +204,7 @@ for i, chunk in enumerate(all_chunks):
         "chunk_index": chunk["chunk_index"],
         "text": chunk["text"][:200] + "...",  # First 200 chars for preview
         "start_char": chunk["start_char"],
-        "end_char": chunk["end_char"]
+        "end_char": chunk["end_char"],
     }
     chunk_metadata.append(metadata)
 
@@ -261,7 +269,7 @@ Now, let's combine our vector index and knowledge graph into a GraphRAG engine:
 query_engine = GraphRAGQueryEngine(
     vector_stores={"default": vector_index},
     graph_store={"entities": all_entities, "relationships": all_relationships},
-    model_weights={"default": 1.0}
+    model_weights={"default": 1.0},
 )
 
 print("GraphRAG engine initialized and ready for queries")
@@ -276,24 +284,21 @@ def run_query(query_text, top_k=5, max_graph_hops=2):
     """Run a query through the GraphRAG engine and display results."""
     print(f"\nQUERY: {query_text}")
     print("-" * 80)
-    
-    results = query_engine.query(
-        query_text=query_text,
-        top_k=top_k,
-        max_graph_hops=max_graph_hops
-    )
-    
+
+    results = query_engine.query(query_text=query_text, top_k=top_k, max_graph_hops=max_graph_hops)
+
     print(f"Found {len(results)} results\n")
-    
+
     for i, result in enumerate(results):
-        print(f"Result {i+1} (Score: {result['score']:.4f}):")
+        print(f"Result {i + 1} (Score: {result['score']:.4f}):")
         print(f"  Document: {result['metadata']['title']}")
         print(f"  Text: {result['text'][:150]}...")
-        
-        if 'evidence_path' in result:
+
+        if "evidence_path" in result:
             print(f"  Evidence Path: {' -> '.join([e['name'] for e in result['evidence_path']])}")
-        
+
         print()
+
 
 # Run some example queries
 run_query("What are transformer models used for in natural language processing?")
@@ -311,13 +316,13 @@ def hybrid_query(query_text, vector_weight=0.7, graph_weight=0.3, top_k=5):
     """Perform hybrid retrieval with custom weights."""
     # Get query embedding
     query_embedding = embedding_model.encode(query_text)
-    
+
     # Perform vector search
-    vector_results = vector_index.search(query_embedding, top_k=top_k*2)
-    
+    vector_results = vector_index.search(query_embedding, top_k=top_k * 2)
+
     # Get mentioned entities in query
     query_entities = extractor.extract_entities_from_text(query_text)
-    
+
     # Perform graph search
     graph_results = []
     if query_entities:
@@ -328,26 +333,25 @@ def hybrid_query(query_text, vector_weight=0.7, graph_weight=0.3, top_k=5):
                 if entity.name.lower() == query_entity.lower():
                     seed_entities.append(entity)
                     break
-        
+
         # Traverse graph from seed entities
         if seed_entities:
             graph_results = query_engine.graph_search(seed_entities, max_hops=2)
-    
+
     # Combine results with weights
     combined_results = query_engine.combine_results(
-        vector_results, 
-        graph_results,
-        weights={"vector": vector_weight, "graph": graph_weight}
+        vector_results, graph_results, weights={"vector": vector_weight, "graph": graph_weight}
     )
-    
+
     return combined_results[:top_k]
+
 
 # 2. Query expansion using the knowledge graph
 def expanded_query(query_text, top_k=5):
     """Expand query using related terms from knowledge graph."""
     # Get entities in query
     query_entities = extractor.extract_entities_from_text(query_text)
-    
+
     # Find related terms to expand query
     expanded_terms = set()
     for query_entity in query_entities:
@@ -363,80 +367,88 @@ def expanded_query(query_text, top_k=5):
                         for source_entity in all_entities:
                             if source_entity.id == rel.source:
                                 expanded_terms.add(source_entity.name)
-    
+
     # Combine original query with expansion terms
     expanded_query_text = query_text
     if expanded_terms:
         expanded_query_text += " " + " ".join(expanded_terms)
         print(f"Expanded query: {expanded_query_text}")
-    
+
     # Run the expanded query
     query_embedding = embedding_model.encode(expanded_query_text)
     results = vector_index.search(query_embedding, top_k=top_k)
-    
+
     return results
+
 
 # 3. IPLD-specific optimizations for content-addressed data
 def ipld_optimized_query(query_text, top_k=5, max_hops=2):
     """Execute a query with IPLD-specific optimizations for content-addressed data."""
-    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter
-    
+    from ipfs_datasets_py.rag.rag_query_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+        QueryRewriter,
+    )
+
     # Create specialized components for optimizing IPLD queries
     query_rewriter = QueryRewriter()
     optimizer = UnifiedGraphRAGQueryOptimizer(
-        rewriter=query_rewriter,
-        graph_info={"graph_type": "ipld"}
+        rewriter=query_rewriter, graph_info={"graph_type": "ipld"}
     )
-    
+
     # Get query embedding
     query_embedding = embedding_model.encode(query_text)
-    
+
     # Prepare query with IPLD signals
     query = {
         "query_vector": query_embedding,
         "max_vector_results": top_k,
         "max_traversal_depth": max_hops,
         "graph_type": "ipld",
-        "query_text": query_text
+        "query_text": query_text,
     }
-    
+
     # Get optimized query plan
     plan = optimizer.optimize_query(query)
-    
+
     # Extract traversal parameters with IPLD-specific optimizations
     traversal_params = plan["query"].get("traversal", {})
     print(f"Using DAG traversal strategy: {traversal_params.get('strategy') == 'dag_traversal'}")
-    print(f"Using CID path optimization: {traversal_params.get('use_cid_path_optimization', False)}")
+    print(
+        f"Using CID path optimization: {traversal_params.get('use_cid_path_optimization', False)}"
+    )
     print(f"Using batch loading: {traversal_params.get('batch_loading', False)}")
-    
+
     # Execute optimized query
     results = query_engine.query(
         query_text=query_text,
         query_vector=query_embedding,
         top_k=top_k,
         max_graph_hops=max_hops,
-        traversal_options=traversal_params
+        traversal_options=traversal_params,
     )
-    
+
     return results
+
 
 # Try these advanced queries
 print("\n=== HYBRID RETRIEVAL ===")
 hybrid_results = hybrid_query("How is reinforcement learning used in robotics?")
 for i, result in enumerate(hybrid_results):
-    print(f"Result {i+1} (Score: {result['score']:.4f}): {result['metadata']['title']}")
+    print(f"Result {i + 1} (Score: {result['score']:.4f}): {result['metadata']['title']}")
 
 print("\n=== QUERY EXPANSION ===")
 expanded_results = expanded_query("What is attention mechanism?")
 for i, result in enumerate(expanded_results):
-    print(f"Result {i+1} (Score: {result.score:.4f}): {result.metadata['title']}")
+    print(f"Result {i + 1} (Score: {result.score:.4f}): {result.metadata['title']}")
 
 print("\n=== IPLD OPTIMIZED QUERY ===")
 ipld_results = ipld_optimized_query("How does content addressing relate to CIDs?")
 for i, result in enumerate(ipld_results):
-    print(f"Result {i+1} (Score: {result['score']:.4f}): {result['metadata']['title']}")
-    if 'evidence_path' in result:
-        print(f"  Evidence Path: {' -> '.join([e.get('name', 'Unknown') for e in result['evidence_path']])}")
+    print(f"Result {i + 1} (Score: {result['score']:.4f}): {result['metadata']['title']}")
+    if "evidence_path" in result:
+        print(
+            f"  Evidence Path: {' -> '.join([e.get('name', 'Unknown') for e in result['evidence_path']])}"
+        )
 ```
 
 ## Exporting and Sharing
@@ -465,15 +477,15 @@ manifest = {
             "dimension": embedding_model.get_dimension(),
             "metric": "cosine",
             "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "item_count": len(vector_ids)
+            "item_count": len(vector_ids),
         },
         "knowledge_graph": {
             "cid": knowledge_graph_cid,
             "entity_count": len(all_entities),
-            "relationship_count": len(all_relationships)
-        }
+            "relationship_count": len(all_relationships),
+        },
     },
-    "documents": [doc["title"] for doc in documents]
+    "documents": [doc["title"] for doc in documents],
 }
 
 # Save manifest locally
@@ -505,6 +517,7 @@ os.makedirs("graphrag_demo", exist_ok=True)
 os.chdir("graphrag_demo")
 embedding_model = ipfs_datasets.load_embedding_model("sentence-transformers/all-MiniLM-L6-v2")
 
+
 # Load documents
 def load_documents(directory: str) -> List[Dict[str, Any]]:
     documents = []
@@ -515,34 +528,39 @@ def load_documents(directory: str) -> List[Dict[str, Any]]:
                 "id": file_path.stem,
                 "title": file_path.stem.replace("_", " ").title(),
                 "text": text,
-                "path": str(file_path)
+                "path": str(file_path),
             }
             documents.append(doc)
     return documents
 
+
 documents = load_documents("../sample_docs")
 print(f"Loaded {len(documents)} documents")
+
 
 # Chunk documents
 def chunk_document(doc, chunk_size=512, overlap=50):
     text = doc["text"]
     chunks = []
-    
+
     for i in range(0, len(text), chunk_size - overlap):
-        chunk_text = text[i:i + chunk_size]
+        chunk_text = text[i : i + chunk_size]
         if len(chunk_text) < 100:  # Skip very small chunks
             continue
-            
-        chunks.append({
-            "doc_id": doc["id"],
-            "title": doc["title"],
-            "text": chunk_text,
-            "chunk_index": len(chunks),
-            "start_char": i,
-            "end_char": i + len(chunk_text)
-        })
-    
+
+        chunks.append(
+            {
+                "doc_id": doc["id"],
+                "title": doc["title"],
+                "text": chunk_text,
+                "chunk_index": len(chunks),
+                "start_char": i,
+                "end_char": i + len(chunk_text),
+            }
+        )
+
     return chunks
+
 
 all_chunks = []
 for doc in documents:
@@ -552,11 +570,13 @@ for doc in documents:
 
 print(f"Created {len(all_chunks)} total chunks")
 
+
 # Generate embeddings
 def generate_embeddings(chunks, model):
     texts = [chunk["text"] for chunk in chunks]
     embeddings = model.encode(texts)
     return embeddings
+
 
 print("Generating embeddings...")
 chunk_embeddings = generate_embeddings(all_chunks, embedding_model)
@@ -570,7 +590,7 @@ for i, chunk in enumerate(all_chunks):
         "chunk_index": chunk["chunk_index"],
         "text": chunk["text"][:200] + "...",
         "start_char": chunk["start_char"],
-        "end_char": chunk["end_char"]
+        "end_char": chunk["end_char"],
     }
     chunk_metadata.append(metadata)
 
@@ -587,7 +607,7 @@ all_relationships = []
 for doc in documents:
     print(f"Extracting knowledge graph from '{doc['title']}'...")
     entities, relationships = extractor.extract_graph(doc["text"], document_id=doc["id"])
-    
+
     print(f"  Found {len(entities)} entities and {len(relationships)} relationships")
     all_entities.extend(entities)
     all_relationships.extend(relationships)
@@ -614,31 +634,29 @@ extractor.save_graph_locally(all_entities, all_relationships, "ai_papers_graph.j
 query_engine = GraphRAGQueryEngine(
     vector_stores={"default": vector_index},
     graph_store={"entities": all_entities, "relationships": all_relationships},
-    model_weights={"default": 1.0}
+    model_weights={"default": 1.0},
 )
+
 
 # Run queries
 def run_query(query_text, top_k=5, max_graph_hops=2):
     print(f"\nQUERY: {query_text}")
     print("-" * 80)
-    
-    results = query_engine.query(
-        query_text=query_text,
-        top_k=top_k,
-        max_graph_hops=max_graph_hops
-    )
-    
+
+    results = query_engine.query(query_text=query_text, top_k=top_k, max_graph_hops=max_graph_hops)
+
     print(f"Found {len(results)} results\n")
-    
+
     for i, result in enumerate(results):
-        print(f"Result {i+1} (Score: {result['score']:.4f}):")
+        print(f"Result {i + 1} (Score: {result['score']:.4f}):")
         print(f"  Document: {result['metadata']['title']}")
         print(f"  Text: {result['text'][:150]}...")
-        
-        if 'evidence_path' in result:
+
+        if "evidence_path" in result:
             print(f"  Evidence Path: {' -> '.join([e['name'] for e in result['evidence_path']])}")
-        
+
         print()
+
 
 # Example queries
 run_query("What are transformer models used for in natural language processing?")
@@ -659,15 +677,15 @@ manifest = {
             "dimension": embedding_model.get_dimension(),
             "metric": "cosine",
             "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "item_count": len(vector_ids)
+            "item_count": len(vector_ids),
         },
         "knowledge_graph": {
             "cid": knowledge_graph_cid,
             "entity_count": len(all_entities),
-            "relationship_count": len(all_relationships)
-        }
+            "relationship_count": len(all_relationships),
+        },
     },
-    "documents": [doc["title"] for doc in documents]
+    "documents": [doc["title"] for doc in documents],
 }
 
 with open("graphrag_manifest.json", "w") as f:

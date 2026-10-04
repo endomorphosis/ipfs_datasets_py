@@ -6,6 +6,7 @@ Simple verification that all MCP configurations are in place.
 import os
 from pathlib import Path
 
+
 def main():
     print("🔍 Quick MCP Configuration Check")
     print("=" * 40)
@@ -34,9 +35,10 @@ def main():
 
     # Check MCP server is running
     import subprocess
+
     try:
-        result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
-        if 'ipfs_datasets_py.mcp_server' in result.stdout:
+        result = subprocess.run(["ps", "aux"], capture_output=True, text=True)
+        if "ipfs_datasets_py.mcp_server" in result.stdout:
             print("✅ MCP server is running")
         else:
             print("❌ MCP server is not running")
@@ -45,8 +47,10 @@ def main():
 
     # Check Copilot MCP extension
     try:
-        result = subprocess.run(['code-insiders', '--list-extensions'], capture_output=True, text=True)
-        if 'automatalabs.copilot-mcp' in result.stdout:
+        result = subprocess.run(
+            ["code-insiders", "--list-extensions"], capture_output=True, text=True
+        )
+        if "automatalabs.copilot-mcp" in result.stdout:
             print("✅ Copilot MCP extension is installed")
         else:
             print("❌ Copilot MCP extension is not installed")
@@ -62,6 +66,7 @@ def main():
     print("   - 'Load a dataset from IPFS'")
     print("   - 'Generate an audit report'")
     print("   - 'Upload data to IPFS'")
+
 
 if __name__ == "__main__":
     main()

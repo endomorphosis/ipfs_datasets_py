@@ -204,13 +204,9 @@ def test_ingest_builds_ipld_template_intent_evidence_graph() -> None:
         "DESCRIBES",
         "DERIVED_FROM",
     } <= edge_kinds
-    evidence = next(
-        node for node in index.graph.nodes if node.node_id == f"evidence:{FOOD_CID}"
-    )
+    evidence = next(node for node in index.graph.nodes if node.node_id == f"evidence:{FOOD_CID}")
     assert evidence.properties == {"cid": FOOD_CID, "facts_persisted": False}
-    response = next(
-        node for node in index.graph.nodes if node.node_id == "response:food-example"
-    )
+    response = next(node for node in index.graph.nodes if node.node_id == "response:food-example")
     serialized_response = json.dumps(response.to_dict(), sort_keys=True)
     assert "503-555-0000" not in serialized_response
     assert response.properties["historical_example"] is True
@@ -220,9 +216,7 @@ def test_ingest_builds_ipld_template_intent_evidence_graph() -> None:
 
 def test_ingestion_is_order_independent_content_addressed_and_non_mutating() -> None:
     rows = _rows()
-    payload = {
-        key: [row.to_dict() for row in values] for key, values in rows.items()
-    }
+    payload = {key: [row.to_dict() for row in values] for key, values in rows.items()}
     before = json.dumps(payload, sort_keys=True)
 
     forward = SlottedResponseIndex.from_rows(**payload)
@@ -267,7 +261,9 @@ def test_exact_duplicate_is_idempotent_but_conflicting_id_is_rejected() -> None:
         (
             {
                 "templates": (_food_template(),),
-                "responses": (_food_response(template_id="unknown-template", audio_ids=(), provenance_ids=()),),
+                "responses": (
+                    _food_response(template_id="unknown-template", audio_ids=(), provenance_ids=()),
+                ),
             },
             "missing template",
         ),
@@ -288,9 +284,7 @@ def test_exact_duplicate_is_idempotent_but_conflicting_id_is_rejected() -> None:
         ),
         (
             {
-                "templates": (
-                    _food_template(source_cids=(), provenance_ids=()),
-                ),
+                "templates": (_food_template(source_cids=(), provenance_ids=()),),
             },
             "must declare source_cids",
         ),
@@ -360,11 +354,14 @@ def test_provider_exposes_accelerator_backend_method_aliases() -> None:
     assert result["slots"][1]["value"] == "503-555-0111"
     assert result["slots"][1]["source_ids"] == ["food-current"]
     assert result["sources"][0]["cid"] == FOOD_CID
-    assert backend.retrieve_template(
-        "food assistance",
-        language="en-US",
-        grounding={"sources": [_current_food()]},
-    ) == result
+    assert (
+        backend.retrieve_template(
+            "food assistance",
+            language="en-US",
+            grounding={"sources": [_current_food()]},
+        )
+        == result
+    )
 
 
 def test_historical_example_values_are_never_current_facts() -> None:
@@ -389,9 +386,7 @@ def test_missing_or_contradictory_current_evidence_fails_closed() -> None:
         SlottedResponseIndex.from_rows(**_rows()), minimum_confidence=0.30
     )
 
-    assert (
-        provider.retrieve("food assistance", language="en-US", grounding={}) is None
-    )
+    assert provider.retrieve("food assistance", language="en-US", grounding={}) is None
     assert (
         provider.retrieve(
             "food assistance",
@@ -507,12 +502,10 @@ def test_ranking_ties_have_stable_template_id_tiebreak() -> None:
     second = SlottedResponseIndex.from_rows(templates=(left, right))
 
     assert [
-        item.template.template_id
-        for item in first.search("food assistance", max_results=2)
+        item.template.template_id for item in first.search("food assistance", max_results=2)
     ] == ["frame-a", "frame-b"]
     assert [
-        item.template.template_id
-        for item in second.search("food assistance", max_results=2)
+        item.template.template_id for item in second.search("food assistance", max_results=2)
     ] == ["frame-a", "frame-b"]
 
 
@@ -544,9 +537,12 @@ def test_confidence_boundary_locale_intent_and_result_limit_are_enforced() -> No
         )[0].template.template_id
         == "food-frame"
     )
-    assert index.search(
-        "asistencia alimentaria", locale="es-US", intent="asistencia_alimentaria"
-    )[0].template.template_id == "food-frame-es"
+    assert (
+        index.search("asistencia alimentaria", locale="es-US", intent="asistencia_alimentaria")[
+            0
+        ].template.template_id
+        == "food-frame-es"
+    )
     with pytest.raises(ValueError, match="positive integer"):
         index.search("food", max_results=0)
     with pytest.raises(ValueError, match="between 0 and 1"):
@@ -577,8 +573,7 @@ def test_retrieval_provenance_is_complete_and_stably_ordered() -> None:
     assert metadata["audio_ids"] == ["food-audio"]
     assert set(metadata["scores"]) == {"lexical", "vector", "graph"}
     assert all(
-        slot["source_ids"] == ["aaa-food-current", "zzz-food-current"]
-        for slot in plan["slots"]
+        slot["source_ids"] == ["aaa-food-current", "zzz-food-current"] for slot in plan["slots"]
     )
 
 
@@ -617,9 +612,7 @@ def test_json_export_restore_preserves_identity_graph_and_retrieval() -> None:
     assert restored.index_cid == original.index_cid
     assert restored.graph_cid == original.graph_cid
     assert restored.to_dict() == original.to_dict()
-    assert [
-        match.to_dict() for match in restored.search("I need groceries", max_results=2)
-    ] == [
+    assert [match.to_dict() for match in restored.search("I need groceries", max_results=2)] == [
         match.to_dict() for match in original.search("I need groceries", max_results=2)
     ]
     payload["templates"][0]["template_text"] = "tampered"

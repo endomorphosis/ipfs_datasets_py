@@ -30,7 +30,7 @@ _CID_RAND_NUM_SEED = 420
 def _extract_date_with_m_d_y_format(text):
     """
     Extract dates from legislative references.
-    
+
     This regex looks for:
     - Optional day-month separator (-, /, or .)
     - 1-2 digits for day or month
@@ -38,39 +38,41 @@ def _extract_date_with_m_d_y_format(text):
     - 1-2 digits for day or month
     - Separator (-, /, or .)
     - 2-4 digits for year
-    
+
     Examples:
     - 1-19-1993
     - 01/19/1993
     - 1.19.93
-    
+
     Args:
         text (str): Text containing a date
-        
+
     Returns:
         str or None: Extracted date string or None if no date found
     """
     # Pattern matches dates like 1-19-1993, 01/19/1993, 1.19.93
-    pattern = r'(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})'
-    
+    pattern = r"(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})"
+
     match = re.search(pattern, text)
     if match:
         return match.group(1)
     return None
 
+
 def _get_year(date):
     """
     Extract the year from a date string.
-    
+
     Args:
         date (str): Date string
-        
+
     Returns:
         str or None: Year extracted from date or None if no year found
     """
+
     def _get_year_from_date(date):
         if date:
-            return date.split('-')[-1] if len(date) == 4 else None
+            return date.split("-")[-1] if len(date) == 4 else None
         return None
 
     for func in [_extract_date_with_m_d_y_format]:
@@ -83,10 +85,10 @@ def _get_year(date):
 def _clean_ordinance(ordinance: str):
     """
     Clean up ordinance numbers.
-    
+
     Args:
         ordinance (str): Ordinance number
-        
+
     Returns:
         str or None: Cleaned ordinance number or None if no ordinance found
     """
@@ -94,16 +96,15 @@ def _clean_ordinance(ordinance: str):
         # Remove any leading or trailing whitespace
         ordinance = ordinance.strip()
         # Make all whitespace a single space
-        ordinance = re.sub(r'\s+', ' ', ordinance)
+        ordinance = re.sub(r"\s+", " ", ordinance)
         # Remove newlines
-        ordinance = ordinance.replace('\n', ' ')
+        ordinance = ordinance.replace("\n", " ")
         # Remove any leading or trailing punctuation
-        ordinance = ordinance.strip('.,')
+        ordinance = ordinance.strip(".,")
         # Remove any leading or trailing whitespace
         ordinance = ordinance.strip()
         return ordinance
     return None
-
 
 
 def _get_random_str():
@@ -111,103 +112,162 @@ def _get_random_str():
     random.seed(_CID_RAND_NUM_SEED)
     return str(random.randint(0, 12))
 
+
 _STATE_CODE_CROSSWALK = {
-    'AL': 'Ala.',
-    'AK': 'Alaska',
-    'AZ': 'Ariz.',
-    'AR': 'Ark.',
-    'CA': 'Cal.',
-    'CO': 'Colo.',
-    'CT': 'Conn.',
-    'DE': 'Del.',
-    'FL': 'Fla.',
-    'GA': 'Ga.',
-    'HI': 'Haw.',
-    'ID': 'Idaho',
-    'IL': 'Ill.',
-    'IN': 'Ind.',
-    'IA': 'Iowa',
-    'KS': 'Kan.',
-    'KY': 'Ky.',
-    'LA': 'La.',
-    'ME': 'Me.',
-    'MD': 'Md.',
-    'MA': 'Mass.',
-    'MI': 'Mich.',
-    'MN': 'Minn.',
-    'MS': 'Miss.',
-    'MO': 'Mo.',
-    'MT': 'Mont.',
-    'NE': 'Neb.',
-    'NV': 'Nev.',
-    'NH': 'N.H.',
-    'NJ': 'N.J.',
-    'NM': 'N.M.',
-    'NY': 'N.Y.',
-    'NC': 'N.C.',
-    'ND': 'N.D.',
-    'OH': 'Ohio',
-    'OK': 'Okla.',
-    'OR': 'Or.',
-    'PA': 'Pa.',
-    'RI': 'R.I.',
-    'SC': 'S.C.',
-    'SD': 'S.D.',
-    'TN': 'Tenn.',
-    'TX': 'Tex.',
-    'UT': 'Utah',
-    'VT': 'Vt.',
-    'VA': 'Va.',
-    'WA': 'Wash.',
-    'WV': 'W. Va.',
-    'WI': 'Wis.',
-    'WY': 'Wyo.',
-    'DC': 'D.C.',
-    'PR': 'P.R.',
-    'VI': 'V.I.',
-    'GU': 'Guam',
-    'AS': 'Am. Samoa',
-    'MP': 'N. Mar. I.'
+    "AL": "Ala.",
+    "AK": "Alaska",
+    "AZ": "Ariz.",
+    "AR": "Ark.",
+    "CA": "Cal.",
+    "CO": "Colo.",
+    "CT": "Conn.",
+    "DE": "Del.",
+    "FL": "Fla.",
+    "GA": "Ga.",
+    "HI": "Haw.",
+    "ID": "Idaho",
+    "IL": "Ill.",
+    "IN": "Ind.",
+    "IA": "Iowa",
+    "KS": "Kan.",
+    "KY": "Ky.",
+    "LA": "La.",
+    "ME": "Me.",
+    "MD": "Md.",
+    "MA": "Mass.",
+    "MI": "Mich.",
+    "MN": "Minn.",
+    "MS": "Miss.",
+    "MO": "Mo.",
+    "MT": "Mont.",
+    "NE": "Neb.",
+    "NV": "Nev.",
+    "NH": "N.H.",
+    "NJ": "N.J.",
+    "NM": "N.M.",
+    "NY": "N.Y.",
+    "NC": "N.C.",
+    "ND": "N.D.",
+    "OH": "Ohio",
+    "OK": "Okla.",
+    "OR": "Or.",
+    "PA": "Pa.",
+    "RI": "R.I.",
+    "SC": "S.C.",
+    "SD": "S.D.",
+    "TN": "Tenn.",
+    "TX": "Tex.",
+    "UT": "Utah",
+    "VT": "Vt.",
+    "VA": "Va.",
+    "WA": "Wash.",
+    "WV": "W. Va.",
+    "WI": "Wis.",
+    "WY": "Wyo.",
+    "DC": "D.C.",
+    "PR": "P.R.",
+    "VI": "V.I.",
+    "GU": "Guam",
+    "AS": "Am. Samoa",
+    "MP": "N. Mar. I.",
 }
 
 _MONTHS_OF_THE_YEAR = [
-    'january', 'february', 'march', 'april', 'may', 
-    'june', 'july', 'august', 'september', 'october', 
-    'november', 'december',
-    # Common abbreviations 
-    'jan', 'feb', 'mar', 'apr', 'jun', 
-    'jul', 'aug', 'sep', 'sept', 'oct', 
-    'nov', 'dec',
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+    # Common abbreviations
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "sept",
+    "oct",
+    "nov",
+    "dec",
     # Period abbreviations
-    'jan.', 'feb.', 'mar.', 'apr.', 'jun.', 
-    'jul.', 'aug.', 'sep.', 'sept.', 'oct.', 
-    'nov.', 'dec.'
+    "jan.",
+    "feb.",
+    "mar.",
+    "apr.",
+    "jun.",
+    "jul.",
+    "aug.",
+    "sep.",
+    "sept.",
+    "oct.",
+    "nov.",
+    "dec.",
 ]
 
 
-_DATE_PATTERNS = [ # (match pattern, year extraction pattern,)
-    (r'(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})', r'[-/.]\d{2,4}$'),  # matches dates like 1-19-1993, 01/19/1993, 1.19.93
-    (r'(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})', r'^(\d{4})'),  # matches ISO format dates like 1993-01-19
-    (r'([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})', r'\s(\d{4})$'),  # matches "January 19, 1993" or "Jan. 19, 1993"
-    (r'(\d{1,2}\s+[A-Z][a-z]+\.?\s+\d{4})', r'\s(\d{4})$'),  # matches "19 January 1993" or "19 Jan. 1993"
-    (r'(\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?[A-Z][a-z]+\.?,?\s+\d{4})', r'\s(\d{4})$'),  # matches "19th of January, 1993"
-    (r'([A-Z][a-z]+\.?\s+(?:the\s+)?\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})', r'\s(\d{4})$'),  # matches "January the 19th, 1993"
-    (r'(\d{4})', r'^(\d{4})$'),  # just a year like 1993
-    (r'(\d{1,2}/\d{1,2}/\d{2})', r'/(\d{2})$'),  # matches 1/19/93
-    (r'(\d{1,2}\s+[A-Z][a-z]{2,}\s+\d{2})', r'\s(\d{2})$'),  # matches "19 January 93"
-    (r'([A-Z][a-z]{2,}\s+\d{1,2},?\s+\d{2})', r'\s(\d{2})$'),  # matches "January 19, 93"
-    (r'(?:dated\s+)(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})', r'[-/.]\d{2,4}$'),  # matches "dated 1/19/1993"
-    (r'(?:dated\s+)([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})', r'\s(\d{4})$'),  # matches "dated January 19, 1993"
-    (r'(?:effective\s+)(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})', r'[-/.]\d{2,4}$'),  # matches "effective 1/19/1993"
-    (r'(?:effective\s+)([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})', r'\s(\d{4})$'),  # matches "effective January 19, 1993"
-    (r'(?:adopted\s+)(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})', r'[-/.]\d{2,4}$'),  # matches "adopted 1/19/1993"
-    (r'(?:adopted\s+)([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})', r'\s(\d{4})$')  # matches "adopted January 19, 1993"
+_DATE_PATTERNS = [  # (match pattern, year extraction pattern,)
+    (
+        r"(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})",
+        r"[-/.]\d{2,4}$",
+    ),  # matches dates like 1-19-1993, 01/19/1993, 1.19.93
+    (r"(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})", r"^(\d{4})"),  # matches ISO format dates like 1993-01-19
+    (
+        r"([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "January 19, 1993" or "Jan. 19, 1993"
+    (
+        r"(\d{1,2}\s+[A-Z][a-z]+\.?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "19 January 1993" or "19 Jan. 1993"
+    (
+        r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?[A-Z][a-z]+\.?,?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "19th of January, 1993"
+    (
+        r"([A-Z][a-z]+\.?\s+(?:the\s+)?\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "January the 19th, 1993"
+    (r"(\d{4})", r"^(\d{4})$"),  # just a year like 1993
+    (r"(\d{1,2}/\d{1,2}/\d{2})", r"/(\d{2})$"),  # matches 1/19/93
+    (r"(\d{1,2}\s+[A-Z][a-z]{2,}\s+\d{2})", r"\s(\d{2})$"),  # matches "19 January 93"
+    (r"([A-Z][a-z]{2,}\s+\d{1,2},?\s+\d{2})", r"\s(\d{2})$"),  # matches "January 19, 93"
+    (
+        r"(?:dated\s+)(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})",
+        r"[-/.]\d{2,4}$",
+    ),  # matches "dated 1/19/1993"
+    (
+        r"(?:dated\s+)([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "dated January 19, 1993"
+    (
+        r"(?:effective\s+)(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})",
+        r"[-/.]\d{2,4}$",
+    ),  # matches "effective 1/19/1993"
+    (
+        r"(?:effective\s+)([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "effective January 19, 1993"
+    (
+        r"(?:adopted\s+)(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})",
+        r"[-/.]\d{2,4}$",
+    ),  # matches "adopted 1/19/1993"
+    (
+        r"(?:adopted\s+)([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4})",
+        r"\s(\d{4})$",
+    ),  # matches "adopted January 19, 1993"
 ]
-
 
 
 class SqlStatements:
-
     def __init__(self, *, resources, configs):
         self.resources = resources
         self.configs = configs
@@ -223,18 +283,28 @@ class SqlStatements:
         self.batch_size: int = configs.sql.BATCH_SIZE
         self.partition_column: str = configs.sql.PARTITION_COLUMN
 
-        self.sql_type: str = resources['sql_type']
+        self.sql_type: str = resources["sql_type"]
 
-        self.connection_string: str = f"{self.sql_type}://{self.user}:{self.password}@{self.host}/{self.db_name}"
+        self.connection_string: str = (
+            f"{self.sql_type}://{self.user}:{self.password}@{self.host}/{self.db_name}"
+        )
         self.db_typed = f"{self.sql_type}_db"
         self.data_table: str = f"{self.db_typed}.{self.db_name}.{self.data_table_names[0]}"
-        self.raw_api_output_table: str = f"{self.db_typed}.{self.db_name}.{self.data_table_names[1]}"
-        self.html_metadata_table: str = f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[0]}"
-        self.place_metadata_table: str = f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[1]}"
+        self.raw_api_output_table: str = (
+            f"{self.db_typed}.{self.db_name}.{self.data_table_names[1]}"
+        )
+        self.html_metadata_table: str = (
+            f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[0]}"
+        )
+        self.place_metadata_table: str = (
+            f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[1]}"
+        )
 
-        self.install_db: str | None = f'INSTALL {self.sql_type};'
-        self.load_db: str | None = f'LOAD {self.sql_type};'
-        self.attach_db: str | None = f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);"
+        self.install_db: str | None = f"INSTALL {self.sql_type};"
+        self.load_db: str | None = f"LOAD {self.sql_type};"
+        self.attach_db: str | None = (
+            f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);"
+        )
 
     def setup_duckdb(self, duckdb_module: ModuleType) -> ModuleType:
         """Setup DuckDB with SQL extension and establish connection."""
@@ -247,18 +317,18 @@ class SqlStatements:
 class MySqlToParquet:
     """
     Class to download data from MySQL and save it as parquet files.
-    
+
     This class handles extracting data from MySQL tables using DuckDB as an intermediary,
     and saving the data as parquet files, organized by a partition column.
     """
-    
+
     def __init__(self, *, resources: dict[str, Any], configs: Configs):
         self.configs = configs
         self.resources = resources
 
-        self.logger: logging.Logger = resources['logger']
-        self.duckdb: ModuleType = resources['duckdb']
-        self.date_patterns: list[tuple[re.Pattern, re.Pattern]] = resources['date_patterns']
+        self.logger: logging.Logger = resources["logger"]
+        self.duckdb: ModuleType = resources["duckdb"]
+        self.date_patterns: list[tuple[re.Pattern, re.Pattern]] = resources["date_patterns"]
         self.sql_statements: SqlStatements = resources["sql_statements"]
 
         # Setup database connection details
@@ -267,7 +337,7 @@ class MySqlToParquet:
         self.user: str = configs.sql.USER
         self.password: str = configs.sql.PASSWORD
         self.compression_type: str = configs.sql.COMPRESSION_TYPE
-    
+
         # Setup table names and other configurations
         self.data_table_names: list[str] = configs.sql.tables.DATA_TABLE_NAMES
         self.metadata_table_names: list[str] = configs.sql.tables.METADATA_TABLE_NAMES
@@ -283,7 +353,7 @@ class MySqlToParquet:
         self.citation_table: str | None = None
         self.embedding_table: str | None = None
         self.connection_string: str | None = None
-        #self.open_ai_embedding = OpenAIEmbedding()
+        # self.open_ai_embedding = OpenAIEmbedding()
         self._create_sql_statements()
 
         # Setup paths
@@ -295,19 +365,24 @@ class MySqlToParquet:
         # Do not create directories at init time; callers trigger this via
         # get_files_from_sql_server_as_parquet() to keep initialization side-effect free.
 
-
     def _create_sql_statements(self):
         """Create sql statements."""
-        self.connection_string = f"{self.sql_type}://{self.user}:{self.password}@{self.host}/{self.db_name}"
+        self.connection_string = (
+            f"{self.sql_type}://{self.user}:{self.password}@{self.host}/{self.db_name}"
+        )
         self.db_typed = f"{self.sql_type}_db"
 
         # Tables
         self.data_table = f"{self.db_typed}.{self.db_name}.{self.data_table_names[0]}"
         self.citation_table = (
-            f"{self.db_typed}.{self.db_name}.{self.data_table_names[1]}" if len(self.data_table_names) > 1 else None
+            f"{self.db_typed}.{self.db_name}.{self.data_table_names[1]}"
+            if len(self.data_table_names) > 1
+            else None
         )
         self.embedding_table = (
-            f"{self.db_typed}.{self.db_name}.{self.data_table_names[2]}" if len(self.data_table_names) > 2 else None
+            f"{self.db_typed}.{self.db_name}.{self.data_table_names[2]}"
+            if len(self.data_table_names) > 2
+            else None
         )
 
         # Metadata tables
@@ -317,11 +392,13 @@ class MySqlToParquet:
     def setup_duckdb(self) -> None:
         """Setup DuckDB with MySQL extension and establish connection."""
         for _ in range(3):  # Retry up to 3 times
-            self.duckdb.sql(f'INSTALL {self.sql_type};')
-            self.duckdb.sql(f'LOAD {self.sql_type};')
+            self.duckdb.sql(f"INSTALL {self.sql_type};")
+            self.duckdb.sql(f"LOAD {self.sql_type};")
 
             # Using DuckDB's preferred connection format with MySQL extension
-            self.duckdb.sql(f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);")
+            self.duckdb.sql(
+                f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);"
+            )
 
     def _ensure_output_directories(self) -> None:
         """Create output directories if they don't exist."""
@@ -339,29 +416,35 @@ class MySqlToParquet:
                 WHERE we_have_all_the_laws = 1
             """
             try:
-                group_list = self.duckdb.sql(query).to_df()['gnis'].to_list()
+                group_list = self.duckdb.sql(query).to_df()["gnis"].to_list()
             except Exception:
                 group_list = []
 
         # Fallback for unit-test / minimal-metadata scenarios.
         if not group_list and self.data_table is not None:
-            fallback_query = f"SELECT DISTINCT {self.partition_column} AS gnis FROM {self.data_table}"
-            group_list = self.duckdb.sql(fallback_query).to_df()['gnis'].to_list()
+            fallback_query = (
+                f"SELECT DISTINCT {self.partition_column} AS gnis FROM {self.data_table}"
+            )
+            group_list = self.duckdb.sql(fallback_query).to_df()["gnis"].to_list()
 
         print(f"Got {len(group_list)} complete groups. Fetching...")
         return group_list
-    
+
     def _save_data_to_parquet(self, df: pd.DataFrame, parquet_path: Path) -> None:
         """Save data to parquet files, grouped by partition column."""
 
         # Check if partition column exists
         if self.partition_column not in df.columns:
-            raise ValueError(f"Partition column '{self.partition_column}' not found in DataFrame columns: {df.columns.tolist()}")
+            raise ValueError(
+                f"Partition column '{self.partition_column}' not found in DataFrame columns: {df.columns.tolist()}"
+            )
 
         # Group by partition column (typically a single group when called per-GNIS)
         for partition_value, group_df in df.groupby(self.partition_column):
             group_df.to_parquet(parquet_path, compression=self.compression_type)  # type: ignore[call-overload]
-            self.logger.info(f"Saved partition {str(partition_value)} with {len(group_df)} rows to {parquet_path}")
+            self.logger.info(
+                f"Saved partition {str(partition_value)} with {len(group_df)} rows to {parquet_path}"
+            )
 
     def _get_metadata_from_server(self, gnis: int) -> pd.DataFrame:
         """Get combined metadata for a GNIS from MySQL server."""
@@ -382,7 +465,6 @@ class MySqlToParquet:
         self.logger.debug(combined_metadata_df)
         return combined_metadata_df
 
-
     def _save_metadata(self, gnis: int, metadata_df: pd.DataFrame) -> None:
         """Save metadata for a GNIS to a JSON file."""
         # Save combined metadata to JSON
@@ -391,9 +473,8 @@ class MySqlToParquet:
         if self.metadata_output_path.exists():
             return
         else:
-            metadata_df.to_json(json_path, orient='records', lines=True)
+            metadata_df.to_json(json_path, orient="records", lines=True)
             self.logger.info(f"Saved metadata for GNIS {gnis} to {json_path}")
-
 
     @staticmethod
     def _try_patterns(input: str, pattern_list: list) -> str:
@@ -403,23 +484,26 @@ class MySqlToParquet:
         for pattern in pattern_list:
             match = re.search(pattern, input)
             if match:
-                return match.groups(1)[0] # type: ignore[assignment]
+                return match.groups(1)[0]  # type: ignore[assignment]
         return "NA"
-
 
     @staticmethod
     def _make_bluebook_cid(*, gnis: str, place_name: str) -> str:
         """Make a CID based on the Bluebook citation."""
-        raise NotImplementedError("This method is not yet written. Use get_cid from ipfs_datasets_py.ipfs_multiformats instead.")
+        raise NotImplementedError(
+            "This method is not yet written. Use get_cid from ipfs_datasets_py.ipfs_multiformats instead."
+        )
 
-
-    def _make_citation_parquet_row(self, *,
-                                bluebook_df: pd.DataFrame,
-                                row: pd.Series, 
-                                title: str, 
-                                chapter: str, 
-                                history_note: str,
-                                metadata_df: pd.DataFrame) -> pd.DataFrame:
+    def _make_citation_parquet_row(
+        self,
+        *,
+        bluebook_df: pd.DataFrame,
+        row: pd.Series,
+        title: str,
+        chapter: str,
+        history_note: str,
+        metadata_df: pd.DataFrame,
+    ) -> pd.DataFrame:
         """
         Create a row for the Bluebook citation parquet file.
 
@@ -443,40 +527,42 @@ class MySqlToParquet:
         Notes:
             - The function handles various date formats using multiple regex patterns.
             - Special handling is provided for appendices in chapter names.
-            - The function creates a unique citation ID (bluebook_cid) based on 
+            - The function creates a unique citation ID (bluebook_cid) based on
                 place_name, bluebook_state_code, title, and history_note.
             - Returns the original DataFrame if history_note is None.
             - Distinguishes between county and municipal codes based on metadata.
         """
         # Print inputs for debugging
-        #print(f"title: {title}")
-        #print(f"chapter: {chapter}")
-        #print(f"history_note: {history_note}")
+        # print(f"title: {title}")
+        # print(f"chapter: {chapter}")
+        # print(f"history_note: {history_note}")
 
         # Skip over it if there's no history note.
         # This should never be called but just in case.
         if history_note is None:
             return bluebook_df
 
-        code_label = "County Code" if "h" in metadata_df['class_code'].iloc[0].lower() else "Municipal Code"
-        place_name = metadata_df['place_name'].iloc[0]
-        bluebook_state_code = _STATE_CODE_CROSSWALK.get(metadata_df['state_code'].iloc[0])
+        code_label = (
+            "County Code" if "h" in metadata_df["class_code"].iloc[0].lower() else "Municipal Code"
+        )
+        place_name = metadata_df["place_name"].iloc[0]
+        bluebook_state_code = _STATE_CODE_CROSSWALK.get(metadata_df["state_code"].iloc[0])
 
         # Extract the title number from the title
         title_num = "NA"
         title_num_patterns = [
-            r'(\d+\s*[-\.]\s*\d+)', # matches 1-19 or 1.19
-            r'(\d+\.\d+)', # matches 1.19
-            r'(\d+)' # matches 19
+            r"(\d+\s*[-\.]\s*\d+)",  # matches 1-19 or 1.19
+            r"(\d+\.\d+)",  # matches 1.19
+            r"(\d+)",  # matches 19
         ]
         if title:
-            title = title.strip('. -').strip()
+            title = title.strip(". -").strip()
             title_num = self._try_patterns(title, title_num_patterns)
-        #print(f"title_num: {title_num}")
+        # print(f"title_num: {title_num}")
 
         # Get the chapter number from the chapter name
         chapter_numbers = "NA"
-        if chapter: # If there's a digit in it, it's probably the chapter number.
+        if chapter:  # If there's a digit in it, it's probably the chapter number.
             if any(char.isdigit() for char in chapter):
                 chapter_numbers = self._try_patterns(chapter, title_num_patterns)
 
@@ -485,18 +571,20 @@ class MySqlToParquet:
         # Parse history_note for the date
 
         # Get rid of round brackets
-        history_note = history_note.replace('(', '').replace(')', '')
+        history_note = history_note.replace("(", "").replace(")", "")
 
         # Get rid of excessive whitespace and all newlines.
-        history_note = re.sub(r'\s+', ' ', history_note).strip()
-        history_note = history_note.replace('\n', ' ').strip()
+        history_note = re.sub(r"\s+", " ", history_note).strip()
+        history_note = history_note.replace("\n", " ").strip()
 
         date = "NA"
         year = "NA"
 
         # Using the date patterns, extract the year from the history note.
         if history_note:
-            history_note_parts: list[str] = history_note.strip().replace('(', '').replace(')', '').strip().split(',')
+            history_note_parts: list[str] = (
+                history_note.strip().replace("(", "").replace(")", "").strip().split(",")
+            )
             _history_note_parts = None
 
             # Remove the section part of the note.
@@ -509,17 +597,19 @@ class MySqlToParquet:
 
                 # If the word 'page' or 'pg' is in the part along with numbers, and NOTHING else, remove it.
                 # Check if part contains 'page' or 'pg' followed by numbers
-                if re.search(r'(page|pg\.?\s+\d+|\d+\s*p\.?)', part.lower()):
+                if re.search(r"(page|pg\.?\s+\d+|\d+\s*p\.?)", part.lower()):
                     # Check if after removing page references, there's nothing substantial left
-                    cleaned = re.sub(r'(page|pg\.?)\s+\d+|\d+\s*p\.?', '', part.lower(), flags=re.IGNORECASE)
-                    if not cleaned.strip() or cleaned.strip() in [',', '.', ';', ':', '']:
+                    cleaned = re.sub(
+                        r"(page|pg\.?)\s+\d+|\d+\s*p\.?", "", part.lower(), flags=re.IGNORECASE
+                    )
+                    if not cleaned.strip() or cleaned.strip() in [",", ".", ";", ":", ""]:
                         remove = True
 
                 # Remove the identified page parts from history_note_parts
                 if remove:
                     _history_note_parts = [p for p in history_note_parts if p != part]
 
-            if _history_note_parts: # If we found a section, use the remaining parts.
+            if _history_note_parts:  # If we found a section, use the remaining parts.
                 history_note_parts = _history_note_parts
 
             try:
@@ -531,16 +621,19 @@ class MySqlToParquet:
                         # If there's a date in the part, extract it.
                         date_match = re.search(pattern, part)
                         if date_match:
-                            date: str = date_match.groups(1)[0] # type: ignore[assignment]
+                            date: str = date_match.groups(1)[0]  # type: ignore[assignment]
 
                             # Extract the year from the date using the extract pattern
                             year_match = re.search(extract_pattern, date)
                             if year_match:
                                 _year = None
-                                #print(f"year_match: {year_match}")
-                                
+                                # print(f"year_match: {year_match}")
+
                                 # If there are multiple matches, use the last one.
-                                if isinstance(year_match.groups(), tuple) and len(year_match.groups()) > 0:
+                                if (
+                                    isinstance(year_match.groups(), tuple)
+                                    and len(year_match.groups()) > 0
+                                ):
                                     for match in year_match.groups():
                                         match = match.strip(".,").strip("-").strip("—").strip()
                                         # If the _year is between 1776 and the current year, it's probably the year.
@@ -556,7 +649,7 @@ class MySqlToParquet:
                                 # Get rid of any leading or trailing punctuation
                                 if _year:
                                     _year = _year.strip(".,").strip("-").strip("—").strip()
-                                    #print("_year after strip: ", _year)
+                                    # print("_year after strip: ", _year)
 
                                     if len(_year) == 4:
                                         if int(_year) >= 1776 and int(_year) <= current_year:
@@ -567,50 +660,60 @@ class MySqlToParquet:
                                         if len(_year) == 2:
                                             # If the year is between 00 and 25, it's probably the 21st century.
                                             if int(_year) > 0 and int(_year) <= 25:
-                                                year = f"20{_year}" # Ex: 01 -> 2001
+                                                year = f"20{_year}"  # Ex: 01 -> 2001
                                             else:
-                                                year = f"19{_year}" # Ex: 93 -> 1993
-                            
+                                                year = f"19{_year}"  # Ex: 93 -> 1993
+
                             _history_note_parts = [p for p in history_note_parts if p != part]
                             break
             except Exception as e:
                 self.logger.error(f"Error extracting date: {e}")
 
-            if _history_note_parts: # If we found a date, use the remaining parts.
+            if _history_note_parts:  # If we found a date, use the remaining parts.
                 history_note_parts = _history_note_parts
 
         parquet_row = {
-            'cid': row.cid, # Foreign key to the main parquet file
-            'gnis': row.gnis,
-            'place_name': metadata_df['place_name'].iloc[0],
-            'state_code': metadata_df['state_code'].iloc[0],
-            'bluebook_state_code': bluebook_state_code,
-            'state_name': metadata_df['state_name'].iloc[0],
-            'chapter': chapter,
-            'chapter_num': chapter_numbers,
-            'title': title,
-            'title_num': title_num, # AKA section
-            'public_law_num': 'NA', # Placeholder for public law number since city ordinances don't have one.
-            'date': date,
-            'history_note': history_note,
+            "cid": row.cid,  # Foreign key to the main parquet file
+            "gnis": row.gnis,
+            "place_name": metadata_df["place_name"].iloc[0],
+            "state_code": metadata_df["state_code"].iloc[0],
+            "bluebook_state_code": bluebook_state_code,
+            "state_name": metadata_df["state_name"].iloc[0],
+            "chapter": chapter,
+            "chapter_num": chapter_numbers,
+            "title": title,
+            "title_num": title_num,  # AKA section
+            "public_law_num": "NA",  # Placeholder for public law number since city ordinances don't have one.
+            "date": date,
+            "history_note": history_note,
         }
 
         appendix_name = None
 
         spellings = [
-            'Appendix', 'Appendices', 'appendix', 'APPENDIX', 'APPENDICES', 
-            'Apendix', 'Apendices', 'apendix', 'APENDIX', 'APENDICES', # Common misspellings
-            'Appendx', 'appendx', 'APPENDX'
+            "Appendix",
+            "Appendices",
+            "appendix",
+            "APPENDIX",
+            "APPENDICES",
+            "Apendix",
+            "Apendices",
+            "apendix",
+            "APENDIX",
+            "APENDICES",  # Common misspellings
+            "Appendx",
+            "appendx",
+            "APPENDX",
         ]
         for rep in spellings:
             if rep not in chapter.lower():
                 continue
 
             # Standardize the appendix name
-            chapter = chapter.replace(rep, 'appendix')
+            chapter = chapter.replace(rep, "appendix")
 
             # Extract which appendix it is.
-            for splitter in [':', '—', '-']:
+            for splitter in [":", "—", "-"]:
                 if splitter in chapter:
                     appendix_name = chapter.split(splitter)[0].strip()
                     break
@@ -618,7 +721,7 @@ class MySqlToParquet:
             # Get rid of the word "Appendix" and any other variations of it.
             # This should leave us with just the letter or number.
             if appendix_name is not None:
-                appendix_name = appendix_name.replace(rep, '').strip()
+                appendix_name = appendix_name.replace(rep, "").strip()
                 appendix_name = f"app. {appendix_name}".strip()
 
         # Build the Bluebook citation
@@ -633,10 +736,12 @@ class MySqlToParquet:
                 bluebook_section_str = f"{appendix_name}"
             else:
                 bluebook_section_str = "NA"
-        #print("bluebook_section_str: ", bluebook_section_str)
+        # print("bluebook_section_str: ", bluebook_section_str)
 
-        bluebook_citation = f"{place_name}, {bluebook_state_code}, {code_label}, {bluebook_section_str}"
-        #print(f"bluebook_citation before date", bluebook_citation)
+        bluebook_citation = (
+            f"{place_name}, {bluebook_state_code}, {code_label}, {bluebook_section_str}"
+        )
+        # print(f"bluebook_citation before date", bluebook_citation)
         if "NA" not in year:
             # Append the year to the end if we have the full year in the history note.
             bluebook_citation += f" ({year})" if len(year) == 4 else ""
@@ -645,60 +750,77 @@ class MySqlToParquet:
         if "NA" in bluebook_citation:
             bluebook_citation = "NA"
 
-        parquet_row['bluebook_citation']  = bluebook_citation
-    
-        bluebook_cid_string = f"{place_name}{bluebook_state_code}{title}{history_note}" 
-        parquet_row['bluebook_cid'] = get_cid(bluebook_cid_string)
+        parquet_row["bluebook_citation"] = bluebook_citation
 
-        bluebook_df = pd.concat([
-            bluebook_df,
-            pd.DataFrame([parquet_row])
-        ], ignore_index=True)
+        bluebook_cid_string = f"{place_name}{bluebook_state_code}{title}{history_note}"
+        parquet_row["bluebook_cid"] = get_cid(bluebook_cid_string)
+
+        bluebook_df = pd.concat([bluebook_df, pd.DataFrame([parquet_row])], ignore_index=True)
         return bluebook_df
 
-
     def _get_citations_from_html(self, gnis: int, metadata_df: pd.DataFrame) -> pd.DataFrame:
-        """
-        """
+        """ """
         # Get Municode's raw output from the database
-        api_output_df: pd.DataFrame = self.duckdb.sql(
-            f"SELECT * FROM {self.raw_api_output_table} WHERE gnis = '{gnis}'"
-        ).arrow(batch_size=self.batch_size).to_pandas()
+        api_output_df: pd.DataFrame = (
+            self.duckdb.sql(f"SELECT * FROM {self.raw_api_output_table} WHERE gnis = '{gnis}'")
+            .arrow(batch_size=self.batch_size)
+            .to_pandas()
+        )
 
         # Convert the content_json column to a dictionary
-        api_output_df['content_json'] = api_output_df['content_json'].astype(str).apply(json.loads).apply(dict)
+        api_output_df["content_json"] = (
+            api_output_df["content_json"].astype(str).apply(json.loads).apply(dict)
+        )
 
         # Get the chapter names.
-        chapter_content_json = api_output_df[ # NOTE We do this because Pandas doesn't play nice with dictionaries in DataFrames
-            api_output_df['content_json'].apply(lambda x: x.get('NodeDepth', None)) == 1
-        ]['content_json']
+        chapter_content_json = api_output_df[  # NOTE We do this because Pandas doesn't play nice with dictionaries in DataFrames
+            api_output_df["content_json"].apply(lambda x: x.get("NodeDepth", None)) == 1
+        ]["content_json"]
 
         # Make an empty dataframe to store the extracted laws and history notes
         bluebook_df: Optional[pd.DataFrame] = pd.DataFrame(
-            columns=['bluebook_cid', 'cid', 'gnis', 'title', 'public_law_num', 
-                     'chapter', 'ordinance', 'section', 'enacted', 'year', 'history_note']
+            columns=[
+                "bluebook_cid",
+                "cid",
+                "gnis",
+                "title",
+                "public_law_num",
+                "chapter",
+                "ordinance",
+                "section",
+                "enacted",
+                "year",
+                "history_note",
+            ]
         )
 
-        for row in tqdm.tqdm(api_output_df.itertuples(), total=len(api_output_df), desc=f"Processing citations for GNIS {gnis} rows"):
-
+        for row in tqdm.tqdm(
+            api_output_df.itertuples(),
+            total=len(api_output_df),
+            desc=f"Processing citations for GNIS {gnis} rows",
+        ):
             content_json = row.content_json
             # NOTE: Pylance can't infer the type here, so we ignore it. It's stored in SQL as a json, so we assume it's a dict.
             # TODO: Some way to confirm this?
-            title = content_json['Title'] # type: ignore[index]
-            soup = BeautifulSoup(content_json['Content'], 'html.parser') # type: ignore[index]
+            title = content_json["Title"]  # type: ignore[index]
+            soup = BeautifulSoup(content_json["Content"], "html.parser")  # type: ignore[index]
 
             # Match the ChunkGroupStartingNodeId to the chapter name
             try:
                 # Try to find the chapter name based on the ChunkGroupStartingNodeId
                 matching_chapters = chapter_content_json[
-                    chapter_content_json.apply(lambda x: x['Id'] == content_json.get('ChunkGroupStartingNodeId')) # type: ignore[method]
+                    chapter_content_json.apply(
+                        lambda x: x["Id"] == content_json.get("ChunkGroupStartingNodeId")
+                    )  # type: ignore[method]
                 ]
-                
+
                 if not matching_chapters.empty:
-                    chapter = matching_chapters.apply(lambda x: x['Title']).values[0]
+                    chapter = matching_chapters.apply(lambda x: x["Title"]).values[0]
                 else:
                     # If no matching chapter is found, use a placeholder or the title
-                    self.logger.warning(f"No matching chapter found for node ID {content_json.get('ChunkGroupStartingNodeId')} in GNIS {gnis}") # type: ignore[method]
+                    self.logger.warning(
+                        f"No matching chapter found for node ID {content_json.get('ChunkGroupStartingNodeId')} in GNIS {gnis}"
+                    )  # type: ignore[method]
                     chapter = f"Unknown Chapter ({title})"
             except Exception as e:
                 self.logger.warning(f"Error getting chapter name: {e}. Using title instead.")
@@ -707,11 +829,11 @@ class MySqlToParquet:
             # Find the history note
             try:
                 history_note = soup.find(
-                    class_=lambda class_name: class_name and class_name.startswith('historynote') # type: ignore[arg-value]
+                    class_=lambda class_name: class_name and class_name.startswith("historynote")  # type: ignore[arg-value]
                 )
-                #print(f"history note for {title}: {history_note}")
+                # print(f"history note for {title}: {history_note}")
             except Exception as e:
-                #print(f"Error finding history note: {e}")
+                # print(f"Error finding history note: {e}")
                 history_note = None
 
             if history_note is not None:
@@ -729,26 +851,26 @@ class MySqlToParquet:
                     for history_note_ in parts:
                         bluebook_df = self._make_citation_parquet_row(
                             bluebook_df=bluebook_df,
-                            row=row, # type: ignore[arg-type]
+                            row=row,  # type: ignore[arg-type]
                             title=title,
                             chapter=chapter,
                             history_note=history_note_,
-                            metadata_df=metadata_df
+                            metadata_df=metadata_df,
                         )
                 else:
                     bluebook_df = self._make_citation_parquet_row(
                         bluebook_df=bluebook_df,
-                        row=row, # type: ignore[arg-type]
+                        row=row,  # type: ignore[arg-type]
                         title=title,
                         chapter=chapter,
                         history_note=history_note,
-                        metadata_df=metadata_df
+                        metadata_df=metadata_df,
                     )
             else:
                 # We can assume that if there is no history note, there is no ordinance.
-                #print(f"No history note found for '{title}'")
+                # print(f"No history note found for '{title}'")
                 continue
-        
+
         if bluebook_df is None:
             raise ValueError("No ordinances or history notes were extracted.")
 
@@ -756,11 +878,10 @@ class MySqlToParquet:
         # print(f"bluebook_df: {bluebook_df.head()}")
         return bluebook_df
 
-
     async def get_files_from_sql_server_as_parquet(self) -> dict[str, list[str]]:
         """
         Download data from MySQL and save it as parquet files.
-        
+
         Returns:
             dict[str, [list[str]]: A dictionary containing the following:
                 html: list of string paths to html parquet files
@@ -834,11 +955,7 @@ class MySqlToParquet:
             "text_chunk_order":1,"embedding":[0.0123, -0.0456, 0.0789, ...]
         }
         """
-        path_dict: dict[str, list[str]] = {
-            "html": [],
-            "citation": [],
-            "embedding": []
-        }
+        path_dict: dict[str, list[str]] = {"html": [], "citation": [], "embedding": []}
 
         self._ensure_output_directories()
 
@@ -873,32 +990,37 @@ class MySqlToParquet:
                 key = "default"
                 try:
                     for path_tuple in [
-                        (parquet_path, self._make_html_parquet, "html"), 
-                        (citation_parquet_path, self._make_citation_parquet, "citation"), 
-                        (embedding_parquet_path, self._make_embedding_parquet, "embedding")
+                        (parquet_path, self._make_html_parquet, "html"),
+                        (citation_parquet_path, self._make_citation_parquet, "citation"),
+                        (embedding_parquet_path, self._make_embedding_parquet, "embedding"),
                     ]:
                         path, func, key = path_tuple
                         parquet_type = path.stem.split("_")[1]
                         if path.exists():
-                            self.logger.info(f"{parquet_type} parquet file for '{gnis}' already exists, skipping...")
+                            self.logger.info(
+                                f"{parquet_type} parquet file for '{gnis}' already exists, skipping..."
+                            )
                             continue
                         else:
                             self.logger.info(f"{parquet_type} parquet file for '{gnis}'...")
                             await func(path, gnis, kwargs)
                             if path.exists():
-                                self.logger.info(f"{parquet_type} parquet file for '{gnis}' created successfully")
+                                self.logger.info(
+                                    f"{parquet_type} parquet file for '{gnis}' created successfully"
+                                )
                                 path_dict[key].append(str(path))
                 except Exception as e:
-                    self.logger.exception(f"Error processing GNIS '{gnis}' parquet for '{key}': {e}")
+                    self.logger.exception(
+                        f"Error processing GNIS '{gnis}' parquet for '{key}': {e}"
+                    )
                     raise
                 finally:
                     pbar.update(1)
             pbar.close()
         return path_dict
 
-
     async def _make_html_parquet(self, html_parquet_path: Path, gnis: int, kwargs: dict) -> None:
-        gnis_query = kwargs["gnis_query"] 
+        gnis_query = kwargs["gnis_query"]
 
         # Get html data from the database
         arrow_table: pa.Table = self.duckdb.sql(gnis_query).arrow(batch_size=self.batch_size)
@@ -914,8 +1036,9 @@ class MySqlToParquet:
         self._save_data_to_parquet(df, html_parquet_path)
         return
 
-
-    async def _make_citation_parquet(self, citation_parquet_path: Path, gnis: int, kwargs: dict) -> None:
+    async def _make_citation_parquet(
+        self, citation_parquet_path: Path, gnis: int, kwargs: dict
+    ) -> None:
         if self.citation_table is None:
             return
 
@@ -931,8 +1054,9 @@ class MySqlToParquet:
         self._save_data_to_parquet(df, citation_parquet_path)
         return
 
-
-    async def _make_embedding_parquet(self, embedding_parquet_path: Path, gnis: int, kwargs: dict) -> None:
+    async def _make_embedding_parquet(
+        self, embedding_parquet_path: Path, gnis: int, kwargs: dict
+    ) -> None:
         if self.embedding_table is None:
             return
 
@@ -954,13 +1078,15 @@ class MySqlToParquet:
         return
 
 
-
-
 class InitializationError(RuntimeError):
     """Custom exception for initialization errors in MySqlToParquet."""
+
     pass
 
-def make_sql_statements(configs: Configs = configs, resources: dict[str, Any] = {}) -> SqlStatements:
+
+def make_sql_statements(
+    configs: Configs = configs, resources: dict[str, Any] = {}
+) -> SqlStatements:
     """
     Factory function to create and initialize a SqlStatements instance.
 
@@ -976,7 +1102,7 @@ def make_sql_statements(configs: Configs = configs, resources: dict[str, Any] = 
         if key not in _resources:
             raise KeyError(f"Unsupported resource key: {key}")
     try:
-        return SqlStatements(resources=_resources,configs=configs)
+        return SqlStatements(resources=_resources, configs=configs)
     except KeyError as e:
         raise InitializationError(f"Missing required resource: {e}") from e
     except AttributeError as e:
@@ -985,7 +1111,9 @@ def make_sql_statements(configs: Configs = configs, resources: dict[str, Any] = 
         raise InitializationError(f"Failed to initialize SqlStatements: {e}") from e
 
 
-def make_mysql_to_parquet(configs: Configs = configs, resources: dict[str, Any] = {}) -> MySqlToParquet:
+def make_mysql_to_parquet(
+    configs: Configs = configs, resources: dict[str, Any] = {}
+) -> MySqlToParquet:
     """
     Factory function to create and initialize a MySqlToParquet instance.
 
@@ -1000,15 +1128,15 @@ def make_mysql_to_parquet(configs: Configs = configs, resources: dict[str, Any] 
                 - "sql_statements": SqlStatements instance (optional; will be created if omitted)
                 - "make_openai_embeddings": function for generating embeddings (optional)
             Defaults to empty dict, which uses default implementations.
-    
+
     Returns:
         MySqlToParquet: Fully initialized MySqlToParquet instance ready for data extraction.
-    
+
     Raises:
         KeyError: If an unsupported resource key is provided in the resources dictionary, or if a required resource is missing.
         AttributeError: If a required configuration attribute is missing in the configs object.
         InitializationError: If MySqlToParquet initialization fails unexpectedly.
-    
+
     Example:
         >>> from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers._utils.configs import configs
         >>> converter = make_mysql_to_parquet(configs=configs)
@@ -1032,7 +1160,7 @@ def make_mysql_to_parquet(configs: Configs = configs, resources: dict[str, Any] 
             resources={"duckdb": _resources["duckdb"], "sql_type": _resources["sql_type"]},
         )
     try:
-        return MySqlToParquet(resources=_resources,configs=configs)
+        return MySqlToParquet(resources=_resources, configs=configs)
     except KeyError as e:
         raise InitializationError(f"Missing required resource: {e}") from e
     except AttributeError as e:
@@ -1061,6 +1189,7 @@ async def main() -> int:
     except Exception as e:
         print(f"An error occurred: {e}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(anyio.run(main()))

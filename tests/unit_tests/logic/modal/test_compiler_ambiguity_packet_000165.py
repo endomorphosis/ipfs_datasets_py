@@ -76,11 +76,7 @@ def test_packet_000165_family_cue_pairs_are_refined() -> None:
 
 def test_packet_000165_repeal_lifecycle_cues_are_temporal() -> None:
     temporal_profile = DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.TEMPORAL)
-    temporal_cues = {
-        cue
-        for operator in temporal_profile.operators
-        for cue in operator.cue_terms
-    }
+    temporal_cues = {cue for operator in temporal_profile.operators for cue in operator.cue_terms}
 
     assert {
         "repealed",

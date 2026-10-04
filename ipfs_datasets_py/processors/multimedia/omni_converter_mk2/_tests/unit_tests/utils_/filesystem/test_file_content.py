@@ -5,8 +5,12 @@ import os
 
 # Make sure the input file and documentation file exist.
 cwd = os.getcwd()
-assert os.path.exists(f'{cwd}/utils/filesystem.py'), "utils/filesystem.py does not exist at the specified directory."
-assert os.path.exists(f'{cwd}/utils/filesystem_stubs.md'), "Documentation for utils/filesystem.py does not exist at the specified directory."
+assert os.path.exists(f"{cwd}/utils/filesystem.py"), (
+    "utils/filesystem.py does not exist at the specified directory."
+)
+assert os.path.exists(f"{cwd}/utils/filesystem_stubs.md"), (
+    "Documentation for utils/filesystem.py does not exist at the specified directory."
+)
 
 
 from utils.filesystem import FileContent
@@ -38,9 +42,9 @@ class TestFileContentInit(unittest.TestCase):
             - text_content attribute available for conversion
         """
         valid_raw_content = b"Hello, World!"
-        
+
         file_content = FileContent(valid_raw_content)
-        
+
         self.assertEqual(file_content.as_binary, b"Hello, World!")
         self.assertEqual(file_content.encoding, "utf-8")
         self.assertIsNotNone(file_content.mime_type)
@@ -64,9 +68,9 @@ class TestFileContentInit(unittest.TestCase):
         """
         valid_raw_content = b"Hello, World!"
         custom_encoding = "latin-1"
-        
+
         file_content = FileContent(valid_raw_content, encoding=custom_encoding)
-        
+
         self.assertEqual(file_content.encoding, "latin-1")
         # Verify text_content uses the correct encoding
         expected_text = valid_raw_content.decode("latin-1")
@@ -89,9 +93,9 @@ class TestFileContentInit(unittest.TestCase):
         """
         valid_raw_content = b"Hello, World!"
         explicit_mime_type = "text/plain"
-        
+
         file_content = FileContent(valid_raw_content, mime_type=explicit_mime_type)
-        
+
         self.assertEqual(file_content.mime_type, "text/plain")
 
     def test_init_with_empty_raw_content(self):
@@ -109,9 +113,9 @@ class TestFileContentInit(unittest.TestCase):
             - text_content == ""
         """
         empty_raw_content = b""
-        
+
         file_content = FileContent(empty_raw_content)
-        
+
         self.assertEqual(file_content.size, 0)
         self.assertEqual(file_content.text_content, "")
 
@@ -124,7 +128,7 @@ class TestFileContentInit(unittest.TestCase):
         THEN expect TypeError to be raised for each case
         """
         invalid_types = ["string", 123, None, [1, 2, 3]]
-        
+
         for invalid_content in invalid_types:
             with self.subTest(invalid_content=invalid_content):
                 with self.assertRaises(TypeError):
@@ -142,9 +146,10 @@ class TestFileContentInit(unittest.TestCase):
         """
         valid_raw_content = b"Hello, World!"
         invalid_encoding = "nonexistent-encoding"
-        
+
         with self.assertRaises(LookupError):
             FileContent(valid_raw_content, encoding=invalid_encoding)
+
 
 class TestFileContentAsBinary(unittest.TestCase):
     """Test FileContent.as_binary property."""
@@ -165,10 +170,10 @@ class TestFileContentAsBinary(unittest.TestCase):
             - No modification or copying of the original content
         """
         specific_raw_content = b"test content for binary access"
-        
+
         file_content = FileContent(specific_raw_content)
         binary_result = file_content.as_binary
-        
+
         self.assertIs(binary_result, specific_raw_content)
         self.assertIsInstance(binary_result, bytes)
 
@@ -183,10 +188,10 @@ class TestFileContentAsBinary(unittest.TestCase):
             - Type == bytes
         """
         empty_content = b""
-        
+
         file_content = FileContent(empty_content)
         binary_result = file_content.as_binary
-        
+
         self.assertEqual(binary_result, b"")
         self.assertIsInstance(binary_result, bytes)
 
@@ -202,21 +207,21 @@ class TestFileContentAsBinary(unittest.TestCase):
             - Multiple accesses complete without memory leaks
         """
         large_content = b"x" * (5 * 1024 * 1024)  # 5MB
-        
+
         file_content = FileContent(large_content)
-        
+
         # First access
         binary_result1 = file_content.as_binary
         # Second access
         binary_result2 = file_content.as_binary
         # Third access
         binary_result3 = file_content.as_binary
-        
+
         # Content equality check
         self.assertEqual(binary_result1, large_content)
         self.assertEqual(binary_result2, large_content)
         self.assertEqual(binary_result3, large_content)
-        
+
         # Object reference check
         self.assertIs(binary_result1, binary_result2)
         self.assertIs(binary_result2, binary_result3)
@@ -233,21 +238,22 @@ class TestFileContentAsBinary(unittest.TestCase):
             - Subsequent calls to as_binary return original content
         """
         specific_raw_content = b"test content for binary access"
-        
+
         file_content = FileContent(specific_raw_content)
         binary_result = file_content.as_binary
-        
+
         # Attempt to create a modified version (this doesn't modify the original bytes object)
         modified_binary = binary_result[5:] + b" modified"
-        
+
         # Verify original content is unchanged
         self.assertEqual(file_content.as_binary, specific_raw_content)
         self.assertNotEqual(file_content.as_binary, modified_binary)
-        
+
         # Verify subsequent calls return original content
         subsequent_result = file_content.as_binary
         self.assertEqual(subsequent_result, specific_raw_content)
         self.assertIs(subsequent_result, specific_raw_content)
+
 
 class TestFileContentGetAsText(unittest.TestCase):
     """Test FileContent.get_as_text method."""
@@ -269,11 +275,11 @@ class TestFileContentGetAsText(unittest.TestCase):
             - Uses the instance's default encoding
             - No encoding errors occur
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
-        
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
+
         file_content = FileContent(utf8_text_bytes)
         result = file_content.get_as_text()
-        
+
         self.assertEqual(result, "Hello, 世界")
         self.assertIsInstance(result, str)
 
@@ -290,12 +296,14 @@ class TestFileContentGetAsText(unittest.TestCase):
             - Returned string == "café"
             - Instance's default encoding unchanged
         """
-        latin1_text_bytes = "café".encode('latin-1')
+        latin1_text_bytes = "café".encode("latin-1")
         custom_encoding = "latin-1"
-        
-        file_content = FileContent(latin1_text_bytes, encoding="utf-8")  # Different default encoding
+
+        file_content = FileContent(
+            latin1_text_bytes, encoding="utf-8"
+        )  # Different default encoding
         result = file_content.get_as_text(encoding=custom_encoding)
-        
+
         self.assertEqual(result, "café")
         self.assertEqual(file_content.encoding, "utf-8")  # Verify default encoding unchanged
 
@@ -309,11 +317,11 @@ class TestFileContentGetAsText(unittest.TestCase):
         WHEN get_as_text is called with invalid encoding name
         THEN expect LookupError to be raised
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
         invalid_encoding = "nonexistent-encoding-name"
-        
+
         file_content = FileContent(utf8_text_bytes)
-        
+
         with self.assertRaises(LookupError):
             file_content.get_as_text(encoding=invalid_encoding)
 
@@ -329,7 +337,7 @@ class TestFileContentGetAsText(unittest.TestCase):
         """
         binary_content = b"\x89PNG\r\n\x1a\n"
         custom_encoding = "utf-32"
-        
+
         file_content = FileContent(binary_content)
 
         with self.assertRaises(ValueError):
@@ -346,10 +354,10 @@ class TestFileContentGetAsText(unittest.TestCase):
             - No exceptions raised
         """
         empty_content = b""
-        
+
         file_content = FileContent(empty_content)
         result = file_content.get_as_text()
-        
+
         self.assertEqual(result, "")
         self.assertIsInstance(result, str)
 
@@ -365,20 +373,20 @@ class TestFileContentGetAsText(unittest.TestCase):
             - No state changes between calls
             - Each call returns the same object reference (using is)
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
         custom_encoding = "utf-8"
-        
+
         file_content = FileContent(utf8_text_bytes)
-        
+
         result1 = file_content.get_as_text(encoding=custom_encoding)
         result2 = file_content.get_as_text(encoding=custom_encoding)
         result3 = file_content.get_as_text(encoding=custom_encoding)
-        
+
         # Content equality
         self.assertEqual(result1, result2)
         self.assertEqual(result2, result3)
         self.assertEqual(result1, "Hello, 世界")
-        
+
         # Object reference equality (strings with same content may be interned)
         self.assertIs(result1, result2)
         self.assertIs(result2, result3)
@@ -395,16 +403,17 @@ class TestFileContentGetAsText(unittest.TestCase):
             - Instance's default encoding is used
             - Same result as calling without encoding parameter
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
         none_encoding = None
-        
+
         file_content = FileContent(utf8_text_bytes)
-        
+
         result_with_none = file_content.get_as_text(encoding=none_encoding)
         result_without_param = file_content.get_as_text()
-        
+
         self.assertEqual(result_with_none, result_without_param)
         self.assertEqual(result_with_none, "Hello, 世界")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

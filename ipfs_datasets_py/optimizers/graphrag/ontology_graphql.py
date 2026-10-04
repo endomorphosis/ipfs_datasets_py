@@ -148,9 +148,7 @@ class OntologyGraphQLExecutor:
         self._relationships: List[Relationship] = ontology.get("relationships", [])
 
         # Build entity lookup by ID for relationship resolution
-        self._entity_by_id: Dict[str, Entity] = {
-            e["id"]: e for e in self._entities
-        }
+        self._entity_by_id: Dict[str, Entity] = {e["id"]: e for e in self._entities}
 
     # ------------------------------------------------------------------
     # Public API
@@ -222,11 +220,7 @@ class OntologyGraphQLExecutor:
         entity_type = sel.name
 
         # Collect entities matching the type (case-insensitive)
-        matches = [
-            e
-            for e in self._entities
-            if e["type"].lower() == entity_type.lower()
-        ]
+        matches = [e for e in self._entities if e["type"].lower() == entity_type.lower()]
 
         # Apply argument equality filters
         for arg_name, arg_value in sel.arguments.items():
@@ -238,16 +232,10 @@ class OntologyGraphQLExecutor:
                 matches = [e for e in matches if e["type"] == str(arg_value)]
             elif arg_name == "confidence":
                 # Numeric filter: entities with confidence >= filter value
-                matches = [
-                    e for e in matches if e["confidence"] >= float(arg_value)
-                ]
+                matches = [e for e in matches if e["confidence"] >= float(arg_value)]
             else:
                 # Filter on properties
-                matches = [
-                    e
-                    for e in matches
-                    if e.get("properties", {}).get(arg_name) == arg_value
-                ]
+                matches = [e for e in matches if e.get("properties", {}).get(arg_name) == arg_value]
 
         # If no field selection, return default entity dicts
         if not sel.sub_fields:
@@ -329,10 +317,7 @@ class OntologyGraphQLExecutor:
 
         # Find all relationships of this type starting from source entity
         for rel in self._relationships:
-            if (
-                rel["type"].lower() == rel_type.lower()
-                and rel["source_id"] == source["id"]
-            ):
+            if rel["type"].lower() == rel_type.lower() and rel["source_id"] == source["id"]:
                 target = self._entity_by_id.get(rel["target_id"])
                 if target is not None:
                     targets.append(target)

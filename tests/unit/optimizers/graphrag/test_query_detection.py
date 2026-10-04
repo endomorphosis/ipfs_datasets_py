@@ -71,11 +71,11 @@ class TestGraphTypeDetection:
         """Should cache detection results."""
         cache = {}
         query = {"query": "wikipedia test"}
-        
+
         # First call should cache
         result1 = QueryDetector.detect_graph_type(query, cache)
         assert len(cache) > 0
-        
+
         # Second call should use cache
         result2 = QueryDetector.detect_graph_type(query, cache)
         assert result1 == result2
@@ -354,11 +354,11 @@ class TestDetectionEdgeCases:
         query1 = {"entity_source": "WIKIPEDIA"}
         query2 = {"entity_source": "Wikipedia"}
         query3 = {"entity_source": "wikipedia"}
-        
+
         result1 = QueryDetector.detect_graph_type(query1)
         result2 = QueryDetector.detect_graph_type(query2)
         result3 = QueryDetector.detect_graph_type(query3)
-        
+
         assert result1 == result2 == result3 == "wikipedia"
 
     def test_mixed_case_query_text(self):
@@ -387,12 +387,12 @@ class TestDetectionCaching:
         """Should respect cache size limit."""
         cache = {}
         QueryDetector._graph_type_detection_max_size = 3
-        
+
         # Fill cache
         for i in range(5):
             query = {"query": f"query_{i}"}
             QueryDetector.detect_graph_type(query, cache)
-        
+
         # Cache should not exceed max size
         assert len(cache) <= 3
 
@@ -400,26 +400,26 @@ class TestDetectionCaching:
         """Should track cache hits."""
         cache = {}
         query = {"entity_source": "wikipedia"}
-        
+
         initial_hits = QueryDetector._type_detection_hit_count
-        
+
         # First call - cache miss
         QueryDetector.detect_graph_type(query, cache)
-        
+
         # Second call - cache hit
         QueryDetector.detect_graph_type(query, cache)
-        
+
         assert QueryDetector._type_detection_hit_count > initial_hits
 
     def test_independent_cache_instances(self):
         """Should support independent cache instances."""
         cache1 = {}
         cache2 = {}
-        
+
         query = {"entity_source": "wikipedia"}
-        
+
         QueryDetector.detect_graph_type(query, cache1)
         QueryDetector.detect_graph_type(query, cache2)
-        
+
         assert len(cache1) == 1
         assert len(cache2) == 1

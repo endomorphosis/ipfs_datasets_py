@@ -45,9 +45,7 @@ def test_fresh_layout_has_distinct_artifact_cache_and_snapshot_paths(
     assert fresh.capability_snapshot != published.capability_snapshot
     assert fresh.matrix_snapshot != published.matrix_snapshot
     assert fresh.frontend_report != published.frontend_report
-    assert fresh.frontend_receipt_directory != (
-        published.frontend_receipt_directory
-    )
+    assert fresh.frontend_receipt_directory != (published.frontend_receipt_directory)
     assert fresh.frontend_receipt_index != published.frontend_receipt_index
     assert fresh.pilot_report != published.pilot_report
     assert fresh.pilot_snapshot != published.pilot_snapshot
@@ -60,9 +58,7 @@ def test_fresh_layout_has_distinct_artifact_cache_and_snapshot_paths(
     assert fresh.final_decision != published.final_decision
     assert fresh.run_paths.cache != published.run_paths.cache
     assert fresh.cache_namespace.endswith(f"/{FRESH_RUN_ID}")
-    assert custom.run_paths.run_root == (
-        tmp_path / "isolated-benchmark" / FRESH_RUN_ID
-    )
+    assert custom.run_paths.run_root == (tmp_path / "isolated-benchmark" / FRESH_RUN_ID)
     assert custom.run_paths.cache.is_relative_to(custom.run_paths.run_root)
     assert custom.matrix_root.is_relative_to(custom.run_paths.run_root)
     assert all(
@@ -128,11 +124,7 @@ def test_published_run_and_paths_are_rejected_before_live_work(
         reject_published_write_targets(
             repository_root=tmp_path,
             run_id=FRESH_RUN_ID,
-            targets=(
-                ReassessmentRunLayout.for_run(
-                    PUBLISHED_REASSESSMENT_RUN_ID
-                ).matrix_root,
-            ),
+            targets=(ReassessmentRunLayout.for_run(PUBLISHED_REASSESSMENT_RUN_ID).matrix_root,),
         )
 
 

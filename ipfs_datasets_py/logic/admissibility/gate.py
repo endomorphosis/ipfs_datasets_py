@@ -144,9 +144,7 @@ class AdmissibilityDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.status, AdmissibilityStatus):
-            object.__setattr__(
-                self, "status", AdmissibilityStatus(str(self.status))
-            )
+            object.__setattr__(self, "status", AdmissibilityStatus(str(self.status)))
         if not isinstance(self.reasons, tuple):
             object.__setattr__(self, "reasons", tuple(self.reasons))
         for reason in self.reasons:
@@ -155,9 +153,7 @@ class AdmissibilityDecision:
                     "decision reasons must be AdmissibilityReason instances"
                 )
         if not isinstance(self.constraint_cids, tuple):
-            object.__setattr__(
-                self, "constraint_cids", tuple(self.constraint_cids)
-            )
+            object.__setattr__(self, "constraint_cids", tuple(self.constraint_cids))
         if list(self.constraint_cids) != sorted(self.constraint_cids):
             object.__setattr__(
                 self,
@@ -165,9 +161,7 @@ class AdmissibilityDecision:
                 tuple(sorted(self.constraint_cids)),
             )
         if not isinstance(self.attestation_results, tuple):
-            object.__setattr__(
-                self, "attestation_results", tuple(self.attestation_results)
-            )
+            object.__setattr__(self, "attestation_results", tuple(self.attestation_results))
         if not isinstance(self.intent_cid, str):
             raise AdmissibilityGateError("intent_cid must be a string")
         if not isinstance(self.profile_id, str):
@@ -175,13 +169,9 @@ class AdmissibilityDecision:
         if not isinstance(self.config_digest, str):
             raise AdmissibilityGateError("config_digest must be a string")
         if self.interface != ADMISSIBILITY_DECISION_INTERFACE:
-            raise AdmissibilityGateError(
-                f"unsupported decision interface: {self.interface!r}"
-            )
+            raise AdmissibilityGateError(f"unsupported decision interface: {self.interface!r}")
         if self.schema_version != ADMISSIBILITY_DECISION_SCHEMA_VERSION:
-            raise AdmissibilityGateError(
-                f"unsupported decision schema: {self.schema_version!r}"
-            )
+            raise AdmissibilityGateError(f"unsupported decision schema: {self.schema_version!r}")
 
     @property
     def is_allow(self) -> bool:
@@ -205,9 +195,7 @@ class AdmissibilityDecision:
         """Return a deterministic JSON-serializable decision map."""
 
         return {
-            "attestation_results": [
-                result.to_dict() for result in self.attestation_results
-            ],
+            "attestation_results": [result.to_dict() for result in self.attestation_results],
             "config_digest": self.config_digest,
             "constraint_cids": list(self.constraint_cids),
             "intent_artifact_cid": self.intent_artifact_cid,
@@ -239,18 +227,12 @@ class AdmissibilityDecision:
         ):
             raise AdmissibilityGateError("reasons must be a sequence")
         reasons = tuple(
-            item
-            if isinstance(item, AdmissibilityReason)
-            else AdmissibilityReason.from_dict(item)
+            item if isinstance(item, AdmissibilityReason) else AdmissibilityReason.from_dict(item)
             for item in reasons_raw
         )
         attest_raw = value.get("attestation_results", ())
-        if not isinstance(attest_raw, Sequence) or isinstance(
-            attest_raw, (str, bytes, bytearray)
-        ):
-            raise AdmissibilityGateError(
-                "attestation_results must be a sequence"
-            )
+        if not isinstance(attest_raw, Sequence) or isinstance(attest_raw, (str, bytes, bytearray)):
+            raise AdmissibilityGateError("attestation_results must be a sequence")
         attestations = tuple(
             item
             if isinstance(item, AttestationVerifyResult)
@@ -258,9 +240,7 @@ class AdmissibilityDecision:
             for item in attest_raw
         )
         cids_raw = value.get("constraint_cids", ())
-        if not isinstance(cids_raw, Sequence) or isinstance(
-            cids_raw, (str, bytes, bytearray)
-        ):
+        if not isinstance(cids_raw, Sequence) or isinstance(cids_raw, (str, bytes, bytearray)):
             raise AdmissibilityGateError("constraint_cids must be a sequence")
         return cls(
             status=status,
@@ -270,20 +250,10 @@ class AdmissibilityDecision:
             attestation_results=attestations,
             profile_id=str(value.get("profile_id", "") or ""),
             config_digest=str(value.get("config_digest", "") or ""),
-            intent_artifact_cid=str(
-                value.get("intent_artifact_cid", "") or ""
-            ),
-            store_snapshot_digest=str(
-                value.get("store_snapshot_digest", "") or ""
-            ),
-            interface=str(
-                value.get("interface", ADMISSIBILITY_DECISION_INTERFACE)
-            ),
-            schema_version=str(
-                value.get(
-                    "schema_version", ADMISSIBILITY_DECISION_SCHEMA_VERSION
-                )
-            ),
+            intent_artifact_cid=str(value.get("intent_artifact_cid", "") or ""),
+            store_snapshot_digest=str(value.get("store_snapshot_digest", "") or ""),
+            interface=str(value.get("interface", ADMISSIBILITY_DECISION_INTERFACE)),
+            schema_version=str(value.get("schema_version", ADMISSIBILITY_DECISION_SCHEMA_VERSION)),
         )
 
 
@@ -468,19 +438,13 @@ class IntentAdmissibilityGate:
 
     store: ProofCorpusStore
     query: ProofCorpusQuery | None = None
-    _query: ProofCorpusQuery | None = field(
-        default=None, init=False, repr=False
-    )
+    _query: ProofCorpusQuery | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.store, ProofCorpusStore):
             raise AdmissibilityGateError("store must be a ProofCorpusStore")
-        if self.query is not None and not isinstance(
-            self.query, ProofCorpusQuery
-        ):
-            raise AdmissibilityGateError(
-                "query must be a ProofCorpusQuery when provided"
-            )
+        if self.query is not None and not isinstance(self.query, ProofCorpusQuery):
+            raise AdmissibilityGateError("query must be a ProofCorpusQuery when provided")
 
     @property
     def interface(self) -> str:
@@ -525,8 +489,7 @@ class IntentAdmissibilityGate:
         # no higher-severity reason joined above.
         if status is AdmissibilityStatus.ALLOW:
             if not any(
-                reason.code is AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED
-                for reason in ordered
+                reason.code is AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED for reason in ordered
             ):
                 status = AdmissibilityStatus.REJECT
                 if not ordered:
@@ -552,10 +515,7 @@ class IntentAdmissibilityGate:
 
     def _resolve_intent(
         self,
-        intent: str
-        | ArtifactEnvelope
-        | FormalizationArtifact
-        | Mapping[str, Any],
+        intent: str | ArtifactEnvelope | FormalizationArtifact | Mapping[str, Any],
         *,
         profile: AdmissibilityProfile,
     ) -> tuple[ArtifactEnvelope | None, FormalizationArtifact | None, list[AdmissibilityReason]]:
@@ -614,9 +574,7 @@ class IntentAdmissibilityGate:
                 return None, None, reasons
         elif isinstance(intent, FormalizationArtifact):
             try:
-                envelope = ArtifactEnvelope.from_intent_artifact(
-                    intent, profile=profile.id
-                )
+                envelope = ArtifactEnvelope.from_intent_artifact(intent, profile=profile.id)
             except (ProofCorpusSchemaError, ProofCorpusIntegrityError) as exc:
                 reasons.append(
                     _reason(
@@ -632,9 +590,7 @@ class IntentAdmissibilityGate:
                     envelope = ArtifactEnvelope.from_dict(intent).verify_integrity()
                 else:
                     artifact = FormalizationArtifact.from_dict(intent)
-                    envelope = ArtifactEnvelope.from_intent_artifact(
-                        artifact, profile=profile.id
-                    )
+                    envelope = ArtifactEnvelope.from_intent_artifact(artifact, profile=profile.id)
             except (
                 ProofCorpusSchemaError,
                 ProofCorpusIntegrityError,
@@ -708,14 +664,8 @@ class IntentAdmissibilityGate:
 
     def evaluate(
         self,
-        intent: str
-        | ArtifactEnvelope
-        | FormalizationArtifact
-        | Mapping[str, Any],
-        profile: AdmissibilityProfile
-        | AdmissibilityProfileId
-        | str
-        | None = None,
+        intent: str | ArtifactEnvelope | FormalizationArtifact | Mapping[str, Any],
+        profile: AdmissibilityProfile | AdmissibilityProfileId | str | None = None,
     ) -> AdmissibilityDecision:
         """Evaluate admissibility for *intent* under *profile*.
 
@@ -737,9 +687,7 @@ class IntentAdmissibilityGate:
 
         resolution = resolve_profile_fail_closed(profile)
         if not resolution.ok or resolution.profile is None:
-            reasons = list(resolution.reasons) or [
-                invalid_profile_reason(profile)
-            ]
+            reasons = list(resolution.reasons) or [invalid_profile_reason(profile)]
             return self._decision(
                 status=AdmissibilityStatus.REJECT,
                 reasons=reasons,
@@ -750,18 +698,12 @@ class IntentAdmissibilityGate:
             )
 
         policy = resolution.profile
-        envelope, artifact, early_reasons = self._resolve_intent(
-            intent, profile=policy
-        )
+        envelope, artifact, early_reasons = self._resolve_intent(intent, profile=policy)
         if artifact is None:
             intent_cid = envelope.content_cid if envelope is not None else ""
-            artifact_cid = (
-                envelope.artifact_cid if envelope is not None else ""
-            )
+            artifact_cid = envelope.artifact_cid if envelope is not None else ""
             # Prefer integrity/invalid over empty allow.
-            status = _join_status(early_reasons) if early_reasons else (
-                AdmissibilityStatus.REJECT
-            )
+            status = _join_status(early_reasons) if early_reasons else (AdmissibilityStatus.REJECT)
             return self._decision(
                 status=status,
                 reasons=early_reasons
@@ -797,8 +739,7 @@ class IntentAdmissibilityGate:
 
         obligations = artifact.proof_obligations
         obligation_digests = [
-            normalize_obligation_digest(obligation.digest)
-            for obligation in obligations
+            normalize_obligation_digest(obligation.digest) for obligation in obligations
         ]
 
         query = self._active_query()
@@ -865,13 +806,8 @@ class IntentAdmissibilityGate:
                         elif family is ProofCorpusFamily.SECURITY:
                             security_grants += 1
 
-                    if (
-                        policy.require_zkp_verify
-                        and family is ProofCorpusFamily.LEGAL
-                    ):
-                        attestation_results.append(
-                            self._verify_constraint_zkp(constraint, policy)
-                        )
+                    if policy.require_zkp_verify and family is ProofCorpusFamily.LEGAL:
+                        attestation_results.append(self._verify_constraint_zkp(constraint, policy))
 
                 if local_grants and local_forbids:
                     reasons.append(
@@ -991,16 +927,13 @@ class IntentAdmissibilityGate:
         blocking_codes = {
             reason.code
             for reason in reasons
-            if default_status_for_reason(reason.code)
-            is not AdmissibilityStatus.ALLOW
+            if default_status_for_reason(reason.code) is not AdmissibilityStatus.ALLOW
         }
         full_grant_coverage = (
             bool(obligation_digests)
             and obligations_with_grant == len(obligation_digests)
             and (not policy.require_legal_constraints or legal_grants > 0)
-            and (
-                not policy.require_security_constraints or security_grants > 0
-            )
+            and (not policy.require_security_constraints or security_grants > 0)
             and forbids_for_obligation == 0
         )
         if full_grant_coverage and not blocking_codes and not unsupported:
@@ -1041,14 +974,8 @@ class IntentAdmissibilityGate:
 
 def evaluate_admissibility(
     store: ProofCorpusStore,
-    intent: str
-    | ArtifactEnvelope
-    | FormalizationArtifact
-    | Mapping[str, Any],
-    profile: AdmissibilityProfile
-    | AdmissibilityProfileId
-    | str
-    | None = None,
+    intent: str | ArtifactEnvelope | FormalizationArtifact | Mapping[str, Any],
+    profile: AdmissibilityProfile | AdmissibilityProfileId | str | None = None,
     *,
     query: ProofCorpusQuery | None = None,
 ) -> AdmissibilityDecision:

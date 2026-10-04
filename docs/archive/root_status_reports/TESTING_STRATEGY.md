@@ -70,89 +70,89 @@ Gap: 74+ new test files needed
 import pytest
 from ipfs_datasets_py.logic.TDFOL import *
 
+
 class TestTerms:
     """Test term construction."""
-    
+
     def test_variable_creation(self):
         """Test creating variables."""
         var = Variable("x", Sort.AGENT)
         assert var.name == "x"
         assert var.sort == Sort.AGENT
-    
+
     def test_constant_creation(self):
         """Test creating constants."""
         const = Constant("Alice", Sort.AGENT)
         assert const.name == "Alice"
-    
+
     def test_function_application(self):
         """Test function application."""
-        func = FunctionApplication(
-            "owns",
-            (Variable("x"), Variable("y"))
-        )
+        func = FunctionApplication("owns", (Variable("x"), Variable("y")))
         assert func.function_name == "owns"
         assert len(func.arguments) == 2
-    
+
     # ... 27 more term tests
+
 
 class TestFormulas:
     """Test formula construction."""
-    
+
     def test_predicate(self):
         """Test creating predicates."""
         pred = Predicate("P", (Variable("x"),))
         assert pred.name == "P"
         assert len(pred.terms) == 1
-    
+
     def test_binary_formula(self):
         """Test binary formulas."""
         p = Predicate("P", ())
         q = Predicate("Q", ())
         impl = BinaryFormula(LogicOperator.IMPLIES, p, q)
         assert impl.operator == LogicOperator.IMPLIES
-    
+
     def test_quantified_formula(self):
         """Test quantified formulas."""
         var = Variable("x", Sort.AGENT)
         pred = Predicate("P", (var,))
         forall = QuantifiedFormula(Quantifier.FORALL, var, pred)
         assert forall.quantifier == Quantifier.FORALL
-    
+
     def test_deontic_formula(self):
         """Test deontic formulas."""
         pred = Predicate("pay", ())
         obl = DeonticFormula(DeonticOperator.OBLIGATION, pred)
         assert obl.operator == DeonticOperator.OBLIGATION
-    
+
     def test_temporal_formula(self):
         """Test temporal formulas."""
         pred = Predicate("P", ())
         always = TemporalFormula(TemporalOperator.ALWAYS, pred)
         assert always.operator == TemporalOperator.ALWAYS
-    
+
     # ... 20 more formula tests
+
 
 class TestFormulaOperations:
     """Test operations on formulas."""
-    
+
     def test_formula_equality(self):
         """Test formula equality."""
         p1 = Predicate("P", ())
         p2 = Predicate("P", ())
         assert p1 == p2
-    
+
     def test_formula_hashing(self):
         """Test formula can be hashed."""
         p = Predicate("P", ())
         hash_val = hash(p)
         assert isinstance(hash_val, int)
-    
+
     def test_formula_str(self):
         """Test string representation."""
         p = Predicate("P", (Variable("x"),))
         assert "P" in str(p)
         assert "x" in str(p)
-    
+
     # ... 7 more operation tests
 ```
 
@@ -163,75 +163,78 @@ class TestFormulaOperations:
 import pytest
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol, TDFOLParser
 
+
 class TestBasicParsing:
     """Test basic parsing."""
-    
+
     def test_parse_simple_predicate(self):
         """Test parsing 'P'."""
         formula = parse_tdfol("P")
         assert isinstance(formula, Predicate)
         assert formula.name == "P"
-    
+
     def test_parse_predicate_with_args(self):
         """Test parsing 'P(x)'."""
         formula = parse_tdfol("P(x)")
         assert isinstance(formula, Predicate)
         assert len(formula.terms) == 1
-    
+
     def test_parse_implication(self):
         """Test parsing 'P -> Q'."""
         formula = parse_tdfol("P -> Q")
         assert isinstance(formula, BinaryFormula)
         assert formula.operator == LogicOperator.IMPLIES
-    
+
     # ... 10 more basic tests
+
 
 class TestComplexParsing:
     """Test complex parsing."""
-    
+
     def test_parse_nested_implication(self):
         """Test parsing '(P -> Q) -> R'."""
         formula = parse_tdfol("(P -> Q) -> R")
         assert isinstance(formula, BinaryFormula)
         assert isinstance(formula.left, BinaryFormula)
-    
+
     def test_parse_quantifier(self):
         """Test parsing 'forall x. P(x)'."""
         formula = parse_tdfol("forall x. P(x)")
         assert isinstance(formula, QuantifiedFormula)
         assert formula.quantifier == Quantifier.FORALL
-    
+
     def test_parse_deontic(self):
         """Test parsing 'O(P)'."""
         formula = parse_tdfol("O(P)")
         assert isinstance(formula, DeonticFormula)
         assert formula.operator == DeonticOperator.OBLIGATION
-    
+
     # ... 8 more complex tests
+
 
 class TestEdgeCases:
     """Test edge cases and error handling."""
-    
+
     def test_parse_empty_string(self):
         """Test parsing empty string raises error."""
         with pytest.raises(ValueError):
             parse_tdfol("")
-    
+
     def test_parse_malformed(self):
         """Test parsing malformed input."""
         with pytest.raises(Exception):
             parse_tdfol("P -> -> Q")
-    
+
     def test_parse_max_depth(self):
         """Test parsing respects max depth."""
         # Create deeply nested formula
         deep = "P"
         for _ in range(200):
             deep = f"({deep} -> P)"
-        
+
         with pytest.raises(ValueError, match="too deep"):
             parse_tdfol(deep)
-    
+
     # ... 4 more edge case tests
 ```
 
@@ -242,39 +245,38 @@ class TestEdgeCases:
 import pytest
 from ipfs_datasets_py.logic.TDFOL import TDFOLProver, parse_tdfol
 
+
 class TestBasicProving:
     """Test basic proving."""
-    
+
     def test_prove_tautology(self):
         """Test proving P -> P."""
         prover = TDFOLProver()
         formula = parse_tdfol("P -> P")
         result = prover.prove(formula)
         assert result.is_proved()
-    
+
     def test_prove_modus_ponens(self):
         """Test proving with modus ponens."""
         prover = TDFOLProver()
-        axioms = [
-            parse_tdfol("P"),
-            parse_tdfol("P -> Q")
-        ]
+        axioms = [parse_tdfol("P"), parse_tdfol("P -> Q")]
         goal = parse_tdfol("Q")
         result = prover.prove(goal, axioms=axioms)
         assert result.is_proved()
-    
+
     def test_cannot_prove_invalid(self):
         """Test cannot prove invalid formula."""
         prover = TDFOLProver()
         formula = parse_tdfol("P")  # Without axioms
         result = prover.prove(formula)
         assert not result.is_proved()
-    
+
     # ... 7 more basic tests
+
 
 class TestInferenceRules:
     """Test specific inference rules."""
-    
+
     def test_conjunction_introduction(self):
         """Test conjunction introduction rule."""
         prover = TDFOLProver()
@@ -282,18 +284,15 @@ class TestInferenceRules:
         goal = parse_tdfol("P & Q")
         result = prover.prove(goal, axioms=axioms)
         assert result.is_proved()
-    
+
     def test_disjunctive_syllogism(self):
         """Test disjunctive syllogism."""
         prover = TDFOLProver()
-        axioms = [
-            parse_tdfol("P | Q"),
-            parse_tdfol("~P")
-        ]
+        axioms = [parse_tdfol("P | Q"), parse_tdfol("~P")]
         goal = parse_tdfol("Q")
         result = prover.prove(goal, axioms=axioms)
         assert result.is_proved()
-    
+
     # ... 8 more rule tests
 ```
 
@@ -306,45 +305,40 @@ class TestInferenceRules:
 import pytest
 from ipfs_datasets_py.logic.integration import symbolic_contracts
 
+
 class TestContractCreation:
     """Test creating contracts."""
-    
+
     def test_create_simple_contract(self):
         """Test creating a simple contract."""
         contract = symbolic_contracts.create_contract(
-            parties=["Alice", "Bob"],
-            obligations=[
-                "Alice must pay 100",
-                "Bob must deliver goods"
-            ]
+            parties=["Alice", "Bob"], obligations=["Alice must pay 100", "Bob must deliver goods"]
         )
         assert contract is not None
         assert len(contract.parties) == 2
         assert len(contract.obligations) == 2
-    
+
     # ... 4 more creation tests
+
 
 class TestContractValidation:
     """Test contract validation."""
-    
+
     def test_validate_consistent_contract(self):
         """Test validating consistent contract."""
         contract = symbolic_contracts.create_contract(...)
         result = symbolic_contracts.validate(contract)
         assert result.is_valid
-    
+
     def test_detect_contradiction(self):
         """Test detecting contradictory terms."""
         contract = symbolic_contracts.create_contract(
-            obligations=[
-                "Alice must pay",
-                "Alice must not pay"
-            ]
+            obligations=["Alice must pay", "Alice must not pay"]
         )
         result = symbolic_contracts.validate(contract)
         assert not result.is_valid
         assert len(result.errors) > 0
-    
+
     # ... 3 more validation tests
 ```
 
@@ -363,33 +357,34 @@ class TestContractValidation:
 ```python
 """Test TDFOL-CEC integration."""
 
+
 class TestTDFOLCECBridge:
     """Test TDFOL-CEC bridge."""
-    
+
     def test_tdfol_to_dcec_conversion(self):
         """Test converting TDFOL to DCEC."""
         from ipfs_datasets_py.logic.integration import TDFOLCECBridge
-        
+
         bridge = TDFOLCECBridge()
         tdfol_formula = parse_tdfol("P -> Q")
         dcec_formula = bridge.tdfol_to_dcec(tdfol_formula)
         assert dcec_formula is not None
-    
+
     def test_proving_with_both_systems(self):
         """Test proving with TDFOL and CEC."""
         bridge = TDFOLCECBridge()
         formula = parse_tdfol("P -> P")
-        
+
         # Prove with TDFOL
         tdfol_result = bridge.prove_tdfol(formula)
-        
+
         # Prove with CEC
         cec_result = bridge.prove_cec(formula)
-        
+
         # Both should succeed
         assert tdfol_result.is_proved()
         assert cec_result.is_proved()
-    
+
     # ... 8 more integration tests
 ```
 
@@ -407,47 +402,44 @@ class TestTDFOLCECBridge:
 ```python
 """End-to-end workflow tests."""
 
+
 class TestCompleteWorkflow:
     """Test complete neurosymbolic workflows."""
-    
+
     def test_parse_prove_cache_workflow(self):
         """Test: parse → prove → cache → prove again."""
         from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
-        
+
         reasoner = NeurosymbolicReasoner(enable_cache=True)
-        
+
         # Parse
         formula = reasoner.parse("P -> Q")
-        
+
         # Prove (cache miss)
         result1 = reasoner.prove(formula)
         time1 = result1.proof_time
-        
+
         # Prove again (cache hit)
         result2 = reasoner.prove(formula)
         time2 = result2.proof_time
-        
+
         # Verify
         assert result1.is_proved()
         assert result2.is_proved()
         assert time2 < time1 / 10  # At least 10x faster
-    
+
     def test_multi_prover_workflow(self):
         """Test using multiple provers."""
-        reasoner = NeurosymbolicReasoner(
-            enable_native=True,
-            enable_z3=True,
-            enable_symbolicai=True
-        )
-        
+        reasoner = NeurosymbolicReasoner(enable_native=True, enable_z3=True, enable_symbolicai=True)
+
         formula = parse_tdfol("P -> P")
-        
+
         # Should try all provers
-        result = reasoner.prove(formula, strategy='parallel')
-        
+        result = reasoner.prove(formula, strategy="parallel")
+
         assert result.is_proved()
         assert len(result.all_results) >= 2
-    
+
     # ... 3 more E2E tests
 ```
 
@@ -455,26 +447,27 @@ class TestCompleteWorkflow:
 ```python
 """GraphRAG workflow tests."""
 
+
 class TestGraphRAGWorkflow:
     """Test GraphRAG integration workflows."""
-    
+
     def test_ingest_query_workflow(self):
         """Test: ingest document → extract entities → query."""
         from ipfs_datasets_py.rag import LogicEnhancedRAG
-        
+
         rag = LogicEnhancedRAG()
-        
+
         # Ingest
         contract = "Alice must pay Bob $100"
         rag.ingest_document(contract, "doc_001")
-        
+
         # Query
         result = rag.query("What are Alice's obligations?")
-        
+
         # Verify
         assert len(result.logical_entities) > 0
         assert "Alice" in str(result)
-    
+
     # ... 4 more GraphRAG tests
 ```
 
@@ -486,59 +479,60 @@ class TestGraphRAGWorkflow:
 ```python
 """Load testing suite."""
 
+
 class TestLoad:
     """Test system under load."""
-    
+
     @pytest.mark.slow
     def test_100_concurrent_proofs(self):
         """Test 100 concurrent proof requests."""
         import concurrent.futures
-        
+
         reasoner = NeurosymbolicReasoner()
         formula = parse_tdfol("P -> P")
-        
+
         def prove_once():
             return reasoner.prove(formula)
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
             futures = [executor.submit(prove_once) for _ in range(100)]
             results = [f.result() for f in futures]
-        
+
         # All should succeed
         assert all(r.is_proved() for r in results)
-    
+
     @pytest.mark.slow
     def test_sustained_load(self):
         """Test 1000 proofs over 10 minutes."""
         import time
-        
+
         reasoner = NeurosymbolicReasoner()
         start = time.time()
-        
+
         for _ in range(1000):
             reasoner.prove(parse_tdfol("P -> P"))
-        
+
         duration = time.time() - start
         assert duration < 600  # 10 minutes
-    
+
     @pytest.mark.slow
     def test_memory_stability(self):
         """Test memory doesn't leak."""
         import psutil
         import os
-        
+
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
-        
+
         reasoner = NeurosymbolicReasoner()
-        
+
         # Run 10K proofs
         for _ in range(10000):
             reasoner.prove(parse_tdfol("P -> P"))
-        
+
         final_memory = process.memory_info().rss
         growth = (final_memory - initial_memory) / initial_memory
-        
+
         # Memory growth should be < 20%
         assert growth < 0.2
 ```

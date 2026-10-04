@@ -149,12 +149,15 @@ def test_build_load_and_search_persisted_bag_of_words(tmp_path: Path) -> None:
 
     for filename in ("documents.parquet", "terms.parquet", "postings.parquet"):
         columns = set(parquet.read_schema(output / filename).names)
-        assert not {
-            "skill_md",
-            "library_md",
-            "metadata_yaml",
-            "text",
-        } & columns
+        assert (
+            not {
+                "skill_md",
+                "library_md",
+                "metadata_yaml",
+                "text",
+            }
+            & columns
+        )
 
 
 def test_existing_bm25_is_reused_and_drift_is_rejected(tmp_path: Path) -> None:

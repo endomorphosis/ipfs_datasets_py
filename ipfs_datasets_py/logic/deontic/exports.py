@@ -36,10 +36,22 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
     "proof_obligations": {"primary_key": "proof_obligation_id", "requires_source_id": True},
     "repair_queue": {"primary_key": "repair_id", "requires_source_id": True},
     "decoder_reconstructions": {"primary_key": "reconstruction_id", "requires_source_id": True},
-    "prover_syntax_summaries": {"primary_key": "prover_syntax_summary_id", "requires_source_id": True},
-    "reconstruction_slot_loss": {"primary_key": "reconstruction_slot_loss_id", "requires_source_id": True},
-    "ir_slot_provenance_audits": {"primary_key": "ir_slot_provenance_audit_id", "requires_source_id": True},
-    "phase8_quality_summaries": {"primary_key": "phase8_quality_summary_id", "requires_source_id": True},
+    "prover_syntax_summaries": {
+        "primary_key": "prover_syntax_summary_id",
+        "requires_source_id": True,
+    },
+    "reconstruction_slot_loss": {
+        "primary_key": "reconstruction_slot_loss_id",
+        "requires_source_id": True,
+    },
+    "ir_slot_provenance_audits": {
+        "primary_key": "ir_slot_provenance_audit_id",
+        "requires_source_id": True,
+    },
+    "phase8_quality_summaries": {
+        "primary_key": "phase8_quality_summary_id",
+        "requires_source_id": True,
+    },
 }
 
 _SECTION_REFERENCE_RE = re.compile(
@@ -277,9 +289,7 @@ def summarize_deterministic_parser_capability_profile_records(
         if record_count
         else 0.0,
         "source_grounding_complete_count": source_grounding_complete_count,
-        "source_grounding_complete_rate": round(
-            source_grounding_complete_count / record_count, 6
-        )
+        "source_grounding_complete_rate": round(source_grounding_complete_count / record_count, 6)
         if record_count
         else 0.0,
         "decoder_slot_grounding_complete_count": decoder_grounding_complete_count,
@@ -288,20 +298,15 @@ def summarize_deterministic_parser_capability_profile_records(
         )
         if record_count
         else 0.0,
-        "mean_source_grounded_slot_rate": round(
-            source_grounding_rate_sum / record_count, 6
-        )
+        "mean_source_grounded_slot_rate": round(source_grounding_rate_sum / record_count, 6)
         if record_count
         else 0.0,
-        "mean_decoder_grounded_slot_rate": round(
-            decoder_grounding_rate_sum / record_count, 6
-        )
+        "mean_decoder_grounded_slot_rate": round(decoder_grounding_rate_sum / record_count, 6)
         if record_count
         else 0.0,
         "all_profiles_formula_proof_ready": record_count > 0
         and formula_ready_count == record_count,
-        "all_profiles_parser_proof_ready": record_count > 0
-        and parser_ready_count == record_count,
+        "all_profiles_parser_proof_ready": record_count > 0 and parser_ready_count == record_count,
         "all_profiles_source_grounded": record_count > 0
         and source_grounding_complete_count == record_count,
         "all_profiles_decoder_grounded": record_count > 0
@@ -357,7 +362,9 @@ def summarize_ir_slot_provenance_audit_records(
         checked_slot_instances += int(record.get("checked_slot_count") or len(record_checked))
         grounded_slot_instances += int(record.get("grounded_slot_count") or len(record_grounded))
         missing_slot_instances += int(record.get("missing_slot_count") or len(record_missing))
-        ungrounded_slot_instances += int(record.get("ungrounded_slot_count") or len(record_ungrounded))
+        ungrounded_slot_instances += int(
+            record.get("ungrounded_slot_count") or len(record_ungrounded)
+        )
 
         for blocker in record.get("coverage_blockers") or []:
             blocker_text = str(blocker or "").strip()
@@ -620,15 +627,9 @@ def summarize_prover_syntax_target_coverage(
             }
         )
 
-    passed_targets = sorted(
-        target for target in required if status_by_target[target] == "passed"
-    )
-    failed_targets = sorted(
-        target for target in required if status_by_target[target] == "failed"
-    )
-    skipped_targets = sorted(
-        target for target in required if status_by_target[target] == "skipped"
-    )
+    passed_targets = sorted(target for target in required if status_by_target[target] == "passed")
+    failed_targets = sorted(target for target in required if status_by_target[target] == "failed")
+    skipped_targets = sorted(target for target in required if status_by_target[target] == "skipped")
     missing_targets = [target for target in required if status_by_target[target] == "missing"]
     present_required_count = len(required) - len(missing_targets)
     all_required_passed = (
@@ -702,9 +703,7 @@ def summarize_prover_target_quality_gates(
         if target in gates_by_target and target not in complete_targets
     ]
     complete_rate = (
-        round(len(complete_targets) / len(required), 6)
-        if required and gate_record_count
-        else 1.0
+        round(len(complete_targets) / len(required), 6) if required and gate_record_count else 1.0
     )
     return {
         "quality_gate_record_count": gate_record_count,
@@ -714,16 +713,12 @@ def summarize_prover_target_quality_gates(
         "quality_gate_incomplete_targets": sorted(incomplete_targets),
         "quality_gate_complete_rate": complete_rate,
         "quality_gate_all_targets_complete": bool(
-            gate_record_count
-            and len(complete_targets) == len(required)
-            and not missing_targets
+            gate_record_count and len(complete_targets) == len(required) and not missing_targets
         ),
         "failed_quality_checks_by_target": {
             target: failed_by_target.get(target, []) for target in required
         },
-        "failed_quality_check_distribution": dict(
-            sorted(failed_distribution.items())
-        ),
+        "failed_quality_check_distribution": dict(sorted(failed_distribution.items())),
     }
 
 
@@ -735,9 +730,7 @@ def summarize_prover_target_role_matrix(
 
     required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
     valid_records = [record for record in records or [] if isinstance(record, Mapping)]
-    records_by_target: Dict[str, List[Mapping[str, Any]]] = {
-        target: [] for target in required
-    }
+    records_by_target: Dict[str, List[Mapping[str, Any]]] = {target: [] for target in required}
     for record in valid_records:
         target = _prover_syntax_record_target(record)
         if target in records_by_target:
@@ -790,31 +783,33 @@ def summarize_prover_target_role_matrix(
         components = _record_mapping(record.get("target_components"))
         dialect_profile = _record_mapping(record.get("target_dialect_profile"))
         gate = _record_mapping(record.get("target_quality_gate"))
-        role = str(
-            components.get("formula_role")
-            or record.get("target_formula_role")
-            or dialect_profile.get("formula_role")
-            or ""
-        ).strip() or "unknown"
-        dialect = str(
-            components.get("dialect_family")
-            or dialect_profile.get("dialect_family")
-            or ""
-        ).strip() or "unknown"
+        role = (
+            str(
+                components.get("formula_role")
+                or record.get("target_formula_role")
+                or dialect_profile.get("formula_role")
+                or ""
+            ).strip()
+            or "unknown"
+        )
+        dialect = (
+            str(
+                components.get("dialect_family") or dialect_profile.get("dialect_family") or ""
+            ).strip()
+            or "unknown"
+        )
         semantic_predicate = str(
             components.get("semantic_formula_predicate")
             or record.get("semantic_formula_predicate")
             or ""
         ).strip()
         semantic_family = str(
-            components.get("semantic_formula_family")
-            or record.get("semantic_formula_family")
-            or ""
+            components.get("semantic_formula_family") or record.get("semantic_formula_family") or ""
         ).strip()
         if not semantic_family:
-            semantic_family = _semantic_family_for_action_predicate(
-                semantic_predicate
-            ) or "ordinary_duty"
+            semantic_family = (
+                _semantic_family_for_action_predicate(semantic_predicate) or "ordinary_duty"
+            )
         failed_checks = [
             str(check or "").strip()
             for check in gate.get("failed_quality_checks") or []
@@ -827,9 +822,7 @@ def summarize_prover_target_role_matrix(
         )
 
         expected_role = EXPECTED_PROVER_TARGET_ROLES.get(target, "unknown")
-        expected_dialect = EXPECTED_PROVER_TARGET_DIALECT_FAMILIES.get(
-            target, "unknown"
-        )
+        expected_dialect = EXPECTED_PROVER_TARGET_DIALECT_FAMILIES.get(target, "unknown")
         role_matches = role == expected_role
         dialect_matches = dialect == expected_dialect
         if count == 0:
@@ -903,15 +896,12 @@ def summarize_prover_target_role_matrix(
         f"duplicate_target_role_records:{target}:{record_count_by_target[target]}"
         for target in sorted(duplicate_targets)
     )
-    blockers.extend(
-        f"missing_target_role_record:{target}" for target in sorted(missing_targets)
-    )
+    blockers.extend(f"missing_target_role_record:{target}" for target in sorted(missing_targets))
     blockers.extend(
         f"unknown_target_formula_role:{target}" for target in sorted(unknown_role_targets)
     )
     blockers.extend(
-        f"unknown_target_dialect_family:{target}"
-        for target in sorted(unknown_dialect_targets)
+        f"unknown_target_dialect_family:{target}" for target in sorted(unknown_dialect_targets)
     )
     blockers.extend(
         f"mismatched_target_formula_role:{target}:{roles_by_target[target]}!={EXPECTED_PROVER_TARGET_ROLES[target]}"
@@ -949,29 +939,21 @@ def summarize_prover_target_role_matrix(
         "target_roles_by_target": roles_by_target,
         "target_dialect_families_by_target": dialects_by_target,
         "target_role_matrix": matrix,
-        "target_role_matrix_status_distribution": dict(
-            sorted(status_distribution.items())
-        ),
+        "target_role_matrix_status_distribution": dict(sorted(status_distribution.items())),
         "target_role_matrix_status_by_target": status_by_target,
         "target_semantic_family_by_target": semantic_family_by_target,
-        "target_semantic_family_distribution": dict(
-            sorted(semantic_distribution.items())
-        ),
+        "target_semantic_family_distribution": dict(sorted(semantic_distribution.items())),
         "target_syntax_status_by_target": syntax_status_by_target,
-        "target_syntax_status_distribution": dict(
-            sorted(syntax_distribution.items())
-        ),
+        "target_syntax_status_distribution": dict(sorted(syntax_distribution.items())),
         "target_formal_validation_complete_by_target": formal_validation_by_target,
         "target_formal_validation_complete_count": formal_complete_count,
-        "target_formal_validation_incomplete_count": len(required)
-        - formal_complete_count,
+        "target_formal_validation_incomplete_count": len(required) - formal_complete_count,
         "target_failed_quality_checks_by_target": failed_quality_by_target,
         "expected_target_roles_by_target": {
             target: EXPECTED_PROVER_TARGET_ROLES[target] for target in required
         },
         "expected_target_dialect_families_by_target": {
-            target: EXPECTED_PROVER_TARGET_DIALECT_FAMILIES[target]
-            for target in required
+            target: EXPECTED_PROVER_TARGET_DIALECT_FAMILIES[target] for target in required
         },
         "mismatched_role_targets": sorted(mismatched_role_targets),
         "mismatched_dialect_targets": sorted(mismatched_dialect_targets),
@@ -1000,9 +982,7 @@ def summarize_prover_target_semantic_families(
             or ""
         ).strip()
         family = str(
-            components.get("semantic_formula_family")
-            or record.get("semantic_formula_family")
-            or ""
+            components.get("semantic_formula_family") or record.get("semantic_formula_family") or ""
         ).strip()
         if not family:
             family = _semantic_family_for_action_predicate(predicate)
@@ -1066,8 +1046,7 @@ def summarize_prover_syntax_target_corpus_coverage(
             required,
         )
         has_missing_source_id = any(
-            not str(record.get("source_id") or "").strip()
-            for record in source_records
+            not str(record.get("source_id") or "").strip() for record in source_records
         )
         if source_id == "unknown" and has_missing_source_id:
             source_blockers.append("missing_prover_syntax_source_id")
@@ -1085,9 +1064,7 @@ def summarize_prover_syntax_target_corpus_coverage(
         source_blockers.extend(
             f"missing_prover_syntax_target:{target}" for target in missing_targets
         )
-        source_blockers.extend(
-            f"failed_prover_syntax_target:{target}" for target in failed_targets
-        )
+        source_blockers.extend(f"failed_prover_syntax_target:{target}" for target in failed_targets)
         source_blockers.extend(
             f"skipped_prover_syntax_target:{target}" for target in skipped_targets
         )
@@ -1173,59 +1150,42 @@ def build_prover_syntax_target_coverage_record(
     """
 
     summary = summarize_prover_syntax_target_coverage(records, required_targets)
-    quality_summary = summarize_prover_target_quality_gates(
-        records, required_targets
-    )
+    quality_summary = summarize_prover_target_quality_gates(records, required_targets)
     role_summary = summarize_prover_target_role_matrix(records, required_targets)
     semantic_summary = summarize_prover_target_semantic_families(records)
     blockers: List[str] = []
     blockers.extend(
-        f"missing_prover_syntax_target:{target}"
-        for target in summary["missing_targets"]
+        f"missing_prover_syntax_target:{target}" for target in summary["missing_targets"]
     )
+    blockers.extend(f"failed_prover_syntax_target:{target}" for target in summary["failed_targets"])
     blockers.extend(
-        f"failed_prover_syntax_target:{target}"
-        for target in summary["failed_targets"]
-    )
-    blockers.extend(
-        f"skipped_prover_syntax_target:{target}"
-        for target in summary["skipped_targets"]
+        f"skipped_prover_syntax_target:{target}" for target in summary["skipped_targets"]
     )
     blockers.extend(summary.get("target_status_matrix_blockers", []))
     blockers.extend(
         f"failed_prover_quality_check:{check}"
-        for check, count in quality_summary.get(
-            "failed_quality_check_distribution", {}
-        ).items()
+        for check, count in quality_summary.get("failed_quality_check_distribution", {}).items()
         if count
     )
     blockers = sorted(dict.fromkeys(blockers))
 
     quality_gate_present = quality_summary["quality_gate_record_count"] > 0
     quality_complete = (
-        quality_summary["quality_gate_all_targets_complete"]
-        if quality_gate_present
-        else True
+        quality_summary["quality_gate_all_targets_complete"] if quality_gate_present else True
     )
     role_complete = bool(role_summary["target_role_matrix_complete"])
     formal_syntax_valid = bool(summary["all_required_passed"] and quality_complete)
-    validated_bridge_report = bool(
-        formal_syntax_valid and role_complete and not blockers
-    )
+    validated_bridge_report = bool(formal_syntax_valid and role_complete and not blockers)
     coverage_summary = dict(summary)
     coverage_summary.update(
         {
             "quality_gate_summary": quality_summary,
             "target_role_matrix_summary": role_summary,
-            "target_role_matrix_complete": role_summary[
-                "target_role_matrix_complete"
-            ],
+            "target_role_matrix_complete": role_summary["target_role_matrix_complete"],
             "target_role_matrix_requires_validation": role_summary[
                 "target_role_matrix_requires_validation"
             ],
-            "target_role_matrix_blockers": role_summary[
-                "target_role_matrix_blockers"
-            ],
+            "target_role_matrix_blockers": role_summary["target_role_matrix_blockers"],
             "bridge_validation_status": (
                 "validated" if validated_bridge_report else "requires_validation"
             ),
@@ -1238,9 +1198,7 @@ def build_prover_syntax_target_coverage_record(
                 validated_bridge_report=validated_bridge_report,
             ),
             "semantic_family_summary": semantic_summary,
-            "semantic_formula_families": semantic_summary[
-                "semantic_formula_families"
-            ],
+            "semantic_formula_families": semantic_summary["semantic_formula_families"],
             "semantic_formula_family_distribution": semantic_summary[
                 "semantic_formula_family_distribution"
             ],
@@ -1291,9 +1249,7 @@ def build_prover_syntax_target_coverage_record(
         "semantic_formula_family_distribution": semantic_summary[
             "semantic_formula_family_distribution"
         ],
-        "target_semantic_family_consistent": semantic_summary[
-            "target_semantic_family_consistent"
-        ],
+        "target_semantic_family_consistent": semantic_summary["target_semantic_family_consistent"],
         "coverage_summary": coverage_summary,
     }
 
@@ -1313,14 +1269,8 @@ def _prover_bridge_validation_basis(
     return {
         "validator": "deontic.local_prover_quality_gate",
         "validation_scope": "source_bridge_report",
-        "status": (
-            "validated"
-            if validated_bridge_report
-            else "requires_validation"
-        ),
-        "all_required_passed": bool(
-            coverage_summary.get("all_required_passed") is True
-        ),
+        "status": ("validated" if validated_bridge_report else "requires_validation"),
+        "all_required_passed": bool(coverage_summary.get("all_required_passed") is True),
         "quality_gate_all_targets_complete": bool(
             quality_summary.get("quality_gate_all_targets_complete") is True
         ),
@@ -1494,9 +1444,13 @@ def build_ir_slot_provenance_audit_record(
         "grounded_slot_count": grounded_count,
         "missing_slot_count": len(missing_slots),
         "ungrounded_slot_count": ungrounded_count,
-        "all_checked_slots_grounded": checked_count > 0 and grounded_count == checked_count and ungrounded_count == 0,
+        "all_checked_slots_grounded": checked_count > 0
+        and grounded_count == checked_count
+        and ungrounded_count == 0,
         "grounded_slot_rate": round(grounded_count / checked_count, 6) if checked_count else 0.0,
-        "ungrounded_slot_rate": round(ungrounded_count / checked_count, 6) if checked_count else 0.0,
+        "ungrounded_slot_rate": round(ungrounded_count / checked_count, 6)
+        if checked_count
+        else 0.0,
         "requires_validation": bool(blockers),
         "coverage_blockers": blockers,
         "slot_grounding": audit["slot_grounding"],
@@ -1635,7 +1589,9 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
 
         event = str(relation.get("event") or procedure.get("terminal_event") or "").strip()
         relation_type = str(relation.get("relation") or "").strip()
-        anchor_event = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+        anchor_event = str(
+            relation.get("anchor_event") or procedure.get("trigger_event") or ""
+        ).strip()
         if not event and not anchor_event:
             continue
 
@@ -1709,33 +1665,35 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
         }
         proof_role = "prerequisite" if formula_antecedent else "ordering_provenance"
 
-        records.append({
-            "event_id": _stable_id(
-                "event",
-                norm.source_id,
-                str(index),
-                event,
-                relation_type,
-                anchor_event,
-                "|".join(str(part) for part in span),
-            ),
-            "source_id": norm.source_id,
-            "canonical_citation": norm.canonical_citation,
-            "event_order": index,
-            "event": event,
-            "event_symbol": _procedure_event_symbol(event),
-            "relation": relation_type,
-            "anchor_event": anchor_event,
-            "anchor_symbol": _procedure_event_symbol(anchor_event),
-            "raw_text": raw_text,
-            "span": list(span),
-            "support_span": norm.support_span.to_list(),
-            "procedure_value": str(procedure.get("value") or ""),
-            "is_formula_antecedent": formula_antecedent,
-            "proof_role": proof_role,
-            "relation_record": dict(relation),
-            "schema_version": norm.schema_version,
-        })
+        records.append(
+            {
+                "event_id": _stable_id(
+                    "event",
+                    norm.source_id,
+                    str(index),
+                    event,
+                    relation_type,
+                    anchor_event,
+                    "|".join(str(part) for part in span),
+                ),
+                "source_id": norm.source_id,
+                "canonical_citation": norm.canonical_citation,
+                "event_order": index,
+                "event": event,
+                "event_symbol": _procedure_event_symbol(event),
+                "relation": relation_type,
+                "anchor_event": anchor_event,
+                "anchor_symbol": _procedure_event_symbol(anchor_event),
+                "raw_text": raw_text,
+                "span": list(span),
+                "support_span": norm.support_span.to_list(),
+                "procedure_value": str(procedure.get("value") or ""),
+                "is_formula_antecedent": formula_antecedent,
+                "proof_role": proof_role,
+                "relation_record": dict(relation),
+                "schema_version": norm.schema_version,
+            }
+        )
 
     return records
 
@@ -1768,7 +1726,9 @@ def build_prover_syntax_summary_record_from_ir(
     records = build_prover_syntax_records_from_ir(norm, targets)
     checked_records = [record for record in records if record.get("skipped") is not True]
     valid_count = sum(1 for record in checked_records if record.get("syntax_valid") is True)
-    invalid_records = [record for record in checked_records if record.get("syntax_valid") is not True]
+    invalid_records = [
+        record for record in checked_records if record.get("syntax_valid") is not True
+    ]
     diagnostics: Dict[str, int] = {}
     for record in invalid_records:
         for diagnostic in record.get("diagnostics") or []:
@@ -1820,9 +1780,7 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         if phrase.get("spans")
         for slot in _decoder_phrase_slot_names(phrase)
     }
-    missing_slots = [
-        slot for slot in decoded.missing_slots if slot not in grounded_phrase_slots
-    ]
+    missing_slots = [slot for slot in decoded.missing_slots if slot not in grounded_phrase_slots]
     fixed_phrase_count = sum(1 for phrase in phrase_rows if phrase.get("fixed") is True)
     decoded_legal_phrase_rows = [
         phrase
@@ -1830,15 +1788,11 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         if phrase.get("fixed") is not True and phrase.get("provenance_only") is not True
     ]
     ungrounded_phrase_count = sum(
-        1
-        for phrase in decoded_legal_phrase_rows
-        if not phrase.get("spans")
+        1 for phrase in decoded_legal_phrase_rows if not phrase.get("spans")
     )
     legal_phrase_count = len(decoded_legal_phrase_rows)
     grounded_phrase_count = legal_phrase_count - ungrounded_phrase_count
-    grounded_phrase_rate = (
-        grounded_phrase_count / legal_phrase_count if legal_phrase_count else 1.0
-    )
+    grounded_phrase_rate = grounded_phrase_count / legal_phrase_count if legal_phrase_count else 1.0
     ungrounded_phrase_rate = (
         ungrounded_phrase_count / legal_phrase_count if legal_phrase_count else 0.0
     )
@@ -2298,9 +2252,7 @@ def build_decoder_slot_grounding_audit_record(
         "slot_status": slot_status,
         "slot_grounding_complete": not missing_slots and not ungrounded_slots,
         "requires_validation": bool(
-            decoder_record.get("requires_validation") is True
-            or missing_slots
-            or ungrounded_slots
+            decoder_record.get("requires_validation") is True or missing_slots or ungrounded_slots
         ),
         "grounding_blockers": blockers,
         "proof_ready": bool(decoder_record.get("proof_ready")),
@@ -2340,8 +2292,7 @@ def build_decoder_slot_grounding_audit_records_from_irs(
     """
 
     return [
-        build_decoder_slot_grounding_audit_record_from_ir(norm, required_slots)
-        for norm in norms
+        build_decoder_slot_grounding_audit_record_from_ir(norm, required_slots) for norm in norms
     ]
 
 
@@ -2515,14 +2466,8 @@ def summarize_decoder_reconstruction_records(
             warning_text = str(warning)
             warning_distribution[warning_text] = warning_distribution.get(warning_text, 0) + 1
 
-    grounded_rates = [
-        float(row.get("grounded_decoded_phrase_rate") or 0.0)
-        for row in rows
-    ]
-    ungrounded_rates = [
-        float(row.get("ungrounded_decoded_phrase_rate") or 0.0)
-        for row in rows
-    ]
+    grounded_rates = [float(row.get("grounded_decoded_phrase_rate") or 0.0) for row in rows]
+    ungrounded_rates = [float(row.get("ungrounded_decoded_phrase_rate") or 0.0) for row in rows]
     total_missing_slots = sum(int(row.get("missing_slot_count") or 0) for row in rows)
     records_with_missing_slots = sum(
         1 for row in rows if int(row.get("missing_slot_count") or 0) > 0
@@ -2566,7 +2511,9 @@ def _procedure_event_symbol(value: str) -> str:
     return "".join(word.capitalize() for word in words) if words else ""
 
 
-def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[str, List[Dict[str, Any]]]:
+def build_document_export_tables_from_ir(
+    norms: Iterable[LegalNormIR],
+) -> Dict[str, List[Dict[str, Any]]]:
     """Build deterministic export tables from typed legal norms."""
 
     tables: Dict[str, List[Dict[str, Any]]] = {
@@ -2593,7 +2540,9 @@ def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[s
     return tables
 
 
-def parser_elements_to_export_tables(elements: Iterable[Mapping[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+def parser_elements_to_export_tables(
+    elements: Iterable[Mapping[str, Any]],
+) -> Dict[str, List[Dict[str, Any]]]:
     """Compatibility bridge from parser dictionaries to IR export tables."""
 
     return build_document_export_tables_from_ir(
@@ -2613,14 +2562,15 @@ def parser_elements_for_metrics(
     """
 
     all_source_elements = [
-        _hydrate_parser_element_from_prompt_context(dict(element))
-        for element in elements
+        _hydrate_parser_element_from_prompt_context(dict(element)) for element in elements
     ]
     _hydrate_prompt_context_modal_slots(all_source_elements)
     for element in all_source_elements:
         _hydrate_prompt_context_override_clause_details(element)
 
-    source_elements = [element for element in all_source_elements if not _is_context_only_parser_element(element)]
+    source_elements = [
+        element for element in all_source_elements if not _is_context_only_parser_element(element)
+    ]
     for element in source_elements:
         _hydrate_prompt_context_same_document_references(element, all_source_elements)
     source_norms = [LegalNormIR.from_parser_element(element) for element in all_source_elements]
@@ -2644,7 +2594,9 @@ def parser_elements_for_metrics(
 
     for element in metric_elements:
         export_readiness = dict(element.get("export_readiness") or {})
-        inactive_projection = inactive_projection_by_source_id.get(str(element.get("source_id") or ""))
+        inactive_projection = inactive_projection_by_source_id.get(
+            str(element.get("source_id") or "")
+        )
         batch_formula_record = batch_formula_records_by_source_id.get(element.get("source_id"))
         if batch_formula_record:
             export_readiness["formula_proof_ready"] = bool(batch_formula_record.get("proof_ready"))
@@ -2839,7 +2791,9 @@ def normalize_repair_required_details_from_parser_elements(
             detail["deterministic_resolution"] = (
                 projected_detail.get("deterministic_resolution") or {}
             )
-            detail["llm_repair"] = projected_detail.get("llm_repair") or detail.get("llm_repair", {})
+            detail["llm_repair"] = projected_detail.get("llm_repair") or detail.get(
+                "llm_repair", {}
+            )
 
         normalized.append(detail)
         seen_source_ids.add(source_id)
@@ -2887,9 +2841,7 @@ def normalize_repair_required_evaluation(
     normalized["repair_required"] = normalized_source_ids
     normalized["repair_required_count"] = len(normalized_details)
     normalized["repair_required_rate"] = (
-        len(normalized_details) / summary["element_count"]
-        if summary["element_count"]
-        else 0.0
+        len(normalized_details) / summary["element_count"] if summary["element_count"] else 0.0
     )
     normalized["active_repair_required_by_source_id"] = summary[
         "active_repair_required_by_source_id"
@@ -2901,8 +2853,12 @@ def normalize_repair_required_evaluation(
         normalized_metrics["repair_required_count"] = normalized["repair_required_count"]
         normalized_metrics["repair_required_rate"] = normalized["repair_required_rate"]
         normalized_metrics["repair_required"] = list(normalized_source_ids)
-        normalized_metrics["repair_required_details"] = [dict(detail) for detail in normalized_details]
-        normalized_metrics["active_repair_required_by_source_id"] = dict(summary["active_repair_required_by_source_id"])
+        normalized_metrics["repair_required_details"] = [
+            dict(detail) for detail in normalized_details
+        ]
+        normalized_metrics["active_repair_required_by_source_id"] = dict(
+            summary["active_repair_required_by_source_id"]
+        )
         coverage_gaps = normalized_metrics.get("coverage_gaps")
         if isinstance(coverage_gaps, list):
             normalized_metrics["coverage_gaps"] = [
@@ -2934,14 +2890,10 @@ def _evaluation_parser_elements(
         return explicit_elements
 
     recovered: List[Dict[str, Any]] = []
-    recovered.extend(
-        _parser_context_elements_from_evaluation_document_text(evaluation)
-    )
+    recovered.extend(_parser_context_elements_from_evaluation_document_text(evaluation))
     metrics = evaluation.get("metrics")
     if isinstance(metrics, Mapping):
-        recovered.extend(
-            _parser_context_elements_from_evaluation_document_text(metrics)
-        )
+        recovered.extend(_parser_context_elements_from_evaluation_document_text(metrics))
 
     for sample in _evaluation_samples(evaluation):
         if not isinstance(sample, Mapping):
@@ -2949,9 +2901,7 @@ def _evaluation_parser_elements(
         sample_elements = sample.get("elements") or sample.get("parser_elements")
         if isinstance(sample_elements, list):
             recovered.extend(
-                dict(element)
-                for element in sample_elements
-                if isinstance(element, Mapping)
+                dict(element) for element in sample_elements if isinstance(element, Mapping)
             )
             continue
 
@@ -2968,7 +2918,9 @@ def _evaluation_parser_elements(
         if not isinstance(detail, Mapping):
             continue
         llm_repair = detail.get("llm_repair")
-        prompt_context = dict(llm_repair.get("prompt_context") or {}) if isinstance(llm_repair, Mapping) else {}
+        prompt_context = (
+            dict(llm_repair.get("prompt_context") or {}) if isinstance(llm_repair, Mapping) else {}
+        )
         candidate = _parser_element_from_evaluation_sample(prompt_context)
         candidate = _hydrate_parser_element_from_prompt_context(candidate) if candidate else {}
         if candidate:
@@ -2997,7 +2949,9 @@ def _evaluation_samples(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]
     for container in (evaluation, evaluation.get("metrics")):
         if not isinstance(container, Mapping):
             continue
-        for sample in container.get("samples", []) if isinstance(container.get("samples"), list) else []:
+        for sample in (
+            container.get("samples", []) if isinstance(container.get("samples"), list) else []
+        ):
             if isinstance(sample, Mapping):
                 samples.append(sample)
     return samples
@@ -3016,8 +2970,7 @@ def _evaluation_repair_required_details(evaluation: Mapping[str, Any]) -> List[M
             if not isinstance(detail, Mapping):
                 continue
             key = "|".join(
-                str(detail.get(field) or "")
-                for field in ("source_id", "sample_id", "text")
+                str(detail.get(field) or "") for field in ("source_id", "sample_id", "text")
             )
             if key and key in seen:
                 continue
@@ -3035,7 +2988,9 @@ def _evaluation_repair_required_details(evaluation: Mapping[str, Any]) -> List[M
     return recovered
 
 
-def _dedupe_evaluation_parser_elements(elements: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+def _dedupe_evaluation_parser_elements(
+    elements: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
     """Return recovered evaluation parser rows without losing context rows.
 
     Evaluation payloads can split same-document evidence across ``samples`` and
@@ -3051,8 +3006,7 @@ def _dedupe_evaluation_parser_elements(elements: Sequence[Mapping[str, Any]]) ->
         row = dict(element)
         source_id = str(row.get("source_id") or "")
         key = source_id or "|".join(
-            str(row.get(field) or "")
-            for field in ("canonical_citation", "text", "support_text")
+            str(row.get(field) or "") for field in ("canonical_citation", "text", "support_text")
         )
         if key and key in seen:
             continue
@@ -3111,7 +3065,10 @@ def _recover_detail_only_precedence_override_slots(
     warnings = set(str(warning) for warning in candidate.get("parser_warnings") or [])
     if candidate.get("norm_type") != "permission" or candidate.get("deontic_operator") != "P":
         return
-    if warnings != {"cross_reference_requires_resolution", "override_clause_requires_precedence_review"}:
+    if warnings != {
+        "cross_reference_requires_resolution",
+        "override_clause_requires_precedence_review",
+    }:
         return
     if candidate.get("override_clause_details") or candidate.get("cross_reference_details"):
         return
@@ -3119,10 +3076,7 @@ def _recover_detail_only_precedence_override_slots(
         return
 
     text = str(
-        detail.get("text")
-        or detail.get("source_text")
-        or candidate.get("text")
-        or ""
+        detail.get("text") or detail.get("source_text") or candidate.get("text") or ""
     ).strip()
     if not text:
         return
@@ -3183,7 +3137,11 @@ def _infer_detail_deontic_operator(detail: Mapping[str, Any]) -> str:
 
 def _raw_repair_details(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
     details = evaluation.get("repair_required_details", [])
-    return [detail for detail in details if isinstance(detail, Mapping)] if isinstance(details, list) else []
+    return (
+        [detail for detail in details if isinstance(detail, Mapping)]
+        if isinstance(details, list)
+        else []
+    )
 
 
 def _detail_records_from_sample(
@@ -3324,7 +3282,9 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "canonical_citation": sample.get("canonical_citation", ""),
         "sample_id": sample.get("sample_id", ""),
         "text": sample.get("text", sample.get("source_text", "")),
-        "support_text": sample.get("support_text", sample.get("text", sample.get("source_text", ""))),
+        "support_text": sample.get(
+            "support_text", sample.get("text", sample.get("source_text", ""))
+        ),
         "support_span": list(sample.get("support_span") or sample.get("source_span") or []),
         "source_span": list(sample.get("source_span") or sample.get("support_span") or []),
         "field_spans": dict(sample.get("field_spans") or {}),
@@ -3337,9 +3297,13 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "exceptions": _legacy_text_values_from_sample(sample, "exceptions"),
         "exception_details": _detail_records_from_sample(sample, "exception_details", "exceptions"),
         "override_clauses": _legacy_text_values_from_sample(sample, "override_clauses"),
-        "override_clause_details": _detail_records_from_sample(sample, "override_clause_details", "override_clauses"),
+        "override_clause_details": _detail_records_from_sample(
+            sample, "override_clause_details", "override_clauses"
+        ),
         "cross_references": _legacy_text_values_from_sample(sample, "cross_references"),
-        "cross_reference_details": _detail_records_from_sample(sample, "cross_reference_details", "cross_references"),
+        "cross_reference_details": _detail_records_from_sample(
+            sample, "cross_reference_details", "cross_references"
+        ),
         "resolved_cross_references": list(sample.get("resolved_cross_references") or []),
         "parser_warnings": list(sample.get("parser_warnings") or []),
         "llm_repair": dict(sample.get("llm_repair") or {}),
@@ -3350,12 +3314,13 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
 
 def _sample_has_parser_norm_slots(sample: Mapping[str, Any]) -> bool:
     return any(
-        key in sample
-        for key in ("norm_type", "deontic_operator", "modality", "subject", "action")
+        key in sample for key in ("norm_type", "deontic_operator", "modality", "subject", "action")
     )
 
 
-def _parser_context_element_from_text_only_section_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
+def _parser_context_element_from_text_only_section_sample(
+    sample: Mapping[str, Any],
+) -> Dict[str, Any]:
     """Recover same-document section context from text-only evaluation samples.
 
     Metric payloads may include a cited section as a sample with only raw text,
@@ -3424,7 +3389,11 @@ def _is_context_only_parser_element(element: Mapping[str, Any]) -> bool:
         return True
 
     norm_type = str(element.get("norm_type") or "").strip().lower()
-    if not norm_type and element.get("document_text") and not _sample_has_parser_norm_slots(element):
+    if (
+        not norm_type
+        and element.get("document_text")
+        and not _sample_has_parser_norm_slots(element)
+    ):
         return True
     if norm_type not in {"document_context", "section_context"}:
         return False
@@ -3512,7 +3481,9 @@ def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
         return export_repair_required is True
 
     llm_repair = dict(element.get("llm_repair") or {})
-    active_warnings = element.get("active_repair_warnings") or element.get("repair_required_warnings") or []
+    active_warnings = (
+        element.get("active_repair_warnings") or element.get("repair_required_warnings") or []
+    )
     return llm_repair.get("required") is True or bool(active_warnings)
 
 
@@ -3536,7 +3507,9 @@ def _has_inactive_deterministic_repair_projection(element: Mapping[str, Any]) ->
         return False
     if element.get("active_repair_required") is False or element.get("repair_required") is False:
         return True
-    return llm_repair.get("required") is False and llm_repair.get("deterministically_resolved") is True
+    return (
+        llm_repair.get("required") is False and llm_repair.get("deterministically_resolved") is True
+    )
 
 
 def _cleared_deterministic_repair_payload(element: Mapping[str, Any]) -> Dict[str, Any]:
@@ -3587,7 +3560,9 @@ def parser_elements_with_ir_export_readiness(
     formula_records = build_deontic_formula_records_from_irs(resolved_norms)
 
     aligned: List[Dict[str, Any]] = []
-    for copied, resolved_norm, formula_record in zip(copied_elements, resolved_norms, formula_records):
+    for copied, resolved_norm, formula_record in zip(
+        copied_elements, resolved_norms, formula_records
+    ):
         deterministic_resolution = formula_record.get("deterministic_resolution") or {}
         formula_requires_validation = bool(formula_record.get("requires_validation"))
         formula_repair_required = bool(formula_record.get("repair_required"))
@@ -3667,7 +3642,10 @@ def _project_parser_resolved_cross_references(
     for reference in original_references if isinstance(original_references, list) else []:
         if not isinstance(reference, dict):
             continue
-        if reference.get("resolution_status") == "unresolved" or reference.get("target_exists") is False:
+        if (
+            reference.get("resolution_status") == "unresolved"
+            or reference.get("target_exists") is False
+        ):
             continue
         key = _reference_provenance_key(_normalized_reference_record(reference))
         if key and key not in seen:
@@ -3744,7 +3722,9 @@ def _local_scope_parser_resolved_cross_references(
             if not _is_local_scope_reference_record(reference):
                 continue
             normalized = _normalized_reference_record(reference)
-            normalized["target"] = normalized.get("target") or _local_scope_reference_target(reference)
+            normalized["target"] = normalized.get("target") or _local_scope_reference_target(
+                reference
+            )
             normalized["resolved"] = True
             normalized["same_document"] = True
             normalized["resolution_scope"] = "local_self"
@@ -3760,7 +3740,9 @@ def _local_scope_parser_resolved_cross_references(
 
 
 def _local_scope_reference_target(reference: Mapping[str, Any]) -> str:
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
     if reference_type not in {"section", "subsection", "chapter", "title", "article", "part"}:
         return ""
 
@@ -3858,8 +3840,7 @@ def parser_elements_to_ir_aligned_export_tables(
     aligned_elements = parser_elements_with_ir_export_readiness(elements)
     ir_tables = parser_elements_to_export_tables(aligned_elements)
     merged: Dict[str, List[Dict[str, Any]]] = {
-        name: [dict(row) for row in rows]
-        for name, rows in ir_tables.items()
+        name: [dict(row) for row in rows] for name, rows in ir_tables.items()
     }
     if not legacy_tables:
         return merged
@@ -3915,9 +3896,7 @@ def _merge_repair_queue_rows(
     """Keep only repair rows that remain blocked under IR formula readiness."""
 
     ir_by_source_id = {
-        str(row.get("source_id") or ""): dict(row)
-        for row in ir_rows
-        if row.get("source_id")
+        str(row.get("source_id") or ""): dict(row) for row in ir_rows if row.get("source_id")
     }
     merged_rows: List[Dict[str, Any]] = []
     seen_source_ids: set[str] = set()
@@ -4034,10 +4013,7 @@ def _with_same_document_reference_resolutions(norms: List[LegalNormIR]) -> List[
     if not section_index:
         return norms
 
-    return [
-        _resolve_norm_same_document_references(norm, section_index)
-        for norm in norms
-    ]
+    return [_resolve_norm_same_document_references(norm, section_index) for norm in norms]
 
 
 def _same_document_section_index(norms: Sequence[LegalNormIR]) -> Dict[str, str]:
@@ -4115,7 +4091,9 @@ def _reference_section_citations(reference: Mapping[str, Any]) -> List[str]:
             if citation not in citations:
                 citations.append(citation)
 
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
     target = str(reference.get("target") or reference.get("section") or "").strip()
     if reference_type == "section" and target and target.lower() not in {"this", "current"}:
         for citation in _section_citations_from_text(f"section {target}"):
@@ -4223,7 +4201,9 @@ def _cross_reference_provenance_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         key = _reference_provenance_key(normalized)
         if not key:
             continue
-        if _is_local_scope_reference_record(reference) or _is_local_scope_reference_record(normalized):
+        if _is_local_scope_reference_record(reference) or _is_local_scope_reference_record(
+            normalized
+        ):
             normalized["resolved"] = True
             normalized["same_document"] = True
             normalized.setdefault("resolution_scope", "local_self")
@@ -4270,8 +4250,12 @@ def _cross_reference_provenance_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
 
 def _normalized_reference_record(reference: Mapping[str, Any]) -> Dict[str, Any]:
     citation = _reference_section_citation(reference)
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
-    target = str(reference.get("target") or reference.get("section") or reference.get("subsection") or "").strip()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
+    target = str(
+        reference.get("target") or reference.get("section") or reference.get("subsection") or ""
+    ).strip()
     text = _reference_display_text(reference)
 
     normalized = {
@@ -4281,9 +4265,17 @@ def _normalized_reference_record(reference: Mapping[str, Any]) -> Dict[str, Any]
         "value": citation or text,
         "raw_text": str(reference.get("raw_text") or reference.get("text") or "").strip(),
         "span": list(reference.get("span") or []),
-        "resolution_scope": str(reference.get("resolution_scope") or reference.get("scope") or "").strip(),
+        "resolution_scope": str(
+            reference.get("resolution_scope") or reference.get("scope") or ""
+        ).strip(),
     }
-    for key in ("source_id", "resolved_source_id", "target_document", "document_scope", "source_scope"):
+    for key in (
+        "source_id",
+        "resolved_source_id",
+        "target_document",
+        "document_scope",
+        "source_scope",
+    ):
         value = reference.get(key)
         if value:
             normalized[key] = value
@@ -4293,7 +4285,9 @@ def _normalized_reference_record(reference: Mapping[str, Any]) -> Dict[str, Any]
 
 
 def _reference_display_text(reference: Mapping[str, Any]) -> str:
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
     value_text = str(reference.get("value") or "").strip()
     if reference_type == "section" and value_text.lower() in {
         "this",
@@ -4316,15 +4310,25 @@ def _reference_display_text(reference: Mapping[str, Any]) -> str:
                 return f"section {value}"
             return value
 
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
-    target = str(reference.get("target") or reference.get("section") or reference.get("subsection") or "").strip()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
+    target = str(
+        reference.get("target") or reference.get("section") or reference.get("subsection") or ""
+    ).strip()
     if reference_type and target:
-        return target if target.lower().startswith(reference_type + " ") else f"{reference_type} {target}"
+        return (
+            target
+            if target.lower().startswith(reference_type + " ")
+            else f"{reference_type} {target}"
+        )
     return ""
 
 
 def _reference_provenance_key(reference: Mapping[str, Any]) -> str:
-    citation = _canonical_section_citation(str(reference.get("canonical_citation") or reference.get("value") or ""))
+    citation = _canonical_section_citation(
+        str(reference.get("canonical_citation") or reference.get("value") or "")
+    )
     if citation:
         return citation
     value = str(reference.get("value") or reference.get("raw_text") or "").strip().lower()
@@ -4347,11 +4351,19 @@ def _is_same_document_resolved_reference(reference: Mapping[str, Any]) -> bool:
 def _is_local_scope_reference_record(reference: Mapping[str, Any]) -> bool:
     """Return whether a reference explicitly points to the current local scope."""
 
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
     if reference_type not in {"section", "subsection", "chapter", "title", "article", "part"}:
         return False
 
-    target = str(reference.get("target") or reference.get("section") or reference.get("subsection") or "").strip().lower()
+    target = (
+        str(
+            reference.get("target") or reference.get("section") or reference.get("subsection") or ""
+        )
+        .strip()
+        .lower()
+    )
     if target in {"this", "current", f"this {reference_type}", f"current {reference_type}"}:
         return True
 
@@ -4414,10 +4426,7 @@ def _hydrate_prompt_context_override_clause_details(element: Dict[str, Any]) -> 
         return
 
     source_text = str(
-        prompt_context.get("source_text")
-        or element.get("text")
-        or element.get("source_text")
-        or ""
+        prompt_context.get("source_text") or element.get("text") or element.get("source_text") or ""
     )
     match = re.search(r"\bnotwithstanding\s+(.+?)(?:,|$)", source_text, re.IGNORECASE)
     if not match:
@@ -4469,13 +4478,17 @@ def _hydrate_prompt_context_modal_slots(elements: Sequence[Dict[str, Any]]) -> N
         if not isinstance(prompt_context, Mapping):
             continue
 
-        prompt_operator = str(
-            prompt_context.get("deontic_operator") or prompt_context.get("modality") or ""
-        ).strip().upper()
+        prompt_operator = (
+            str(prompt_context.get("deontic_operator") or prompt_context.get("modality") or "")
+            .strip()
+            .upper()
+        )
         if prompt_operator not in allowed:
             continue
 
-        current_operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+        current_operator = (
+            str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+        )
         if current_operator in allowed:
             continue
 
@@ -4524,7 +4537,9 @@ def _hydrate_prompt_context_same_document_references(
             )
         if not citation or citation not in section_index:
             return
-        projected.append(_parser_native_same_document_reference(reference, citation, section_index[citation]))
+        projected.append(
+            _parser_native_same_document_reference(reference, citation, section_index[citation])
+        )
 
     if projected:
         element["resolved_cross_references"] = projected
@@ -4565,7 +4580,9 @@ def _prompt_context_section_index(
                 section_index.setdefault(citation, candidate_id or source_id)
         section_context = candidate.get("section_context") or {}
         if isinstance(section_context, Mapping):
-            citation = _canonical_section_citation(f"section {section_context.get('section') or ''}")
+            citation = _canonical_section_citation(
+                f"section {section_context.get('section') or ''}"
+            )
             if citation:
                 section_index.setdefault(citation, candidate_id or source_id)
         for key in ("document_text", "source_document", "full_text", "same_document_text"):
@@ -4825,11 +4842,11 @@ def summarize_reconstruction_slot_loss(
             ).strip()
             if not slot_name:
                 continue
-            status = str(
-                slot_record.get("status")
-                or slot_record.get("grounding_status")
-                or ""
-            ).strip().lower()
+            status = (
+                str(slot_record.get("status") or slot_record.get("grounding_status") or "")
+                .strip()
+                .lower()
+            )
             if slot_record.get("grounded") is True or status in {"grounded", "present"}:
                 grounded_slots.add(slot_name)
             elif slot_record.get("ungrounded") is True or status in {"ungrounded", "unprovenanced"}:
@@ -4845,7 +4862,9 @@ def summarize_reconstruction_slot_loss(
                 slot_names = _decoder_phrase_slot_names(phrase)
                 if not slot_names:
                     continue
-                spans = phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
+                spans = (
+                    phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
+                )
                 for slot_name in slot_names:
                     if spans:
                         grounded_slots.add(slot_name)
@@ -4853,7 +4872,9 @@ def summarize_reconstruction_slot_loss(
                         ungrounded_slots.add(slot_name)
 
     grounded_required = sorted(slot for slot in required if slot in grounded_slots)
-    missing_required = sorted(slot for slot in required if slot not in grounded_slots or slot in missing_slots)
+    missing_required = sorted(
+        slot for slot in required if slot not in grounded_slots or slot in missing_slots
+    )
     extra_ungrounded = sorted(slot for slot in ungrounded_slots if slot not in required)
     ungrounded_required = sorted(slot for slot in required if slot in ungrounded_slots)
     blockers = [f"missing_reconstruction_slot:{slot}" for slot in missing_required]
@@ -4876,9 +4897,15 @@ def summarize_reconstruction_slot_loss(
         "grounded_required_slot_count": grounded_count,
         "missing_required_slot_count": len(missing_required),
         "ungrounded_slot_count": ungrounded_count,
-        "slot_reconstruction_complete": required_count > 0 and grounded_count == required_count and ungrounded_count == 0,
-        "grounded_required_slot_rate": round(grounded_count / required_count, 6) if required_count else 0.0,
-        "ungrounded_decoded_slot_rate": round(ungrounded_count / (grounded_count + ungrounded_count), 6)
+        "slot_reconstruction_complete": required_count > 0
+        and grounded_count == required_count
+        and ungrounded_count == 0,
+        "grounded_required_slot_rate": round(grounded_count / required_count, 6)
+        if required_count
+        else 0.0,
+        "ungrounded_decoded_slot_rate": round(
+            ungrounded_count / (grounded_count + ungrounded_count), 6
+        )
         if grounded_count + ungrounded_count
         else 0.0,
         "coverage_blockers": blockers,
@@ -5000,9 +5027,7 @@ def _deterministic_capability_decoder_profile(
             ungrounded_slots.append(slot)
 
     missing_slots = [
-        str(slot)
-        for slot in decoder_record.get("missing_slots") or []
-        if str(slot).strip()
+        str(slot) for slot in decoder_record.get("missing_slots") or [] if str(slot).strip()
     ]
     grounded_count = len(grounded_slots)
     decoded_count = len(decoded_slots)
@@ -5067,93 +5092,107 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if semantic_family:
         return semantic_family
 
-    if action_predicate.startswith((
-        "AdministerAgreement",
-        "AdministerContract",
-        "AdministerProcurement",
-        "Award",
-        "OpenBid",
-        "OpenBids",
-        "OpenProposal",
-        "OpenProposals",
-        "Procure",
-        "SelectBidder",
-        "SelectContractor",
-        "SelectVendor",
-        "Solicit",
-    )):
+    if action_predicate.startswith(
+        (
+            "AdministerAgreement",
+            "AdministerContract",
+            "AdministerProcurement",
+            "Award",
+            "OpenBid",
+            "OpenBids",
+            "OpenProposal",
+            "OpenProposals",
+            "Procure",
+            "SelectBidder",
+            "SelectContractor",
+            "SelectVendor",
+            "Solicit",
+        )
+    ):
         return "procurement_contracting_duty"
     if action_predicate.startswith(("Abate", "Remediate", "Mitigate", "Enforce", "Remedy")):
         return "enforcement_remedy_duty"
     if action_predicate.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
         return "regulatory_control_duty"
-    if action_predicate.startswith((
-        "Analyze",
-        "Diagnose",
-        "Examine",
-        "Immunize",
-        "Screen",
-        "Vaccinate",
-    )):
+    if action_predicate.startswith(
+        (
+            "Analyze",
+            "Diagnose",
+            "Examine",
+            "Immunize",
+            "Screen",
+            "Vaccinate",
+        )
+    ):
         return "health_compliance_duty"
-    if action_predicate.startswith((
-        "Accession",
-        "DocumentChainCustody",
-        "InventoryEvidence",
-        "PreserveEvidence",
-    )):
+    if action_predicate.startswith(
+        (
+            "Accession",
+            "DocumentChainCustody",
+            "InventoryEvidence",
+            "PreserveEvidence",
+        )
+    ):
         return "evidence_custody_duty"
-    if action_predicate.startswith((
-        "Anonymize",
-        "Decrypt",
-        "Deidentify",
-        "Destroy",
-        "Detokenize",
-        "Encrypt",
-        "Erase",
-        "Expunge",
-        "Hash",
-        "Mask",
-        "Pseudonymize",
-        "Redact",
-        "Seal",
-        "Tokenize",
-        "Unseal",
-    )):
+    if action_predicate.startswith(
+        (
+            "Anonymize",
+            "Decrypt",
+            "Deidentify",
+            "Destroy",
+            "Detokenize",
+            "Encrypt",
+            "Erase",
+            "Expunge",
+            "Hash",
+            "Mask",
+            "Pseudonymize",
+            "Redact",
+            "Seal",
+            "Tokenize",
+            "Unseal",
+        )
+    ):
         return "data_protection_duty"
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
-    if action_predicate.startswith((
-        "Announce",
-        "Circulate",
-        "Disseminate",
-        "Display",
-        "Distribute",
-        "Post",
-        "Transmit",
-    )):
+    if action_predicate.startswith(
+        (
+            "Announce",
+            "Circulate",
+            "Disseminate",
+            "Display",
+            "Distribute",
+            "Post",
+            "Transmit",
+        )
+    ):
         return "public_information_duty"
     if action_predicate.startswith(("Comment", "Object", "Respond")):
         return "review_participation_duty"
-    if action_predicate.startswith((
-        "FileAppeal",
-        "FileApplication",
-        "FilePetition",
-        "MakeAppeal",
-        "MakeApplication",
-        "MakePetition",
-        "SubmitAppeal",
-        "SubmitApplication",
-        "SubmitPetition",
-    )):
+    if action_predicate.startswith(
+        (
+            "FileAppeal",
+            "FileApplication",
+            "FilePetition",
+            "MakeAppeal",
+            "MakeApplication",
+            "MakePetition",
+            "SubmitAppeal",
+            "SubmitApplication",
+            "SubmitPetition",
+        )
+    ):
         return "administrative_review_request_duty"
-    if action_predicate.startswith((
-        "Accredit",
-        "Credential",
-        "Endorse",
-        "License",
-        "Permit",
-    )) or action_predicate in {
+    if action_predicate.startswith(
+        (
+            "Accredit",
+            "Credential",
+            "Endorse",
+            "License",
+            "Permit",
+        )
+    ) or action_predicate in {
         "RegisterOperators",
         "RegisterInspectors",
         "RegisterInstructors",
@@ -5168,36 +5207,42 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         action_predicate
     ):
         return "instrument_status_duty"
-    if action_predicate.startswith((
-        "Assess",
-        "Impose",
-        "Allocate",
-        "Apportion",
-        "Remit",
-    )):
+    if action_predicate.startswith(
+        (
+            "Assess",
+            "Impose",
+            "Allocate",
+            "Apportion",
+            "Remit",
+        )
+    ):
         return "financial_administration_duty"
     if action_predicate.startswith(("Refer", "Remand")):
         return "case_routing_duty"
-    if action_predicate.startswith((
-        "Adjudicate",
-        "Decide",
-        "Dismiss",
-        "Dispose",
-        "Find",
-    )):
+    if action_predicate.startswith(
+        (
+            "Adjudicate",
+            "Decide",
+            "Dismiss",
+            "Dispose",
+            "Find",
+        )
+    ):
         return "judicial_disposition_duty"
     if action_predicate.startswith(("Waive", "Extend")):
         return "administrative_relief_duty"
     if action_predicate.startswith(("Register", "Enroll", "Renew")):
         return "registration_lifecycle_duty"
-    if action_predicate.startswith((
-        "Catalog",
-        "Index",
-        "Interpret",
-        "Summarize",
-        "Transcribe",
-        "Translate",
-    )):
+    if action_predicate.startswith(
+        (
+            "Catalog",
+            "Index",
+            "Interpret",
+            "Summarize",
+            "Transcribe",
+            "Translate",
+        )
+    ):
         return "records_information_processing_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
@@ -5226,8 +5271,7 @@ def _deterministic_action_predicate_family(
 
 def _has_temporal_semantic_anchor(norm: LegalNormIR) -> bool:
     if any(
-        isinstance(record, Mapping)
-        and str(record.get("type") or "").strip().lower() != "period"
+        isinstance(record, Mapping) and str(record.get("type") or "").strip().lower() != "period"
         for record in norm.temporal_constraints or []
     ):
         return True
@@ -5240,19 +5284,18 @@ def _has_deadline_semantic_anchor(norm: LegalNormIR) -> bool:
             continue
         constraint_type = str(record.get("type") or "").strip().lower()
         temporal_kind = str(record.get("temporal_kind") or "").strip().lower()
-        value = str(
-            record.get("value")
-            or record.get("normalized_text")
-            or record.get("raw_text")
-            or ""
-        ).strip().lower()
+        value = (
+            str(
+                record.get("value") or record.get("normalized_text") or record.get("raw_text") or ""
+            )
+            .strip()
+            .lower()
+        )
         if constraint_type == "deadline":
             return True
         if "deadline" in temporal_kind:
             return True
-        if value.startswith(
-            ("within ", "by ", "before ", "not later than ", "no later than ")
-        ):
+        if value.startswith(("within ", "by ", "before ", "not later than ", "no later than ")):
             return True
         if record.get("quantity") is not None and record.get("anchor_event"):
             return True
@@ -5264,13 +5307,17 @@ def _has_temporal_condition_anchor(norm: LegalNormIR) -> bool:
         if not isinstance(record, Mapping):
             continue
         condition_type = str(record.get("type") or "").strip().lower()
-        value = str(
-            record.get("value")
-            or record.get("normalized_text")
-            or record.get("raw_text")
-            or record.get("text")
-            or ""
-        ).strip().lower()
+        value = (
+            str(
+                record.get("value")
+                or record.get("normalized_text")
+                or record.get("raw_text")
+                or record.get("text")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
         if condition_type in {"temporal", "deadline", "duration"}:
             return True
         if value.startswith(
@@ -5286,27 +5333,138 @@ def _semantic_family_for_action_predicate(action_predicate: str) -> str:
         return ""
 
     ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
-        (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
+        (
+            (
+                "DocumentChainCustody",
+                "LogCustody",
+                "RecordEvidenceTransfer",
+                "InventoryEvidence",
+                "InventoryExhibit",
+                "Accession",
+                "PreserveEvidence",
+            ),
+            "evidence_custody_duty",
+        ),
         (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
-        (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
-        (("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"), "consent_release_instrument_duty"),
-        (("Accommodate", "ProvideAuxiliaryAid", "ProvideAccessible", "ModifyAccessibility", "PlanLanguageAccess", "FormatAccessibly", "InterpretSignLanguage"), "accessibility_accommodation_duty"),
-        (("ProvideAccess", "ProvideRecordsInspection", "PermitInspection", "ProvideCopy", "ProvidePublicAccess"), "public_access_records_duty"),
-        (("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"), "document_authentication_duty"),
+        (
+            ("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"),
+            "incident_risk_reporting_duty",
+        ),
+        (
+            ("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"),
+            "consent_release_instrument_duty",
+        ),
+        (
+            (
+                "Accommodate",
+                "ProvideAuxiliaryAid",
+                "ProvideAccessible",
+                "ModifyAccessibility",
+                "PlanLanguageAccess",
+                "FormatAccessibly",
+                "InterpretSignLanguage",
+            ),
+            "accessibility_accommodation_duty",
+        ),
+        (
+            (
+                "ProvideAccess",
+                "ProvideRecordsInspection",
+                "PermitInspection",
+                "ProvideCopy",
+                "ProvidePublicAccess",
+            ),
+            "public_access_records_duty",
+        ),
+        (
+            ("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"),
+            "document_authentication_duty",
+        ),
         (("Mediate", "Arbitrate", "Settle", "Conciliate", "Negotiate"), "dispute_resolution_duty"),
-        (("Anonymize", "Decrypt", "Deidentify", "Destroy", "Detokenize", "Encrypt", "Erase", "Expunge", "Hash", "Mask", "Pseudonymize", "Redact", "Seal", "Tokenize", "Unseal"), "data_protection_duty"),
-        (("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"), "legal_recordkeeping_duty"),
+        (
+            (
+                "Anonymize",
+                "Decrypt",
+                "Deidentify",
+                "Destroy",
+                "Detokenize",
+                "Encrypt",
+                "Erase",
+                "Expunge",
+                "Hash",
+                "Mask",
+                "Pseudonymize",
+                "Redact",
+                "Seal",
+                "Tokenize",
+                "Unseal",
+            ),
+            "data_protection_duty",
+        ),
+        (
+            ("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"),
+            "legal_recordkeeping_duty",
+        ),
         (("Train", "Orient", "Instruct"), "training_orientation_duty"),
-        (("ReviewAccess", "RotateCredentials", "ResetPassword", "ScanVulnerabilities", "MonitorIntrusions"), "cybersecurity_access_control_duty"),
-        (("ImplementCorrectiveActionPlan", "SubmitCompliancePlan", "AssessRisk", "MaintainComplianceProgram", "PlanEmergencyResponse", "AnalyzeSafety"), "compliance_planning_duty"),
-        (("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"), "data_quality_processing_duty"),
+        (
+            (
+                "ReviewAccess",
+                "RotateCredentials",
+                "ResetPassword",
+                "ScanVulnerabilities",
+                "MonitorIntrusions",
+            ),
+            "cybersecurity_access_control_duty",
+        ),
+        (
+            (
+                "ImplementCorrectiveActionPlan",
+                "SubmitCompliancePlan",
+                "AssessRisk",
+                "MaintainComplianceProgram",
+                "PlanEmergencyResponse",
+                "AnalyzeSafety",
+            ),
+            "compliance_planning_duty",
+        ),
+        (
+            ("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"),
+            "data_quality_processing_duty",
+        ),
         (("Report", "FileReturn", "DeclareCompliance"), "regulatory_reporting_duty"),
         (("Map", "Geocode", "Georeference", "Survey"), "geospatial_records_duty"),
         (("Evacuate", "Shelter", "Rescue", "Drill"), "emergency_operations_duty"),
         (("Revise", "Annotate", "Supplement"), "code_maintenance_duty"),
-        (("Catalog", "Index", "Interpret", "Summarize", "Transcribe", "Translate", "Abstract", "Excerpt", "Caption", "Tag"), "records_information_processing_duty"),
-        (("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"), "administrative_relief_duty"),
-        (("DepositSecurity", "ProvideProofInsurance", "MaintainLiabilityInsurance", "PostBond", "EstablishEscrow", "ReleaseBond"), "financial_assurance_duty"),
+        (
+            (
+                "Catalog",
+                "Index",
+                "Interpret",
+                "Summarize",
+                "Transcribe",
+                "Translate",
+                "Abstract",
+                "Excerpt",
+                "Caption",
+                "Tag",
+            ),
+            "records_information_processing_duty",
+        ),
+        (
+            ("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"),
+            "administrative_relief_duty",
+        ),
+        (
+            (
+                "DepositSecurity",
+                "ProvideProofInsurance",
+                "MaintainLiabilityInsurance",
+                "PostBond",
+                "EstablishEscrow",
+                "ReleaseBond",
+            ),
+            "financial_assurance_duty",
+        ),
         (("Notice", "Notify", "Disclose"), "public_information_duty"),
     )
     for prefixes, family in ordered_prefixes:

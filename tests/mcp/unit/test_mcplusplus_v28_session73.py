@@ -23,24 +23,28 @@ try:
         Delegation,
         Capability,
     )
+
     _UCAN_OK = True
 except Exception:  # pragma: no cover
     _UCAN_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
     _IPFS_OK = True
 except Exception:  # pragma: no cover
     _IPFS_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PubSubEventType
+
     _PUBSUB_OK = True
 except Exception:  # pragma: no cover
     _PUBSUB_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     _COMPLIANCE_OK = True
 except Exception:  # pragma: no cover
     _COMPLIANCE_OK = False
@@ -50,13 +54,15 @@ except Exception:  # pragma: no cover
 # 1. MergeResult.total property
 # ===========================================================================
 
+
 @unittest.skipUnless(_UCAN_OK, "ucan_delegation not importable")
 class TestMergeResultTotal(unittest.TestCase):
     """MergeResult.total == added_count + conflict_count."""
 
     def _result(self, added: int = 0, conflict: int = 0, revocations: int = 0) -> MergeResult:
-        return MergeResult(added_count=added, conflict_count=conflict,
-                           revocations_copied=revocations)
+        return MergeResult(
+            added_count=added, conflict_count=conflict, revocations_copied=revocations
+        )
 
     def test_total_zeros(self):
         r = self._result()
@@ -104,8 +110,7 @@ class TestMergeResultTotal(unittest.TestCase):
     def test_total_via_manager_merge(self):
         mgr_src = DelegationManager()
         cap = Capability(resource="resource:total_test", ability="read")
-        tok = Delegation(cid="cid:A", issuer="alice", audience="bob",
-                         capabilities=[cap])
+        tok = Delegation(cid="cid:A", issuer="alice", audience="bob", capabilities=[cap])
         mgr_src.add(tok)
         mgr_dst = DelegationManager()
         result = mgr_dst.merge(mgr_src)
@@ -113,8 +118,7 @@ class TestMergeResultTotal(unittest.TestCase):
 
     def test_total_stable_after_conflict(self):
         cap = Capability(resource="resource:conflict_test", ability="*")
-        tok = Delegation(cid="cid:X", issuer="u", audience="v",
-                         capabilities=[cap])
+        tok = Delegation(cid="cid:X", issuer="u", audience="v", capabilities=[cap])
         # To generate a conflict, revoke the CID in mgr2 first, then merge
         mgr1 = DelegationManager()
         mgr1.add(tok)
@@ -131,6 +135,7 @@ class TestMergeResultTotal(unittest.TestCase):
 # ===========================================================================
 # 2. IPFSReloadResult.all_succeeded
 # ===========================================================================
+
 
 @unittest.skipUnless(_IPFS_OK, "nl_ucan_policy not importable")
 class TestIPFSReloadResultAllSucceeded(unittest.TestCase):
@@ -181,6 +186,7 @@ class TestIPFSReloadResultAllSucceeded(unittest.TestCase):
 # ===========================================================================
 # 3. PubSubBus.topics()
 # ===========================================================================
+
 
 @unittest.skipUnless(_PUBSUB_OK, "mcp_p2p_transport not importable")
 class TestPubSubBusTopics(unittest.TestCase):
@@ -245,6 +251,7 @@ class TestPubSubBusTopics(unittest.TestCase):
 # 4. ComplianceChecker.purge_bak_files(path)
 # ===========================================================================
 
+
 @unittest.skipUnless(_COMPLIANCE_OK, "compliance_checker not importable")
 class TestComplianceCheckerPurgeBakFiles(unittest.TestCase):
     """ComplianceChecker.purge_bak_files() deletes all bak files."""
@@ -255,6 +262,7 @@ class TestComplianceCheckerPurgeBakFiles(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def _touch(self, path: str) -> None:
@@ -310,6 +318,7 @@ class TestComplianceCheckerPurgeBakFiles(unittest.TestCase):
 # 5. E2E combined regression
 # ===========================================================================
 
+
 @unittest.skipUnless(
     _UCAN_OK and _IPFS_OK and _PUBSUB_OK and _COMPLIANCE_OK,
     "one or more modules not importable",
@@ -322,16 +331,15 @@ class TestE2ESession73(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_merge_result_total_in_pipeline(self):
         """merge() → MergeResult.total includes both added and skipped."""
         cap_r = Capability(resource="resource:e2e73:1", ability="read")
         cap_w = Capability(resource="resource:e2e73:2", ability="write")
-        tok1 = Delegation(cid="cid:e2e73:1", issuer="a", audience="b",
-                          capabilities=[cap_r])
-        tok2 = Delegation(cid="cid:e2e73:2", issuer="a", audience="b",
-                          capabilities=[cap_w])
+        tok1 = Delegation(cid="cid:e2e73:1", issuer="a", audience="b", capabilities=[cap_r])
+        tok2 = Delegation(cid="cid:e2e73:2", issuer="a", audience="b", capabilities=[cap_w])
         src = DelegationManager()
         src.add(tok1)
         src.add(tok2)
@@ -348,12 +356,11 @@ class TestE2ESession73(unittest.TestCase):
 
     def test_reload_result_all_succeeded_and_total(self):
         """IPFSReloadResult with mixed results exercises all_succeeded + total."""
-        r_good = IPFSReloadResult(
-            count=2, pin_results={"a": "cid:a", "b": "cid:b"}
-        )
+        r_good = IPFSReloadResult(count=2, pin_results={"a": "cid:a", "b": "cid:b"})
         self.assertTrue(r_good.all_succeeded)
         r_bad = IPFSReloadResult(
-            count=2, pin_results={"a": "cid:a", "b": None},
+            count=2,
+            pin_results={"a": "cid:a", "b": None},
             pin_errors={"b": "timeout"},
         )
         self.assertFalse(r_bad.all_succeeded)

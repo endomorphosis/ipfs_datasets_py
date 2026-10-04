@@ -4,6 +4,7 @@ Session 40: CEC/native/proof_strategies.py coverage from 0% → 94%.
 This module tests all four proof strategies (ForwardChaining, BackwardChaining,
 BidirectionalSearch, HybridAdaptive) and the get_strategy factory function.
 """
+
 from __future__ import annotations
 
 import time
@@ -38,6 +39,7 @@ from ipfs_datasets_py.logic.CEC.native.dcec_core import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _f(name: str = "P") -> AtomicFormula:
     return AtomicFormula(Predicate(name, []), [])
 
@@ -58,10 +60,7 @@ class _DeriveRule(InferenceRule):
         return f"Derive{self._derive_name}From{self._trigger_name}"
 
     def can_apply(self, formulas: List) -> bool:
-        return any(
-            f.to_string() == f"{self._trigger_name}()"
-            for f in formulas
-        )
+        return any(f.to_string() == f"{self._trigger_name}()" for f in formulas)
 
     def apply(self, formulas: List) -> List:
         return [_f(self._derive_name)]
@@ -97,6 +96,7 @@ class _ErrorRule(InferenceRule):
 # StrategyType enum
 # ===========================================================================
 
+
 class TestStrategyTypeEnum:
     def test_all_types_exist(self):
         """GIVEN StrategyType enum THEN all expected values present."""
@@ -113,6 +113,7 @@ class TestStrategyTypeEnum:
 # ===========================================================================
 # ProofStrategy ABC
 # ===========================================================================
+
 
 class TestProofStrategyBase:
     def test_is_goal_reached_when_present(self):
@@ -156,6 +157,7 @@ class TestProofStrategyBase:
 # ===========================================================================
 # ForwardChainingStrategy
 # ===========================================================================
+
 
 class TestForwardChainingStrategy:
     def test_name(self):
@@ -203,8 +205,12 @@ class TestForwardChainingStrategy:
         _counter = [0]
 
         class InfiniteRule(InferenceRule):
-            def name(self): return "InfiniteRule"
-            def can_apply(self, _): return True
+            def name(self):
+                return "InfiniteRule"
+
+            def can_apply(self, _):
+                return True
+
             def apply(self, _):
                 _counter[0] += 1
                 return [_f(f"X{_counter[0]}")]
@@ -224,6 +230,7 @@ class TestForwardChainingStrategy:
 # ===========================================================================
 # BackwardChainingStrategy
 # ===========================================================================
+
 
 class TestBackwardChainingStrategy:
     def test_name(self):
@@ -260,21 +267,26 @@ class TestBackwardChainingStrategy:
 
         # Rule that keeps producing new subgoals to avoid early exit
         class SubgoalRule(InferenceRule):
-            def name(self): return "SubgoalRule"
-            def can_apply(self, _): return True
+            def name(self):
+                return "SubgoalRule"
+
+            def can_apply(self, _):
+                return True
+
             def apply(self, formulas):
                 _counter[0] += 1
                 return [_f(f"SG{_counter[0]}")]
 
         # Pre-populate state with many subgoals via a subclass that overrides
-        from ipfs_datasets_py.logic.CEC.native.proof_strategies import BackwardChainingStrategy as BCS
+        from ipfs_datasets_py.logic.CEC.native.proof_strategies import (
+            BackwardChainingStrategy as BCS,
+        )
         from ipfs_datasets_py.logic.CEC.native.prover_core import ProofState
 
         strategy = BCS(max_steps=10000)
         # Patch ProofState.get_proof_tree to always return a tree with TIMEOUT
         with patch.object(
-            ProofState, "get_proof_tree",
-            return_value=MagicMock(result=ProofResult.TIMEOUT)
+            ProofState, "get_proof_tree", return_value=MagicMock(result=ProofResult.TIMEOUT)
         ):
             with patch("time.time", side_effect=[0, 0, 100]):
                 result = strategy.prove(goal, [_f("A")], [SubgoalRule()])
@@ -293,6 +305,7 @@ class TestBackwardChainingStrategy:
 # ===========================================================================
 # BidirectionalStrategy
 # ===========================================================================
+
 
 class TestBidirectionalStrategy:
     def test_name(self):
@@ -328,8 +341,12 @@ class TestBidirectionalStrategy:
         _counter = [0]
 
         class InfiniteRule(InferenceRule):
-            def name(self): return "InfiniteRule"
-            def can_apply(self, _): return True
+            def name(self):
+                return "InfiniteRule"
+
+            def can_apply(self, _):
+                return True
+
             def apply(self, _):
                 _counter[0] += 1
                 return [_f(f"X{_counter[0]}")]
@@ -338,8 +355,7 @@ class TestBidirectionalStrategy:
 
         strategy = BidirectionalStrategy(max_steps=10000)
         with patch.object(
-            ProofState, "get_proof_tree",
-            return_value=MagicMock(result=ProofResult.TIMEOUT)
+            ProofState, "get_proof_tree", return_value=MagicMock(result=ProofResult.TIMEOUT)
         ):
             with patch("time.time", side_effect=[0, 0, 100]):
                 result = strategy.prove(goal, [_f("A")], [InfiniteRule()])
@@ -361,6 +377,7 @@ class TestBidirectionalStrategy:
 # ===========================================================================
 # HybridStrategy
 # ===========================================================================
+
 
 class TestHybridStrategy:
     def test_name(self):
@@ -434,6 +451,7 @@ class TestHybridStrategy:
 # get_strategy factory
 # ===========================================================================
 
+
 class TestGetStrategyFactory:
     def test_get_forward_chaining(self):
         s = get_strategy(StrategyType.FORWARD_CHAINING, max_steps=50)
@@ -467,6 +485,7 @@ class TestGetStrategyFactory:
 # ===========================================================================
 # ProofStrategy max_steps attribute
 # ===========================================================================
+
 
 class TestProofStrategyMaxSteps:
     def test_max_steps_default(self):

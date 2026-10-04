@@ -6,7 +6,7 @@ after running actual refinement cycles.
 
 Test Categories:
 - Single round refinement cycle round-trip
-- Multiple rounds refinement cycle round-trip  
+- Multiple rounds refinement cycle round-trip
 - Convergence detection state preservation
 - Critic feedback preservation across serialization
 - Refinement action history integrity
@@ -35,6 +35,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mediator_with_components():
@@ -76,6 +77,7 @@ def generation_context():
 # Test Classes
 # ============================================================================
 
+
 class TestSingleRoundRefinementRoundTrip:
     """Test round-trip serialization after single refinement round."""
 
@@ -84,10 +86,10 @@ class TestSingleRoundRefinementRoundTrip:
     ):
         """Single round refinement produces serializable state."""
         mediator = mediator_with_components
-        
+
         # Run one refinement cycle
         state = mediator.run_refinement_cycle(sample_text, generation_context)
-        
+
         # Should be serializable
         state_dict = state.to_dict()
         assert isinstance(state_dict, dict)
@@ -99,15 +101,15 @@ class TestSingleRoundRefinementRoundTrip:
     ):
         """Deserialized state matches original after single round."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_ontology = state.current_ontology.copy()
         original_scores = len(state.critic_scores)
-        
+
         # Serialize and deserialize
         state_dict = state.to_dict()
         restored = MediatorState.from_dict(state_dict)
-        
+
         # Verify restoration
         assert restored.current_ontology == original_ontology
         assert len(restored.critic_scores) == original_scores
@@ -118,16 +120,16 @@ class TestSingleRoundRefinementRoundTrip:
     ):
         """State survives JSON serialization round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_entities = len(state.current_ontology.get("entities", []))
-        
+
         # JSON round-trip
         state_dict = state.to_dict()
         json_str = json.dumps(state_dict)
         restored_dict = json.loads(json_str)
         restored = MediatorState.from_dict(restored_dict)
-        
+
         assert len(restored.current_ontology.get("entities", [])) == original_entities
 
 
@@ -139,21 +141,23 @@ class TestMultipleRoundsRefinementRoundTrip:
     ):
         """Multi-round refinement state is preserved through serialization."""
         mediator = mediator_with_components
-        
+
         # Run multiple refinement cycles
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         # Force additional rounds by continuing refinement
         for _ in range(2):
             if not state.converged and state.current_round < mediator.max_rounds:
-                state = mediator.run_refinement_cycle(sample_text, generation_context, initial_state=state)
-        
+                state = mediator.run_refinement_cycle(
+                    sample_text, generation_context, initial_state=state
+                )
+
         # Verify we have multiple rounds
         assert state.current_round >= 1
-        
+
         # Serialize and restore
         state_dict = state.to_dict()
         restored = MediatorState.from_dict(state_dict)
-        
+
         # Verify all rounds preserved
         assert restored.current_round == state.current_round
         assert len(restored.critic_scores) == len(state.critic_scores)
@@ -164,16 +168,16 @@ class TestMultipleRoundsRefinementRoundTrip:
     ):
         """Complete refinement history preserved through round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_history_len = len(state.refinement_history)
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         # History length preserved
         assert len(restored.refinement_history) == original_history_len
-        
+
         # Each history entry has required fields
         for entry in restored.refinement_history:
             assert "round" in entry or "action" in entry
@@ -187,13 +191,13 @@ class TestConvergenceStatePreservation:
     ):
         """Convergence flag survives serialization."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_converged = state.converged
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         assert restored.converged == original_converged
 
     def test_convergence_threshold_preserved(
@@ -201,13 +205,13 @@ class TestConvergenceStatePreservation:
     ):
         """Convergence threshold preserved through round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_threshold = state.convergence_threshold
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         assert restored.convergence_threshold == original_threshold
 
 
@@ -219,14 +223,14 @@ class TestCriticFeedbackPreservation:
     ):
         """Critic scores preserved through round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         if state.critic_scores:
             original_overall = state.critic_scores[-1].overall
-            
+
             # Round-trip
             restored = MediatorState.from_dict(state.to_dict())
-            
+
             if restored.critic_scores:
                 assert restored.critic_scores[-1].overall == original_overall
 
@@ -235,33 +239,31 @@ class TestCriticFeedbackPreservation:
     ):
         """Score recommendations preserved through round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         # Verify scores exist and have structure
         for score in restored.critic_scores:
-            assert hasattr(score, 'overall')
+            assert hasattr(score, "overall")
             assert 0.0 <= score.overall <= 1.0
 
 
 class TestMediatorConfigurationPreservation:
     """Test mediator configuration preservation."""
 
-    def test_max_rounds_preserved(
-        self, mediator_with_components, sample_text, generation_context
-    ):
+    def test_max_rounds_preserved(self, mediator_with_components, sample_text, generation_context):
         """Max rounds setting preserved through round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_max_rounds = state.max_rounds
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         assert restored.max_rounds == original_max_rounds
 
     def test_target_score_preserved(
@@ -269,43 +271,39 @@ class TestMediatorConfigurationPreservation:
     ):
         """Target score preserved through round-trip."""
         mediator = mediator_with_components
-        
+
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         original_target = state.target_score
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         assert restored.target_score == original_target
 
 
 class TestEdgeCases:
     """Test edge cases for round-trip serialization."""
 
-    def test_empty_ontology_round_trip(
-        self, mediator_with_components, generation_context
-    ):
+    def test_empty_ontology_round_trip(self, mediator_with_components, generation_context):
         """Empty/minimal text produces valid round-trip state."""
         mediator = mediator_with_components
-        
+
         # Minimal text
         minimal_text = "Test."
-        
+
         state = mediator.run_refinement_cycle(minimal_text, generation_context)
-        
+
         # Should still serialize
         state_dict = state.to_dict()
         restored = MediatorState.from_dict(state_dict)
-        
+
         assert restored is not None
         assert isinstance(restored.current_ontology, dict)
 
-    def test_complex_text_round_trip(
-        self, mediator_with_components, generation_context
-    ):
+    def test_complex_text_round_trip(self, mediator_with_components, generation_context):
         """Complex multi-entity text produces valid round-trip state."""
         mediator = mediator_with_components
-        
+
         complex_text = """
         Alice Johnson, CEO of TechCorp Inc., announced a partnership with
         Global Systems Ltd. The deal involves Dr. Robert Chen, Chief Technology
@@ -313,12 +311,12 @@ class TestEdgeCases:
         The companies will collaborate on cloud infrastructure projects
         worth $50 million over three years.
         """
-        
+
         state = mediator.run_refinement_cycle(complex_text, generation_context)
-        
+
         # Round-trip
         restored = MediatorState.from_dict(state.to_dict())
-        
+
         # Verify entities were extracted and preserved
         original_entities = len(state.current_ontology.get("entities", []))
         restored_entities = len(restored.current_ontology.get("entities", []))
@@ -333,18 +331,18 @@ class TestIntegrationWithFullWorkflow:
     ):
         """Complete workflow produces serializable state."""
         mediator = mediator_with_components
-        
+
         # Full workflow
         state = mediator.run_refinement_cycle(sample_text, generation_context)
-        
+
         # Verify workflow completed
         assert state.current_round >= 1
         assert state.current_ontology is not None
-        
+
         # Verify serializable
         state_dict = state.to_dict()
         assert isinstance(state_dict, dict)
-        
+
         # Verify restorable
         restored = MediatorState.from_dict(state_dict)
         assert restored.current_round == state.current_round
@@ -354,15 +352,15 @@ class TestIntegrationWithFullWorkflow:
     ):
         """Refinement can continue after state deserialization."""
         mediator = mediator_with_components
-        
+
         # Initial refinement
         state = mediator.run_refinement_cycle(sample_text, generation_context)
         initial_round = state.current_round
-        
+
         # Serialize and restore
         state_dict = state.to_dict()
         restored_state = MediatorState.from_dict(state_dict)
-        
+
         # Can continue from restored state if not converged
         if not restored_state.converged and restored_state.current_round < mediator.max_rounds:
             continued_state = mediator.run_refinement_cycle(

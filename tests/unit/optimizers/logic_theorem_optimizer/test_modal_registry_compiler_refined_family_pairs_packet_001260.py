@@ -26,10 +26,7 @@ _PACKET_001260_FAMILY_PAIRS = (
 
 
 def test_packet_001260_pairs_match_registry_constant() -> None:
-    assert (
-        tuple(COMPILER_REFINED_PACKET_001260_FAMILY_PAIRS)
-        == _PACKET_001260_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_REFINED_PACKET_001260_FAMILY_PAIRS) == _PACKET_001260_FAMILY_PAIRS
 
 
 def test_packet_001260_pairs_are_supported_across_compiler_ambiguity_policies() -> None:
@@ -60,7 +57,4 @@ def test_packet_001260_refined_margin_buffer_covers_evidence_gaps() -> None:
     }
 
     for family_pair, minimum_buffer in minimum_buffers.items():
-        assert (
-            compiler_refined_modal_family_cue_margin_buffer(*family_pair)
-            >= minimum_buffer
-        )
+        assert compiler_refined_modal_family_cue_margin_buffer(*family_pair) >= minimum_buffer

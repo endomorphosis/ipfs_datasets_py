@@ -104,7 +104,10 @@ async def run_gmail_duckdb_pipeline(
     resolved_output_dir: Path | None = None
 
     def _flush_pending_duckdb_batch() -> dict[str, object] | None:
-        nonlocal pending_imported_records, pending_searched_message_count, pending_raw_email_total_bytes
+        nonlocal \
+            pending_imported_records, \
+            pending_searched_message_count, \
+            pending_raw_email_total_bytes
         nonlocal duckdb_flush_count, latest_duckdb_summary, resolved_output_dir
         if not pending_imported_records or latest_import_payload is None:
             return None
@@ -195,7 +198,8 @@ async def run_gmail_duckdb_pipeline(
             or batch_number == max(1, int(max_batches))
             or (
                 int(duckdb_build_every_batches or 0) > 0
-                and len(pending_imported_records) >= int(uid_window_size or 0) * int(duckdb_build_every_batches or 1)
+                and len(pending_imported_records)
+                >= int(uid_window_size or 0) * int(duckdb_build_every_batches or 1)
             )
         )
         if should_flush:
@@ -244,7 +248,9 @@ async def run_gmail_duckdb_pipeline(
     }
 
     if latest_duckdb_summary and latest_duckdb_summary.get("index_dir"):
-        summary_path = Path(str(latest_duckdb_summary["index_dir"])) / "gmail_duckdb_pipeline_summary.json"
+        summary_path = (
+            Path(str(latest_duckdb_summary["index_dir"])) / "gmail_duckdb_pipeline_summary.json"
+        )
         summary_path.parent.mkdir(parents=True, exist_ok=True)
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
         summary["summary_path"] = str(summary_path)

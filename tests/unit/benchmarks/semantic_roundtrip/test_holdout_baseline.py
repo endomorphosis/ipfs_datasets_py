@@ -266,9 +266,7 @@ def test_experiment_contract_rejects_tampered_margin() -> None:
 
 def test_mint_new_experiment_identity_retires_previous() -> None:
     contract = build_experiment_contract(ROOT)
-    successor = mint_new_experiment_identity(
-        contract, reason="protocol_bootstrap_seed_change"
-    )
+    successor = mint_new_experiment_identity(contract, reason="protocol_bootstrap_seed_change")
     assert successor["experiment_id"] != contract["experiment_id"]
     assert successor["experiment_revision"] == contract["experiment_revision"] + 1
     assert successor["previous_experiment_id"] == contract["experiment_id"]
@@ -367,13 +365,9 @@ def test_build_baseline_report_from_injected_population_results() -> None:
         }
 
     pilot_cases = [_case(case_id) for case_id in PILOT_CASE_IDS]
-    repair_ids = [
-        case.case_id
-        for case in load_matrix_cases(ROOT / REPAIR_DEV_CASES_RELATIVE_PATH)
-    ]
+    repair_ids = [case.case_id for case in load_matrix_cases(ROOT / REPAIR_DEV_CASES_RELATIVE_PATH)]
     repair_cases = [
-        _case(case_id, e2e=0.1 if index % 2 else 0.0)
-        for index, case_id in enumerate(repair_ids)
+        _case(case_id, e2e=0.1 if index % 2 else 0.0) for index, case_id in enumerate(repair_ids)
     ]
     # One runtime-failed synthetic row to exercise taxonomy.
     repair_cases.append(
@@ -406,7 +400,9 @@ def test_build_baseline_report_from_injected_population_results() -> None:
                 "case_count": len(cases),
                 "gate_pass_counts": {
                     "full_coverage": sum(
-                        1 for c in cases if c["gates"]["full_coverage"]  # type: ignore[index]
+                        1
+                        for c in cases
+                        if c["gates"]["full_coverage"]  # type: ignore[index]
                     ),
                     "polarity_preservation": sum(
                         1
@@ -441,9 +437,7 @@ def test_build_baseline_report_from_injected_population_results() -> None:
                 "status_counts": {
                     "not_measured": 0,
                     "runtime_failed": sum(
-                        1
-                        for c in cases
-                        if c["evaluation_status"] == EVAL_STATUS_RUNTIME_FAILED
+                        1 for c in cases if c["evaluation_status"] == EVAL_STATUS_RUNTIME_FAILED
                     ),
                     "semantic_scored": len(scored),
                     "unsupported": 0,
@@ -524,9 +518,7 @@ def test_build_baseline_report_rejects_blind_population_results() -> None:
 
 
 def test_checked_in_baseline_report_parses_and_scopes_populations() -> None:
-    assert BASELINE_PATH.is_file(), (
-        "repair_dev_baseline.json must be written by PLAT2-025"
-    )
+    assert BASELINE_PATH.is_file(), "repair_dev_baseline.json must be written by PLAT2-025"
     report = load_repair_dev_baseline_report(BASELINE_PATH, repo_root=ROOT)
     assert report["interface"] == EVAL_REPAIR_MATRIX_REPORT_INTERFACE
     assert report["arm_id"] == PRODUCTION_ARM_ID

@@ -43,9 +43,7 @@ def test_evaluate_condition_simple_comparisons():
 
 
 def test_evaluate_case_expression_generic_case():
-    node = Node(
-        1, labels=["Person"], properties={"age": 30, "min": 20, "flag": "yes", "alt": "no"}
-    )
+    node = Node(1, labels=["Person"], properties={"age": 30, "min": 20, "flag": "yes", "alt": "no"})
     row = {"n": node}
 
     # Generic CASE (no TEST:), WHEN uses condition expressions.

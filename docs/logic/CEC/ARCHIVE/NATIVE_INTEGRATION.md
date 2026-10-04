@@ -62,8 +62,8 @@ wrapper.initialize()
 
 # Check which backend is being used
 info = wrapper.get_backend_info()
-print(info['backend'])  # "native_python3" or "python2_submodule"
-print(info['is_native'])  # True or False
+print(info["backend"])  # "native_python3" or "python2_submodule"
+print(info["is_native"])  # True or False
 ```
 
 ### Force Submodule Mode
@@ -74,7 +74,7 @@ wrapper = DCECLibraryWrapper(use_native=False)
 wrapper.initialize()
 
 # Will use submodule (if available)
-assert wrapper.get_backend_info()['is_native'] == False
+assert wrapper.get_backend_info()["is_native"] == False
 ```
 
 ### Check Backend at Runtime
@@ -146,7 +146,8 @@ def get_backend_info() -> Dict[str, Any]:
 ```python
 def convert_to_dcec(english_text, use_deep_parsing=False):
     """Works with both native and submodule backends."""
-    
+
+
 def convert_from_dcec(dcec_formula):
     """Accepts Formula objects or strings."""
 ```
@@ -178,7 +179,10 @@ Take advantage of native features:
 ```python
 from ipfs_datasets_py.logic.CEC import DCECLibraryWrapper
 from ipfs_datasets_py.logic.CEC.native import (
-    AtomicFormula, Predicate, DeonticFormula, DeonticOperator
+    AtomicFormula,
+    Predicate,
+    DeonticFormula,
+    DeonticOperator,
 )
 
 # Create wrapper (uses native if available)
@@ -189,11 +193,8 @@ if wrapper.is_native:
     # Can use Formula objects directly
     pred = Predicate("act", 1)
     agent = Variable("agent", "Agent")
-    formula = DeonticFormula(
-        DeonticOperator.OBLIGATION,
-        AtomicFormula(pred, [VariableTerm(agent)])
-    )
-    
+    formula = DeonticFormula(DeonticOperator.OBLIGATION, AtomicFormula(pred, [VariableTerm(agent)]))
+
     # Add formula directly (native only)
     wrapper.add_statement(formula, label="obligation1", is_axiom=True)
 ```
@@ -292,6 +293,7 @@ Enable logging to see backend selection:
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 # Now initialization will log backend choice
@@ -332,12 +334,13 @@ wrapper.initialize()
 import pytest
 from ipfs_datasets_py.logic.CEC import DCECLibraryWrapper
 
+
 @pytest.mark.parametrize("use_native", [True, False])
 def test_wrapper_with_both_backends(use_native):
     wrapper = DCECLibraryWrapper(use_native=use_native)
     if not wrapper.initialize():
         pytest.skip(f"Backend not available: use_native={use_native}")
-    
+
     # Test functionality works with either backend
     result = wrapper.add_statement("test")
     assert result is not None
@@ -347,7 +350,7 @@ def test_wrapper_with_both_backends(use_native):
 
 ```python
 # Mock native unavailable
-with mock.patch('ipfs_datasets_py.logic.CEC.dcec_wrapper.importlib'):
+with mock.patch("ipfs_datasets_py.logic.CEC.dcec_wrapper.importlib"):
     wrapper = DCECLibraryWrapper()
     # Will fall back to submodule
 ```
@@ -362,6 +365,7 @@ with mock.patch('ipfs_datasets_py.logic.CEC.dcec_wrapper.importlib'):
 ```python
 try:
     from ipfs_datasets_py.logic.CEC.native import DCECContainer
+
     print("Native available!")
 except ImportError as e:
     print(f"Native not available: {e}")

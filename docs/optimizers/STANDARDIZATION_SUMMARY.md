@@ -76,49 +76,35 @@ from ipfs_datasets_py.optimizers.common import GraphRAGExtractionConfig, LogicEx
 ```python
 # GraphRAG - dict config
 ctx = OntologyGenerationContext(
-    data_source='file.pdf',
-    data_type='pdf',
-    domain='legal',
-    config={'confidence_threshold': 0.7, 'window_size': 5}
+    data_source="file.pdf",
+    data_type="pdf",
+    domain="legal",
+    config={"confidence_threshold": 0.7, "window_size": 5},
 )
 
 # Logic - separate fields
-ctx = LogicExtractionContext(
-    data=text,
-    extraction_mode=ExtractionMode.TDFOL,
-    domain='legal'
-)
+ctx = LogicExtractionContext(data=text, extraction_mode=ExtractionMode.TDFOL, domain="legal")
 
 # Agentic - constraints dict
-task = OptimizationTask(
-    task_id='1',
-    description='...',
-    constraints={'timeout': 30}
-)
+task = OptimizationTask(task_id="1", description="...", constraints={"timeout": 30})
 ```
 
 ### New (recommended)
 ```python
 # GraphRAG - typed config
 config = GraphRAGExtractionConfig(
-    confidence_threshold=0.7,
-    domain='legal',
-    window_size=5,
-    min_entity_length=3
+    confidence_threshold=0.7, domain="legal", window_size=5, min_entity_length=3
 )
 ctx = OntologyGenerationContext(
-    data_source='file.pdf',
-    data_type='pdf',
-    domain='legal',
-    config=config
+    data_source="file.pdf", data_type="pdf", domain="legal", config=config
 )
 
 # Logic - typed config
 config = LogicExtractionConfig(
     confidence_threshold=0.8,
-    domain='legal',
+    domain="legal",
     extraction_mode=ExtractionMode.TDFOL,
-    formalism_hint='temporal'
+    formalism_hint="temporal",
 )
 ctx = LogicExtractionContext(data=text, config=config)
 
@@ -127,13 +113,9 @@ config = AgenticExtractionConfig(
     confidence_threshold=0.85,
     optimization_method=OptimizationMethod.ACTOR_CRITIC,
     enable_validation=True,
-    validation_level='extended'
+    validation_level="extended",
 )
-task = OptimizationTask(
-    task_id='1',
-    description='...',
-    config=config
-)
+task = OptimizationTask(task_id="1", description="...", config=config)
 ```
 
 ## Testing

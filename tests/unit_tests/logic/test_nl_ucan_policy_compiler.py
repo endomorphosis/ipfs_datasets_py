@@ -8,6 +8,7 @@ Covers:
 - Phase D: MCP tool nl_ucan_policy_tool.py
 - Integration: end-to-end NL → Policy evaluation + UCAN delegation
 """
+
 import sys
 import time
 import importlib
@@ -18,41 +19,71 @@ import pytest
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
 
+
 def _get_nl_compiler():
     from ipfs_datasets_py.logic.CEC.nl.nl_to_policy_compiler import (
-        NLToDCECCompiler, CompilationResult, compile_nl_to_policy,
-        _dcec_formula_to_clause, _extract_actor, _extract_action,
+        NLToDCECCompiler,
+        CompilationResult,
+        compile_nl_to_policy,
+        _dcec_formula_to_clause,
+        _extract_actor,
+        _extract_action,
     )
-    return NLToDCECCompiler, CompilationResult, compile_nl_to_policy, _dcec_formula_to_clause, _extract_actor, _extract_action
+
+    return (
+        NLToDCECCompiler,
+        CompilationResult,
+        compile_nl_to_policy,
+        _dcec_formula_to_clause,
+        _extract_actor,
+        _extract_action,
+    )
 
 
 def _get_ucan_bridge():
     from ipfs_datasets_py.logic.CEC.nl.dcec_to_ucan_bridge import (
-        DCECToUCANBridge, DenyCapability, BridgeResult, DCECToUCANMapping,
+        DCECToUCANBridge,
+        DenyCapability,
+        BridgeResult,
+        DCECToUCANMapping,
     )
+
     return DCECToUCANBridge, DenyCapability, BridgeResult, DCECToUCANMapping
 
 
 def _get_e2e_compiler():
     from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
-        NLUCANPolicyCompiler, NLUCANCompilerResult, compile_nl_to_ucan_policy,
+        NLUCANPolicyCompiler,
+        NLUCANCompilerResult,
+        compile_nl_to_ucan_policy,
     )
+
     return NLUCANPolicyCompiler, NLUCANCompilerResult, compile_nl_to_ucan_policy
 
 
 def _get_mcp_tool():
     from ipfs_datasets_py.mcp_server.tools.logic_tools.nl_ucan_policy_tool import (
-        nl_compile_policy, nl_evaluate_policy, nl_inspect_policy, TOOL_FUNCTIONS,
+        nl_compile_policy,
+        nl_evaluate_policy,
+        nl_inspect_policy,
+        TOOL_FUNCTIONS,
     )
+
     return nl_compile_policy, nl_evaluate_policy, nl_inspect_policy, TOOL_FUNCTIONS
 
 
 def _make_deontic_formula(op_name: str = "OBLIGATION", predicate: str = "read", actor: str = "bob"):
     """Build a synthetic DeonticFormula for testing."""
     from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-        DeonticFormula, DeonticOperator, AtomicFormula, Predicate, Sort,
-        Variable, VariableTerm,
+        DeonticFormula,
+        DeonticOperator,
+        AtomicFormula,
+        Predicate,
+        Sort,
+        Variable,
+        VariableTerm,
     )
+
     agent_sort = Sort(name="Agent")
     var = Variable(name=actor, sort=agent_sort)
     vterm = VariableTerm(variable=var)
@@ -64,8 +95,8 @@ def _make_deontic_formula(op_name: str = "OBLIGATION", predicate: str = "read", 
 
 # ─── Phase A: NLToDCECCompiler ────────────────────────────────────────────────
 
-class TestNLToDCECCompilerBasics:
 
+class TestNLToDCECCompilerBasics:
     def test_import(self):
         NLToDCECCompiler, *_ = _get_nl_compiler()
         assert NLToDCECCompiler is not None
@@ -116,11 +147,13 @@ class TestNLToDCECCompilerBasics:
     def test_compile_multiple_sentences(self):
         NLToDCECCompiler, _, *__ = _get_nl_compiler()
         c = NLToDCECCompiler(policy_id="multi-p")
-        r = c.compile([
-            "Alice must not delete records",
-            "Bob is permitted to read files",
-            "Carol is required to audit access",
-        ])
+        r = c.compile(
+            [
+                "Alice must not delete records",
+                "Bob is permitted to read files",
+                "Carol is required to audit access",
+            ]
+        )
         assert r.success
         assert len(r.clauses) == 3
         assert r.policy is not None
@@ -172,7 +205,6 @@ class TestNLToDCECCompilerBasics:
 
 
 class TestExtractHelpers:
-
     def test_extract_actor_from_deontic_formula(self):
         _, _, _, _, extract_actor, _ = _get_nl_compiler()
         formula = _make_deontic_formula(actor="carol")
@@ -211,9 +243,8 @@ class TestExtractHelpers:
     def test_dcec_formula_to_clause_non_deontic_returns_none(self):
         _, _, _, dcec_to_clause, _, _ = _get_nl_compiler()
         # AtomicFormula is not DeonticFormula
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-            AtomicFormula, Predicate, Sort
-        )
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate, Sort
+
         atom = AtomicFormula(
             predicate=Predicate("foo", []),
             arguments=[],
@@ -224,8 +255,8 @@ class TestExtractHelpers:
 
 # ─── Phase B: DCECToUCANBridge ────────────────────────────────────────────────
 
-class TestDCECToUCANBridge:
 
+class TestDCECToUCANBridge:
     def test_import(self):
         _get_ucan_bridge()
 
@@ -267,6 +298,7 @@ class TestDCECToUCANBridge:
         DCECToUCANBridge, *_ = _get_ucan_bridge()
         b = DCECToUCANBridge()
         from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
+
         atom = AtomicFormula(predicate=Predicate("foo", []), arguments=[])
         mapping = b.map_formula(atom)
         assert mapping.error is not None
@@ -302,7 +334,7 @@ class TestDCECToUCANBridge:
         result = b.map_formulas(formulas)
         assert isinstance(result, BridgeResult)
         assert result.success
-        assert len(result.tokens) == 2   # permission + obligation
+        assert len(result.tokens) == 2  # permission + obligation
         assert len(result.denials) == 1  # prohibition
 
     def test_bridge_result_build_chain(self):
@@ -346,8 +378,8 @@ class TestDCECToUCANBridge:
 
 # ─── Phase C: NLUCANPolicyCompiler end-to-end ────────────────────────────────
 
-class TestNLUCANPolicyCompilerE2E:
 
+class TestNLUCANPolicyCompilerE2E:
     def test_import(self):
         _get_e2e_compiler()
 
@@ -370,11 +402,14 @@ class TestNLUCANPolicyCompilerE2E:
 
     def test_compile_mixed_sentences(self):
         _, _, compile_fn = _get_e2e_compiler()
-        r = compile_fn([
-            "Alice must not delete records",
-            "Bob is permitted to read files",
-            "Carol is required to audit access",
-        ], policy_id="e2e-3")
+        r = compile_fn(
+            [
+                "Alice must not delete records",
+                "Bob is permitted to read files",
+                "Carol is required to audit access",
+            ],
+            policy_id="e2e-3",
+        )
         assert r.success
         assert len(r.policy_result.clauses) == 3
         assert r.delegation_evaluator is not None
@@ -393,9 +428,7 @@ class TestNLUCANPolicyCompilerE2E:
         ev = r.delegation_evaluator
         assert ev is not None
         token = r.bridge_result.tokens[0]
-        ok, reason = ev.can_invoke(
-            "did:key:bob", "logic/read", "read/invoke", leaf_cid=token.cid
-        )
+        ok, reason = ev.can_invoke("did:key:bob", "logic/read", "read/invoke", leaf_cid=token.cid)
         assert ok is True
         assert reason == "allowed"
 
@@ -449,14 +482,18 @@ class TestNLUCANPolicyCompilerE2E:
     def test_policy_evaluation_via_evaluator(self):
         """Prohibitions correctly deny; obligations/permissions allow after policy registration."""
         _, _, compile_fn = _get_e2e_compiler()
-        r = compile_fn([
-            "Bob is permitted to read files",
-            "Alice must not delete records",
-        ], policy_id="eval-test")
+        r = compile_fn(
+            [
+                "Bob is permitted to read files",
+                "Alice must not delete records",
+            ],
+            policy_id="eval-test",
+        )
         assert r.success
         pol = r.policy
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyEvaluator
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         ev = PolicyEvaluator()
         ev._policies[pol.policy_cid] = pol
         # Bob should be allowed to read
@@ -469,8 +506,8 @@ class TestNLUCANPolicyCompilerE2E:
 
 # ─── Phase D: MCP Tool ────────────────────────────────────────────────────────
 
-class TestNLUCANMCPTool:
 
+class TestNLUCANMCPTool:
     def test_tool_functions_exported(self):
         _, _, _, TOOL_FUNCTIONS = _get_mcp_tool()
         assert len(TOOL_FUNCTIONS) == 3
@@ -576,15 +613,20 @@ class TestNLUCANMCPTool:
 
 # ─── Integration: policy evaluation correctness ───────────────────────────────
 
+
 class TestPolicyEvaluationCorrectness:
     """End-to-end correctness tests across the full stack."""
 
     def _compile(self, sentences, policy_id):
-        from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import compile_nl_to_ucan_policy
+        from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
+            compile_nl_to_ucan_policy,
+        )
+
         return compile_nl_to_ucan_policy(sentences, policy_id=policy_id)
 
     def _make_evaluator(self, result):
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyEvaluator
+
         ev = PolicyEvaluator()
         pol = result.policy
         ev._policies[pol.policy_cid] = pol
@@ -592,6 +634,7 @@ class TestPolicyEvaluationCorrectness:
 
     def test_prohibited_actor_gets_deny(self):
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         r = self._compile(["Alice must not delete records"], "deny-correct")
         ev, pol = self._make_evaluator(r)
         dec = ev.evaluate(IntentObject(tool="delete"), pol.policy_cid, actor="alice")
@@ -599,6 +642,7 @@ class TestPolicyEvaluationCorrectness:
 
     def test_permitted_actor_gets_allow(self):
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         r = self._compile(["Bob is permitted to read files"], "allow-correct")
         ev, pol = self._make_evaluator(r)
         dec = ev.evaluate(IntentObject(tool="read"), pol.policy_cid, actor="bob")
@@ -606,14 +650,18 @@ class TestPolicyEvaluationCorrectness:
 
     def test_obligation_gives_allow_with_obligations(self):
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         # An OBLIGATION in the closed-world policy evaluator requires
         # *both* a permission AND an obligation clause for ALLOW_WITH_OBLIGATIONS.
         # With only an obligation, closed-world denies (no explicit permission).
         # We test this by adding a permission for the same action.
-        r = self._compile([
-            "Carol is permitted to audit",  # permission
-            "Carol must audit access events",  # obligation
-        ], "oblig-correct")
+        r = self._compile(
+            [
+                "Carol is permitted to audit",  # permission
+                "Carol must audit access events",  # obligation
+            ],
+            "oblig-correct",
+        )
         ev, pol = self._make_evaluator(r)
         dec = ev.evaluate(IntentObject(tool="audit"), pol.policy_cid, actor="carol")
         # With permission + obligation → ALLOW_WITH_OBLIGATIONS
@@ -624,20 +672,22 @@ class TestPolicyEvaluationCorrectness:
         ev = r.delegation_evaluator
         assert ev is not None
         tok = r.bridge_result.tokens[0]
-        ok, reason = ev.can_invoke(
-            "did:key:bob", "logic/read", "read/invoke", leaf_cid=tok.cid
-        )
+        ok, reason = ev.can_invoke("did:key:bob", "logic/read", "read/invoke", leaf_cid=tok.cid)
         assert ok is True
 
     def test_complex_policy_all_actors(self):
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
-        r = self._compile([
-            "Alice must not delete records",
-            "Bob is permitted to read files",
-            "Carol is required to audit all access events",
-            "Dave must not share passwords",
-            "Eve may access the system",
-        ], "complex-pol")
+
+        r = self._compile(
+            [
+                "Alice must not delete records",
+                "Bob is permitted to read files",
+                "Carol is required to audit all access events",
+                "Dave must not share passwords",
+                "Eve may access the system",
+            ],
+            "complex-pol",
+        )
         assert r.success
         assert len(r.policy_result.clauses) == 5
         # 3 positive tokens (obligation+permission+permission), 2 denials
@@ -647,6 +697,7 @@ class TestPolicyEvaluationCorrectness:
     def test_compile_id_determinism(self):
         """Same sentences produce the same auto policy_id."""
         from ipfs_datasets_py.logic.CEC.nl.nl_to_policy_compiler import _make_policy_id
+
         sents = ["Alice must not delete", "Bob may read"]
         id1 = _make_policy_id(sents)
         id2 = _make_policy_id(sents)
@@ -656,6 +707,7 @@ class TestPolicyEvaluationCorrectness:
     def test_policy_cid_stable(self):
         """Same policy content produces the same policy_cid."""
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyClause, PolicyObject
+
         c = PolicyClause(clause_type="permission", actor="bob", action="read")
         p1 = PolicyObject(policy_id="x", clauses=[c])
         p2 = PolicyObject(policy_id="x", clauses=[c])

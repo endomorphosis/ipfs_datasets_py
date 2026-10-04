@@ -98,7 +98,9 @@ def _predicate(formula: Any) -> Any:
 
 
 def _formula_id(formula: Any, index: int) -> str:
-    return str(_get(formula, "formula_id") or _as_mapping(formula).get("formula_id") or f"formula-{index}")
+    return str(
+        _get(formula, "formula_id") or _as_mapping(formula).get("formula_id") or f"formula-{index}"
+    )
 
 
 def _premise(
@@ -152,8 +154,7 @@ def _compiler_candidate_fact_specs(
     arguments = [
         _leanstral_candidate_symbol(value)
         for value in _sequence(
-            _get(predicate, "arguments")
-            or _as_mapping(predicate).get("arguments", [])
+            _get(predicate, "arguments") or _as_mapping(predicate).get("arguments", [])
         )
     ]
     arguments = [value for value in arguments if value]
@@ -161,9 +162,7 @@ def _compiler_candidate_fact_specs(
         _get(predicate, "role") or _as_mapping(predicate).get("role")
     )
     formula_mapping = _as_mapping(formula)
-    metadata = _as_mapping(
-        _get(formula, "metadata") or formula_mapping.get("metadata")
-    )
+    metadata = _as_mapping(_get(formula, "metadata") or formula_mapping.get("metadata"))
     operator_mapping = _as_mapping(operator)
     cue = _leanstral_candidate_symbol(
         metadata.get("cue")
@@ -201,10 +200,7 @@ def _compiler_candidate_fact_specs(
             [
                 (
                     "flogic_frame_role",
-                    (
-                        f"frame_role(frame:{predicate_name}, role:{role}, "
-                        f"value:{predicate_name})"
-                    ),
+                    (f"frame_role(frame:{predicate_name}, role:{role}, value:{predicate_name})"),
                     "modal.frame_logic",
                     "frame_logic",
                     "frame_role",
@@ -418,7 +414,9 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
                 weight=1.3,
                 metadata={
                     "authority_id": law.authority_id,
-                    "canonical_citation_hash": _stable_hash(law.canonical_citation) if law.canonical_citation else "",
+                    "canonical_citation_hash": _stable_hash(law.canonical_citation)
+                    if law.canonical_citation
+                    else "",
                     "effective_date": law.effective_date,
                     "emergency_rule": law.emergency,
                     "law_version_id": law.law_version_id,
@@ -433,12 +431,24 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
         formula_id = _formula_id(formula, index)
         operator = _operator(formula)
         predicate = _predicate(formula)
-        family = _atom(_get(operator, "family") or _as_mapping(operator).get("family"), fallback="modal")
-        system = _atom(_get(operator, "system") or _as_mapping(operator).get("system"), fallback="system")
-        symbol = _atom(_get(operator, "symbol") or _as_mapping(operator).get("symbol"), fallback="operator")
-        predicate_name = _atom(_get(predicate, "name") or _as_mapping(predicate).get("name"), fallback="predicate")
-        arguments = _sequence(_get(predicate, "arguments") or _as_mapping(predicate).get("arguments", []))
-        provenance = _as_mapping(_get(formula, "provenance") or _as_mapping(formula).get("provenance", {}))
+        family = _atom(
+            _get(operator, "family") or _as_mapping(operator).get("family"), fallback="modal"
+        )
+        system = _atom(
+            _get(operator, "system") or _as_mapping(operator).get("system"), fallback="system"
+        )
+        symbol = _atom(
+            _get(operator, "symbol") or _as_mapping(operator).get("symbol"), fallback="operator"
+        )
+        predicate_name = _atom(
+            _get(predicate, "name") or _as_mapping(predicate).get("name"), fallback="predicate"
+        )
+        arguments = _sequence(
+            _get(predicate, "arguments") or _as_mapping(predicate).get("arguments", [])
+        )
+        provenance = _as_mapping(
+            _get(formula, "provenance") or _as_mapping(formula).get("provenance", {})
+        )
         provenance_id = str(
             provenance.get("source_id")
             or provenance.get("provenance_id")
@@ -446,7 +456,11 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
             or ""
         ).strip()
         citation = str(provenance.get("citation") or "").strip()
-        view = "deontic.ir" if family == "deontic" or symbol in {"shall", "must", "may", "shall_not", "may_not"} else "modal.frame_logic"
+        view = (
+            "deontic.ir"
+            if family == "deontic" or symbol in {"shall", "must", "may", "shall_not", "may_not"}
+            else "modal.frame_logic"
+        )
         premises.append(
             _premise(
                 f"formula_fact_{_atom(formula_id)}",
@@ -484,10 +498,7 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
         ) in _compiler_candidate_fact_specs(formula):
             premises.append(
                 _premise(
-                    (
-                        f"compiler_candidate_fact_{_atom(formula_id)}_"
-                        f"{fact_kind}"
-                    ),
+                    (f"compiler_candidate_fact_{_atom(formula_id)}_{fact_kind}"),
                     fact_statement,
                     legal_ir_view=fact_view,
                     logic_family=fact_family,
@@ -500,7 +511,9 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
                     },
                 )
             )
-        exceptions = _sequence(_get(formula, "exceptions") or _as_mapping(formula).get("exceptions", []))
+        exceptions = _sequence(
+            _get(formula, "exceptions") or _as_mapping(formula).get("exceptions", [])
+        )
         if exceptions:
             premises.append(
                 _premise(
@@ -547,9 +560,7 @@ def premises_from_theorem_registry(registry: Any) -> List[HammerPremise]:
         )
     )
     verified_theorem_ids = {
-        str(item)
-        for item in _sequence(data.get("verified_theorem_ids"))
-        if str(item)
+        str(item) for item in _sequence(data.get("verified_theorem_ids")) if str(item)
     }
     premises: List[HammerPremise] = []
     for index, theorem in enumerate(_sequence(raw_theorems), start=1):
@@ -595,8 +606,14 @@ def premises_from_theorem_registry(registry: Any) -> List[HammerPremise]:
             _premise(
                 name,
                 statement,
-                legal_ir_view=str(theorem_map.get("legal_ir_view") or theorem_map.get("target_component") or "external_provers.router"),
-                logic_family=str(theorem_map.get("logic_family") or theorem_map.get("family") or "prover"),
+                legal_ir_view=str(
+                    theorem_map.get("legal_ir_view")
+                    or theorem_map.get("target_component")
+                    or "external_provers.router"
+                ),
+                logic_family=str(
+                    theorem_map.get("logic_family") or theorem_map.get("family") or "prover"
+                ),
                 source_module="legal_ir_theorem_registry",
                 weight=float(theorem_map.get("weight", 1.0) or 1.0),
                 metadata={

@@ -1,4 +1,3 @@
-
 from functools import partial
 from typing import Callable
 
@@ -8,7 +7,7 @@ from .file_unit import FileUnit
 
 def get_args_kwargs_and_func(file_unit: FileUnit, func_name: str):
     """
-    Extracts function arguments, keyword arguments, and the function 
+    Extracts function arguments, keyword arguments, and the function
     itself from a FileUnit object.
 
     Args:
@@ -21,8 +20,10 @@ def get_args_kwargs_and_func(file_unit: FileUnit, func_name: str):
         func: The function object itself
 
     """
-    assert hasattr(file_unit.function_dict, func_name), f"Function {func_name} not found in function_dict"
-    for attr in ['args', 'kwargs', 'func']:
+    assert hasattr(file_unit.function_dict, func_name), (
+        f"Function {func_name} not found in function_dict"
+    )
+    for attr in ["args", "kwargs", "func"]:
         if not hasattr(getattr(file_unit.function_dict, func_name), attr):
             raise AttributeError(f"Function {func_name} has no {attr}")
 
@@ -30,6 +31,7 @@ def get_args_kwargs_and_func(file_unit: FileUnit, func_name: str):
     kwargs = getattr(file_unit.function_dict, func_name).kwargs
     func = getattr(file_unit.function_dict, func_name).func
     return args, kwargs, func
+
 
 def define_function(file_unit: FileUnit, func_name: str) -> Callable:
     """
@@ -47,4 +49,3 @@ def define_function(file_unit: FileUnit, func_name: str) -> Callable:
     """
     args, kwargs, func = get_args_kwargs_and_func(file_unit, func_name)
     return partial(func, *args, **kwargs)
-

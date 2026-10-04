@@ -146,11 +146,7 @@ from ipfs_datasets_py.logic import create_logic_api
 
 # One API for everything
 api = create_logic_api(
-    use_cache=True,
-    use_ipfs=True,
-    use_ml=True,
-    use_nlp=True,
-    enable_monitoring=True
+    use_cache=True, use_ipfs=True, use_ml=True, use_nlp=True, enable_monitoring=True
 )
 
 # FOL conversion with NLP

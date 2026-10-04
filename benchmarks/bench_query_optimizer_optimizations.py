@@ -30,12 +30,12 @@ from ipfs_datasets_py.optimizers.graphrag.query_optimizer_optimizations import (
 
 class PerformanceComparisonBenchmark:
     """Compare optimized vs baseline query optimizer performance."""
-    
+
     def __init__(self, iterations: int = 50):
         self.iterations = iterations
         self.baseline_optimizer = UnifiedGraphRAGQueryOptimizer()
         self.optimized_wrapper = OptimizedQueryOptimizerWrapper(self.baseline_optimizer)
-        
+
     def create_test_queries(self, count: int = 5) -> List[Dict[str, Any]]:
         """Create diverse test queries."""
         return [
@@ -66,12 +66,12 @@ class PerformanceComparisonBenchmark:
                 },
             },
         ]
-    
+
     def benchmark_baseline(self) -> Dict[str, float]:
         """Benchmark baseline query optimizer."""
         queries = self.create_test_queries()
         times = []
-        
+
         # Simulate realistic workload: repeat queries multiple times
         for iteration in range(self.iterations):
             for query in queries:
@@ -79,7 +79,7 @@ class PerformanceComparisonBenchmark:
                 _ = self.baseline_optimizer.optimize_query(query)
                 elapsed = (time.perf_counter() - start) * 1000  # Convert to ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -89,12 +89,12 @@ class PerformanceComparisonBenchmark:
             "samples": len(times),
             "throughput_per_sec": 1000.0 / statistics.mean(times) if times else 0,
         }
-    
+
     def benchmark_optimized(self) -> Dict[str, float]:
         """Benchmark optimized query optimizer."""
         queries = self.create_test_queries()
         times = []
-        
+
         # Simulate realistic workload: repeat queries multiple times
         for iteration in range(self.iterations):
             for query in queries:
@@ -102,7 +102,7 @@ class PerformanceComparisonBenchmark:
                 _ = self.optimized_wrapper.optimize_query(query)
                 elapsed = (time.perf_counter() - start) * 1000  # Convert to ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -112,52 +112,58 @@ class PerformanceComparisonBenchmark:
             "samples": len(times),
             "throughput_per_sec": 1000.0 / statistics.mean(times) if times else 0,
         }
-    
+
     def run_comparison(self) -> None:
         """Run complete performance comparison."""
         print("=" * 80)
         print("Query Optimizer Performance Comparison")
         print("=" * 80)
-        print(f"Workload: {self.iterations} iterations × {len(self.create_test_queries())} different queries")
+        print(
+            f"Workload: {self.iterations} iterations × {len(self.create_test_queries())} different queries"
+        )
         print(f"Total calls measured: {self.iterations * len(self.create_test_queries())}")
         print()
-        
+
         print("Running baseline benchmark...")
         baseline_stats = self.benchmark_baseline()
-        
+
         print("Running optimized benchmark (with caching)...")
         optimized_stats = self.benchmark_optimized()
-        
+
         print()
         print("=" * 80)
         print("RESULTS: Baseline vs Optimized")
         print("=" * 80)
         print()
-        
+
         # Print side-by-side comparison
         print(f"{'Metric':<30} {'Baseline':<20} {'Optimized':<20} {'Improvement':<15}")
         print("-" * 80)
-        
+
         for key in ["mean_ms", "median_ms", "min_ms", "max_ms", "stdev_ms"]:
             baseline_val = baseline_stats[key]
             optimized_val = optimized_stats[key]
-            
+
             if baseline_val > 0:
                 improvement_pct = (baseline_val - optimized_val) / baseline_val * 100
                 improvement_str = f"{improvement_pct:+.1f}%"
             else:
                 improvement_str = "N/A"
-            
-            print(f"{key:<30} {baseline_val:<20.6f}ms {optimized_val:<20.6f}ms {improvement_str:<15}")
-        
+
+            print(
+                f"{key:<30} {baseline_val:<20.6f}ms {optimized_val:<20.6f}ms {improvement_str:<15}"
+            )
+
         print()
-        print(f"{'Throughput (ops/sec)':<30} {baseline_stats['throughput_per_sec']:<20.1f} {optimized_stats['throughput_per_sec']:<20.1f}")
-        
+        print(
+            f"{'Throughput (ops/sec)':<30} {baseline_stats['throughput_per_sec']:<20.1f} {optimized_stats['throughput_per_sec']:<20.1f}"
+        )
+
         # Calculate overall improvement
         baseline_mean = baseline_stats["mean_ms"]
         optimized_mean = optimized_stats["mean_ms"]
         improvement_pct = (baseline_mean - optimized_mean) / baseline_mean * 100
-        
+
         print()
         print("=" * 80)
         print(f"OVERALL IMPROVEMENT: {improvement_pct:.1f}%")
@@ -165,27 +171,27 @@ class PerformanceComparisonBenchmark:
         print(f"Time saved per query: {baseline_mean - optimized_mean:.6f}ms")
         print("=" * 80)
         print()
-        
+
         # Print optimization statistics
         print("Optimization Statistics:")
         print("-" * 80)
-        
+
         opt_stats = self.optimized_wrapper.get_optimization_stats()
-        
+
         print("\nFingerprint Cache:")
         fp_cache = opt_stats["fingerprint_cache"]
         print(f"  Cache size: {fp_cache['cache_size']}/{fp_cache['max_size']}")
         print(f"  Accesses: {fp_cache['accesses']}")
         print(f"  Hits: {fp_cache['hits']}")
         print(f"  Hit rate: {fp_cache['hit_rate']:.1f}%")
-        
+
         print("\nGraph Type Detection:")
         type_det = opt_stats["type_detector"]
         print(f"  Cache size: {type_det['cache_size']}")
         print(f"  Cache hits: {type_det['cache_hits']}")
         print(f"  Cache misses: {type_det['cache_misses']}")
         print(f"  Hit rate: {type_det['hit_rate']:.1f}%")
-        
+
         print()
         print("=" * 80)
         print("Bottleneck Analysis (from component profiling):")

@@ -4,6 +4,7 @@ Peer Engine — core P2P peer management operations.
 Business logic extracted from mcplusplus_peer_tools.py (964 lines → thin wrapper).
 All methods can be imported and used independently of the MCP layer.
 """
+
 from __future__ import annotations
 
 import anyio
@@ -25,6 +26,7 @@ try:
         get_bootstrap_config,
         create_bootstrap_config,
     )
+
     MCPLUSPLUS_AVAILABLE: bool = mcplusplus_available()
 except (ImportError, ModuleNotFoundError):
     MCPLUSPLUS_AVAILABLE = False
@@ -42,6 +44,7 @@ _DEFAULT_BOOTSTRAP_NODES = [
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _unavailable(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Standard degraded-mode response."""
@@ -74,6 +77,7 @@ def _error(e: Exception, extra: Optional[Dict[str, Any]] = None) -> Dict[str, An
 # ---------------------------------------------------------------------------
 # PeerEngine
 # ---------------------------------------------------------------------------
+
 
 class PeerEngine:
     """Core peer management operations, independent of MCP tool layer."""
@@ -151,9 +155,9 @@ class PeerEngine:
             start_time = time.time()
             for attempt in range(retry_count):
                 try:
-                    connection_id = hashlib.sha256(
-                        f"{peer_id}{multiaddr}".encode()
-                    ).hexdigest()[:16]
+                    connection_id = hashlib.sha256(f"{peer_id}{multiaddr}".encode()).hexdigest()[
+                        :16
+                    ]
                     return {
                         "success": True,
                         "peer_id": peer_id,
@@ -250,7 +254,7 @@ class PeerEngine:
                 peers.append(peer)
 
             total = len(peers)
-            page = peers[offset:offset + limit]
+            page = peers[offset : offset + limit]
             return {
                 "success": True,
                 "peers": page,
@@ -309,9 +313,17 @@ class PeerEngine:
                     {
                         "timestamp": time.time() - (i * 3600),
                         "latency_ms": current_metrics["latency_ms"] + random.uniform(-10, 10),
-                        "bandwidth_mbps": current_metrics["bandwidth_mbps"] + random.uniform(-20, 20),
-                        "packet_loss_percent": max(0, current_metrics["packet_loss_percent"] + random.uniform(-1, 1)),
-                        "connection_quality": min(1.0, max(0, current_metrics["connection_quality"] + random.uniform(-0.1, 0.1))),
+                        "bandwidth_mbps": current_metrics["bandwidth_mbps"]
+                        + random.uniform(-20, 20),
+                        "packet_loss_percent": max(
+                            0, current_metrics["packet_loss_percent"] + random.uniform(-1, 1)
+                        ),
+                        "connection_quality": min(
+                            1.0,
+                            max(
+                                0, current_metrics["connection_quality"] + random.uniform(-0.1, 0.1)
+                            ),
+                        ),
                     }
                     for i in range(history_hours)
                 ]

@@ -7,6 +7,7 @@ Targets (by uncovered-statement count, no daemon/network required):
   - extraction/validator.py       59% → target 69%  (75 miss)
   - transactions/wal.py           66% → target 75%  (54 miss)
 """
+
 import json
 import time
 import uuid
@@ -54,7 +55,9 @@ from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
 )
 
 
-def _make_doc(doc_id="d1", content="hello world", entities=None, published="2020-01-01", relevance=0.9):
+def _make_doc(
+    doc_id="d1", content="hello world", entities=None, published="2020-01-01", relevance=0.9
+):
     return {
         "id": doc_id,
         "content": content,
@@ -122,8 +125,12 @@ class TestCrossDocumentReasoner:
     def test_find_entity_connections_no_kg_common_entities(self):
         reasoner = self._reasoner()
         docs = [
-            DocumentNode(id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=["e1"]),
-            DocumentNode(id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=["e1"]),
+            DocumentNode(
+                id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=["e1"]
+            ),
+            DocumentNode(
+                id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=["e1"]
+            ),
         ]
         connections = reasoner.find_entity_connections(docs, knowledge_graph=None)
         # Without KG, matches based on shared entity string IDs
@@ -132,8 +139,12 @@ class TestCrossDocumentReasoner:
     def test_find_entity_connections_with_kg(self):
         reasoner = self._reasoner()
         docs = [
-            DocumentNode(id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=["e1"]),
-            DocumentNode(id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=["e1"]),
+            DocumentNode(
+                id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=["e1"]
+            ),
+            DocumentNode(
+                id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=["e1"]
+            ),
         ]
         mock_kg = MagicMock()
         mock_kg.get_entity.return_value = {"name": "Alice", "type": "PERSON"}
@@ -145,8 +156,12 @@ class TestCrossDocumentReasoner:
     def test_find_entity_connections_no_common_entities(self):
         reasoner = self._reasoner()
         docs = [
-            DocumentNode(id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=["e1"]),
-            DocumentNode(id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=["e2"]),
+            DocumentNode(
+                id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=["e1"]
+            ),
+            DocumentNode(
+                id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=["e2"]
+            ),
         ]
         connections = reasoner.find_entity_connections(docs, knowledge_graph=None)
         # No shared entities → no connections
@@ -157,18 +172,34 @@ class TestCrossDocumentReasoner:
     # -----------------------------------------------------------------------
     def test_determine_relation_missing_docs_returns_unclear(self):
         reasoner = self._reasoner()
-        rel, strength = reasoner._determine_relation("e1", "d1", "d2", documents=[], knowledge_graph=None)
+        rel, strength = reasoner._determine_relation(
+            "e1", "d1", "d2", documents=[], knowledge_graph=None
+        )
         assert rel == InformationRelationType.UNCLEAR
 
     def test_determine_relation_chronological_returns_elaborating(self):
         reasoner = self._reasoner()
         docs = [
-            DocumentNode(id="d1", content="x", source="s",
-                         metadata={"published_date": "2020-01-01"}, relevance_score=0.9, entities=[]),
-            DocumentNode(id="d2", content="y", source="s",
-                         metadata={"published_date": "2021-06-01"}, relevance_score=0.8, entities=[]),
+            DocumentNode(
+                id="d1",
+                content="x",
+                source="s",
+                metadata={"published_date": "2020-01-01"},
+                relevance_score=0.9,
+                entities=[],
+            ),
+            DocumentNode(
+                id="d2",
+                content="y",
+                source="s",
+                metadata={"published_date": "2021-06-01"},
+                relevance_score=0.8,
+                entities=[],
+            ),
         ]
-        rel, strength = reasoner._determine_relation("e1", "d1", "d2", documents=docs, knowledge_graph=None)
+        rel, strength = reasoner._determine_relation(
+            "e1", "d1", "d2", documents=docs, knowledge_graph=None
+        )
         # d1 older than d2 → chronological → ELABORATING
         assert rel == InformationRelationType.ELABORATING
         assert strength > 0
@@ -176,10 +207,16 @@ class TestCrossDocumentReasoner:
     def test_determine_relation_no_dates_returns_complementary(self):
         reasoner = self._reasoner()
         docs = [
-            DocumentNode(id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=[]),
-            DocumentNode(id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=[]),
+            DocumentNode(
+                id="d1", content="x", source="s", metadata={}, relevance_score=0.9, entities=[]
+            ),
+            DocumentNode(
+                id="d2", content="y", source="s", metadata={}, relevance_score=0.8, entities=[]
+            ),
         ]
-        rel, strength = reasoner._determine_relation("e1", "d1", "d2", documents=docs, knowledge_graph=None)
+        rel, strength = reasoner._determine_relation(
+            "e1", "d1", "d2", documents=docs, knowledge_graph=None
+        )
         assert rel == InformationRelationType.COMPLEMENTARY
 
     # -----------------------------------------------------------------------
@@ -218,13 +255,22 @@ class TestCrossDocumentReasoner:
     # -----------------------------------------------------------------------
     def test_synthesize_answer_no_llm(self):
         reasoner = self._reasoner()
-        docs = [DocumentNode(id="d1", content="content", source="s", metadata={}, relevance_score=0.9, entities=[])]
+        docs = [
+            DocumentNode(
+                id="d1",
+                content="content",
+                source="s",
+                metadata={},
+                relevance_score=0.9,
+                entities=[],
+            )
+        ]
         answer, confidence = reasoner._synthesize_answer(
             query="test?",
             documents=docs,
             entity_connections=[],
             traversal_paths=[],
-            reasoning_depth="shallow"
+            reasoning_depth="shallow",
         )
         assert isinstance(answer, str)
         assert 0 < confidence <= 1.0
@@ -258,20 +304,44 @@ class TestCrossDocumentReasoner:
     # -----------------------------------------------------------------------
     def test_compute_document_similarity_shared_tokens(self):
         reasoner = self._reasoner()
-        d1 = DocumentNode(id="d1", content="knowledge graph extraction", source="s",
-                           metadata={}, relevance_score=0.9, entities=[])
-        d2 = DocumentNode(id="d2", content="extraction from knowledge sources", source="s",
-                           metadata={}, relevance_score=0.8, entities=[])
+        d1 = DocumentNode(
+            id="d1",
+            content="knowledge graph extraction",
+            source="s",
+            metadata={},
+            relevance_score=0.9,
+            entities=[],
+        )
+        d2 = DocumentNode(
+            id="d2",
+            content="extraction from knowledge sources",
+            source="s",
+            metadata={},
+            relevance_score=0.8,
+            entities=[],
+        )
         sim = reasoner._compute_document_similarity(d1, d2)
         assert 0.0 <= sim <= 1.0
         assert sim > 0.0  # shared: "knowledge", "extraction"
 
     def test_compute_document_similarity_no_shared(self):
         reasoner = self._reasoner()
-        d1 = DocumentNode(id="d1", content="alpha beta gamma", source="s",
-                           metadata={}, relevance_score=0.9, entities=[])
-        d2 = DocumentNode(id="d2", content="delta epsilon zeta", source="s",
-                           metadata={}, relevance_score=0.8, entities=[])
+        d1 = DocumentNode(
+            id="d1",
+            content="alpha beta gamma",
+            source="s",
+            metadata={},
+            relevance_score=0.9,
+            entities=[],
+        )
+        d2 = DocumentNode(
+            id="d2",
+            content="delta epsilon zeta",
+            source="s",
+            metadata={},
+            relevance_score=0.8,
+            entities=[],
+        )
         sim = reasoner._compute_document_similarity(d1, d2)
         assert sim == 0.0
 
@@ -544,6 +614,7 @@ class TestQueryExecutor:
         # Inject a compile error by mocking the compiler
         from ipfs_datasets_py.knowledge_graphs.cypher import CypherCompiler
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompileError
+
         with patch.object(CypherCompiler, "compile", side_effect=CypherCompileError("bad compile")):
             result = qe._execute_cypher("MATCH (n) RETURN n", {}, raise_on_error=False)
         data = result.data()
@@ -627,7 +698,11 @@ class TestKnowledgeGraphExtractorWithValidation:
             validator = MagicMock()
             vk = MagicMock()
             vk.to_dict.return_value = {"valid": True}
-            vk.data = {"entity_coverage": 0.8, "relationship_coverage": 0.7, "overall_coverage": 0.75}
+            vk.data = {
+                "entity_coverage": 0.8,
+                "relationship_coverage": 0.7,
+                "overall_coverage": 0.75,
+            }
             vk.is_valid = True
             validator.validate_knowledge_graph.return_value = vk
             validator.generate_validation_explanation.return_value = "Use X instead"
@@ -660,7 +735,9 @@ class TestKnowledgeGraphExtractorWithValidation:
         vk = MagicMock()
         vk.to_dict.return_value = {}
         vk.data = {
-            "entity_coverage": 0.5, "relationship_coverage": 0.5, "overall_coverage": 0.5,
+            "entity_coverage": 0.5,
+            "relationship_coverage": 0.5,
+            "overall_coverage": 0.5,
             "entity_validations": {"e0": {"valid": False, "name": "Entity0"}},
         }
         vke.validator.validate_knowledge_graph.return_value = vk
@@ -701,8 +778,7 @@ class TestKnowledgeGraphExtractorWithValidation:
         vke = self._make_vke(with_validator=True)
         kg = _make_kg(2, 1)
         vke.validator.validate_knowledge_graph.return_value = MagicMock(
-            to_dict=lambda: {"valid": True, "score": 0.9},
-            is_valid=True
+            to_dict=lambda: {"valid": True, "score": 0.9}, is_valid=True
         )
         result = vke.validate_against_wikidata(kg)
         assert isinstance(result, dict)

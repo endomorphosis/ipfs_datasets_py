@@ -15,6 +15,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
+
 def test_web_archive_tools():
     """Test all web archive tools."""
     print("Testing Web Archive Tools")
@@ -24,9 +25,11 @@ def test_web_archive_tools():
 
     # Test extract_text_from_warc
     try:
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import extract_text_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import (
+            extract_text_from_warc,
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -37,7 +40,7 @@ def test_web_archive_tools():
             results.append(("extract_text_from_warc", True, None))
         else:
             print(f"✗ extract_text_from_warc: {result.get('error', 'Unknown error')}")
-            results.append(("extract_text_from_warc", False, result.get('error', 'Unknown error')))
+            results.append(("extract_text_from_warc", False, result.get("error", "Unknown error")))
 
         os.unlink(warc_path)
     except Exception as e:
@@ -46,9 +49,11 @@ def test_web_archive_tools():
 
     # Test extract_metadata_from_warc
     try:
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import extract_metadata_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import (
+            extract_metadata_from_warc,
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -59,7 +64,9 @@ def test_web_archive_tools():
             results.append(("extract_metadata_from_warc", True, None))
         else:
             print(f"✗ extract_metadata_from_warc: {result.get('error', 'Unknown error')}")
-            results.append(("extract_metadata_from_warc", False, result.get('error', 'Unknown error')))
+            results.append(
+                ("extract_metadata_from_warc", False, result.get("error", "Unknown error"))
+            )
 
         os.unlink(warc_path)
     except Exception as e:
@@ -68,9 +75,11 @@ def test_web_archive_tools():
 
     # Test extract_links_from_warc
     try:
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import extract_links_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import (
+            extract_links_from_warc,
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -81,7 +90,7 @@ def test_web_archive_tools():
             results.append(("extract_links_from_warc", True, None))
         else:
             print(f"✗ extract_links_from_warc: {result.get('error', 'Unknown error')}")
-            results.append(("extract_links_from_warc", False, result.get('error', 'Unknown error')))
+            results.append(("extract_links_from_warc", False, result.get("error", "Unknown error")))
 
         os.unlink(warc_path)
     except Exception as e:
@@ -92,7 +101,7 @@ def test_web_archive_tools():
     try:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc import index_warc
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -103,7 +112,7 @@ def test_web_archive_tools():
             results.append(("index_warc", True, None))
         else:
             print(f"✗ index_warc: {result.get('error', 'Unknown error')}")
-            results.append(("index_warc", False, result.get('error', 'Unknown error')))
+            results.append(("index_warc", False, result.get("error", "Unknown error")))
 
         os.unlink(warc_path)
     except Exception as e:
@@ -111,6 +120,7 @@ def test_web_archive_tools():
         results.append(("index_warc", False, str(e)))
 
     return results
+
 
 def test_vector_tools():
     """Test all vector tools."""
@@ -122,20 +132,24 @@ def test_vector_tools():
     # Test create_vector_index
     try:
         import anyio
-        from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
+        from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import (
+            create_vector_index,
+        )
 
         # Create test vectors
         vectors = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
         metadata = [{"text": "test1"}, {"text": "test2"}, {"text": "test3"}]
 
-        result = anyio.run(create_vector_index(vectors, dimension=3, metadata=metadata, index_id="test_index"))
+        result = anyio.run(
+            create_vector_index(vectors, dimension=3, metadata=metadata, index_id="test_index")
+        )
 
         if result.get("status") == "success":
             print("✓ create_vector_index")
             results.append(("create_vector_index", True, None))
         else:
             print(f"✗ create_vector_index: {result.get('message', 'Unknown error')}")
-            results.append(("create_vector_index", False, result.get('message', 'Unknown error')))
+            results.append(("create_vector_index", False, result.get("message", "Unknown error")))
     except Exception as e:
         print(f"✗ create_vector_index: {e}")
         results.append(("create_vector_index", False, str(e)))
@@ -143,7 +157,9 @@ def test_vector_tools():
     # Test search_vector_index
     try:
         import anyio
-        from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
+        from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import (
+            search_vector_index,
+        )
 
         query_vector = [1.0, 2.0, 3.0]
         result = anyio.run(search_vector_index("test_index", query_vector, top_k=5))
@@ -153,12 +169,13 @@ def test_vector_tools():
             results.append(("search_vector_index", True, None))
         else:
             print(f"✗ search_vector_index: {result.get('message', 'Unknown error')}")
-            results.append(("search_vector_index", False, result.get('message', 'Unknown error')))
+            results.append(("search_vector_index", False, result.get("message", "Unknown error")))
     except Exception as e:
         print(f"✗ search_vector_index: {e}")
         results.append(("search_vector_index", False, str(e)))
 
     return results
+
 
 def test_graph_tools():
     """Test all graph tools."""
@@ -170,7 +187,9 @@ def test_graph_tools():
     # Test query_knowledge_graph
     try:
         import anyio
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import (
+            query_knowledge_graph,
+        )
 
         query = "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10"
         result = anyio.run(query_knowledge_graph("test_graph", query))
@@ -180,12 +199,13 @@ def test_graph_tools():
             results.append(("query_knowledge_graph", True, None))
         else:
             print(f"✗ query_knowledge_graph: {result.get('message', 'Unknown error')}")
-            results.append(("query_knowledge_graph", False, result.get('message', 'Unknown error')))
+            results.append(("query_knowledge_graph", False, result.get("message", "Unknown error")))
     except Exception as e:
         print(f"✗ query_knowledge_graph: {e}")
         results.append(("query_knowledge_graph", False, str(e)))
 
     return results
+
 
 def test_dataset_tools():
     """Test all dataset tools."""
@@ -198,12 +218,13 @@ def test_dataset_tools():
         ("load_dataset", ["test_dataset"]),
         ("save_dataset", [{"data": [1, 2, 3]}, "test_output"]),
         ("process_dataset", [{"data": [1, 2, 3]}, [{"operation": "filter", "type": "filter"}]]),
-        ("convert_dataset_format", [{"data": [1, 2, 3]}, "csv", "json"])
+        ("convert_dataset_format", [{"data": [1, 2, 3]}, "csv", "json"]),
     ]
 
     for tool_name, args in tools_to_test:
         try:
             import anyio
+
             # Try to import and test each tool
             module_path = f"ipfs_datasets_py.mcp_server.tools.dataset_tools.{tool_name}"
             module = __import__(module_path, fromlist=[tool_name])
@@ -220,12 +241,13 @@ def test_dataset_tools():
                 results.append((tool_name, True, None))
             else:
                 print(f"✗ {tool_name}: {result.get('error', 'Unknown error')}")
-                results.append((tool_name, False, result.get('error', 'Unknown error')))
+                results.append((tool_name, False, result.get("error", "Unknown error")))
         except Exception as e:
             print(f"✗ {tool_name}: {e}")
             results.append((tool_name, False, str(e)))
 
     return results
+
 
 def test_ipfs_tools():
     """Test all IPFS tools."""
@@ -234,14 +256,12 @@ def test_ipfs_tools():
 
     results = []
 
-    tools_to_test = [
-        ("get_from_ipfs", ["QmTest123"]),
-        ("pin_to_ipfs", [{"test": "data"}])
-    ]
+    tools_to_test = [("get_from_ipfs", ["QmTest123"]), ("pin_to_ipfs", [{"test": "data"}])]
 
     for tool_name, args in tools_to_test:
         try:
             import anyio
+
             module_path = f"ipfs_datasets_py.mcp_server.tools.ipfs_tools.{tool_name}"
             module = __import__(module_path, fromlist=[tool_name])
             tool_func = getattr(module, tool_name)
@@ -257,12 +277,13 @@ def test_ipfs_tools():
                 results.append((tool_name, True, None))
             else:
                 print(f"✗ {tool_name}: {result.get('error', 'Unknown error')}")
-                results.append((tool_name, False, result.get('error', 'Unknown error')))
+                results.append((tool_name, False, result.get("error", "Unknown error")))
         except Exception as e:
             print(f"✗ {tool_name}: {e}")
             results.append((tool_name, False, str(e)))
 
     return results
+
 
 def test_other_tools():
     """Test tools in other categories."""
@@ -275,20 +296,18 @@ def test_other_tools():
     tool_configs = {
         "audit_tools": {
             "record_audit_event": ["test_action", "test_resource", "test_user"],
-            "generate_audit_report": {"report_type": "comprehensive", "start_time": "2023-01-01", "end_time": "2023-12-31"}
+            "generate_audit_report": {
+                "report_type": "comprehensive",
+                "start_time": "2023-01-01",
+                "end_time": "2023-12-31",
+            },
         },
         "provenance_tools": {
             "record_provenance": ["test_dataset", "test_operation", {"user": "test"}]
         },
-        "security_tools": {
-            "check_access_permission": ["test_resource", "test_user"]
-        },
-        "cli": {
-            "execute_command": ["echo 'test'"]
-        },
-        "functions": {
-            "execute_python_snippet": ["print('test')"]
-        }
+        "security_tools": {"check_access_permission": ["test_resource", "test_user"]},
+        "cli": {"execute_command": ["echo 'test'"]},
+        "functions": {"execute_python_snippet": ["print('test')"]},
     }
 
     for category, tools in tool_configs.items():
@@ -302,6 +321,7 @@ def test_other_tools():
         for tool_name, args in tools.items():
             try:
                 import anyio
+
                 module_path = f"ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}"
                 module = __import__(module_path, fromlist=[tool_name])
                 tool_func = getattr(module, tool_name)
@@ -325,12 +345,15 @@ def test_other_tools():
                     results.append((f"{category}.{tool_name}", True, None))
                 else:
                     print(f"    ✗ {tool_name}: {result.get('error', 'Unknown error')}")
-                    results.append((f"{category}.{tool_name}", False, result.get('error', 'Unknown error')))
+                    results.append(
+                        (f"{category}.{tool_name}", False, result.get("error", "Unknown error"))
+                    )
             except Exception as e:
                 print(f"    ✗ {tool_name}: {e}")
                 results.append((f"{category}.{tool_name}", False, str(e)))
 
     return results
+
 
 def main():
     """Run all MCP tool tests."""
@@ -387,6 +410,7 @@ def main():
                 print(f"  ✗ {tool_name}: {error}")
 
     return 0 if passed == total else 1
+
 
 if __name__ == "__main__":
     exit(main())

@@ -22,9 +22,9 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=None,
         )
-        
+
         decayed = entity.apply_confidence_decay()
-        
+
         assert decayed.confidence == 0.9
         assert decayed.last_seen is None
         assert decayed.id == entity.id
@@ -39,9 +39,9 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=current_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(current_time=current_time)
-        
+
         assert decayed.confidence == pytest.approx(0.9, abs=1e-6)
 
     def test_decay_after_one_half_life(self):
@@ -50,7 +50,7 @@ class TestEntityConfidenceDecay:
         half_life_days = 30.0
         # Entity was seen exactly 30 days ago
         past_time = current_time - (half_life_days * 86400)
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -58,12 +58,12 @@ class TestEntityConfidenceDecay:
             confidence=0.8,
             last_seen=past_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=half_life_days,
         )
-        
+
         expected = 0.8 * 0.5  # 0.4
         assert decayed.confidence == pytest.approx(expected, abs=0.01)
 
@@ -72,7 +72,7 @@ class TestEntityConfidenceDecay:
         current_time = time.time()
         half_life_days = 30.0
         past_time = current_time - (2 * half_life_days * 86400)
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -80,13 +80,13 @@ class TestEntityConfidenceDecay:
             confidence=0.8,
             last_seen=past_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=half_life_days,
         )
-        
-        expected = 0.8 * (0.5 ** 2)  # 0.2
+
+        expected = 0.8 * (0.5**2)  # 0.2
         assert decayed.confidence == pytest.approx(expected, abs=0.01)
 
     def test_decay_respects_min_confidence_floor(self):
@@ -95,7 +95,7 @@ class TestEntityConfidenceDecay:
         half_life_days = 30.0
         # Very old observation (10 half-lives = 300 days)
         past_time = current_time - (10 * half_life_days * 86400)
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -103,13 +103,13 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=past_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=half_life_days,
             min_confidence=0.1,
         )
-        
+
         # After 10 half-lives, natural decay would be 0.9 * (0.5 ** 10) ≈ 0.00088
         # But we enforce min_confidence=0.1
         assert decayed.confidence == pytest.approx(0.1, abs=1e-6)
@@ -119,7 +119,7 @@ class TestEntityConfidenceDecay:
         current_time = time.time()
         days_elapsed = 60.0
         past_time = current_time - (days_elapsed * 86400)
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -127,19 +127,19 @@ class TestEntityConfidenceDecay:
             confidence=0.8,
             last_seen=past_time,
         )
-        
+
         # Fast decay (15-day half-life)
         fast_decay = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=15.0,
         )
-        
+
         # Slow decay (120-day half-life)
         slow_decay = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=120.0,
         )
-        
+
         # Fast decay should reduce confidence more than slow decay
         assert fast_decay.confidence < slow_decay.confidence
         # With 60 days elapsed and 15-day half-life, that's 4 half-lives
@@ -153,7 +153,7 @@ class TestEntityConfidenceDecay:
         """Decay should only modify confidence, leaving other fields unchanged."""
         current_time = time.time()
         past_time = current_time - (30 * 86400)
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -163,9 +163,9 @@ class TestEntityConfidenceDecay:
             source_span=(10, 15),
             last_seen=past_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(current_time=current_time)
-        
+
         assert decayed.id == "e1"
         assert decayed.type == "Person"
         assert decayed.text == "Alice"
@@ -178,7 +178,7 @@ class TestEntityConfidenceDecay:
         """apply_confidence_decay should return a new Entity, not modify in place."""
         current_time = time.time()
         past_time = current_time - (30 * 86400)
-        
+
         original = Entity(
             id="e1",
             type="Person",
@@ -186,9 +186,9 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=past_time,
         )
-        
+
         decayed = original.apply_confidence_decay(current_time=current_time)
-        
+
         # Original should be unchanged
         assert original.confidence == 0.9
         # Decayed should be different
@@ -199,7 +199,7 @@ class TestEntityConfidenceDecay:
         """If current_time < last_seen (clock skew), treat as no decay."""
         current_time = time.time()
         future_time = current_time + 3600  # 1 hour in the future
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -207,9 +207,9 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=future_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(current_time=current_time)
-        
+
         # No decay should occur (max(0, elapsed) protects against negative)
         assert decayed.confidence == pytest.approx(0.9, abs=1e-6)
 
@@ -223,11 +223,11 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=current_time,
         )
-        
+
         serialized = entity.to_dict()
         assert "last_seen" in serialized
         assert serialized["last_seen"] == current_time
-        
+
         deserialized = Entity.from_dict(serialized)
         assert deserialized.last_seen == current_time
 
@@ -240,10 +240,10 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=None,
         )
-        
+
         serialized = entity.to_dict()
         assert serialized["last_seen"] is None
-        
+
         deserialized = Entity.from_dict(serialized)
         assert deserialized.last_seen is None
 
@@ -251,7 +251,7 @@ class TestEntityConfidenceDecay:
         """Decay with very short half-life should converge to min_confidence quickly."""
         current_time = time.time()
         past_time = current_time - (7 * 86400)  # 7 days ago
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -259,13 +259,13 @@ class TestEntityConfidenceDecay:
             confidence=0.9,
             last_seen=past_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=1.0,  # Very aggressive: 1-day half-life
             min_confidence=0.05,
         )
-        
+
         # After 7 days with 1-day half-life: 0.9 * (0.5 ** 7) ≈ 0.007
         # Should be clamped to 0.05
         assert decayed.confidence == pytest.approx(0.05, abs=1e-6)
@@ -274,7 +274,7 @@ class TestEntityConfidenceDecay:
         """Entity with zero confidence should remain at zero after decay."""
         current_time = time.time()
         past_time = current_time - (30 * 86400)
-        
+
         entity = Entity(
             id="e1",
             type="Person",
@@ -282,12 +282,12 @@ class TestEntityConfidenceDecay:
             confidence=0.0,
             last_seen=past_time,
         )
-        
+
         decayed = entity.apply_confidence_decay(
             current_time=current_time,
             min_confidence=0.0,
         )
-        
+
         assert decayed.confidence == 0.0
 
     def test_extracted_entities_have_last_seen_timestamp(self):
@@ -296,7 +296,7 @@ class TestEntityConfidenceDecay:
             OntologyGenerator,
             OntologyGenerationContext,
         )
-        
+
         generator = OntologyGenerator()
         context = OntologyGenerationContext(
             data_source="test.txt",
@@ -304,14 +304,14 @@ class TestEntityConfidenceDecay:
             domain="legal",
             extraction_strategy="rule_based",
         )
-        
+
         text = "The plaintiff Alice Smith filed a lawsuit against Bob Corp."
-        
+
         result = generator._extract_rule_based(text, context)
-        
+
         # At least some entities should be extracted
         assert len(result.entities) > 0
-        
+
         # All should have last_seen timestamps
         for entity in result.entities:
             assert entity.last_seen is not None
@@ -322,12 +322,12 @@ class TestEntityConfidenceDecay:
     def test_synthetic_ontology_entities_have_last_seen(self):
         """Synthetic ontology entities should have last_seen set."""
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
-        
+
         generator = OntologyGenerator()
         ontology = generator.generate_synthetic_ontology("legal", n_entities=3)
-        
+
         assert len(ontology["entities"]) == 3
-        
+
         for entity_dict in ontology["entities"]:
             assert "last_seen" in entity_dict
             assert isinstance(entity_dict["last_seen"], float)
@@ -401,20 +401,20 @@ class TestConfidenceDecayIntegration:
             confidence=0.9,
             last_seen=current_time - (15 * 86400),  # 15 days ago
         )
-        
+
         # Apply decay with 30-day half-life at current_time
         # After 15 days: 0.9 * (0.5 ** 0.5) ≈ 0.636
         decayed_1 = entity.apply_confidence_decay(
             current_time=current_time,
             half_life_days=30.0,
         )
-        
+
         assert decayed_1.confidence == pytest.approx(0.636, abs=0.01)
         # Note: decayed_1.last_seen is still the original timestamp
-        
+
         # Simulate another 15 days passing
         future_time = current_time + (15 * 86400)
-        
+
         # Apply decay again
         # Now 30 days have elapsed from original last_seen
         # Decay is calculated from original timestamp: 0.636 * (0.5 ** 1.0) ≈ 0.318
@@ -422,7 +422,7 @@ class TestConfidenceDecayIntegration:
             current_time=future_time,
             half_life_days=30.0,
         )
-        
+
         # The decay compounds on the already-decayed confidence, but uses original last_seen
         # So it's 0.636 * (0.5 ^ (15 days / 30 days)) = 0.636 * (0.5 ^ 0.5) ≈ 0.45
         # Actually no - decay uses last_seen, which is still 30 days before future_time
@@ -439,17 +439,17 @@ class TestConfidenceDecayIntegration:
             confidence=0.9,
             last_seen=current_time - (60 * 86400),  # 60 days ago
         )
-        
+
         # Apply decay
         decayed = old_entity.apply_confidence_decay(current_time=current_time)
         assert decayed.confidence < 0.9
-        
+
         # "Re-observe" the entity by updating last_seen
         fresh_entity = decayed.copy_with(last_seen=current_time)
-        
+
         # Apply decay again immediately
         re_decayed = fresh_entity.apply_confidence_decay(current_time=current_time)
-        
+
         # Should have no additional decay
         assert re_decayed.confidence == pytest.approx(fresh_entity.confidence, abs=1e-6)
 
@@ -466,22 +466,22 @@ class TestConfidenceDecayIntegration:
             )
             for i in range(4)
         ]
-        
+
         decayed_entities = [
             e.apply_confidence_decay(current_time=current_time, half_life_days=30.0)
             for e in entities
         ]
-        
+
         # Entity 0 (just observed) should have no decay
         assert decayed_entities[0].confidence == pytest.approx(0.9, abs=1e-6)
-        
+
         # Entity 1 (10 days ago) should have some decay
         assert decayed_entities[1].confidence < 0.9
         assert decayed_entities[1].confidence > decayed_entities[2].confidence
-        
+
         # Entity 3 (30 days = one half-life) should be ~0.45
         assert decayed_entities[3].confidence == pytest.approx(0.45, abs=0.01)
-        
+
         # Confidence should be monotonically decreasing with age
         for i in range(len(decayed_entities) - 1):
             assert decayed_entities[i].confidence >= decayed_entities[i + 1].confidence

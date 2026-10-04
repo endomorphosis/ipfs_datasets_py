@@ -74,10 +74,7 @@ def _repair_source_artifacts(
         invocation_index=0,
     )
     kernel_body = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "native-kernel-receipt.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.native-kernel-receipt.v1"),
         "accepted": False,
         "independent": True,
         "active_process_count": 0,
@@ -177,9 +174,7 @@ def test_repair_is_one_explicit_attempt_and_preserves_failure_context() -> None:
     assert record.data["repair_attempts"] == 1
     assert len(seen) == 1
     assert seen[0]["max_repair_attempts"] == 1
-    assert seen[0]["compact_failures"] == [
-        {"message": "unknown constant wrong_lemma"}
-    ]
+    assert seen[0]["compact_failures"] == [{"message": "unknown constant wrong_lemma"}]
 
 
 def test_out_of_band_repair_is_source_bound_without_changing_case_identity() -> None:
@@ -203,14 +198,10 @@ def test_out_of_band_repair_is_source_bound_without_changing_case_identity() -> 
     assert repair.input_sha256 == original_input_sha256
     assert record.provenance.input_sha256 == original_input_sha256
     assert repair.repair_context is not None
-    assert repair.repair_context["failure_text"] == (
-        "unknown constant wrong_lemma"
-    )
-    assert repair.repair_context["failed_leanstral_artifact_sha256"] == (
-        leanstral.digest
-    )
-    assert repair.repair_context["kernel_rejection_receipt_sha256"] == (
-        kernel.data["receipt_sha256"]
+    assert repair.repair_context["failure_text"] == ("unknown constant wrong_lemma")
+    assert repair.repair_context["failed_leanstral_artifact_sha256"] == (leanstral.digest)
+    assert (
+        repair.repair_context["kernel_rejection_receipt_sha256"] == (kernel.data["receipt_sha256"])
     )
     with pytest.raises(TypeError):
         repair.repair_context["failure_text"] = "mutated"  # type: ignore[index]
@@ -222,26 +213,20 @@ def test_out_of_band_repair_is_source_bound_without_changing_case_identity() -> 
     assert projected.repair_context is None
     assert isinstance(projected.input_data, dict)
     assert projected.input_data["repair_attempt"] == 1
-    assert projected.input_data["compact_failures"] == [
-        {"message": "unknown constant wrong_lemma"}
-    ]
+    assert projected.input_data["compact_failures"] == [{"message": "unknown constant wrong_lemma"}]
     assert projected.input_data["reusable_drafts"] == [
         adapters._thaw_json(repair.repair_context["failed_draft"])
     ]
     projected_repair = projected.input_data["repair"]
     assert projected_repair["case_input_sha256"] == original_input_sha256
-    assert projected_repair["failed_leanstral_artifact_sha256"] == (
-        leanstral.digest
+    assert projected_repair["failed_leanstral_artifact_sha256"] == (leanstral.digest)
+    assert projected_repair["kernel_rejection_receipt_sha256"] == (kernel.data["receipt_sha256"])
+    expected_provider_id = (
+        "leanstral-"
+        + hashlib.sha256(
+            (f"{repair.run_id}:{repair.case_id}:{original_input_sha256}:1").encode("utf-8")
+        ).hexdigest()[:48]
     )
-    assert projected_repair["kernel_rejection_receipt_sha256"] == (
-        kernel.data["receipt_sha256"]
-    )
-    expected_provider_id = "leanstral-" + hashlib.sha256(
-        (
-            f"{repair.run_id}:{repair.case_id}:"
-            f"{original_input_sha256}:1"
-        ).encode("utf-8")
-    ).hexdigest()[:48]
     assert adapters._provider_request_id(repair, 1) == expected_provider_id
 
 
@@ -338,9 +323,7 @@ def test_out_of_band_repair_context_rejects_draft_and_receipt_source_tampering()
 
 
 def test_repair_context_can_reconstruct_payload_for_downstream_kernel_check() -> None:
-    original, repair, _failed_leanstral, kernel = (
-        _source_bound_repair_request()
-    )
+    original, repair, _failed_leanstral, kernel = _source_bound_repair_request()
     assert repair.repair_context is not None
     repaired_leanstral = adapters.StageArtifact(
         stage=contracts.StageName.LEANSTRAL,
@@ -370,12 +353,11 @@ def test_repair_context_can_reconstruct_payload_for_downstream_kernel_check() ->
     assert downstream.input_sha256 == original.input_sha256
     assert obligation_id == "obl-identity"
     assert repair_attempt == 1
-    assert payload["repair"]["failed_leanstral_artifact_sha256"] == (
-        repair.repair_context["failed_leanstral_artifact_sha256"]
+    assert (
+        payload["repair"]["failed_leanstral_artifact_sha256"]
+        == (repair.repair_context["failed_leanstral_artifact_sha256"])
     )
-    assert payload["repair"]["kernel_rejection_receipt_sha256"] == (
-        kernel.data["receipt_sha256"]
-    )
+    assert payload["repair"]["kernel_rejection_receipt_sha256"] == (kernel.data["receipt_sha256"])
 
 
 def test_out_of_band_repair_context_enforces_failure_and_draft_bounds() -> None:
@@ -389,17 +371,11 @@ def test_out_of_band_repair_context_enforces_failure_and_draft_bounds() -> None:
             case_input_sha256=original.input_sha256,
             failed_leanstral_artifact=leanstral,
             kernel_rejection_artifact=kernel,
-            failure_text="x" * (
-                adapters.LEANSTRAL_MAX_REPAIR_FAILURE_BYTES + 1
-            ),
+            failure_text="x" * (adapters.LEANSTRAL_MAX_REPAIR_FAILURE_BYTES + 1),
         )
 
-    oversized = _draft(
-        "x" * (adapters.LEANSTRAL_MAX_REPAIR_DRAFT_BYTES + 1)
-    )
-    large_leanstral, kernel = _repair_source_artifacts(
-        failed_draft=oversized
-    )
+    oversized = _draft("x" * (adapters.LEANSTRAL_MAX_REPAIR_DRAFT_BYTES + 1))
+    large_leanstral, kernel = _repair_source_artifacts(failed_draft=oversized)
     with pytest.raises(
         contracts.ProtocolContractError,
         match="failed_draft exceeds",
@@ -420,9 +396,7 @@ def test_out_of_band_and_legacy_repair_sources_cannot_conflict() -> None:
             "failed_draft": "exact legacy",
         },
     )
-    _original, repair, _leanstral, _kernel = (
-        _source_bound_repair_request(legacy)
-    )
+    _original, repair, _leanstral, _kernel = _source_bound_repair_request(legacy)
     calls = 0
 
     def handler(_request: adapters.StageRequest) -> dict[str, object]:
@@ -435,17 +409,12 @@ def test_out_of_band_and_legacy_repair_sources_cannot_conflict() -> None:
     assert record.status is contracts.StageStatus.FAILED
     assert calls == 0
     assert record.data["safe_failure_class"] == "malformed_request"
-    assert record.failure_detail == (
-        "Leanstral request violated the strict provider contract"
-    )
+    assert record.failure_detail == ("Leanstral request violated the strict provider contract")
 
 
 def test_frozen_case_text_is_the_prompt_at_the_leanstral_boundary() -> None:
     seen: list[dict[str, object]] = []
-    source_text = (
-        "Every archivist is trained. Ada is an archivist. "
-        "Therefore Ada is trained."
-    )
+    source_text = "Every archivist is trained. Ada is an archivist. Therefore Ada is trained."
 
     def handler(request: adapters.StageRequest) -> dict[str, object]:
         assert isinstance(request.input_data, dict)
@@ -467,14 +436,9 @@ def test_frozen_case_text_crosses_the_supervisor_provider_contract() -> None:
     )
 
     seen_prompts: list[str] = []
-    source_text = (
-        "Every archivist is trained. Ada is an archivist. "
-        "Therefore Ada is trained."
-    )
+    source_text = "Every archivist is trained. Ada is an archivist. Therefore Ada is trained."
     provider = LeanstralProofProvider(
-        llm_generate=lambda prompt, **_kwargs: (
-            seen_prompts.append(prompt) or "exact h"
-        )
+        llm_generate=lambda prompt, **_kwargs: seen_prompts.append(prompt) or "exact h"
     )
 
     record = adapters.LeanstralAdapter(provider=provider).run(
@@ -494,10 +458,7 @@ def test_a3_fallback_binds_the_compiler_theorem_and_structured_schema() -> None:
         LeanstralProofProvider,
     )
 
-    source_text = (
-        "Every archivist is trained. Ada is an archivist. "
-        "Therefore Ada is trained."
-    )
+    source_text = "Every archivist is trained. Ada is an archivist. Therefore Ada is trained."
     compiled = runtime.compile_reviewed_obligation(
         {
             "text": source_text,
@@ -526,10 +487,7 @@ def test_a3_fallback_binds_the_compiler_theorem_and_structured_schema() -> None:
         theorem = structured["fixed_theorem"]
         return json.dumps(
             {
-                "schema": (
-                    "ipfs_accelerate_py.agent_supervisor."
-                    "leanstral-proof-proposal@1"
-                ),
+                "schema": ("ipfs_accelerate_py.agent_supervisor.leanstral-proof-proposal@1"),
                 "theorem_id": theorem["theorem_id"],
                 "proposal_kind": "proof",
                 "proof_text": "exact rule witness fact",
@@ -542,9 +500,9 @@ def test_a3_fallback_binds_the_compiler_theorem_and_structured_schema() -> None:
         upstream_artifacts=(compiler,),
         invocation_index=1,
     )
-    record = adapters.LeanstralAdapter(
-        provider=LeanstralProofProvider(llm_generate=generate)
-    ).run(request)
+    record = adapters.LeanstralAdapter(provider=LeanstralProofProvider(llm_generate=generate)).run(
+        request
+    )
 
     assert record.status is contracts.StageStatus.SUCCESS
     assert len(seen_prompts) == 1
@@ -559,15 +517,11 @@ def test_a3_fallback_binds_the_compiler_theorem_and_structured_schema() -> None:
     ]
     assert fixed["conclusion"]
     assert fixed["conclusion"] in compiled.source_template
-    assert fixed["canonical_source_digest"] == (
-        f"sha256:{compiled.source_template_sha256}"
-    )
+    assert fixed["canonical_source_digest"] == (f"sha256:{compiled.source_template_sha256}")
     assert seen_prompts[0]["output_schema"]["schema"] == (
         "ipfs_accelerate_py.agent_supervisor.leanstral-proof-proposal@1"
     )
-    assert record.data["draft"]["context_capsule_id"].startswith(
-        "proof-context:sha256:"
-    )
+    assert record.data["draft"]["context_capsule_id"].startswith("proof-context:sha256:")
     assert record.data["draft"]["proof_text"] == "exact rule witness fact"
     rendered = compiled.render(record.data["draft"]["proof_text"])
     assert "by\n  exact rule witness fact" in rendered
@@ -580,10 +534,7 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
         LeanstralProofProvider,
     )
 
-    source_text = (
-        "Every archivist is trained. Ada is an archivist. "
-        "Therefore Ada is trained."
-    )
+    source_text = "Every archivist is trained. Ada is an archivist. Therefore Ada is trained."
     compiled = runtime.compile_reviewed_obligation(
         {
             "text": source_text,
@@ -636,11 +587,7 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
         invocation_index=1,
     )
     max_text = "x" * 77
-    candidate_ir = {
-        "propositions": [
-            f"{index:02d}-{max_text}" for index in range(12)
-        ]
-    }
+    candidate_ir = {"propositions": [f"{index:02d}-{max_text}" for index in range(12)]}
     symai = adapters.StageArtifact(
         stage=contracts.StageName.SYMAI,
         status=contracts.StageStatus.SUCCESS,
@@ -650,22 +597,12 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
             "candidate_ir_sha256": hashlib.sha256(
                 contracts.canonical_json(candidate_ir).encode("utf-8")
             ).hexdigest(),
-            "normalized_predicates": [
-                f"{index:02d}-{max_text}" for index in range(24)
-            ],
-            "quantifiers": [
-                f"{index:02d}-{max_text}" for index in range(24)
-            ],
-            "entities": [
-                f"{index:02d}-{max_text}" for index in range(24)
-            ],
-            "ambiguity_flags": [
-                f"{index:02d}-{max_text}" for index in range(24)
-            ],
+            "normalized_predicates": [f"{index:02d}-{max_text}" for index in range(24)],
+            "quantifiers": [f"{index:02d}-{max_text}" for index in range(24)],
+            "entities": [f"{index:02d}-{max_text}" for index in range(24)],
+            "ambiguity_flags": [f"{index:02d}-{max_text}" for index in range(24)],
             "confidence": 0.9,
-            "validation_errors": [
-                f"{index:02d}-{max_text}" for index in range(24)
-            ],
+            "validation_errors": [f"{index:02d}-{max_text}" for index in range(24)],
             "assurance": {
                 "semantic_hypothesis": True,
                 "authoritative": False,
@@ -705,25 +642,21 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
         request,
         adapters.LeanstralAdapterConfig(),
     )
-    record = adapters.LeanstralAdapter(
-        provider=LeanstralProofProvider(llm_generate=generate)
-    ).run(request)
+    record = adapters.LeanstralAdapter(provider=LeanstralProofProvider(llm_generate=generate)).run(
+        request
+    )
 
     assert record.status is contracts.StageStatus.SUCCESS
     assert len(prompts) == 1
     fields = payload["context_capsule"]["untrusted_suggestions"][0]["fields"]
-    assert fields["schema"] == (
-        adapters.LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA
-    )
+    assert fields["schema"] == (adapters.LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA)
     assert "source_semantic_context_sha256" not in fields
     assert fields["semantic_context"]["schema"] == (
         adapters.LEANSTRAL_MODEL_SEMANTIC_CONTEXT_SCHEMA
     )
     assert source_context["artifacts"][0]["artifact_sha256"] == spacy.digest
     assert source_context["artifacts"][1]["artifact_sha256"] == symai.digest
-    encoded_role = fields["semantic_context"]["artifacts"][0]["evidence"][
-        "semantic_roles"
-    ][0]
+    encoded_role = fields["semantic_context"]["artifacts"][0]["evidence"]["semantic_roles"][0]
     assert encoded_role["confidence"] == {
         "schema": adapters.LEANSTRAL_JSON_NUMBER_SCHEMA,
         "json_number": "0.8",
@@ -735,9 +668,7 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
     encoded_symai = fields["semantic_context"]["artifacts"][1]["evidence"]
     assert "artifact_sha256" not in fields["semantic_context"]["artifacts"][0]
     assert "output_sha256" not in fields["semantic_context"]["artifacts"][0]
-    assert "execution" not in fields["semantic_context"]["artifacts"][0][
-        "evidence"
-    ]
+    assert "execution" not in fields["semantic_context"]["artifacts"][0]["evidence"]
     assert "candidate_ir_sha256" not in encoded_symai
     assert len(encoded_symai["normalized_predicates"]) == 24
     assert encoded_symai["confidence"] == {
@@ -755,10 +686,7 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
     assert hint["usable_as_proof_evidence"] is False
     assert hint["usable_as_failure_evidence"] is False
     assert hint["content_sha256"] == (
-        "sha256:"
-        + hashlib.sha256(
-            contracts.canonical_json(fields).encode("utf-8")
-        ).hexdigest()
+        "sha256:" + hashlib.sha256(contracts.canonical_json(fields).encode("utf-8")).hexdigest()
     )
     assert len(contracts.canonical_json(hint).encode("utf-8")) > 10_002
     assert prompts[0]["semantic_hint_policy"] == {
@@ -769,20 +697,13 @@ def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
         "usable_as_proof_evidence": False,
         "usable_as_failure_evidence": False,
     }
-    final_prompt_sha256 = hashlib.sha256(
-        prompt_texts[0].encode("utf-8")
-    ).hexdigest()
+    final_prompt_sha256 = hashlib.sha256(prompt_texts[0].encode("utf-8")).hexdigest()
     assert record.data["draft"]["prompt_sha256"] == final_prompt_sha256
-    assert record.data["draft"]["context_capsule_id"] == (
-        payload["context_capsule"]["capsule_id"]
-    )
+    assert record.data["draft"]["context_capsule_id"] == (payload["context_capsule"]["capsule_id"])
 
 
 def test_leanstral_prompt_identity_ignores_cache_receipts_but_not_semantics() -> None:
-    source_text = (
-        "Every archivist is trained. Ada is an archivist. "
-        "Therefore Ada is trained."
-    )
+    source_text = "Every archivist is trained. Ada is an archivist. Therefore Ada is trained."
     compiled = runtime.compile_reviewed_obligation(
         {
             "text": source_text,
@@ -828,9 +749,7 @@ def test_leanstral_prompt_identity_ignores_cache_receipts_but_not_semantics() ->
                 # become model evidence.
                 "cache_prime": {
                     "marker": cache_marker,
-                    "receipt_sha256": hashlib.sha256(
-                        cache_marker.encode("utf-8")
-                    ).hexdigest(),
+                    "receipt_sha256": hashlib.sha256(cache_marker.encode("utf-8")).hexdigest(),
                 },
             },
             output_sha256=None,
@@ -897,9 +816,7 @@ def test_leanstral_prompt_identity_ignores_cache_receipts_but_not_semantics() ->
         proof_context = adapters.import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.proof_context"
         )
-        capsule = proof_context.ProofContextCapsule.from_dict(
-            payload["context_capsule"]
-        )
+        capsule = proof_context.ProofContextCapsule.from_dict(payload["context_capsule"])
         final_context = proof_context.build_leanstral_proof_context(
             capsule,
             payload["fixed_theorem"],
@@ -938,9 +855,9 @@ def test_leanstral_prompt_identity_ignores_cache_receipts_but_not_semantics() ->
     assert cold[0] != changed[0]
     assert cold[1] != changed[1]
     for payload in (cold[2], warm[2], changed[2]):
-        semantic = payload["context_capsule"]["untrusted_suggestions"][0][
-            "fields"
-        ]["semantic_context"]
+        semantic = payload["context_capsule"]["untrusted_suggestions"][0]["fields"][
+            "semantic_context"
+        ]
         encoded = contracts.canonical_json(semantic)
         assert "cache_prime" not in encoded
         assert "cache_marker" not in encoded
@@ -961,10 +878,7 @@ def test_non_corpus_runtime_readiness_smoke_uses_the_same_strict_boundary() -> N
         calls.append((structured, kwargs))
         return json.dumps(
             {
-                "schema": (
-                    "ipfs_accelerate_py.agent_supervisor."
-                    "leanstral-proof-proposal@1"
-                ),
+                "schema": ("ipfs_accelerate_py.agent_supervisor.leanstral-proof-proposal@1"),
                 "theorem_id": structured["fixed_theorem"]["theorem_id"],
                 "proposal_kind": "proof",
                 "proof_text": "rfl",
@@ -989,19 +903,13 @@ def test_non_corpus_runtime_readiness_smoke_uses_the_same_strict_boundary() -> N
     assert record.status is contracts.StageStatus.SUCCESS
     assert len(calls) == 1
     prompt, kwargs = calls[0]
-    assert prompt["fixed_theorem"]["obligation_id"] == (
-        "leanstral-runtime-smoke-obligation"
-    )
+    assert prompt["fixed_theorem"]["obligation_id"] == ("leanstral-runtime-smoke-obligation")
     assert kwargs["provider"] == "leanstral_local"
     assert kwargs["model_name"] == "exact-test-model"
     assert kwargs["allow_local_fallback"] is False
     assert 0 < kwargs["timeout"] <= adapters.LEANSTRAL_MEASURED_TIMEOUT_SECONDS
-    assert kwargs["max_new_tokens"] == (
-        adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
-    )
-    assert record.data["draft"]["context_capsule_id"].startswith(
-        "proof-context:sha256:"
-    )
+    assert kwargs["max_new_tokens"] == (adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS)
+    assert record.data["draft"]["context_capsule_id"].startswith("proof-context:sha256:")
     assert record.data["draft"]["model"] == "exact-test-model"
     assert record.kernel_accepted is False
 
@@ -1019,12 +927,14 @@ def test_measured_supervisor_request_binds_budget_and_absolute_deadline() -> Non
         model_token_limit=321,
     )
     case_request = _request()
-    expected_request_id = "leanstral-" + hashlib.sha256(
-        (
-            f"{case_request.run_id}:{case_request.case_id}:"
-            f"{case_request.input_sha256}:0"
-        ).encode("utf-8")
-    ).hexdigest()[:48]
+    expected_request_id = (
+        "leanstral-"
+        + hashlib.sha256(
+            (f"{case_request.run_id}:{case_request.case_id}:{case_request.input_sha256}:0").encode(
+                "utf-8"
+            )
+        ).hexdigest()[:48]
+    )
     before_ms = int(time.time() * 1_000)
     record = adapters.LeanstralAdapter(
         provider=Provider(),
@@ -1037,9 +947,7 @@ def test_measured_supervisor_request_binds_budget_and_absolute_deadline() -> Non
     provider_request = requests[0]
     assert provider_request.resource_budget.wall_time_ms == 17_000
     assert provider_request.resource_budget.model_token_limit == 321
-    assert provider_request.resource_budget.max_output_bytes == (
-        adapters.LEANSTRAL_MAX_DRAFT_BYTES
-    )
+    assert provider_request.resource_budget.max_output_bytes == (adapters.LEANSTRAL_MAX_DRAFT_BYTES)
     assert provider_request.request_id == expected_request_id
     assert before_ms + 17_000 <= provider_request.deadline_unix_ms
     assert provider_request.deadline_unix_ms <= after_ms + 17_000
@@ -1131,9 +1039,7 @@ def test_strict_provider_request_failure_is_safe_and_pre_generation() -> None:
         contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
     )
     assert record.data["safe_failure_class"] == "malformed_request"
-    assert record.failure_detail == (
-        "Leanstral request violated the strict provider contract"
-    )
+    assert record.failure_detail == ("Leanstral request violated the strict provider contract")
     assert record.telemetry.model_calls == 0
     assert provider_calls == 0
 
@@ -1193,17 +1099,15 @@ def test_pinned_typed_failure_binds_exact_route_and_original_receipt() -> None:
     assert boundary["provider"] == provider_name
     assert boundary["requested_model"] == model
     assert boundary["cache_prompt"] is False
-    assert boundary["provider_failure_receipt_sha256"] == (
-        failure.boundary_receipt["receipt_sha256"]
+    assert (
+        boundary["provider_failure_receipt_sha256"] == (failure.boundary_receipt["receipt_sha256"])
     )
     identity = record.provenance.effective_identity
     assert identity["endpoint"] == endpoint
     assert identity["provider"] == provider_name
     assert identity["model"] == model
     assert identity["cache_prompt"] is False
-    assert identity["leanstral_failure_boundary_sha256"] == (
-        boundary["receipt_sha256"]
-    )
+    assert identity["leanstral_failure_boundary_sha256"] == (boundary["receipt_sha256"])
 
 
 def test_pinned_provider_accepts_only_a_route_bound_raw_failure() -> None:
@@ -1234,8 +1138,8 @@ def test_pinned_provider_accepts_only_a_route_bound_raw_failure() -> None:
 
     assert record.status is contracts.StageStatus.FAILED
     assert record.data["safe_failure_class"] == "resource_exhausted"
-    assert record.data["generation_failure_boundary"] == (
-        output.data["generation_failure_boundary"]
+    assert (
+        record.data["generation_failure_boundary"] == (output.data["generation_failure_boundary"])
     )
 
 
@@ -1337,9 +1241,7 @@ def test_strict_live_generator_pins_endpoint_model_and_json_schema(
         timeouts.append(timeout)
         calls.append((request.full_url, request.data))
         if request.full_url.endswith("/models"):
-            return Response(
-                {"data": [{"id": model}]}, request.full_url
-            )
+            return Response({"data": [{"id": model}]}, request.full_url)
         payload = json.loads(request.data.decode("utf-8"))
         schema = payload["response_format"]["json_schema"]["schema"]
         assert payload["model"] == model
@@ -1356,9 +1258,7 @@ def test_strict_live_generator_pins_endpoint_model_and_json_schema(
             "<|im_start|>",
         ]
         assert schema["properties"]["theorem_id"] == {"const": "hssl_test"}
-        assert schema["properties"]["schema"] == {
-            "const": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA
-        }
+        assert schema["properties"]["schema"] == {"const": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA}
         return Response(
             {
                 "model": model,
@@ -1382,9 +1282,7 @@ def test_strict_live_generator_pins_endpoint_model_and_json_schema(
     prompt = json.dumps(
         {
             "fixed_theorem": {"theorem_id": "hssl_test"},
-            "output_schema": {
-                "schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA
-            },
+            "output_schema": {"schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA},
         }
     )
 
@@ -1399,9 +1297,7 @@ def test_strict_live_generator_pins_endpoint_model_and_json_schema(
         temperature=0.0,
     )
     assert json.loads(generated) == expected_output
-    receipt = generate.consume_receipt(
-        hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-    )
+    receipt = generate.consume_receipt(hashlib.sha256(prompt.encode("utf-8")).hexdigest())
     assert receipt is not None
     assert receipt["schema"] == adapters.LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
     assert receipt["endpoint"] == endpoint
@@ -1409,23 +1305,20 @@ def test_strict_live_generator_pins_endpoint_model_and_json_schema(
     assert receipt["response_model"] == model
     assert receipt["cache_prompt"] is False
     assert receipt["normalization"] == "strip_single_leading_by"
-    assert receipt["raw_model_content_sha256"] == hashlib.sha256(
-        raw_output.encode("utf-8")
-    ).hexdigest()
-    assert receipt["normalized_proposal_sha256"] == hashlib.sha256(
-        generated.encode("utf-8")
-    ).hexdigest()
-    assert receipt["request_payload_sha256"] == hashlib.sha256(
-        calls[1][1]
-    ).hexdigest()
-    receipt_body = {
-        key: value
-        for key, value in receipt.items()
-        if key != "receipt_sha256"
-    }
-    assert receipt["receipt_sha256"] == hashlib.sha256(
-        contracts.canonical_json(receipt_body).encode("utf-8")
-    ).hexdigest()
+    assert (
+        receipt["raw_model_content_sha256"]
+        == hashlib.sha256(raw_output.encode("utf-8")).hexdigest()
+    )
+    assert (
+        receipt["normalized_proposal_sha256"]
+        == hashlib.sha256(generated.encode("utf-8")).hexdigest()
+    )
+    assert receipt["request_payload_sha256"] == hashlib.sha256(calls[1][1]).hexdigest()
+    receipt_body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+    assert (
+        receipt["receipt_sha256"]
+        == hashlib.sha256(contracts.canonical_json(receipt_body).encode("utf-8")).hexdigest()
+    )
     assert calls == [
         (f"{endpoint}/models", None),
         (f"{endpoint}/chat/completions", calls[1][1]),
@@ -1473,15 +1366,9 @@ def _generation_receipt_for_draft(
             "response_model": "exact-test-model",
             "cache_prompt": False,
             "prompt_sha256": prompt_sha256,
-            "request_payload_sha256": hashlib.sha256(
-                b"request-payload"
-            ).hexdigest(),
-            "response_envelope_sha256": hashlib.sha256(
-                b"response-envelope"
-            ).hexdigest(),
-            "raw_model_content_sha256": hashlib.sha256(
-                b"raw-model-content"
-            ).hexdigest(),
+            "request_payload_sha256": hashlib.sha256(b"request-payload").hexdigest(),
+            "response_envelope_sha256": hashlib.sha256(b"response-envelope").hexdigest(),
+            "raw_model_content_sha256": hashlib.sha256(b"raw-model-content").hexdigest(),
             "raw_model_content_bytes": len(b"raw-model-content"),
             "normalized_proposal_sha256": hashlib.sha256(normalized).hexdigest(),
             "normalized_proposal_bytes": len(normalized),
@@ -1502,9 +1389,7 @@ def test_audited_provider_selects_exact_receipt_for_same_prompt() -> None:
     class Delegate:
         def prove(self, _request: object) -> dict[str, object]:
             proof_text = next(calls)
-            receipt = _generation_receipt_for_draft(
-                prompt_sha256, proof_text
-            )
+            receipt = _generation_receipt_for_draft(prompt_sha256, proof_text)
             generator._receipt_local.pending = (prompt_sha256, receipt)
             return _audited_provider_draft(prompt_sha256, proof_text)
 
@@ -1527,9 +1412,7 @@ def test_audited_provider_selects_exact_receipt_for_same_prompt() -> None:
         lambda receipt: {**receipt, "prompt_sha256": "0" * 64},
         lambda receipt: {
             **receipt,
-            "normalized_proposal_bytes": (
-                int(receipt["normalized_proposal_bytes"]) + 1
-            ),
+            "normalized_proposal_bytes": (int(receipt["normalized_proposal_bytes"]) + 1),
         },
     ],
 )
@@ -1543,9 +1426,7 @@ def test_audited_provider_rejects_tampered_generation_receipt(
         provider="leanstral_local",
         model="exact-test-model",
     )
-    receipt = tamper(
-        _generation_receipt_for_draft(prompt_sha256, "exact target")
-    )
+    receipt = tamper(_generation_receipt_for_draft(prompt_sha256, "exact target"))
     generator._receipt_local.pending = (prompt_sha256, receipt)
 
     class Delegate:
@@ -1586,9 +1467,7 @@ def test_strict_live_generator_rejects_model_substitution_before_http(
             json.dumps(
                 {
                     "fixed_theorem": {"theorem_id": "hssl_test"},
-                    "output_schema": {
-                        "schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA
-                    },
+                    "output_schema": {"schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA},
                 }
             ),
             provider="leanstral_local",
@@ -1629,9 +1508,7 @@ def test_strict_live_generator_types_length_exhaustion_without_content_leak(
     def urlopen(request: object, *, timeout: float) -> Response:
         del timeout
         if request.full_url.endswith("/models"):
-            return Response(
-                {"data": [{"id": model}]}, request.full_url
-            )
+            return Response({"data": [{"id": model}]}, request.full_url)
         return Response(
             {
                 "model": model,
@@ -1656,9 +1533,7 @@ def test_strict_live_generator_types_length_exhaustion_without_content_leak(
             json.dumps(
                 {
                     "fixed_theorem": {"theorem_id": "hssl_test"},
-                    "output_schema": {
-                        "schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA
-                    },
+                    "output_schema": {"schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA},
                 }
             ),
             provider="leanstral_local",
@@ -1671,9 +1546,7 @@ def test_strict_live_generator_types_length_exhaustion_without_content_leak(
         )
     assert caught.value.safe_failure_class == "length_exhausted"
     assert secret not in str(caught.value)
-    assert secret not in contracts.canonical_json(
-        caught.value.boundary_receipt
-    )
+    assert secret not in contracts.canonical_json(caught.value.boundary_receipt)
 
 
 @pytest.mark.parametrize(
@@ -1738,32 +1611,17 @@ def test_leanstral_http_opener_disables_proxies_and_redirects(
         captured.extend(handlers)
         return Opener()
 
-    monkeypatch.setattr(
-        adapters.urllib.request, "build_opener", build_opener
-    )
-    request = adapters.urllib.request.Request(
-        "http://127.0.0.1:8080/v1/models"
-    )
+    monkeypatch.setattr(adapters.urllib.request, "build_opener", build_opener)
+    request = adapters.urllib.request.Request("http://127.0.0.1:8080/v1/models")
 
-    assert adapters._leanstral_urlopen(
-        request, timeout=1.0
-    ) == (request, 1.0)
+    assert adapters._leanstral_urlopen(request, timeout=1.0) == (request, 1.0)
     proxy = next(
-        item
-        for item in captured
-        if isinstance(item, adapters.urllib.request.ProxyHandler)
+        item for item in captured if isinstance(item, adapters.urllib.request.ProxyHandler)
     )
-    redirect = next(
-        item
-        for item in captured
-        if isinstance(item, adapters._LeanstralNoRedirect)
-    )
+    redirect = next(item for item in captured if isinstance(item, adapters._LeanstralNoRedirect))
     assert proxy.proxies == {}
     assert (
-        redirect.redirect_request(
-            request, None, 302, "redirect", {}, "http://evil.invalid"
-        )
-        is None
+        redirect.redirect_request(request, None, 302, "redirect", {}, "http://evil.invalid") is None
     )
 
 
@@ -1790,12 +1648,8 @@ def test_strict_http_rejects_changed_final_url(
         "_leanstral_urlopen",
         lambda _request, *, timeout: Response(),
     )
-    request = adapters.urllib.request.Request(
-        "http://127.0.0.1:8080/v1/models"
-    )
-    with pytest.raises(
-        adapters.LeanstralGenerationFailure
-    ) as caught:
+    request = adapters.urllib.request.Request("http://127.0.0.1:8080/v1/models")
+    with pytest.raises(adapters.LeanstralGenerationFailure) as caught:
         adapters._strict_leanstral_http_object(
             request,
             phase="model_registry",
@@ -1809,29 +1663,22 @@ def test_strict_http_rejects_changed_final_url(
 def test_adapter_failure_receipt_types_are_bound_and_never_echo_exceptions() -> None:
     secret = "DO_NOT_LEAK_PROVIDER_EXCEPTION"
     record = _run(
-        lambda _request: (_ for _ in ()).throw(
-            adapters.LeanstralAdapterContractError(secret)
-        )
+        lambda _request: (_ for _ in ()).throw(adapters.LeanstralAdapterContractError(secret))
     )
 
     assert record.status is contracts.StageStatus.FAILED
     assert record.data["safe_failure_class"] == "malformed_response"
-    assert record.provenance.effective_identity[
-        "leanstral_safe_failure_class"
-    ] == "malformed_response"
-    boundary = record.data["generation_failure_boundary"]
-    body = {
-        key: value
-        for key, value in boundary.items()
-        if key != "receipt_sha256"
-    }
-    assert boundary["receipt_sha256"] == hashlib.sha256(
-        contracts.canonical_json(body).encode("utf-8")
-    ).hexdigest()
     assert (
-        record.provenance.effective_identity[
-            "leanstral_failure_boundary_sha256"
-        ]
+        record.provenance.effective_identity["leanstral_safe_failure_class"] == "malformed_response"
+    )
+    boundary = record.data["generation_failure_boundary"]
+    body = {key: value for key, value in boundary.items() if key != "receipt_sha256"}
+    assert (
+        boundary["receipt_sha256"]
+        == hashlib.sha256(contracts.canonical_json(body).encode("utf-8")).hexdigest()
+    )
+    assert (
+        record.provenance.effective_identity["leanstral_failure_boundary_sha256"]
         == boundary["receipt_sha256"]
     )
     assert secret not in record.failure_detail
@@ -1881,16 +1728,10 @@ def test_failure_telemetry_retains_elapsed_wall_and_cpu_time(
 ) -> None:
     wall = iter((10.0, 11.0, 13.5))
     cpu = iter((20.0, 21.0, 22.25))
-    monkeypatch.setattr(
-        adapters.time, "perf_counter", lambda: next(wall)
-    )
-    monkeypatch.setattr(
-        adapters.time, "process_time", lambda: next(cpu)
-    )
+    monkeypatch.setattr(adapters.time, "perf_counter", lambda: next(wall))
+    monkeypatch.setattr(adapters.time, "process_time", lambda: next(cpu))
 
-    record = _run(
-        lambda _request: (_ for _ in ()).throw(TimeoutError())
-    )
+    record = _run(lambda _request: (_ for _ in ()).throw(TimeoutError()))
 
     assert record.status is contracts.StageStatus.FAILED
     assert record.telemetry.wall_time_ms == 2_500.0
@@ -1904,29 +1745,31 @@ def test_failure_telemetry_retains_elapsed_wall_and_cpu_time(
         (lambda draft: draft | {"schema_version": "wrong-schema"}, "malformed_response"),
         (lambda draft: draft | {"obligation_ids": ["other-obligation"]}, "malformed_response"),
         (
-            lambda draft: draft
-            | {"draft_text": "exact sorry", "proof_text": "exact sorry"},
+            lambda draft: draft | {"draft_text": "exact sorry", "proof_text": "exact sorry"},
             "inadmissible_proposal",
         ),
         (
-            lambda draft: draft
-            | {"draft_text": "by exact rfl", "proof_text": "by exact rfl"},
+            lambda draft: draft | {"draft_text": "by exact rfl", "proof_text": "by exact rfl"},
             "inadmissible_proposal",
         ),
         (
-            lambda draft: draft
-            | {
-                "draft_text": "import Mathlib\ntheorem x : True := by\n  trivial",
-                "proof_text": "import Mathlib\ntheorem x : True := by\n  trivial",
-            },
+            lambda draft: (
+                draft
+                | {
+                    "draft_text": "import Mathlib\ntheorem x : True := by\n  trivial",
+                    "proof_text": "import Mathlib\ntheorem x : True := by\n  trivial",
+                }
+            ),
             "inadmissible_proposal",
         ),
         (
-            lambda draft: draft
-            | {
-                "draft_text": "```lean\nexact rfl\n```",
-                "proof_text": "```lean\nexact rfl\n```",
-            },
+            lambda draft: (
+                draft
+                | {
+                    "draft_text": "```lean\nexact rfl\n```",
+                    "proof_text": "```lean\nexact rfl\n```",
+                }
+            ),
             "inadmissible_proposal",
         ),
         (
@@ -1943,8 +1786,7 @@ def test_malformed_forbidden_or_authoritative_model_output_fails_closed(
 
     assert record.status is contracts.StageStatus.FAILED
     assert (
-        record.failure_code
-        is contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
+        record.failure_code is contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
     )
     assert record.data["safe_failure_class"] == safe_failure_class
     assert record.output_sha256 is None
@@ -1968,9 +1810,7 @@ def test_timeout_and_unavailable_backend_are_distinct_explicit_outcomes() -> Non
     )
 
     unavailable = _run(
-        lambda _request: (_ for _ in ()).throw(
-            ImportError("leanstral provider is not installed")
-        )
+        lambda _request: (_ for _ in ()).throw(ImportError("leanstral provider is not installed"))
     )
     assert unavailable.status is contracts.StageStatus.UNAVAILABLE
     assert unavailable.failure_code is contracts.FailureCode.CAPABILITY_UNAVAILABLE

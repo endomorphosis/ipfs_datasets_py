@@ -115,30 +115,23 @@ FREEZE_EVIDENCE_ID: Final = "PLAT2EV055FREEZE"
 FREEZE_REVISION: Final = 1
 
 DEFAULT_FREEZE_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "plateau2_candidate_freeze.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau2_candidate_freeze.json"
 )
 DEFAULT_AUTHORIZATION_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "plateau2_holdout_authorization.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau2_holdout_authorization.json"
 )
 DEFAULT_FREEZE_DOCS_RELATIVE_PATH: Final = Path(
     "docs/benchmarks/semantic_roundtrip_plateau2_candidate_freeze.md"
 )
 DEFAULT_EDIT_WAVE_RECEIPT_DIR: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "repair_dev_edit_wave_receipts"
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts"
 )
-DEFAULT_EDIT_WAVE_MANIFEST_RELATIVE_PATH: Final = (
-    DEFAULT_EDIT_WAVE_RECEIPT_DIR / "manifest.json"
-)
+DEFAULT_EDIT_WAVE_MANIFEST_RELATIVE_PATH: Final = DEFAULT_EDIT_WAVE_RECEIPT_DIR / "manifest.json"
 DEFAULT_INTERVENTION_REGISTRY_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "repair_dev_intervention_registry.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_intervention_registry.json"
 )
 DEFAULT_PACKET_METRICS_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "repair_dev_packet_context_metrics.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_packet_context_metrics.json"
 )
 
 # Frozen selection thresholds (bound from PLAT2-025; not retunable post-auth).
@@ -229,9 +222,7 @@ def _finite_number(value: object, path: str) -> float:
 def _finite_unit(value: object, path: str) -> float:
     number = _finite_number(value, path)
     if not 0.0 <= number <= 1.0:
-        raise HoldoutCandidateFreezeError(
-            f"{path} must be a finite number from zero to one"
-        )
+        raise HoldoutCandidateFreezeError(f"{path} must be a finite number from zero to one")
     return number
 
 
@@ -252,9 +243,7 @@ def _cid(value: object, path: str) -> str:
     try:
         return validate_cid(text, codecs=(CID_CODEC,))
     except (TypeError, ValueError) as exc:
-        raise HoldoutCandidateFreezeError(
-            f"{path} must be a canonical dag-json CID"
-        ) from exc
+        raise HoldoutCandidateFreezeError(f"{path} must be a canonical dag-json CID") from exc
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -296,9 +285,7 @@ def load_edit_wave_manifest(
 
     root = Path(repo_root) if repo_root is not None else _repo_root()
     manifest_path = (
-        Path(path)
-        if path is not None
-        else root / DEFAULT_EDIT_WAVE_MANIFEST_RELATIVE_PATH
+        Path(path) if path is not None else root / DEFAULT_EDIT_WAVE_MANIFEST_RELATIVE_PATH
     )
     _require(manifest_path.is_file(), f"missing edit-wave manifest: {manifest_path}")
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -393,18 +380,14 @@ def load_edit_wave_receipts(
         _nonblank(case_id, "manifest.case_ids[]")
         for case_id in _array(man.get("case_ids"), "case_ids")
     }
-    actual_ids = {
-        _nonblank(item.get("case_id"), "receipt.case_id") for item in receipts
-    }
+    actual_ids = {_nonblank(item.get("case_id"), "receipt.case_id") for item in receipts}
     _require(
         expected_ids == actual_ids,
         f"edit-wave receipt case set mismatch: expected {sorted(expected_ids)}, "
         f"got {sorted(actual_ids)}",
     )
     # Stable order: manifest order.
-    by_id = {
-        _nonblank(item.get("case_id"), "receipt.case_id"): item for item in receipts
-    }
+    by_id = {_nonblank(item.get("case_id"), "receipt.case_id"): item for item in receipts}
     ordered = tuple(by_id[case_id] for case_id in man["case_ids"])  # type: ignore[index]
     return ordered
 
@@ -432,14 +415,11 @@ def _case_loss_from_scores(
 
 def _pilot_mean_from_scores(scores: Mapping[str, object]) -> float | None:
     if "mean_pilot_forward_loss" in scores:
-        return _finite_number(
-            scores["mean_pilot_forward_loss"], "mean_pilot_forward_loss"
-        )
+        return _finite_number(scores["mean_pilot_forward_loss"], "mean_pilot_forward_loss")
     pilot = scores.get("pilot_forward_losses")
     if isinstance(pilot, Mapping) and pilot:
         values = [
-            _finite_number(value, f"pilot_forward_losses.{key}")
-            for key, value in pilot.items()
+            _finite_number(value, f"pilot_forward_losses.{key}") for key, value in pilot.items()
         ]
         return _mean(values)
     return None
@@ -508,9 +488,7 @@ def replay_isolated_edit_wave(
         "metered": False,
         "provider_call_cost": 0.0,
         "total_cost": 0.0,
-        "note": (
-            "residual-only deterministic edit wave; no paid provider inference"
-        ),
+        "note": ("residual-only deterministic edit wave; no paid provider inference"),
     }
 
     accepted_patch_regression = False
@@ -567,9 +545,7 @@ def replay_isolated_edit_wave(
         "structural_gate_coverage": {
             "constraints_preserved": constraints,
             "coverage_count": len(constraints),
-            "may_substitute_for_e2e": bool(
-                structural.get("may_substitute_for_e2e") is True
-            ),
+            "may_substitute_for_e2e": bool(structural.get("may_substitute_for_e2e") is True),
             "semantic_authority": bool(structural.get("semantic_authority") is True),
             "status": structural.get("status"),
         },
@@ -643,8 +619,7 @@ def score_population_block(
             )
     else:
         _require(
-            population_kind
-            in {POPULATION_KIND_PILOT, POPULATION_KIND_REPAIR_DEVELOPMENT},
+            population_kind in {POPULATION_KIND_PILOT, POPULATION_KIND_REPAIR_DEVELOPMENT},
             f"freeze scoring rejects population_kind {population_kind!r}",
         )
 
@@ -681,11 +656,7 @@ def score_population_block(
         for metric in ("forward", "cycle", "end_to_end")
     }
     gate_pass_counts = {
-        gate: sum(
-            1
-            for item in records
-            if bool(_mapping(item.get("gates"), "gates").get(gate))
-        )
+        gate: sum(1 for item in records if bool(_mapping(item.get("gates"), "gates").get(gate)))
         for gate in (
             "full_coverage",
             "source_copy_exclusion",
@@ -735,9 +706,7 @@ def score_cumulative_candidate(
                 "population_results required when run_scoring is False"
             )
         pilot = score_population_block(POPULATION_KIND_PILOT, repo_root=root)
-        repair = score_population_block(
-            POPULATION_KIND_REPAIR_DEVELOPMENT, repo_root=root
-        )
+        repair = score_population_block(POPULATION_KIND_REPAIR_DEVELOPMENT, repo_root=root)
 
     return {
         POPULATION_KIND_PILOT: pilot,
@@ -778,17 +747,13 @@ def compute_attribution_evidence(
 ) -> dict[str, object]:
     """Aggregate per-wave marginals, cumulative deltas, and interactions."""
 
-    pilot_block = _mapping(
-        cumulative.get(POPULATION_KIND_PILOT), "cumulative.pilot"
-    )
+    pilot_block = _mapping(cumulative.get(POPULATION_KIND_PILOT), "cumulative.pilot")
     repair_block = _mapping(
         cumulative.get(POPULATION_KIND_REPAIR_DEVELOPMENT),
         "cumulative.repair_development",
     )
     baseline_pilot = _baseline_case_index(baseline_report, POPULATION_KIND_PILOT)
-    baseline_repair = _baseline_case_index(
-        baseline_report, POPULATION_KIND_REPAIR_DEVELOPMENT
-    )
+    baseline_repair = _baseline_case_index(baseline_report, POPULATION_KIND_REPAIR_DEVELOPMENT)
 
     cum_pilot_e2e = _per_case_loss_map(pilot_block, "end_to_end")
     cum_repair_e2e = _per_case_loss_map(repair_block, "end_to_end")
@@ -860,21 +825,15 @@ def compute_attribution_evidence(
             }
         )
 
-    first_pass = sum(
-        1 for wave in isolated_waves if wave.get("first_pass_repair_success") is True
-    )
-    eventual = sum(
-        1 for wave in isolated_waves if wave.get("eventual_repair_success") is True
-    )
+    first_pass = sum(1 for wave in isolated_waves if wave.get("first_pass_repair_success") is True)
+    eventual = sum(1 for wave in isolated_waves if wave.get("eventual_repair_success") is True)
     regressions = [
         _nonblank(wave.get("case_id"), "wave.case_id")
         for wave in isolated_waves
         if wave.get("accepted_patch_regression") is True
     ]
     pilot_regressions = [
-        case_id
-        for case_id, delta in pilot_deltas.items()
-        if delta > LOSS_COMPARISON_TOLERANCE
+        case_id for case_id, delta in pilot_deltas.items() if delta > LOSS_COMPARISON_TOLERANCE
     ]
 
     total_tokens = 0
@@ -890,9 +849,7 @@ def compute_attribution_evidence(
         total_provider_calls += int(calls.get("total_provider_calls") or 0)
         cost = _mapping(wave.get("cost"), "cost")
         total_cost += float(cost.get("total_cost") or 0.0)
-        coverage = _mapping(
-            wave.get("structural_gate_coverage"), "structural_gate_coverage"
-        )
+        coverage = _mapping(wave.get("structural_gate_coverage"), "structural_gate_coverage")
         for name in coverage.get("constraints_preserved") or []:
             structural_constraint_union.add(str(name))
 
@@ -907,9 +864,7 @@ def compute_attribution_evidence(
         .get("end_to_end", FAILURE_LOSS)  # type: ignore[union-attr]
     )
     base_pilot_mean = _mean(list(base_pilot_e2e.values())) if base_pilot_e2e else 0.0
-    base_repair_mean = (
-        _mean(list(base_repair_e2e.values())) if base_repair_e2e else 0.0
-    )
+    base_repair_mean = _mean(list(base_repair_e2e.values())) if base_repair_e2e else 0.0
 
     return {
         "accepted_patch_regressions": {
@@ -986,9 +941,7 @@ def evaluate_selection_gates(
 
     base_pilot = _baseline_case_index(baseline_report, POPULATION_KIND_PILOT)
     cum_pilot_cases = {
-        _nonblank(_mapping(item, "case").get("case_id"), "case_id"): dict(
-            _mapping(item, "case")
-        )
+        _nonblank(_mapping(item, "case").get("case_id"), "case_id"): dict(_mapping(item, "case"))
         for item in _array(pilot_block.get("cases"), "pilot.cases")
     }
 
@@ -1014,9 +967,7 @@ def evaluate_selection_gates(
         cand_gates = _mapping(cand.get("gates"), "cand gates")
         for gate in SELECTION_GATE_IDS:
             if base_gates.get(gate) is True and cand_gates.get(gate) is not True:
-                new_gate_failures.append(
-                    {"case_id": case_id, "gate": gate, "kind": "new_failure"}
-                )
+                new_gate_failures.append({"case_id": case_id, "gate": gate, "kind": "new_failure"})
 
     # Evidence completeness: every nonzero residual case has a terminal receipt.
     catalog_case_ids = {
@@ -1024,12 +975,10 @@ def evaluate_selection_gates(
     }
     all_terminal = all(receipt.get("implementable") is True for receipt in receipts)
     no_optional_promoted = all(
-        list(receipt.get("optional_runtimes_promoted") or []) == []
-        for receipt in receipts
+        list(receipt.get("optional_runtimes_promoted") or []) == [] for receipt in receipts
     )
     no_blind_in_receipts = all(
-        _mapping(receipt.get("doctrine"), "doctrine").get("blind_data_accessed")
-        is False
+        _mapping(receipt.get("doctrine"), "doctrine").get("blind_data_accessed") is False
         for receipt in receipts
     )
     production_unchanged = all(
@@ -1166,11 +1115,7 @@ def collect_freeze_bindings(
     )
     wave_manifest = load_edit_wave_manifest(repo_root=root)
 
-    tree = (
-        dict(candidate_tree)
-        if candidate_tree is not None
-        else capture_git_tree_binding(root)
-    )
+    tree = dict(candidate_tree) if candidate_tree is not None else capture_git_tree_binding(root)
     # Slim identity: keep gitlinks_cid, drop bulky gitlinks rows from freeze payload.
     tree_binding = {
         "commit": tree.get("commit"),
@@ -1181,11 +1126,7 @@ def collect_freeze_bindings(
         "tree": tree.get("tree"),
         "tree_binding_cid": tree.get("tree_binding_cid"),
     }
-    env = (
-        dict(environment)
-        if environment is not None
-        else capture_environment_toolchain()
-    )
+    env = dict(environment) if environment is not None else capture_environment_toolchain()
 
     decision_rules = noninferiority_and_promotion_rules()
     metrics = metric_facet_definitions()
@@ -1208,13 +1149,9 @@ def collect_freeze_bindings(
         "compiler_realizer": {
             "arm_id": PRODUCTION_ARM_ID,
             "constructor_identity": PRODUCTION_CONSTRUCTOR_IDENTITY,
-            "constructor_module": (
-                "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-            ),
+            "constructor_module": ("benchmarks/semantic_roundtrip/constructors/typed_deontic.py"),
             "realizer_identity": PRODUCTION_REALIZER_IDENTITY,
-            "realizer_module": (
-                "benchmarks/semantic_roundtrip/realizers/deterministic.py"
-            ),
+            "realizer_module": ("benchmarks/semantic_roundtrip/realizers/deterministic.py"),
         },
         "decision_rules": decision_rules,
         "edit_wave_manifest_cid": wave_manifest.get("manifest_cid"),
@@ -1263,12 +1200,10 @@ def collect_freeze_bindings(
         "selection_gate_ids": list(SELECTION_GATE_IDS),
         "tests": {
             "candidate_freeze": (
-                "tests/unit/benchmarks/semantic_roundtrip/"
-                "test_holdout_candidate_freeze.py"
+                "tests/unit/benchmarks/semantic_roundtrip/test_holdout_candidate_freeze.py"
             ),
             "edit_waves": (
-                "tests/unit/benchmarks/semantic_roundtrip/"
-                "test_repair_dev_edit_waves.py"
+                "tests/unit/benchmarks/semantic_roundtrip/test_repair_dev_edit_waves.py"
             ),
             "holdout_protocol": (
                 "tests/unit/benchmarks/semantic_roundtrip/test_holdout_protocol.py"
@@ -1316,14 +1251,10 @@ def build_candidate_freeze(
     root = Path(repo_root) if repo_root is not None else _repo_root()
     root = root.resolve()
 
-    blind_status = assert_blind_seal_unopened(
-        root, access_ledger_path=access_ledger_path
-    )
+    blind_status = assert_blind_seal_unopened(root, access_ledger_path=access_ledger_path)
     baseline_report = load_repair_dev_baseline_report(repo_root=root)
     wave_receipts = (
-        tuple(receipts)
-        if receipts is not None
-        else load_edit_wave_receipts(repo_root=root)
+        tuple(receipts) if receipts is not None else load_edit_wave_receipts(repo_root=root)
     )
     isolated = replay_all_isolated_edit_waves(wave_receipts)
     cumulative = score_cumulative_candidate(
@@ -1370,9 +1301,7 @@ def build_candidate_freeze(
         "board_namespace": EXPERIMENT_FAMILY,
         "candidate": candidate_block,
         "candidate_selected": bool(selection.get("candidate_selected")),
-        "candidates_selected_count": (
-            1 if selection.get("candidate_selected") is True else 0
-        ),
+        "candidates_selected_count": (1 if selection.get("candidate_selected") is True else 0),
         "cumulative_candidate_scores": {
             POPULATION_KIND_PILOT: _plain_json(cumulative[POPULATION_KIND_PILOT]),
             POPULATION_KIND_REPAIR_DEVELOPMENT: _plain_json(
@@ -1386,9 +1315,7 @@ def build_candidate_freeze(
         "goal_id": FREEZE_GOAL_ID,
         "interface": PLATEAU2_CANDIDATE_FREEZE_INTERFACE,
         "invalidation_policy": {
-            "action_on_change": (
-                "mint_new_experiment_identity_and_require_fresh_blind_holdout"
-            ),
+            "action_on_change": ("mint_new_experiment_identity_and_require_fresh_blind_holdout"),
             "invalidating_change_classes": list(INVALIDATING_CHANGE_CLASSES),
             "mutable_after_freeze": False,
             "retune_against_this_blind_holdout": False,
@@ -1505,9 +1432,7 @@ def parse_candidate_freeze(
             "access receipts must be zero at freeze",
         )
 
-    scores = _mapping(
-        data.get("cumulative_candidate_scores"), "cumulative_candidate_scores"
-    )
+    scores = _mapping(data.get("cumulative_candidate_scores"), "cumulative_candidate_scores")
     _require(scores.get("blind_data_used") is False, "scores used blind data")
     for kind in (POPULATION_KIND_PILOT, POPULATION_KIND_REPAIR_DEVELOPMENT):
         _mapping(scores.get(kind), f"cumulative_candidate_scores.{kind}")
@@ -1571,9 +1496,7 @@ def build_holdout_authorization(
     if selection.get("required_gates_pass") is not True:
         return None
 
-    blind_status = assert_blind_seal_unopened(
-        root, access_ledger_path=access_ledger_path
-    )
+    blind_status = assert_blind_seal_unopened(root, access_ledger_path=access_ledger_path)
     receipt_count = blind_status.get("access_receipt_count")
     if (
         blind_status.get("blind_seal_unopened") is not True
@@ -1608,9 +1531,7 @@ def build_holdout_authorization(
         "holdout_authorized": True,
         "interface": SEMANTIC_ROUNDTRIP_HOLDOUT_AUTHORIZATION_INTERFACE,
         "invalidation_policy": {
-            "action_on_change": (
-                "mint_new_experiment_identity_and_require_fresh_blind_holdout"
-            ),
+            "action_on_change": ("mint_new_experiment_identity_and_require_fresh_blind_holdout"),
             "invalidating_change_classes": list(INVALIDATING_CHANGE_CLASSES),
             "mutable_after_authorization": False,
             "retune_against_this_blind_holdout": False,
@@ -1650,8 +1571,7 @@ def parse_holdout_authorization(value: object) -> dict[str, object]:
         "authorization interface mismatch",
     )
     _require(
-        data.get("schema_version")
-        == SEMANTIC_ROUNDTRIP_HOLDOUT_AUTHORIZATION_SCHEMA,
+        data.get("schema_version") == SEMANTIC_ROUNDTRIP_HOLDOUT_AUTHORIZATION_SCHEMA,
         "authorization schema mismatch",
     )
     _require(data.get("goal_id") == AUTHORIZATION_GOAL_ID, "goal_id must be PLAT2-055")
@@ -1786,9 +1706,7 @@ def load_candidate_freeze(
     repo_root: str | Path | None = None,
 ) -> dict[str, object]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    freeze_path = (
-        Path(path) if path is not None else root / DEFAULT_FREEZE_RELATIVE_PATH
-    )
+    freeze_path = Path(path) if path is not None else root / DEFAULT_FREEZE_RELATIVE_PATH
     payload = json.loads(freeze_path.read_text(encoding="utf-8"))
     return parse_candidate_freeze(payload)
 
@@ -1799,11 +1717,7 @@ def load_holdout_authorization(
     repo_root: str | Path | None = None,
 ) -> dict[str, object]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    auth_path = (
-        Path(path)
-        if path is not None
-        else root / DEFAULT_AUTHORIZATION_RELATIVE_PATH
-    )
+    auth_path = Path(path) if path is not None else root / DEFAULT_AUTHORIZATION_RELATIVE_PATH
     payload = json.loads(auth_path.read_text(encoding="utf-8"))
     return parse_holdout_authorization(payload)
 
@@ -1880,10 +1794,7 @@ def build_freeze_and_authorization_bundle(
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description=(
-            "PLAT2-055 freeze candidate, attribution evidence, and holdout "
-            "authorization"
-        )
+        description=("PLAT2-055 freeze candidate, attribution evidence, and holdout authorization")
     )
     parser.add_argument(
         "--repo-root",
@@ -1918,20 +1829,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
 
     freeze_path = args.freeze_output or (root / DEFAULT_FREEZE_RELATIVE_PATH)
-    auth_path = args.authorization_output or (
-        root / DEFAULT_AUTHORIZATION_RELATIVE_PATH
-    )
+    auth_path = args.authorization_output or (root / DEFAULT_AUTHORIZATION_RELATIVE_PATH)
     freeze = write_candidate_freeze(freeze_path, repo_root=root, run_scoring=True)
-    authorization = write_holdout_authorization(
-        auth_path, freeze=freeze, repo_root=root
-    )
+    authorization = write_holdout_authorization(auth_path, freeze=freeze, repo_root=root)
     print(
         json.dumps(
             {
                 "authorization_artifact_cid": (
-                    authorization.get("authorization_artifact_cid")
-                    if authorization
-                    else None
+                    authorization.get("authorization_artifact_cid") if authorization else None
                 ),
                 "authorization_emitted": authorization is not None,
                 "authorization_path": str(auth_path) if authorization else None,

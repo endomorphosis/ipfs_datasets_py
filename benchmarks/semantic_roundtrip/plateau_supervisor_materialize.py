@@ -60,9 +60,7 @@ from benchmarks.semantic_roundtrip.plateau_codex_packet import (
 )
 
 
-PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE: Final = (
-    "PlateauSupervisorMaterializer@1"
-)
+PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE: Final = "PlateauSupervisorMaterializer@1"
 PLATEAU_SUPERVISOR_MATERIALIZER_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-plateau-supervisor-materializer.v1"
 )
@@ -88,9 +86,7 @@ DEFAULT_MATERIALIZER_PREDICTED_FILES: Final = (
 )
 
 # Optional realizer path when cycle residual explicitly requires it.
-DEFAULT_REALIZER_PREDICTED_FILE: Final = (
-    "benchmarks/semantic_roundtrip/realizers/deterministic.py"
-)
+DEFAULT_REALIZER_PREDICTED_FILE: Final = "benchmarks/semantic_roundtrip/realizers/deterministic.py"
 
 # Launch doctrine constants (mirrored in the launch doc).
 DEFAULT_MERGE_TARGET_BRANCH: Final = "benchmark/semantic-roundtrip-20260726"
@@ -105,9 +101,7 @@ DEFAULT_TASKBOARD_RELATIVE_PATH: Final = (
 DEFAULT_SCHEDULER_CONFIG_RELATIVE_PATH: Final = (
     "config/semantic_roundtrip_plateau_break_scheduler.json"
 )
-BUNDLE_SUPERVISOR_MODULE: Final = (
-    "ipfs_accelerate_py.agent_supervisor.bundle_supervisor"
-)
+BUNDLE_SUPERVISOR_MODULE: Final = "ipfs_accelerate_py.agent_supervisor.bundle_supervisor"
 
 # Holdout / repair-development launch doctrine (PLAT2 / plateau-holdout board).
 HOLDOUT_BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-holdout-v2"
@@ -129,9 +123,7 @@ REPAIR_DEV_BUNDLE: Final = HOLDOUT_BUNDLE
 REPAIR_DEV_TASK_PREFIX: Final = HOLDOUT_TASK_PREFIX
 REPAIR_DEV_RUNTIME_ROOT: Final = HOLDOUT_RUNTIME_ROOT
 REPAIR_DEV_TASKBOARD_RELATIVE_PATH: Final = HOLDOUT_TASKBOARD_RELATIVE_PATH
-REPAIR_DEV_SCHEDULER_CONFIG_RELATIVE_PATH: Final = (
-    HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH
-)
+REPAIR_DEV_SCHEDULER_CONFIG_RELATIVE_PATH: Final = HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH
 REPAIR_DEV_MAX_LANES: Final = HOLDOUT_MAX_LANES
 REPAIR_DEV_MERGE_TARGET_BRANCH: Final = HOLDOUT_MERGE_TARGET_BRANCH
 
@@ -188,13 +180,16 @@ def _sha(payload: Mapping[str, object]) -> str:
 
 
 def _canonical_json(payload: Mapping[str, object]) -> str:
-    return json.dumps(
-        payload,
-        sort_keys=True,
-        indent=2,
-        ensure_ascii=False,
-        default=str,
-    ) + "\n"
+    return (
+        json.dumps(
+            payload,
+            sort_keys=True,
+            indent=2,
+            ensure_ascii=False,
+            default=str,
+        )
+        + "\n"
+    )
 
 
 def is_materializer_allowed_path(path: str) -> bool:
@@ -242,25 +237,18 @@ def filter_supervisor_predicted_files(
         kept.append(cleaned)
     if kept:
         return tuple(kept)
-    fallback = (
-        tuple(default)
-        if default is not None
-        else DEFAULT_MATERIALIZER_PREDICTED_FILES
-    )
+    fallback = tuple(default) if default is not None else DEFAULT_MATERIALIZER_PREDICTED_FILES
     validated: list[str] = []
     for item in fallback:
         cleaned = _nonblank(item, "predicted_files item").replace("\\", "/")
         if not is_materializer_allowed_path(cleaned):
             raise PlateauSupervisorMaterializeError(
-                "default predicted file is outside materializer allowlist: "
-                f"{cleaned!r}"
+                f"default predicted file is outside materializer allowlist: {cleaned!r}"
             )
         if cleaned not in validated:
             validated.append(cleaned)
     if not validated:
-        raise PlateauSupervisorMaterializeError(
-            "materializer predicted_files must be nonempty"
-        )
+        raise PlateauSupervisorMaterializeError("materializer predicted_files must be nonempty")
     return tuple(validated)
 
 
@@ -280,28 +268,20 @@ def coerce_packet(
     elif isinstance(value, str):
         text = value.strip()
         if not text:
-            raise PlateauSupervisorMaterializeError(
-                "packet JSON must be nonblank"
-            )
+            raise PlateauSupervisorMaterializeError("packet JSON must be nonblank")
         try:
             payload = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise PlateauSupervisorMaterializeError(
-                f"packet JSON is invalid: {exc}"
-            ) from exc
+            raise PlateauSupervisorMaterializeError(f"packet JSON is invalid: {exc}") from exc
         try:
             packet = PlateauCodexPacket.from_dict(payload)
         except PlateauCodexPacketError as exc:
-            raise PlateauSupervisorMaterializeError(
-                f"packet decode failed: {exc}"
-            ) from exc
+            raise PlateauSupervisorMaterializeError(f"packet decode failed: {exc}") from exc
     elif isinstance(value, Mapping):
         try:
             packet = PlateauCodexPacket.from_dict(value)
         except PlateauCodexPacketError as exc:
-            raise PlateauSupervisorMaterializeError(
-                f"packet decode failed: {exc}"
-            ) from exc
+            raise PlateauSupervisorMaterializeError(f"packet decode failed: {exc}") from exc
     else:
         raise PlateauSupervisorMaterializeError(
             "packet must be PlateauCodexPacket, mapping, or JSON string"
@@ -475,22 +455,12 @@ class MaterializedSupervisorItem:
     population_kind: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "task_id", _nonblank(self.task_id, "task_id")
-        )
+        object.__setattr__(self, "task_id", _nonblank(self.task_id, "task_id"))
         if not _TASK_ID_RE.match(self.task_id):
-            raise PlateauSupervisorMaterializeError(
-                f"task_id has invalid shape: {self.task_id!r}"
-            )
-        object.__setattr__(
-            self, "title", _nonblank(self.title, "title")
-        )
-        object.__setattr__(
-            self, "body", _nonblank(self.body, "body")
-        )
-        object.__setattr__(
-            self, "packet_id", _nonblank(self.packet_id, "packet_id")
-        )
+            raise PlateauSupervisorMaterializeError(f"task_id has invalid shape: {self.task_id!r}")
+        object.__setattr__(self, "title", _nonblank(self.title, "title"))
+        object.__setattr__(self, "body", _nonblank(self.body, "body"))
+        object.__setattr__(self, "packet_id", _nonblank(self.packet_id, "packet_id"))
         object.__setattr__(
             self,
             "packet_digest",
@@ -498,9 +468,7 @@ class MaterializedSupervisorItem:
         )
         if not isinstance(self.kind, MaterializedKind):
             try:
-                object.__setattr__(
-                    self, "kind", MaterializedKind(self.kind)
-                )
+                object.__setattr__(self, "kind", MaterializedKind(self.kind))
             except (TypeError, ValueError) as exc:
                 raise PlateauSupervisorMaterializeError(
                     f"invalid materialized kind: {self.kind!r}"
@@ -516,9 +484,7 @@ class MaterializedSupervisorItem:
             "board_namespace",
             _nonblank(self.board_namespace, "board_namespace"),
         )
-        object.__setattr__(
-            self, "bundle", _nonblank(self.bundle, "bundle")
-        )
+        object.__setattr__(self, "bundle", _nonblank(self.bundle, "bundle"))
         if self.population_kind is not None:
             object.__setattr__(
                 self,
@@ -541,8 +507,7 @@ class MaterializedSupervisorItem:
             for path in files:
                 if not is_materializer_allowed_path(path):
                     raise PlateauSupervisorMaterializeError(
-                        f"implementable predicted file outside det. surface: "
-                        f"{path!r}"
+                        f"implementable predicted file outside det. surface: {path!r}"
                     )
             # Edit tasks never auto-merge: daemon merges only after gates.
             object.__setattr__(self, "authorize_merge", False)
@@ -618,30 +583,17 @@ class MaterializedSupervisorItem:
         if self.edit_wave_task_id:
             lines.append(f"- Edit wave task: {self.edit_wave_task_id}")
         if self.primary_disposition:
-            lines.append(
-                f"- Primary disposition: {self.primary_disposition}"
-            )
+            lines.append(f"- Primary disposition: {self.primary_disposition}")
         if self.predicted_files:
-            lines.append(
-                "- Predicted files: " + ", ".join(self.predicted_files)
-            )
+            lines.append("- Predicted files: " + ", ".join(self.predicted_files))
         if self.validation_commands:
-            lines.append(
-                "- Validation: " + " && ".join(self.validation_commands)
-            )
+            lines.append("- Validation: " + " && ".join(self.validation_commands))
         if self.proof_obligation_ids:
-            lines.append(
-                "- Proof obligation IDs: "
-                + ", ".join(self.proof_obligation_ids)
-            )
+            lines.append("- Proof obligation IDs: " + ", ".join(self.proof_obligation_ids))
         if self.residual_ref_ids:
-            lines.append(
-                "- Residual refs: " + ", ".join(self.residual_ref_ids)
-            )
+            lines.append("- Residual refs: " + ", ".join(self.residual_ref_ids))
         if self.proposal_ids:
-            lines.append(
-                "- Proposal ids: " + ", ".join(self.proposal_ids)
-            )
+            lines.append("- Proposal ids: " + ", ".join(self.proposal_ids))
         lines.extend(
             [
                 f"- Board namespace: {self.board_namespace}",
@@ -654,23 +606,14 @@ class MaterializedSupervisorItem:
                 "",
             ]
         )
-        if (
-            self.kind is MaterializedKind.IMPLEMENTABLE
-            and self.admitted_field_changes
-        ):
+        if self.kind is MaterializedKind.IMPLEMENTABLE and self.admitted_field_changes:
             lines.append("### Admitted field changes (ΔL1)")
             lines.append("")
             for change in self.admitted_field_changes:
                 path = change.get("path", change.get("canonical_field"))
-                lines.append(
-                    f"- `{path}`: {change.get('before')!r} → "
-                    f"{change.get('after')!r}"
-                )
+                lines.append(f"- `{path}`: {change.get('before')!r} → {change.get('after')!r}")
             lines.append("")
-        if (
-            self.kind is MaterializedKind.OBLIGATION_ONLY
-            and self.proof_obligations
-        ):
+        if self.kind is MaterializedKind.OBLIGATION_ONLY and self.proof_obligations:
             lines.append("### Proof obligations")
             lines.append("")
             for obligation in self.proof_obligations:
@@ -691,10 +634,7 @@ class MaterializedSupervisorItem:
 
 
 def _implementable_body(packet: PlateauCodexPacket) -> str:
-    change_paths = [
-        field_change_path(change)
-        for change in packet.admitted_field_changes
-    ]
+    change_paths = [field_change_path(change) for change in packet.admitted_field_changes]
     residual_ids = [item.residual_id for item in packet.residual_refs]
     proposal_ids = [item.proposal_id for item in packet.proposals]
     wave = _edit_wave_hint(packet.case_id)
@@ -718,8 +658,7 @@ def _implementable_body(packet: PlateauCodexPacket) -> str:
                 "validation commands, and pilot re-score gates pass."
             )
         ),
-        "Proof pass alone is not promotion evidence "
-        "(semantic_authority=false).",
+        "Proof pass alone is not promotion evidence (semantic_authority=false).",
     ]
     if packet.case_id:
         if repair_dev:
@@ -732,17 +671,9 @@ def _implementable_body(packet: PlateauCodexPacket) -> str:
     if wave:
         parts.append(f"Aligns with edit-wave task `{wave}`.")
     if change_paths:
-        parts.append(
-            "Admitted ΔL1 field paths: "
-            + ", ".join(f"`{p}`" for p in change_paths)
-            + "."
-        )
+        parts.append("Admitted ΔL1 field paths: " + ", ".join(f"`{p}`" for p in change_paths) + ".")
     if residual_ids:
-        parts.append(
-            "Residual provenance: "
-            + ", ".join(f"`{r}`" for r in residual_ids)
-            + "."
-        )
+        parts.append("Residual provenance: " + ", ".join(f"`{r}`" for r in residual_ids) + ".")
     if proposal_ids:
         parts.append(
             "Teacher proposal ids (non-authoritative): "
@@ -766,22 +697,15 @@ def _obligation_body(packet: PlateauCodexPacket) -> str:
         "semantic_authority remains false on all prover receipts.",
     ]
     if ids:
-        parts.append(
-            "Proof obligation IDs: "
-            + ", ".join(f"`{oid}`" for oid in ids)
-            + "."
-        )
+        parts.append("Proof obligation IDs: " + ", ".join(f"`{oid}`" for oid in ids) + ".")
     else:
         parts.append(
-            "No proof_obligation_ids were minted; retain prior L1 and "
-            "treat as documentation-only."
+            "No proof_obligation_ids were minted; retain prior L1 and treat as documentation-only."
         )
     residual_ids = [item.residual_id for item in packet.residual_refs]
     if residual_ids:
         parts.append(
-            "Residual refs for follow-up: "
-            + ", ".join(f"`{r}`" for r in residual_ids)
-            + "."
+            "Residual refs for follow-up: " + ", ".join(f"`{r}`" for r in residual_ids) + "."
         )
     if packet.detail:
         parts.append(f"Packet detail: {packet.detail}")
@@ -822,23 +746,14 @@ def materialize_packet(
     wave = _edit_wave_hint(sealed.case_id)
     disposition = sealed.primary_disposition.value
     repair_dev = force_repair_dev or is_repair_dev_packet(sealed)
-    holdout = (
-        force_holdout
-        or force_repair_dev
-        or is_holdout_packet(sealed)
-        or repair_dev
-    )
+    holdout = force_holdout or force_repair_dev or is_holdout_packet(sealed) or repair_dev
     namespace = (
         board_namespace
         if board_namespace is not None
-        else (
-            HOLDOUT_BOARD_NAMESPACE if holdout else DEFAULT_BOARD_NAMESPACE
-        )
+        else (HOLDOUT_BOARD_NAMESPACE if holdout else DEFAULT_BOARD_NAMESPACE)
     )
     active_bundle = (
-        bundle
-        if bundle is not None
-        else (HOLDOUT_BUNDLE if holdout else DEFAULT_BUNDLE)
+        bundle if bundle is not None else (HOLDOUT_BUNDLE if holdout else DEFAULT_BUNDLE)
     )
     if sealed.population_kind:
         population = sealed.population_kind
@@ -868,10 +783,7 @@ def materialize_packet(
             else:
                 commands = DEFAULT_VALIDATION_COMMANDS
         case_label = sealed.case_id or "unknown-case"
-        title = (
-            f"Det. compiler edit from packet {sealed.packet_id} "
-            f"({case_label})"
-        )
+        title = f"Det. compiler edit from packet {sealed.packet_id} ({case_label})"
         return MaterializedSupervisorItem(
             kind=MaterializedKind.IMPLEMENTABLE,
             task_id=task_id,
@@ -900,10 +812,7 @@ def materialize_packet(
             population_kind=population,
         )
 
-    title = (
-        f"Obligation-only note for packet {sealed.packet_id} "
-        f"({disposition})"
-    )
+    title = f"Obligation-only note for packet {sealed.packet_id} ({disposition})"
     return MaterializedSupervisorItem(
         kind=MaterializedKind.OBLIGATION_ONLY,
         task_id=task_id,
@@ -956,21 +865,13 @@ class MaterializerReceipt:
                 "materializer receipt must not claim semantic_authority"
             )
         if self.implementable_count != sum(
-            1
-            for item in self.items
-            if item.kind is MaterializedKind.IMPLEMENTABLE
+            1 for item in self.items if item.kind is MaterializedKind.IMPLEMENTABLE
         ):
-            raise PlateauSupervisorMaterializeError(
-                "implementable_count does not match items"
-            )
+            raise PlateauSupervisorMaterializeError("implementable_count does not match items")
         if self.obligation_only_count != sum(
-            1
-            for item in self.items
-            if item.kind is MaterializedKind.OBLIGATION_ONLY
+            1 for item in self.items if item.kind is MaterializedKind.OBLIGATION_ONLY
         ):
-            raise PlateauSupervisorMaterializeError(
-                "obligation_only_count does not match items"
-            )
+            raise PlateauSupervisorMaterializeError("obligation_only_count does not match items")
 
     @property
     def receipt_digest(self) -> str:
@@ -1000,20 +901,12 @@ class MaterializerReceipt:
         return _canonical_json(self.to_dict())
 
     def implementable_items(self) -> tuple[MaterializedSupervisorItem, ...]:
-        return tuple(
-            item
-            for item in self.items
-            if item.kind is MaterializedKind.IMPLEMENTABLE
-        )
+        return tuple(item for item in self.items if item.kind is MaterializedKind.IMPLEMENTABLE)
 
     def obligation_only_items(
         self,
     ) -> tuple[MaterializedSupervisorItem, ...]:
-        return tuple(
-            item
-            for item in self.items
-            if item.kind is MaterializedKind.OBLIGATION_ONLY
-        )
+        return tuple(item for item in self.items if item.kind is MaterializedKind.OBLIGATION_ONLY)
 
     def to_markdown(self) -> str:
         blocks = [item.to_markdown() for item in self.items]
@@ -1049,9 +942,7 @@ def materialize_packets(
     det.-only ``predicted_files`` and nonempty ``validation_commands``.
     """
 
-    if not isinstance(packets, Sequence) or isinstance(
-        packets, (str, bytes, bytearray)
-    ):
+    if not isinstance(packets, Sequence) or isinstance(packets, (str, bytes, bytearray)):
         raise PlateauSupervisorMaterializeError(
             "packets must be a sequence of packet objects/dicts/JSON"
         )
@@ -1072,9 +963,7 @@ def materialize_packets(
             raise PlateauSupervisorMaterializeError(
                 f"packet[{index}] materialization failed: {exc}"
             ) from exc
-    implementable_count = sum(
-        1 for item in items if item.kind is MaterializedKind.IMPLEMENTABLE
-    )
+    implementable_count = sum(1 for item in items if item.kind is MaterializedKind.IMPLEMENTABLE)
     obligation_only_count = len(items) - implementable_count
     evidence = (
         PLATEAU_SUPERVISOR_MATERIALIZER_HOLDOUT_EVIDENCE
@@ -1088,9 +977,7 @@ def materialize_packets(
         packet_ids=tuple(item.packet_id for item in items),
         packet_digests=tuple(item.packet_digest for item in items),
         evidence=evidence,
-        merge_target_branch=_nonblank(
-            merge_target_branch, "merge_target_branch"
-        ),
+        merge_target_branch=_nonblank(merge_target_branch, "merge_target_branch"),
         max_lanes=int(max_lanes),
     )
 
@@ -1156,9 +1043,7 @@ def load_packets_from_json_path(
     try:
         payload = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise PlateauSupervisorMaterializeError(
-            f"invalid packet JSON file {path}: {exc}"
-        ) from exc
+        raise PlateauSupervisorMaterializeError(f"invalid packet JSON file {path}: {exc}") from exc
     if isinstance(payload, Mapping):
         # Single packet or wrapper with "packets" key.
         if "packets" in payload and isinstance(payload["packets"], list):
@@ -1172,17 +1057,13 @@ def load_packets_from_json_path(
     elif isinstance(payload, list):
         raw_list = payload
     else:
-        raise PlateauSupervisorMaterializeError(
-            "packet file must be a JSON object or array"
-        )
+        raise PlateauSupervisorMaterializeError("packet file must be a JSON object or array")
     packets: list[PlateauCodexPacket] = []
     for index, item in enumerate(raw_list):
         try:
             packets.append(coerce_packet(item))
         except PlateauSupervisorMaterializeError as exc:
-            raise PlateauSupervisorMaterializeError(
-                f"packets[{index}] invalid: {exc}"
-            ) from exc
+            raise PlateauSupervisorMaterializeError(f"packets[{index}] invalid: {exc}") from exc
     return packets
 
 
@@ -1207,18 +1088,14 @@ class BundleSupervisorLaunchSpec:
             "merge_target_branch",
             _nonblank(self.merge_target_branch, "merge_target_branch"),
         )
-        object.__setattr__(
-            self, "task_prefix", _nonblank(self.task_prefix, "task_prefix")
-        )
+        object.__setattr__(self, "task_prefix", _nonblank(self.task_prefix, "task_prefix"))
         object.__setattr__(
             self,
             "scheduler_config_path",
             _nonblank(self.scheduler_config_path, "scheduler_config_path"),
         )
         if int(self.max_lanes) < 1:
-            raise PlateauSupervisorMaterializeError(
-                "max_lanes must be at least 1"
-            )
+            raise PlateauSupervisorMaterializeError("max_lanes must be at least 1")
         object.__setattr__(self, "max_lanes", int(self.max_lanes))
 
     @property

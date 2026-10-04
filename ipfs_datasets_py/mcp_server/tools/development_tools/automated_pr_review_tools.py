@@ -7,6 +7,7 @@ Business logic delegates to `automated_pr_review.AutomatedPRReviewer` (a scripts
 helper) which is imported lazily inside each function to avoid hard import failures when
 the scripts directory is not on sys.path.
 """
+
 from __future__ import annotations
 
 import logging
@@ -138,8 +139,10 @@ async def invoke_copilot_on_pr(
 # Backward-compatible class aliases
 # ---------------------------------------------------------------------------
 
+
 class AutomatedPRReviewTool:  # noqa: E302
     """Thin compatibility shim — wraps automated_pr_review()."""
+
     name = "automated_pr_review"
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -148,6 +151,7 @@ class AutomatedPRReviewTool:  # noqa: E302
 
 class AnalyzePRTool:
     """Thin compatibility shim — wraps analyze_pr()."""
+
     name = "analyze_pr"
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -156,6 +160,7 @@ class AnalyzePRTool:
 
 class InvokeCopilotOnPRTool:
     """Thin compatibility shim — wraps invoke_copilot_on_pr()."""
+
     name = "invoke_copilot_on_pr"
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:

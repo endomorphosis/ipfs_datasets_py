@@ -5,6 +5,7 @@ This module provides WikipediaExtractionMixin, a mixin class that adds
 Wikipedia page extraction and Wikidata validation capabilities to
 KnowledgeGraphExtractor.  Extracted from extractor.py to reduce its size.
 """
+
 import logging
 import requests
 from typing import Dict, List, Any, Optional
@@ -21,11 +22,12 @@ logger = logging.getLogger(__name__)
 class WikipediaExtractionMixin:
     """Mixin providing Wikipedia/Wikidata extraction and validation methods."""
 
-    def extract_from_wikipedia(self, 
-                            page_title: str, 
-                            extraction_temperature: float = 0.7,
-                           structure_temperature: float = 0.5
-                           ) -> KnowledgeGraph:
+    def extract_from_wikipedia(
+        self,
+        page_title: str,
+        extraction_temperature: float = 0.7,
+        structure_temperature: float = 0.5,
+    ) -> KnowledgeGraph:
         """Extract a knowledge graph from a Wikipedia page with tunable parameters.
 
         This method fetches content from a Wikipedia page via the Wikipedia API and processes it into
@@ -37,9 +39,9 @@ class WikipediaExtractionMixin:
                 the Wikipedia page title format (case-sensitive, with proper spacing).
             extraction_temperature (float, optional): Controls the granularity and depth of entity
                 and relationship extraction. Defaults to 0.7.
-                - Low values (0.1-0.3): Extract only primary concepts, major entities, and the 
+                - Low values (0.1-0.3): Extract only primary concepts, major entities, and the
                     strongest, most obvious relationships. Results in a minimal, core knowledge graph.
-                - Medium values (0.4-0.7): Balanced extraction including secondary concepts, 
+                - Medium values (0.4-0.7): Balanced extraction including secondary concepts,
                     moderate entity detail, and well-supported relationships. Provides good coverage
                     without excessive noise.
                 - High values (0.8-1.0): Comprehensive extraction including detailed concepts,
@@ -93,7 +95,7 @@ class WikipediaExtractionMixin:
             trace_id = self.tracer.trace_extraction(
                 page_title=page_title,
                 extraction_temperature=extraction_temperature,
-                structure_temperature=structure_temperature
+                structure_temperature=structure_temperature,
             )
 
         # Fetch Wikipedia content
@@ -106,7 +108,7 @@ class WikipediaExtractionMixin:
                 "titles": page_title,
                 "prop": "extracts",
                 "exintro": 0,  # Include the full page, not just intro
-                "explaintext": 1  # Get plain text
+                "explaintext": 1,  # Get plain text
             }
 
             response = requests.get(url, params=params)
@@ -122,9 +124,7 @@ class WikipediaExtractionMixin:
                 # Update trace with error if tracer is enabled
                 if self.use_tracer and self.tracer and trace_id:
                     self.tracer.update_extraction_trace(
-                        trace_id=trace_id,
-                        status="failed",
-                        error=error_msg
+                        trace_id=trace_id, status="failed", error=error_msg
                     )
                 raise ValueError(error_msg)
 
@@ -135,7 +135,7 @@ class WikipediaExtractionMixin:
                 page_content,
                 use_chunking=True,
                 extraction_temperature=extraction_temperature,
-                structure_temperature=structure_temperature
+                structure_temperature=structure_temperature,
             )
 
             # Add metadata about the source
@@ -146,7 +146,7 @@ class WikipediaExtractionMixin:
                 entity_type="wikipedia_page",
                 name=page_title,
                 properties={"url": f"https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}"},
-                confidence=1.0
+                confidence=1.0,
             )
 
             kg.entities[page_entity.entity_id] = page_entity
@@ -160,7 +160,7 @@ class WikipediaExtractionMixin:
                         relationship_type="sourced_from",
                         source_entity=entity,
                         target_entity=page_entity,
-                        confidence=1.0
+                        confidence=1.0,
                     )
 
                     kg.relationships[rel.relationship_id] = rel
@@ -177,36 +177,40 @@ class WikipediaExtractionMixin:
                     entity_count=len(kg.entities),
                     relationship_count=len(kg.relationships),
                     entity_types=dict(kg.entity_types),
-                    relationship_types=dict(kg.relationship_types)
+                    relationship_types=dict(kg.relationship_types),
                 )
 
             return kg
 
         except (requests.RequestException, requests.HTTPError, requests.Timeout) as e:
-            error_msg = f"Network error extracting knowledge graph from Wikipedia '{page_title}': {e}"
+            error_msg = (
+                f"Network error extracting knowledge graph from Wikipedia '{page_title}': {e}"
+            )
             logger.error(error_msg)
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_extraction_trace(
-                    trace_id=trace_id,
-                    status="failed",
-                    error=error_msg
+                    trace_id=trace_id, status="failed", error=error_msg
                 )
             # Re-raise as EntityExtractionError
-            raise EntityExtractionError(error_msg, details={'wikipedia_title': page_title, 'trace_id': trace_id}) from e
-        
+            raise EntityExtractionError(
+                error_msg, details={"wikipedia_title": page_title, "trace_id": trace_id}
+            ) from e
+
         except (ValueError, KeyError, TypeError, IndexError) as e:
-            error_msg = f"Unexpected error extracting knowledge graph from Wikipedia '{page_title}': {e}"
+            error_msg = (
+                f"Unexpected error extracting knowledge graph from Wikipedia '{page_title}': {e}"
+            )
             logger.error(error_msg)
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_extraction_trace(
-                    trace_id=trace_id,
-                    status="failed",
-                    error=error_msg
+                    trace_id=trace_id, status="failed", error=error_msg
                 )
             # Re-raise as EntityExtractionError
-            raise EntityExtractionError(error_msg, details={'wikipedia_title': page_title, 'trace_id': trace_id}) from e
+            raise EntityExtractionError(
+                error_msg, details={"wikipedia_title": page_title, "trace_id": trace_id}
+            ) from e
 
     def validate_against_wikidata(self, kg: KnowledgeGraph, entity_name: str) -> Dict[str, Any]:
         """
@@ -226,10 +230,7 @@ class WikipediaExtractionMixin:
         # Create trace if tracer is enabled
         trace_id = None
         if self.use_tracer and self.tracer:
-            trace_id = self.tracer.trace_validation(
-                kg_name=kg.name,
-                entity_name=entity_name
-            )
+            trace_id = self.tracer.trace_validation(kg_name=kg.name, entity_name=entity_name)
 
         try:
             # Map the entity to Wikidata
@@ -241,7 +242,7 @@ class WikipediaExtractionMixin:
                     "coverage": 0.0,
                     "missing_relationships": [],
                     "additional_relationships": [],
-                    "entity_mapping": {}
+                    "entity_mapping": {},
                 }
 
                 # Update trace with error if tracer is enabled
@@ -250,7 +251,7 @@ class WikipediaExtractionMixin:
                         trace_id=trace_id,
                         status="failed",
                         error=error_result["error"],
-                        validation_results=error_result
+                        validation_results=error_result,
                     )
 
                 return error_result
@@ -267,7 +268,7 @@ class WikipediaExtractionMixin:
                     "coverage": 0.0,
                     "missing_relationships": wikidata_statements,
                     "additional_relationships": [],
-                    "entity_mapping": {}
+                    "entity_mapping": {},
                 }
 
                 # Update trace with error if tracer is enabled
@@ -276,7 +277,7 @@ class WikipediaExtractionMixin:
                         trace_id=trace_id,
                         status="failed",
                         error=error_result["error"],
-                        validation_results=error_result
+                        validation_results=error_result,
                     )
 
                 return error_result
@@ -293,18 +294,22 @@ class WikipediaExtractionMixin:
             for rel in kg_relationships:
                 if rel.source_id == kg_entity.entity_id:
                     # This is an outgoing relationship
-                    kg_statements.append({
-                        "property": rel.relationship_type,
-                        "value": rel.target_entity.name,
-                        "value_entity": rel.target_entity.entity_id
-                    })
+                    kg_statements.append(
+                        {
+                            "property": rel.relationship_type,
+                            "value": rel.target_entity.name,
+                            "value_entity": rel.target_entity.entity_id,
+                        }
+                    )
                 elif rel.target_id == kg_entity.entity_id:
                     # This is an incoming relationship
-                    kg_statements.append({
-                        "property": f"inverse_{rel.relationship_type}",
-                        "value": rel.source_entity.name,
-                        "value_entity": rel.source_entity.entity_id
-                    })
+                    kg_statements.append(
+                        {
+                            "property": f"inverse_{rel.relationship_type}",
+                            "value": rel.source_entity.name,
+                            "value_entity": rel.source_entity.entity_id,
+                        }
+                    )
 
             # Compare statements
             covered_statements = []
@@ -319,14 +324,12 @@ class WikipediaExtractionMixin:
                 for kg_stmt in kg_statements:
                     # Compare property names (inexact)
                     prop_match = _string_similarity(
-                        wk_stmt["property"].lower(),
-                        kg_stmt["property"].lower()
+                        wk_stmt["property"].lower(), kg_stmt["property"].lower()
                     )
 
                     # Compare values (inexact)
                     value_match = _string_similarity(
-                        wk_stmt["value"].lower(),
-                        kg_stmt["value"].lower()
+                        wk_stmt["value"].lower(), kg_stmt["value"].lower()
                     )
 
                     # Calculate overall match score
@@ -338,11 +341,9 @@ class WikipediaExtractionMixin:
                         best_score = score
 
                 if found:
-                    covered_statements.append({
-                        "wikidata": wk_stmt,
-                        "kg": best_match,
-                        "match_score": best_score
-                    })
+                    covered_statements.append(
+                        {"wikidata": wk_stmt, "kg": best_match, "match_score": best_score}
+                    )
 
                     # Add to entity mapping
                     if "value_id" in wk_stmt and "value_entity" in best_match:
@@ -368,7 +369,7 @@ class WikipediaExtractionMixin:
                 "covered_relationships": covered_statements,
                 "missing_relationships": missing_statements,
                 "additional_relationships": additional_statements,
-                "entity_mapping": entity_mapping
+                "entity_mapping": entity_mapping,
             }
 
             # Update trace with results if tracer is enabled
@@ -383,7 +384,7 @@ class WikipediaExtractionMixin:
                     covered_count=len(covered_statements),
                     missing_count=len(missing_statements),
                     additional_count=len(additional_statements),
-                    validation_results=result
+                    validation_results=result,
                 )
 
             return result
@@ -394,7 +395,7 @@ class WikipediaExtractionMixin:
                 "coverage": 0.0,
                 "missing_relationships": [],
                 "additional_relationships": [],
-                "entity_mapping": {}
+                "entity_mapping": {},
             }
             logger.error(f"Wikidata validation network error: {e}")
 
@@ -404,18 +405,18 @@ class WikipediaExtractionMixin:
                     trace_id=trace_id,
                     status="failed",
                     error=str(e),
-                    validation_results=error_result
+                    validation_results=error_result,
                 )
 
             return error_result
-        
+
         except (ValueError, KeyError, TypeError, IndexError, AttributeError) as e:
             error_result = {
                 "error": f"Unexpected error validating against Wikidata: {e}",
                 "coverage": 0.0,
                 "missing_relationships": [],
                 "additional_relationships": [],
-                "entity_mapping": {}
+                "entity_mapping": {},
             }
             logger.error(f"Wikidata validation error: {e}")
 
@@ -425,13 +426,18 @@ class WikipediaExtractionMixin:
                     trace_id=trace_id,
                     status="failed",
                     error=str(e),
-                    validation_results=error_result
+                    validation_results=error_result,
                 )
 
             # Wrap in ValidationError
             raise ValidationError(
                 f"Failed to validate knowledge graph against Wikidata: {e}",
-                details={'trace_id': trace_id, 'entity_name': kg.entities.get(list(kg.entities.keys())[0]).name if kg.entities else 'unknown'}
+                details={
+                    "trace_id": trace_id,
+                    "entity_name": kg.entities.get(list(kg.entities.keys())[0]).name
+                    if kg.entities
+                    else "unknown",
+                },
             ) from e
 
     def _get_wikidata_id(self, entity_name: str) -> Optional[str]:
@@ -451,7 +457,7 @@ class WikipediaExtractionMixin:
                 "action": "wbsearchentities",
                 "format": "json",
                 "search": entity_name,
-                "language": "en"
+                "language": "en",
             }
 
             response = requests.get(url, params=params)
@@ -500,14 +506,12 @@ class WikipediaExtractionMixin:
             """
 
             headers = {
-                'User-Agent': 'KnowledgeGraphValidator/1.0 (https://example.org/; info@example.org)',
-                'Accept': 'application/json'
+                "User-Agent": "KnowledgeGraphValidator/1.0 (https://example.org/; info@example.org)",
+                "Accept": "application/json",
             }
 
             response = requests.get(
-                sparql_endpoint,
-                params={"query": query, "format": "json"},
-                headers=headers
+                sparql_endpoint, params={"query": query, "format": "json"}, headers=headers
             )
 
             data = response.json()
@@ -518,12 +522,14 @@ class WikipediaExtractionMixin:
             for result in data.get("results", {}).get("bindings", []):
                 # Skip some administrative properties
                 property_id = result.get("property", {}).get("value", "")
-                if property_id.endswith("/P31") or property_id.endswith("/P279"):  # Instance of, subclass of
+                if property_id.endswith("/P31") or property_id.endswith(
+                    "/P279"
+                ):  # Instance of, subclass of
                     continue
 
                 statement = {
                     "property": result.get("propertyLabel", {}).get("value", "Unknown property"),
-                    "value": result.get("valueLabel", {}).get("value", "Unknown value")
+                    "value": result.get("valueLabel", {}).get("value", "Unknown value"),
                 }
 
                 # Include Wikidata IDs if available
@@ -541,13 +547,15 @@ class WikipediaExtractionMixin:
             logger.error(f"Unexpected error querying Wikidata for entity '{entity_id}': {e}")
             raise ValidationError(
                 f"Failed to query Wikidata statements for entity '{entity_id}': {e}",
-                details={'entity_id': entity_id}
+                details={"entity_id": entity_id},
             ) from e
 
-
-
-    def extract_and_validate_wikipedia_graph(self, page_title: str, extraction_temperature: float = 0.7,
-                                        structure_temperature: float = 0.5) -> Dict[str, Any]:
+    def extract_and_validate_wikipedia_graph(
+        self,
+        page_title: str,
+        extraction_temperature: float = 0.7,
+        structure_temperature: float = 0.5,
+    ) -> Dict[str, Any]:
         """
         Extract knowledge graph from a Wikipedia page and validate against Wikidata SPARQL.
 
@@ -574,7 +582,7 @@ class WikipediaExtractionMixin:
             trace_id = self.tracer.trace_extraction_and_validation(
                 page_title=page_title,
                 extraction_temperature=extraction_temperature,
-                structure_temperature=structure_temperature
+                structure_temperature=structure_temperature,
             )
 
         try:
@@ -582,7 +590,7 @@ class WikipediaExtractionMixin:
             kg = self.extract_from_wikipedia(
                 page_title=page_title,
                 extraction_temperature=extraction_temperature,
-                structure_temperature=structure_temperature
+                structure_temperature=structure_temperature,
             )
 
             # Validate against Wikidata
@@ -592,11 +600,17 @@ class WikipediaExtractionMixin:
             metrics = {
                 "entity_count": len(kg.entities),
                 "relationship_count": len(kg.relationships),
-                "entity_types": {entity_type: len(entities) for entity_type, entities in kg.entity_types.items()},
-                "relationship_types": {rel_type: len(rels) for rel_type, rels in kg.relationship_types.items()},
-                "avg_confidence": sum(e.confidence for e in kg.entities.values()) / len(kg.entities) if kg.entities else 0,
+                "entity_types": {
+                    entity_type: len(entities) for entity_type, entities in kg.entity_types.items()
+                },
+                "relationship_types": {
+                    rel_type: len(rels) for rel_type, rels in kg.relationship_types.items()
+                },
+                "avg_confidence": sum(e.confidence for e in kg.entities.values()) / len(kg.entities)
+                if kg.entities
+                else 0,
                 "extraction_temperature": extraction_temperature,
-                "structure_temperature": structure_temperature
+                "structure_temperature": structure_temperature,
             }
 
             # Create comprehensive result
@@ -604,7 +618,7 @@ class WikipediaExtractionMixin:
                 "knowledge_graph": kg,
                 "validation": validation_results,
                 "coverage": validation_results.get("coverage", 0.0),
-                "metrics": metrics
+                "metrics": metrics,
             }
 
             # Add trace ID if tracing is enabled
@@ -620,7 +634,7 @@ class WikipediaExtractionMixin:
                     metrics=metrics,
                     entity_count=len(kg.entities),
                     relationship_count=len(kg.relationships),
-                    coverage=validation_results.get("coverage", 0.0)
+                    coverage=validation_results.get("coverage", 0.0),
                 )
 
             return result
@@ -636,15 +650,16 @@ class WikipediaExtractionMixin:
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
-                    trace_id=trace_id,
-                    status="failed",
-                    error=str(e)
+                    trace_id=trace_id, status="failed", error=str(e)
                 )
             # Wrap in EntityExtractionError
             raise EntityExtractionError(
                 f"Failed to extract and validate knowledge graph from Wikipedia page '{page_title}': {e}",
-                details={'page_title': page_title, 'extraction_temperature': extraction_temperature,
-                        'structure_temperature': structure_temperature}
+                details={
+                    "page_title": page_title,
+                    "extraction_temperature": extraction_temperature,
+                    "structure_temperature": structure_temperature,
+                },
             ) from e
 
 

@@ -15,6 +15,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+
 def test_import_tool(category, tool_name):
     """Test importing a single tool."""
     try:
@@ -33,6 +34,7 @@ def test_import_tool(category, tool_name):
     except Exception as e:
         return False, f"❌ {category}/{tool_name}: Error - {e}"
 
+
 def main():
     """Run the validation."""
     print("🔍 IPFS Datasets MCP Tools Validation")
@@ -45,34 +47,25 @@ def main():
         ("dataset_tools", "convert_dataset_format"),
         ("dataset_tools", "process_dataset"),
         ("dataset_tools", "save_dataset"),
-
         # Vector tools
         ("vector_tools", "create_vector_index"),
         ("vector_tools", "search_vector_index"),
-
         # Graph tools
         ("graph_tools", "query_knowledge_graph"),
-
         # Audit tools
         ("audit_tools", "record_audit_event"),
         ("audit_tools", "generate_audit_report"),
-
         # Provenance tools
         ("provenance_tools", "record_provenance"),
-
         # Security tools
         ("security_tools", "check_access_permission"),
-
         # IPFS tools
         ("ipfs_tools", "get_from_ipfs"),
         ("ipfs_tools", "pin_to_ipfs"),
-
         # CLI tools
         ("cli", "execute_command"),
-
         # Function tools
         ("functions", "execute_python_snippet"),
-
         # Web archive tools
         ("web_archive_tools", "create_warc"),
     ]
@@ -91,16 +84,17 @@ def main():
 
     print("\n" + "=" * 50)
     print(f"📊 VALIDATION SUMMARY")
-    print(f"✅ Successful: {success_count}/{len(tools)} ({success_count/len(tools)*100:.1f}%)")
-    print(f"❌ Failed: {len(tools)-success_count}/{len(tools)}")
+    print(f"✅ Successful: {success_count}/{len(tools)} ({success_count / len(tools) * 100:.1f}%)")
+    print(f"❌ Failed: {len(tools) - success_count}/{len(tools)}")
 
     if success_count == len(tools):
         print("\n🎉 ALL TOOLS VALIDATED SUCCESSFULLY!")
         print("The IPFS Datasets MCP Tools are ready for use.")
         return 0
     else:
-        print(f"\n⚠️  {len(tools)-success_count} tools need attention.")
+        print(f"\n⚠️  {len(tools) - success_count} tools need attention.")
         return 1
+
 
 if __name__ == "__main__":
     exit(main())

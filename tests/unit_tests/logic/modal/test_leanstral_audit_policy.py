@@ -156,8 +156,7 @@ def test_policy_selects_only_informative_unresolved_owned_gaps() -> None:
 
 def test_policy_enforces_fair_family_budget_and_exhaustion() -> None:
     clusters = [
-        _cluster(f"d{index}", "deontic", "deontic.ir", severity=0.95)
-        for index in range(3)
+        _cluster(f"d{index}", "deontic", "deontic.ir", severity=0.95) for index in range(3)
     ] + [_cluster("temporal", "temporal", "modal.temporal", severity=0.95)]
 
     report = select_informative_leanstral_audit_clusters(
@@ -227,7 +226,11 @@ def _packet(index: int, *, component: str = "deontic") -> dict:
         "legal_ir_component_gaps": {f"{component}.obligation_scope": 0.42},
         "legal_ir_views": {
             "canonical": {"family_distribution": {"deontic": 1.0}, "modal_ir_hash": modal_hash},
-            "predicted": {"family_distribution": {"temporal": 0.8}, "predicted_family": "temporal", "target_family": "deontic"},
+            "predicted": {
+                "family_distribution": {"temporal": 0.8},
+                "predicted_family": "temporal",
+                "target_family": "deontic",
+            },
         },
         "proof_route_status": {
             "attempted_count": 1,

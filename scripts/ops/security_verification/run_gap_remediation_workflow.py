@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build a prioritized execution manifest for gap-remediation lanes."""
+
 from __future__ import annotations
 
 import argparse
@@ -18,24 +19,34 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_gap_re
 )
 
 
-MATRIX_PATH = Path('security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json')
-COUNTEREXAMPLE_REPORT_PATH = Path('security_ir_artifacts/corpora/xaman-app/counterexample-report.json')
-FUZZ_REPORT_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json')
-FUZZ_COUNTEREXAMPLE_MANIFEST_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json')
-NATIVE_VAULT_STATE_FUZZ_PATH = Path('security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json')
-OUTPUT_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json')
+MATRIX_PATH = Path("security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json")
+COUNTEREXAMPLE_REPORT_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/counterexample-report.json"
+)
+FUZZ_REPORT_PATH = Path("security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json")
+FUZZ_COUNTEREXAMPLE_MANIFEST_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
+)
+NATIVE_VAULT_STATE_FUZZ_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json"
+)
+OUTPUT_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json"
+)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'{path} does not contain a JSON object')
+        raise ValueError(f"{path} does not contain a JSON object")
     return payload
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def generate(
@@ -49,8 +60,8 @@ def generate(
     out_path: Path = OUTPUT_PATH,
 ) -> dict[str, Any]:
     matrix = _load_json(repo_root / matrix_path)
-    if matrix.get('task_id') != 'PORTAL-CXTP-170':
-        raise ValueError('gap-remediation matrix input is not PORTAL-CXTP-170')
+    if matrix.get("task_id") != "PORTAL-CXTP-170":
+        raise ValueError("gap-remediation matrix input is not PORTAL-CXTP-170")
 
     counterexample_report = _load_json(repo_root / counterexample_report_path)
     fuzz_report = _load_json(repo_root / fuzz_report_path)
@@ -73,21 +84,35 @@ def generate(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_ir_artifacts.')
-    parser.add_argument('--matrix', default=str(MATRIX_PATH), help='Gap-remediation matrix input path.')
-    parser.add_argument('--counterexample-report', default=str(COUNTEREXAMPLE_REPORT_PATH), help='Counterexample report path.')
-    parser.add_argument('--fuzz-report', default=str(FUZZ_REPORT_PATH), help='Xaman testnet fuzz report path.')
     parser.add_argument(
-        '--fuzz-counterexample-manifest',
+        "--repo-root",
+        default=str(ROOT_DIR),
+        help="Repository root containing security_ir_artifacts.",
+    )
+    parser.add_argument(
+        "--matrix", default=str(MATRIX_PATH), help="Gap-remediation matrix input path."
+    )
+    parser.add_argument(
+        "--counterexample-report",
+        default=str(COUNTEREXAMPLE_REPORT_PATH),
+        help="Counterexample report path.",
+    )
+    parser.add_argument(
+        "--fuzz-report", default=str(FUZZ_REPORT_PATH), help="Xaman testnet fuzz report path."
+    )
+    parser.add_argument(
+        "--fuzz-counterexample-manifest",
         default=str(FUZZ_COUNTEREXAMPLE_MANIFEST_PATH),
-        help='Fuzz counterexample manifest path.',
+        help="Fuzz counterexample manifest path.",
     )
     parser.add_argument(
-        '--native-vault-state-fuzz',
+        "--native-vault-state-fuzz",
         default=str(NATIVE_VAULT_STATE_FUZZ_PATH),
-        help='Native-vault rekey state-fuzz report path.',
+        help="Native-vault rekey state-fuzz report path.",
     )
-    parser.add_argument('--out', default=str(OUTPUT_PATH), help='Output remediation execution manifest path.')
+    parser.add_argument(
+        "--out", default=str(OUTPUT_PATH), help="Output remediation execution manifest path."
+    )
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
@@ -109,11 +134,11 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'out': str(Path(args.out)),
-                'overall_status': manifest['overall_status'],
-                'entry_count': manifest['summary']['entry_count'],
-                'ready_count': manifest['summary']['ready_count'],
-                'blocked_count': manifest['summary']['blocked_count'],
+                "out": str(Path(args.out)),
+                "overall_status": manifest["overall_status"],
+                "entry_count": manifest["summary"]["entry_count"],
+                "ready_count": manifest["summary"]["ready_count"],
+                "blocked_count": manifest["summary"]["blocked_count"],
             },
             sort_keys=True,
         ),
@@ -121,5 +146,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

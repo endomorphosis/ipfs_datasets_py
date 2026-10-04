@@ -2,12 +2,12 @@
 PDF Processing Tools for MCP Server
 
 This module provides MCP-compatible tools for comprehensive PDF processing,
-including decomposition, OCR, LLM optimization, entity extraction, vector 
+including decomposition, OCR, LLM optimization, entity extraction, vector
 embedding, GraphRAG integration, and cross-document analysis.
 
 The tools support the complete PDF processing pipeline:
-PDF Input → Decomposition → IPLD Structuring → OCR Processing → 
-LLM Optimization → Entity Extraction → Vector Embedding → 
+PDF Input → Decomposition → IPLD Structuring → OCR Processing →
+LLM Optimization → Entity Extraction → Vector Embedding →
 IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 
 Extended pipeline (form intelligence):
@@ -28,15 +28,15 @@ from .pdf_generate_zkp_certificate import pdf_generate_zkp_certificate
 from .pdf_verify_zkp_certificate import pdf_verify_zkp_certificate
 
 __all__ = [
-    'pdf_ingest_to_graphrag',
-    'pdf_query_corpus',
-    'pdf_query_knowledge_graph',
-    'pdf_analyze_relationships',
-    'pdf_batch_process',
-    'pdf_extract_entities',
-    'pdf_optimize_for_llm',
-    'pdf_cross_document_analysis',
-    'pdf_fill_form_agent',
-    'pdf_generate_zkp_certificate',
-    'pdf_verify_zkp_certificate',
+    "pdf_ingest_to_graphrag",
+    "pdf_query_corpus",
+    "pdf_query_knowledge_graph",
+    "pdf_analyze_relationships",
+    "pdf_batch_process",
+    "pdf_extract_entities",
+    "pdf_optimize_for_llm",
+    "pdf_cross_document_analysis",
+    "pdf_fill_form_agent",
+    "pdf_generate_zkp_certificate",
+    "pdf_verify_zkp_certificate",
 ]

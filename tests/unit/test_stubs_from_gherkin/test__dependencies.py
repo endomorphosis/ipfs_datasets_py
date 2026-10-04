@@ -4,11 +4,13 @@ Test stubs for _dependencies module.
 Feature: Dependency Management
   Manage package dependencies and imports
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_failed_dependency_import():
@@ -83,6 +85,7 @@ def package_imports():
 
 
 # Test scenarios
+
 
 def test_check_dependency_availability():
     """
@@ -173,6 +176,7 @@ def test_detect_circular_dependencies():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a failed dependency import")
@@ -343,4 +347,3 @@ def version_compatibility_is_checked():
     """Step: Then version compatibility is checked"""
     # TODO: Implement step
     pass
-

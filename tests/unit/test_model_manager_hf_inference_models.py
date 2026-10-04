@@ -107,7 +107,9 @@ def test_default_config_includes_hf_inference_provider_model_lists() -> None:
     assert combined.issubset(hf_models)
 
 
-def test_load_model_config_keeps_hf_inference_provider_defaults_when_no_file(monkeypatch, tmp_path) -> None:
+def test_load_model_config_keeps_hf_inference_provider_defaults_when_no_file(
+    monkeypatch, tmp_path
+) -> None:
     config_path = tmp_path / "missing_model_config.json"
     monkeypatch.setenv("IPFS_DATASETS_PY_MODEL_CONFIG", str(config_path))
 
@@ -223,7 +225,9 @@ def test_load_hf_inference_ipld_rejects_wrong_document_kind() -> None:
             return json.dumps({"kind": "other"}).encode("utf-8")
 
     try:
-        _ = model_manager.load_hf_inference_ipld_from_ipfs("fakecid", backend_instance=_FakeBackend())
+        _ = model_manager.load_hf_inference_ipld_from_ipfs(
+            "fakecid", backend_instance=_FakeBackend()
+        )
         assert False, "Expected ValueError for invalid kind"
     except ValueError:
         pass

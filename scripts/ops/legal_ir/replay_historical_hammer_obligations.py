@@ -146,7 +146,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _policy(args: argparse.Namespace, versions: ProofFeedbackVersions) -> HistoricalHammerReplayPolicy:
+def _policy(
+    args: argparse.Namespace, versions: ProofFeedbackVersions
+) -> HistoricalHammerReplayPolicy:
     enforce = not args.allow_inventory_mismatch
     return HistoricalHammerReplayPolicy(
         versions=versions,
@@ -162,12 +164,8 @@ def _policy(args: argparse.Namespace, versions: ProofFeedbackVersions) -> Histor
         use_global_solver_budget=not args.no_global_solver_budget,
         resource_wait_timeout_seconds=args.resource_wait_timeout_seconds,
         expected_cycle_file_count=args.expected_cycle_files if enforce else None,
-        expected_nested_artifact_count=(
-            args.expected_nested_artifacts if enforce else None
-        ),
-        expected_unique_obligation_count=(
-            args.expected_unique_obligations if enforce else None
-        ),
+        expected_nested_artifact_count=(args.expected_nested_artifacts if enforce else None),
+        expected_unique_obligation_count=(args.expected_unique_obligations if enforce else None),
     )
 
 

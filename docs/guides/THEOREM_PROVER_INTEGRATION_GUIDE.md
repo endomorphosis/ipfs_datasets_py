@@ -108,7 +108,7 @@ from ipfs_datasets_py.logic_integration import create_proof_engine
 
 proof_engine = create_proof_engine(
     temp_dir="./custom_proofs",
-    timeout=120  # 2 minutes timeout for complex proofs
+    timeout=120,  # 2 minutes timeout for complex proofs
 )
 
 # Check prover availability

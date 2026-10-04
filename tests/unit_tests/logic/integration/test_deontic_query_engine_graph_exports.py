@@ -34,18 +34,32 @@ def test_query_engine_builds_graph_conflict_summary_and_support_map():
             ),
         ],
     )
-    engine = DeonticQueryEngine(rule_set=rule_set, enable_rate_limiting=False, enable_validation=False)
+    engine = DeonticQueryEngine(
+        rule_set=rule_set, enable_rate_limiting=False, enable_validation=False
+    )
 
     graph = engine.build_deontic_graph()
     summary = engine.summarize_graph_conflicts()
     support_map = engine.build_support_map(
         fact_catalog={
-            "fact:requested-review:1:1": {"predicate": "requested review", "status": "verified", "source_ids": ["email:1"]},
-            "fact:notice-sent:1:2": {"predicate": "notice sent", "status": "verified", "source_ids": ["notice:1"]},
+            "fact:requested-review:1:1": {
+                "predicate": "requested review",
+                "status": "verified",
+                "source_ids": ["email:1"],
+            },
+            "fact:notice-sent:1:2": {
+                "predicate": "notice sent",
+                "status": "verified",
+                "source_ids": ["notice:1"],
+            },
         },
         filing_map={
             rule_set.formulas[0].formula_id: [
-                {"filing_id": "motion:show-cause", "filing_type": "motion", "proposition": "Agency had a duty to grant review."}
+                {
+                    "filing_id": "motion:show-cause",
+                    "filing_type": "motion",
+                    "proposition": "Agency had a duty to grant review.",
+                }
             ]
         },
     )

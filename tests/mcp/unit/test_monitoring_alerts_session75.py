@@ -25,6 +25,7 @@ Covers:
   * P2PMetricsCollector._check_peer_discovery_alerts / _check_workflow_alerts /
     _check_bootstrap_alerts (direct calls for branch coverage)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -47,16 +48,14 @@ from ipfs_datasets_py.mcp_server.exceptions import HealthCheckError
 # _check_health: async check function path
 # ===========================================================================
 
-class TestCheckHealthAsync:
 
+class TestCheckHealthAsync:
     async def test_async_coroutine_check_function(self):
         """An async check function must be awaited and result stored."""
         col = EnhancedMetricsCollector(enabled=True)
 
         async def my_check():
-            return HealthCheckResult(
-                component="test_comp", status="healthy", message="ok"
-            )
+            return HealthCheckResult(component="test_comp", status="healthy", message="ok")
 
         col.register_health_check("comp_async", my_check)
         await col._check_health()
@@ -71,9 +70,7 @@ class TestCheckHealthAsync:
         col = EnhancedMetricsCollector(enabled=True)
 
         async def _coro():
-            return HealthCheckResult(
-                component="awaitable_comp", status="healthy", message="ok"
-            )
+            return HealthCheckResult(component="awaitable_comp", status="healthy", message="ok")
 
         def sync_returning_awaitable():
             return _coro()
@@ -142,8 +139,7 @@ class TestCheckHealthAsync:
 
         def timed_check():
             return HealthCheckResult(
-                component="timed", status="healthy", message="ok",
-                response_time_ms=0.0
+                component="timed", status="healthy", message="ok", response_time_ms=0.0
             )
 
         col.register_health_check("timed", timed_check)
@@ -157,8 +153,8 @@ class TestCheckHealthAsync:
 # P2PMetricsCollector.get_alert_conditions — peer discovery
 # ===========================================================================
 
-class TestPeerDiscoveryAlerts:
 
+class TestPeerDiscoveryAlerts:
     def _make_collector(self) -> P2PMetricsCollector:
         return P2PMetricsCollector()
 
@@ -203,8 +199,8 @@ class TestPeerDiscoveryAlerts:
 # P2PMetricsCollector.get_alert_conditions — workflows
 # ===========================================================================
 
-class TestWorkflowAlerts:
 
+class TestWorkflowAlerts:
     def _make_collector(self) -> P2PMetricsCollector:
         return P2PMetricsCollector()
 
@@ -248,8 +244,8 @@ class TestWorkflowAlerts:
 # P2PMetricsCollector.get_alert_conditions — bootstrap
 # ===========================================================================
 
-class TestBootstrapAlerts:
 
+class TestBootstrapAlerts:
     def _make_collector(self) -> P2PMetricsCollector:
         return P2PMetricsCollector()
 

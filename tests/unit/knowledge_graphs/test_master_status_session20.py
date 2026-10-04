@@ -27,6 +27,7 @@ import pytest
 # extraction/validator.py
 # ---------------------------------------------------------------------------
 
+
 class TestKGExtractorWithValidation:
     """Tests for KnowledgeGraphExtractorWithValidation."""
 
@@ -34,6 +35,7 @@ class TestKGExtractorWithValidation:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         return KnowledgeGraphExtractorWithValidation(
             validate_during_extraction=validate,
             auto_correct_suggestions=auto_correct,
@@ -53,9 +55,12 @@ class TestKGExtractorWithValidation:
         mock_validator_cls = MagicMock()
         mock_validator_cls.return_value = MagicMock()
         import sys
+
         fake_module = MagicMock()
         fake_module.SPARQLValidator = mock_validator_cls
-        with patch.dict("sys.modules", {"ipfs_datasets_py.ml.llm.llm_semantic_validation": fake_module}):
+        with patch.dict(
+            "sys.modules", {"ipfs_datasets_py.ml.llm.llm_semantic_validation": fake_module}
+        ):
             ext = self._make_extractor()
         assert ext.validator_available is True
         assert ext.validator is not None
@@ -180,6 +185,7 @@ class TestKGExtractorWithValidation:
     def test_apply_corrections_empty_corrections(self):
         """GIVEN empty corrections WHEN apply THEN KG is a clean copy."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         ext = self._make_extractor()
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice")
@@ -189,6 +195,7 @@ class TestKGExtractorWithValidation:
     def test_apply_corrections_entity_property_correction_dict(self):
         """GIVEN structured dict suggestions WHEN apply THEN property updated."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         ext = self._make_extractor()
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice", properties={"role": "manager"})
@@ -208,6 +215,7 @@ class TestKGExtractorWithValidation:
     def test_apply_corrections_entity_property_correction_text(self):
         """GIVEN text suggestions with colon WHEN apply THEN property updated."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         ext = self._make_extractor()
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Bob", properties={"title": "VP"})
@@ -228,6 +236,7 @@ class TestKGExtractorWithValidation:
         """GIVEN rel type suggestion WHEN apply THEN relationship type updated."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import Entity as GraphEntity
+
         ext = self._make_extractor()
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice")
@@ -253,6 +262,7 @@ class TestKGExtractorWithValidation:
     def test_apply_corrections_entity_with_none_properties(self):
         """GIVEN entity with None properties WHEN apply THEN no crash."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         ext = self._make_extractor()
         kg = KnowledgeGraph(name="test")
         entity = kg.add_entity(entity_type="Person", name="Alice")
@@ -267,11 +277,13 @@ class TestKGExtractorWithValidation:
 # core/_legacy_graph_engine.py  (uncovered persistence & traversal paths)
 # ---------------------------------------------------------------------------
 
+
 class TestLegacyGraphEngineExtended:
     """Tests for _LegacyGraphEngine uncovered paths."""
 
     def _make_engine(self, storage=None):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         return _LegacyGraphEngine(storage_backend=storage)
 
     # --- persistence via mock storage ---------------------------------------
@@ -288,6 +300,7 @@ class TestLegacyGraphEngineExtended:
     def test_create_node_persistence_storage_error(self):
         """GIVEN storage raises StorageError WHEN create_node THEN node still created."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         mock_storage = MagicMock()
         mock_storage.store.side_effect = StorageError("disk full")
         engine = self._make_engine(storage=mock_storage)
@@ -310,10 +323,13 @@ class TestLegacyGraphEngineExtended:
     def test_get_node_from_storage_fallback(self):
         """GIVEN node CID in cache and mock storage WHEN get_node THEN loads from storage."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         mock_storage = MagicMock()
         mock_storage.store.return_value = "bafyfake"
         mock_storage.retrieve_json.return_value = {
-            "id": "node-123", "labels": ["Person"], "properties": {"name": "Alice"}
+            "id": "node-123",
+            "labels": ["Person"],
+            "properties": {"name": "Alice"},
         }
         engine = self._make_engine(storage=mock_storage)
         # Manually insert CID reference as if persisted
@@ -385,7 +401,13 @@ class TestLegacyGraphEngineExtended:
                 {"id": "n1", "labels": ["Person"], "properties": {"name": "Alice"}},
             ],
             "relationships": [
-                {"id": "r1", "type": "KNOWS", "start_node": "n1", "end_node": "n1", "properties": {}}
+                {
+                    "id": "r1",
+                    "type": "KNOWS",
+                    "start_node": "n1",
+                    "end_node": "n1",
+                    "properties": {},
+                }
             ],
         }
         engine = self._make_engine(storage=mock_storage)
@@ -450,6 +472,7 @@ class TestLegacyGraphEngineExtended:
 # storage/ipld_backend.py
 # ---------------------------------------------------------------------------
 
+
 class TestIPLDBackendExtended:
     """Tests for IPLDBackend using a mocked router."""
 
@@ -459,9 +482,16 @@ class TestIPLDBackendExtended:
             mock_backend = MagicMock()
             mock_backend.block_put.return_value = "bafyfake"
             mock_backend.pin = MagicMock()
-        with patch("ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.RouterDeps", return_value=mock_deps):
-            with patch("ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.get_ipfs_backend", return_value=mock_backend):
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.RouterDeps",
+            return_value=mock_deps,
+        ):
+            with patch(
+                "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.get_ipfs_backend",
+                return_value=mock_backend,
+            ):
                 from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDBackend
+
                 backend = IPLDBackend(deps=mock_deps, cache_capacity=5)
         # _get_backend() is lazy; inject mock directly so calls outside the
         # patch context also use the mock backend.
@@ -495,6 +525,7 @@ class TestIPLDBackendExtended:
     def test_store_unsupported_type_raises_serialization_error(self):
         """GIVEN set data WHEN store THEN SerializationError raised."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import SerializationError
+
         backend, _ = self._make_backend()
         with pytest.raises(SerializationError):
             backend.store({1, 2, 3})  # sets are not JSON-serializable
@@ -502,6 +533,7 @@ class TestIPLDBackendExtended:
     def test_store_connection_error_raises_ipld_storage_error(self):
         """GIVEN backend raises ConnectionError WHEN store THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDStorageError
+
         mock_b = MagicMock()
         mock_b.block_put.side_effect = ConnectionError("IPFS offline")
         backend, _ = self._make_backend(mock_backend=mock_b)
@@ -511,6 +543,7 @@ class TestIPLDBackendExtended:
     def test_store_generic_error_raises_ipld_storage_error(self):
         """GIVEN backend raises unknown Exception WHEN store THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDStorageError
+
         mock_b = MagicMock()
         mock_b.block_put.side_effect = RuntimeError("unexpected")
         backend, _ = self._make_backend(mock_backend=mock_b)
@@ -565,6 +598,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_cat_connection_error_raises(self):
         """GIVEN block_get fails and cat raises ConnectionError WHEN retrieve THEN IPLDStorageError."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDStorageError
+
         mock_b = MagicMock()
         mock_b.block_get.side_effect = AttributeError("no block_get")
         mock_b.cat.side_effect = ConnectionError("IPFS down")
@@ -575,6 +609,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_cat_generic_error_raises(self):
         """GIVEN block_get fails and cat raises generic error WHEN retrieve THEN IPLDStorageError."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDStorageError
+
         mock_b = MagicMock()
         mock_b.block_get.side_effect = AttributeError("no block_get")
         mock_b.cat.side_effect = RuntimeError("weird error")
@@ -585,6 +620,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_main_path_connection_error(self):
         """GIVEN block_get raises ConnectionError WHEN retrieve THEN IPLDStorageError."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDStorageError
+
         mock_b = MagicMock()
         mock_b.block_get.side_effect = ConnectionError("IPFS down")
         backend, _ = self._make_backend(mock_backend=mock_b)
@@ -604,6 +640,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_json_bad_bytes_raises_deserialization_error(self):
         """GIVEN non-JSON bytes WHEN retrieve_json THEN DeserializationError raised."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import DeserializationError
+
         mock_b = MagicMock()
         mock_b.block_get.return_value = b"not json!!!"
         backend, _ = self._make_backend(mock_backend=mock_b)
@@ -674,16 +711,23 @@ class TestIPLDBackendExtended:
 # extraction/finance_graphrag.py  (link_executives, test_hypothesis, analyze)
 # ---------------------------------------------------------------------------
 
+
 class TestFinanceGraphRAGExtended:
     """Tests for GraphRAGNewsAnalyzer and helpers (no network required)."""
 
     def _make_analyzer(self):
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import GraphRAGNewsAnalyzer
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            GraphRAGNewsAnalyzer,
+        )
+
         return GraphRAGNewsAnalyzer()
 
     def test_hash_id_deterministic(self):
         """GIVEN same parts WHEN _hash_id THEN same hash returned."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import GraphRAGNewsAnalyzer
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            GraphRAGNewsAnalyzer,
+        )
+
         h1 = GraphRAGNewsAnalyzer._hash_id("Alice", "Acme", "exec_of")
         h2 = GraphRAGNewsAnalyzer._hash_id("Alice", "Acme", "exec_of")
         assert h1 == h2
@@ -723,12 +767,12 @@ class TestFinanceGraphRAGExtended:
     def test_link_executives_to_performance_returns_relationships(self):
         """GIVEN exec with matching company WHEN link THEN relationship returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            ExecutiveProfile, CompanyPerformance
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = self._make_analyzer()
-        exec_profile = ExecutiveProfile(
-            person_id="e1", name="Alice", companies=["AAPL"]
-        )
+        exec_profile = ExecutiveProfile(person_id="e1", name="Alice", companies=["AAPL"])
         company = CompanyPerformance(
             company_id="c1", symbol="AAPL", name="Apple", return_percentage=12.5
         )
@@ -739,8 +783,10 @@ class TestFinanceGraphRAGExtended:
     def test_link_executives_no_matching_company(self):
         """GIVEN exec with no matching company WHEN link THEN no relationships."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            ExecutiveProfile, CompanyPerformance
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = self._make_analyzer()
         exec_profile = ExecutiveProfile(person_id="e1", name="Alice", companies=["GOOG"])
         company = CompanyPerformance(company_id="c1", symbol="AAPL", name="Apple")
@@ -762,16 +808,24 @@ class TestFinanceGraphRAGExtended:
     def test_test_hypothesis_supports_hypothesis(self):
         """GIVEN group_a_avg > group_b_avg WHEN test THEN conclusion=supports_hypothesis."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            ExecutiveProfile, CompanyPerformance
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = self._make_analyzer()
         analyzer.executives = {
-            "e1": ExecutiveProfile(person_id="e1", name="Alice", gender="female", companies=["AAPL"]),
+            "e1": ExecutiveProfile(
+                person_id="e1", name="Alice", gender="female", companies=["AAPL"]
+            ),
             "e2": ExecutiveProfile(person_id="e2", name="Bob", gender="male", companies=["MSFT"]),
         }
         analyzer.companies = {
-            "c1": CompanyPerformance(company_id="c1", symbol="AAPL", name="Apple", return_percentage=20.0),
-            "c2": CompanyPerformance(company_id="c2", symbol="MSFT", name="Microsoft", return_percentage=5.0),
+            "c1": CompanyPerformance(
+                company_id="c1", symbol="AAPL", name="Apple", return_percentage=20.0
+            ),
+            "c2": CompanyPerformance(
+                company_id="c2", symbol="MSFT", name="Microsoft", return_percentage=5.0
+            ),
         }
         result = analyzer.test_hypothesis(
             hypothesis="female execs outperform",
@@ -784,16 +838,24 @@ class TestFinanceGraphRAGExtended:
     def test_test_hypothesis_no_effect(self):
         """GIVEN equal performance WHEN test THEN conclusion=no_effect_detected."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            ExecutiveProfile, CompanyPerformance
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = self._make_analyzer()
         analyzer.executives = {
-            "e1": ExecutiveProfile(person_id="e1", name="Alice", gender="female", companies=["AAPL"]),
+            "e1": ExecutiveProfile(
+                person_id="e1", name="Alice", gender="female", companies=["AAPL"]
+            ),
             "e2": ExecutiveProfile(person_id="e2", name="Bob", gender="male", companies=["MSFT"]),
         }
         analyzer.companies = {
-            "c1": CompanyPerformance(company_id="c1", symbol="AAPL", name="Apple", return_percentage=10.0),
-            "c2": CompanyPerformance(company_id="c2", symbol="MSFT", name="Microsoft", return_percentage=10.0),
+            "c1": CompanyPerformance(
+                company_id="c1", symbol="AAPL", name="Apple", return_percentage=10.0
+            ),
+            "c2": CompanyPerformance(
+                company_id="c2", symbol="MSFT", name="Microsoft", return_percentage=10.0
+            ),
         }
         result = analyzer.test_hypothesis(
             hypothesis="equal performance",
@@ -806,8 +868,10 @@ class TestFinanceGraphRAGExtended:
     def test_build_knowledge_graph(self):
         """GIVEN exec and company profiles WHEN build_knowledge_graph THEN entities added."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            ExecutiveProfile, CompanyPerformance
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = self._make_analyzer()
         analyzer.executives = {
             "e1": ExecutiveProfile(person_id="e1", name="Alice", companies=["AAPL"])
@@ -820,7 +884,10 @@ class TestFinanceGraphRAGExtended:
 
     def test_analyze_news_with_graphrag_no_hypothesis(self):
         """GIVEN articles/stock but no hypothesis WHEN analyze THEN success without test."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import analyze_news_with_graphrag
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            analyze_news_with_graphrag,
+        )
+
         result = analyze_news_with_graphrag(
             news_articles=[{"executives": [{"name": "Alice", "companies": ["AAPL"]}]}],
             stock_data=[{"symbol": "AAPL", "return_percentage": 10.0}],
@@ -830,7 +897,10 @@ class TestFinanceGraphRAGExtended:
 
     def test_analyze_news_with_graphrag_unsupported_type(self):
         """GIVEN unsupported analysis_type WHEN analyze THEN success=False."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import analyze_news_with_graphrag
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            analyze_news_with_graphrag,
+        )
+
         result = analyze_news_with_graphrag(
             news_articles=[],
             stock_data=[],
@@ -840,7 +910,10 @@ class TestFinanceGraphRAGExtended:
 
     def test_analyze_news_with_graphrag_missing_groups(self):
         """GIVEN hypothesis but groups missing key WHEN analyze THEN success=False."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import analyze_news_with_graphrag
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            analyze_news_with_graphrag,
+        )
+
         result = analyze_news_with_graphrag(
             news_articles=[],
             stock_data=[],
@@ -852,9 +925,14 @@ class TestFinanceGraphRAGExtended:
 
     def test_analyze_news_with_graphrag_full_hypothesis(self):
         """GIVEN full params WHEN analyze THEN success and hypothesis_test in result."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import analyze_news_with_graphrag
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            analyze_news_with_graphrag,
+        )
+
         result = analyze_news_with_graphrag(
-            news_articles=[{"executives": [{"name": "Alice", "gender": "female", "companies": ["AAPL"]}]}],
+            news_articles=[
+                {"executives": [{"name": "Alice", "gender": "female", "companies": ["AAPL"]}]}
+            ],
             stock_data=[{"symbol": "AAPL", "return_percentage": 15.0}],
             hypothesis="female execs outperform",
             attribute="gender",
@@ -865,7 +943,10 @@ class TestFinanceGraphRAGExtended:
 
     def test_create_financial_knowledge_graph(self):
         """GIVEN articles and stock data WHEN create_financial_knowledge_graph THEN success."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import create_financial_knowledge_graph
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            create_financial_knowledge_graph,
+        )
+
         result = create_financial_knowledge_graph(
             news_articles=[{"executives": [{"name": "Alice", "companies": ["AAPL"]}]}],
             stock_data=[{"symbol": "AAPL", "return_percentage": 8.0}],
@@ -875,7 +956,10 @@ class TestFinanceGraphRAGExtended:
 
     def test_analyze_executive_performance_json_wrapper(self):
         """GIVEN JSON strings WHEN analyze_executive_performance THEN JSON string returned."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import analyze_executive_performance
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            analyze_executive_performance,
+        )
+
         articles_json = json.dumps([])
         stock_json = json.dumps([])
         result_json = analyze_executive_performance(
@@ -886,10 +970,11 @@ class TestFinanceGraphRAGExtended:
 
     def test_analyze_executive_performance_bad_json(self):
         """GIVEN invalid JSON WHEN analyze_executive_performance THEN error returned."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import analyze_executive_performance
-        result_json = analyze_executive_performance(
-            "not json", "[]", "h", "gender", "f", "m"
+        from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
+            analyze_executive_performance,
         )
+
+        result_json = analyze_executive_performance("not json", "[]", "h", "gender", "f", "m")
         result = json.loads(result_json)
         assert result.get("success") is False
 
@@ -898,14 +983,18 @@ class TestFinanceGraphRAGExtended:
 # query/distributed.py  (parallel, streaming, _KGBackend, helpers)
 # ---------------------------------------------------------------------------
 
+
 class TestDistributedQueryExtended:
     """Tests for FederatedQueryExecutor and helpers."""
 
     def _make_federated(self, partitions=1):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            DistributedGraph, FederatedQueryExecutor, PartitionStrategy
+            DistributedGraph,
+            FederatedQueryExecutor,
+            PartitionStrategy,
         )
+
         kgs = [KnowledgeGraph(name=f"p{i}") for i in range(partitions)]
         dg = DistributedGraph(
             partitions=kgs,
@@ -917,6 +1006,7 @@ class TestDistributedQueryExtended:
     def test_execute_cypher_parallel_basic(self):
         """GIVEN empty partition WHEN execute_cypher_parallel THEN FederatedQueryResult returned."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryResult
+
         fed = self._make_federated(partitions=1)
         result = fed.execute_cypher_parallel("MATCH (n) RETURN n", max_workers=1)
         assert isinstance(result, FederatedQueryResult)
@@ -924,6 +1014,7 @@ class TestDistributedQueryExtended:
     def test_execute_cypher_parallel_worker_error(self):
         """GIVEN partition executor raises WHEN parallel THEN error logged, result still returned."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryResult
+
         fed = self._make_federated(partitions=1)
         # Patch _execute_on_partition to raise
         fed._execute_on_partition = MagicMock(side_effect=RuntimeError("partition fail"))
@@ -935,11 +1026,16 @@ class TestDistributedQueryExtended:
         """GIVEN partition with entities WHEN streaming THEN yields (idx, record) tuples."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            DistributedGraph, FederatedQueryExecutor, PartitionStrategy
+            DistributedGraph,
+            FederatedQueryExecutor,
+            PartitionStrategy,
         )
+
         kg = KnowledgeGraph(name="p0")
         kg.add_entity(entity_type="Person", name="Alice")
-        dg = DistributedGraph(partitions=[kg], strategy=PartitionStrategy.HASH, node_to_partition={})
+        dg = DistributedGraph(
+            partitions=[kg], strategy=PartitionStrategy.HASH, node_to_partition={}
+        )
         fed = FederatedQueryExecutor(dg)
         # Patch _execute_on_partition to return known records
         fed._execute_on_partition = MagicMock(return_value=[{"n": "Alice"}])
@@ -953,11 +1049,16 @@ class TestDistributedQueryExtended:
         """GIVEN duplicate records across partitions WHEN streaming with dedup THEN each unique once."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            DistributedGraph, FederatedQueryExecutor, PartitionStrategy
+            DistributedGraph,
+            FederatedQueryExecutor,
+            PartitionStrategy,
         )
+
         kg1 = KnowledgeGraph(name="p0")
         kg2 = KnowledgeGraph(name="p1")
-        dg = DistributedGraph(partitions=[kg1, kg2], strategy=PartitionStrategy.HASH, node_to_partition={})
+        dg = DistributedGraph(
+            partitions=[kg1, kg2], strategy=PartitionStrategy.HASH, node_to_partition={}
+        )
         fed = FederatedQueryExecutor(dg, dedup=True)
         dup_record = {"name": "Alice"}
         fed._execute_on_partition = MagicMock(return_value=[dup_record])
@@ -969,16 +1070,23 @@ class TestDistributedQueryExtended:
         """GIVEN partition raises WHEN streaming THEN error skipped, other partitions processed."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            DistributedGraph, FederatedQueryExecutor, PartitionStrategy
+            DistributedGraph,
+            FederatedQueryExecutor,
+            PartitionStrategy,
         )
+
         kg1 = KnowledgeGraph(name="p0")
         kg2 = KnowledgeGraph(name="p1")
-        dg = DistributedGraph(partitions=[kg1, kg2], strategy=PartitionStrategy.HASH, node_to_partition={})
+        dg = DistributedGraph(
+            partitions=[kg1, kg2], strategy=PartitionStrategy.HASH, node_to_partition={}
+        )
         fed = FederatedQueryExecutor(dg)
+
         def side_effect(part, q, p):
             if part is kg1:
                 raise RuntimeError("p0 fails")
             return [{"name": "Bob"}]
+
         fed._execute_on_partition = MagicMock(side_effect=side_effect)
         items = list(fed.execute_cypher_streaming("MATCH (n) RETURN n"))
         # Only p1 result
@@ -989,6 +1097,7 @@ class TestDistributedQueryExtended:
         """GIVEN entities with different types WHEN find_nodes with label THEN filtered."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice")
         kg.add_entity(entity_type="Organization", name="Acme")
@@ -1001,6 +1110,7 @@ class TestDistributedQueryExtended:
         """GIVEN entities with properties WHEN find_nodes with property filter THEN filtered."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice", properties={"age": 30})
         kg.add_entity(entity_type="Person", name="Bob", properties={"age": 25})
@@ -1013,6 +1123,7 @@ class TestDistributedQueryExtended:
         """GIVEN 3 entities WHEN find_nodes limit=2 THEN 2 returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         for i in range(3):
             kg.add_entity(entity_type="Person", name=f"P{i}")
@@ -1024,6 +1135,7 @@ class TestDistributedQueryExtended:
         """GIVEN known entity WHEN get_node THEN entity returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice")
         entity_id = list(kg.entities.keys())[0]
@@ -1035,6 +1147,7 @@ class TestDistributedQueryExtended:
         """GIVEN relationship WHEN get_relationships source_id filter THEN correct rel returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice")
         kg.add_entity(entity_type="Person", name="Bob")
@@ -1050,6 +1163,7 @@ class TestDistributedQueryExtended:
         """GIVEN two rels of different types WHEN filter by type THEN correct one returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="Person", name="Alice")
         kg.add_entity(entity_type="Person", name="Bob")
@@ -1066,6 +1180,7 @@ class TestDistributedQueryExtended:
         """GIVEN adapter WHEN store/retrieve THEN store returns str, retrieve returns None."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
+
         kg = KnowledgeGraph(name="test")
         adapter = _KGBackend(kg)
         key = adapter.store({"x": 1})
@@ -1078,11 +1193,13 @@ class TestDistributedQueryExtended:
     def test_normalise_result_none(self):
         """GIVEN None WHEN _normalise_result THEN empty list."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         assert _normalise_result(None) == []
 
     def test_normalise_result_list_of_dicts(self):
         """GIVEN list of dicts WHEN _normalise_result THEN same list returned."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         records = [{"a": 1}, {"b": 2}]
         result = _normalise_result(records)
         assert result == records
@@ -1090,6 +1207,7 @@ class TestDistributedQueryExtended:
     def test_normalise_result_has_records_attr(self):
         """GIVEN object with .records attribute WHEN _normalise_result THEN uses records."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         obj = MagicMock()
         obj.records = [{"x": 10}]
         # Remove result_set and rows attrs to force .records path
@@ -1101,22 +1219,27 @@ class TestDistributedQueryExtended:
     def test_normalise_result_has_result_set_attr(self):
         """GIVEN object with .result_set attribute WHEN _normalise_result THEN uses result_set."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         class Obj:
             result_set = [{"y": 20}]
+
         result = _normalise_result(Obj())
         assert result == [{"y": 20}]
 
     def test_normalise_result_has_rows_attr(self):
         """GIVEN object with .rows attribute WHEN _normalise_result THEN uses rows."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         class Obj:
             rows = [{"z": 30}]
+
         result = _normalise_result(Obj())
         assert result == [{"z": 30}]
 
     def test_normalise_result_to_dict_method(self):
         """GIVEN list of rows with to_dict() WHEN _normalise_result THEN to_dict() called."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         row = MagicMock()
         row.to_dict.return_value = {"row": "data"}
         # to_dict has priority over __iter__
@@ -1127,6 +1250,7 @@ class TestDistributedQueryExtended:
     def test_normalise_result_row_has_data_method(self):
         """GIVEN list of rows with .data() method WHEN _normalise_result THEN data() called."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         row = MagicMock(spec=["data"])
         row.data.return_value = {"neo4j": "record"}
         result = _normalise_result([row])
@@ -1135,9 +1259,11 @@ class TestDistributedQueryExtended:
     def test_normalise_result_non_iterable_fallback(self):
         """GIVEN non-iterable, non-dict row with __dict__ WHEN _normalise_result THEN __dict__ used."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         class Plain:
             def __init__(self):
                 self.key = "value"
+
         obj = Plain()
         result = _normalise_result([obj])
         # __dict__ path: {"key": "value"}
@@ -1148,6 +1274,7 @@ class TestDistributedQueryExtended:
     def test_record_fingerprint_deterministic(self):
         """GIVEN same dict WHEN _record_fingerprint called twice THEN same hash."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         fp1 = _record_fingerprint({"a": 1, "b": 2})
         fp2 = _record_fingerprint({"a": 1, "b": 2})
         assert fp1 == fp2
@@ -1155,6 +1282,7 @@ class TestDistributedQueryExtended:
     def test_record_fingerprint_different_dicts(self):
         """GIVEN different dicts WHEN _record_fingerprint THEN different hashes."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         fp1 = _record_fingerprint({"a": 1})
         fp2 = _record_fingerprint({"a": 2})
         assert fp1 != fp2
@@ -1164,12 +1292,14 @@ class TestDistributedQueryExtended:
 # migration/formats.py  (CAR format import error coverage)
 # ---------------------------------------------------------------------------
 
+
 class TestMigrationFormatsExtended:
     """Tests for migration/formats.py edge cases."""
 
     def test_save_car_requires_libipld(self):
         """GIVEN libipld not installed WHEN _builtin_save_car THEN ImportError raised."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_save_car, GraphData
+
         gd = GraphData()
         with patch.dict("sys.modules", {"libipld": None}):
             with pytest.raises(ImportError, match="libipld"):
@@ -1179,6 +1309,7 @@ class TestMigrationFormatsExtended:
         """GIVEN libipld not installed AND ipld_car not installed WHEN _builtin_load_car THEN ImportError."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
         import tempfile, os
+
         with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
             f.write(b"fake car content")
             tmp = f.name
@@ -1192,11 +1323,18 @@ class TestMigrationFormatsExtended:
     def test_graph_data_to_json_from_json_roundtrip(self):
         """GIVEN GraphData WHEN to_json/from_json THEN roundtrip preserves structure."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, RelationshipData
+            GraphData,
+            NodeData,
+            RelationshipData,
         )
+
         original = GraphData(
             nodes=[NodeData(id="n1", labels=["A"], properties={"x": 1})],
-            relationships=[RelationshipData(id="e1", type="KNOWS", start_node="n1", end_node="n1", properties={})],
+            relationships=[
+                RelationshipData(
+                    id="e1", type="KNOWS", start_node="n1", end_node="n1", properties={}
+                )
+            ],
             metadata={"version": "1.0"},
         )
         json_str = original.to_json()
@@ -1209,8 +1347,12 @@ class TestMigrationFormatsExtended:
         """GIVEN GraphData WHEN save_dag_json+load THEN data preserved."""
         import tempfile, os
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            _builtin_save_dag_json, _builtin_load_dag_json, GraphData, NodeData
+            _builtin_save_dag_json,
+            _builtin_load_dag_json,
+            GraphData,
+            NodeData,
         )
+
         gd = GraphData(
             nodes=[NodeData(id="n1", labels=["Thing"], properties={"name": "Alice"})],
         )

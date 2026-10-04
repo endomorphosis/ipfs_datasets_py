@@ -6,12 +6,16 @@ Methods under test:
   - LogicValidator.weakly_connected_components(ontology)
   - OntologyOptimizer.history_entropy()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -23,6 +27,7 @@ def _push_feedback(a, score):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -36,11 +41,13 @@ def _push_run(p, overall):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -65,7 +72,9 @@ class TestBestNFeedback:
             ([0.3, 0.6], 10, 2, 0.6, None),
         ],
     )
-    def test_best_n_feedback_scenarios(self, feedback_scores, n, expected_len, expected_top, predicate):
+    def test_best_n_feedback_scenarios(
+        self, feedback_scores, n, expected_len, expected_top, predicate
+    ):
         a = _make_adapter()
         for v in feedback_scores:
             _push_feedback(a, v)
@@ -102,24 +111,36 @@ class TestWeaklyConnectedComponents:
             ({}, lambda wccs: wccs == []),
             (
                 {"entities": [{"id": "A"}, {"id": "B"}], "relationships": []},
-                lambda wccs: sorted([n for wcc in wccs for n in wcc]) == ["A", "B"] and all(len(w) == 1 for w in wccs),
+                lambda wccs: (
+                    sorted([n for wcc in wccs for n in wcc]) == ["A", "B"]
+                    and all(len(w) == 1 for w in wccs)
+                ),
             ),
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "C"},
+                    ],
                 },
                 lambda wccs: len(wccs) == 1 and wccs[0] == ["A", "B", "C"],
             ),
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "C", "object_id": "D"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "C", "object_id": "D"},
+                    ],
                 },
                 lambda wccs: len(wccs) == 2,
             ),
             (
-                {"entities": [{"id": "A"}, {"id": "B"}], "relationships": [{"subject_id": "B", "object_id": "A"}]},
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}],
+                    "relationships": [{"subject_id": "B", "object_id": "A"}],
+                },
                 lambda wccs: len(wccs) == 1,
             ),
         ],

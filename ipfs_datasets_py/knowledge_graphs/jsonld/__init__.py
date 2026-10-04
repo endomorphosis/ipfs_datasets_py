@@ -31,9 +31,9 @@ JSON-LD → IPLD Mapping:
 
 Usage:
     from ipfs_datasets_py.knowledge_graphs.jsonld import JSONLDTranslator
-    
+
     translator = JSONLDTranslator()
-    
+
     # Convert JSON-LD to IPLD
     jsonld = {
         "@context": "https://schema.org/",
@@ -44,10 +44,10 @@ Usage:
             "name": "Bob Jones"
         }
     }
-    
+
     ipld_graph = translator.jsonld_to_ipld(jsonld)
     graph_cid = ipld_graph.save()  # Store on IPFS
-    
+
     # Convert back to JSON-LD
     recovered_jsonld = translator.ipld_to_jsonld(ipld_graph)
 
@@ -60,7 +60,7 @@ Example Translation:
         "name": "Alice",
         "knows": "http://example.com/bob"
     }
-    
+
     Output IPLD:
     {
         "entities": [
@@ -90,20 +90,10 @@ Roadmap:
 from .translator import JSONLDTranslator
 from .context import ContextExpander, ContextCompactor
 from .validation import SemanticValidator, SchemaValidator, SHACLValidator
-from .types import (
-    JSONLDContext,
-    IPLDGraph,
-    TranslationOptions,
-    ValidationResult,
-    VocabularyType
-)
+from .types import JSONLDContext, IPLDGraph, TranslationOptions, ValidationResult, VocabularyType
+
 # Phase C: RDF Serialization - NEW
-from .rdf_serializer import (
-    TurtleSerializer,
-    TurtleParser,
-    jsonld_to_turtle,
-    turtle_to_jsonld
-)
+from .rdf_serializer import TurtleSerializer, TurtleParser, jsonld_to_turtle, turtle_to_jsonld
 
 __all__ = [
     # Translator

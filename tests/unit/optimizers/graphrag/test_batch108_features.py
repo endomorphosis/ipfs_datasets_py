@@ -14,6 +14,7 @@ Methods under test:
   - OntologyCritic.average_dimension(scores, dim)
   - OntologyCritic.score_summary(scores)
 """
+
 import math
 import pytest
 from unittest.mock import MagicMock
@@ -22,6 +23,7 @@ from unittest.mock import MagicMock
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
@@ -52,8 +54,14 @@ def _make_critic():
     return OntologyCritic(use_llm=False)
 
 
-def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
-                        granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9):
+def _make_critic_score(
+    completeness=0.8,
+    consistency=0.7,
+    clarity=0.6,
+    granularity=0.5,
+    relationship_coherence=0.9,
+    domain_alignment=0.9,
+):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 
     return CriticScore(
@@ -69,6 +77,7 @@ def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_variance
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineScoreVariance:
     def test_empty_returns_zero(self):
@@ -97,6 +106,7 @@ class TestPipelineScoreVariance:
 # OntologyPipeline.score_stddev
 # ---------------------------------------------------------------------------
 
+
 class TestPipelineScoreStddev:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -113,6 +123,7 @@ class TestPipelineScoreStddev:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.passing_run_count
 # ---------------------------------------------------------------------------
+
 
 class TestPassingRunCount:
     def test_no_runs(self):
@@ -141,6 +152,7 @@ class TestPassingRunCount:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_summary
 # ---------------------------------------------------------------------------
+
 
 class TestRunSummary:
     def test_empty(self):
@@ -172,6 +184,7 @@ class TestRunSummary:
 # OntologyLearningAdapter.has_feedback
 # ---------------------------------------------------------------------------
 
+
 class TestHasFeedback:
     def test_no_feedback_false(self):
         a = _make_adapter()
@@ -186,6 +199,7 @@ class TestHasFeedback:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.recent_feedback
 # ---------------------------------------------------------------------------
+
 
 class TestRecentFeedback:
     def test_empty_adapter(self):
@@ -216,6 +230,7 @@ class TestRecentFeedback:
 # OntologyLearningAdapter.feedback_score_stats
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackScoreStats:
     def test_empty(self):
         a = _make_adapter()
@@ -243,6 +258,7 @@ class TestFeedbackScoreStats:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_percentile
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackPercentile:
     def test_empty_returns_zero(self):
@@ -276,6 +292,7 @@ class TestFeedbackPercentile:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.passing_feedback_fraction
 # ---------------------------------------------------------------------------
+
 
 class TestPassingFeedbackFraction:
     def test_empty_returns_zero(self):
@@ -322,6 +339,7 @@ class TestAboveThresholdFraction:
 # OntologyCritic.failing_scores
 # ---------------------------------------------------------------------------
 
+
 class TestFailingScores:
     def test_empty(self):
         c = _make_critic()
@@ -351,6 +369,7 @@ class TestFailingScores:
 # OntologyCritic.average_dimension
 # ---------------------------------------------------------------------------
 
+
 class TestAverageDimension:
     def test_empty_returns_zero(self):
         c = _make_critic()
@@ -377,6 +396,7 @@ class TestAverageDimension:
 # ---------------------------------------------------------------------------
 # OntologyCritic.score_summary
 # ---------------------------------------------------------------------------
+
 
 class TestScoreSummary:
     def test_empty(self):

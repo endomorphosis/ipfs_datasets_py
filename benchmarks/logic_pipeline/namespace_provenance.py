@@ -46,63 +46,48 @@ from .variants import get_causal_proof_variant_profile
 
 
 G240_NAMESPACE_CONTEXT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-namespace-context.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-namespace-context.v2"
 )
 G240_NAMESPACE_PREIMAGE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-namespace-preimage.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-namespace-preimage.v2"
 )
 G240_JOB_NAMESPACE_PLAN_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-job-namespace-plan.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-job-namespace-plan.v2"
 )
 G240_NAMESPACE_POLICY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-namespace-policy.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-namespace-policy.v2"
 )
 G240_CACHE_KEY_OBSERVATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-cache-key-observation.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-cache-key-observation.v2"
 )
 G240_CACHE_NAMESPACE_SET_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "physical-cache-namespace-set.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.physical-cache-namespace-set.v2"
 )
 G240_RUNTIME_NAMESPACE_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-namespace-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-namespace-receipt.v2"
 )
 G240_RUNTIME_NAMESPACE_EVIDENCE_SET_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-namespace-evidence-set.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-namespace-evidence-set.v2"
 )
 G240_REPLAY_NAMESPACE_CONTEXT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-namespace-context.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-namespace-context.v2"
 )
 G240_REPLAY_NAMESPACE_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-namespace-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-namespace-receipt.v2"
 )
 G240_REPLAY_WORKTREE_PROJECTION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-worktree-projection.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-worktree-projection.v2"
 )
 G240_RECURSIVE_GITLINKS_PROJECTION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "recursive-gitlinks-projection.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.recursive-gitlinks-projection.v2"
 )
 G240_REPLAY_ORCHESTRATION_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-orchestration-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-orchestration-receipt.v2"
 )
 
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _SPLITS: Final = frozenset({Split.PILOT.value, Split.DEVELOPMENT.value})
-_CACHE_MODES: Final = frozenset(
-    {CacheMode.COLD.value, CacheMode.WARM.value}
-)
+_CACHE_MODES: Final = frozenset({CacheMode.COLD.value, CacheMode.WARM.value})
 _JOB_NAMESPACE_KINDS: Final = ("process_group", "state", "output")
 
 
@@ -124,43 +109,27 @@ def _plain(value: object) -> object:
         return value.value
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 DAG-JSON objects require string keys"
-            )
-        return {
-            str(key): _plain(member)
-            for key, member in value.items()
-        }
+            raise RuntimeNamespaceProvenanceError("G240 DAG-JSON objects require string keys")
+        return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     if value is None or type(value) in {str, bool, int, float}:
         return value
-    raise RuntimeNamespaceProvenanceError(
-        f"G240 value is not DAG-JSON: {type(value).__name__}"
-    )
+    raise RuntimeNamespaceProvenanceError(f"G240 value is not DAG-JSON: {type(value).__name__}")
 
 
 def _freeze(value: object) -> object:
     plain = _plain(value)
     if isinstance(plain, dict):
-        return MappingProxyType(
-            {
-                key: _freeze(member)
-                for key, member in plain.items()
-            }
-        )
+        return MappingProxyType({key: _freeze(member) for key, member in plain.items()})
     if isinstance(plain, list):
         return tuple(_freeze(member) for member in plain)
     return plain
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise RuntimeNamespaceProvenanceError(
-            f"{field} must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise RuntimeNamespaceProvenanceError(f"{field} must be an object with string keys")
     return value
 
 
@@ -187,22 +156,14 @@ def _cid(value: object, field: str) -> str:
 
 
 def _safe_id(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
-        raise RuntimeNamespaceProvenanceError(
-            f"{field} must be a safe nonempty identifier"
-        )
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
+        raise RuntimeNamespaceProvenanceError(f"{field} must be a safe nonempty identifier")
     return value
 
 
 def _plan_cid(plan: AblationPlan) -> str:
     if not isinstance(plan, AblationPlan):
-        raise RuntimeNamespaceProvenanceError(
-            "G240 requires typed AblationPlan values"
-        )
+        raise RuntimeNamespaceProvenanceError("G240 requires typed AblationPlan values")
     return cid_for_dag_json(_plain(plan.to_dict()))
 
 
@@ -221,9 +182,7 @@ def _namespace_context_cid(
             "source_commit_cid": source_commit_cid,
             "recursive_gitlinks_cid": recursive_gitlinks_cid,
             "environment_cid": environment_cid,
-            "runtime_orchestration_policy_cid": (
-                runtime_orchestration_policy_cid
-            ),
+            "runtime_orchestration_policy_cid": (runtime_orchestration_policy_cid),
             "run_id": run_id,
             "plan_cids": list(plan_cids),
         }
@@ -243,9 +202,7 @@ def _job_namespace_cid(
     cache_mode: str,
 ) -> str:
     if kind not in _JOB_NAMESPACE_KINDS:
-        raise RuntimeNamespaceProvenanceError(
-            f"unsupported G240 job namespace kind: {kind}"
-        )
+        raise RuntimeNamespaceProvenanceError(f"unsupported G240 job namespace kind: {kind}")
     return cid_for_dag_json(
         {
             "schema": G240_NAMESPACE_PREIMAGE_SCHEMA_V2,
@@ -302,23 +259,15 @@ def g240_cache_namespace_set_cid(
     """Address one exact stage-to-physical-cache namespace projection."""
 
     caches = {
-        _safe_id(stage, "cache stage"): _cid(
-            value, f"cache_namespace_cids.{stage}"
-        )
-        for stage, value in _mapping(
-            cache_namespace_cids, "cache_namespace_cids"
-        ).items()
+        _safe_id(stage, "cache stage"): _cid(value, f"cache_namespace_cids.{stage}")
+        for stage, value in _mapping(cache_namespace_cids, "cache_namespace_cids").items()
     }
     if not caches:
-        raise RuntimeNamespaceProvenanceError(
-            "cache namespace set must not be empty"
-        )
+        raise RuntimeNamespaceProvenanceError("cache namespace set must not be empty")
     return cid_for_dag_json(
         {
             "schema": G240_CACHE_NAMESPACE_SET_SCHEMA_V2,
-            "cache_namespace_cids": {
-                stage: caches[stage] for stage in sorted(caches)
-            },
+            "cache_namespace_cids": {stage: caches[stage] for stage in sorted(caches)},
         }
     )
 
@@ -334,9 +283,7 @@ def g240_recursive_gitlinks_cid(values: Sequence[object]) -> str:
         from .source_reconciliation import GitlinkIdentity
 
         records = tuple(
-            item
-            if isinstance(item, GitlinkIdentity)
-            else GitlinkIdentity.from_dict(item)
+            item if isinstance(item, GitlinkIdentity) else GitlinkIdentity.from_dict(item)
             for item in values
         )
     except (AttributeError, TypeError, ValueError) as exc:
@@ -377,36 +324,22 @@ class G240JobNamespacePlanV2:
 
     def __post_init__(self) -> None:
         if self.schema != G240_JOB_NAMESPACE_PLAN_SCHEMA_V2:
-            raise RuntimeNamespaceProvenanceError(
-                "unsupported G240 job namespace-plan schema"
-            )
+            raise RuntimeNamespaceProvenanceError("unsupported G240 job namespace-plan schema")
         for field in ("context_cid", "plan_cid"):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         for field in ("run_id", "job_id", "case_id", "variant_id"):
-            object.__setattr__(
-                self, field, _safe_id(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _safe_id(getattr(self, field), field))
         if self.split not in _SPLITS:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 job split must be pilot or development"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 job split must be pilot or development")
         if self.cache_mode not in _CACHE_MODES:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 job cache mode must be cold or warm"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 job cache mode must be cold or warm")
         expected_stages = tuple(
             stage.value
-            for stage in get_causal_proof_variant_profile(
-                self.variant_id
-            ).effective_stages
+            for stage in get_causal_proof_variant_profile(self.variant_id).effective_stages
         )
         stages = tuple(self.stages)
         if stages != expected_stages:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 job stages differ from the causal route"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 job stages differ from the causal route")
         object.__setattr__(self, "stages", stages)
         for field, kind in (
             ("process_namespace_cid", "process_group"),
@@ -466,13 +399,9 @@ class G240JobNamespacePlanV2:
         )
         expected_coordinate = cid_for_dag_json(self.identity_payload())
         if self.coordinate_cid is None:
-            object.__setattr__(
-                self, "coordinate_cid", expected_coordinate
-            )
+            object.__setattr__(self, "coordinate_cid", expected_coordinate)
         elif _cid(self.coordinate_cid, "coordinate_cid") != expected_coordinate:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 job namespace coordinate CID changed"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 job namespace coordinate CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -509,9 +438,7 @@ class G240JobNamespacePlanV2:
     ) -> Self:
         stages = tuple(
             stage.value
-            for stage in get_causal_proof_variant_profile(
-                job.variant_id
-            ).effective_stages
+            for stage in get_causal_proof_variant_profile(job.variant_id).effective_stages
         )
         common = {
             "context_cid": context_cid,
@@ -526,15 +453,9 @@ class G240JobNamespacePlanV2:
         return cls(
             **common,
             stages=stages,
-            process_namespace_cid=_job_namespace_cid(
-                **common, kind="process_group"
-            ),
-            state_namespace_cid=_job_namespace_cid(
-                **common, kind="state"
-            ),
-            output_namespace_cid=_job_namespace_cid(
-                **common, kind="output"
-            ),
+            process_namespace_cid=_job_namespace_cid(**common, kind="process_group"),
+            state_namespace_cid=_job_namespace_cid(**common, kind="state"),
+            output_namespace_cid=_job_namespace_cid(**common, kind="output"),
             cache_namespace_cids={
                 stage: _cache_namespace_cid(
                     context_cid=context_cid,
@@ -559,9 +480,7 @@ class G240JobNamespacePlanV2:
         )
         stages = data["stages"]
         if not isinstance(stages, list):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 job stages must be an array"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 job stages must be an array")
         return cls(
             **{
                 **data,
@@ -592,9 +511,7 @@ class G240NamespacePolicyV2:
 
     def __post_init__(self) -> None:
         if self.schema != G240_NAMESPACE_POLICY_SCHEMA_V2:
-            raise RuntimeNamespaceProvenanceError(
-                "unsupported G240 namespace-policy schema"
-            )
+            raise RuntimeNamespaceProvenanceError("unsupported G240 namespace-policy schema")
         for field in (
             "source_commit_cid",
             "recursive_gitlinks_cid",
@@ -603,14 +520,10 @@ class G240NamespacePolicyV2:
             "context_cid",
             "namespace_authority_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         object.__setattr__(self, "run_id", _safe_id(self.run_id, "run_id"))
         plans = tuple(_cid(value, "plan_cid") for value in self.plan_cids)
-        if not plans or plans != tuple(sorted(plans)) or len(set(plans)) != len(
-            plans
-        ):
+        if not plans or plans != tuple(sorted(plans)) or len(set(plans)) != len(plans):
             raise RuntimeNamespaceProvenanceError(
                 "G240 plan CIDs must be nonempty, sorted, and unique"
             )
@@ -619,9 +532,7 @@ class G240NamespacePolicyV2:
             source_commit_cid=self.source_commit_cid,
             recursive_gitlinks_cid=self.recursive_gitlinks_cid,
             environment_cid=self.environment_cid,
-            runtime_orchestration_policy_cid=(
-                self.runtime_orchestration_policy_cid
-            ),
+            runtime_orchestration_policy_cid=(self.runtime_orchestration_policy_cid),
             run_id=self.run_id,
             plan_cids=plans,
         )
@@ -635,9 +546,7 @@ class G240NamespacePolicyV2:
             else G240JobNamespacePlanV2.from_dict(item)
             for item in self.jobs
         )
-        order = tuple(
-            (item.plan_cid, item.job_id) for item in jobs
-        )
+        order = tuple((item.plan_cid, item.job_id) for item in jobs)
         if (
             not jobs
             or order != tuple(sorted(order))
@@ -659,12 +568,8 @@ class G240NamespacePolicyV2:
         ):
             values = [getattr(item, field) for item in jobs]
             if len(values) != len(set(values)):
-                raise RuntimeNamespaceProvenanceError(
-                    f"G240 {field} values must be unique per job"
-                )
-        cache_coordinates: dict[
-            tuple[str, str, str, str, str], str
-        ] = {}
+                raise RuntimeNamespaceProvenanceError(f"G240 {field} values must be unique per job")
+        cache_coordinates: dict[tuple[str, str, str, str, str], str] = {}
         for item in jobs:
             for stage, cache_cid in item.cache_namespace_cids.items():
                 key = (
@@ -679,9 +584,7 @@ class G240NamespacePolicyV2:
                     raise RuntimeNamespaceProvenanceError(
                         "G240 cache namespace changed within one coordinate"
                     )
-        by_treatment: dict[
-            tuple[str, str, str, str], dict[str, str]
-        ] = {}
+        by_treatment: dict[tuple[str, str, str, str], dict[str, str]] = {}
         for (
             plan_cid,
             split,
@@ -689,13 +592,10 @@ class G240NamespacePolicyV2:
             stage,
             cache_mode,
         ), cache_cid in cache_coordinates.items():
-            by_treatment.setdefault(
-                (plan_cid, split, variant_id, stage), {}
-            )[cache_mode] = cache_cid
-        if any(
-            len(set(modes.values())) != len(modes)
-            for modes in by_treatment.values()
-        ):
+            by_treatment.setdefault((plan_cid, split, variant_id, stage), {})[cache_mode] = (
+                cache_cid
+            )
+        if any(len(set(modes.values())) != len(modes) for modes in by_treatment.values()):
             raise RuntimeNamespaceProvenanceError(
                 "G240 cold and warm physical cache namespaces collide"
             )
@@ -704,18 +604,11 @@ class G240NamespacePolicyV2:
         if self.policy_cid is None:
             object.__setattr__(self, "policy_cid", expected_policy)
         elif _cid(self.policy_cid, "policy_cid") != expected_policy:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 namespace policy CID changed"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 namespace policy CID changed")
 
     @property
     def job_map(self) -> Mapping[tuple[str, str], G240JobNamespacePlanV2]:
-        return MappingProxyType(
-            {
-                (item.plan_cid, item.job_id): item
-                for item in self.jobs
-            }
-        )
+        return MappingProxyType({(item.plan_cid, item.job_id): item for item in self.jobs})
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -723,9 +616,7 @@ class G240NamespacePolicyV2:
             "source_commit_cid": self.source_commit_cid,
             "recursive_gitlinks_cid": self.recursive_gitlinks_cid,
             "environment_cid": self.environment_cid,
-            "runtime_orchestration_policy_cid": (
-                self.runtime_orchestration_policy_cid
-            ),
+            "runtime_orchestration_policy_cid": (self.runtime_orchestration_policy_cid),
             "run_id": self.run_id,
             "plan_cids": list(self.plan_cids),
             "context_cid": self.context_cid,
@@ -747,17 +638,12 @@ class G240NamespacePolicyV2:
         plan_cids = data["plan_cids"]
         jobs = data["jobs"]
         if not isinstance(plan_cids, list) or not isinstance(jobs, list):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 policy plan/job fields must be arrays"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 policy plan/job fields must be arrays")
         return cls(
             **{
                 **data,
                 "plan_cids": tuple(plan_cids),
-                "jobs": tuple(
-                    G240JobNamespacePlanV2.from_dict(item)
-                    for item in jobs
-                ),
+                "jobs": tuple(G240JobNamespacePlanV2.from_dict(item) for item in jobs),
             }
         )  # type: ignore[arg-type]
 
@@ -774,15 +660,11 @@ def build_g240_namespace_policy_v2(
     """Derive all path-free namespace identities before execution."""
 
     restored = tuple(
-        AblationPlan.from_dict(plan.to_dict())
-        if isinstance(plan, AblationPlan)
-        else None
+        AblationPlan.from_dict(plan.to_dict()) if isinstance(plan, AblationPlan) else None
         for plan in plans
     )
     if not restored or any(plan is None for plan in restored):
-        raise RuntimeNamespaceProvenanceError(
-            "G240 policy requires one or more typed plans"
-        )
+        raise RuntimeNamespaceProvenanceError("G240 policy requires one or more typed plans")
     typed = tuple(plan for plan in restored if plan is not None)
     run_ids = {plan.run_id for plan in typed}
     environments = {plan.environment_sha256 for plan in typed}
@@ -791,8 +673,7 @@ def build_g240_namespace_policy_v2(
         or None in environments
         or len(environments) != 1
         or any(
-            plan.split.value not in _SPLITS
-            or plan.holdout_access_log_id is not None
+            plan.split.value not in _SPLITS or plan.holdout_access_log_id is not None
             for plan in typed
         )
     ):
@@ -802,13 +683,9 @@ def build_g240_namespace_policy_v2(
     keyed = sorted((_plan_cid(plan), plan) for plan in typed)
     plan_cids = tuple(key for key, _plan in keyed)
     if len(plan_cids) != len(set(plan_cids)):
-        raise RuntimeNamespaceProvenanceError(
-            "G240 plans must have distinct content identities"
-        )
+        raise RuntimeNamespaceProvenanceError("G240 plans must have distinct content identities")
     source_cid = _cid(source_commit_cid, "source_commit_cid")
-    gitlinks_cid = _cid(
-        recursive_gitlinks_cid, "recursive_gitlinks_cid"
-    )
+    gitlinks_cid = _cid(recursive_gitlinks_cid, "recursive_gitlinks_cid")
     frozen_environment_cid = _cid(environment_cid, "environment_cid")
     orchestration_policy_cid = _cid(
         runtime_orchestration_policy_cid,
@@ -867,9 +744,7 @@ def validate_g240_namespace_policy_v2(
         source_commit_cid=policy.source_commit_cid,
         recursive_gitlinks_cid=policy.recursive_gitlinks_cid,
         environment_cid=policy.environment_cid,
-        runtime_orchestration_policy_cid=(
-            policy.runtime_orchestration_policy_cid
-        ),
+        runtime_orchestration_policy_cid=(policy.runtime_orchestration_policy_cid),
         namespace_authority_cid=policy.namespace_authority_cid,
     )
     if _plain(policy.to_dict()) != _plain(rebuilt.to_dict()):
@@ -917,13 +792,9 @@ def _cache_key_cids_for_stage_map(
             {
                 "schema": G240_CACHE_KEY_OBSERVATION_SCHEMA_V2,
                 "runtime_evidence_cid": evidence.receipt_cid,
-                "stage_record_cid": cid_for_dag_json(
-                    _plain(stage.to_dict())
-                ),
+                "stage_record_cid": cid_for_dag_json(_plain(stage.to_dict())),
                 "stage": stage_name,
-                "physical_cache_namespace_cid": (
-                    cache_namespace_cids[stage_name]
-                ),
+                "physical_cache_namespace_cid": (cache_namespace_cids[stage_name]),
                 "logical_cache_namespace": logical_namespace,
                 "logical_cache_key": logical_key,
             }
@@ -988,14 +859,10 @@ class G240RuntimeNamespaceReceiptV2:
             "executor_identity_cid",
             "observer_identity_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         object.__setattr__(self, "job_id", _safe_id(self.job_id, "job_id"))
         caches = {
-            _safe_id(stage, "cache stage"): _cid(
-                value, f"cache_namespace_cids.{stage}"
-            )
+            _safe_id(stage, "cache stage"): _cid(value, f"cache_namespace_cids.{stage}")
             for stage, value in _mapping(
                 self.cache_namespace_cids,
                 "cache_namespace_cids",
@@ -1008,31 +875,17 @@ class G240RuntimeNamespaceReceiptV2:
         ).items():
             _safe_id(stage, "cache-key stage")
             if not isinstance(values, (tuple, list)):
-                raise RuntimeNamespaceProvenanceError(
-                    f"cache_key_cids.{stage} must be an array"
-                )
-            normalized = tuple(
-                _cid(value, f"cache_key_cids.{stage}[]")
-                for value in values
-            )
-            if (
-                normalized != tuple(sorted(normalized))
-                or len(normalized) != len(set(normalized))
-            ):
+                raise RuntimeNamespaceProvenanceError(f"cache_key_cids.{stage} must be an array")
+            normalized = tuple(_cid(value, f"cache_key_cids.{stage}[]") for value in values)
+            if normalized != tuple(sorted(normalized)) or len(normalized) != len(set(normalized)):
                 raise RuntimeNamespaceProvenanceError(
                     f"cache_key_cids.{stage} must be sorted and unique"
                 )
             keys[stage] = normalized
         if set(caches) != set(keys):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 cache namespace and key stage maps differ"
-            )
-        object.__setattr__(
-            self, "cache_namespace_cids", MappingProxyType(caches)
-        )
-        object.__setattr__(
-            self, "cache_key_cids", MappingProxyType(keys)
-        )
+            raise RuntimeNamespaceProvenanceError("G240 cache namespace and key stage maps differ")
+        object.__setattr__(self, "cache_namespace_cids", MappingProxyType(caches))
+        object.__setattr__(self, "cache_key_cids", MappingProxyType(keys))
         for field in (
             "process_group_started",
             "process_group_reaped",
@@ -1044,9 +897,7 @@ class G240RuntimeNamespaceReceiptV2:
             "holdout_accessed",
         ):
             if type(getattr(self, field)) is not bool:
-                raise RuntimeNamespaceProvenanceError(
-                    f"{field} must be an observed boolean"
-                )
+                raise RuntimeNamespaceProvenanceError(f"{field} must be an observed boolean")
         if (
             type(self.active_process_count_after_reap) is not int
             or self.active_process_count_after_reap < 0
@@ -1071,16 +922,12 @@ class G240RuntimeNamespaceReceiptV2:
                 not self.holdout_accessed,
             )
         ):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 runtime namespace lifecycle is incomplete"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 runtime namespace lifecycle is incomplete")
         expected = cid_for_dag_json(self.identity_payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
         elif _cid(self.receipt_cid, "receipt_cid") != expected:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 runtime namespace receipt CID changed"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 runtime namespace receipt CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -1095,23 +942,16 @@ class G240RuntimeNamespaceReceiptV2:
             "output_namespace_cid": self.output_namespace_cid,
             "cache_namespace_cids": dict(self.cache_namespace_cids),
             "cache_key_cids": {
-                stage: list(values)
-                for stage, values in self.cache_key_cids.items()
+                stage: list(values) for stage, values in self.cache_key_cids.items()
             },
             "executor_identity_cid": self.executor_identity_cid,
             "observer_identity_cid": self.observer_identity_cid,
             "process_group_started": self.process_group_started,
             "process_group_reaped": self.process_group_reaped,
-            "active_process_count_after_reap": (
-                self.active_process_count_after_reap
-            ),
-            "state_namespace_created_exclusive": (
-                self.state_namespace_created_exclusive
-            ),
+            "active_process_count_after_reap": (self.active_process_count_after_reap),
+            "state_namespace_created_exclusive": (self.state_namespace_created_exclusive),
             "state_namespace_finalized": self.state_namespace_finalized,
-            "output_namespace_created_exclusive": (
-                self.output_namespace_created_exclusive
-            ),
+            "output_namespace_created_exclusive": (self.output_namespace_created_exclusive),
             "output_namespace_finalized": self.output_namespace_finalized,
             "cache_namespaces_mounted": self.cache_namespaces_mounted,
             "holdout_accessed": self.holdout_accessed,
@@ -1166,16 +1006,10 @@ class G240RuntimeNamespaceReceiptV2:
             observer_identity_cid=observer_identity_cid,
             process_group_started=process_group_started,
             process_group_reaped=process_group_reaped,
-            active_process_count_after_reap=(
-                active_process_count_after_reap
-            ),
-            state_namespace_created_exclusive=(
-                state_namespace_created_exclusive
-            ),
+            active_process_count_after_reap=(active_process_count_after_reap),
+            state_namespace_created_exclusive=(state_namespace_created_exclusive),
             state_namespace_finalized=state_namespace_finalized,
-            output_namespace_created_exclusive=(
-                output_namespace_created_exclusive
-            ),
+            output_namespace_created_exclusive=(output_namespace_created_exclusive),
             output_namespace_finalized=output_namespace_finalized,
             cache_namespaces_mounted=cache_namespaces_mounted,
             holdout_accessed=holdout_accessed,
@@ -1272,13 +1106,10 @@ def _validate_g240_receipt_against_coordinate(
         or receipt.coordinate_cid != coordinate.coordinate_cid
         or receipt.job_id != coordinate.job_id
         or receipt.runtime_evidence_cid != evidence.receipt_cid
-        or receipt.process_namespace_cid
-        != coordinate.process_namespace_cid
+        or receipt.process_namespace_cid != coordinate.process_namespace_cid
         or receipt.state_namespace_cid != coordinate.state_namespace_cid
-        or receipt.output_namespace_cid
-        != coordinate.output_namespace_cid
-        or dict(receipt.cache_namespace_cids)
-        != dict(coordinate.cache_namespace_cids)
+        or receipt.output_namespace_cid != coordinate.output_namespace_cid
+        or dict(receipt.cache_namespace_cids) != dict(coordinate.cache_namespace_cids)
         or _plain(receipt.cache_key_cids) != _plain(expected_keys)
     ):
         raise RuntimeNamespaceProvenanceError(
@@ -1301,9 +1132,7 @@ def validate_g240_runtime_namespace_receipt_from_policy_v2(
         else G240RuntimeNamespaceReceiptV2.from_dict(value)
     )
     try:
-        coordinate = policy.job_map[
-            (receipt.plan_cid, receipt.job_id)
-        ]
+        coordinate = policy.job_map[(receipt.plan_cid, receipt.job_id)]
     except KeyError as exc:
         raise RuntimeNamespaceProvenanceError(
             "G240 source receipt is absent from its policy"
@@ -1343,9 +1172,7 @@ class G240RuntimeNamespaceEvidenceSetV2:
 
     def __post_init__(self) -> None:
         if self.schema != G240_RUNTIME_NAMESPACE_EVIDENCE_SET_SCHEMA_V2:
-            raise RuntimeNamespaceProvenanceError(
-                "unsupported G240 namespace evidence-set schema"
-            )
+            raise RuntimeNamespaceProvenanceError("unsupported G240 namespace evidence-set schema")
         if not isinstance(self.policy, G240NamespacePolicyV2):
             raise RuntimeNamespaceProvenanceError(
                 "G240 evidence set requires a typed namespace policy"
@@ -1359,9 +1186,7 @@ class G240RuntimeNamespaceEvidenceSetV2:
             or len(plans) != len(set(plans))
             or not set(plans).issubset(policy.plan_cids)
         ):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 evidence-set plan identities are invalid"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 evidence-set plan identities are invalid")
         object.__setattr__(self, "plan_cids", plans)
         receipts = tuple(
             item
@@ -1369,16 +1194,13 @@ class G240RuntimeNamespaceEvidenceSetV2:
             else G240RuntimeNamespaceReceiptV2.from_dict(item)
             for item in self.receipts
         )
-        order = tuple(
-            (item.plan_cid, item.job_id) for item in receipts
-        )
+        order = tuple((item.plan_cid, item.job_id) for item in receipts)
         if (
             not receipts
             or order != tuple(sorted(order))
             or len(order) != len(set(order))
             or any(
-                item.policy_cid != policy.policy_cid
-                or item.plan_cid not in plans
+                item.policy_cid != policy.policy_cid or item.plan_cid not in plans
                 for item in receipts
             )
         ):
@@ -1386,41 +1208,22 @@ class G240RuntimeNamespaceEvidenceSetV2:
                 "G240 receipts are empty, duplicated, unsorted, or foreign"
             )
         object.__setattr__(self, "receipts", receipts)
-        validator = _cid(
-            self.validator_identity_cid, "validator_identity_cid"
-        )
+        validator = _cid(self.validator_identity_cid, "validator_identity_cid")
         object.__setattr__(self, "validator_identity_cid", validator)
         authorities = {
             policy.namespace_authority_cid,
             validator,
-            *(
-                receipt.executor_identity_cid
-                for receipt in receipts
-            ),
-            *(
-                receipt.observer_identity_cid
-                for receipt in receipts
-            ),
+            *(receipt.executor_identity_cid for receipt in receipts),
+            *(receipt.observer_identity_cid for receipt in receipts),
         }
         expected_authority_count = (
             2
-            + len(
-                {
-                    receipt.executor_identity_cid
-                    for receipt in receipts
-                }
-            )
-            + len(
-                {
-                    receipt.observer_identity_cid
-                    for receipt in receipts
-                }
-            )
+            + len({receipt.executor_identity_cid for receipt in receipts})
+            + len({receipt.observer_identity_cid for receipt in receipts})
         )
         if len(authorities) != expected_authority_count:
             raise RuntimeNamespaceProvenanceError(
-                "G240 policy, executor, observer, and validator authorities "
-                "must be disjoint"
+                "G240 policy, executor, observer, and validator authorities must be disjoint"
             )
         if self.complete is not True or self.holdout_included is not False:
             raise RuntimeNamespaceProvenanceError(
@@ -1430,20 +1233,13 @@ class G240RuntimeNamespaceEvidenceSetV2:
         if self.evidence_set_cid is None:
             object.__setattr__(self, "evidence_set_cid", expected)
         elif _cid(self.evidence_set_cid, "evidence_set_cid") != expected:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 namespace evidence-set CID changed"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 namespace evidence-set CID changed")
 
     @property
     def receipt_map(
         self,
     ) -> Mapping[tuple[str, str], G240RuntimeNamespaceReceiptV2]:
-        return MappingProxyType(
-            {
-                (item.plan_cid, item.job_id): item
-                for item in self.receipts
-            }
-        )
+        return MappingProxyType({(item.plan_cid, item.job_id): item for item in self.receipts})
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -1496,17 +1292,14 @@ class G240RuntimeNamespaceEvidenceSetV2:
         plan_cids = data["plan_cids"]
         receipts = data["receipts"]
         if not isinstance(plan_cids, list) or not isinstance(receipts, list):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 evidence-set plans/receipts must be arrays"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 evidence-set plans/receipts must be arrays")
         return cls(
             **{
                 **data,
                 "policy": G240NamespacePolicyV2.from_dict(data["policy"]),
                 "plan_cids": tuple(plan_cids),
                 "receipts": tuple(
-                    G240RuntimeNamespaceReceiptV2.from_dict(item)
-                    for item in receipts
+                    G240RuntimeNamespaceReceiptV2.from_dict(item) for item in receipts
                 ),
             }
         )  # type: ignore[arg-type]
@@ -1516,9 +1309,7 @@ def validate_g240_runtime_namespace_evidence_set_v2(
     value: object,
     *,
     plans: Sequence[AblationPlan],
-    evidence_by_plan_and_job: Mapping[
-        tuple[str, str], CausalRuntimeEvidenceV2
-    ],
+    evidence_by_plan_and_job: Mapping[tuple[str, str], CausalRuntimeEvidenceV2],
 ) -> G240RuntimeNamespaceEvidenceSetV2:
     """Source-recompute an exact G240 receipt population."""
 
@@ -1527,10 +1318,7 @@ def validate_g240_runtime_namespace_evidence_set_v2(
         if isinstance(value, G240RuntimeNamespaceEvidenceSetV2)
         else G240RuntimeNamespaceEvidenceSetV2.from_dict(value)
     )
-    plans_by_cid = {
-        _plan_cid(plan): AblationPlan.from_dict(plan.to_dict())
-        for plan in plans
-    }
+    plans_by_cid = {_plan_cid(plan): AblationPlan.from_dict(plan.to_dict()) for plan in plans}
     if set(plans_by_cid) != set(evidence_set.plan_cids):
         raise RuntimeNamespaceProvenanceError(
             "G240 evidence set differs from the selected plan population"
@@ -1548,10 +1336,9 @@ def validate_g240_runtime_namespace_evidence_set_v2(
         for plan_cid, plan in plans_by_cid.items()
         for job in plan.jobs
     }
-    if (
-        set(evidence_by_plan_and_job) != set(expected_coordinates)
-        or set(evidence_set.receipt_map) != set(expected_coordinates)
-    ):
+    if set(evidence_by_plan_and_job) != set(expected_coordinates) or set(
+        evidence_set.receipt_map
+    ) != set(expected_coordinates):
         raise RuntimeNamespaceProvenanceError(
             "G240 receipts/evidence must exactly cover every scheduled job"
         )
@@ -1599,9 +1386,7 @@ def validate_g240_runtime_namespace_population_v2(
 
     plan_map = {
         split: _cid(plan_cid, f"plan_cids_by_split.{split}")
-        for split, plan_cid in _mapping(
-            plan_cids_by_split, "plan_cids_by_split"
-        ).items()
+        for split, plan_cid in _mapping(plan_cids_by_split, "plan_cids_by_split").items()
     }
     if set(plan_map) != _SPLITS or len(set(plan_map.values())) != len(plan_map):
         raise RuntimeNamespaceProvenanceError(
@@ -1625,32 +1410,20 @@ def validate_g240_runtime_namespace_population_v2(
             )
         plan_cid = item.plan_cids[0]
         if plan_cid in set_by_plan:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 namespace evidence sets duplicate a plan"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 namespace evidence sets duplicate a plan")
         set_by_plan[plan_cid] = item
     if set(set_by_plan) != set(plan_map.values()):
-        raise RuntimeNamespaceProvenanceError(
-            "G240 namespace evidence plan population changed"
-        )
+        raise RuntimeNamespaceProvenanceError("G240 namespace evidence plan population changed")
     restored_evidence = tuple(
-        validate_causal_runtime_evidence_v2(item.to_dict())
-        for item in runtime_evidence
+        validate_causal_runtime_evidence_v2(item.to_dict()) for item in runtime_evidence
     )
-    evidence_by_key: dict[
-        tuple[str, str], CausalRuntimeEvidenceV2
-    ] = {}
+    evidence_by_key: dict[tuple[str, str], CausalRuntimeEvidenceV2] = {}
     for evidence in restored_evidence:
         result = evidence.case_result
         split = result.split.value
         if split not in plan_map:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 runtime evidence includes a foreign split"
-            )
-        job_id = (
-            f"j-{result.cache_mode.value}-{result.case_id}-"
-            f"{result.variant_id.lower()}"
-        )
+            raise RuntimeNamespaceProvenanceError("G240 runtime evidence includes a foreign split")
+        job_id = f"j-{result.cache_mode.value}-{result.case_id}-{result.variant_id.lower()}"
         key = (plan_map[split], job_id)
         if key in evidence_by_key:
             raise RuntimeNamespaceProvenanceError(
@@ -1676,26 +1449,18 @@ def validate_g240_runtime_namespace_population_v2(
     all_process: set[str] = set()
     all_state: set[str] = set()
     all_output: set[str] = set()
-    cache_modes_by_treatment: dict[
-        tuple[str, str, str, str], dict[str, str]
-    ] = {}
+    cache_modes_by_treatment: dict[tuple[str, str, str, str], dict[str, str]] = {}
     for plan_cid in sorted(set_by_plan):
         evidence_set = set_by_plan[plan_cid]
         policy = evidence_set.policy
-        if (
-            policy.plan_cids != (plan_cid,)
-            or (
-                environment is not None
-                and policy.environment_cid != environment
-            )
+        if policy.plan_cids != (plan_cid,) or (
+            environment is not None and policy.environment_cid != environment
         ):
             raise RuntimeNamespaceProvenanceError(
                 "G240 policy plan/environment differs from the source freeze"
             )
         coordinates = {
-            (item.plan_cid, item.job_id): item
-            for item in policy.jobs
-            if item.plan_cid == plan_cid
+            (item.plan_cid, item.job_id): item for item in policy.jobs if item.plan_cid == plan_cid
         }
         if set(evidence_set.receipt_map) != set(coordinates):
             raise RuntimeNamespaceProvenanceError(
@@ -1746,16 +1511,11 @@ def validate_g240_runtime_namespace_population_v2(
                     coordinate.variant_id,
                     stage,
                 )
-                mode_map = cache_modes_by_treatment.setdefault(
-                    treatment, {}
-                )
-                previous = mode_map.setdefault(
-                    coordinate.cache_mode, cache_cid
-                )
+                mode_map = cache_modes_by_treatment.setdefault(treatment, {})
+                previous = mode_map.setdefault(coordinate.cache_mode, cache_cid)
                 if previous != cache_cid:
                     raise RuntimeNamespaceProvenanceError(
-                        "G240 physical cache namespace changed within a "
-                        "treatment"
+                        "G240 physical cache namespace changed within a treatment"
                     )
         rebuilt = G240RuntimeNamespaceEvidenceSetV2.create(
             policy=policy,
@@ -1768,16 +1528,11 @@ def validate_g240_runtime_namespace_population_v2(
                 "G240 persisted evidence set changed under source replay"
             )
         restored_sets.append(rebuilt)
-    if any(
-        len(set(modes.values())) != len(modes)
-        for modes in cache_modes_by_treatment.values()
-    ):
+    if any(len(set(modes.values())) != len(modes) for modes in cache_modes_by_treatment.values()):
         raise RuntimeNamespaceProvenanceError(
             "G240 cold/warm cache namespace reuse crossed a treatment"
         )
-    return tuple(
-        sorted(restored_sets, key=lambda item: item.plan_cids)
-    )
+    return tuple(sorted(restored_sets, key=lambda item: item.plan_cids))
 
 
 def _replay_context_cid(
@@ -1806,9 +1561,7 @@ def _replay_job_namespace_cid(
     source_coordinate: G240JobNamespacePlanV2,
 ) -> str:
     if kind not in _JOB_NAMESPACE_KINDS:
-        raise RuntimeNamespaceProvenanceError(
-            f"unsupported G240 replay namespace kind: {kind}"
-        )
+        raise RuntimeNamespaceProvenanceError(f"unsupported G240 replay namespace kind: {kind}")
     return cid_for_dag_json(
         {
             "schema": G240_NAMESPACE_PREIMAGE_SCHEMA_V2,
@@ -1900,9 +1653,7 @@ class G240ReplayNamespaceReceiptV2:
             "replay_executor_identity_cid",
             "replay_observer_identity_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         object.__setattr__(
             self,
             "replay_run_id",
@@ -1927,14 +1678,8 @@ class G240ReplayNamespaceReceiptV2:
                 raise RuntimeNamespaceProvenanceError(
                     f"replay_cache_key_cids.{stage} must be an array"
                 )
-            normalized = tuple(
-                _cid(value, f"replay_cache_key_cids.{stage}[]")
-                for value in values
-            )
-            if (
-                normalized != tuple(sorted(normalized))
-                or len(normalized) != len(set(normalized))
-            ):
+            normalized = tuple(_cid(value, f"replay_cache_key_cids.{stage}[]") for value in values)
+            if normalized != tuple(sorted(normalized)) or len(normalized) != len(set(normalized)):
                 raise RuntimeNamespaceProvenanceError(
                     f"replay_cache_key_cids.{stage} must be sorted and unique"
                 )
@@ -1966,9 +1711,7 @@ class G240ReplayNamespaceReceiptV2:
             "holdout_accessed",
         ):
             if type(getattr(self, field)) is not bool:
-                raise RuntimeNamespaceProvenanceError(
-                    f"{field} must be an observed boolean"
-                )
+                raise RuntimeNamespaceProvenanceError(f"{field} must be an observed boolean")
         if (
             type(self.active_process_count_after_reap) is not int
             or self.active_process_count_after_reap < 0
@@ -1976,13 +1719,8 @@ class G240ReplayNamespaceReceiptV2:
             raise RuntimeNamespaceProvenanceError(
                 "active_process_count_after_reap must be nonnegative"
             )
-        if (
-            self.replay_executor_identity_cid
-            == self.replay_observer_identity_cid
-        ):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 replay executor and observer must differ"
-            )
+        if self.replay_executor_identity_cid == self.replay_observer_identity_cid:
+            raise RuntimeNamespaceProvenanceError("G240 replay executor and observer must differ")
         if not all(
             (
                 self.process_group_started,
@@ -1998,68 +1736,39 @@ class G240ReplayNamespaceReceiptV2:
                 not self.holdout_accessed,
             )
         ):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 replay namespace lifecycle is incomplete"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 replay namespace lifecycle is incomplete")
         expected = cid_for_dag_json(self.identity_payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
         elif _cid(self.receipt_cid, "receipt_cid") != expected:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 replay namespace receipt CID changed"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 replay namespace receipt CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
             "schema": self.schema,
             "source_policy_cid": self.source_policy_cid,
-            "source_namespace_receipt_cid": (
-                self.source_namespace_receipt_cid
-            ),
-            "source_runtime_evidence_cid": (
-                self.source_runtime_evidence_cid
-            ),
+            "source_namespace_receipt_cid": (self.source_namespace_receipt_cid),
+            "source_runtime_evidence_cid": (self.source_runtime_evidence_cid),
             "source_coordinate_cid": self.source_coordinate_cid,
             "replay_run_id": self.replay_run_id,
             "replay_worktree_cid": self.replay_worktree_cid,
-            "replay_runtime_evidence_cid": (
-                self.replay_runtime_evidence_cid
-            ),
+            "replay_runtime_evidence_cid": (self.replay_runtime_evidence_cid),
             "replay_context_cid": self.replay_context_cid,
-            "replay_process_namespace_cid": (
-                self.replay_process_namespace_cid
-            ),
-            "replay_state_namespace_cid": (
-                self.replay_state_namespace_cid
-            ),
-            "replay_output_namespace_cid": (
-                self.replay_output_namespace_cid
-            ),
-            "replay_cache_namespace_cids": dict(
-                self.replay_cache_namespace_cids
-            ),
+            "replay_process_namespace_cid": (self.replay_process_namespace_cid),
+            "replay_state_namespace_cid": (self.replay_state_namespace_cid),
+            "replay_output_namespace_cid": (self.replay_output_namespace_cid),
+            "replay_cache_namespace_cids": dict(self.replay_cache_namespace_cids),
             "replay_cache_key_cids": {
-                stage: list(values)
-                for stage, values in self.replay_cache_key_cids.items()
+                stage: list(values) for stage, values in self.replay_cache_key_cids.items()
             },
-            "replay_executor_identity_cid": (
-                self.replay_executor_identity_cid
-            ),
-            "replay_observer_identity_cid": (
-                self.replay_observer_identity_cid
-            ),
+            "replay_executor_identity_cid": (self.replay_executor_identity_cid),
+            "replay_observer_identity_cid": (self.replay_observer_identity_cid),
             "process_group_started": self.process_group_started,
             "process_group_reaped": self.process_group_reaped,
-            "active_process_count_after_reap": (
-                self.active_process_count_after_reap
-            ),
-            "state_namespace_created_exclusive": (
-                self.state_namespace_created_exclusive
-            ),
+            "active_process_count_after_reap": (self.active_process_count_after_reap),
+            "state_namespace_created_exclusive": (self.state_namespace_created_exclusive),
             "state_namespace_finalized": self.state_namespace_finalized,
-            "output_namespace_created_exclusive": (
-                self.output_namespace_created_exclusive
-            ),
+            "output_namespace_created_exclusive": (self.output_namespace_created_exclusive),
             "output_namespace_finalized": self.output_namespace_finalized,
             "cache_namespaces_mounted": self.cache_namespaces_mounted,
             "detached": self.detached,
@@ -2094,16 +1803,12 @@ class G240ReplayNamespaceReceiptV2:
         holdout_accessed: bool = False,
     ) -> Self:
         try:
-            coordinate = source_policy.job_map[
-                (source_receipt.plan_cid, source_receipt.job_id)
-            ]
+            coordinate = source_policy.job_map[(source_receipt.plan_cid, source_receipt.job_id)]
         except KeyError as exc:
             raise RuntimeNamespaceProvenanceError(
                 "G240 source receipt is absent from its policy"
             ) from exc
-        replay_evidence = validate_causal_runtime_evidence_v2(
-            replay_runtime_evidence.to_dict()
-        )
+        replay_evidence = validate_causal_runtime_evidence_v2(replay_runtime_evidence.to_dict())
         replay_id = _safe_id(replay_run_id, "replay_run_id")
         replay_result = replay_evidence.case_result
         if (
@@ -2116,15 +1821,11 @@ class G240ReplayNamespaceReceiptV2:
             raise RuntimeNamespaceProvenanceError(
                 "G240 replay runtime differs from its fresh run/coordinate"
             )
-        worktree_cid = _cid(
-            replay_worktree_cid, "replay_worktree_cid"
-        )
+        worktree_cid = _cid(replay_worktree_cid, "replay_worktree_cid")
         context_cid = _replay_context_cid(
             source_policy_cid=str(source_policy.policy_cid),
             source_coordinate_cid=str(coordinate.coordinate_cid),
-            source_runtime_evidence_cid=(
-                source_receipt.runtime_evidence_cid
-            ),
+            source_runtime_evidence_cid=(source_receipt.runtime_evidence_cid),
             replay_run_id=replay_id,
         )
         caches = {
@@ -2138,12 +1839,8 @@ class G240ReplayNamespaceReceiptV2:
         }
         return cls(
             source_policy_cid=str(source_policy.policy_cid),
-            source_namespace_receipt_cid=str(
-                source_receipt.receipt_cid
-            ),
-            source_runtime_evidence_cid=(
-                source_receipt.runtime_evidence_cid
-            ),
+            source_namespace_receipt_cid=str(source_receipt.receipt_cid),
+            source_runtime_evidence_cid=(source_receipt.runtime_evidence_cid),
             source_coordinate_cid=str(coordinate.coordinate_cid),
             replay_run_id=replay_id,
             replay_worktree_cid=worktree_cid,
@@ -2177,16 +1874,10 @@ class G240ReplayNamespaceReceiptV2:
             replay_observer_identity_cid=replay_observer_identity_cid,
             process_group_started=process_group_started,
             process_group_reaped=process_group_reaped,
-            active_process_count_after_reap=(
-                active_process_count_after_reap
-            ),
-            state_namespace_created_exclusive=(
-                state_namespace_created_exclusive
-            ),
+            active_process_count_after_reap=(active_process_count_after_reap),
+            state_namespace_created_exclusive=(state_namespace_created_exclusive),
             state_namespace_finalized=state_namespace_finalized,
-            output_namespace_created_exclusive=(
-                output_namespace_created_exclusive
-            ),
+            output_namespace_created_exclusive=(output_namespace_created_exclusive),
             output_namespace_finalized=output_namespace_finalized,
             cache_namespaces_mounted=cache_namespaces_mounted,
             detached=detached,
@@ -2233,16 +1924,12 @@ def validate_g240_replay_namespace_receipt_v2(
         else G240ReplayNamespaceReceiptV2.from_dict(value)
     )
     try:
-        coordinate = source_policy.job_map[
-            (source_receipt.plan_cid, source_receipt.job_id)
-        ]
+        coordinate = source_policy.job_map[(source_receipt.plan_cid, source_receipt.job_id)]
     except KeyError as exc:
         raise RuntimeNamespaceProvenanceError(
             "G240 replay source coordinate is absent from the policy"
         ) from exc
-    source_evidence = validate_causal_runtime_evidence_v2(
-        source_runtime_evidence.to_dict()
-    )
+    source_evidence = validate_causal_runtime_evidence_v2(source_runtime_evidence.to_dict())
     _validate_g240_receipt_against_coordinate(
         source_receipt,
         policy=source_policy,
@@ -2255,24 +1942,14 @@ def validate_g240_replay_namespace_receipt_v2(
         replay_run_id=receipt.replay_run_id,
         replay_worktree_cid=receipt.replay_worktree_cid,
         replay_runtime_evidence=replay_runtime_evidence,
-        replay_executor_identity_cid=(
-            receipt.replay_executor_identity_cid
-        ),
-        replay_observer_identity_cid=(
-            receipt.replay_observer_identity_cid
-        ),
+        replay_executor_identity_cid=(receipt.replay_executor_identity_cid),
+        replay_observer_identity_cid=(receipt.replay_observer_identity_cid),
         process_group_started=receipt.process_group_started,
         process_group_reaped=receipt.process_group_reaped,
-        active_process_count_after_reap=(
-            receipt.active_process_count_after_reap
-        ),
-        state_namespace_created_exclusive=(
-            receipt.state_namespace_created_exclusive
-        ),
+        active_process_count_after_reap=(receipt.active_process_count_after_reap),
+        state_namespace_created_exclusive=(receipt.state_namespace_created_exclusive),
         state_namespace_finalized=receipt.state_namespace_finalized,
-        output_namespace_created_exclusive=(
-            receipt.output_namespace_created_exclusive
-        ),
+        output_namespace_created_exclusive=(receipt.output_namespace_created_exclusive),
         output_namespace_finalized=receipt.output_namespace_finalized,
         cache_namespaces_mounted=receipt.cache_namespaces_mounted,
         detached=receipt.detached,
@@ -2281,12 +1958,9 @@ def validate_g240_replay_namespace_receipt_v2(
     )
     if (
         receipt.replay_run_id == coordinate.run_id
-        or receipt.replay_process_namespace_cid
-        == source_receipt.process_namespace_cid
-        or receipt.replay_state_namespace_cid
-        == source_receipt.state_namespace_cid
-        or receipt.replay_output_namespace_cid
-        == source_receipt.output_namespace_cid
+        or receipt.replay_process_namespace_cid == source_receipt.process_namespace_cid
+        or receipt.replay_state_namespace_cid == source_receipt.state_namespace_cid
+        or receipt.replay_output_namespace_cid == source_receipt.output_namespace_cid
         or set(receipt.replay_cache_namespace_cids.values())
         & set(source_receipt.cache_namespace_cids.values())
         or _plain(receipt.to_dict()) != _plain(rebuilt.to_dict())
@@ -2306,24 +1980,18 @@ def g240_replay_namespace_request_v2(
     """Derive launch-time replay namespaces before creating a worktree."""
 
     try:
-        coordinate = source_policy.job_map[
-            (source_receipt.plan_cid, source_receipt.job_id)
-        ]
+        coordinate = source_policy.job_map[(source_receipt.plan_cid, source_receipt.job_id)]
     except KeyError as exc:
         raise RuntimeNamespaceProvenanceError(
             "G240 replay request source is absent from the policy"
         ) from exc
     replay_id = _safe_id(replay_run_id, "replay_run_id")
     if replay_id == coordinate.run_id:
-        raise RuntimeNamespaceProvenanceError(
-            "G240 replay request must use a fresh run"
-        )
+        raise RuntimeNamespaceProvenanceError("G240 replay request must use a fresh run")
     context_cid = _replay_context_cid(
         source_policy_cid=str(source_policy.policy_cid),
         source_coordinate_cid=str(coordinate.coordinate_cid),
-        source_runtime_evidence_cid=(
-            source_receipt.runtime_evidence_cid
-        ),
+        source_runtime_evidence_cid=(source_receipt.runtime_evidence_cid),
         replay_run_id=replay_id,
     )
     caches = {
@@ -2361,9 +2029,7 @@ def g240_replay_namespace_request_v2(
             source_coordinate=coordinate,
         ),
         "replay_cache_namespace_cids": caches,
-        "replay_cache_namespace_set_cid": (
-            g240_cache_namespace_set_cid(caches)
-        ),
+        "replay_cache_namespace_set_cid": (g240_cache_namespace_set_cid(caches)),
     }
     frozen = _freeze(value)
     assert isinstance(frozen, Mapping)
@@ -2438,16 +2104,9 @@ class G240ReplayOrchestrationReceiptV2:
             "evidence_payload_cid",
             "orchestration_observer_identity_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
-        if (
-            self.confinement_profile_cid
-            != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
-        ):
-            raise RuntimeNamespaceProvenanceError(
-                "G240 replay confinement profile changed"
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
+        if self.confinement_profile_cid != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2:
+            raise RuntimeNamespaceProvenanceError("G240 replay confinement profile changed")
         for field in (
             "landlock_policy_cid",
             "landlock_receipt_cid",
@@ -2471,9 +2130,7 @@ class G240ReplayOrchestrationReceiptV2:
             "holdout_accessed",
         ):
             if type(getattr(self, field)) is not bool:
-                raise RuntimeNamespaceProvenanceError(
-                    f"{field} must be an observed boolean"
-                )
+                raise RuntimeNamespaceProvenanceError(f"{field} must be an observed boolean")
         if (
             type(self.active_process_count_after_reap) is not int
             or self.active_process_count_after_reap < 0
@@ -2486,12 +2143,8 @@ class G240ReplayOrchestrationReceiptV2:
             self.landlock_receipt_cid,
             self.landlock_receipt_payload_cid,
         )
-        if (
-            self.synthetic_test_only
-            and any(value is not None for value in landlock_cids)
-        ) or (
-            not self.synthetic_test_only
-            and any(value is None for value in landlock_cids)
+        if (self.synthetic_test_only and any(value is not None for value in landlock_cids)) or (
+            not self.synthetic_test_only and any(value is None for value in landlock_cids)
         ):
             raise RuntimeNamespaceProvenanceError(
                 "G240 replay Landlock claims differ from execution mode"
@@ -2514,15 +2167,11 @@ class G240ReplayOrchestrationReceiptV2:
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
         elif _cid(self.receipt_cid, "receipt_cid") != expected:
-            raise RuntimeNamespaceProvenanceError(
-                "G240 replay orchestration receipt CID changed"
-            )
+            raise RuntimeNamespaceProvenanceError("G240 replay orchestration receipt CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-            if name != "receipt_cid"
+            name: getattr(self, name) for name in self.__dataclass_fields__ if name != "receipt_cid"
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -2632,12 +2281,8 @@ def _build_g240_replay_orchestration_receipt_v2(
         )
         worktree = (
             worktree_safety_receipt
-            if isinstance(
-                worktree_safety_receipt, WorktreeSafetyReceipt
-            )
-            else WorktreeSafetyReceipt.from_dict(
-                worktree_safety_receipt
-            )
+            if isinstance(worktree_safety_receipt, WorktreeSafetyReceipt)
+            else WorktreeSafetyReceipt.from_dict(worktree_safety_receipt)
         )
         contract = _coerce_g240_executor_contract_v2(
             executor_contract,
@@ -2648,21 +2293,14 @@ def _build_g240_replay_orchestration_receipt_v2(
             request,
             expected_arguments=_g240_launch_arguments(contract),
         )
-        if (
-            process_observation is not None
-            and process_observation is not observed_process
-        ):
+        if process_observation is not None and process_observation is not observed_process:
             raise RuntimeNamespaceProvenanceError(
-                "G240 replay process observation differs from the live "
-                "receipt capability"
+                "G240 replay process observation differs from the live receipt capability"
             )
-        execution = validate_g240_execution_request_v2(
-            replay_execution_request
-        )
+        execution = validate_g240_execution_request_v2(replay_execution_request)
         if (
             not isinstance(execution_request_payload, bytes)
-            or execution_request_payload
-            != canonical_dag_json_bytes(execution.to_dict()) + b"\n"
+            or execution_request_payload != canonical_dag_json_bytes(execution.to_dict()) + b"\n"
             or request.execution_request_cid != execution.request_cid
         ):
             raise RuntimeNamespaceProvenanceError(
@@ -2679,29 +2317,19 @@ def _build_g240_replay_orchestration_receipt_v2(
             execution_request=execution,
             contract=contract,
             worktree=worktree,
-            landlock_transport_observation=(
-                landlock_transport_observation
-            ),
+            landlock_transport_observation=(landlock_transport_observation),
             process_observation=observed_process,
         )
     except (AttributeError, TypeError, ValueError) as exc:
         raise RuntimeNamespaceProvenanceError(
             "G240 replay orchestration inputs failed typed replay"
         ) from exc
-    source_runtime = validate_causal_runtime_evidence_v2(
-        source_runtime_evidence.to_dict()
-    )
-    runtime = validate_causal_runtime_evidence_v2(
-        replay_runtime_evidence.to_dict()
-    )
+    source_runtime = validate_causal_runtime_evidence_v2(source_runtime_evidence.to_dict())
+    runtime = validate_causal_runtime_evidence_v2(replay_runtime_evidence.to_dict())
     _validate_g240_executor_entrypoint_v2(contract, worktree)
     if not isinstance(evidence_payload, bytes):
-        raise RuntimeNamespaceProvenanceError(
-            "G240 replay evidence payload must be exact bytes"
-        )
-    expected_payload = (
-        canonical_dag_json_bytes(_plain(runtime.to_dict())) + b"\n"
-    )
+        raise RuntimeNamespaceProvenanceError("G240 replay evidence payload must be exact bytes")
+    expected_payload = canonical_dag_json_bytes(_plain(runtime.to_dict())) + b"\n"
     try:
         decoded = json.loads(evidence_payload.decode("utf-8"))
     except (UnicodeError, json.JSONDecodeError) as exc:
@@ -2711,13 +2339,10 @@ def _build_g240_replay_orchestration_receipt_v2(
     evidence_canonical = (
         evidence_payload == expected_payload
         and _plain(decoded) == _plain(runtime.to_dict())
-        and replay.evidence_sha256
-        == hashlib.sha256(evidence_payload).hexdigest()
+        and replay.evidence_sha256 == hashlib.sha256(evidence_payload).hexdigest()
     )
     worktree_projection_cid = g240_worktree_safety_projection_cid(worktree)
-    cache_set_cid = g240_cache_namespace_set_cid(
-        namespace_receipt.replay_cache_namespace_cids
-    )
+    cache_set_cid = g240_cache_namespace_set_cid(namespace_receipt.replay_cache_namespace_cids)
     source_cache_set_cid = g240_cache_namespace_set_cid(
         source_namespace_receipt.cache_namespace_cids
     )
@@ -2734,9 +2359,7 @@ def _build_g240_replay_orchestration_receipt_v2(
         }
     )
     expected_source_receipt_sha256 = hashlib.sha256(
-        canonical_json(
-            source_namespace_receipt.to_dict()
-        ).encode("utf-8")
+        canonical_json(source_namespace_receipt.to_dict()).encode("utf-8")
     ).hexdigest()
     source_stage_environments = {
         stage.provenance.environment_sha256
@@ -2754,43 +2377,30 @@ def _build_g240_replay_orchestration_receipt_v2(
     }
     if (
         namespace_receipt.source_policy_cid != source_policy.policy_cid
-        or namespace_receipt.source_namespace_receipt_cid
-        != source_namespace_receipt.receipt_cid
-        or source_namespace_receipt.policy_cid
-        != source_policy.policy_cid
+        or namespace_receipt.source_namespace_receipt_cid != source_namespace_receipt.receipt_cid
+        or source_namespace_receipt.policy_cid != source_policy.policy_cid
         or namespace_receipt.source_runtime_evidence_cid
         != source_namespace_receipt.runtime_evidence_cid
-        or source_namespace_receipt.runtime_evidence_cid
-        != source_runtime.receipt_cid
-        or namespace_receipt.replay_runtime_evidence_cid
-        != runtime.receipt_cid
-        or contract.contract_cid
-        != source_policy.runtime_orchestration_policy_cid
+        or source_namespace_receipt.runtime_evidence_cid != source_runtime.receipt_cid
+        or namespace_receipt.replay_runtime_evidence_cid != runtime.receipt_cid
+        or contract.contract_cid != source_policy.runtime_orchestration_policy_cid
         or contract.environment_cid != source_policy.environment_cid
-        or source_namespace_receipt.executor_identity_cid
-        != contract.executor_identity_cid
+        or source_namespace_receipt.executor_identity_cid != contract.executor_identity_cid
         or request.command != contract.command_template
         or replay.request_sha256 != request.request_sha256
-        or replay.source_execution_receipt_sha256
-        != request.source_execution_receipt_sha256
-        or request.source_execution_receipt_sha256
-        != expected_source_receipt_sha256
-        or replay.source_worktree_receipt_sha256
-        != request.source_worktree_receipt_sha256
-        or request.source_run_id
-        != source_policy.run_id
-        or request.replay_run_id
-        != namespace_receipt.replay_run_id
+        or replay.source_execution_receipt_sha256 != request.source_execution_receipt_sha256
+        or request.source_execution_receipt_sha256 != expected_source_receipt_sha256
+        or replay.source_worktree_receipt_sha256 != request.source_worktree_receipt_sha256
+        or request.source_run_id != source_policy.run_id
+        or request.replay_run_id != namespace_receipt.replay_run_id
         or request.source_commit != replay.source_commit
         or request.environment_sha256 != replay.environment_sha256
         or request.environment_sha256 != contract.environment_sha256
         or source_stage_environments != {contract.environment_sha256}
         or replay_stage_environments != {contract.environment_sha256}
         or replay_stage_environments != {request.environment_sha256}
-        or request.source_process_namespace
-        != source_namespace_receipt.process_namespace_cid
-        or request.replay_process_namespace
-        != namespace_receipt.replay_process_namespace_cid
+        or request.source_process_namespace != source_namespace_receipt.process_namespace_cid
+        or request.replay_process_namespace != namespace_receipt.replay_process_namespace_cid
         or not all(
             source_cache_set_cid in logical_namespace
             for logical_namespace in request.source_cache_namespaces
@@ -2799,18 +2409,15 @@ def _build_g240_replay_orchestration_receipt_v2(
         or cache_set_cid not in request.replay_cache_namespace
         or namespace_receipt.replay_run_id != replay.replay_run_id
         or namespace_receipt.replay_run_id != worktree.run_id
-        or namespace_receipt.replay_worktree_cid
-        != worktree_projection_cid
+        or namespace_receipt.replay_worktree_cid != worktree_projection_cid
         or replay.replay_worktree_receipt_sha256 != worktree.sha256
-        or replay.process_namespace
-        != namespace_receipt.replay_process_namespace_cid
+        or replay.process_namespace != namespace_receipt.replay_process_namespace_cid
         or replay.source_commit != worktree.worktree_commit
         or replay.source_commit != worktree.base_commit
         or not evidence_canonical
     ):
         raise RuntimeNamespaceProvenanceError(
-            "G240 actual replay/worktree outputs differ from namespace "
-            "or runtime evidence"
+            "G240 actual replay/worktree outputs differ from namespace or runtime evidence"
         )
     observer = _cid(
         orchestration_observer_identity_cid,
@@ -2821,35 +2428,23 @@ def _build_g240_replay_orchestration_receipt_v2(
         namespace_receipt.replay_executor_identity_cid,
         namespace_receipt.replay_observer_identity_cid,
     }:
-        raise RuntimeNamespaceProvenanceError(
-            "G240 orchestration observer must be independent"
-        )
+        raise RuntimeNamespaceProvenanceError("G240 orchestration observer must be independent")
     return G240ReplayOrchestrationReceiptV2(
         source_policy_cid=str(source_policy.policy_cid),
         runtime_orchestration_policy_cid=str(contract.contract_cid),
         command_cid=contract.command_template_cid,
         interpreter_identity_cid=contract.interpreter_identity_cid,
-        confinement_profile_cid=(
-            G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
-        ),
+        confinement_profile_cid=(G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2),
         namespace_receipt_cid=str(namespace_receipt.receipt_cid),
-        source_runtime_evidence_cid=(
-            namespace_receipt.source_runtime_evidence_cid
-        ),
+        source_runtime_evidence_cid=(namespace_receipt.source_runtime_evidence_cid),
         replay_runtime_evidence_cid=runtime.receipt_cid,
         source_commit_cid=source_policy.source_commit_cid,
         recursive_gitlinks_cid=source_policy.recursive_gitlinks_cid,
         replay_run_id=namespace_receipt.replay_run_id,
         replay_worktree_cid=namespace_receipt.replay_worktree_cid,
-        replay_process_namespace_cid=(
-            namespace_receipt.replay_process_namespace_cid
-        ),
-        replay_state_namespace_cid=(
-            namespace_receipt.replay_state_namespace_cid
-        ),
-        replay_output_namespace_cid=(
-            namespace_receipt.replay_output_namespace_cid
-        ),
+        replay_process_namespace_cid=(namespace_receipt.replay_process_namespace_cid),
+        replay_state_namespace_cid=(namespace_receipt.replay_state_namespace_cid),
+        replay_output_namespace_cid=(namespace_receipt.replay_output_namespace_cid),
         replay_cache_namespace_set_cid=cache_set_cid,
         replay_request_cid=request_cid,
         legacy_replay_receipt_cid=replay_projection_cid,
@@ -2857,17 +2452,13 @@ def _build_g240_replay_orchestration_receipt_v2(
         runtime_preflight_cid=runtime_preflight_cid,
         landlock_policy_cid=landlock_policy_cid,
         landlock_receipt_cid=landlock_receipt_cid,
-        landlock_receipt_payload_cid=(
-            landlock_receipt_payload_cid
-        ),
+        landlock_receipt_payload_cid=(landlock_receipt_payload_cid),
         evidence_payload_cid=cid_for_bytes(evidence_payload),
         orchestration_observer_identity_cid=observer,
         detached=bool(replay.detached and worktree.detached),
         auto_merge=bool(replay.auto_merge or worktree.auto_merge),
         process_group_reaped=observed_process.process_group_reaped,
-        active_process_count_after_reap=(
-            observed_process.active_process_count_after_reap
-        ),
+        active_process_count_after_reap=(observed_process.active_process_count_after_reap),
         evidence_canonical=evidence_canonical,
         synthetic_test_only=synthetic_test_only,
         complete=True,
@@ -2888,12 +2479,8 @@ def validate_g240_replay_orchestration_receipt_v2(
     )
     rebuilt = _build_g240_replay_orchestration_receipt_v2(
         **sources,  # type: ignore[arg-type]
-        orchestration_observer_identity_cid=(
-            receipt.orchestration_observer_identity_cid
-        ),
-        active_process_count_after_reap=(
-            receipt.active_process_count_after_reap
-        ),
+        orchestration_observer_identity_cid=(receipt.orchestration_observer_identity_cid),
+        active_process_count_after_reap=(receipt.active_process_count_after_reap),
         holdout_accessed=receipt.holdout_accessed,
     )
     if _plain(receipt.to_dict()) != _plain(rebuilt.to_dict()):
@@ -2951,30 +2538,19 @@ class G240PrivateReplayValidationSourcesV2:
                 bundle,
                 _G240ReplayPrivateExecutionSourcesV2,
             )
-            or bundle._capability
-            is not _G240_REPLAY_PRIVATE_EXECUTION_CAPABILITY_V2
+            or bundle._capability is not _G240_REPLAY_PRIVATE_EXECUTION_CAPABILITY_V2
         ):
             raise RuntimeNamespaceProvenanceError(
                 "G240 private replay lacks live process/bootstrap authority"
             )
         transport = bundle.landlock_transport_observation
-        expected_policy_sources = (
-            None if transport is None else transport.policy_sources
-        )
-        expected_landlock_receipt = (
-            None if transport is None else transport.receipt
-        )
-        expected_landlock_payload = (
-            None if transport is None else transport.receipt_payload
-        )
+        expected_policy_sources = None if transport is None else transport.policy_sources
+        expected_landlock_receipt = None if transport is None else transport.receipt
+        expected_landlock_payload = None if transport is None else transport.receipt_payload
         values = {
             "replay_execution_request": bundle.execution_request,
-            "execution_request_payload": (
-                bundle.execution_request_payload
-            ),
-            "runtime_preflight_payload": (
-                bundle.runtime_preflight_payload
-            ),
+            "execution_request_payload": (bundle.execution_request_payload),
+            "runtime_preflight_payload": (bundle.runtime_preflight_payload),
             "landlock_policy_sources": expected_policy_sources,
             "landlock_receipt": expected_landlock_receipt,
             "landlock_receipt_payload": expected_landlock_payload,
@@ -3056,9 +2632,7 @@ def validate_g240_private_replay_sources_v2(
                 value.source_namespace_receipt,
                 G240RuntimeNamespaceReceiptV2,
             )
-            else G240RuntimeNamespaceReceiptV2.from_dict(
-                value.source_namespace_receipt
-            )
+            else G240RuntimeNamespaceReceiptV2.from_dict(value.source_namespace_receipt)
         )
         namespace_receipt = (
             value.namespace_receipt
@@ -3066,9 +2640,7 @@ def validate_g240_private_replay_sources_v2(
                 value.namespace_receipt,
                 G240ReplayNamespaceReceiptV2,
             )
-            else G240ReplayNamespaceReceiptV2.from_dict(
-                value.namespace_receipt
-            )
+            else G240ReplayNamespaceReceiptV2.from_dict(value.namespace_receipt)
         )
         orchestration_receipt = (
             value.orchestration_receipt
@@ -3076,9 +2648,7 @@ def validate_g240_private_replay_sources_v2(
                 value.orchestration_receipt,
                 G240ReplayOrchestrationReceiptV2,
             )
-            else G240ReplayOrchestrationReceiptV2.from_dict(
-                value.orchestration_receipt
-            )
+            else G240ReplayOrchestrationReceiptV2.from_dict(value.orchestration_receipt)
         )
         source_worktree = (
             value.source_worktree_safety_receipt
@@ -3086,9 +2656,7 @@ def validate_g240_private_replay_sources_v2(
                 value.source_worktree_safety_receipt,
                 WorktreeSafetyReceipt,
             )
-            else WorktreeSafetyReceipt.from_dict(
-                value.source_worktree_safety_receipt
-            )
+            else WorktreeSafetyReceipt.from_dict(value.source_worktree_safety_receipt)
         )
         replay_request = (
             value.replay_request
@@ -3106,20 +2674,14 @@ def validate_g240_private_replay_sources_v2(
                 value.replay_worktree_safety_receipt,
                 WorktreeSafetyReceipt,
             )
-            else WorktreeSafetyReceipt.from_dict(
-                value.replay_worktree_safety_receipt
-            )
+            else WorktreeSafetyReceipt.from_dict(value.replay_worktree_safety_receipt)
         )
     except (AttributeError, TypeError, ValueError) as exc:
         raise RuntimeNamespaceProvenanceError(
             "G240 private replay sources failed typed validation"
         ) from exc
-    source_runtime = validate_causal_runtime_evidence_v2(
-        source_runtime_evidence.to_dict()
-    )
-    replay_runtime = validate_causal_runtime_evidence_v2(
-        replay_runtime_evidence.to_dict()
-    )
+    source_runtime = validate_causal_runtime_evidence_v2(source_runtime_evidence.to_dict())
+    replay_runtime = validate_causal_runtime_evidence_v2(replay_runtime_evidence.to_dict())
     source_receipt = validate_g240_runtime_namespace_receipt_from_policy_v2(
         source_receipt,
         policy=policy,
@@ -3166,26 +2728,17 @@ def validate_g240_private_replay_sources_v2(
     if (
         source_gitlinks != replay_gitlinks
         or source_entrypoint != replay_entrypoint
-        or g240_recursive_gitlinks_cid(source_gitlinks)
-        != policy.recursive_gitlinks_cid
+        or g240_recursive_gitlinks_cid(source_gitlinks) != policy.recursive_gitlinks_cid
         or source_worktree.run_id != policy.run_id
-        or source_worktree.base_commit
-        != source_worktree.worktree_commit
-        or g238_git_commit_cid(source_worktree.worktree_commit)
-        != policy.source_commit_cid
-        or replay_worktree.base_commit
-        != source_worktree.worktree_commit
-        or replay_worktree.worktree_commit
-        != source_worktree.worktree_commit
-        or replay_request.source_worktree_receipt_sha256
-        != source_worktree.sha256
+        or source_worktree.base_commit != source_worktree.worktree_commit
+        or g238_git_commit_cid(source_worktree.worktree_commit) != policy.source_commit_cid
+        or replay_worktree.base_commit != source_worktree.worktree_commit
+        or replay_worktree.worktree_commit != source_worktree.worktree_commit
+        or replay_request.source_worktree_receipt_sha256 != source_worktree.sha256
         or replay_request.source_execution_receipt_sha256
-        != hashlib.sha256(
-            canonical_json(source_receipt.to_dict()).encode("utf-8")
-        ).hexdigest()
+        != hashlib.sha256(canonical_json(source_receipt.to_dict()).encode("utf-8")).hexdigest()
         or replay_request.command != contract.command_template
-        or source_receipt.executor_identity_cid
-        != contract.executor_identity_cid
+        or source_receipt.executor_identity_cid != contract.executor_identity_cid
         or {
             stage.provenance.environment_sha256
             for stage in (
@@ -3202,38 +2755,27 @@ def validate_g240_private_replay_sources_v2(
             )
         }
         != {contract.environment_sha256}
-        or replay_request.environment_sha256
-        != contract.environment_sha256
+        or replay_request.environment_sha256 != contract.environment_sha256
     ):
         raise RuntimeNamespaceProvenanceError(
             "G240 live source/replay Git evidence differs from policy"
         )
-    orchestration_receipt = (
-        validate_g240_replay_orchestration_receipt_v2(
-            orchestration_receipt,
-            source_policy=policy,
-            source_namespace_receipt=source_receipt,
-            namespace_receipt=namespace_receipt,
-            source_runtime_evidence=source_runtime,
-            replay_runtime_evidence=replay_runtime,
-            executor_contract=contract,
-            replay_request=replay_request,
-            replay_receipt=replay_receipt,
-            worktree_safety_receipt=replay_worktree,
-            replay_execution_request=(
-                value.replay_execution_request
-            ),
-            execution_request_payload=(
-                value.execution_request_payload
-            ),
-            runtime_preflight_payload=(
-                value.runtime_preflight_payload
-            ),
-            landlock_transport_observation=(
-                value.landlock_transport_observation
-            ),
-            evidence_payload=value.evidence_payload,
-        )
+    orchestration_receipt = validate_g240_replay_orchestration_receipt_v2(
+        orchestration_receipt,
+        source_policy=policy,
+        source_namespace_receipt=source_receipt,
+        namespace_receipt=namespace_receipt,
+        source_runtime_evidence=source_runtime,
+        replay_runtime_evidence=replay_runtime,
+        executor_contract=contract,
+        replay_request=replay_request,
+        replay_receipt=replay_receipt,
+        worktree_safety_receipt=replay_worktree,
+        replay_execution_request=(value.replay_execution_request),
+        execution_request_payload=(value.execution_request_payload),
+        runtime_preflight_payload=(value.runtime_preflight_payload),
+        landlock_transport_observation=(value.landlock_transport_observation),
+        evidence_payload=value.evidence_payload,
     )
     return (
         policy,

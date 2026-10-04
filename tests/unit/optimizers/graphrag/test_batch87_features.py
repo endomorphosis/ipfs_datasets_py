@@ -185,6 +185,7 @@ class TestEvaluateList:
 
     def test_returns_critic_scores(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         onts = [{"entities": [], "relationships": []}]
         scores = self.critic.evaluate_list(onts, self.ctx)
         assert all(isinstance(s, CriticScore) for s in scores)

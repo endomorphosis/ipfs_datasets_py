@@ -213,7 +213,7 @@ cli.download_and_install()
 cli.auth_login()
 
 # Fetch repository data
-result = cli.execute(['repo', 'list', '--json', 'name,description'])
+result = cli.execute(["repo", "list", "--json", "name,description"])
 repos_data = json.loads(result.stdout)
 
 # This data can now be:
@@ -235,7 +235,7 @@ cli.install()
 cli.configure_api_key("YOUR_API_KEY")
 
 # Generate text data
-result = cli.execute(['chat', 'What are the benefits of IPFS?'])
+result = cli.execute(["chat", "What are the benefits of IPFS?"])
 generated_text = result.stdout
 
 # This data can be:
@@ -257,7 +257,7 @@ cli.install()
 cli.configure_api_key("YOUR_API_KEY")
 
 # Generate analysis
-result = cli.execute(['chat', 'Explain how DHT works in IPFS'])
+result = cli.execute(["chat", "Explain how DHT works in IPFS"])
 analysis = result.stdout
 
 # This data can be:
@@ -276,17 +276,17 @@ repos = github_cli.repo_list(limit=10)
 
 # Analyze with Gemini
 gemini_cli = GeminiCLI()
-gemini_analysis = gemini_cli.execute(['chat', f'Analyze these repos: {repos}'])
+gemini_analysis = gemini_cli.execute(["chat", f"Analyze these repos: {repos}"])
 
 # Get additional insights from Claude
 claude_cli = ClaudeCLI()
-claude_insights = claude_cli.execute(['chat', f'Provide technical insights on: {repos}'])
+claude_insights = claude_cli.execute(["chat", f"Provide technical insights on: {repos}"])
 
 # Combine all data
 combined_data = {
-    'repositories': repos,
-    'gemini_analysis': gemini_analysis.stdout,
-    'claude_insights': claude_insights.stdout
+    "repositories": repos,
+    "gemini_analysis": gemini_analysis.stdout,
+    "claude_insights": claude_insights.stdout,
 }
 
 # Store in IPFS, create embeddings, use in RAG, etc.

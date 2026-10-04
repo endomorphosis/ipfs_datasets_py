@@ -25,17 +25,16 @@ from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger('test_p2p_real')
+logger = logging.getLogger("test_p2p_real")
 
 
 async def test_async_p2p_initialization():
     """Test async P2P initialization"""
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info("TEST: Async P2P Initialization")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     try:
         logger.info("Creating libp2p host...")
@@ -73,15 +72,16 @@ async def test_async_p2p_initialization():
     except Exception as e:
         logger.error(f"✗ P2P initialization failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_p2p_with_encryption():
     """Test P2P with encryption"""
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info("TEST: P2P with Encryption")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     try:
         from cryptography.fernet import Fernet
@@ -93,13 +93,10 @@ async def test_p2p_with_encryption():
         import subprocess
 
         # Get GitHub token
-        github_token = os.environ.get('GITHUB_TOKEN')
+        github_token = os.environ.get("GITHUB_TOKEN")
         if not github_token:
             result = subprocess.run(
-                ["gh", "auth", "token"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["gh", "auth", "token"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
                 github_token = result.stdout.strip()
@@ -114,9 +111,9 @@ async def test_p2p_with_encryption():
             length=32,
             salt=b"github-cache-p2p",
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
-        key = base64.urlsafe_b64encode(kdf.derive(github_token.encode('utf-8')))
+        key = base64.urlsafe_b64encode(kdf.derive(github_token.encode("utf-8")))
         cipher = Fernet(key)
 
         logger.info("✓ Encryption key derived")
@@ -127,21 +124,21 @@ async def test_p2p_with_encryption():
 
             # Test message
             test_message = {
-                'key': 'test/endpoint',
-                'data': {'result': 'encrypted test'},
-                'timestamp': time.time()
+                "key": "test/endpoint",
+                "data": {"result": "encrypted test"},
+                "timestamp": time.time(),
             }
 
             # Encrypt message
-            plaintext = json.dumps(test_message).encode('utf-8')
+            plaintext = json.dumps(test_message).encode("utf-8")
             encrypted = cipher.encrypt(plaintext)
             logger.info(f"✓ Message encrypted: {len(encrypted)} bytes")
 
             # Decrypt message
             decrypted = cipher.decrypt(encrypted)
-            decrypted_msg = json.loads(decrypted.decode('utf-8'))
+            decrypted_msg = json.loads(decrypted.decode("utf-8"))
 
-            if decrypted_msg['key'] == test_message['key']:
+            if decrypted_msg["key"] == test_message["key"]:
                 logger.info("✓ Message decrypted successfully")
                 logger.info("✓ Encryption working with P2P")
             else:
@@ -155,15 +152,16 @@ async def test_p2p_with_encryption():
     except Exception as e:
         logger.error(f"✗ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_two_peers_communication():
     """Test communication between two P2P peers"""
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info("TEST: Two Peers Communication")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     try:
         # Create first host (bootstrap node)
@@ -238,15 +236,16 @@ async def test_two_peers_communication():
     except Exception as e:
         logger.error(f"✗ Two peers test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def run_all_tests():
     """Run all async tests"""
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info("      P2P CACHE REAL-WORLD INTEGRATION TEST SUITE")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     results = []
 
@@ -257,9 +256,9 @@ async def run_all_tests():
 
     # Print summary
     logger.info("")
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info("                   TEST SUMMARY")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     passed = 0
     failed = 0
@@ -272,11 +271,11 @@ async def run_all_tests():
         else:
             failed += 1
 
-    logger.info("="*70)
+    logger.info("=" * 70)
     total = passed + failed
     percentage = (passed / total * 100) if total > 0 else 0
     logger.info(f"Total: {passed}/{total} tests passed ({percentage:.1f}%)")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     if failed == 0:
         logger.info("")
@@ -296,9 +295,10 @@ def main():
     except Exception as e:
         logger.error(f"✗ Test suite failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

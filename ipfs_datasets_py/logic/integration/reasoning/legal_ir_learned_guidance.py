@@ -30,18 +30,10 @@ from .legal_ir_premise_security import scan_legal_ir_artifact
 
 
 LEGAL_IR_LEARNED_GUIDANCE_SCHEMA_VERSION: Final = "legal-ir-learned-guidance-v1"
-LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION: Final = (
-    "legal-ir-learned-guidance-promotion-v1"
-)
-LEGAL_IR_LEARNED_GUIDANCE_CANARY_SCHEMA_VERSION: Final = (
-    "legal-ir-learned-guidance-fixed-canary-v1"
-)
-LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION: Final = (
-    "legal-ir-learned-guidance-rollback-v1"
-)
-TRUSTED_FEEDBACK_ABLATION_SCHEMA_VERSION: Final = (
-    "legal-ir-trusted-feedback-ablation-v1"
-)
+LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION: Final = "legal-ir-learned-guidance-promotion-v1"
+LEGAL_IR_LEARNED_GUIDANCE_CANARY_SCHEMA_VERSION: Final = "legal-ir-learned-guidance-fixed-canary-v1"
+LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION: Final = "legal-ir-learned-guidance-rollback-v1"
+TRUSTED_FEEDBACK_ABLATION_SCHEMA_VERSION: Final = "legal-ir-trusted-feedback-ablation-v1"
 
 _LOWER_IS_BETTER_METRICS = frozenset(
     {
@@ -135,9 +127,7 @@ class LegalIRFixedCanaryEvidence(_SerializableMapping):
             "missing_guardrail_evidence": list(self.missing_guardrail_evidence),
             "schema_version": self.schema_version,
             "source_copy_regressions": list(self.source_copy_regressions),
-            "symbolic_validity_regressions": list(
-                self.symbolic_validity_regressions
-            ),
+            "symbolic_validity_regressions": list(self.symbolic_validity_regressions),
         }
 
 
@@ -163,9 +153,7 @@ class LegalIRLearnedGuidanceRecord(_SerializableMapping):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "canary_metric_evidence": _canonical_json_value(
-                self.canary_metric_evidence
-            ),
+            "canary_metric_evidence": _canonical_json_value(self.canary_metric_evidence),
             "confidence": round(self.confidence, 12),
             "contract_id": self.contract_id,
             "guidance_id": self.guidance_id,
@@ -181,9 +169,7 @@ class LegalIRLearnedGuidanceRecord(_SerializableMapping):
             "target_component": self.target_component,
             "view_family": self.view_family,
             "view_family_weight": round(self.view_family_weight, 12),
-            "view_family_weights": {
-                self.view_family: round(self.view_family_weight, 12)
-            },
+            "view_family_weights": {self.view_family: round(self.view_family_weight, 12)},
         }
 
 
@@ -247,16 +233,12 @@ class LegalIRLearnedGuidancePromotion(_SerializableMapping):
             "causal_evidence": _canonical_json_value(self.causal_evidence),
             "compiler_commit": self.compiler_commit,
             "eligible_snapshot_id": self.eligible_snapshot_id,
-            "fixed_canary_binding": _canonical_json_value(
-                self.fixed_canary_binding
-            ),
+            "fixed_canary_binding": _canonical_json_value(self.fixed_canary_binding),
             "guidance_records": records,
             "learned_export": _canonical_json_value(self.learned_export),
             "learned_export_id": self.source_export_id,
             "learned_export_sha256": str(
-                self.learned_export.get("sha256")
-                or self.learned_export.get("export_sha256")
-                or ""
+                self.learned_export.get("sha256") or self.learned_export.get("export_sha256") or ""
             ),
             "proof_receipt_ids": [
                 str(receipt.get("receipt_id") or receipt.get("id") or "")
@@ -312,8 +294,7 @@ class TrustedFeedbackAblationEvidence(_SerializableMapping):
     @property
     def heldout_benefit(self) -> bool:
         return (
-            self.heldout_improvement > 0.0
-            and self.heldout_improvement >= self.minimum_improvement
+            self.heldout_improvement > 0.0 and self.heldout_improvement >= self.minimum_improvement
         )
 
     @property
@@ -357,9 +338,7 @@ class TrustedFeedbackAblationEvidence(_SerializableMapping):
             "schema_version": self.schema_version,
             "source_copy_guard_passed": self.source_copy_guard_passed,
             "status": self.status,
-            "symbolic_validity_guard_passed": (
-                self.symbolic_validity_guard_passed
-            ),
+            "symbolic_validity_guard_passed": (self.symbolic_validity_guard_passed),
             "training_sample_ids": list(self.training_sample_ids),
         }
 
@@ -504,9 +483,7 @@ def evaluate_trusted_feedback_ablation(
         reasons.append("symbolic_validity_guardrail_evidence_missing")
     elif not symbolic_passed:
         reasons.append("symbolic_validity_guardrail_regression")
-    non_hard_regressions = sorted(
-        set(regressions) - set(copy_names) - {symbolic_name}
-    )
+    non_hard_regressions = sorted(set(regressions) - set(copy_names) - {symbolic_name})
     if non_hard_regressions:
         reasons.append("heldout_metric_regression")
     descriptor = {
@@ -524,9 +501,7 @@ def evaluate_trusted_feedback_ablation(
         primary_metric=metric,
         baseline_primary_value=float(before) if before is not None else 0.0,
         candidate_primary_value=float(after) if after is not None else 0.0,
-        heldout_improvement=(
-            float(improvement) if math.isfinite(improvement) else 0.0
-        ),
+        heldout_improvement=(float(improvement) if math.isfinite(improvement) else 0.0),
         minimum_improvement=minimum,
         training_sample_ids=train_ids,
         heldout_sample_ids=heldout_ids,
@@ -560,9 +535,7 @@ def evaluate_fixed_canary_evidence(
 
     baseline = _as_mapping(baseline_metrics)
     candidate = _as_mapping(candidate_metrics)
-    canary_id, fixed_sample_set = _resolve_fixed_canary_id(
-        baseline, candidate, fixed_canary_id
-    )
+    canary_id, fixed_sample_set = _resolve_fixed_canary_id(baseline, candidate, fixed_canary_id)
     before_by_family = _family_metric_mapping(baseline)
     after_by_family = _family_metric_mapping(candidate)
     families = tuple(
@@ -606,12 +579,8 @@ def evaluate_fixed_canary_evidence(
             if guardrail not in before or guardrail not in after:
                 missing.append(f"{family}:{guardrail}")
         evidence[family] = {
-            "baseline": {
-                key: round(float(value), 12) for key, value in sorted(before.items())
-            },
-            "candidate": {
-                key: round(float(value), 12) for key, value in sorted(after.items())
-            },
+            "baseline": {key: round(float(value), 12) for key, value in sorted(before.items())},
+            "candidate": {key: round(float(value), 12) for key, value in sorted(after.items())},
             "deltas": dict(sorted(deltas.items())),
             "guardrails_passed": not family_regressions
             and not any(item.startswith(f"{family}:") for item in missing),
@@ -704,13 +673,9 @@ def promote_learned_autoencoder_guidance(
     ).strip()
 
     block_reasons: list[str] = [
-        str(reason).strip()
-        for reason in eligibility_block_reasons
-        if str(reason).strip()
+        str(reason).strip() for reason in eligibility_block_reasons if str(reason).strip()
     ]
-    if str(export.get("schema_version") or "") != (
-        LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION
-    ):
+    if str(export.get("schema_version") or "") != (LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION):
         block_reasons.append("unsupported_stable_feature_export_schema")
     if not export_id:
         block_reasons.append("learned_export_id_missing")
@@ -807,15 +772,11 @@ def promote_learned_autoencoder_guidance(
                 contract_id=contract.contract_id,
                 view_family=family,
                 target_component=contract.target_component,
-                guidance_kind=(
-                    "decompiler" if family == "decompiler" else "compiler"
-                ),
+                guidance_kind=("decompiler" if family == "decompiler" else "compiler"),
                 view_family_weight=weight,
                 confidence=confidence,
                 stable_features=tuple(record_features),
-                repair_lane_suggestions=tuple(
-                    str(lane["lane_id"]) for lane in lane_records
-                ),
+                repair_lane_suggestions=tuple(str(lane["lane_id"]) for lane in lane_records),
                 repair_lane_records=tuple(lane_records),
                 canary_metric_evidence={
                     "canary_id": canary.canary_id,
@@ -887,9 +848,7 @@ def promote_learned_autoencoder_guidance(
     )
 
 
-def promote_legal_ir_learned_guidance(
-    *args: Any, **kwargs: Any
-) -> LegalIRLearnedGuidancePromotion:
+def promote_legal_ir_learned_guidance(*args: Any, **kwargs: Any) -> LegalIRLearnedGuidancePromotion:
     """Alias for the canonical autoencoder promotion entry point."""
 
     return promote_learned_autoencoder_guidance(*args, **kwargs)
@@ -928,9 +887,7 @@ def _stable_export_mapping(
 
 def _stable_features(export: Mapping[str, Any]) -> tuple[list[dict[str, Any]], int]:
     raw_features = export.get("stable_features")
-    if not isinstance(raw_features, Sequence) or isinstance(
-        raw_features, (str, bytes)
-    ):
+    if not isinstance(raw_features, Sequence) or isinstance(raw_features, (str, bytes)):
         return [], 0
     safe: list[dict[str, Any]] = []
     unsafe_count = 0
@@ -945,9 +902,7 @@ def _stable_features(export: Mapping[str, Any]) -> tuple[list[dict[str, Any]], i
             and group in _FEATURE_GROUPS
             and item.get("stable") is True
             and weight > 0.0
-            and not any(
-                marker in feature.lower() for marker in _FORBIDDEN_FEATURE_MARKERS
-            )
+            and not any(marker in feature.lower() for marker in _FORBIDDEN_FEATURE_MARKERS)
         )
         if not is_safe:
             unsafe_count += 1
@@ -981,10 +936,7 @@ def _view_family_weights(export: Mapping[str, Any]) -> dict[str, float]:
     weights: dict[str, float] = {}
     for name, value in raw.items():
         family = legal_ir_view_family_name(str(name))
-        if (
-            family not in LEGAL_IR_VIEW_FAMILIES
-            and str(name) in LEGAL_IR_VIEW_FAMILIES
-        ):
+        if family not in LEGAL_IR_VIEW_FAMILIES and str(name) in LEGAL_IR_VIEW_FAMILIES:
             family = str(name)
         weight = _finite_nonnegative(value)
         if family in LEGAL_IR_VIEW_FAMILIES and weight > 0.0:
@@ -1002,14 +954,12 @@ def _selected_contracts(
 ) -> list[LegalIRViewContract]:
     contracts = list(legal_ir_view_contracts())
     raw_atoms = export.get("contract_feature_atoms")
-    has_declared_contracts = isinstance(raw_atoms, Sequence) and not isinstance(
-        raw_atoms, (str, bytes)
-    ) and bool(raw_atoms)
-    atoms = (
-        {_identifier_atom(value) for value in raw_atoms}
-        if has_declared_contracts
-        else set()
+    has_declared_contracts = (
+        isinstance(raw_atoms, Sequence)
+        and not isinstance(raw_atoms, (str, bytes))
+        and bool(raw_atoms)
     )
+    atoms = {_identifier_atom(value) for value in raw_atoms} if has_declared_contracts else set()
     explicitly_selected = [
         contract
         for contract in contracts
@@ -1050,11 +1000,7 @@ def _features_for_contract(
             "semantic_slot",
         }
     )
-    preferred = [
-        dict(item)
-        for item in features
-        if item.get("feature_group") in preferred_groups
-    ]
+    preferred = [dict(item) for item in features if item.get("feature_group") in preferred_groups]
     return preferred[: max(0, int(limit))]
 
 
@@ -1064,16 +1010,14 @@ def _repair_lane_records(
     raw_atoms = export.get("repair_lane_feature_atoms")
     atoms = (
         tuple(_identifier_atom(value) for value in raw_atoms)
-        if isinstance(raw_atoms, Sequence)
-        and not isinstance(raw_atoms, (str, bytes))
+        if isinstance(raw_atoms, Sequence) and not isinstance(raw_atoms, (str, bytes))
         else ()
     )
     matched = [
         lane
         for lane in contract.repair_lanes
         if any(
-            _identifier_atom(lane.lane_id) in atom
-            or _identifier_atom(lane.action) in atom
+            _identifier_atom(lane.lane_id) in atom or _identifier_atom(lane.action) in atom
             for atom in atoms
         )
     ]
@@ -1140,10 +1084,7 @@ def _learned_export_binding(export: Mapping[str, Any]) -> dict[str, Any]:
     payload = _canonical_export_payload(export)
     export_id = str(export.get("export_id") or "")
     artifact_path = str(
-        export.get("artifact_path")
-        or export.get("export_path")
-        or export.get("path")
-        or ""
+        export.get("artifact_path") or export.get("export_path") or export.get("path") or ""
     ).strip()
     stable_features = export.get("stable_features")
     feature_count = (
@@ -1203,9 +1144,7 @@ def _proof_receipts(
             "trusted_proof_receipts",
         ):
             value = export.get(key)
-            if isinstance(value, Sequence) and not isinstance(
-                value, (str, bytes, bytearray)
-            ):
+            if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
                 raw = value
                 break
     if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)):
@@ -1222,9 +1161,9 @@ def _proof_receipts(
         ).strip()
         canonical = _canonical_json_value(item)
         if not receipt_id:
-            receipt_id = "lir-proof-receipt-" + _stable_hash(
-                {"index": index, "receipt": canonical}
-            )[:24]
+            receipt_id = (
+                "lir-proof-receipt-" + _stable_hash({"index": index, "receipt": canonical})[:24]
+            )
         receipts.append(
             {
                 **canonical,
@@ -1292,8 +1231,7 @@ def _causal_evidence_report(
         "metric_lineage_complete": bool(deltas) and canary.fixed_sample_set,
         "proof_receipt_count": len(proof_receipts),
         "view_family_weights": {
-            str(key): round(float(value), 12)
-            for key, value in sorted(family_weights.items())
+            str(key): round(float(value), 12) for key, value in sorted(family_weights.items())
         },
     }
     if overrides:
@@ -1331,10 +1269,7 @@ def _family_metric_mapping(payload: Mapping[str, Any]) -> dict[str, dict[str, fl
         if not isinstance(raw_metrics, Mapping):
             continue
         family = legal_ir_view_family_name(str(raw_family))
-        if (
-            family not in LEGAL_IR_VIEW_FAMILIES
-            and str(raw_family) in LEGAL_IR_VIEW_FAMILIES
-        ):
+        if family not in LEGAL_IR_VIEW_FAMILIES and str(raw_family) in LEGAL_IR_VIEW_FAMILIES:
             family = str(raw_family)
         if family not in LEGAL_IR_VIEW_FAMILIES:
             continue
@@ -1368,9 +1303,7 @@ def _flatten_ablation_metrics(payload: Mapping[str, Any]) -> dict[str, float]:
         nested = payload.get(key)
         if isinstance(nested, Mapping):
             if all(isinstance(value, Mapping) for value in nested.values()):
-                candidates.extend(
-                    value for value in nested.values() if isinstance(value, Mapping)
-                )
+                candidates.extend(value for value in nested.values() if isinstance(value, Mapping))
             else:
                 candidates.append(nested)
             break
@@ -1387,11 +1320,7 @@ def _flatten_ablation_metrics(payload: Mapping[str, Any]) -> dict[str, float]:
             number = _finite_float(raw_value)
             if number is not None:
                 values.setdefault(name, []).append(number)
-    return {
-        name: sum(items) / len(items)
-        for name, items in sorted(values.items())
-        if items
-    }
+    return {name: sum(items) / len(items) for name, items in sorted(values.items()) if items}
 
 
 def _resolve_fixed_canary_id(
@@ -1399,12 +1328,8 @@ def _resolve_fixed_canary_id(
     candidate: Mapping[str, Any],
     explicit: str,
 ) -> tuple[str, bool]:
-    before_id = str(
-        baseline.get("fixed_canary_id") or baseline.get("canary_id") or ""
-    )
-    after_id = str(
-        candidate.get("fixed_canary_id") or candidate.get("canary_id") or ""
-    )
+    before_id = str(baseline.get("fixed_canary_id") or baseline.get("canary_id") or "")
+    after_id = str(candidate.get("fixed_canary_id") or candidate.get("canary_id") or "")
     canary_id = str(explicit or before_id or after_id)
     identity_matches = bool(canary_id) and all(
         not value or value == canary_id for value in (before_id, after_id)

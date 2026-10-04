@@ -24,6 +24,7 @@ class TestStoreData:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import store_data
+
         result = await store_data(data="hello storage")
         assert isinstance(result, dict)
 
@@ -35,6 +36,7 @@ class TestStoreData:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import store_data
+
         result = await store_data(
             data={"key": "value", "num": 42},
             storage_type="memory",
@@ -50,6 +52,7 @@ class TestStoreData:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import store_data
+
         result = await store_data(
             data="tagged data",
             metadata={"source": "test", "version": 1},
@@ -65,6 +68,7 @@ class TestStoreData:
         THEN the tool raises ValueError (documents the real behavior)
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import store_data
+
         # The tool re-raises ValueError for invalid storage_type
         try:
             result = await store_data(data="test", storage_type="nonexistent_backend")
@@ -85,6 +89,7 @@ class TestRetrieveData:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import retrieve_data
+
         result = await retrieve_data(item_ids=["item_test_001", "item_test_002"])
         assert isinstance(result, dict)
 
@@ -96,6 +101,7 @@ class TestRetrieveData:
         THEN the tool raises ValueError (requires ≥1 item ID)
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import retrieve_data
+
         try:
             result = await retrieve_data(item_ids=[])
             assert isinstance(result, dict)
@@ -110,6 +116,7 @@ class TestRetrieveData:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import retrieve_data
+
         result = await retrieve_data(item_ids=["item_xyz"], include_content=True)
         assert isinstance(result, dict)
 
@@ -125,6 +132,7 @@ class TestManageCollections:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import manage_collections
+
         result = await manage_collections(action="list")
         assert isinstance(result, dict)
 
@@ -136,6 +144,7 @@ class TestManageCollections:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import manage_collections
+
         result = await manage_collections(
             action="create",
             collection_name="test_collection_b2",
@@ -150,6 +159,7 @@ class TestManageCollections:
         THEN the result is a dict with success=False or status='error'
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import manage_collections
+
         result = await manage_collections(action="do_the_impossible")
         assert isinstance(result, dict)
         # Tool returns {'success': False, 'error': ...} for unknown actions
@@ -167,6 +177,7 @@ class TestQueryStorage:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import query_storage
+
         result = await query_storage()
         assert isinstance(result, dict)
 
@@ -178,6 +189,7 @@ class TestQueryStorage:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import query_storage
+
         result = await query_storage(
             collection="test_collection_b2",
             limit=10,

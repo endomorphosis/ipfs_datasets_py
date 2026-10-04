@@ -390,7 +390,7 @@ from ipfs_datasets_py.logic.integration import TDFOLGrammarBridge
 bridge = TDFOLGrammarBridge()
 natural_text = bridge._dcec_to_natural_language(
     dcec_str="(O (agent1 laugh))",
-    style="casual"  # "formal", "casual", or "technical"
+    style="casual",  # "formal", "casual", or "technical"
 )
 print(natural_text)  # "agent1 must laugh"
 ```
@@ -400,11 +400,7 @@ print(natural_text)  # "agent1 must laugh"
 from ipfs_datasets_py.logic.integration import TDFOLCECBridge
 
 bridge = TDFOLCECBridge()
-result = bridge.prove_with_cec(
-    goal=my_formula,
-    axioms=[axiom1, axiom2],
-    timeout_ms=10000
-)
+result = bridge.prove_with_cec(goal=my_formula, axioms=[axiom1, axiom2], timeout_ms=10000)
 
 if result.is_proved():
     print(f"Proved in {result.time_ms}ms with {len(result.proof_steps)} steps")
@@ -415,10 +411,7 @@ if result.is_proved():
 from ipfs_datasets_py.logic.TDFOL import TDFOLProver
 
 prover = TDFOLProver()
-result = prover._modal_tableaux_prove(
-    goal=modal_formula,
-    timeout_ms=5000
-)
+result = prover._modal_tableaux_prove(goal=modal_formula, timeout_ms=5000)
 
 if result.status == ProofStatus.PROVED:
     print("Modal logic proof successful!")

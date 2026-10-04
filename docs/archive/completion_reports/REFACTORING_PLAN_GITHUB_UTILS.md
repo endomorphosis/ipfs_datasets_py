@@ -326,15 +326,18 @@ optimizers/agentic/
 Please update imports:
     from ipfs_datasets_py.utils.github import GitHubClient
 """
+
 import warnings
+
 warnings.warn(
     "utils.github_wrapper is deprecated. Use utils.github instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 from .github import GitHubClient as GitHubCLI
-__all__ = ['GitHubCLI']
+
+__all__ = ["GitHubCLI"]
 ```
 
 #### 2.2 Create Thin Wrappers in .github/scripts
@@ -348,6 +351,7 @@ __all__ = ['GitHubCLI']
 ```python
 #!/usr/bin/env python3
 """Thin wrapper for GitHub API counter - imports from utils."""
+
 import sys
 from pathlib import Path
 
@@ -357,7 +361,7 @@ sys.path.insert(0, str(repo_root))
 
 from ipfs_datasets_py.utils.github import APICounter
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     counter = APICounter()
     counter.run_from_cli(sys.argv[1:])
 ```
@@ -439,19 +443,20 @@ Auto-generate API docs for all new modules.
 from ipfs_datasets_py.utils.cache import UnifiedCache, P2PCache
 
 # Local TTL cache
-cache = UnifiedCache(backend='local', ttl=300)
-cache.set('key', 'value')
-value = cache.get('key')
+cache = UnifiedCache(backend="local", ttl=300)
+cache.set("key", "value")
+value = cache.get("key")
 
 # P2P distributed cache (loads config from .github/p2p-config.yml)
 p2p_cache = P2PCache()
-p2p_cache.broadcast('shared_key', 'shared_value')
-value = p2p_cache.get_from_network('shared_key')
+p2p_cache.broadcast("shared_key", "shared_value")
+value = p2p_cache.get_from_network("shared_key")
 
 # GitHub API-specific cache (loads config from .github/cache-config.yml)
 from ipfs_datasets_py.utils.cache import GitHubCache
+
 gh_cache = GitHubCache()
-gh_cache.cache_response('repos/owner/repo', response, operation_type='get_repo_info')
+gh_cache.cache_response("repos/owner/repo", response, operation_type="get_repo_info")
 ```
 
 ### Unified GitHub Client
@@ -466,7 +471,7 @@ client = GitHubClient()
 repos = client.list_repos()
 
 # Create issue
-issue = client.create_issue(title='Bug found', body='Description')
+issue = client.create_issue(title="Bug found", body="Description")
 
 # Get API statistics
 stats = client.get_api_stats()
@@ -485,16 +490,16 @@ from ipfs_datasets_py.utils.cli_tools import Copilot, Claude, VSCode
 
 # Copilot
 copilot = Copilot()
-suggestion = copilot.suggest('Fix this code')
-explanation = copilot.explain('def func(): pass')
+suggestion = copilot.suggest("Fix this code")
+explanation = copilot.explain("def func(): pass")
 
 # Claude (same interface)
 claude = Claude()
-response = claude.query('Explain this concept')
+response = claude.query("Explain this concept")
 
 # VSCode (same interface)
 vscode = VSCode()
-result = vscode.execute(['code', '--list-extensions'])
+result = vscode.execute(["code", "--list-extensions"])
 ```
 
 ### Thin Wrapper in .github/scripts
@@ -512,7 +517,7 @@ sys.path.insert(0, str(repo_root))
 
 from ipfs_datasets_py.utils.github import APICounter
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     counter = APICounter()
     counter.run_gh_command(sys.argv[1:])
     counter.save_metrics()
@@ -556,16 +561,17 @@ New import:
 """
 
 import warnings
+
 warnings.warn(
     "utils.github_wrapper is deprecated. Use utils.github.GitHubClient instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Backward compatible re-export
 from .github import GitHubClient as GitHubCLI
 
-__all__ = ['GitHubCLI']
+__all__ = ["GitHubCLI"]
 ```
 
 ### Migration Steps for Users

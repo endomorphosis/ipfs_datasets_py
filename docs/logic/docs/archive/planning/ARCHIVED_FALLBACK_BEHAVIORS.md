@@ -42,10 +42,13 @@ When SymbolicAI is not installed:
    # Automatically defined when SymbolicAI missing
    class Symbol:
        """Mock Symbol class for fallback."""
+
        pass
-   
+
+
    class Primitive:
        """Mock Primitive class for fallback."""
+
        pass
    ```
 
@@ -268,9 +271,7 @@ result1 = converter.convert("All birds can fly")
 # Both spaCy and regex handle this well
 
 # Complex sentence - spaCy better
-result2 = converter.convert(
-    "Professors who teach courses that students attend are educators"
-)
+result2 = converter.convert("Professors who teach courses that students attend are educators")
 # With spaCy: Correctly parses nested structure
 # Without spaCy: May miss some relations
 
@@ -592,17 +593,21 @@ import sys
 
 # Temporarily block import
 import builtins
+
 real_import = builtins.__import__
 
+
 def mock_import(name, *args, **kwargs):
-    if name == 'symbolicai':
+    if name == "symbolicai":
         raise ImportError("Simulating missing SymbolicAI")
     return real_import(name, *args, **kwargs)
+
 
 builtins.__import__ = mock_import
 
 # Now test fallback
 from ipfs_datasets_py.logic.fol import FOLConverter
+
 converter = FOLConverter()  # Will use fallback
 
 # Restore
@@ -698,6 +703,7 @@ The logic module uses **110+ ImportError handlers** across **54 files** for grac
 try:
     from beartype import beartype  # type: ignore
 except ImportError:  # pragma: no cover
+
     def beartype(func):  # type: ignore
         """Fallback when beartype not installed."""
         return func
@@ -710,13 +716,15 @@ except ImportError:  # pragma: no cover
 ```python
 try:
     from symai import Expression
+
     SYMBOLICAI_AVAILABLE = True
 except ImportError:
     SYMBOLICAI_AVAILABLE = False
     logger.warning("SymbolicAI not available, using fallback implementation")
-    
+
     class Expression:
         """Mock for development without SymbolicAI."""
+
         pass
 ```
 **Usage:** 15+ files  
@@ -727,6 +735,7 @@ except ImportError:
 ```python
 try:
     import spacy
+
     NLP_AVAILABLE = True
 except ImportError:
     NLP_AVAILABLE = False

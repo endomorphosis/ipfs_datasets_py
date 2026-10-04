@@ -55,11 +55,7 @@ This document outlines a comprehensive plan to enhance the MCP finance dashboard
     "close": 151.00,
     "volume": 1000000,
     "adjusted_close": 151.00,
-    "metadata": {
-        "splits": [],
-        "dividends": [],
-        "corporate_actions": []
-    }
+    "metadata": {"splits": [], "dividends": [], "corporate_actions": []},
 }
 ```
 
@@ -142,18 +138,18 @@ NEWS_SOURCES = {
     "ap_news": {
         "url": "https://apnews.com/hub/financial-markets",
         "archive_fallback": "https://web.archive.org/web/*/apnews.com/*",
-        "scraper_type": "rss_feed"
+        "scraper_type": "rss_feed",
     },
     "reuters": {
         "url": "https://www.reuters.com/finance/",
         "archive_fallback": "https://web.archive.org/web/*/reuters.com/*",
-        "scraper_type": "html_parser"
+        "scraper_type": "html_parser",
     },
     "bloomberg": {
         "url": "https://www.bloomberg.com/markets",
         "archive_fallback": "https://web.archive.org/web/*/bloomberg.com/*",
-        "scraper_type": "selenium_js"
-    }
+        "scraper_type": "selenium_js",
+    },
 }
 ```
 
@@ -176,16 +172,11 @@ NEWS_SOURCES = {
     "entities_mentioned": {
         "companies": ["AAPL", "MSFT"],
         "people": ["CEO Name"],
-        "events": ["merger", "earnings"]
+        "events": ["merger", "earnings"],
     },
-    "sentiment": {
-        "overall": 0.6,
-        "entity_specific": {...}
-    },
-    "archive_urls": [
-        "https://web.archive.org/..."
-    ],
-    "ipfs_cid": "Qm..."
+    "sentiment": {"overall": 0.6, "entity_specific": {...}},
+    "archive_urls": ["https://web.archive.org/..."],
+    "ipfs_cid": "Qm...",
 }
 ```
 
@@ -307,37 +298,32 @@ class FinancialEntityExtractor:
 ```python
 class FinancialKnowledgeGraph:
     """Build and query temporal knowledge graphs."""
-    
+
     # Node Types
     COMPANY = "company"
     PERSON = "person"
     EVENT = "event"
     FINANCIAL_INSTRUMENT = "instrument"
-    
+
     # Edge Types with Temporal Validity
     edges = {
         ("AAPL", "CEO_OF", "Tim Cook"): {
             "valid_from": "2011-08-24",
             "valid_to": None,
-            "confidence": 1.0
+            "confidence": 1.0,
         },
         ("AAPL", "STOCK_SPLIT", "4:1 Split"): {
             "valid_from": "2020-08-31",
             "valid_to": "2020-08-31",
             "confidence": 1.0,
-            "metadata": {
-                "split_ratio": 4,
-                "pre_split_price": 499.23,
-                "post_split_price": 124.81
-            }
-        }
+            "metadata": {"split_ratio": 4, "pre_split_price": 499.23, "post_split_price": 124.81},
+        },
     }
-    
-    def add_temporal_fact(self, subject, predicate, object, 
-                          valid_from, valid_to, confidence):
+
+    def add_temporal_fact(self, subject, predicate, object, valid_from, valid_to, confidence):
         """Add fact with temporal validity."""
         pass
-    
+
     def query_at_time(self, time, entity):
         """Query graph state at specific time."""
         pass
@@ -359,13 +345,13 @@ class FinancialTheorems:
     """
     Define financial rules as temporal deontic logic theorems.
     """
-    
+
     STOCK_SPLIT_THEOREM = {
         "name": "stock_split_price_adjustment",
         "formula": """
         ∀s,t,r: (StockSplit(s, t, r) → 
             O(AdjustPrice(s, t, Price(s, t-) / r)))
-        
+
         Translation: If stock s has a split at time t with ratio r,
         then it is OBLIGATORY to adjust the price to the pre-split 
         price divided by the split ratio.
@@ -374,36 +360,36 @@ class FinancialTheorems:
         "applicability_conditions": [
             "has_corporate_action",
             "action_type == 'split'",
-            "valid_split_ratio"
-        ]
+            "valid_split_ratio",
+        ],
     }
-    
+
     MERGER_THEOREM = {
         "name": "merger_price_convergence",
         "formula": """
         ∀a,b,t,p: (Merger(a, b, t, premium=p) →
             P(Price(b, t+) ≈ Price(a, t) × ExchangeRatio(a, b, t)))
-        
+
         Translation: If company a acquires company b at time t with 
         exchange ratio, then it is PERMITTED that the price of b's 
         stock converges to a's price times the exchange ratio.
         """,
         "fuzzy_logic": {
             "convergence_threshold": 0.02,  # 2% tolerance
-            "time_window": "30 days"
-        }
+            "time_window": "30 days",
+        },
     }
-    
+
     DIVIDEND_THEOREM = {
         "name": "ex_dividend_price_adjustment",
         "formula": """
         ∀s,t,d: (ExDividendDate(s, t) ∧ DividendAmount(s, d) →
             O(Price(s, t) ≈ Price(s, t-) - d))
-        
+
         Translation: On ex-dividend date t for stock s with dividend d,
         the opening price OUGHT to be approximately the previous close 
         minus the dividend amount.
-        """
+        """,
     }
 ```
 
@@ -416,16 +402,16 @@ class FinancialFuzzyLogicEngine:
     """
     Apply fuzzy logic to financial theorems for soft constraints.
     """
-    
+
     def evaluate_theorem(self, theorem, market_data, threshold=0.7):
         """
         Evaluate theorem with fuzzy logic.
-        
+
         Returns confidence score [0, 1] indicating how well the
         market data matches the expected behavior.
         """
         pass
-    
+
     def membership_functions(self):
         """
         Define membership functions for fuzzy sets:
@@ -434,12 +420,12 @@ class FinancialFuzzyLogicEngine:
         - Volatility_Low(threshold)
         """
         pass
-    
+
     def fuzzy_rules(self):
         """
-        IF price_change is LARGE AND volume is HIGH 
+        IF price_change is LARGE AND volume is HIGH
         THEN confidence is VERY_HIGH
-        
+
         IF price_matches_theorem is CLOSE AND time_proximity is NEAR
         THEN theorem_validity is HIGH
         """
@@ -602,59 +588,68 @@ class FinancialCausalChain:
 **Endpoints to Add**:
 ```python
 # Market Data Endpoints
-@app.route('/api/mcp/finance/market_data/<symbol>', methods=['GET'])
+@app.route("/api/mcp/finance/market_data/<symbol>", methods=["GET"])
 def get_market_data(symbol):
     """Get latest market data for symbol."""
     pass
 
-@app.route('/api/mcp/finance/timeseries/<symbol>', methods=['GET'])
+
+@app.route("/api/mcp/finance/timeseries/<symbol>", methods=["GET"])
 def get_timeseries(symbol):
     """Get historical time series data."""
     # Query params: start_date, end_date, interval
     pass
 
+
 # News Endpoints
-@app.route('/api/mcp/finance/news/search', methods=['POST'])
+@app.route("/api/mcp/finance/news/search", methods=["POST"])
 def search_news():
     """Search financial news articles."""
     # Body: query, date_range, sources, entities
     pass
 
-@app.route('/api/mcp/finance/news/article/<article_id>', methods=['GET'])
+
+@app.route("/api/mcp/finance/news/article/<article_id>", methods=["GET"])
 def get_article(article_id):
     """Get specific news article with entities."""
     pass
 
+
 # Knowledge Graph Endpoints
-@app.route('/api/mcp/finance/graph/entity/<entity_id>', methods=['GET'])
+@app.route("/api/mcp/finance/graph/entity/<entity_id>", methods=["GET"])
 def get_entity(entity_id):
     """Get entity details and relationships."""
     pass
 
-@app.route('/api/mcp/finance/graph/query', methods=['POST'])
+
+@app.route("/api/mcp/finance/graph/query", methods=["POST"])
 def query_graph():
     """Execute graph query."""
     # Body: cypher-like query language
     pass
 
+
 # Reasoning Endpoints
-@app.route('/api/mcp/finance/reason/chain', methods=['POST'])
+@app.route("/api/mcp/finance/reason/chain", methods=["POST"])
 def build_reasoning_chain():
     """Build causal reasoning chain for event."""
     pass
 
-@app.route('/api/mcp/finance/theorems/apply', methods=['POST'])
+
+@app.route("/api/mcp/finance/theorems/apply", methods=["POST"])
 def apply_theorem():
     """Apply financial theorem to data."""
     pass
 
+
 # Scraper Management
-@app.route('/api/mcp/finance/scrapers/status', methods=['GET'])
+@app.route("/api/mcp/finance/scrapers/status", methods=["GET"])
 def scraper_status():
     """Get status of all scrapers."""
     pass
 
-@app.route('/api/mcp/finance/scrapers/run', methods=['POST'])
+
+@app.route("/api/mcp/finance/scrapers/run", methods=["POST"])
 def run_scraper():
     """Manually trigger scraper."""
     # Body: scraper_type, symbols, date_range
@@ -673,40 +668,49 @@ def test_yahoo_finance_scraper():
     """Test Yahoo Finance data scraping."""
     pass
 
+
 def test_data_validation():
     """Test OHLCV validation logic."""
     pass
 
+
 def test_split_adjustment():
     """Test stock split price adjustment."""
     pass
+
 
 # test_news_scrapers.py
 def test_reuters_scraper():
     """Test Reuters news scraping."""
     pass
 
+
 def test_archive_fallback():
     """Test archive.org fallback mechanism."""
     pass
+
 
 # test_knowledge_graph.py
 def test_entity_extraction():
     """Test entity extraction from news."""
     pass
 
+
 def test_temporal_graph_query():
     """Test temporal knowledge graph queries."""
     pass
+
 
 # test_theorems.py
 def test_stock_split_theorem():
     """Test stock split theorem application."""
     pass
 
+
 def test_fuzzy_logic_evaluation():
     """Test fuzzy logic theorem evaluation."""
     pass
+
 
 def test_causal_chain_building():
     """Test causal reasoning chain construction."""
@@ -728,6 +732,7 @@ def test_full_pipeline():
     7. Query via API
     """
     pass
+
 
 def test_realtime_updates():
     """Test real-time data updates through dashboard."""

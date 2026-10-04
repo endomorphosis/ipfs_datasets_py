@@ -24,7 +24,9 @@ class HuggingFaceBucketError(ValueError):
 
 def _text(value: Any, *, label: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value:
-        raise HuggingFaceBucketError(f"{label} must be a non-empty string without surrounding whitespace")
+        raise HuggingFaceBucketError(
+            f"{label} must be a non-empty string without surrounding whitespace"
+        )
     if "\x00" in value:
         raise HuggingFaceBucketError(f"{label} must not contain NUL")
     return value
@@ -35,7 +37,11 @@ def _path(value: Any, *, label: str = "path") -> str:
     if "\\" in text:
         raise HuggingFaceBucketError(f"{label} must use POSIX separators")
     parsed = PurePosixPath(text)
-    if parsed.is_absolute() or parsed.as_posix() != text or any(part in {"", ".", ".."} for part in parsed.parts):
+    if (
+        parsed.is_absolute()
+        or parsed.as_posix() != text
+        or any(part in {"", ".", ".."} for part in parsed.parts)
+    ):
         raise HuggingFaceBucketError(f"{label} must be a normalized root-relative POSIX path")
     return text
 
@@ -43,7 +49,9 @@ def _path(value: Any, *, label: str = "path") -> str:
 def _sha256(value: Any) -> str:
     text = _text(value, label="sha256")
     if re.fullmatch(r"[0-9a-f]{64}", text) is None:
-        raise HuggingFaceBucketError("sha256 must be a full 64-character lowercase hexadecimal digest")
+        raise HuggingFaceBucketError(
+            "sha256 must be a full 64-character lowercase hexadecimal digest"
+        )
     return text
 
 
@@ -59,7 +67,11 @@ class HuggingFaceBucketObject:
 
     def __post_init__(self) -> None:
         path = _path(self.path)
-        if isinstance(self.size_bytes, bool) or not isinstance(self.size_bytes, int) or self.size_bytes < 0:
+        if (
+            isinstance(self.size_bytes, bool)
+            or not isinstance(self.size_bytes, int)
+            or self.size_bytes < 0
+        ):
             raise HuggingFaceBucketError("size_bytes must be a non-negative integer")
         sha256 = _sha256(self.sha256)
         etag = _text(self.etag, label="etag")
@@ -93,7 +105,9 @@ class HuggingFaceBucketObject:
         for field, names in aliases.items():
             present = [name for name in names if name in value]
             if len(present) != 1:
-                raise HuggingFaceBucketError(f"bucket object must provide exactly one {field} field")
+                raise HuggingFaceBucketError(
+                    f"bucket object must provide exactly one {field} field"
+                )
             normalized[field] = value[present[0]]
         return cls(**normalized)
 
@@ -115,7 +129,9 @@ class HuggingFaceBucketInventory:
         try:
             objects = tuple(sorted(self.objects, key=lambda item: item.path))
         except (AttributeError, TypeError) as exc:
-            raise HuggingFaceBucketError("objects must contain HuggingFaceBucketObject values") from exc
+            raise HuggingFaceBucketError(
+                "objects must contain HuggingFaceBucketObject values"
+            ) from exc
         if any(not isinstance(item, HuggingFaceBucketObject) for item in objects):
             raise HuggingFaceBucketError("objects must contain HuggingFaceBucketObject values")
         paths = [item.path for item in objects]
@@ -224,10 +240,14 @@ class HuggingFaceBucketStore:
             raw_objects = response.get("objects", response.get("items"))
         else:
             raw_objects = response
-        if isinstance(raw_objects, str | bytes | bytearray | Mapping) or not isinstance(raw_objects, Iterable):
+        if isinstance(raw_objects, str | bytes | bytearray | Mapping) or not isinstance(
+            raw_objects, Iterable
+        ):
             raise HuggingFaceBucketError("list_bucket_tree must return an object sequence")
         objects = tuple(
-            item if isinstance(item, HuggingFaceBucketObject) else HuggingFaceBucketObject.from_mapping(item)
+            item
+            if isinstance(item, HuggingFaceBucketObject)
+            else HuggingFaceBucketObject.from_mapping(item)
             for item in raw_objects
         )
         return HuggingFaceBucketInventory(
@@ -274,7 +294,9 @@ class HuggingFaceBucketStore:
             elif result is not None:
                 source = Path(result)
                 if source.is_symlink() or not source.is_file():
-                    raise HuggingFaceBucketError("bucket client returned a path that is not a regular file")
+                    raise HuggingFaceBucketError(
+                        "bucket client returned a path that is not a regular file"
+                    )
                 if source.resolve() != temporary_path.resolve():
                     shutil.copyfile(source, temporary_path)
             self.verify_download(item, temporary_path)

@@ -8,8 +8,11 @@ from os import walk
 import toml
 from typing import Dict, Any, Optional, Union
 
-class config():
-    def __init__(self, collection: Optional[Any] = None, meta: Optional[Dict[str, Any]] = None) -> None:
+
+class config:
+    def __init__(
+        self, collection: Optional[Any] = None, meta: Optional[Dict[str, Any]] = None
+    ) -> None:
         this_dir = os.path.dirname(os.path.realpath(__file__))
         if meta is not None:
             if "config" in meta:
@@ -23,7 +26,9 @@ class config():
                 self.toml_file = os.path.realpath(os.path.join(this_dir, self.toml_file))
             self.baseConfig = self.requireConfig(self.toml_file)
 
-    def overrideToml(self, base: Dict[str, Any], overrides: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+    def overrideToml(
+        self, base: Dict[str, Any], overrides: Union[Dict[str, Any], str]
+    ) -> Dict[str, Any]:
         if not isinstance(overrides, dict):
             if isinstance(overrides, str):
                 if os.path.exists(overrides):
@@ -32,9 +37,9 @@ class config():
                             base[key] = value
                         return base
                 else:
-                    raise Exception('file not found: ' + overrides)
+                    raise Exception("file not found: " + overrides)
             else:
-                raise Exception('invalid override type: ' + str(type(overrides)))
+                raise Exception("invalid override type: " + str(type(overrides)))
         elif isinstance(overrides, dict):
             for item in overrides.items():
                 key = item[0]
@@ -47,12 +52,7 @@ class config():
             return base
 
     def findConfig(self) -> Optional[str]:
-        paths = [
-            './config.toml',
-            '../config.toml',
-            '../config/config.toml',
-            './config/config.toml'
-        ]
+        paths = ["./config.toml", "../config.toml", "../config/config.toml", "./config/config.toml"]
         foundPath = None
 
         for path in paths:
@@ -64,7 +64,9 @@ class config():
         print("foundPath: ", foundPath)
         return foundPath if foundPath != None else None
 
-    def loadConfig(self, configPath: Optional[str], overrides: Optional[Union[Dict[str, Any], str]] = None) -> Dict[str, Any]:
+    def loadConfig(
+        self, configPath: Optional[str], overrides: Optional[Union[Dict[str, Any], str]] = None
+    ) -> Dict[str, Any]:
         if configPath is None and "findConfig" in dir(self):
             configPath = self.findConfig()
         with open(configPath) as f:
@@ -77,21 +79,26 @@ class config():
     def requireConfig(self, opts: Optional[Union[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
         configPath = None
         this_dir = os.path.dirname(os.path.realpath(__file__))
-        this_config = os.path.join(this_dir, 'config.toml')
+        this_config = os.path.join(this_dir, "config.toml")
         if type(opts) == str and os.path.exists(opts) and opts is not None:
             configPath = opts
-        elif  type(opts) == dict and 'config' in opts and os.path.exists(opts['config']) and opts['config'] is not None:
-            configPath = opts['config']
+        elif (
+            type(opts) == dict
+            and "config" in opts
+            and os.path.exists(opts["config"])
+            and opts["config"] is not None
+        ):
+            configPath = opts["config"]
         elif opts is None and "findConfig" in dir(self):
             configPath = self.findConfig()
 
         if not configPath:
-            print('this_dir: ')
+            print("this_dir: ")
             print(this_dir)
-            print('this_config: ')
+            print("this_config: ")
             print(this_config)
-            print('no config file found')
-            print('make sure config.toml is in the working directory')
-            print('or specify path using --config')
+            print("no config file found")
+            print("make sure config.toml is in the working directory")
+            print("or specify path using --config")
             exit(1)
         return self.loadConfig(configPath, opts)

@@ -46,7 +46,9 @@ class LogicREPL(cmd.Cmd):
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import LogicOptimizerCLI
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import (
+            LogicOptimizerCLI,
+        )
 
         self.cli = LogicOptimizerCLI()
         self.session_state: Dict[str, Any] = {

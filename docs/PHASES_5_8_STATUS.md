@@ -281,6 +281,7 @@ Successfully completed Phase 5 (Feature Exposure) of the comprehensive MCP serve
 # MCP Tool (~40 lines)
 async def tool_name(**params):
     from ipfs_datasets_py.core_operations import Module
+
     return await Module().method(**params)
 ```
 

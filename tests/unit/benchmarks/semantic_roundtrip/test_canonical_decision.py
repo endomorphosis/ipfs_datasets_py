@@ -103,16 +103,12 @@ def _reproduction() -> dict[str, Any]:
         "supervisor_commands": [
             {
                 "purpose": "supervisor_plan",
-                "command": (
-                    "PYTHONPATH=. python "
-                    "benchmarks/semantic_roundtrip_scheduler.py plan"
-                ),
+                "command": ("PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py plan"),
             },
             {
                 "purpose": "supervisor_launch",
                 "command": (
-                    "PYTHONPATH=. python "
-                    "benchmarks/semantic_roundtrip_scheduler.py launch"
+                    "PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py launch"
                 ),
             },
         ],
@@ -176,15 +172,11 @@ def _selected_fixture(root: Path) -> dict[str, Any]:
             "schema_version": PARITY_POLICY_SCHEMA,
             "metric": "end_to_end_loss",
             "comparison": "canonical_minus_selected",
-            "decision_rule": (
-                "upper_confidence_bound_lte_noninferiority_margin"
-            ),
+            "decision_rule": ("upper_confidence_bound_lte_noninferiority_margin"),
             "confidence_level": 0.95,
             "bootstrap_method": "seeded_percentile_case_cluster_bootstrap",
             "bootstrap_samples": 10_000,
-            "resampling_unit": (
-                "case_after_within_case_repeat_aggregation"
-            ),
+            "resampling_unit": ("case_after_within_case_repeat_aggregation"),
             "noninferiority_margin": 0.03,
             "frozen_from_report_cid": composition["report_cid"],
         },
@@ -241,9 +233,7 @@ def _selected_fixture(root: Path) -> dict[str, Any]:
                     "method": "seeded_percentile_case_cluster_bootstrap",
                     "confidence_level": 0.95,
                     "bootstrap_samples": 10_000,
-                    "resampling_unit": (
-                        "case_after_within_case_repeat_aggregation"
-                    ),
+                    "resampling_unit": ("case_after_within_case_repeat_aggregation"),
                     "low": 0.0,
                     "high": 0.02,
                 },
@@ -253,12 +243,8 @@ def _selected_fixture(root: Path) -> dict[str, Any]:
             "structural_checks": {
                 tool_id: {
                     "applicable": tool_id != "lean",
-                    "status": (
-                        "passed" if tool_id != "lean" else "not_applicable"
-                    ),
-                    "reason": (
-                        "checked" if tool_id != "lean" else "no Lean obligation"
-                    ),
+                    "status": ("passed" if tool_id != "lean" else "not_applicable"),
+                    "reason": ("checked" if tool_id != "lean" else "no Lean obligation"),
                 }
                 for tool_id in ("hammer", "cvc5", "lean")
             },
@@ -374,17 +360,13 @@ def test_selected_decision_rejects_parity_margin_drift(
     tmp_path: Path,
 ) -> None:
     decision = _selected_fixture(tmp_path)
-    parity_path = (
-        tmp_path / CANONICAL_ARTIFACT_PATHS["parity_report"]
-    )
+    parity_path = tmp_path / CANONICAL_ARTIFACT_PATHS["parity_report"]
     parity = json.loads(parity_path.read_bytes())
     parity["comparison"]["noninferiority_margin"] = 0.04
     parity.pop("report_cid")
     parity["report_cid"] = cid_for_dag_json(parity)
     parity_path.write_bytes(canonical_dag_json_bytes(parity) + b"\n")
-    decision["artifacts"]["parity_report"]["raw_cid"] = cid_for_bytes(
-        parity_path.read_bytes()
-    )
+    decision["artifacts"]["parity_report"]["raw_cid"] = cid_for_bytes(parity_path.read_bytes())
     decision["parity"]["report_cid"] = parity["report_cid"]
     decision.pop("decision_cid")
     decision["decision_cid"] = cid_for_dag_json(decision)
@@ -439,9 +421,7 @@ def test_nonselectable_srt014_outcome_requires_declined_decision(
         CANONICAL_ARTIFACT_PATHS["composition_report"],
         canonical_dag_json_bytes(composition) + b"\n",
     )
-    artifacts: dict[str, object] = {
-        name: None for name in CANONICAL_ARTIFACT_PATHS
-    }
+    artifacts: dict[str, object] = {name: None for name in CANONICAL_ARTIFACT_PATHS}
     artifacts["composition_report"] = {
         "path": CANONICAL_ARTIFACT_PATHS["composition_report"],
         "raw_cid": cid_for_bytes(composition_path.read_bytes()),

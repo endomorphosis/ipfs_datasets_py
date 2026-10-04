@@ -8,6 +8,7 @@ including parsing, proving, and conversion tools.
 
 Test format follows GIVEN-WHEN-THEN pattern as per docs/_example_test_format.md
 """
+
 import pytest
 from typing import Dict, Any
 
@@ -26,17 +27,13 @@ async def test_parse_symbolic_formula():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_parse_tool import TDFOLParseTool
-    
+
     tool = TDFOLParseTool()
     formula = "∀x.(P(x) → Q(x))"
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "format": "symbolic",
-        "validate": True
-    })
-    
+    result = await tool.execute({"formula": formula, "format": "symbolic", "validate": True})
+
     # THEN
     assert result["success"] is True
     assert "parsed_formula" in result
@@ -53,22 +50,24 @@ async def test_parse_natural_language():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_parse_tool import TDFOLParseTool
-    
+
     tool = TDFOLParseTool()
     text = "All contractors must submit reports."
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": text,
-        "format": "natural_language",
-        "min_confidence": 0.3  # Lower threshold for test
-    })
-    
+    result = await tool.execute(
+        {
+            "formula": text,
+            "format": "natural_language",
+            "min_confidence": 0.3,  # Lower threshold for test
+        }
+    )
+
     # THEN
     # Note: This may fail if NL dependencies not installed, which is acceptable
     if "error" in result and "not available" in result["error"]:
         pytest.skip("NL parser dependencies not installed")
-    
+
     assert "success" in result
     assert result["format_detected"] == "natural_language"
 
@@ -82,16 +81,13 @@ async def test_parse_auto_detect_symbolic():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_parse_tool import TDFOLParseTool
-    
+
     tool = TDFOLParseTool()
     formula = "∀x.(Contractor(x) → O(Pay(x)))"
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "format": "auto"
-    })
-    
+    result = await tool.execute({"formula": formula, "format": "auto"})
+
     # THEN
     assert "format_detected" in result
     assert result["format_detected"] == "symbolic"
@@ -111,17 +107,13 @@ async def test_prove_simple_formula():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLProveTool
-    
+
     tool = TDFOLProveTool()
     formula = "P(x) → P(x)"  # Simple tautology with variable
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "strategy": "auto",
-        "timeout_ms": 5000
-    })
-    
+    result = await tool.execute({"formula": formula, "strategy": "auto", "timeout_ms": 5000})
+
     # THEN
     assert result["success"] is True
     assert "proved" in result
@@ -137,20 +129,22 @@ async def test_prove_with_axioms():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLProveTool
-    
+
     tool = TDFOLProveTool()
     formula = "P(a)"
     axioms = ["P(a)"]  # Simple axiom: P(a) proves P(a) directly
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "axioms": axioms,
-        "strategy": "auto",
-        "include_proof_steps": True,
-        "timeout_ms": 3000
-    })
-    
+    result = await tool.execute(
+        {
+            "formula": formula,
+            "axioms": axioms,
+            "strategy": "auto",
+            "include_proof_steps": True,
+            "timeout_ms": 3000,
+        }
+    )
+
     # THEN
     assert result["success"] is True
     assert "proved" in result
@@ -165,21 +159,15 @@ async def test_batch_prove_multiple_formulas():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLBatchProveTool
-    
+
     tool = TDFOLBatchProveTool()
-    formulas = [
-        "P() → P()",
-        "Q() → Q()",
-        "R() → R()"
-    ]
-    
+    formulas = ["P() → P()", "Q() → Q()", "R() → R()"]
+
     # WHEN
-    result = await tool.execute({
-        "formulas": formulas,
-        "strategy": "auto",
-        "timeout_per_formula_ms": 3000
-    })
-    
+    result = await tool.execute(
+        {"formulas": formulas, "strategy": "auto", "timeout_per_formula_ms": 3000}
+    )
+
     # THEN
     assert result["success"] is True
     assert "results" in result
@@ -196,17 +184,19 @@ async def test_prove_with_timeout():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLProveTool
-    
+
     tool = TDFOLProveTool()
     formula = "∀x.∀y.(P(x) → Q(y))"  # Simpler nested quantifiers
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "timeout_ms": 100,  # Very short timeout
-        "strategy": "auto"
-    })
-    
+    result = await tool.execute(
+        {
+            "formula": formula,
+            "timeout_ms": 100,  # Very short timeout
+            "strategy": "auto",
+        }
+    )
+
     # THEN
     assert result["success"] is True
     assert "status" in result
@@ -227,17 +217,15 @@ async def test_convert_tdfol_to_fol():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_convert_tool import TDFOLConvertTool
-    
+
     tool = TDFOLConvertTool()
     formula = "∀x.(P(x) → Q(x))"
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "source_format": "tdfol",
-        "target_format": "fol"
-    })
-    
+    result = await tool.execute(
+        {"formula": formula, "source_format": "tdfol", "target_format": "fol"}
+    )
+
     # THEN
     assert result["success"] is True
     assert "converted_formula" in result
@@ -254,17 +242,15 @@ async def test_convert_tdfol_to_dcec():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_convert_tool import TDFOLConvertTool
-    
+
     tool = TDFOLConvertTool()
     formula = "O(PayTaxes)"  # Deontic obligation without nested predicate
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "source_format": "tdfol",
-        "target_format": "dcec"
-    })
-    
+    result = await tool.execute(
+        {"formula": formula, "source_format": "tdfol", "target_format": "dcec"}
+    )
+
     # THEN
     assert result["success"] is True
     assert "converted_formula" in result
@@ -280,17 +266,15 @@ async def test_convert_with_metadata():
     """
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_convert_tool import TDFOLConvertTool
-    
+
     tool = TDFOLConvertTool()
     formula = "∀x.(P(x) → Q(x))"
-    
+
     # WHEN
-    result = await tool.execute({
-        "formula": formula,
-        "target_format": "fol",
-        "include_metadata": True
-    })
-    
+    result = await tool.execute(
+        {"formula": formula, "target_format": "fol", "include_metadata": True}
+    )
+
     # THEN
     assert result["success"] is True
     if "metadata" in result:
@@ -313,23 +297,17 @@ async def test_parse_and_prove_integration():
     # GIVEN
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_parse_tool import TDFOLParseTool
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLProveTool
-    
+
     parse_tool = TDFOLParseTool()
     prove_tool = TDFOLProveTool()
     formula = "P() → P()"
-    
+
     # WHEN
-    parse_result = await parse_tool.execute({
-        "formula": formula,
-        "format": "symbolic"
-    })
-    
+    parse_result = await parse_tool.execute({"formula": formula, "format": "symbolic"})
+
     if parse_result.get("success"):
-        prove_result = await prove_tool.execute({
-            "formula": formula,
-            "strategy": "auto"
-        })
-        
+        prove_result = await prove_tool.execute({"formula": formula, "strategy": "auto"})
+
         # THEN
         assert prove_result["success"] is True
 

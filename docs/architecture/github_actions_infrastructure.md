@@ -124,7 +124,7 @@ should_skip, cached_result = cache.should_skip_scan(
     repo="owner/repo",
     commit_sha="abc123",
     scan_config={"queries": "security-extended"},
-    changed_files=["src/main.py"]
+    changed_files=["src/main.py"],
 )
 
 if not should_skip:
@@ -134,7 +134,7 @@ if not should_skip:
         commit_sha="abc123",
         scan_config={"queries": "security-extended"},
         results=sarif_results,
-        scan_duration=300.0
+        scan_duration=300.0,
     )
 ```
 
@@ -161,14 +161,11 @@ manager.store_credential(
     value="secret_value",
     scope=CredentialScope.REPO,
     scope_filter="owner/repo",
-    ttl_hours=24
+    ttl_hours=24,
 )
 
 # Retrieve credential
-value = manager.get_credential(
-    "API_KEY",
-    repo="owner/repo"
-)
+value = manager.get_credential("API_KEY", repo="owner/repo")
 ```
 
 #### 3. `ipfs_datasets_py/cache.py` (Enhanced)
@@ -532,17 +529,20 @@ With proper configuration, expect:
 ```python
 # GitHub API Cache
 from ipfs_datasets_py.caching.cache import get_global_cache
+
 stats = get_global_cache().get_stats()
 print(f"Hit rate: {stats['hit_rate']:.1%}")
 print(f"API calls saved: {stats['api_calls_saved']}")
 
 # CodeQL Cache
 from ipfs_datasets_py.codeql_cache import get_global_codeql_cache
+
 stats = get_global_codeql_cache().get_stats()
 print(f"Time saved: {stats['scan_time_saved_hours']:.1f} hours")
 
 # Credentials
 from ipfs_datasets_py.credential_manager import get_global_credential_manager
+
 stats = get_global_credential_manager().get_stats()
 print(f"Active credentials: {stats['active_credentials']}")
 ```

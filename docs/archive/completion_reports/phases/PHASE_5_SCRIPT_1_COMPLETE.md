@@ -45,9 +45,9 @@ Successfully refactored **github_api_dashboard.py**, the first of 5 high-priorit
 ```python
 from ipfs_datasets_py.utils.workflows import DashboardGenerator
 
-generator = DashboardGenerator(repo='owner/repo')
-generator.load_all_metrics(metrics_dir=Path('/tmp'))
-report = generator.generate_report(format='html')
+generator = DashboardGenerator(repo="owner/repo")
+generator.load_all_metrics(metrics_dir=Path("/tmp"))
+report = generator.generate_report(format="html")
 ```
 
 #### .github/scripts/github_api_dashboard_refactored.py (116 lines)

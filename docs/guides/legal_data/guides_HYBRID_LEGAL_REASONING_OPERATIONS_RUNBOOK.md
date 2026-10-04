@@ -81,16 +81,22 @@ PYTHONPATH=ipfs_datasets_py python -m pytest ipfs_datasets_py/tests/reasoner/tes
 
 ```python
 import sys
-sys.path.insert(0, 'ipfs_datasets_py/processors/legal_data')
-from reasoner.hybrid_v2_blueprint import parse_cnl_to_ir, compile_ir_to_dcec, check_compliance, clear_v2_proof_store
+
+sys.path.insert(0, "ipfs_datasets_py/processors/legal_data")
+from reasoner.hybrid_v2_blueprint import (
+    parse_cnl_to_ir,
+    compile_ir_to_dcec,
+    check_compliance,
+    clear_v2_proof_store,
+)
 
 clear_v2_proof_store()
-ir = parse_cnl_to_ir('Contractor shall submit the report within 30 days')
+ir = parse_cnl_to_ir("Contractor shall submit the report within 30 days")
 dcec = compile_ir_to_dcec(ir)
-assert 'O(' in dcec[-1]   # deontic operator wraps FrameRef
-result = check_compliance({'ir': ir, 'facts': {}, 'events': []}, {})
-assert result['status'] == 'non_compliant'  # obligation not met
-print('Smoke test passed. Violations:', result['violations'])
+assert "O(" in dcec[-1]  # deontic operator wraps FrameRef
+result = check_compliance({"ir": ir, "facts": {}, "events": []}, {})
+assert result["status"] == "non_compliant"  # obligation not met
+print("Smoke test passed. Violations:", result["violations"])
 ```
 
 ## Debugging Test Failures

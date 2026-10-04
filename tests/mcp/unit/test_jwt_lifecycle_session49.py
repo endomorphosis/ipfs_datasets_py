@@ -20,23 +20,31 @@ import pytest
 # Stub heavy optional deps before importing enterprise_api
 # ---------------------------------------------------------------------------
 
+
 def _install_stubs():
     """Install sys.modules stubs for uninstalled optional dependencies."""
     stubs = {
         "ipfs_datasets_py.processors": types.ModuleType("ipfs_datasets_py.processors"),
-        "ipfs_datasets_py.processors.graphrag": types.ModuleType("ipfs_datasets_py.processors.graphrag"),
+        "ipfs_datasets_py.processors.graphrag": types.ModuleType(
+            "ipfs_datasets_py.processors.graphrag"
+        ),
         "ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag": types.ModuleType(
             "ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag"
         ),
     }
     # Add minimal class stubs expected by enterprise_api at module level
     rag_mod = stubs["ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag"]
-    for cls_name in ("CompleteGraphRAGSystem", "CompleteProcessingConfiguration", "CompleteProcessingResult"):
+    for cls_name in (
+        "CompleteGraphRAGSystem",
+        "CompleteProcessingConfiguration",
+        "CompleteProcessingResult",
+    ):
         setattr(rag_mod, cls_name, type(cls_name, (), {}))
 
     for key, mod in stubs.items():
         if key not in sys.modules:
             sys.modules[key] = mod
+
 
 _install_stubs()
 
@@ -48,17 +56,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 try:
     from ipfs_datasets_py.mcp_server.enterprise_api import AuthenticationManager
+
     IMPORT_OK = True
 except Exception as _e:
     IMPORT_OK = False
     _IMPORT_ERROR = str(_e)
 
-pytestmark = pytest.mark.skipif(not IMPORT_OK, reason=f"enterprise_api not importable: {_IMPORT_ERROR if not IMPORT_OK else ''}")
+pytestmark = pytest.mark.skipif(
+    not IMPORT_OK, reason=f"enterprise_api not importable: {_IMPORT_ERROR if not IMPORT_OK else ''}"
+)
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def auth():
@@ -69,6 +81,7 @@ def auth():
 # ---------------------------------------------------------------------------
 # revoke_token
 # ---------------------------------------------------------------------------
+
 
 class TestRevokeToken:
     def test_revoke_valid_token_returns_true(self, auth):
@@ -85,19 +98,19 @@ class TestRevokeToken:
         """Expired tokens can still be explicitly revoked (exp not enforced)."""
         from datetime import datetime, timedelta
         import jwt as pyjwt
+
         expired_payload = {
             "sub": "demo",
             "exp": datetime.utcnow() - timedelta(hours=1),
         }
-        expired_token = pyjwt.encode(
-            expired_payload, auth.secret_key, algorithm=auth.algorithm
-        )
+        expired_token = pyjwt.encode(expired_payload, auth.secret_key, algorithm=auth.algorithm)
         # Should succeed because revoke_token skips expiry verification
         assert auth.revoke_token(expired_token) is True
 
     def test_revoke_token_with_wrong_key_returns_false(self, auth):
         import jwt as pyjwt
         from datetime import datetime, timedelta
+
         payload = {"sub": "demo", "exp": datetime.utcnow() + timedelta(hours=1)}
         token_wrong_key = pyjwt.encode(payload, "other-secret", algorithm="HS256")
         # auth uses "test-secret-key-for-pytest" — different key → decode fails
@@ -120,6 +133,7 @@ class TestRevokeToken:
 # ---------------------------------------------------------------------------
 # is_token_revoked
 # ---------------------------------------------------------------------------
+
 
 class TestIsTokenRevoked:
     def test_fresh_token_not_revoked(self, auth):
@@ -146,6 +160,7 @@ class TestIsTokenRevoked:
             # Add a distinguishing claim so tokens are unique even if issued quickly
             import jwt as pyjwt
             from datetime import datetime, timedelta
+
             payload = {
                 "sub": username,
                 "exp": datetime.utcnow() + timedelta(minutes=30),
@@ -159,6 +174,7 @@ class TestIsTokenRevoked:
 # ---------------------------------------------------------------------------
 # verify_token respects revocation
 # ---------------------------------------------------------------------------
+
 
 class TestVerifyTokenRevocation:
     def test_verify_returns_user_data_before_revoke(self, auth):
@@ -179,6 +195,7 @@ class TestVerifyTokenRevocation:
         """Token for a user not in users_db returns None."""
         import jwt as pyjwt
         from datetime import datetime, timedelta
+
         payload = {"sub": "ghost_user", "exp": datetime.utcnow() + timedelta(hours=1)}
         token = pyjwt.encode(payload, auth.secret_key, algorithm=auth.algorithm)
         assert auth.verify_token(token) is None
@@ -187,6 +204,7 @@ class TestVerifyTokenRevocation:
 # ---------------------------------------------------------------------------
 # authenticate() respects revocation
 # ---------------------------------------------------------------------------
+
 
 class TestAuthenticateRevocation:
     def _run(self, coro):
@@ -199,6 +217,7 @@ class TestAuthenticateRevocation:
 
     def test_authenticate_revoked_token_raises_401(self, auth):
         from fastapi import HTTPException
+
         token = auth.create_access_token("demo")
         auth.revoke_token(token)
         with pytest.raises(HTTPException) as exc_info:
@@ -208,12 +227,14 @@ class TestAuthenticateRevocation:
 
     def test_authenticate_invalid_token_raises_401(self, auth):
         from fastapi import HTTPException
+
         with pytest.raises(HTTPException) as exc_info:
             self._run(auth.authenticate("bad.token"))
         assert exc_info.value.status_code == 401
 
     def test_authenticate_inactive_user_raises_401(self, auth):
         from fastapi import HTTPException
+
         # Mark demo as inactive
         auth.users_db["demo"].is_active = False
         token = auth.create_access_token("demo")
@@ -227,6 +248,7 @@ class TestAuthenticateRevocation:
         from fastapi import HTTPException
         import jwt as pyjwt
         from datetime import datetime, timedelta
+
         payload = {"exp": datetime.utcnow() + timedelta(hours=1)}  # no "sub"
         token = pyjwt.encode(payload, auth.secret_key, algorithm=auth.algorithm)
         with pytest.raises(HTTPException) as exc_info:
@@ -237,6 +259,7 @@ class TestAuthenticateRevocation:
 # ---------------------------------------------------------------------------
 # Full lifecycle scenario
 # ---------------------------------------------------------------------------
+
 
 class TestJWTLifecycleScenario:
     def _run(self, coro):
@@ -274,6 +297,7 @@ class TestJWTLifecycleScenario:
         """Revoking one token does not affect others."""
         import jwt as pyjwt
         from datetime import datetime, timedelta
+
         # Use jti claim to ensure tokens are distinct even if issued at the same second
         tokens = []
         for i in range(3):

@@ -106,9 +106,7 @@ def test_interface_and_schema_are_frozen() -> None:
         "legal_doc_1",
         "construction_contract",
     }
-    assert set(PILOT_CASE_IDS) == set(NONZERO_PILOT_CASE_IDS) | {
-        ZERO_RESIDUAL_CONTROL_CASE_ID
-    }
+    assert set(PILOT_CASE_IDS) == set(NONZERO_PILOT_CASE_IDS) | {ZERO_RESIDUAL_CONTROL_CASE_ID}
     assert BASELINE_ARM_ID.startswith("typed_deontic__")
 
 
@@ -179,10 +177,7 @@ def test_missing_rule_residual_uses_missing_trigger() -> None:
     facets = compute_facet_residuals("missing_case", gold, candidate)
     missing = [facet for facet in facets if facet.residual_kind == "missing_rule"]
     assert missing
-    assert all(
-        facet.suggested_trigger_kind == RepairTriggerKind.MISSING.value
-        for facet in missing
-    )
+    assert all(facet.suggested_trigger_kind == RepairTriggerKind.MISSING.value for facet in missing)
     assert any(facet.field_path.startswith("rules[") for facet in missing)
 
 
@@ -233,18 +228,12 @@ def test_aggregate_residuals_by_case_field_and_trigger() -> None:
     assert aggregates["nonzero_case_ids"] == ["exec_order_1"]
     assert aggregates["zero_control_residual_count"] == 0
     assert aggregates["total_residual_count"] == nonzero.residual_count
-    assert aggregates["by_case"]["exec_order_1"]["residual_count"] == (
-        nonzero.residual_count
-    )
-    assert set(aggregates["by_case"]["exec_order_1"]["field_paths"]) == set(
-        nonzero.field_paths
-    )
+    assert aggregates["by_case"]["exec_order_1"]["residual_count"] == (nonzero.residual_count)
+    assert set(aggregates["by_case"]["exec_order_1"]["field_paths"]) == set(nonzero.field_paths)
     assert "temporal" in aggregates["by_canonical_field"]
     assert "conditions" in aggregates["by_canonical_field"]
     assert aggregates["by_suggested_trigger_kind"]
-    assert aggregates["sum_forward_loss"] == round(
-        control.forward_loss + nonzero.forward_loss, 9
-    )
+    assert aggregates["sum_forward_loss"] == round(control.forward_loss + nonzero.forward_loss, 9)
 
 
 def test_residual_facet_and_case_round_trip_parse() -> None:
@@ -272,14 +261,13 @@ def test_checked_in_catalog_parses_and_covers_pilots() -> None:
     assert catalog["interface"] == PLATEAU_RESIDUAL_CATALOG_INTERFACE
     assert catalog["schema_version"] == PLATEAU_RESIDUAL_CATALOG_SCHEMA
     assert catalog["baseline"]["arm_id"] == BASELINE_ARM_ID
-    assert catalog["zero_residual_control_case_id"] == (
-        ZERO_RESIDUAL_CONTROL_CASE_ID
-    )
+    assert catalog["zero_residual_control_case_id"] == (ZERO_RESIDUAL_CONTROL_CASE_ID)
     assert catalog["pilot_case_ids"] == list(PILOT_CASE_IDS)
     assert catalog["nonzero_pilot_case_ids"] == list(NONZERO_PILOT_CASE_IDS)
 
     cases = {
-        item["case_id"]: item for item in catalog["cases"]  # type: ignore[index]
+        item["case_id"]: item
+        for item in catalog["cases"]  # type: ignore[index]
     }
     assert set(cases) == set(PILOT_CASE_IDS)
 
@@ -323,16 +311,15 @@ def test_checked_in_catalog_parses_and_covers_pilots() -> None:
     assert aggregates["total_residual_count"] == len(catalog["residuals"])
     assert set(aggregates["nonzero_case_ids"]) == set(NONZERO_PILOT_CASE_IDS)
 
-    cid_payload = {
-        key: value for key, value in catalog.items() if key != "catalog_cid"
-    }
+    cid_payload = {key: value for key, value in catalog.items() if key != "catalog_cid"}
     assert catalog["catalog_cid"] == cid_for_dag_json(cid_payload)
 
 
 def test_checked_in_catalog_aggregates_match_recompute() -> None:
     catalog = load_plateau_residual_catalog(CATALOG_PATH, repo_root=ROOT)
     records = [
-        CaseResidualRecord.from_dict(item) for item in catalog["cases"]  # type: ignore[index]
+        CaseResidualRecord.from_dict(item)
+        for item in catalog["cases"]  # type: ignore[index]
     ]
     recomputed = aggregate_residuals(records)
     for key in (
@@ -379,9 +366,7 @@ def test_parse_rejects_missing_nonzero_pilot_residuals() -> None:
         parse_plateau_residual_catalog(broken)
 
 
-def _write_population_fixture(
-    path: Path, cases: list[dict[str, object]]
-) -> Path:
+def _write_population_fixture(path: Path, cases: list[dict[str, object]]) -> Path:
     path.write_text(
         json.dumps(cases, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -404,13 +389,9 @@ def test_build_accepts_preregistered_case_population_path(
         }
         for case in holdout_cases
     ]
-    population_path = _write_population_fixture(
-        tmp_path / "holdout_population.json", fixture_rows
-    )
+    population_path = _write_population_fixture(tmp_path / "holdout_population.json", fixture_rows)
     loaded = load_population_matrix_cases(population_path)
-    assert [case.case_id for case in loaded] == [
-        case.case_id for case in holdout_cases
-    ]
+    assert [case.case_id for case in loaded] == [case.case_id for case in holdout_cases]
 
     catalog = build_plateau_residual_catalog(
         ROOT,
@@ -428,15 +409,14 @@ def test_build_accepts_preregistered_case_population_path(
     assert set(catalog["case_ids"]).isdisjoint(set(PILOT_CASE_IDS))
     assert "pilot_case_ids" not in catalog
     assert catalog["aggregates"]["case_count"] == len(holdout_cases)
-    assert catalog["aggregates"]["total_residual_count"] == len(
-        catalog["residuals"]
-    )
+    assert catalog["aggregates"]["total_residual_count"] == len(catalog["residuals"])
     # Post-PLAT2-050 det. waves may clear all activation residuals; a
     # zero-residual holdout catalog remains a valid PlateauResidualCatalog@1.
     assert catalog["aggregates"]["total_residual_count"] >= 0
 
     cases_by_id = {
-        item["case_id"]: item for item in catalog["cases"]  # type: ignore[index]
+        item["case_id"]: item
+        for item in catalog["cases"]  # type: ignore[index]
     }
     for case_id in catalog["case_ids"]:  # type: ignore[union-attr]
         record = cases_by_id[case_id]
@@ -475,9 +455,7 @@ def test_build_from_pilot_cases_path_preserves_seal() -> None:
     )
     assert catalog["pilot_case_ids"] == list(PILOT_CASE_IDS)
     assert catalog["nonzero_pilot_case_ids"] == list(NONZERO_PILOT_CASE_IDS)
-    assert catalog["zero_residual_control_case_id"] == (
-        ZERO_RESIDUAL_CONTROL_CASE_ID
-    )
+    assert catalog["zero_residual_control_case_id"] == (ZERO_RESIDUAL_CONTROL_CASE_ID)
     assert "population_kind" not in catalog
     assert "case_ids" not in catalog
     assert "population_path" not in catalog
@@ -491,20 +469,14 @@ def test_checked_in_holdout_catalog_parses_with_case_facet_residuals() -> None:
     assert HOLDOUT_CATALOG_PATH.is_file(), (
         "holdout_residual_catalog.json must be written by PLAT2-010"
     )
-    catalog = load_holdout_residual_catalog(
-        HOLDOUT_CATALOG_PATH, repo_root=ROOT
-    )
+    catalog = load_holdout_residual_catalog(HOLDOUT_CATALOG_PATH, repo_root=ROOT)
 
     assert catalog["population_kind"] == POPULATION_KIND_HOLDOUT
-    assert str(HOLDOUT_CASES_RELATIVE_PATH).replace("\\", "/") in str(
-        catalog["population_path"]
-    )
+    assert str(HOLDOUT_CASES_RELATIVE_PATH).replace("\\", "/") in str(catalog["population_path"])
     assert catalog["case_ids"]
     assert set(catalog["case_ids"]).isdisjoint(set(PILOT_CASE_IDS))
     assert catalog["aggregates"]["case_count"] == len(catalog["case_ids"])
-    assert catalog["aggregates"]["total_residual_count"] == len(
-        catalog["residuals"]
-    )
+    assert catalog["aggregates"]["total_residual_count"] == len(catalog["residuals"])
     # Sealed PLAT2-010 receipt records pre-wave residuals for the activation
     # subset; live det. path may clear them (PLAT2-050) without rewriting the
     # sealed JSON.
@@ -524,9 +496,7 @@ def test_checked_in_holdout_catalog_parses_with_case_facet_residuals() -> None:
             assert facet["case_id"] == case_id
             assert float(facet["loss_contribution"]) > 0.0
 
-    cid_payload = {
-        key: value for key, value in catalog.items() if key != "catalog_cid"
-    }
+    cid_payload = {key: value for key, value in catalog.items() if key != "catalog_cid"}
     assert catalog["catalog_cid"] == cid_for_dag_json(cid_payload)
 
     # Sealed PLAT2-010 receipt used the activation-fixture subset (3 cases)
@@ -544,19 +514,18 @@ def test_checked_in_holdout_catalog_parses_with_case_facet_residuals() -> None:
     assert regenerated["population_kind"] == POPULATION_KIND_HOLDOUT
     assert set(catalog["case_ids"]).issubset(set(regenerated["case_ids"]))  # type: ignore[arg-type]
     sealed_by_id = {
-        item["case_id"]: item for item in catalog["cases"]  # type: ignore[union-attr]
+        item["case_id"]: item
+        for item in catalog["cases"]  # type: ignore[union-attr]
     }
     regen_by_id = {
-        item["case_id"]: item for item in regenerated["cases"]  # type: ignore[union-attr]
+        item["case_id"]: item
+        for item in regenerated["cases"]  # type: ignore[union-attr]
     }
     for case_id in catalog["nonzero_case_ids"]:  # type: ignore[union-attr]
         assert case_id in regen_by_id
         # Det. edit waves may clear residuals; never allow more residuals than
         # the sealed prior for an activation case.
-        assert (
-            regen_by_id[case_id]["residual_count"]
-            <= sealed_by_id[case_id]["residual_count"]
-        )
+        assert regen_by_id[case_id]["residual_count"] <= sealed_by_id[case_id]["residual_count"]
         assert (
             float(regen_by_id[case_id]["forward_loss"])
             <= float(sealed_by_id[case_id]["forward_loss"]) + 1e-9
@@ -573,9 +542,10 @@ def test_checked_in_holdout_catalog_parses_with_case_facet_residuals() -> None:
     assert activation["case_ids"] == catalog["case_ids"]
     # After PLAT2-050 det. edits, activation residuals may be empty while the
     # sealed receipt still records the pre-wave residual facets.
-    assert activation["aggregates"]["total_residual_count"] <= catalog[
-        "aggregates"
-    ]["total_residual_count"]
+    assert (
+        activation["aggregates"]["total_residual_count"]
+        <= catalog["aggregates"]["total_residual_count"]
+    )
 
 
 def test_write_holdout_catalog_round_trip(tmp_path: Path) -> None:
@@ -611,12 +581,8 @@ def test_build_accepts_explicitly_typed_repair_development_population() -> None:
     assert catalog["catalog_cid"]
     assert catalog["assumptions"]
     assert catalog["status"]["non_semantic_excluded_from_score_aggregates"] is True
-    assert set(catalog["status"]["non_semantic_statuses"]) == set(
-        NON_SEMANTIC_CATALOG_STATUSES
-    )
-    assert catalog["provenance"]["population_kind"] == (
-        POPULATION_KIND_REPAIR_DEVELOPMENT
-    )
+    assert set(catalog["status"]["non_semantic_statuses"]) == set(NON_SEMANTIC_CATALOG_STATUSES)
+    assert catalog["provenance"]["population_kind"] == (POPULATION_KIND_REPAIR_DEVELOPMENT)
     assert catalog["provenance"]["tree_cid"] == catalog["tree_cid"]
     assert catalog["provenance"]["population_cid"] == catalog["population_cid"]
 
@@ -628,9 +594,7 @@ def test_build_accepts_explicitly_typed_repair_development_population() -> None:
             CATALOG_STATUS_NOT_MEASURED,
             CATALOG_STATUS_RUNTIME_FAILED,
         }
-        record = next(
-            item for item in catalog["cases"] if item["case_id"] == case_id
-        )
+        record = next(item for item in catalog["cases"] if item["case_id"] == case_id)
         if status_entry["semantic_score_eligible"]:
             assert record["residual_count"] == len(record["residuals"])
             contribution = round(
@@ -646,21 +610,15 @@ def test_build_accepts_explicitly_typed_repair_development_population() -> None:
     with pytest.raises(ResidualCatalogError, match="population residual"):
         parse_plateau_residual_catalog(catalog)
 
-    assert_catalog_usable_on_supervisor_path(
-        catalog, access_mode=ACCESS_MODE_SUPERVISOR
-    )
-    assert_catalog_usable_on_supervisor_path(
-        catalog, access_mode=ACCESS_MODE_PACKET
-    )
+    assert_catalog_usable_on_supervisor_path(catalog, access_mode=ACCESS_MODE_SUPERVISOR)
+    assert_catalog_usable_on_supervisor_path(catalog, access_mode=ACCESS_MODE_PACKET)
 
 
 def test_checked_in_repair_dev_catalog_parses_with_bindings() -> None:
     assert REPAIR_DEV_CATALOG_PATH.is_file(), (
         "repair_dev_residual_catalog.json must be written by PLAT2-010"
     )
-    catalog = load_repair_dev_residual_catalog(
-        REPAIR_DEV_CATALOG_PATH, repo_root=ROOT
-    )
+    catalog = load_repair_dev_residual_catalog(REPAIR_DEV_CATALOG_PATH, repo_root=ROOT)
     assert catalog["population_kind"] == POPULATION_KIND_REPAIR_DEVELOPMENT
     assert catalog["tree_cid"]
     assert catalog["population_cid"]
@@ -668,18 +626,12 @@ def test_checked_in_repair_dev_catalog_parses_with_bindings() -> None:
     assert catalog["status"]["non_semantic_excluded_from_score_aggregates"] is True
     assert catalog["provenance"]["builder"]
     assert catalog["aggregates"]["case_count"] == len(catalog["case_ids"])
-    assert catalog["aggregates"]["total_residual_count"] == len(
-        catalog["residuals"]
-    )
-    cid_payload = {
-        key: value for key, value in catalog.items() if key != "catalog_cid"
-    }
+    assert catalog["aggregates"]["total_residual_count"] == len(catalog["residuals"])
+    cid_payload = {key: value for key, value in catalog.items() if key != "catalog_cid"}
     assert catalog["catalog_cid"] == cid_for_dag_json(cid_payload)
 
     regenerated = build_repair_dev_residual_catalog(ROOT)
-    parse_population_residual_catalog(
-        regenerated, require_repair_development_kind=True
-    )
+    parse_population_residual_catalog(regenerated, require_repair_development_kind=True)
     assert regenerated["population_kind"] == POPULATION_KIND_REPAIR_DEVELOPMENT
     assert set(catalog["case_ids"]).issubset(set(regenerated["case_ids"]))
 
@@ -690,9 +642,7 @@ def test_write_repair_dev_catalog_round_trip(tmp_path: Path) -> None:
     written = write_repair_dev_residual_catalog(out, catalog=source)
     reloaded = json.loads(out.read_text(encoding="utf-8"))
     assert reloaded == written
-    parse_population_residual_catalog(
-        reloaded, require_repair_development_kind=True
-    )
+    parse_population_residual_catalog(reloaded, require_repair_development_kind=True)
     assert reloaded["catalog_cid"] == source["catalog_cid"]
 
 
@@ -724,9 +674,7 @@ def test_non_semantic_statuses_excluded_from_score_aggregates() -> None:
         evaluation_status=CATALOG_STATUS_RUNTIME_FAILED,
         evaluation_status_reason="provider_error",
     )
-    aggregates = aggregate_residuals(
-        [scored, unsupported, not_measured, runtime_failed]
-    )
+    aggregates = aggregate_residuals([scored, unsupported, not_measured, runtime_failed])
     assert aggregates["case_count"] == 4
     assert aggregates["semantic_scored_case_count"] == 1
     assert aggregates["sum_forward_loss"] == scored.forward_loss
@@ -809,17 +757,11 @@ def test_premature_blind_access_rejected_on_supervisor_and_packet_paths(
 
     # Normal parse paths reject the blind catalog.
     with pytest.raises(ResidualCatalogError, match="premature blind access|rejects blind"):
-        parse_population_residual_catalog(
-            blind, access_mode=ACCESS_MODE_SUPERVISOR
-        )
+        parse_population_residual_catalog(blind, access_mode=ACCESS_MODE_SUPERVISOR)
     with pytest.raises(ResidualCatalogError, match="premature blind access|rejects blind"):
-        parse_population_residual_catalog(
-            blind, access_mode=ACCESS_MODE_PACKET
-        )
+        parse_population_residual_catalog(blind, access_mode=ACCESS_MODE_PACKET)
     with pytest.raises(ResidualCatalogError, match="rejects blind|evaluator mode"):
-        assert_catalog_usable_on_supervisor_path(
-            blind, access_mode=ACCESS_MODE_SUPERVISOR
-        )
+        assert_catalog_usable_on_supervisor_path(blind, access_mode=ACCESS_MODE_SUPERVISOR)
 
     # Authorized parse succeeds.
     parsed = parse_population_residual_catalog(
@@ -831,21 +773,15 @@ def test_premature_blind_access_rejected_on_supervisor_and_packet_paths(
     assert parsed["catalog_cid"] == blind["catalog_cid"]
 
     # Synthetic blind markers on repair-dev payloads are rejected.
-    repair = build_repair_dev_residual_catalog(
-        ROOT, cases=holdout_cases[:1]
-    )
+    repair = build_repair_dev_residual_catalog(ROOT, cases=holdout_cases[:1])
     tainted = copy.deepcopy(repair)
     tainted["cases"][0]["blind_source"] = True
     with pytest.raises(ResidualCatalogError, match="blind sources"):
-        reject_blind_material_on_normal_path(
-            tainted, access_mode=ACCESS_MODE_SUPERVISOR
-        )
+        reject_blind_material_on_normal_path(tainted, access_mode=ACCESS_MODE_SUPERVISOR)
     tainted_gold = copy.deepcopy(repair)
     tainted_gold["cases"][0]["gold_binding"] = "blind"
     with pytest.raises(ResidualCatalogError, match="blind gold"):
-        reject_blind_material_on_normal_path(
-            tainted_gold, access_mode=ACCESS_MODE_PACKET
-        )
+        reject_blind_material_on_normal_path(tainted_gold, access_mode=ACCESS_MODE_PACKET)
     tainted_residual = copy.deepcopy(repair)
     if tainted_residual["residuals"]:
         tainted_residual["residuals"][0]["visibility"] = "blind"
@@ -856,9 +792,7 @@ def test_premature_blind_access_rejected_on_supervisor_and_packet_paths(
     unauthorized_mode = copy.deepcopy(repair)
     unauthorized_mode["evaluator_mode"] = True
     with pytest.raises(ResidualCatalogError, match="unauthorized evaluator mode"):
-        reject_blind_material_on_normal_path(
-            unauthorized_mode, access_mode=ACCESS_MODE_SUPERVISOR
-        )
+        reject_blind_material_on_normal_path(unauthorized_mode, access_mode=ACCESS_MODE_SUPERVISOR)
 
     with pytest.raises(ResidualCatalogError, match="premature blind access"):
         assert_access_allows_population(
@@ -879,24 +813,16 @@ def test_repair_dev_case_status_overrides_keep_scores_distinct() -> None:
             }
         },
     )
-    parse_population_residual_catalog(
-        catalog, require_repair_development_kind=True
-    )
+    parse_population_residual_catalog(catalog, require_repair_development_kind=True)
     override_id = cases[0].case_id
     assert (
         catalog["status"]["by_case"][override_id]["evaluation_status"]
         == CATALOG_STATUS_NOT_MEASURED
     )
-    assert catalog["status"]["by_case"][override_id][
-        "semantic_score_eligible"
-    ] is False
-    record = next(
-        item for item in catalog["cases"] if item["case_id"] == override_id
-    )
+    assert catalog["status"]["by_case"][override_id]["semantic_score_eligible"] is False
+    record = next(item for item in catalog["cases"] if item["case_id"] == override_id)
     assert record["residuals"] == []
     assert override_id not in catalog["nonzero_case_ids"]
-    assert catalog["aggregates"]["by_evaluation_status"][
-        CATALOG_STATUS_NOT_MEASURED
-    ] == 1
+    assert catalog["aggregates"]["by_evaluation_status"][CATALOG_STATUS_NOT_MEASURED] == 1
     # Semantic aggregates ignore the not_measured case.
     assert catalog["aggregates"]["semantic_scored_case_count"] == len(cases) - 1

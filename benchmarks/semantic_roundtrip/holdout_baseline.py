@@ -127,8 +127,7 @@ REPORT_CID_SCOPE: Final = "payload_without_report_cid"
 CID_CODEC: Final = "dag-json"
 
 DEFAULT_BASELINE_REPORT_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "repair_dev_baseline.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_baseline.json"
 )
 DEFAULT_CONTRACT_DOCS_RELATIVE_PATH: Final = Path(
     "docs/benchmarks/semantic_roundtrip_plateau2_baseline.md"
@@ -161,12 +160,8 @@ POST_PLAT_BASELINE_REPORT_CID: Final = HOLDOUT_BASELINE_REPORT_CID
 PRIMARY_PROMOTION_METRIC: Final = "end_to_end_loss"
 LOSS_METRICS: Final = ("forward", "cycle", "end_to_end")
 FACET_NAMES: Final = ("modality", "conditions", "exceptions", "temporal")
-AGGREGATION_ORDER: Final = (
-    "per_case_first_macro_mean"
-)
-AGGREGATION_DETAIL: Final = (
-    "repeats_within_case_then_unweighted_macro_average_across_cases"
-)
+AGGREGATION_ORDER: Final = "per_case_first_macro_mean"
+AGGREGATION_DETAIL: Final = "repeats_within_case_then_unweighted_macro_average_across_cases"
 LOSS_DIRECTION: Final = "lower_is_better"
 FAILURE_LOSS: Final = 1.0
 
@@ -182,9 +177,7 @@ RESAMPLING_UNIT: Final = "case_after_within_case_repeat_aggregation"
 NONINFERIORITY_MARGIN: Final = 0.03
 COMPARISON_SIGN: Final = "candidate_minus_baseline"
 IMPROVEMENT_RULE: Final = "paired_ci_high_lt_0"
-NONINFERIORITY_RULE: Final = (
-    "upper_confidence_bound_lte_noninferiority_margin"
-)
+NONINFERIORITY_RULE: Final = "upper_confidence_bound_lte_noninferiority_margin"
 SELECTION_GATE_IDS: Final = PROMOTION_FULL_GATE_IDS  # coverage/copy/polarity
 
 # Packet token budget (frozen for PLAT2-030 packets)
@@ -217,9 +210,7 @@ EVALUATION_STATUSES: Final = frozenset(
 
 # Decision outcomes (PLAT2 plan)
 DECISION_IMPROVEMENT_CONFIRMED: Final = "improvement_confirmed"
-DECISION_GENERALIZATION_NO_IMPROVEMENT: Final = (
-    "generalization_confirmed_no_improvement"
-)
+DECISION_GENERALIZATION_NO_IMPROVEMENT: Final = "generalization_confirmed_no_improvement"
 DECISION_PROMOTION_DECLINED: Final = "promotion_declined"
 DECISION_INCOMPLETE: Final = "incomplete"
 DECISION_OUTCOMES: Final = frozenset(
@@ -357,9 +348,7 @@ def _finite_unit(value: object, path: str) -> float:
         or not math.isfinite(float(value))
         or not 0.0 <= float(value) <= 1.0
     ):
-        raise HoldoutBaselineError(
-            f"{path} must be a finite number from zero to one"
-        )
+        raise HoldoutBaselineError(f"{path} must be a finite number from zero to one")
     return float(value)
 
 
@@ -380,9 +369,7 @@ def _cid(value: object, path: str) -> str:
     try:
         return validate_cid(text, codecs=(CID_CODEC,))
     except (TypeError, ValueError) as exc:
-        raise HoldoutBaselineError(
-            f"{path} must be a canonical dag-json CID"
-        ) from exc
+        raise HoldoutBaselineError(f"{path} must be a canonical dag-json CID") from exc
 
 
 def _git_value(repo: Path, *args: str) -> str:
@@ -495,32 +482,20 @@ def load_population_and_residual_cids(
     )
     seal = load_frozen_blind_holdout_seal(repository_root=root)
 
-    pilot_catalog_cid = _nonblank(
-        pilot_catalog.get("catalog_cid"), "pilot residual catalog_cid"
-    )
-    repair_catalog_cid = _nonblank(
-        repair_catalog.get("catalog_cid"), "repair residual catalog_cid"
-    )
-    repair_population_cid = _nonblank(
-        repair_catalog.get("population_cid"), "repair population_cid"
-    )
-    repair_tree_cid = _nonblank(
-        repair_catalog.get("tree_cid"), "repair tree_cid"
-    )
+    pilot_catalog_cid = _nonblank(pilot_catalog.get("catalog_cid"), "pilot residual catalog_cid")
+    repair_catalog_cid = _nonblank(repair_catalog.get("catalog_cid"), "repair residual catalog_cid")
+    repair_population_cid = _nonblank(repair_catalog.get("population_cid"), "repair population_cid")
+    repair_tree_cid = _nonblank(repair_catalog.get("tree_cid"), "repair tree_cid")
 
     return {
         "blind_holdout_seal_cid": seal.seal_cid,
-        "blind_holdout_seal_path": str(BLIND_SEAL_RELATIVE_PATH).replace(
-            "\\", "/"
-        ),
+        "blind_holdout_seal_path": str(BLIND_SEAL_RELATIVE_PATH).replace("\\", "/"),
         "pilot": {
             "case_ids": list(pilot_manifest.case_ids),
             "manifest_cid": pilot_manifest.manifest_cid,
             "population_kind": HOLDOUT_POP_PILOT,
             "residual_catalog_cid": pilot_catalog_cid,
-            "residual_catalog_path": str(DEFAULT_CATALOG_RELATIVE_PATH).replace(
-                "\\", "/"
-            ),
+            "residual_catalog_path": str(DEFAULT_CATALOG_RELATIVE_PATH).replace("\\", "/"),
         },
         "repair_development": {
             "case_ids": list(repair_manifest.case_ids),
@@ -528,9 +503,9 @@ def load_population_and_residual_cids(
             "population_cid": repair_population_cid,
             "population_kind": HOLDOUT_POP_REPAIR,
             "residual_catalog_cid": repair_catalog_cid,
-            "residual_catalog_path": str(
-                DEFAULT_REPAIR_DEV_CATALOG_RELATIVE_PATH
-            ).replace("\\", "/"),
+            "residual_catalog_path": str(DEFAULT_REPAIR_DEV_CATALOG_RELATIVE_PATH).replace(
+                "\\", "/"
+            ),
             "tree_cid": repair_tree_cid,
         },
     }
@@ -547,9 +522,7 @@ def assert_blind_seal_unopened(
     root = root.resolve()
     seal = load_frozen_blind_holdout_seal(repository_root=root)
     # Public seal must not contain private content fields.
-    raw = json.loads(
-        (root / BLIND_SEAL_RELATIVE_PATH).read_text(encoding="utf-8")
-    )
+    raw = json.loads((root / BLIND_SEAL_RELATIVE_PATH).read_text(encoding="utf-8"))
     forbidden = {
         "case_ids",
         "cases",
@@ -643,12 +616,8 @@ def noninferiority_and_promotion_rules() -> dict[str, object]:
                 "frozen noninferiority rule and no-regression gates pass, but "
                 "no improvement is claimed"
             ),
-            DECISION_PROMOTION_DECLINED: (
-                "all other complete outcomes (including residual hold)"
-            ),
-            DECISION_INCOMPLETE: (
-                "missing, leaked, stale, underpowered, or unauthorized evidence"
-            ),
+            DECISION_PROMOTION_DECLINED: ("all other complete outcomes (including residual hold)"),
+            DECISION_INCOMPLETE: ("missing, leaked, stale, underpowered, or unauthorized evidence"),
         },
         "selection_gate_ids": list(SELECTION_GATE_IDS),
         "underpowered_cannot_promote": True,
@@ -659,9 +628,7 @@ def packet_token_budget_definition() -> dict[str, object]:
     return {
         "counting_method": PACKET_TOKEN_COUNTING_METHOD,
         "max_tokens": PACKET_TOKEN_BUDGET,
-        "omitted_handle_coverage_required": (
-            PACKET_OMITTED_HANDLE_COVERAGE_REQUIRED
-        ),
+        "omitted_handle_coverage_required": (PACKET_OMITTED_HANDLE_COVERAGE_REQUIRED),
         "soft_warn_tokens": PACKET_TOKEN_BUDGET_SOFT_WARN,
     }
 
@@ -706,26 +673,14 @@ def build_experiment_contract(
     tree = dict(source_tree) if source_tree is not None else capture_git_tree_binding(root)
     if not include_gitlinks_payload:
         # Keep CID stable for identity while allowing slim receipts.
-        tree = {
-            key: value
-            for key, value in tree.items()
-            if key != "gitlinks"
-        }
-    env = (
-        dict(environment)
-        if environment is not None
-        else capture_environment_toolchain()
-    )
+        tree = {key: value for key, value in tree.items() if key != "gitlinks"}
+    env = dict(environment) if environment is not None else capture_environment_toolchain()
     populations = (
         dict(population_bindings)
         if population_bindings is not None
         else load_population_and_residual_cids(root)
     )
-    blind = (
-        dict(blind_status)
-        if blind_status is not None
-        else assert_blind_seal_unopened(root)
-    )
+    blind = dict(blind_status) if blind_status is not None else assert_blind_seal_unopened(root)
 
     arm_config = {
         "arm_id": PRODUCTION_ARM_ID,
@@ -760,9 +715,7 @@ def build_experiment_contract(
         "packet_token_budget": packet_token_budget_definition(),
         "populations": _plain_json(populations),
         "protocol_change_policy": {
-            "action_on_change": (
-                "mint_new_experiment_identity_and_retire_downstream_receipts"
-            ),
+            "action_on_change": ("mint_new_experiment_identity_and_retire_downstream_receipts"),
             "downstream_receipts_retired": True,
             "mutable_after_freeze": False,
         },
@@ -821,14 +774,8 @@ def mint_new_experiment_identity(
         or not isinstance(previous_revision, int)
         or previous_revision < 1
     ):
-        raise HoldoutBaselineError(
-            "previous experiment_revision must be a positive integer"
-        )
-    if (
-        isinstance(revision_bump, bool)
-        or not isinstance(revision_bump, int)
-        or revision_bump < 1
-    ):
+        raise HoldoutBaselineError("previous experiment_revision must be a positive integer")
+    if isinstance(revision_bump, bool) or not isinstance(revision_bump, int) or revision_bump < 1:
         raise HoldoutBaselineError("revision_bump must be a positive integer")
 
     reason_text = _nonblank(reason, "reason")
@@ -855,9 +802,7 @@ def mint_new_experiment_identity(
         "experiment_revision": new_revision,
         "previous_contract_cid": previous_cid,
         "previous_experiment_id": previous_id,
-        "retired_receipts_policy": (
-            "all receipts bound to previous_experiment_id are invalid"
-        ),
+        "retired_receipts_policy": ("all receipts bound to previous_experiment_id are invalid"),
         "retirement": retirement,
         "task_id": EXPERIMENT_TASK_ID,
     }
@@ -908,8 +853,7 @@ def parse_experiment_contract(
     )
     rules = _mapping(data.get("decision_rules"), "decision_rules")
     _require(
-        float(rules.get("noninferiority_margin", -1.0))
-        == NONINFERIORITY_MARGIN,
+        float(rules.get("noninferiority_margin", -1.0)) == NONINFERIORITY_MARGIN,
         "noninferiority_margin mismatch",
     )
     budget = _mapping(data.get("packet_token_budget"), "packet_token_budget")
@@ -1015,16 +959,10 @@ def score_deterministic_case(
     construct = getattr(ctor, "construct", None)
     realize = getattr(det, "realize", None)
     if not callable(construct) or not callable(realize):
-        raise HoldoutBaselineError(
-            "constructor/realizer must provide construct()/realize()"
-        )
+        raise HoldoutBaselineError("constructor/realizer must provide construct()/realize()")
 
     try:
-        initial = construct(
-            ConstructorRequest(
-                case.source_text, case.allowed_atom_vocabulary, {}
-            )
-        )
+        initial = construct(ConstructorRequest(case.source_text, case.allowed_atom_vocabulary, {}))
     except BaseException as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
@@ -1049,9 +987,7 @@ def score_deterministic_case(
 
     l1 = initial.canonical_ir
     try:
-        realized = realize(
-            RealizerRequest(l1, case.allowed_atom_vocabulary, {})
-        )
+        realized = realize(RealizerRequest(l1, case.allowed_atom_vocabulary, {}))
     except BaseException as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
@@ -1077,9 +1013,7 @@ def score_deterministic_case(
         )
 
     try:
-        recompiled = construct(
-            ConstructorRequest(text, case.allowed_atom_vocabulary, {})
-        )
+        recompiled = construct(ConstructorRequest(text, case.allowed_atom_vocabulary, {}))
     except BaseException as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
@@ -1099,9 +1033,7 @@ def score_deterministic_case(
             case,
             status=EVAL_STATUS_RUNTIME_FAILED,
             reason="recompile_failed",
-            detail=str(
-                getattr(recompiled, "failure_detail", None) or "recompile failed"
-            ),
+            detail=str(getattr(recompiled, "failure_detail", None) or "recompile failed"),
         )
 
     l2 = recompiled.canonical_ir
@@ -1288,11 +1220,7 @@ def _build_failure_clusters(
     for key, values in residual_clusters.items():
         clusters[key] = sorted(set(clusters.get(key, []) + values))
 
-    return {
-        kind: sorted(set(values))
-        for kind, values in clusters.items()
-        if values
-    }
+    return {kind: sorted(set(values)) for kind, values in clusters.items() if values}
 
 
 def _macro_mean(values: Sequence[float]) -> float:
@@ -1336,13 +1264,10 @@ def _population_aggregates(
         "aggregation": AGGREGATION_ORDER,
         "case_count": len(case_records),
         "gate_pass_counts": gate_pass_counts,
-        "means": {
-            key: _macro_mean(vals) for key, vals in scored_losses.items()
-        },
+        "means": {key: _macro_mean(vals) for key, vals in scored_losses.items()},
         "scored_case_count": scored_n,
         "status_counts": {
-            status: int(status_counts.get(status, 0))
-            for status in sorted(EVALUATION_STATUSES)
+            status: int(status_counts.get(status, 0)) for status in sorted(EVALUATION_STATUSES)
         },
     }
 
@@ -1374,10 +1299,7 @@ def run_deterministic_baseline(
                 "other populations are out of scope for PLAT2-025"
             )
         cases = _load_population_cases(kind, root)
-        records = [
-            score_deterministic_case(case, constructor=ctor, realizer=det)
-            for case in cases
-        ]
+        records = [score_deterministic_case(case, constructor=ctor, realizer=det) for case in cases]
         residual = None
         if residual_catalogs is not None:
             residual = residual_catalogs.get(kind)
@@ -1393,9 +1315,7 @@ def run_deterministic_baseline(
         results[kind] = {
             "aggregates": _population_aggregates(records),
             "cases": records,
-            "failure_clusters": _build_failure_clusters(
-                records, residual_catalog=residual
-            ),
+            "failure_clusters": _build_failure_clusters(records, residual_catalog=residual),
             "population_kind": kind,
         }
     return results
@@ -1421,25 +1341,17 @@ def build_repair_dev_baseline_report(
 
     root = Path(repo_root) if repo_root is not None else _repo_root()
     root = root.resolve()
-    contract_payload = (
-        dict(contract)
-        if contract is not None
-        else build_experiment_contract(root)
-    )
+    contract_payload = dict(contract) if contract is not None else build_experiment_contract(root)
     parse_experiment_contract(contract_payload, require_blind_unopened=True)
 
     if population_results is None:
         if not run_scoring:
-            raise HoldoutBaselineError(
-                "population_results required when run_scoring is False"
-            )
+            raise HoldoutBaselineError("population_results required when run_scoring is False")
         population_results = run_deterministic_baseline(root)
     else:
         for kind in population_results:
             if kind not in BASELINE_POPULATIONS:
-                raise HoldoutBaselineError(
-                    f"baseline report rejects population {kind!r}"
-                )
+                raise HoldoutBaselineError(f"baseline report rejects population {kind!r}")
 
     pilot_block = population_results.get(POPULATION_KIND_PILOT)
     repair_block = population_results.get(POPULATION_KIND_REPAIR_DEVELOPMENT)
@@ -1596,11 +1508,7 @@ def load_repair_dev_baseline_report(
     repo_root: str | Path | None = None,
 ) -> dict[str, object]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    report_path = (
-        Path(path)
-        if path is not None
-        else root / DEFAULT_BASELINE_REPORT_RELATIVE_PATH
-    )
+    report_path = Path(path) if path is not None else root / DEFAULT_BASELINE_REPORT_RELATIVE_PATH
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     return parse_repair_dev_baseline_report(payload)
 
@@ -1650,9 +1558,7 @@ def build_frozen_baseline_bundle(
 
     root = Path(repo_root) if repo_root is not None else _repo_root()
     contract = build_experiment_contract(root)
-    report = build_repair_dev_baseline_report(
-        root, contract=contract, run_scoring=run_scoring
-    )
+    report = build_repair_dev_baseline_report(root, contract=contract, run_scoring=run_scoring)
     return {
         "contract": contract,
         "report": report,

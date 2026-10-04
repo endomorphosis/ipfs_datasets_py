@@ -3,7 +3,9 @@ import itertools
 from typing import Callable, Iterable, Generator
 
 
-def run_pipeline_in_thread_pool(inputs: Iterable[tuple], max_concurrency=5) -> Generator[tuple, None, None]:
+def run_pipeline_in_thread_pool(
+    inputs: Iterable[tuple], max_concurrency=5
+) -> Generator[tuple, None, None]:
     """
     Runs a pipeline of functions in a thread pool.
 
@@ -21,9 +23,7 @@ def run_pipeline_in_thread_pool(inputs: Iterable[tuple], max_concurrency=5) -> G
         }
 
         while futures:
-            done, _ = cf.wait(
-                futures, return_when=cf.FIRST_COMPLETED
-            )
+            done, _ = cf.wait(futures, return_when=cf.FIRST_COMPLETED)
 
             for fut in done:
                 original_input = futures.pop(fut)
@@ -58,9 +58,7 @@ def run_in_thread_pool(handler, inputs, *, max_concurrency=5):
         }
 
         while futures:
-            done, _ = cf.wait(
-                futures, return_when=cf.FIRST_COMPLETED
-            )
+            done, _ = cf.wait(futures, return_when=cf.FIRST_COMPLETED)
 
             for fut in done:
                 original_input = futures.pop(fut)

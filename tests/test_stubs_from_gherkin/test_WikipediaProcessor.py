@@ -24,7 +24,9 @@ def wikipediaprocessor_instance():
         raise FixtureError(f"Failed to create fixture wikipediaprocessor_instance: {e}") from e
 
 
-def test_initialize_with_default_configuration_config_is_wikipediaconfig_with_defaults(wikipediaprocessor_instance):
+def test_initialize_with_default_configuration_config_is_wikipediaconfig_with_defaults(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Initialize with default configuration config is WikipediaConfig with defaults
 
@@ -63,7 +65,9 @@ def test_initialize_with_default_configuration_logger_is_set(wikipediaprocessor_
     pass
 
 
-def test_initialize_with_custom_configuration_config_cache_dir_is_tmpcache(wikipediaprocessor_instance):
+def test_initialize_with_custom_configuration_config_cache_dir_is_tmpcache(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Initialize with custom configuration config cache_dir is /tmp/cache
 
@@ -111,7 +115,9 @@ def test_load_dataset_with_valid_name_dataset_is_loaded_successfully(wikipediapr
     pass
 
 
-def test_load_dataset_with_valid_name_dataset_is_stored_in_db_with_key_laionwikipediax(wikipediaprocessor_instance):
+def test_load_dataset_with_valid_name_dataset_is_stored_in_db_with_key_laionwikipediax(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Load dataset with valid name dataset is stored in db with key laion/Wikipedia-X
 
@@ -176,7 +182,9 @@ def test_load_dataset_with_kwargs(wikipediaprocessor_instance):
     pass
 
 
-def test_load_dataset_merges_config_with_kwargs_dataset_is_loaded_with_cache_dir_tmpcache(wikipediaprocessor_instance):
+def test_load_dataset_merges_config_with_kwargs_dataset_is_loaded_with_cache_dir_tmpcache(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Load dataset merges config with kwargs dataset is loaded with cache_dir /tmp/cache
 
@@ -195,7 +203,9 @@ def test_load_dataset_merges_config_with_kwargs_dataset_is_loaded_with_cache_dir
     pass
 
 
-def test_load_dataset_merges_config_with_kwargs_dataset_is_loaded_with_trust_remote_code_true(wikipediaprocessor_instance):
+def test_load_dataset_merges_config_with_kwargs_dataset_is_loaded_with_trust_remote_code_true(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Load dataset merges config with kwargs dataset is loaded with trust_remote_code True
 
@@ -214,7 +224,9 @@ def test_load_dataset_merges_config_with_kwargs_dataset_is_loaded_with_trust_rem
     pass
 
 
-def test_load_dataset_handles_loading_failure_runtimeerror_is_raised_with_message_failed_to_load_dataset(wikipediaprocessor_instance):
+def test_load_dataset_handles_loading_failure_runtimeerror_is_raised_with_message_failed_to_load_dataset(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Load dataset handles loading failure RuntimeError is raised with message Failed to load dataset
 
@@ -230,7 +242,9 @@ def test_load_dataset_handles_loading_failure_runtimeerror_is_raised_with_messag
     pass
 
 
-def test_load_dataset_handles_loading_failure_logger_logs_error_message(wikipediaprocessor_instance):
+def test_load_dataset_handles_loading_failure_logger_logs_error_message(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Load dataset handles loading failure logger logs error message
 
@@ -246,7 +260,9 @@ def test_load_dataset_handles_loading_failure_logger_logs_error_message(wikipedi
     pass
 
 
-def test_process_datasets_with_single_string_results_contain_laionwikipediax(wikipediaprocessor_instance):
+def test_process_datasets_with_single_string_results_contain_laionwikipediax(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets with single string results contain laion/Wikipedia-X
 
@@ -262,7 +278,9 @@ def test_process_datasets_with_single_string_results_contain_laionwikipediax(wik
     pass
 
 
-def test_process_datasets_with_single_string_laionwikipediax_is_loaded_successfully(wikipediaprocessor_instance):
+def test_process_datasets_with_single_string_laionwikipediax_is_loaded_successfully(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets with single string laion/Wikipedia-X is loaded successfully
 
@@ -278,7 +296,9 @@ def test_process_datasets_with_single_string_laionwikipediax_is_loaded_successfu
     pass
 
 
-def test_process_datasets_with_list_of_names_results_contain_laionwikipediax(wikipediaprocessor_instance):
+def test_process_datasets_with_list_of_names_results_contain_laionwikipediax(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets with list of names results contain laion/Wikipedia-X
 
@@ -294,7 +314,9 @@ def test_process_datasets_with_list_of_names_results_contain_laionwikipediax(wik
     pass
 
 
-def test_process_datasets_with_list_of_names_results_contain_laionwikipediam3(wikipediaprocessor_instance):
+def test_process_datasets_with_list_of_names_results_contain_laionwikipediam3(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets with list of names results contain laion/Wikipedia-M3
 
@@ -310,7 +332,9 @@ def test_process_datasets_with_list_of_names_results_contain_laionwikipediam3(wi
     pass
 
 
-def test_process_datasets_with_list_of_names_both_datasets_are_loaded_successfully(wikipediaprocessor_instance):
+def test_process_datasets_with_list_of_names_both_datasets_are_loaded_successfully(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets with list of names both datasets are loaded successfully
 
@@ -374,7 +398,9 @@ def test_process_datasets_with_invalid_type(wikipediaprocessor_instance):
     pass
 
 
-def test_process_datasets_continues_on_failure_results_contain_validdataset(wikipediaprocessor_instance):
+def test_process_datasets_continues_on_failure_results_contain_validdataset(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets continues on failure results contain valid/dataset
 
@@ -390,7 +416,9 @@ def test_process_datasets_continues_on_failure_results_contain_validdataset(wiki
     pass
 
 
-def test_process_datasets_continues_on_failure_results_do_not_contain_invaliddataset(wikipediaprocessor_instance):
+def test_process_datasets_continues_on_failure_results_do_not_contain_invaliddataset(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets continues on failure results do not contain invalid/dataset
 
@@ -406,7 +434,9 @@ def test_process_datasets_continues_on_failure_results_do_not_contain_invaliddat
     pass
 
 
-def test_process_datasets_continues_on_failure_logger_logs_error_for_invaliddataset(wikipediaprocessor_instance):
+def test_process_datasets_continues_on_failure_logger_logs_error_for_invaliddataset(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Process datasets continues on failure logger logs error for invalid/dataset
 
@@ -422,7 +452,9 @@ def test_process_datasets_continues_on_failure_logger_logs_error_for_invaliddata
     pass
 
 
-def test_get_dataset_info_for_loaded_dataset_info_contains_name_as_laionwikipediax(wikipediaprocessor_instance):
+def test_get_dataset_info_for_loaded_dataset_info_contains_name_as_laionwikipediax(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Get dataset info for loaded dataset info contains name as laion/Wikipedia-X
 
@@ -506,7 +538,9 @@ def test_get_dataset_info_for_nonloaded_dataset(wikipediaprocessor_instance):
     pass
 
 
-def test_get_dataset_info_handles_errors_info_contains_name_as_laionwikipediax(wikipediaprocessor_instance):
+def test_get_dataset_info_handles_errors_info_contains_name_as_laionwikipediax(
+    wikipediaprocessor_instance,
+):
     """
     Scenario: Get dataset info handles errors info contains name as laion/Wikipedia-X
 
@@ -586,4 +620,3 @@ def test_get_loaded_datasets_property(wikipediaprocessor_instance):
         result is list with 3 dataset names
     """
     pass
-

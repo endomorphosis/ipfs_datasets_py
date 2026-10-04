@@ -51,11 +51,7 @@ class TaskQueueWrapper:
             logger.warning("Task queue not available - MCP++ module not installed")
 
     async def submit(
-        self,
-        task_type: str,
-        payload: Dict[str, Any],
-        priority: int = 0,
-        **kwargs: Any
+        self, task_type: str, payload: Dict[str, Any], priority: int = 0, **kwargs: Any
     ) -> Optional[str]:
         """Submit a task to the P2P network.
 
@@ -127,11 +123,7 @@ class TaskQueueWrapper:
             logger.error(f"Failed to cancel task: {e}")
             return False
 
-    async def list(
-        self,
-        status: Optional[str] = None,
-        limit: int = 100
-    ) -> list[Dict[str, Any]]:
+    async def list(self, status: Optional[str] = None, limit: int = 100) -> list[Dict[str, Any]]:
         """List tasks in the queue.
 
         Args:

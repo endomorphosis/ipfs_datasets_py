@@ -70,12 +70,8 @@ def _immutable_json(value: Any) -> Any:
     """Freeze metadata without retaining mutable caller-owned containers."""
 
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _immutable_json(item) for key, item in value.items()}
-        )
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+        return MappingProxyType({str(key): _immutable_json(item) for key, item in value.items()})
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(_immutable_json(item) for item in value)
     return value
 
@@ -295,9 +291,7 @@ class AsyncArtifactWriter:
         self.queue_capacity = max(1, int(queue_capacity))
         self.max_queue_bytes = max(1, int(max_queue_bytes))
         self.max_write_concurrency = max(1, int(max_write_concurrency))
-        self.backpressure_timeout_seconds = max(
-            0.0, float(backpressure_timeout_seconds)
-        )
+        self.backpressure_timeout_seconds = max(0.0, float(backpressure_timeout_seconds))
         self.fsync_policy = fsync_policy or ArtifactFsyncPolicy()
         self.name = name
         self._jobs: deque[_ArtifactJob] = deque()
@@ -370,9 +364,7 @@ class AsyncArtifactWriter:
     def summary(self) -> Dict[str, Any]:
         with self._lock:
             last_receipt = self._last_receipt.to_dict() if self._last_receipt else None
-            phase_timings = {
-                name: metric.to_dict() for name, metric in self._timings.items()
-            }
+            phase_timings = {name: metric.to_dict() for name, metric in self._timings.items()}
             result = {
                 "active_write_count": self._active_writes,
                 "backpressure_timeouts": self._backpressure_timeouts,
@@ -403,10 +395,7 @@ class AsyncArtifactWriter:
                 "timings_seconds": phase_timings,
             }
             result.update(
-                {
-                    f"{name}_seconds": values["total"]
-                    for name, values in phase_timings.items()
-                }
+                {f"{name}_seconds": values["total"] for name, values in phase_timings.items()}
             )
             return result
 
@@ -465,15 +454,11 @@ class AsyncArtifactWriter:
 
         source_revision = int(getattr(state, "state_revision", 0))
         base_revision = (
-            int(getattr(base_state, "state_revision", 0))
-            if base_state is not None
-            else None
+            int(getattr(base_state, "state_revision", 0)) if base_state is not None else None
         )
         state_identity = getattr(state, "state_identity", None)
         source_identity = (
-            str(state_identity(metric_lineage=metric_lineage))
-            if callable(state_identity)
-            else ""
+            str(state_identity(metric_lineage=metric_lineage)) if callable(state_identity) else ""
         )
         started = time.monotonic()
         if compact:
@@ -510,9 +495,10 @@ class AsyncArtifactWriter:
             raise ConcurrentArtifactMutationError(
                 "state mutated while checkpoint snapshot was being serialized"
             )
-        if base_state is not None and int(
-            getattr(base_state, "state_revision", base_revision)
-        ) != base_revision:
+        if (
+            base_state is not None
+            and int(getattr(base_state, "state_revision", base_revision)) != base_revision
+        ):
             raise ConcurrentArtifactMutationError(
                 "base state mutated while delta snapshot was being serialized"
             )
@@ -569,9 +555,7 @@ class AsyncArtifactWriter:
             for record in record_list
         ]
         payload = (("\n".join(lines) + "\n") if lines else "").encode("utf-8")
-        snapshot = self.snapshot_bytes(
-            payload, serialization_seconds=time.monotonic() - started
-        )
+        snapshot = self.snapshot_bytes(payload, serialization_seconds=time.monotonic() - started)
         future = self.submit_snapshot(
             path,
             snapshot,
@@ -596,14 +580,8 @@ class AsyncArtifactWriter:
     ) -> ArtifactWriteFuture | ArtifactWriteReceipt:
         started = time.monotonic()
         frozen_lines = [str(line).rstrip("\n") for line in lines if str(line).strip()]
-        payload = (
-            (("\n".join(frozen_lines) + "\n").encode("utf-8"))
-            if frozen_lines
-            else b""
-        )
-        snapshot = self.snapshot_bytes(
-            payload, serialization_seconds=time.monotonic() - started
-        )
+        payload = (("\n".join(frozen_lines) + "\n").encode("utf-8")) if frozen_lines else b""
+        snapshot = self.snapshot_bytes(payload, serialization_seconds=time.monotonic() - started)
         future = self.submit_snapshot(
             path,
             snapshot,
@@ -736,7 +714,9 @@ class AsyncArtifactWriter:
                     MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION
                     if full
                     else MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION
-                ) if use_compact else "legacy-json",
+                )
+                if use_compact
+                else "legacy-json",
                 "compact": bool(use_compact),
                 "cycle": int(cycle),
                 "float_precision": str(float_precision),
@@ -764,7 +744,11 @@ class AsyncArtifactWriter:
         timeout: Optional[float] = None,
         wait: bool = False,
     ) -> ArtifactWriteFuture | ArtifactWriteReceipt:
-        if isinstance(delta, ArtifactSnapshotHandle) or not isinstance(delta, Mapping) or base_state is not None:
+        if (
+            isinstance(delta, ArtifactSnapshotHandle)
+            or not isinstance(delta, Mapping)
+            or base_state is not None
+        ):
             if not isinstance(delta, ArtifactSnapshotHandle) and base_state is None:
                 raise ValueError("base_state is required for a compact state delta")
             return self.write_state_checkpoint(
@@ -786,9 +770,7 @@ class AsyncArtifactWriter:
             "schema_version": STATE_DELTA_SCHEMA_VERSION,
             **dict(delta),
         }
-        payload.setdefault(
-            "delta_id", "lir-state-delta-" + _sha256(_json_bytes(payload))[:24]
-        )
+        payload.setdefault("delta_id", "lir-state-delta-" + _sha256(_json_bytes(payload))[:24])
         return self.append_jsonl(
             path,
             [payload],
@@ -865,9 +847,7 @@ class AsyncArtifactWriter:
                         continue
                     self._cancel_job_locked(job)
                 self._jobs = retained
-                self._coalescible = {
-                    job.coalesce_key: job for job in retained if job.coalesce_key
-                }
+                self._coalescible = {job.coalesce_key: job for job in retained if job.coalesce_key}
             self._available.notify_all()
 
         # Required checkpoint/delta writes are a durability contract.  They are
@@ -970,18 +950,15 @@ class AsyncArtifactWriter:
                     f"{self.max_queue_bytes}"
                 )
                 future.set_exception(error)
-                self._timings["backpressure"].observe(
-                    time.monotonic() - enqueue_started
-                )
+                self._timings["backpressure"].observe(time.monotonic() - enqueue_started)
                 self._timings["enqueue"].observe(time.monotonic() - enqueue_started)
                 raise error
 
             previous = self._coalescible.get(job.coalesce_key) if job.coalesce_key else None
             extra_bytes = job.byte_size - previous.byte_size if previous else job.byte_size
             while (
-                (previous is None and self._pending >= self.queue_capacity)
-                or self._reserved_bytes + max(0, extra_bytes) > self.max_queue_bytes
-            ):
+                previous is None and self._pending >= self.queue_capacity
+            ) or self._reserved_bytes + max(0, extra_bytes) > self.max_queue_bytes:
                 waited = True
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
@@ -993,30 +970,18 @@ class AsyncArtifactWriter:
                         f"{self.max_queue_bytes})"
                     )
                     future.set_exception(error)
-                    self._timings["backpressure"].observe(
-                        time.monotonic() - enqueue_started
-                    )
-                    self._timings["enqueue"].observe(
-                        time.monotonic() - enqueue_started
-                    )
+                    self._timings["backpressure"].observe(time.monotonic() - enqueue_started)
+                    self._timings["enqueue"].observe(time.monotonic() - enqueue_started)
                     raise error
                 self._available.wait(remaining)
                 if self._closed:
                     raise RuntimeError("artifact writer is closed")
-                previous = (
-                    self._coalescible.get(job.coalesce_key)
-                    if job.coalesce_key
-                    else None
-                )
-                extra_bytes = (
-                    job.byte_size - previous.byte_size if previous else job.byte_size
-                )
+                previous = self._coalescible.get(job.coalesce_key) if job.coalesce_key else None
+                extra_bytes = job.byte_size - previous.byte_size if previous else job.byte_size
 
             if waited:
                 self._backpressure_waits += 1
-                self._timings["backpressure"].observe(
-                    time.monotonic() - enqueue_started
-                )
+                self._timings["backpressure"].observe(time.monotonic() - enqueue_started)
 
             if previous is not None:
                 coalesce_started = time.monotonic()
@@ -1038,9 +1003,7 @@ class AsyncArtifactWriter:
                         self._required_pending += 1
                     self._coalesced += 1
                     self._coalesced_bytes += previous.byte_size
-                    self._timings["coalescing"].observe(
-                        time.monotonic() - coalesce_started
-                    )
+                    self._timings["coalescing"].observe(time.monotonic() - coalesce_started)
 
             if previous is None:
                 self._jobs.append(job)
@@ -1050,9 +1013,7 @@ class AsyncArtifactWriter:
                 if job.required:
                     self._required_pending += 1
                 self._reserved_bytes += job.byte_size
-            self._peak_reserved_bytes = max(
-                self._peak_reserved_bytes, self._reserved_bytes
-            )
+            self._peak_reserved_bytes = max(self._peak_reserved_bytes, self._reserved_bytes)
             self._timings["enqueue"].observe(time.monotonic() - enqueue_started)
             self._available.notify()
         return future
@@ -1068,9 +1029,7 @@ class AsyncArtifactWriter:
                 if job.coalesce_key:
                     self._coalescible.pop(job.coalesce_key, None)
                 self._active_writes += 1
-                self._peak_active_writes = max(
-                    self._peak_active_writes, self._active_writes
-                )
+                self._peak_active_writes = max(self._peak_active_writes, self._active_writes)
             try:
                 path_key = str(job.path.absolute())
                 with self._lock:
@@ -1099,9 +1058,7 @@ class AsyncArtifactWriter:
                     self._pending = max(0, self._pending - 1)
                     if job.required:
                         self._required_pending = max(0, self._required_pending - 1)
-                    self._reserved_bytes = max(
-                        0, self._reserved_bytes - job.byte_size
-                    )
+                    self._reserved_bytes = max(0, self._reserved_bytes - job.byte_size)
                     self._available.notify_all()
                     self._idle.notify_all()
 

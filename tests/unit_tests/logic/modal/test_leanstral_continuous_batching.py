@@ -107,7 +107,9 @@ def _healthy_service() -> LeanstralServiceHealth:
 def test_continuous_service_checks_cache_before_queue_admission(tmp_path) -> None:
     cached_request = _request(1)
     miss_request = _request(2)
-    cached_response = LeanstralAuditResponse.from_mapping(json.loads(_response_json(cached_request)))
+    cached_response = LeanstralAuditResponse.from_mapping(
+        json.loads(_response_json(cached_request))
+    )
     validation = validate_leanstral_audit_response(cached_request, cached_response)
     assert validation.accepted and validation.verified
 
@@ -123,8 +125,7 @@ def test_continuous_service_checks_cache_before_queue_admission(tmp_path) -> Non
             miss_request.request_id: miss_request,
         }
         return [
-            _response_json(known[_request_from_prompt(prompt)["request_id"]])
-            for prompt in prompts
+            _response_json(known[_request_from_prompt(prompt)["request_id"]]) for prompt in prompts
         ]
 
     worker = LeanstralAuditWorker(

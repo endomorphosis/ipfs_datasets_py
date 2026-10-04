@@ -125,4 +125,3 @@ def verify_approval(
     if set(request.abilities) != set(abilities):
         raise ApprovalRequiredError("Approval abilities do not match request")
     return request
-

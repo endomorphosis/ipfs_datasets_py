@@ -5,39 +5,45 @@ Final validation test for Phase 1 development tools migration.
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path.cwd()))
+
 
 def test_imports():
     """Test all development tool imports."""
     print("1. Testing imports...")
     try:
         from ipfs_datasets_py.mcp_server.tools.development_tools import (
-            test_generator, codebase_search, documentation_generator,
-            lint_python_codebase, run_comprehensive_tests
+            test_generator,
+            codebase_search,
+            documentation_generator,
+            lint_python_codebase,
+            run_comprehensive_tests,
         )
+
         print("   ✓ All development tools import successfully")
         return True
     except Exception as e:
         print(f"   ✗ Import error: {e}")
         return False
 
+
 def test_function_calls():
     """Test that the functions can be called."""
     print("2. Testing function calls...")
     try:
         # Test codebase_search (simplest test)
-        from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
-        result = codebase_search(
-            pattern="test",
-            path="/tmp",
-            format="text",
-            max_depth=1
+        from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import (
+            codebase_search,
         )
+
+        result = codebase_search(pattern="test", path="/tmp", format="text", max_depth=1)
         print("   ✓ codebase_search function executes")
         return True
     except Exception as e:
         print(f"   ✗ Function call error: {e}")
         return False
+
 
 def test_discovery():
     """Test tool discovery mechanism."""
@@ -46,11 +52,16 @@ def test_discovery():
         from pathlib import Path
         from ipfs_datasets_py.mcp_server.server import import_tools_from_directory
 
-        tools_path = Path('ipfs_datasets_py/mcp_server/tools/development_tools')
+        tools_path = Path("ipfs_datasets_py/mcp_server/tools/development_tools")
         tools = import_tools_from_directory(tools_path)
 
-        expected = ['test_generator', 'codebase_search', 'documentation_generator',
-                   'lint_python_codebase', 'run_comprehensive_tests']
+        expected = [
+            "test_generator",
+            "codebase_search",
+            "documentation_generator",
+            "lint_python_codebase",
+            "run_comprehensive_tests",
+        ]
         found = [name for name in expected if name in tools]
 
         print(f"   Found {len(found)}/5 expected tools: {found}")
@@ -59,16 +70,13 @@ def test_discovery():
         print(f"   ✗ Discovery error: {e}")
         return False
 
+
 def main():
     """Run all validation tests."""
     print("Phase 1 Development Tools Migration - Final Validation")
     print("=" * 60)
 
-    tests = [
-        test_imports,
-        test_function_calls,
-        test_discovery
-    ]
+    tests = [test_imports, test_function_calls, test_discovery]
 
     results = []
     for test in tests:
@@ -105,6 +113,7 @@ def main():
         print(f"Failed tests: {failed_tests}")
 
     return 0 if all_passed else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

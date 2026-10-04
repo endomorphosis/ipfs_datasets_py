@@ -210,9 +210,7 @@ class LegalIRProvenanceSpan:
             token_span=LegalIRTokenSpan.from_dict(_mapping(data.get("token_span"))),
             normalized_text=str(data.get("normalized_text") or ""),
             transformation_step_id=str(
-                data.get("transformation_step_id")
-                or data.get("transformation_step")
-                or ""
+                data.get("transformation_step_id") or data.get("transformation_step") or ""
             ),
             decompiler_attribution=str(data.get("decompiler_attribution") or "not_decompiled"),
             source_uri=str(data.get("source_uri") or ""),
@@ -265,9 +263,7 @@ class LegalIRSourceMapNode:
             transform_ids=tuple(_strings(data.get("transform_ids", ()))),
             emitted_fact=str(data.get("emitted_fact") or ""),
             transformation_step_id=str(
-                data.get("transformation_step_id")
-                or data.get("transformation_step")
-                or ""
+                data.get("transformation_step_id") or data.get("transformation_step") or ""
             ),
             decompiler_attribution=str(data.get("decompiler_attribution") or "not_decompiled"),
             derived=bool(data.get("derived")),
@@ -425,8 +421,10 @@ class LegalIRArtifactTraceability:
 
     @property
     def traceable(self) -> bool:
-        return bool(self.emitted_fact_ids) and not self.missing_fact_ids and not any(
-            issue.severity == "error" for issue in self.issues
+        return (
+            bool(self.emitted_fact_ids)
+            and not self.missing_fact_ids
+            and not any(issue.severity == "error" for issue in self.issues)
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -510,7 +508,9 @@ class LegalIRSourceMap:
 class LegalIRSourceMapBuilder:
     """Mutable builder for a deterministic source-map graph."""
 
-    def __init__(self, *, source_map_id: str = "", metadata: Mapping[str, Any] | None = None) -> None:
+    def __init__(
+        self, *, source_map_id: str = "", metadata: Mapping[str, Any] | None = None
+    ) -> None:
         self.source_map_id = source_map_id
         self.metadata = dict(metadata or {})
         self._sources: dict[str, LegalIRSourceDocument] = {}
@@ -561,7 +561,9 @@ class LegalIRSourceMapBuilder:
         if not normalized_text and source is not None:
             normalized_text = source.normalized_text[start:end]
         if token_span is None:
-            token_span = _token_span_for_offsets(source.normalized_text if source else normalized_text, start, end)
+            token_span = _token_span_for_offsets(
+                source.normalized_text if source else normalized_text, start, end
+            )
         resolved_token_span = (
             token_span
             if isinstance(token_span, LegalIRTokenSpan)
@@ -647,7 +649,11 @@ class LegalIRSourceMapBuilder:
         inputs = tuple(_unique(_strings(input_node_ids)))
         outputs = tuple(_unique(_strings(output_node_ids)))
         in_spans = tuple(_unique(_strings(input_span_ids))) or tuple(
-            _unique(span for node_id in inputs for span in self._nodes.get(node_id, LegalIRSourceMapNode(node_id, "")).span_ids)
+            _unique(
+                span
+                for node_id in inputs
+                for span in self._nodes.get(node_id, LegalIRSourceMapNode(node_id, "")).span_ids
+            )
         )
         out_spans = tuple(_unique(_strings(output_span_ids)))
         payload = {
@@ -716,14 +722,18 @@ class LegalIRSourceMapBuilder:
         return self._nodes[node.node_id]
 
     def to_source_map(self) -> LegalIRSourceMap:
-        source_map_id = self.source_map_id or "lir-source-map-" + _stable_hash(
-            {
-                "nodes": sorted(self._nodes),
-                "sources": sorted(self._sources),
-                "spans": sorted(self._spans),
-                "transforms": sorted(self._transforms),
-            }
-        )[:24]
+        source_map_id = (
+            self.source_map_id
+            or "lir-source-map-"
+            + _stable_hash(
+                {
+                    "nodes": sorted(self._nodes),
+                    "sources": sorted(self._sources),
+                    "spans": sorted(self._spans),
+                    "transforms": sorted(self._transforms),
+                }
+            )[:24]
+        )
         return LegalIRSourceMap(
             source_map_id=source_map_id,
             sources=tuple(self._sources[key] for key in sorted(self._sources)),
@@ -768,12 +778,20 @@ def build_legal_ir_source_map(sample_or_document: Any) -> LegalIRSourceMap:
             or start
         )
         span = builder.add_span(
-            str(provenance.get("source_document_id") or provenance.get("source_id") or source_document_id),
+            str(
+                provenance.get("source_document_id")
+                or provenance.get("source_id")
+                or source_document_id
+            ),
             start,
             end,
             citation=str(provenance.get("citation") or citation),
-            transformation_step_id=str(provenance.get("transformation_step") or "compiler.source_span"),
-            decompiler_attribution=str(provenance.get("decompiler_attribution") or "not_decompiled"),
+            transformation_step_id=str(
+                provenance.get("transformation_step") or "compiler.source_span"
+            ),
+            decompiler_attribution=str(
+                provenance.get("decompiler_attribution") or "not_decompiled"
+            ),
             metadata={"formula_id": formula_id},
         )
         builder.add_node(
@@ -782,7 +800,9 @@ def build_legal_ir_source_map(sample_or_document: Any) -> LegalIRSourceMap:
             span_ids=(span.span_id,),
             emitted_fact=formula_id,
             transformation_step_id="compiler.emit_formula",
-            decompiler_attribution=str(provenance.get("decompiler_attribution") or "not_decompiled"),
+            decompiler_attribution=str(
+                provenance.get("decompiler_attribution") or "not_decompiled"
+            ),
             metadata={"formula_index": index},
         )
     return builder.to_source_map()
@@ -800,7 +820,11 @@ def record_legal_ir_artifact_provenance(
     payload = _payload_mapping(artifact)
     kind = str(artifact_kind or _artifact_kind(payload) or "artifact")
 
-    if "translation_records" in payload or "reconstruction_receipts" in payload or "artifacts" in payload:
+    if (
+        "translation_records" in payload
+        or "reconstruction_receipts" in payload
+        or "artifacts" in payload
+    ):
         recorded: list[str] = []
         for key, child_kind in (
             ("translation_records", "hammer_translation"),
@@ -861,7 +885,9 @@ def record_legal_ir_artifact_provenance(
     return fact_ids
 
 
-def validate_legal_ir_source_map(source_map: LegalIRSourceMap | Mapping[str, Any]) -> LegalIRSourceMapValidationResult:
+def validate_legal_ir_source_map(
+    source_map: LegalIRSourceMap | Mapping[str, Any],
+) -> LegalIRSourceMapValidationResult:
     """Validate source documents, spans, nodes, transform edges, and traces."""
 
     source_map = _source_map(source_map)
@@ -870,56 +896,148 @@ def validate_legal_ir_source_map(source_map: LegalIRSourceMap | Mapping[str, Any
     spans = source_map.span_by_id
     nodes = source_map.node_by_id
     transforms = source_map.transform_by_id
-    _duplicate_issues("sources", [source.source_document_id for source in source_map.sources], issues)
+    _duplicate_issues(
+        "sources", [source.source_document_id for source in source_map.sources], issues
+    )
     _duplicate_issues("spans", [span.span_id for span in source_map.spans], issues)
     _duplicate_issues("nodes", [node.node_id for node in source_map.nodes], issues)
-    _duplicate_issues("transforms", [transform.transform_id for transform in source_map.transforms], issues)
+    _duplicate_issues(
+        "transforms", [transform.transform_id for transform in source_map.transforms], issues
+    )
 
     for source in source_map.sources:
         if not source.source_document_id:
-            issues.append(_issue("source_document_missing", "Source document has no ID.", "sources.source_document_id"))
+            issues.append(
+                _issue(
+                    "source_document_missing",
+                    "Source document has no ID.",
+                    "sources.source_document_id",
+                )
+            )
         if not source.normalized_text:
-            issues.append(_issue("source_normalized_text_missing", "Source document has no normalized text.", f"sources.{source.source_document_id}.normalized_text"))
+            issues.append(
+                _issue(
+                    "source_normalized_text_missing",
+                    "Source document has no normalized text.",
+                    f"sources.{source.source_document_id}.normalized_text",
+                )
+            )
 
     for span in source_map.spans:
         path = f"spans.{span.span_id}"
         source = sources.get(span.source_document_id)
         if source is None:
-            issues.append(_issue("span_source_missing", "Span references an unknown source document.", f"{path}.source_document_id"))
+            issues.append(
+                _issue(
+                    "span_source_missing",
+                    "Span references an unknown source document.",
+                    f"{path}.source_document_id",
+                )
+            )
         if not span.citation:
-            issues.append(_issue("span_citation_missing", "Span does not preserve a citation.", f"{path}.citation"))
+            issues.append(
+                _issue(
+                    "span_citation_missing",
+                    "Span does not preserve a citation.",
+                    f"{path}.citation",
+                )
+            )
         if not span.normalized_text:
-            issues.append(_issue("span_normalized_text_missing", "Span does not preserve normalized text.", f"{path}.normalized_text"))
+            issues.append(
+                _issue(
+                    "span_normalized_text_missing",
+                    "Span does not preserve normalized text.",
+                    f"{path}.normalized_text",
+                )
+            )
         if span.end_offset < span.start_offset:
-            issues.append(_issue("span_offsets_invalid", "Span end offset precedes start offset.", f"{path}.offset"))
+            issues.append(
+                _issue(
+                    "span_offsets_invalid",
+                    "Span end offset precedes start offset.",
+                    f"{path}.offset",
+                )
+            )
         if span.token_span.end_token < span.token_span.start_token:
-            issues.append(_issue("span_token_offsets_invalid", "Token span end precedes start.", f"{path}.token_span"))
+            issues.append(
+                _issue(
+                    "span_token_offsets_invalid",
+                    "Token span end precedes start.",
+                    f"{path}.token_span",
+                )
+            )
         if not span.transformation_step_id:
-            issues.append(_issue("span_transformation_step_missing", "Span has no transformation step.", f"{path}.transformation_step_id"))
+            issues.append(
+                _issue(
+                    "span_transformation_step_missing",
+                    "Span has no transformation step.",
+                    f"{path}.transformation_step_id",
+                )
+            )
         if not span.decompiler_attribution:
-            issues.append(_issue("span_decompiler_attribution_missing", "Span has no decompiler attribution marker.", f"{path}.decompiler_attribution"))
+            issues.append(
+                _issue(
+                    "span_decompiler_attribution_missing",
+                    "Span has no decompiler attribution marker.",
+                    f"{path}.decompiler_attribution",
+                )
+            )
         if source is not None and span.end_offset <= len(source.normalized_text):
             expected = source.normalized_text[span.start_offset : span.end_offset]
             if expected != span.normalized_text:
-                issues.append(_issue("span_text_mismatch", "Span normalized text does not match source offsets.", f"{path}.normalized_text"))
+                issues.append(
+                    _issue(
+                        "span_text_mismatch",
+                        "Span normalized text does not match source offsets.",
+                        f"{path}.normalized_text",
+                    )
+                )
 
     for node in source_map.nodes:
         path = f"nodes.{node.node_id}"
         if not node.node_id:
             issues.append(_issue("node_id_missing", "Node has no ID.", path))
         if not node.decompiler_attribution:
-            issues.append(_issue("node_decompiler_attribution_missing", "Node has no decompiler attribution marker.", f"{path}.decompiler_attribution"))
+            issues.append(
+                _issue(
+                    "node_decompiler_attribution_missing",
+                    "Node has no decompiler attribution marker.",
+                    f"{path}.decompiler_attribution",
+                )
+            )
         for span_id in node.span_ids:
             if span_id not in spans:
-                issues.append(_issue("node_span_missing", "Node references an unknown span.", f"{path}.span_ids"))
+                issues.append(
+                    _issue(
+                        "node_span_missing", "Node references an unknown span.", f"{path}.span_ids"
+                    )
+                )
         for parent_id in node.derived_from_node_ids:
             if parent_id not in nodes:
-                issues.append(_issue("node_parent_missing", "Node references an unknown parent node.", f"{path}.derived_from_node_ids"))
+                issues.append(
+                    _issue(
+                        "node_parent_missing",
+                        "Node references an unknown parent node.",
+                        f"{path}.derived_from_node_ids",
+                    )
+                )
         for transform_id in node.transform_ids:
             if transform_id not in transforms:
-                issues.append(_issue("node_transform_missing", "Node references an unknown transform.", f"{path}.transform_ids"))
+                issues.append(
+                    _issue(
+                        "node_transform_missing",
+                        "Node references an unknown transform.",
+                        f"{path}.transform_ids",
+                    )
+                )
         if not node.span_ids and not node.derived:
-            issues.append(_issue("node_origin_missing", "Node has no source span and is not marked derived.", path))
+            issues.append(
+                _issue(
+                    "node_origin_missing",
+                    "Node has no source span and is not marked derived.",
+                    path,
+                )
+            )
         if (
             node.derived
             and not node.span_ids
@@ -927,20 +1045,42 @@ def validate_legal_ir_source_map(source_map: LegalIRSourceMap | Mapping[str, Any
             and not node.transform_ids
             and not node.transformation_step_id
         ):
-            issues.append(_issue("derived_node_explanation_missing", "Derived node has no parent or transform explanation.", path))
+            issues.append(
+                _issue(
+                    "derived_node_explanation_missing",
+                    "Derived node has no parent or transform explanation.",
+                    path,
+                )
+            )
 
     for transform in source_map.transforms:
         path = f"transforms.{transform.transform_id}"
         if not transform.transformation_step:
-            issues.append(_issue("transform_step_missing", "Transform has no transformation step.", f"{path}.transformation_step"))
+            issues.append(
+                _issue(
+                    "transform_step_missing",
+                    "Transform has no transformation step.",
+                    f"{path}.transformation_step",
+                )
+            )
         if not transform.output_node_ids:
-            issues.append(_issue("transform_outputs_missing", "Transform has no output nodes.", f"{path}.output_node_ids"))
+            issues.append(
+                _issue(
+                    "transform_outputs_missing",
+                    "Transform has no output nodes.",
+                    f"{path}.output_node_ids",
+                )
+            )
         for node_id in (*transform.input_node_ids, *transform.output_node_ids):
             if node_id not in nodes:
-                issues.append(_issue("transform_node_missing", "Transform references an unknown node.", path))
+                issues.append(
+                    _issue("transform_node_missing", "Transform references an unknown node.", path)
+                )
         for span_id in (*transform.input_span_ids, *transform.output_span_ids):
             if span_id not in spans:
-                issues.append(_issue("transform_span_missing", "Transform references an unknown span.", path))
+                issues.append(
+                    _issue("transform_span_missing", "Transform references an unknown span.", path)
+                )
 
     for node in source_map.nodes:
         trace = trace_legal_ir_fact(source_map, node.node_id)
@@ -965,7 +1105,9 @@ def validate_legal_ir_source_map(source_map: LegalIRSourceMap | Mapping[str, Any
     )
 
 
-def trace_legal_ir_fact(source_map: LegalIRSourceMap | Mapping[str, Any], fact_id: str) -> LegalIRFactTrace:
+def trace_legal_ir_fact(
+    source_map: LegalIRSourceMap | Mapping[str, Any], fact_id: str
+) -> LegalIRFactTrace:
     """Trace one emitted fact recursively through the source-map graph."""
 
     source_map = _source_map(source_map)
@@ -996,11 +1138,17 @@ def trace_legal_ir_fact(source_map: LegalIRSourceMap | Mapping[str, Any], fact_i
     def visit(node_id: str, stack: tuple[str, ...] = ()) -> None:
         nonlocal derived
         if node_id in stack:
-            issues.append(_issue("source_map_cycle", "Source-map derivation cycle detected.", f"nodes.{node_id}"))
+            issues.append(
+                _issue(
+                    "source_map_cycle", "Source-map derivation cycle detected.", f"nodes.{node_id}"
+                )
+            )
             return
         node = nodes.get(node_id)
         if node is None:
-            issues.append(_issue("trace_parent_missing", "Trace parent is missing.", f"nodes.{node_id}"))
+            issues.append(
+                _issue("trace_parent_missing", "Trace parent is missing.", f"nodes.{node_id}")
+            )
             return
         visited.append(node_id)
         derived = derived or node.derived
@@ -1020,7 +1168,11 @@ def trace_legal_ir_fact(source_map: LegalIRSourceMap | Mapping[str, Any], fact_i
 
     visit(fact)
     source_spans = tuple(spans[span_id] for span_id in _unique(span_ids) if span_id in spans)
-    steps = tuple(transforms[transform_id] for transform_id in _unique(transform_ids) if transform_id in transforms)
+    steps = tuple(
+        transforms[transform_id]
+        for transform_id in _unique(transform_ids)
+        if transform_id in transforms
+    )
     if not source_spans and not derived:
         issues.append(
             _issue(
@@ -1129,7 +1281,11 @@ def assert_legal_ir_artifact_traceable(
 
 
 def _source_map(value: LegalIRSourceMap | Mapping[str, Any]) -> LegalIRSourceMap:
-    return value if isinstance(value, LegalIRSourceMap) else LegalIRSourceMap.from_dict(_mapping(value))
+    return (
+        value
+        if isinstance(value, LegalIRSourceMap)
+        else LegalIRSourceMap.from_dict(_mapping(value))
+    )
 
 
 def _document(sample_or_document: Any) -> Any:
@@ -1223,12 +1379,20 @@ def _duplicate_issues(kind: str, ids: Sequence[str], issues: list[LegalIRSourceM
         seen.add(item)
 
 
-def _issue(code: str, message: str, field_path: str = "", severity: str = "error") -> LegalIRSourceMapIssue:
-    return LegalIRSourceMapIssue(code=code, message=message, field_path=field_path, severity=severity)
+def _issue(
+    code: str, message: str, field_path: str = "", severity: str = "error"
+) -> LegalIRSourceMapIssue:
+    return LegalIRSourceMapIssue(
+        code=code, message=message, field_path=field_path, severity=severity
+    )
 
 
 def _dedupe_issues(issues: Iterable[LegalIRSourceMapIssue]) -> tuple[LegalIRSourceMapIssue, ...]:
-    return tuple({(issue.code, issue.field_path, issue.message, issue.severity): issue for issue in issues}.values())
+    return tuple(
+        {
+            (issue.code, issue.field_path, issue.message, issue.severity): issue for issue in issues
+        }.values()
+    )
 
 
 def _artifact_id(payload: Mapping[str, Any]) -> str:

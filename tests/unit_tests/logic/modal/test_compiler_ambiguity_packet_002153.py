@@ -144,9 +144,7 @@ def test_compiler_exposes_packet_002153_explicit_adaptive_ambiguities() -> None:
     )
 
     for predicted_family, target_family, family_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,

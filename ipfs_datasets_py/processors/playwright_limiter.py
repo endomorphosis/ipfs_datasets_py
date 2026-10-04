@@ -47,11 +47,7 @@ def _get_semaphore() -> asyncio.Semaphore:
     limit = get_playwright_browser_limit()
     loop = asyncio.get_running_loop()
     loop_id = id(loop)
-    if (
-        _semaphore is None
-        or _semaphore_loop_id != loop_id
-        or _semaphore_limit != limit
-    ):
+    if _semaphore is None or _semaphore_loop_id != loop_id or _semaphore_limit != limit:
         _semaphore = asyncio.Semaphore(limit)
         _semaphore_loop_id = loop_id
         _semaphore_limit = limit

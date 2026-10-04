@@ -222,9 +222,7 @@ def test_parallel_requests_run_one_pip_install(monkeypatch, tmp_path):
 
     def worker():
         start.wait()
-        results.append(
-            installer.ensure_dependency("parallel_lazy_module", "parallel-lazy-package")
-        )
+        results.append(installer.ensure_dependency("parallel_lazy_module", "parallel-lazy-package"))
 
     threads = [threading.Thread(target=worker) for _ in range(8)]
     for thread in threads:

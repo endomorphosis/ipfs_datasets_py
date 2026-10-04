@@ -33,18 +33,10 @@ from .verifier import (
 )
 
 LEGACY_PROOF_CORPUS_READER_INTERFACE: Final = "LegacyProofCorpusReader@1"
-LEGACY_PROOF_CORPUS_READER_SCHEMA_VERSION: Final = (
-    "legacy-proof-corpus-reader/v1"
-)
-LEGACY_RECORD_INSPECTION_SCHEMA_VERSION: Final = (
-    "legacy-record-inspection/v1"
-)
-LEGACY_QUARANTINE_RECORD_SCHEMA_VERSION: Final = (
-    "legacy-quarantine-record/v1"
-)
-LEGACY_AUTHORITY_MANIFEST_SCHEMA_VERSION: Final = (
-    "legacy-authority-manifest/v1"
-)
+LEGACY_PROOF_CORPUS_READER_SCHEMA_VERSION: Final = "legacy-proof-corpus-reader/v1"
+LEGACY_RECORD_INSPECTION_SCHEMA_VERSION: Final = "legacy-record-inspection/v1"
+LEGACY_QUARANTINE_RECORD_SCHEMA_VERSION: Final = "legacy-quarantine-record/v1"
+LEGACY_AUTHORITY_MANIFEST_SCHEMA_VERSION: Final = "legacy-authority-manifest/v1"
 LEGACY_AUTHORITY_MANIFEST_INTERFACE: Final = "LegacyAuthorityManifest@1"
 
 # Disposition labels for quarantine / audit-only handling.
@@ -207,9 +199,7 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise LegacyProofCorpusError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise LegacyProofCorpusError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -223,28 +213,20 @@ def _unique_texts(values: Any, field_name: str) -> tuple[str, ...]:
     if values in (None, ()):
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise LegacyProofCorpusError(
-            f"{field_name} must be a sequence of strings"
-        )
+        raise LegacyProofCorpusError(f"{field_name} must be a sequence of strings")
     try:
         items = tuple(_require_text(item, field_name) for item in values)
     except TypeError as exc:
-        raise LegacyProofCorpusError(
-            f"{field_name} must be a sequence of strings"
-        ) from exc
+        raise LegacyProofCorpusError(f"{field_name} must be a sequence of strings") from exc
     if len(items) != len(set(items)):
         raise LegacyProofCorpusError(f"{field_name} values must be unique")
     return items
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise LegacyProofCorpusError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise LegacyProofCorpusError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -254,9 +236,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise LegacyProofCorpusError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise LegacyProofCorpusError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _lookup_path(record: Mapping[str, Any], path: str) -> Any:
@@ -289,9 +269,7 @@ def _value_present(value: Any) -> bool:
     return True
 
 
-def resolve_legacy_binding(
-    record: Mapping[str, Any], binding: str
-) -> tuple[bool, Any, str]:
+def resolve_legacy_binding(record: Mapping[str, Any], binding: str) -> tuple[bool, Any, str]:
     """Resolve *binding* on a legacy record via aliases.
 
     Returns ``(present, value, matched_alias)``.
@@ -356,9 +334,7 @@ class LegacyRecordInspection:
     schema_version: str = LEGACY_RECORD_INSPECTION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "record_id", _require_text(self.record_id, "record_id")
-        )
+        object.__setattr__(self, "record_id", _require_text(self.record_id, "record_id"))
         object.__setattr__(
             self,
             "absent_bindings",
@@ -378,18 +354,14 @@ class LegacyRecordInspection:
             raise LegacyProofCorpusError("grants_authority must be a bool")
         # Hard invariant: legacy reader never grants authority.
         if self.grants_authority:
-            raise LegacyProofCorpusError(
-                "LegacyRecordInspection never grants authority"
-            )
+            raise LegacyProofCorpusError("LegacyRecordInspection never grants authority")
         object.__setattr__(self, "grants_authority", False)
         object.__setattr__(
             self,
             "record_digest",
             _optional_text(self.record_digest, "record_digest"),
         )
-        object.__setattr__(
-            self, "source_path", _optional_text(self.source_path, "source_path")
-        )
+        object.__setattr__(self, "source_path", _optional_text(self.source_path, "source_path"))
         object.__setattr__(self, "notes", _optional_text(self.notes, "notes"))
         object.__setattr__(
             self,
@@ -397,9 +369,7 @@ class LegacyRecordInspection:
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != LEGACY_RECORD_INSPECTION_SCHEMA_VERSION:
-            raise LegacyProofCorpusError(
-                f"unsupported inspection schema: {self.schema_version!r}"
-            )
+            raise LegacyProofCorpusError(f"unsupported inspection schema: {self.schema_version!r}")
 
     @property
     def is_complete(self) -> bool:
@@ -448,16 +418,12 @@ class LegacyRecordInspection:
             record_id=payload.get("record_id", ""),
             absent_bindings=tuple(payload.get("absent_bindings", ()) or ()),
             present_bindings=tuple(payload.get("present_bindings", ()) or ()),
-            disposition=payload.get(
-                "disposition", LegacyDisposition.AUDIT_ONLY.value
-            ),
+            disposition=payload.get("disposition", LegacyDisposition.AUDIT_ONLY.value),
             grants_authority=False,
             record_digest=payload.get("record_digest", ""),
             source_path=payload.get("source_path", ""),
             notes=payload.get("notes", ""),
-            schema_version=payload.get(
-                "schema_version", LEGACY_RECORD_INSPECTION_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", LEGACY_RECORD_INSPECTION_SCHEMA_VERSION),
         )
 
 
@@ -481,9 +447,7 @@ class LegacyQuarantineRecord:
     schema_version: str = LEGACY_QUARANTINE_RECORD_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "record_id", _require_text(self.record_id, "record_id")
-        )
+        object.__setattr__(self, "record_id", _require_text(self.record_id, "record_id"))
         object.__setattr__(
             self,
             "absent_bindings",
@@ -497,42 +461,30 @@ class LegacyQuarantineRecord:
         if not isinstance(self.grants_authority, bool):
             raise LegacyProofCorpusError("grants_authority must be a bool")
         if self.grants_authority:
-            raise LegacyProofCorpusError(
-                "LegacyQuarantineRecord never grants authority"
-            )
+            raise LegacyProofCorpusError("LegacyQuarantineRecord never grants authority")
         object.__setattr__(self, "grants_authority", False)
         object.__setattr__(
             self,
             "record_digest",
             _optional_text(self.record_digest, "record_digest"),
         )
-        object.__setattr__(
-            self, "source_path", _optional_text(self.source_path, "source_path")
-        )
-        object.__setattr__(
-            self, "reason", _require_text(self.reason, "reason")
-        )
+        object.__setattr__(self, "source_path", _optional_text(self.source_path, "source_path"))
+        object.__setattr__(self, "reason", _require_text(self.reason, "reason"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != LEGACY_QUARANTINE_RECORD_SCHEMA_VERSION:
-            raise LegacyProofCorpusError(
-                f"unsupported quarantine schema: {self.schema_version!r}"
-            )
+            raise LegacyProofCorpusError(f"unsupported quarantine schema: {self.schema_version!r}")
 
         body = self._identity_payload()
         digest = _sha256_digest(_canonical_bytes(body))
         cid = cid_v1_from_digest(bytes.fromhex(digest.removeprefix("sha256:")))
         if self.quarantine_digest and self.quarantine_digest != digest:
-            raise LegacyProofCorpusError(
-                "quarantine_digest does not match payload"
-            )
+            raise LegacyProofCorpusError("quarantine_digest does not match payload")
         if self.quarantine_cid and self.quarantine_cid != cid:
-            raise LegacyProofCorpusError(
-                "quarantine_cid does not match payload"
-            )
+            raise LegacyProofCorpusError("quarantine_cid does not match payload")
         object.__setattr__(self, "quarantine_digest", digest)
         object.__setattr__(self, "quarantine_cid", cid)
 
@@ -578,20 +530,14 @@ class LegacyQuarantineRecord:
         return cls(
             record_id=payload.get("record_id", ""),
             absent_bindings=tuple(payload.get("absent_bindings", ()) or ()),
-            disposition=payload.get(
-                "disposition", LegacyDisposition.AWAITING_REBUILD.value
-            ),
+            disposition=payload.get("disposition", LegacyDisposition.AWAITING_REBUILD.value),
             grants_authority=False,
             record_digest=payload.get("record_digest", ""),
             source_path=payload.get("source_path", ""),
-            reason=payload.get(
-                "reason", "incomplete_legacy_authority_bindings"
-            ),
+            reason=payload.get("reason", "incomplete_legacy_authority_bindings"),
             quarantine_digest=payload.get("quarantine_digest", ""),
             quarantine_cid=payload.get("quarantine_cid", ""),
-            schema_version=payload.get(
-                "schema_version", LEGACY_QUARANTINE_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", LEGACY_QUARANTINE_RECORD_SCHEMA_VERSION),
         )
 
 
@@ -621,17 +567,11 @@ class LegacyProofCorpusReader:
             _unique_texts(self.required_bindings, "required_bindings"),
         )
         if not self.required_bindings:
-            raise LegacyProofCorpusError(
-                "required_bindings must not be empty"
-            )
+            raise LegacyProofCorpusError("required_bindings must not be empty")
         if self.schema_version != LEGACY_PROOF_CORPUS_READER_SCHEMA_VERSION:
-            raise LegacyProofCorpusError(
-                f"unsupported reader schema: {self.schema_version!r}"
-            )
+            raise LegacyProofCorpusError(f"unsupported reader schema: {self.schema_version!r}")
         if self.interface != LEGACY_PROOF_CORPUS_READER_INTERFACE:
-            raise LegacyProofCorpusError(
-                f"unsupported reader interface: {self.interface!r}"
-            )
+            raise LegacyProofCorpusError(f"unsupported reader interface: {self.interface!r}")
 
     def inspect_record(
         self,
@@ -655,26 +595,16 @@ class LegacyProofCorpusReader:
         if not rid:
             rid = record_content_digest(record)
 
-        absent = report_absent_bindings(
-            record, required=self.required_bindings
-        )
-        present = tuple(
-            binding
-            for binding in self.required_bindings
-            if binding not in absent
-        )
+        absent = report_absent_bindings(record, required=self.required_bindings)
+        present = tuple(binding for binding in self.required_bindings if binding not in absent)
         if absent:
             disposition = LegacyDisposition.INCOMPLETE
-            note = notes or (
-                "legacy record missing authority bindings; audit-only"
-            )
+            note = notes or ("legacy record missing authority bindings; audit-only")
         else:
             # Even "complete" legacy shapes never grant authority without
             # consumer rebuild under AttestedProofEnvelope@1.
             disposition = LegacyDisposition.NON_AUTHORITATIVE
-            note = notes or (
-                "legacy record is non-authoritative until attested rebuild"
-            )
+            note = notes or ("legacy record is non-authoritative until attested rebuild")
 
         inspection = LegacyRecordInspection(
             record_id=rid,
@@ -703,9 +633,7 @@ class LegacyProofCorpusReader:
         record mapping is left unchanged.
         """
 
-        inspection = self.inspect_record(
-            record, record_id=record_id, source_path=source_path
-        )
+        inspection = self.inspect_record(record, record_id=record_id, source_path=source_path)
         # Always quarantine: legacy never grants authority.
         disposition = (
             LegacyDisposition.AWAITING_REBUILD
@@ -735,9 +663,7 @@ class LegacyProofCorpusReader:
         results: list[LegacyRecordInspection] = []
         for index, record in enumerate(records):
             if not isinstance(record, Mapping):
-                raise LegacyProofCorpusError(
-                    f"records[{index}] must be a mapping"
-                )
+                raise LegacyProofCorpusError(f"records[{index}] must be a mapping")
             rid = str(record.get(id_field) or record.get("id") or f"record-{index}")
             results.append(self.inspect_record(record, record_id=rid))
         return tuple(results)
@@ -753,13 +679,9 @@ class LegacyProofCorpusReader:
         results: list[LegacyQuarantineRecord] = []
         for index, record in enumerate(records):
             if not isinstance(record, Mapping):
-                raise LegacyProofCorpusError(
-                    f"records[{index}] must be a mapping"
-                )
+                raise LegacyProofCorpusError(f"records[{index}] must be a mapping")
             rid = str(record.get(id_field) or record.get("id") or f"record-{index}")
-            results.append(
-                self.quarantine_record(record, record_id=rid)
-            )
+            results.append(self.quarantine_record(record, record_id=rid))
         return tuple(results)
 
     def load_json_path(self, path: str | Path) -> dict[str, Any]:
@@ -774,9 +696,7 @@ class LegacyProofCorpusReader:
                 f"cannot load legacy record from {file_path}: {exc}"
             ) from exc
         if not isinstance(payload, Mapping):
-            raise LegacyProofCorpusError(
-                f"legacy record at {file_path} must be a JSON object"
-            )
+            raise LegacyProofCorpusError(f"legacy record at {file_path} must be a JSON object")
         return dict(payload)
 
     def inspect_path(self, path: str | Path) -> LegacyRecordInspection:
@@ -786,11 +706,7 @@ class LegacyProofCorpusReader:
         record = self.load_json_path(file_path)
         return self.inspect_record(
             record,
-            record_id=str(
-                record.get("record_id")
-                or record.get("id")
-                or file_path.stem
-            ),
+            record_id=str(record.get("record_id") or record.get("id") or file_path.stem),
             source_path=str(file_path),
         )
 
@@ -840,9 +756,7 @@ def load_legacy_authority_manifest(
 
     if payload is None:
         if path is None:
-            raise LegacyProofCorpusError(
-                "load_legacy_authority_manifest requires path or payload"
-            )
+            raise LegacyProofCorpusError("load_legacy_authority_manifest requires path or payload")
         file_path = Path(path)
         try:
             raw = file_path.read_text(encoding="utf-8")
@@ -852,9 +766,7 @@ def load_legacy_authority_manifest(
                 f"cannot load legacy authority manifest from {file_path}: {exc}"
             ) from exc
         if not isinstance(loaded, Mapping):
-            raise LegacyProofCorpusError(
-                "legacy authority manifest must be a JSON object"
-            )
+            raise LegacyProofCorpusError("legacy authority manifest must be a JSON object")
         payload = loaded
 
     data = dict(_as_mapping(payload, "legacy authority manifest"))
@@ -863,20 +775,12 @@ def load_legacy_authority_manifest(
         raise LegacyProofCorpusError(
             f"unsupported legacy authority manifest interface: {interface!r}"
         )
-    schema = data.get(
-        "schema_version", LEGACY_AUTHORITY_MANIFEST_SCHEMA_VERSION
-    )
+    schema = data.get("schema_version", LEGACY_AUTHORITY_MANIFEST_SCHEMA_VERSION)
     if schema != LEGACY_AUTHORITY_MANIFEST_SCHEMA_VERSION:
-        raise LegacyProofCorpusError(
-            f"unsupported legacy authority manifest schema: {schema!r}"
-        )
+        raise LegacyProofCorpusError(f"unsupported legacy authority manifest schema: {schema!r}")
     required = data.get("required_bindings")
-    if not isinstance(required, Sequence) or isinstance(
-        required, (str, bytes, bytearray)
-    ):
-        raise LegacyProofCorpusError(
-            "required_bindings must be a sequence of strings"
-        )
+    if not isinstance(required, Sequence) or isinstance(required, (str, bytes, bytearray)):
+        raise LegacyProofCorpusError("required_bindings must be a sequence of strings")
     required_tuple = tuple(str(item) for item in required)
     if not required_tuple:
         raise LegacyProofCorpusError("required_bindings must not be empty")
@@ -908,9 +812,7 @@ def inspect_manifest_samples(
     samples = normalized.get("samples") or {}
     for sample_id, sample in samples.items():
         if not isinstance(sample, Mapping):
-            raise LegacyProofCorpusError(
-                f"sample {sample_id!r} must be a mapping"
-            )
+            raise LegacyProofCorpusError(f"sample {sample_id!r} must be a mapping")
         record = sample.get("record")
         if not isinstance(record, Mapping):
             # Allow inline sample fields as the record itself.
@@ -953,13 +855,7 @@ def default_legacy_authority_manifest_path() -> Path:
     here = Path(__file__).resolve()
     # ipfs_datasets_py/logic/proof_corpus/migration.py -> repo root is parents[3]
     repo_root = here.parents[3]
-    return (
-        repo_root
-        / "tests"
-        / "fixtures"
-        / "proof_corpus"
-        / "legacy_authority_manifest.json"
-    )
+    return repo_root / "tests" / "fixtures" / "proof_corpus" / "legacy_authority_manifest.json"
 
 
 __all__ = [

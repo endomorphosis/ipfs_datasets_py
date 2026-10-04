@@ -38,8 +38,12 @@ def build_case_knowledge_graph(
                 id=str(relationship.get("id") or ""),
                 source=str(relationship.get("source") or relationship.get("source_id") or ""),
                 target=str(relationship.get("target") or relationship.get("target_id") or ""),
-                type=str(relationship.get("type") or relationship.get("relation_type") or "RELATED_TO"),
-                properties=dict(relationship.get("properties") or relationship.get("attributes") or {}),
+                type=str(
+                    relationship.get("type") or relationship.get("relation_type") or "RELATED_TO"
+                ),
+                properties=dict(
+                    relationship.get("properties") or relationship.get("attributes") or {}
+                ),
                 confidence=float(relationship.get("confidence", 1.0) or 1.0),
                 bidirectional=bool(relationship.get("bidirectional", False)),
             )
@@ -105,7 +109,8 @@ def analyze_case_graph_gaps(
         rel.type.lower() in {"occurred_on", "has_timeline_detail"} for rel in relationships
     )
     has_timeline_fact = any(
-        entity.type == "fact" and str(entity.properties.get("fact_type") or "").lower() == "timeline"
+        entity.type == "fact"
+        and str(entity.properties.get("fact_type") or "").lower() == "timeline"
         for entity in entities
     )
     if not has_dates and not has_timeline_rel and not has_timeline_fact:
@@ -119,7 +124,8 @@ def analyze_case_graph_gaps(
     timeline_fact_texts = [
         _entity_text(entity)
         for entity in entities
-        if entity.type == "fact" and str(entity.properties.get("fact_type") or "").lower() == "timeline"
+        if entity.type == "fact"
+        and str(entity.properties.get("fact_type") or "").lower() == "timeline"
     ]
     decision_timeline_terms = (
         "decision",
@@ -188,7 +194,9 @@ def analyze_case_graph_gaps(
     return gaps
 
 
-def summarize_case_graph(graph: KnowledgeGraph, *, confidence_threshold: float = 0.7) -> Dict[str, Any]:
+def summarize_case_graph(
+    graph: KnowledgeGraph, *, confidence_threshold: float = 0.7
+) -> Dict[str, Any]:
     """Summarize case-graph readiness and structural quality."""
 
     entity_count = len(graph.entities)
@@ -196,7 +204,9 @@ def summarize_case_graph(graph: KnowledgeGraph, *, confidence_threshold: float =
     average_confidence = (
         sum(entity.confidence for entity in graph.entities) / entity_count if entity_count else 0.0
     )
-    isolated_count = sum(1 for entity in graph.entities if not _relationships_for_entity(graph, entity.id))
+    isolated_count = sum(
+        1 for entity in graph.entities if not _relationships_for_entity(graph, entity.id)
+    )
     connection_counts = {
         entity.id: len(_relationships_for_entity(graph, entity.id)) for entity in graph.entities
     }

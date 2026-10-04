@@ -33,23 +33,59 @@ def _parse_args() -> argparse.Namespace:
         ],
         help="Canonical corpus key.",
     )
-    parser.add_argument("--canonical-parquet", required=True, help="Path to the canonical parquet file.")
-    parser.add_argument("--state", default="", help="Optional state code for state-partitioned corpora.")
+    parser.add_argument(
+        "--canonical-parquet", required=True, help="Path to the canonical parquet file."
+    )
+    parser.add_argument(
+        "--state", default="", help="Optional state code for state-partitioned corpora."
+    )
     parser.add_argument("--provider", default="", help="Embeddings provider override.")
     parser.add_argument("--model", default="", help="Embedding model override.")
-    parser.add_argument("--embeddings-output", default="", help="Optional output path for *_embeddings.parquet.")
-    parser.add_argument("--faiss-output", default="", help="Optional output path for the FAISS index.")
-    parser.add_argument("--faiss-metadata-output", default="", help="Optional output path for FAISS metadata parquet.")
+    parser.add_argument(
+        "--embeddings-output", default="", help="Optional output path for *_embeddings.parquet."
+    )
+    parser.add_argument(
+        "--faiss-output", default="", help="Optional output path for the FAISS index."
+    )
+    parser.add_argument(
+        "--faiss-metadata-output",
+        default="",
+        help="Optional output path for FAISS metadata parquet.",
+    )
     parser.add_argument("--no-faiss", action="store_true", help="Skip FAISS index generation.")
-    parser.add_argument("--publish-to-hf", action="store_true", help="Upload generated artifacts to the Hugging Face dataset.")
+    parser.add_argument(
+        "--publish-to-hf",
+        action="store_true",
+        help="Upload generated artifacts to the Hugging Face dataset.",
+    )
     parser.add_argument("--hf-token", default="", help="Hugging Face token for upload.")
     parser.add_argument("--repo-id", default="", help="Override Hugging Face dataset repo id.")
-    parser.add_argument("--include-canonical-parquet", action="store_true", help="Also upload the canonical parquet file.")
-    parser.add_argument("--canonical-repo-path", default="", help="Override path-in-repo for the canonical parquet file.")
-    parser.add_argument("--embeddings-repo-path", default="", help="Override path-in-repo for the embeddings parquet.")
-    parser.add_argument("--faiss-repo-path", default="", help="Override path-in-repo for the FAISS index.")
-    parser.add_argument("--faiss-metadata-repo-path", default="", help="Override path-in-repo for the FAISS metadata parquet.")
-    parser.add_argument("--commit-message", default="", help="Optional commit message for HF uploads.")
+    parser.add_argument(
+        "--include-canonical-parquet",
+        action="store_true",
+        help="Also upload the canonical parquet file.",
+    )
+    parser.add_argument(
+        "--canonical-repo-path",
+        default="",
+        help="Override path-in-repo for the canonical parquet file.",
+    )
+    parser.add_argument(
+        "--embeddings-repo-path",
+        default="",
+        help="Override path-in-repo for the embeddings parquet.",
+    )
+    parser.add_argument(
+        "--faiss-repo-path", default="", help="Override path-in-repo for the FAISS index."
+    )
+    parser.add_argument(
+        "--faiss-metadata-repo-path",
+        default="",
+        help="Override path-in-repo for the FAISS metadata parquet.",
+    )
+    parser.add_argument(
+        "--commit-message", default="", help="Optional commit message for HF uploads."
+    )
     parser.add_argument("--json", action="store_true", help="Print JSON result.")
     return parser.parse_args()
 
@@ -61,9 +97,15 @@ def main() -> int:
             args.corpus_key,
             canonical_parquet_path=str(Path(args.canonical_parquet).expanduser()),
             state_code=str(args.state or "").strip() or None,
-            embeddings_output_path=str(Path(args.embeddings_output).expanduser()) if args.embeddings_output else None,
-            faiss_index_output_path=str(Path(args.faiss_output).expanduser()) if args.faiss_output else None,
-            faiss_metadata_output_path=str(Path(args.faiss_metadata_output).expanduser()) if args.faiss_metadata_output else None,
+            embeddings_output_path=str(Path(args.embeddings_output).expanduser())
+            if args.embeddings_output
+            else None,
+            faiss_index_output_path=str(Path(args.faiss_output).expanduser())
+            if args.faiss_output
+            else None,
+            faiss_metadata_output_path=str(Path(args.faiss_metadata_output).expanduser())
+            if args.faiss_metadata_output
+            else None,
             provider=str(args.provider or "").strip() or None,
             model_name=str(args.model or "").strip() or None,
             build_faiss=not bool(args.no_faiss),

@@ -3,6 +3,7 @@
 Produces a deterministic conflict-triage report in both JSON and Markdown
 formats using ``detect_proof_conflicts`` from ``hybrid_v2_blueprint``.
 """
+
 from __future__ import annotations
 
 import hashlib

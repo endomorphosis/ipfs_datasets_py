@@ -93,10 +93,10 @@ All skipped tests are due to a bug in `ipfs_datasets_py/mcp_server/monitoring.py
 **Fix Required:**
 ```python
 # Current (line 637):
-self.base_collector.record_histogram('p2p.workflow.execution_time_ms', execution_time_ms)
+self.base_collector.record_histogram("p2p.workflow.execution_time_ms", execution_time_ms)
 
 # Should be:
-self.base_collector.observe_histogram('p2p.workflow.execution_time_ms', execution_time_ms)
+self.base_collector.observe_histogram("p2p.workflow.execution_time_ms", execution_time_ms)
 ```
 
 ## 🚀 Running Tests
