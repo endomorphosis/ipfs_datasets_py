@@ -22,6 +22,7 @@ from ..backends import codebase_process
 from ..backends.codebase_process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
 from ..backends.smt.differential import SmtRawSolverOutput, SmtSolverRunner
 from ..ir_core.protocols import ExecutionBounds
+from ..software_contracts.codebase_resources import codebase_admission_timeout
 from ...optimizers.logic_theorem_optimizer.resource_scheduler import (
     LeaseCancelledError, LeaseTimeoutError, ResourceLane, ResourceLease,
 )
@@ -74,8 +75,10 @@ def bounded_header_runner(executable: str, *, parent_lease: ResourceLease,
 
     The caller owns the native parent lease and source/executable provenance.
     This factory starts no process. Each call acquires one validation child and
-    bounds admission, the first cached version probe, and the query by both the
-    caller's remaining time and ExecutionBounds.timeout_ms (at most five seconds).
+    bounds admission by the selected resource profile and the caller's remaining
+    time. After admission, the first cached version probe and query share
+    ExecutionBounds.timeout_ms (at most five seconds). Admission never renews the
+    enclosing deadline or changes the query's execution/resource limits.
     The SMT-LIB string is forwarded unchanged. The Z3 resource counter receives
     max_steps through its argv option, not by rewriting the source-bound script.
     """
@@ -116,13 +119,15 @@ def bounded_header_runner(executable: str, *, parent_lease: ResourceLease,
             raise BoundedHeaderCheckerError("requested bounds exceed the header profile")
         if not lock.acquire(blocking=False):
             raise BoundedHeaderCheckerError("one header runner cannot execute concurrently")
+        phase = "child_admission"
         try:
             started = time.monotonic()
-            local_deadline = started + min(MAX_QUERY_SECONDS, bounds.timeout_ms / 1000, remaining())
             with parent_lease.acquire_child(lane=ResourceLane.VALIDATION, cpu_slots=1,
                     memory_mb=max(1, math.ceil(bounds.max_memory_bytes / (1024 * 1024))),
-                    child_process_slots=1, timeout=remaining(local_deadline),
+                    child_process_slots=1,
+                    timeout=codebase_admission_timeout(remaining_seconds=remaining()),
                     cancel_event=parent_cancel, request_id="header-model:z3") as lease:
+                local_deadline = time.monotonic() + min(MAX_QUERY_SECONDS, bounds.timeout_ms / 1000, remaining())
                 cancellation = _FailClosedCancellation(lease.combined_cancellation_signal(cancel_event))
 
                 def invoke(arguments, text):
@@ -155,16 +160,31 @@ def bounded_header_runner(executable: str, *, parent_lease: ResourceLease,
                     return result
 
                 if version is None:
+                    phase = "version_probe"
                     observed = invoke(["-version"], "")
                     candidate = (observed.stdout or observed.stderr).strip()
                     if not candidate or len(candidate.encode()) > 1024 or "\n" in candidate:
                         raise BoundedHeaderCheckerError("native solver version is missing or malformed")
                     version = candidate
+                phase = "query"
                 observed = invoke(["-in", "-smt2", f"rlimit={bounds.max_steps}"], smtlib)
+                phase = "child_release"
             remaining(local_deadline)  # Includes the child's normal release/cleanup.
             return SmtRawSolverOutput(stdout=observed.stdout, stderr=observed.stderr,
                 returncode=0, elapsed_ms=max(0, int((time.monotonic() - started) * 1000)),
                 solver_version=version)
+        except Exception as error:
+            # A closed phase label describes this invocation, never a guessed
+            # host-pressure cause. Preserve the original typed exception and
+            # its native admission observation for the enclosing error chain.
+            reason = ("cancelled" if isinstance(error, (LeaseCancelledError, InterruptedError))
+                else "admission_timeout" if phase == "child_admission"
+                    and isinstance(error, LeaseTimeoutError) and error.admission_observation is not None
+                else "deadline" if isinstance(error, TimeoutError)
+                else "tool_refusal")
+            error.header_checker_diagnostic = dict(schema="bounded-header-checker-failure@1",
+                phase=phase, reason=reason)
+            raise
         finally:
             lock.release()
 

@@ -350,10 +350,26 @@ def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source
         if parent_lease is None:
             backend = Z3SoftwareVerificationBackend(executable=executable)
         else:
-            from .bounded_header_checker import bounded_header_runner
+            from .bounded_header_checker import (
+                BoundedHeaderCheckerError, LeaseCancelledError, bounded_header_runner,
+            )
             runner = bounded_header_runner(executable, parent_lease=parent_lease,
                 remaining_seconds=remaining_seconds, cancel_event=cancel_event)
-            backend = Z3SoftwareVerificationBackend(executable=executable, runner=runner)
+            def leased_runner(smtlib, bounds):
+                try:
+                    return runner(smtlib, bounds)
+                except (TimeoutError, InterruptedError, LeaseCancelledError) as cause:
+                    # The generic SMT backend intentionally converts timeout
+                    # exceptions into solver outcomes. Native lease failures
+                    # must keep their cause and admission observations instead.
+                    error = BoundedHeaderCheckerError("bounded leased header checking did not complete")
+                    if hasattr(cause, "header_checker_diagnostic"):
+                        error.header_checker_diagnostic = cause.header_checker_diagnostic
+                    raise error from cause
+            backend = Z3SoftwareVerificationBackend(executable=executable, runner=leased_runner,
+                # A native result obtains its version inside the leased runner.
+                # An inconclusive observation cannot start an unowned probe.
+                version_probe=lambda: "")
             output["execution_profile"] = "native-leased-bounded-header-checker@1"
         output["solver_executable_sha256"] = _sha(Path(executable).read_bytes())
         for target in report["smt_targets"]:
