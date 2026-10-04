@@ -40,9 +40,12 @@ from typing import Any, Protocol, TypeVar
 T_co = TypeVar("T_co", covariant=True)
 U_co = TypeVar("U_co", covariant=True)
 
+
 class PipelineStep(Protocol[T_co, U_co]):
     """Protocol for a single step in a processing pipeline."""
+
     def __call__(self, data: T_co) -> U_co: ...
+
 
 def run_pipeline(initial: Any, steps: Iterable[Callable[[Any], Any]]) -> Any:
     """Execute a simple linear processing pipeline."""
@@ -84,18 +87,22 @@ Removed the empty file completely
 **Before:**
 ```python
 conditions: tuple[bool, str] = [
-    (equal_to_this_value is not None and this_value != equal_to_this_value,
-     f'Expected {this_value} to be equal to {equal_to_this_value}'),
-    ...
+    (
+        equal_to_this_value is not None and this_value != equal_to_this_value,
+        f"Expected {this_value} to be equal to {equal_to_this_value}",
+    ),
+    ...,
 ]
 ```
 
 **After:**
 ```python
 conditions: list[tuple[bool, str]] = [
-    (equal_to_this_value is not None and this_value != equal_to_this_value,
-     f'Expected {this_value} to be equal to {equal_to_this_value}'),
-    ...
+    (
+        equal_to_this_value is not None and this_value != equal_to_this_value,
+        f"Expected {this_value} to be equal to {equal_to_this_value}",
+    ),
+    ...,
 ]
 ```
 
@@ -157,7 +164,7 @@ def convert_to_gigabytes(self, bits: int):
 ```python
 def convert_to_gigabytes(self, bits: int):
     bytes_ = bits / 8
-    return bytes_ / (1024 ** 3)  # Correct! ** is exponentiation
+    return bytes_ / (1024**3)  # Correct! ** is exponentiation
 ```
 
 **Impact:** Correct bytes-to-gigabytes conversion (was computing `1024 XOR 3 = 1027` instead of `1024³ = 1,073,741,824`)
@@ -176,15 +183,13 @@ def convert_to_gigabytes(self, bits: int):
 **Before:**
 ```python
 class Async(Monad(T)):  # Wrong! This calls Monad as a function
-    def __init__(self, work, *args, **kwargs) -> None:
-        ...
+    def __init__(self, work, *args, **kwargs) -> None: ...
 ```
 
 **After:**
 ```python
 class Async(Monad[T]):  # Correct! Square brackets for generic type parameters
-    def __init__(self, work, *args, **kwargs) -> None:
-        ...
+    def __init__(self, work, *args, **kwargs) -> None: ...
 ```
 
 **Impact:** Correct generic type parameter syntax, proper class inheritance
@@ -233,13 +238,13 @@ def _check_if_there_are_duplicate_keys_in_this_dictionary(configs_dict: dict) ->
 
 **Before:**
 ```python
-class SystemResourcesPoolTemplate():
+class SystemResourcesPoolTemplate:
     def __init__(self, configs: Configs):  # Line 24
         self.timeout: Final[float] = configs.RESOURCE_TIMEOUT or 30.0
         ...
-    
+
     # ... other methods ...
-    
+
     def __init__(self, configs):  # Line 132 - DUPLICATE!
         self.timeout = configs.timeout
         ...
@@ -247,11 +252,11 @@ class SystemResourcesPoolTemplate():
 
 **After:**
 ```python
-class SystemResourcesPoolTemplate():
+class SystemResourcesPoolTemplate:
     def __init__(self, configs: Configs):  # Line 24 - ONLY ONE
         self.timeout: Final[float] = configs.RESOURCE_TIMEOUT or 30.0
         ...
-    
+
     # ... other methods ...
     # Duplicate removed
 ```

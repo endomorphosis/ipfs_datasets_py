@@ -31,19 +31,15 @@ class NewMexicoScraper(BaseStateScraper):
         "http://web.archive.org/web/20250101000000/https://nmonesource.com/nmos/nmsa/en/12084/1/document.do",
         "http://web.archive.org/web/20250101000000/https://nmonesource.com/nmos/nmsa/en/5326/1/document.do",
     ]
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for New Mexico's legislative website."""
         return "https://www.nmlegis.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for New Mexico."""
-        return [{
-            "name": "New Mexico Statutes",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "New Mexico Statutes", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -51,31 +47,45 @@ class NewMexicoScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from New Mexico's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
-        chapter_sections = await self._scrape_live_chapter_document_pdfs(code_name=code_name, max_statutes=limit)
+        limit = (
+            max(1, int(max_statutes))
+            if max_statutes is not None
+            else self._bounded_return_threshold(160)
+        )
+        chapter_sections = await self._scrape_live_chapter_document_pdfs(
+            code_name=code_name, max_statutes=limit
+        )
         if chapter_sections:
-            self.logger.info("New Mexico chapter PDF extraction: Scraped %s section(s)", len(chapter_sections))
+            self.logger.info(
+                "New Mexico chapter PDF extraction: Scraped %s section(s)", len(chapter_sections)
+            )
             return chapter_sections[:limit]
 
         fallback_candidates: List[NormalizedStatute] = []
-        nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=limit)
+        nav_sections = await self._scrape_nmonesource_nav_sections(
+            code_name=code_name, max_statutes=limit
+        )
         if nav_sections:
-            self.logger.info("New Mexico nav-date fallback: Scraped %s section(s)", len(nav_sections))
+            self.logger.info(
+                "New Mexico nav-date fallback: Scraped %s section(s)", len(nav_sections)
+            )
             fallback_candidates.extend(nav_sections)
             if not self._full_corpus_enabled():
                 return nav_sections
 
         index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
         archival_limit = limit if self._full_corpus_enabled() else max(1, min(8, limit))
-        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=archival_limit)
+        archival = await self._scrape_archived_document_pdfs(
+            code_name=code_name, max_statutes=archival_limit
+        )
         if archival:
             if index_fallback:
                 archival.extend(index_fallback)
@@ -85,13 +95,17 @@ class NewMexicoScraper(BaseStateScraper):
                 return archival
 
         if index_fallback:
-            self.logger.info("New Mexico index fallback: Scraped %s section(s)", len(index_fallback))
+            self.logger.info(
+                "New Mexico index fallback: Scraped %s section(s)", len(index_fallback)
+            )
             fallback_candidates.extend(index_fallback)
             if not self._full_corpus_enabled():
                 return index_fallback
 
         if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_document_pdfs(code_name=code_name, max_statutes=limit)
+            direct = await self._scrape_direct_document_pdfs(
+                code_name=code_name, max_statutes=limit
+            )
             if direct:
                 return direct[:limit]
 
@@ -107,9 +121,13 @@ class NewMexicoScraper(BaseStateScraper):
             return fallback_candidates[:limit]
         return list(fallback_candidates)
 
-    async def _scrape_live_chapter_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_live_chapter_document_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
-        discovered = await self._discover_live_document_urls(limit=max(8, int(max_statutes or 1) * 8))
+        discovered = await self._discover_live_document_urls(
+            limit=max(8, int(max_statutes or 1) * 8)
+        )
         if not discovered:
             return []
 
@@ -123,7 +141,9 @@ class NewMexicoScraper(BaseStateScraper):
             if not pdf_bytes:
                 continue
 
-            chapter_text = self._extract_pdf_text_preserve_layout(pdf_bytes=pdf_bytes, max_chars=250000)
+            chapter_text = self._extract_pdf_text_preserve_layout(
+                pdf_bytes=pdf_bytes, max_chars=250000
+            )
             if len(chapter_text) < 280:
                 continue
 
@@ -144,7 +164,9 @@ class NewMexicoScraper(BaseStateScraper):
 
         return statutes
 
-    async def _scrape_direct_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_direct_document_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         seeds = [
             ("24A", "https://nmonesource.com/nmos/nmsa/en/18973/1/document.do"),
             ("1", "https://nmonesource.com/nmos/nmsa/en/25293/1/document.do"),
@@ -204,7 +226,9 @@ class NewMexicoScraper(BaseStateScraper):
         for page_url in pages_to_scan:
             if len(discovered) >= limit:
                 break
-            page_bytes = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                page_url, timeout_seconds=35
+            )
             if not page_bytes:
                 continue
             page_soup = BeautifulSoup(page_bytes, "html.parser")
@@ -221,7 +245,7 @@ class NewMexicoScraper(BaseStateScraper):
                 if full_url in seen:
                     continue
                 seen.add(full_url)
-                discovered.append((pending_label or f"Chapter {len(discovered)+1}", full_url))
+                discovered.append((pending_label or f"Chapter {len(discovered) + 1}", full_url))
                 pending_label = ""
                 if len(discovered) >= limit:
                     break
@@ -242,7 +266,9 @@ class NewMexicoScraper(BaseStateScraper):
         except Exception:
             return b""
 
-    async def _scrape_nmonesource_nav_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_nmonesource_nav_sections(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         """Parse NMOneSource nav-by-date pages that expose chapter/item links."""
         try:
             from bs4 import BeautifulSoup
@@ -271,7 +297,9 @@ class NewMexicoScraper(BaseStateScraper):
         for page_url in pages_to_scan:
             if len(statutes) >= max_statutes:
                 break
-            page_bytes = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                page_url, timeout_seconds=35
+            )
             if not page_bytes:
                 continue
             page_soup = BeautifulSoup(page_bytes, "html.parser")
@@ -297,7 +325,11 @@ class NewMexicoScraper(BaseStateScraper):
 
                 chapter_match = re.search(r"chapter\s+([\dA-Za-z.-]+)", text, flags=re.IGNORECASE)
                 chapter_no = chapter_match.group(1) if chapter_match else None
-                section_number = chapter_no or self._extract_section_number(text) or f"Section-{len(statutes)+1}"
+                section_number = (
+                    chapter_no
+                    or self._extract_section_number(text)
+                    or f"Section-{len(statutes) + 1}"
+                )
 
                 statutes.append(
                     NormalizedStatute(
@@ -324,7 +356,9 @@ class NewMexicoScraper(BaseStateScraper):
         nmsa_url = "https://nmonesource.com/nmos/nmsa/en/nav_date.do"
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(nav_url, timeout_seconds=30)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                nav_url, timeout_seconds=30
+            )
             if not payload:
                 return []
             text = re.sub(r"\s+", " ", payload.decode("utf-8", errors="ignore")).strip()
@@ -355,7 +389,9 @@ class NewMexicoScraper(BaseStateScraper):
         )
         return [statute]
 
-    async def _scrape_archived_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_document_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen = set()
@@ -426,7 +462,7 @@ class NewMexicoScraper(BaseStateScraper):
                 original = str(row[2]).strip()
                 if not ts or not original:
                     continue
-                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                encoded = urllib.parse.quote(original, safe=":/?=&%.-_")
                 archive_url = f"http://web.archive.org/web/{ts}/{encoded}"
                 discovered.append(archive_url)
 
@@ -520,14 +556,16 @@ class NewMexicoScraper(BaseStateScraper):
             return []
 
         out: List[NormalizedStatute] = []
-        chapter_number_match = re.search(r"Chapter\s+([0-9A-Za-z.-]+)", chapter_label, flags=re.IGNORECASE)
+        chapter_number_match = re.search(
+            r"Chapter\s+([0-9A-Za-z.-]+)", chapter_label, flags=re.IGNORECASE
+        )
         chapter_number = chapter_number_match.group(1) if chapter_number_match else None
 
         for index, match in enumerate(matches):
             section_number = str(match.group(1) or "").strip()
             section_title = re.sub(r"\s+", " ", str(match.group(2) or "")).strip()
             end = matches[index + 1].start() if index + 1 < len(matches) else len(chapter_text)
-            body = chapter_text[match.start():end].strip()
+            body = chapter_text[match.start() : end].strip()
             body = re.sub(r"\n{3,}", "\n\n", body)
             normalized_body = self._normalize_legal_text(body)
             if len(normalized_body) < 120:

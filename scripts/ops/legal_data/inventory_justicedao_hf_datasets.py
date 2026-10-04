@@ -11,7 +11,9 @@ from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory imp
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inspect JusticeDAO Hugging Face dataset structures.")
+    parser = argparse.ArgumentParser(
+        description="Inspect JusticeDAO Hugging Face dataset structures."
+    )
     parser.add_argument("--author", default="justicedao")
     parser.add_argument("--prefix", default="ipfs_")
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")

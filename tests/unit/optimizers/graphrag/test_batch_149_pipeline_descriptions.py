@@ -185,9 +185,7 @@ class TestOntologyGeneratorDescribeExtractionPipeline:
         """Output is multiline when result is provided."""
         config = ExtractionConfig(confidence_threshold=0.6)
         entities = [Entity(id="e1", type="Person", text="Bob", confidence=0.85)]
-        result = EntityExtractionResult(
-            entities=entities, relationships=[], confidence=0.85
-        )
+        result = EntityExtractionResult(entities=entities, relationships=[], confidence=0.85)
         summary = generator.describe_extraction_pipeline(config, result)
         lines = summary.split("\n")
         assert len(lines) >= 2
@@ -205,7 +203,9 @@ class TestOntologyGeneratorDescribeExtractionPipeline:
         result = EntityExtractionResult(entities=entities, relationships=[], confidence=1.0)
         summary = generator.describe_extraction_pipeline(config, result)
         expected_avg = (0.9 + 0.8 + 0.7) / 3
-        assert f"avg_conf=0.{int((expected_avg-0.8)*100)}" in summary or f"avg_conf=0.8" in summary
+        assert (
+            f"avg_conf=0.{int((expected_avg - 0.8) * 100)}" in summary or f"avg_conf=0.8" in summary
+        )
 
     def test_describe_pipeline_zero_entities_no_crash(self, generator):
         """describe_extraction_pipeline() handles zero entities gracefully."""
@@ -226,7 +226,7 @@ class TestOntologyGeneratorDescribeExtractionPipeline:
             Relationship(
                 id=f"r{i}",
                 source_id=f"e{i}",
-                target_id=f"e{(i+1)%100}",
+                target_id=f"e{(i + 1) % 100}",
                 type="knows",
                 confidence=0.6,
             )
@@ -248,9 +248,7 @@ class TestOntologyGeneratorDescribeExtractionPipeline:
 
     def test_describe_pipeline_preserves_config_order(self, generator):
         """describe_extraction_pipeline() preserves expected field order."""
-        config = ExtractionConfig(
-            confidence_threshold=0.7, window_size=8, min_entity_length=3
-        )
+        config = ExtractionConfig(confidence_threshold=0.7, window_size=8, min_entity_length=3)
         summary = generator.describe_extraction_pipeline(config)
         lines = summary.split("\n")
         config_line = lines[0]
@@ -267,16 +265,16 @@ class TestPipelineDescriptionIntegration:
         """Can chain config.describe() into pipeline description."""
         config = ExtractionConfig(confidence_threshold=0.6, max_entities=50)
         generator = OntologyGenerator()
-        
+
         # Config description standalone
         config_desc = config.describe()
         assert "threshold=0.6" in config_desc
-        
+
         # Full pipeline description
         entities = [Entity(id="e1", type="Person", text="Test", confidence=0.8)]
         result = EntityExtractionResult(entities=entities, relationships=[], confidence=0.8)
         pipeline_desc = generator.describe_extraction_pipeline(config, result)
-        
+
         # Both descriptions should be present
         assert config_desc.split(":")[0] in pipeline_desc  # "ExtractionConfig"
 
@@ -295,10 +293,10 @@ class TestPipelineDescriptionIntegration:
             ExtractionConfig(confidence_threshold=0.9),
         ]
         descriptions = [c.describe() for c in configs]
-        
+
         # All different
         assert len(set(descriptions)) == 3
-        
+
         # All include threshold
         assert all("threshold=" in d for d in descriptions)
 

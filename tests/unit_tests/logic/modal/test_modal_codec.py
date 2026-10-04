@@ -300,12 +300,8 @@ def test_modal_registry_packet_001624_exposes_self_family_ambiguity_policy() -> 
     assert set(COMPILER_AMBIGUITY_PACKET_001624_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -423,8 +419,7 @@ def test_modal_compiler_packet_001624_emits_explicit_self_family_ambiguities() -
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [family]
             and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -440,15 +435,9 @@ def test_modal_registry_packet_000202_refines_modal_family_cue_pairs() -> None:
     assert set(COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -480,21 +469,12 @@ def test_modal_registry_packet_001002_refines_deontic_target_cue_pairs() -> None
         ("temporal", "deontic"),
     }
 
-    assert (
-        set(compiler_guardrail_packet_001002_deontic_target_cues())
-        == expected_pairs
-    )
+    assert set(compiler_guardrail_packet_001002_deontic_target_cues()) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -514,10 +494,7 @@ def test_modal_registry_packet_001002_refines_deontic_target_cue_pairs() -> None
         )
 
     _assert_refined_margin_buffer_at_least("deontic", "deontic", 0.18)
-    assert (
-        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
-        >= 0.206
-    )
+    assert compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic") >= 0.206
     _assert_refined_margin_buffer_at_least("frame", "deontic", 1.02)
     _assert_refined_margin_buffer_at_least("temporal", "deontic", 0.43)
 
@@ -531,15 +508,9 @@ def test_modal_registry_packet_003901_exposes_frame_policy_ambiguity_pairs() -> 
     assert set(COMPILER_AMBIGUITY_PACKET_003901_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -571,15 +542,9 @@ def test_modal_registry_packet_001314_refines_deontic_dynamic_frame_pairs() -> N
     assert set(COMPILER_AMBIGUITY_PACKET_001314_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -708,14 +673,10 @@ def test_modal_compiler_packet_001314_emits_deontic_outvoted_family_pairs() -> N
     }
 
     for target_family in ("dynamic", "frame"):
-        ambiguity = explicit[
-            f"adaptive_deontic_{target_family}_outvoted_margin_low"
-        ]
+        ambiguity = explicit[f"adaptive_deontic_{target_family}_outvoted_margin_low"]
         assert ambiguity.severity == "requires_rule"
         assert ambiguity.candidate_ids == ["deontic", target_family]
-        assert ambiguity.metadata["adaptive_policy_pair"] == (
-            f"deontic->{target_family}"
-        )
+        assert ambiguity.metadata["adaptive_policy_pair"] == (f"deontic->{target_family}")
         assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
 
@@ -730,15 +691,9 @@ def test_modal_registry_packet_007052_refines_weak_modal_family_cues() -> None:
     assert set(COMPILER_REFINED_PACKET_007052_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -787,15 +742,9 @@ def test_packet_007816_exposes_modal_ambiguity_policy() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -824,15 +773,9 @@ def test_packet_002400_exposes_modal_ambiguity_policy() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_002400_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002400_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -861,15 +804,9 @@ def test_packet_002507_exposes_modal_ambiguity_policy() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_002507_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002507_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -986,9 +923,7 @@ def test_packet_002507_low_margin_pairs_emit_explicit_ambiguity(monkeypatch) -> 
             family_shares={predicted_family: 0.6, target_family: 0.5},
         )
 
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -998,18 +933,13 @@ def test_packet_002507_low_margin_pairs_emit_explicit_ambiguity(monkeypatch) -> 
         assert base_ambiguity.metadata["adaptive_policy_pair"] == (
             f"{predicted_family}->{target_family}"
         )
-        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == (
-            "compiler_ambiguity"
-        )
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == ("compiler_ambiguity")
         assert base_ambiguity.metadata["family_margin"] == -0.1
-        assert base_ambiguity.metadata["explicit_ambiguity_type"] == (
-            expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == (expected_explicit_type)
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
-            and ambiguity.metadata["adaptive_policy_pair"]
-            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata["adaptive_policy_pair"] == f"{predicted_family}->{target_family}"
             for ambiguity in ambiguities
         )
 
@@ -1090,8 +1020,7 @@ def test_packet_007816_doxastic_deontic_margin_emits_explicit_ambiguity() -> Non
     explicit = [
         ambiguity
         for ambiguity in ambiguities
-        if ambiguity.ambiguity_type
-        == "adaptive_doxastic_deontic_outvoted_margin_low"
+        if ambiguity.ambiguity_type == "adaptive_doxastic_deontic_outvoted_margin_low"
     ]
     assert explicit
     ambiguity = explicit[0]
@@ -1111,6 +1040,8 @@ def test_modal_registry_packet_000393_exposes_compiler_ambiguity_policy_pairs() 
     }
 
     assert set(COMPILER_AMBIGUITY_PACKET_000393_FAMILY_PAIRS) == expected_pairs
+
+
 def test_modal_registry_packet_005912_exposes_compiler_ambiguity_policy_pairs() -> None:
     expected_pairs = {
         ("deontic", "conditional_normative"),
@@ -1122,15 +1053,9 @@ def test_modal_registry_packet_005912_exposes_compiler_ambiguity_policy_pairs() 
     assert set(COMPILER_AMBIGUITY_PACKET_005912_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1163,15 +1088,9 @@ def test_modal_registry_packet_000165_exposes_compiler_ambiguity_policy_pairs() 
     assert expected_pairs.issubset(set(COMPILER_AMBIGUITY_PACKET_000165_FAMILY_PAIRS))
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1206,15 +1125,9 @@ def test_modal_registry_packet_002842_refines_family_cue_policy_pairs() -> None:
     assert set(COMPILER_REFINED_PACKET_002842_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1257,15 +1170,9 @@ def test_modal_registry_packet_003057_exposes_explicit_adaptive_ambiguity_pairs(
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS)
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1288,9 +1195,7 @@ def test_modal_registry_packet_003057_exposes_explicit_adaptive_ambiguity_pairs(
     encoding = SpaCyLegalEncoding(
         document_id="packet-003057-deontic-margin",
         text="The Secretary shall state all conditions subject to subsection (b).",
-        normalized_text=(
-            "The Secretary shall state all conditions subject to subsection (b)."
-        ),
+        normalized_text=("The Secretary shall state all conditions subject to subsection (b)."),
         tokens=[],
         sentences=[],
         cues=[
@@ -1377,10 +1282,7 @@ def test_modal_registry_packet_003057_exposes_explicit_adaptive_ambiguity_pairs(
 
     explicit_types = {ambiguity.ambiguity_type for ambiguity in ambiguities}
     assert "adaptive_deontic_deontic_contested_margin_low" in explicit_types
-    assert (
-        "adaptive_deontic_conditional_normative_outvoted_margin_low"
-        in explicit_types
-    )
+    assert "adaptive_deontic_conditional_normative_outvoted_margin_low" in explicit_types
     conditional_base = next(
         ambiguity
         for ambiguity in ambiguities
@@ -1404,9 +1306,7 @@ def test_modal_registry_packet_001063_exposes_refined_family_cue_pairs() -> None
     assert expected_pairs == set(COMPILER_REFINED_PACKET_001063_FAMILY_PAIRS)
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1421,6 +1321,7 @@ def test_modal_registry_packet_001063_exposes_refined_family_cue_pairs() -> None
             target_family,
             0.08,
         )
+
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoder,
@@ -1454,7 +1355,7 @@ _USCODE_46_8906_TEXT = (
     "Historical and Revision Notes Revised section Source section (U.S. Code) "
     "8906 46:390d Section 8906 prescribes the penalties for violations of this "
     "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
-    "\"not more than $25,000\" for \"$1,000\"."
+    '"not more than $25,000" for "$1,000".'
 )
 
 
@@ -1464,16 +1365,12 @@ def test_modal_registry_packet_000117_refines_family_cue_rules() -> None:
 
     temporal_terms = {
         cue
-        for operator in DEFAULT_MODAL_REGISTRY.get_profile(
-            ModalLogicFamily.TEMPORAL
-        ).operators
+        for operator in DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.TEMPORAL).operators
         for cue in operator.cue_terms
     }
     frame_terms = {
         cue
-        for operator in DEFAULT_MODAL_REGISTRY.get_profile(
-            ModalLogicFamily.FRAME
-        ).operators
+        for operator in DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.FRAME).operators
         for cue in operator.cue_terms
     }
 
@@ -1520,20 +1417,14 @@ def test_modal_registry_packet_000160_exposes_adaptive_ambiguity_pairs() -> None
     assert COMPILER_AMBIGUITY_PACKET_000160_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1559,15 +1450,9 @@ def test_modal_registry_packet_007716_exposes_adaptive_ambiguity_pairs() -> None
     assert COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1601,15 +1486,9 @@ def test_modal_registry_packet_000167_exposes_adaptive_ambiguity_pairs() -> None
     assert COMPILER_AMBIGUITY_PACKET_000167_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1647,16 +1526,12 @@ def test_modal_registry_packet_000120_exposes_low_margin_ambiguity_pairs() -> No
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1674,23 +1549,17 @@ def test_modal_registry_packet_000207_exposes_deontic_frame_ambiguity_policy() -
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1711,23 +1580,17 @@ def test_modal_registry_packet_006116_exposes_same_family_ambiguity_policy() -> 
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1752,23 +1615,17 @@ def test_modal_registry_packet_000180_exposes_signal_free_ambiguity_pairs() -> N
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1791,9 +1648,7 @@ def test_modal_registry_packet_000297_exposes_deontic_frame_ambiguity_policy() -
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1820,23 +1675,17 @@ def test_modal_registry_packet_000298_exposes_explicit_ambiguity_policy() -> Non
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1857,23 +1706,17 @@ def test_modal_registry_packet_000534_exposes_modal_ambiguity_policy() -> None:
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1896,23 +1739,17 @@ def test_modal_registry_packet_000535_exposes_modal_ambiguity_policy() -> None:
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1942,23 +1779,17 @@ def test_modal_registry_packet_000496_exposes_modal_ambiguity_policy() -> None:
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1991,23 +1822,17 @@ def test_modal_registry_packet_000165_exposes_modal_ambiguity_policy() -> None:
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -2107,12 +1932,9 @@ def test_modal_compiler_surfaces_packet_000165_adaptive_ambiguities(
             expected_direction = "outvoted"
             candidate_ids = [predicted_family, target_family]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
-        predicted_system, predicted_symbol, predicted_label = family_specs[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_specs[predicted_family]
         text = f"Synthetic packet 000165 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000165-adaptive-evidence-{index}",
@@ -2170,8 +1992,7 @@ def test_modal_compiler_surfaces_packet_000165_adaptive_ambiguities(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{expected_direction}"
-            "_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -2186,10 +2007,7 @@ def test_modal_compiler_surfaces_packet_000165_adaptive_ambiguities(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -2197,8 +2015,7 @@ def test_modal_compiler_surfaces_packet_000165_adaptive_ambiguities(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -2241,23 +2058,17 @@ def test_modal_compiler_surfaces_packet_000154_adaptive_ambiguities(
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -2297,12 +2108,9 @@ def test_modal_compiler_surfaces_packet_000154_adaptive_ambiguities(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
-        predicted_system, predicted_symbol, predicted_label = family_specs[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_specs[predicted_family]
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000154-adaptive-evidence-{index}",
             text=f"Synthetic {predicted_family} ambiguity evidence.",
@@ -2358,9 +2166,7 @@ def test_modal_compiler_surfaces_packet_000154_adaptive_ambiguities(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -2372,15 +2178,9 @@ def test_modal_compiler_surfaces_packet_000154_adaptive_ambiguities(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
@@ -2388,8 +2188,7 @@ def test_modal_compiler_surfaces_packet_000154_adaptive_ambiguities(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -2430,23 +2229,17 @@ def test_modal_compiler_surfaces_packet_000155_deontic_frame_policy() -> None:
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -2481,12 +2274,9 @@ def test_modal_compiler_surfaces_packet_000155_deontic_frame_policy() -> None:
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
-        predicted_system, predicted_symbol, predicted_label = family_specs[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_specs[predicted_family]
         text = f"Synthetic packet 000155 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000155-adaptive-evidence-{index}",
@@ -2542,17 +2332,14 @@ def test_modal_compiler_surfaces_packet_000155_deontic_frame_policy() -> None:
             family_shares=family_shares,
             predicted_family_source="adaptive_logits",
         )
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         candidate_ids = [predicted_family, target_family]
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == candidate_ids
-            and ambiguity.metadata["adaptive_policy_pair"]
-            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata["adaptive_policy_pair"] == f"{predicted_family}->{target_family}"
         )
 
         assert base_ambiguity.severity == "requires_rule"
@@ -2561,15 +2348,11 @@ def test_modal_compiler_surfaces_packet_000155_deontic_frame_policy() -> None:
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -2622,12 +2405,9 @@ def test_modal_compiler_surfaces_packet_000534_adaptive_ambiguities() -> None:
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
-        predicted_system, predicted_symbol, predicted_label = family_specs[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_specs[predicted_family]
         text = f"Synthetic packet 000534 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000534-adaptive-evidence-{index}",
@@ -2683,17 +2463,14 @@ def test_modal_compiler_surfaces_packet_000534_adaptive_ambiguities() -> None:
             family_shares=family_shares,
             predicted_family_source="adaptive_logits",
         )
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         candidate_ids = [predicted_family, target_family]
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == candidate_ids
-            and ambiguity.metadata["adaptive_policy_pair"]
-            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata["adaptive_policy_pair"] == f"{predicted_family}->{target_family}"
         )
 
         assert base_ambiguity.severity == "requires_rule"
@@ -2702,15 +2479,11 @@ def test_modal_compiler_surfaces_packet_000534_adaptive_ambiguities() -> None:
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -2770,12 +2543,9 @@ def test_modal_compiler_surfaces_packet_000297_adaptive_ambiguities() -> None:
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
-        predicted_system = (
-            "FRAME_BM25" if predicted_family == "frame" else "SDL"
-        )
+        predicted_system = "FRAME_BM25" if predicted_family == "frame" else "SDL"
         predicted_symbol = "Frame" if predicted_family == "frame" else "O"
         predicted_label = "frame" if predicted_family == "frame" else "obligation"
         text = f"Synthetic packet 000297 {predicted_family} ambiguity evidence."
@@ -2848,22 +2618,17 @@ def test_modal_compiler_surfaces_packet_000297_adaptive_ambiguities() -> None:
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == candidate_ids
-            and ambiguity.metadata["adaptive_policy_pair"]
-            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata["adaptive_policy_pair"] == f"{predicted_family}->{target_family}"
         )
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -2916,8 +2681,8 @@ _USCODE_25_5396_TODO_TEXT = (
     "6 - Application of other sections of this chapter From the U.S. Government Publishing Office, www.gpo.gov §539"
     "6. Application of other sections of this chapter (a) Mandatory application All provisions of sections 5305(b),"
     " 5306, 5307, 5321(c) and (d), 5323, 5324(k) and (l), 5325(a) through (k), and 5332 of this title and section 3"
-    "14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the \"Federal Tort Claims A"
-    "ct\"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho"
+    '14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the "Federal Tort Claims A'
+    'ct"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho'
     "rized by this subchapter. (b) Discretionary application At the request of a participating Indian tribe, any ot"
     "her provision of subchapter I of this chapter, to the extent such provision is not in conflict with this subch"
     "apter, shall be made a part of a funding agreement or compact entered into under this subchapter. The Secretar"
@@ -2928,7 +2693,7 @@ _USCODE_25_5396_TODO_TEXT = (
     "lting compact and funding agreement. (Pub. L. 93–638, title V, §516, as added Pub. L. 106–260, §4, Aug. 18, 20"
     "00, 114 Stat. 729.) Editorial Notes References in Text Section 314 of Pub. L. 101–512, referred to in subsec. "
     "(a), is section 314 of Pub. L. 101–512, which is set out as a note under section 5321 of this title. Subchapte"
-    "r I of this chapter, referred to in subsec. (b), was in the original \"title I\", meaning title I of Pub. L. 93–"
+    'r I of this chapter, referred to in subsec. (b), was in the original "title I", meaning title I of Pub. L. 93–'
     "638, known as the Indian Self-Determination Act, which is classified principally to subchapter I (§5321 et seq"
     ".) of this chapter. For complete classification of title I to the Code, see Short Title note set out under sec"
     "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
@@ -2965,8 +2730,8 @@ _USCODE_42_6930_TEXT = (
     "together with a description of the identified or listed hazardous waste involved and, in the "
     "case of a facility referred to in paragraph (1) or (2), a description of the production or "
     "energy recovery activity carried out at the facility and such other information as the "
-    "Administrator deems necessary. For purposes of the preceding provisions, the term \"hazardous "
-    "waste listed under section 6921 of this title\" also includes any commercial chemical product "
+    'Administrator deems necessary. For purposes of the preceding provisions, the term "hazardous '
+    'waste listed under section 6921 of this title" also includes any commercial chemical product '
     "which is listed under section 6921 of this title and which, in lieu of its original intended "
     "use, is (i) produced for use as (or as a component of) a fuel, (ii) distributed for use as a "
     "fuel, or (iii) burned as a fuel. Notification shall not be required under the second "
@@ -2999,14 +2764,14 @@ _USCODE_42_6930_TEXT = (
     "§15, Oct. 21, 1980, 94 Stat. 2342; Pub. L. 98–616, title II, §§204(a), 234, Nov. 8, 1984, 98 "
     "Stat. 3235, 3258.) Editorial Notes Amendments 1984 —Subsec. (a). Pub. L. 98–616, §204(a), "
     "inserted provisions after first sentence relating to burning and blending of hazardous "
-    "wastes and substituted \"the preceding provisions\" for \"the preceding sentence\" in three "
+    'wastes and substituted "the preceding provisions" for "the preceding sentence" in three '
     "places. Subsec. (b). Pub. L. 98–616, §234, inserted provision that at the time a regulation "
     "is promulgated, the Administrator may provide for a shorter period prior to the effective "
     "date, or an immediate effective date for a regulation with which the Administrator finds the "
     "regulated community does not need six months to come into compliance, a regulation which "
     "responds to an emergency situation, or other good cause found and published with the "
-    "regulation. 1980 —Subsec. (a). Pub. L. 96–482 struck out \"or revision\" after \"after "
-    "promulgation or revision of regulations\" and inserted provision for filing of notification "
+    'regulation. 1980 —Subsec. (a). Pub. L. 96–482 struck out "or revision" after "after '
+    'promulgation or revision of regulations" and inserted provision for filing of notification '
     "when revising any regulation identifying additional characteristics of hazardous waste or "
     "listing any additional substance as hazardous waste subject to this subchapter. Executive "
     "Documents Transfer of Functions For transfer of certain enforcement functions of "
@@ -3031,21 +2796,21 @@ _USCODE_46_60101_TEXT = (
     "Homeland Security by section 403(1) of the Homeland Security Act of 2002 (Pub. L. 107–296, "
     "116 Stat. 2178). The functions of the Commissioner of Customs previously were vested in the "
     "Secretary of the Treasury under section 321(c) of title 31. For prior related transfers of "
-    "functions, see the transfer of functions note under 46 App. U.S.C. 163. The word \"shall\" is "
-    "substituted for \"is authorized and directed to\" for consistency in the revised title and to "
-    "eliminate unnecessary words. The word \"port\" is substituted for \"seaports\" for consistency "
-    "in the revised title. The word \"secured\" is substituted for \"placed in security\" to "
-    "eliminate unnecessary words. The words \"from time to time\", \"properly\", and \"and for that "
-    "purpose to employ any of the officers of the United States Customs Service\" are omitted as "
-    "unnecessary. In subsection (b), the words \"fined under title 18, imprisoned for not more "
-    "than 6 months, or both\" are substituted for \"subject to a penalty of not more than $100 or "
-    "imprisonment not to exceed six months, or both\" because of chapter 227 of title 18. The "
-    "words \"in the discretion of the court\" are omitted as unnecessary. In subsection (c), the "
-    "words \"section 2279 of title 18\" are substituted for \"section forty-six hundred and six of "
-    "the Revised Statutes\" in the Act of Mar. 31, 1900, because R.S. §4606 (formerly classified "
+    'functions, see the transfer of functions note under 46 App. U.S.C. 163. The word "shall" is '
+    'substituted for "is authorized and directed to" for consistency in the revised title and to '
+    'eliminate unnecessary words. The word "port" is substituted for "seaports" for consistency '
+    'in the revised title. The word "secured" is substituted for "placed in security" to '
+    'eliminate unnecessary words. The words "from time to time", "properly", and "and for that '
+    'purpose to employ any of the officers of the United States Customs Service" are omitted as '
+    'unnecessary. In subsection (b), the words "fined under title 18, imprisoned for not more '
+    'than 6 months, or both" are substituted for "subject to a penalty of not more than $100 or '
+    'imprisonment not to exceed six months, or both" because of chapter 227 of title 18. The '
+    'words "in the discretion of the court" are omitted as unnecessary. In subsection (c), the '
+    'words "section 2279 of title 18" are substituted for "section forty-six hundred and six of '
+    'the Revised Statutes" in the Act of Mar. 31, 1900, because R.S. §4606 (formerly classified '
     "to 46 U.S.C. 708 (1946 ed.)) was replaced by 18 U.S.C. 2279 in the codification of title 18 "
-    "by the Act of June 25, 1948 (ch. 645, 62 Stat. 683). The words \"section 9 of act August 2, "
-    "1882 (22 Stat. 189)\" are omitted because that law was repealed by section 4(b) of Public Law "
+    'by the Act of June 25, 1948 (ch. 645, 62 Stat. 683). The words "section 9 of act August 2, '
+    '1882 (22 Stat. 189)" are omitted because that law was repealed by section 4(b) of Public Law '
     "98–89 (Aug. 26, 1983, 97 Stat. 600)."
 )
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
@@ -3058,7 +2823,9 @@ _USCODE_43_2430_PACKET_143_TODO_TEXT = (
 _USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
 _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
-_USCODE_6_314_TODO_TEXT = "National planning scenarios, preparedness targets, and implementation guidance."
+_USCODE_6_314_TODO_TEXT = (
+    "National planning scenarios, preparedness targets, and implementation guidance."
+)
 _USCODE_35_4_TODO_TEXT = "Officers, employees, and attorneys."
 _USCODE_7_7316_TODO_TEXT = "Report."
 _USCODE_2_453_PACKET_39_TEXT = "The oath of office."
@@ -3069,7 +2836,7 @@ _USCODE_46_55318_TODO_TEXT = (
     "(Pub. L. 109–304, §8(c), Oct. 6, 2006, 120 Stat. 1648.) Historical and Revision "
     "Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 55318 46 "
     "App.:1241p. Pub. L. 99–198, title XI, §1143, Dec. 23, 1985, 99 Stat. 1496. The "
-    "words \"section 1707a(b)(8) of title 7\" are omitted because the provision referred "
+    'words "section 1707a(b)(8) of title 7" are omitted because the provision referred '
     "to has been repealed."
 )
 _USCODE_8_606_TODO_TEXT = (
@@ -3081,7 +2848,7 @@ _USCODE_8_606_TODO_TEXT = (
     "section 1407 of this title."
 )
 _USCODE_46_115_TODO_TEXT = (
-    "§115. Vessel In this title, the term \"vessel\" has the meaning given that term in "
+    '§115. Vessel In this title, the term "vessel" has the meaning given that term in '
     "section 3 of title 1. (Pub. L. 109–304, §4, Oct. 6, 2006, 120 Stat. 1487.) Historical "
     "and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 115 "
     "46:2101(45)."
@@ -3094,8 +2861,7 @@ _USCODE_LONG_SUBSECTION_BODY = (
     "continuity guidance taxonomy harmonization standards integration"
 )
 _USCODE_42_15362_LONG_SUBSECTION_HEADING_TEXT = (
-    "Section 15362 Administrative notice and hearing procedures (a) "
-    + _USCODE_LONG_SUBSECTION_BODY
+    "Section 15362 Administrative notice and hearing procedures (a) " + _USCODE_LONG_SUBSECTION_BODY
 )
 _USCODE_26_3201_LONG_SUBSECTION_HEADING_TEXT = (
     "Section 3201 Lien for taxes and related enforcement administration (a) "
@@ -3191,8 +2957,8 @@ _USCODE_5_5564_SYMBOLIC_VALIDITY_TEXT = (
     "sale of bulky items; claims for proceeds; appropriation chargeable From the U.S. Government "
     "Publishing Office, www.gpo.gov §5564. Travel and transportation; dependents; household and "
     "personal effects; motor vehicles; sale of bulky items; claims for proceeds; appropriation "
-    "chargeable (a) For the purpose of this section, \"household and personal effects\" and "
-    "\"household effects\" may include, in addition to other authorized weight allowances, one "
+    'chargeable (a) For the purpose of this section, "household and personal effects" and '
+    '"household effects" may include, in addition to other authorized weight allowances, one '
     "privately owned motor vehicle which may be shipped at United States expense. (b) Transportation "
     "(including packing, crating, draying, temporarily storing, and unpacking of household and "
     "personal effects) may be provided for the dependents and household and personal effects of an "
@@ -3424,8 +3190,7 @@ def test_modal_compiler_decompiler_are_explainable_and_deterministic() -> None:
     assert compiled.modal_ir.metadata["llm_call_count"] == 0
     assert compiled.ambiguities
     assert any(
-        ambiguity.ambiguity_type == "close_bm25_frame_scores"
-        for ambiguity in compiled.ambiguities
+        ambiguity.ambiguity_type == "close_bm25_frame_scores" for ambiguity in compiled.ambiguities
     )
     assert decoded.source_id == "compiler-doc"
     assert decoded.text == "The agency must provide notice."
@@ -3469,21 +3234,13 @@ def test_modal_decompiler_surfaces_autoencoder_modal_family_guidance_slots() -> 
 
     assert decoded.text == modal_ir.normalized_text
     assert slot_texts["autoencoder_modal_family_cue_mismatch"] == ["true"]
-    assert slot_texts["autoencoder_modal_family_target_probability_gap"] == [
-        "0.366001885428"
-    ]
-    assert slot_texts["autoencoder_modal_family_target_probability_gap_bucket"] == [
-        "0_25_to_0_5"
-    ]
-    assert slot_texts["autoencoder_primary_pipeline_stage"] == [
-        "modal_family_registry"
-    ]
+    assert slot_texts["autoencoder_modal_family_target_probability_gap"] == ["0.366001885428"]
+    assert slot_texts["autoencoder_modal_family_target_probability_gap_bucket"] == ["0_25_to_0_5"]
+    assert slot_texts["autoencoder_primary_pipeline_stage"] == ["modal_family_registry"]
     assert slot_texts["autoencoder_modal_family_prototype"] == ["temporal", "frame"]
     assert slot_texts["autoencoder_modal_family_prototype_pair"] == ["temporal->frame"]
     assert slot_texts["autoencoder_legal_ir_view_prototype"] == ["modal.frame_logic"]
-    assert slot_texts["autoencoder_family_legal_ir_view_pair"] == [
-        "frame||modal.frame_logic"
-    ]
+    assert slot_texts["autoencoder_family_legal_ir_view_pair"] == ["frame||modal.frame_logic"]
 
 
 def test_modal_decompiler_reconstructs_semantic_text_from_typed_slots_without_source() -> None:
@@ -3575,13 +3332,9 @@ def test_modal_decompiler_reconstructs_semantic_text_from_typed_slots_without_so
         in value
         for value in slot_texts["typed_ir_semantic_surface_reconstruction"]
     )
-    assert "frame->conditional_normative" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "frame->conditional_normative" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert "frame->deontic" in slot_texts["typed_ir_cross_family_semantic_support"]
-    assert "temporal->deontic" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "temporal->deontic" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert "deontic legal obligations" in slot_texts["typed_ir_legal_view_support"]
 
 
@@ -3715,9 +3468,7 @@ def test_modal_decompiler_guided_semantics_follow_family_pair_target() -> None:
         decoded,
         include_provenance_only=False,
     )
-    guided_text = " ".join(
-        semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
-    )
+    guided_text = " ".join(semantic_slot_texts["guided_typed_ir_semantic_reconstruction"])
 
     assert "legal frame source reconstructs temporal deadline period" in guided_text
     assert "event calculus native events" in guided_text
@@ -3816,13 +3567,9 @@ def test_modal_decompiler_packet_000634_binds_guided_views_to_family_pairs() -> 
         decoded,
         include_provenance_only=False,
     )
-    guided_text = " ".join(
-        semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
-    )
+    guided_text = " ".join(semantic_slot_texts["guided_typed_ir_semantic_reconstruction"])
 
-    assert "frame->conditional_normative" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "frame->conditional_normative" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert "frame->frame" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert "frame->temporal" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert any(
@@ -3831,8 +3578,7 @@ def test_modal_decompiler_packet_000634_binds_guided_views_to_family_pairs() -> 
         for value in slot_texts["typed_ir_policy_view_semantic_reconstruction"]
     )
     assert any(
-        "legal frame source reconstruction" in value
-        and "knowledge graph relations" in value
+        "legal frame source reconstruction" in value and "knowledge graph relations" in value
         for value in slot_texts["typed_ir_policy_view_semantic_reconstruction"]
     )
     assert "event calculus native events" in guided_text
@@ -3905,15 +3651,15 @@ def test_modal_decompiler_packet_000844_guides_purpose_context_clauses() -> None
         include_provenance_only=False,
     )
 
-    assert "frame->conditional_normative" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
-    assert "frame->conditional_normative:in_order_to" in slot_texts[
-        "typed_decompiler_target_reconstruction_cue"
-    ]
-    assert "frame->conditional_normative:in_connection_with" in slot_texts[
-        "typed_decompiler_target_reconstruction_cue"
-    ]
+    assert "frame->conditional_normative" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert (
+        "frame->conditional_normative:in_order_to"
+        in slot_texts["typed_decompiler_target_reconstruction_cue"]
+    )
+    assert (
+        "frame->conditional_normative:in_connection_with"
+        in slot_texts["typed_decompiler_target_reconstruction_cue"]
+    )
     assert any(
         "legal frame source reconstructs conditional obligation" in value
         for value in semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
@@ -4060,9 +3806,7 @@ def test_modal_decompiler_packet_000843_reconstructs_guided_family_pair_surfaces
         "belief intent knowledge state" in value
         for value in frame_semantic_slots["typed_ir_target_view_semantic_clause"]
     )
-    assert "temporal->deontic" in temporal_slots[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "temporal->deontic" in temporal_slots["typed_ir_cross_family_semantic_support"]
     assert (
         "temporal rule reconstructs deontic duty"
         in temporal_semantic_slots["typed_ir_family_pair_semantic_bridge"]
@@ -4075,8 +3819,7 @@ def test_modal_decompiler_packet_000843_reconstructs_guided_family_pair_surfaces
 
 def test_modal_decompiler_packet_005035_promotes_typed_self_pair_semantics() -> None:
     source = (
-        "Not later than 180 days after enactment, the Secretary shall submit "
-        "a report to Congress."
+        "Not later than 180 days after enactment, the Secretary shall submit a report to Congress."
     )
     document = ModalIRDocument(
         document_id="packet-005035-temporal-self-pair",
@@ -4144,17 +3887,14 @@ def test_modal_decompiler_packet_005035_promotes_typed_self_pair_semantics() -> 
     )
 
     assert "temporal->temporal" in slot_texts["autoencoder_modal_family_guided_pair"]
-    assert "temporal->temporal" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
-    assert "temporal rule preserves deadline period" in semantic_slot_texts[
-        "typed_ir_family_pair_semantic_bridge"
-    ]
+    assert "temporal->temporal" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert (
+        "temporal rule preserves deadline period"
+        in semantic_slot_texts["typed_ir_family_pair_semantic_bridge"]
+    )
     assert any(
         "temporal deadline period source reconstruction" in value
-        for value in semantic_slot_texts[
-            "guided_typed_ir_semantic_reconstruction"
-        ]
+        for value in semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
     )
     assert "temporal rule preserves deadline period" in decoded.text
     assert "not later than 180 days after enactment" in decoded.text
@@ -4198,22 +3938,19 @@ def test_modal_decompiler_preserves_operator_temporal_self_target_without_surfac
     decoded = decode_modal_ir_document(document)
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "temporal->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "temporal->temporal:subject+action+object+temporal" in slot_texts[
-        "typed-decompiler-family-pair-role-topology"
-    ]
-    assert "temporal->temporal:temporal:temporal_operator_scope" in slot_texts[
-        "typed-decompiler-family-pair-role-value"
-    ]
+    assert "temporal->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "temporal->temporal:subject+action+object+temporal"
+        in slot_texts["typed-decompiler-family-pair-role-topology"]
+    )
+    assert (
+        "temporal->temporal:temporal:temporal_operator_scope"
+        in slot_texts["typed-decompiler-family-pair-role-value"]
+    )
 
 
 def test_modal_decompiler_reconstructs_temporal_origin_from_permission_slots() -> None:
-    source = (
-        "From fiscal year 2025, States may provide vocational rehabilitation "
-        "services."
-    )
+    source = "From fiscal year 2025, States may provide vocational rehabilitation services."
     document = ModalIRDocument(
         document_id="packet-003202-temporal-origin-permission",
         source="us_code",
@@ -4247,19 +3984,13 @@ def test_modal_decompiler_reconstructs_temporal_origin_from_permission_slots() -
         ],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert {"temporal->temporal", "temporal->deontic"}.issubset(
         set(slot_texts["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "temporal->temporal:from" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "temporal->deontic:may" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
+    assert "temporal->temporal:from" in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    assert "temporal->deontic:may" in slot_texts["typed-decompiler-target-reconstruction-cue"]
     assert "temporal:F:from" in slot_texts["refined_temporal_bridge_signature"]
     assert "fiscal_year+fiscal+year+from" in slot_texts["typed_decompiler_temporal"]
 
@@ -4370,9 +4101,7 @@ def test_modal_ir_graph_projection_metadata_keeps_frame_logic_selected_frame() -
         source="us_code",
         normalized_text="The agency must provide notice.",
         frame_logic=ModalIRFrameLogic.from_triples(
-            [
-                {"subject": "sample-doc", "predicate": "type", "object": "legal_modal_document"}
-            ],
+            [{"subject": "sample-doc", "predicate": "type", "object": "legal_modal_document"}],
             ontology_name="sample_flogic",
             selected_frame="administrative_notice_hearing",
         ),
@@ -4396,7 +4125,11 @@ def test_modal_ir_graph_projection_augments_sparse_legal_document_context() -> N
         ),
         frame_logic=ModalIRFrameLogic.from_triples(
             [
-                {"subject": "us-code-10-2515-cb1304b3980adf2a", "predicate": "type", "object": "legal_modal_document"},
+                {
+                    "subject": "us-code-10-2515-cb1304b3980adf2a",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                },
                 {
                     "subject": "us-code-10-2515-cb1304b3980adf2a",
                     "predicate": "selected_ontology_frame",
@@ -4415,8 +4148,7 @@ def test_modal_ir_graph_projection_augments_sparse_legal_document_context() -> N
     assert graph_data.metadata["frame_logic_projection_augmented_aligned"] is True
     assert graph_data.metadata["frame_logic_projection_augmented_triple_count"] > 0
     assert (
-        graph_data.metadata["frame_logic_to_neo4j_alignment_total"]
-        == graph_data.relationship_count
+        graph_data.metadata["frame_logic_to_neo4j_alignment_total"] == graph_data.relationship_count
     )
     assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
@@ -4496,8 +4228,7 @@ def test_modal_ir_graph_projection_routes_temporal_deadline_scope_to_temporal_vi
         document_id="deadline-doc",
         source="us_code",
         normalized_text=(
-            "The Secretary submits the report not later than 180 days after "
-            "enactment."
+            "The Secretary submits the report not later than 180 days after enactment."
         ),
         formulas=[
             ModalIRFormula(
@@ -4552,8 +4283,7 @@ def test_modal_ir_graph_projection_preserves_temporal_view_for_deontic_deadline_
         document_id="shall-within-deadline-doc",
         source="us_code",
         normalized_text=(
-            "The State shall provide vocational rehabilitation services within "
-            "the fiscal year."
+            "The State shall provide vocational rehabilitation services within the fiscal year."
         ),
         formulas=[
             ModalIRFormula(
@@ -4605,7 +4335,9 @@ def test_modal_ir_graph_projection_preserves_temporal_view_for_deontic_deadline_
     assert "LegalIRViewAlignment" in graph_data.schema.node_labels
 
 
-def test_modal_ir_graph_projection_uses_predicted_view_weights_to_bound_frame_distribution() -> None:
+def test_modal_ir_graph_projection_uses_predicted_view_weights_to_bound_frame_distribution() -> (
+    None
+):
     document = ModalIRDocument(
         document_id="weighted-view-doc",
         source="compiler_guidance_distillation_v1",
@@ -4639,9 +4371,7 @@ def test_modal_ir_graph_projection_uses_predicted_view_weights_to_bound_frame_di
     )
 
     graph_data = modal_ir_to_neo4j_graph_data(document)
-    distribution = graph_data.metadata[
-        "canonical_legal_ir_projection_view_distribution"
-    ]
+    distribution = graph_data.metadata["canonical_legal_ir_projection_view_distribution"]
 
     assert distribution["modal.frame_logic"] == 0.474
     assert distribution["deontic.ir"] == 0.212
@@ -4691,9 +4421,7 @@ def test_modal_ir_graph_projection_repairs_underweighted_frame_family_distributi
     )
 
     graph_data = modal_ir_to_neo4j_graph_data(document)
-    distribution = graph_data.metadata[
-        "canonical_legal_ir_projection_view_distribution"
-    ]
+    distribution = graph_data.metadata["canonical_legal_ir_projection_view_distribution"]
 
     assert distribution["modal.frame_logic"] == 0.916667
     assert distribution["modal.frame_logic"] > distribution["temporal"]
@@ -4739,9 +4467,7 @@ def test_modal_ir_graph_projection_repairs_frame_heavy_temporal_underweight() ->
     )
 
     graph_data = modal_ir_to_neo4j_graph_data(document)
-    distribution = graph_data.metadata[
-        "canonical_legal_ir_projection_view_distribution"
-    ]
+    distribution = graph_data.metadata["canonical_legal_ir_projection_view_distribution"]
 
     assert distribution["deontic.ir"] == 0.368
     assert distribution["temporal"] == 0.158
@@ -4763,16 +4489,12 @@ def test_flogic_graph_projection_extracts_weighted_packet_evidence_json() -> Non
                 "predicate": "evidence",
                 "object": json.dumps(
                     {
-                        "bridge_failure_name": (
-                            "legal_ir_multiview_graph_failure_penalty"
-                        ),
+                        "bridge_failure_name": ("legal_ir_multiview_graph_failure_penalty"),
                         "legal_ir_component_gaps": {
                             "knowledge_graphs.neo4j_compat": 0.151069107289,
                             "modal.frame_logic": -0.009388851835,
                         },
-                        "legal_ir_underrepresented_components": [
-                            "knowledge_graphs.neo4j_compat"
-                        ],
+                        "legal_ir_underrepresented_components": ["knowledge_graphs.neo4j_compat"],
                         "predicted_view": "knowledge_graphs.neo4j_compat",
                         "target_view": "knowledge_graphs.neo4j_compat",
                     },
@@ -4831,9 +4553,7 @@ def test_flogic_graph_projection_promotes_structured_graph_repair_packet() -> No
                     },
                     "evidence": [
                         {
-                            "bridge_failure_name": (
-                                "legal_ir_multiview_graph_failure_penalty"
-                            ),
+                            "bridge_failure_name": ("legal_ir_multiview_graph_failure_penalty"),
                             "legal_ir_component_gaps": {
                                 "CEC.native": 0.257432158713,
                                 "knowledge_graphs.neo4j_compat": 0.138977525703,
@@ -4977,8 +4697,7 @@ def test_modal_compiler_handles_transferred_heading_for_uscode_15_688() -> None:
 
     assert compiled.modal_ir.formulas
     assert all(
-        ambiguity.ambiguity_type != "missing_modal_formula"
-        for ambiguity in compiled.ambiguities
+        ambiguity.ambiguity_type != "missing_modal_formula" for ambiguity in compiled.ambiguities
     )
     fallback = compiled.modal_ir.formulas[-1]
     assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
@@ -5023,7 +4742,9 @@ def test_modal_compiler_handles_spaced_transferred_headings_for_known_uscode_sam
         assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_handles_sec_prefixed_transferred_headings_for_known_uscode_samples() -> None:
+def test_modal_compiler_handles_sec_prefixed_transferred_headings_for_known_uscode_samples() -> (
+    None
+):
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     cases = [
         (
@@ -5094,7 +4815,9 @@ def test_modal_compiler_handles_embedded_sec_headings_for_known_uscode_samples()
         assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_dataset_zero_formula_cases_for_59b_130a_31a_2b_60a_2_and_8906() -> None:
+def test_modal_compiler_replays_dataset_zero_formula_cases_for_59b_130a_31a_2b_60a_2_and_8906() -> (
+    None
+):
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     cases = [
         (
@@ -5239,10 +4962,7 @@ def test_modal_compiler_replays_packet_todo_symbolic_validity_sample_for_25_5396
             ambiguity.ambiguity_type != "missing_modal_formula"
             for ambiguity in compiled.ambiguities
         )
-        assert any(
-            formula.operator.family == "deontic"
-            for formula in compiled.modal_ir.formulas
-        )
+        assert any(formula.operator.family == "deontic" for formula in compiled.modal_ir.formulas)
         assert all(
             formula.provenance.citation == "25 U.S.C. 5396"
             for formula in compiled.modal_ir.formulas
@@ -5305,7 +5025,9 @@ def test_modal_compiler_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to
             assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_packet_todo_heading_only_samples_for_6_314_35_4_and_7_7316() -> None:
+def test_modal_compiler_replays_packet_todo_heading_only_samples_for_6_314_35_4_and_7_7316() -> (
+    None
+):
     cases = [
         (
             "us-code-6-314-afaf3a4084d6428b",
@@ -5346,11 +5068,15 @@ def test_modal_compiler_replays_packet_todo_heading_only_samples_for_6_314_35_4_
             fallback = compiled.modal_ir.formulas[-1]
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
-            assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            assert (
+                fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            )
             assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> None:
+def test_modal_compiler_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> (
+    None
+):
     cases = [
         (
             "us-code-2-453-868ad5bf81742f35",
@@ -5391,7 +5117,9 @@ def test_modal_compiler_replays_packet_todo_article_prefixed_heading_samples_for
             fallback = compiled.modal_ir.formulas[-1]
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
-            assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            assert (
+                fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            )
             assert fallback.provenance.citation == citation
 
 
@@ -5491,13 +5219,9 @@ def test_modal_compiler_replays_dataset_samples_for_478_1_6930_and_60101() -> No
                 for ambiguity in compiled.ambiguities
             )
             assert all(
-                formula.provenance.citation == citation
-                for formula in compiled.modal_ir.formulas
+                formula.provenance.citation == citation for formula in compiled.modal_ir.formulas
             )
-            modal_families = {
-                formula.operator.family
-                for formula in compiled.modal_ir.formulas
-            }
+            modal_families = {formula.operator.family for formula in compiled.modal_ir.formulas}
             assert expected_families.issubset(modal_families)
             if fallback_rule is not None:
                 fallback = compiled.modal_ir.formulas[-1]
@@ -5505,7 +5229,9 @@ def test_modal_compiler_replays_dataset_samples_for_478_1_6930_and_60101() -> No
                 assert fallback.metadata["fallback_rule"] == fallback_rule
 
 
-def test_modal_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:
+def test_modal_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> (
+    None
+):
     cases = [
         (
             "us-code-25-422-f3f166961e45b585",
@@ -5546,7 +5272,9 @@ def test_modal_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_15
             fallback = compiled.modal_ir.formulas[-1]
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
-            assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            assert (
+                fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            )
             assert fallback.provenance.citation == citation
 
 
@@ -5577,7 +5305,9 @@ def test_modal_compiler_replays_packet_todo_long_heading_sample_for_43_2430() ->
         assert fallback.provenance.citation == "43 U.S.C. 2430."
 
 
-def test_modal_compiler_replays_long_subsection_heading_zero_formula_cases_for_15362_3201_and_3796ff() -> None:
+def test_modal_compiler_replays_long_subsection_heading_zero_formula_cases_for_15362_3201_and_3796ff() -> (
+    None
+):
     cases = [
         (
             "us-code-42-15362.-c7a145faec5f2ad6",
@@ -5686,7 +5416,9 @@ def test_modal_compiler_spacy_replays_editorial_status_zero_formula_samples() ->
         assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
+def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="spacy",
@@ -5702,8 +5434,7 @@ def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_f
 
     assert compiled.modal_ir.formulas
     assert all(
-        ambiguity.ambiguity_type != "missing_modal_formula"
-        for ambiguity in compiled.ambiguities
+        ambiguity.ambiguity_type != "missing_modal_formula" for ambiguity in compiled.ambiguities
     )
     fallback = compiled.modal_ir.formulas[-1]
     assert fallback.operator.family == "frame"
@@ -5771,7 +5502,9 @@ def test_modal_compiler_replays_sec_prefixed_heading_samples_with_usc_citation_v
             assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_packet_todo_symbolic_validity_samples_for_16_773b_and_16_460vv_17() -> None:
+def test_modal_compiler_replays_packet_todo_symbolic_validity_samples_for_16_773b_and_16_460vv_17() -> (
+    None
+):
     cases = [
         (
             "us-code-16-773b-d418534f697a23b1",
@@ -5811,7 +5544,9 @@ def test_modal_compiler_replays_packet_todo_symbolic_validity_samples_for_16_773
             assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_symbolic_validity_samples_for_4_123_5_5564_16_6410_16_47a_16_6808_7_614_and_7_7656() -> None:
+def test_modal_compiler_replays_symbolic_validity_samples_for_4_123_5_5564_16_6410_16_47a_16_6808_7_614_and_7_7656() -> (
+    None
+):
     cases = [
         (
             "us-code-4-123-d46eff3eecad7d48",
@@ -5870,12 +5605,13 @@ def test_modal_compiler_replays_symbolic_validity_samples_for_4_123_5_5564_16_64
                 for ambiguity in compiled.ambiguities
             )
             assert all(
-                formula.provenance.citation == citation
-                for formula in compiled.modal_ir.formulas
+                formula.provenance.citation == citation for formula in compiled.modal_ir.formulas
             )
 
 
-def test_modal_compiler_replays_long_embedded_section_heading_samples_for_8_1365b_34_50108_and_19_3702() -> None:
+def test_modal_compiler_replays_long_embedded_section_heading_samples_for_8_1365b_34_50108_and_19_3702() -> (
+    None
+):
     cases = [
         (
             "us-code-8-1365b-a825991ce12b9ec4",
@@ -5920,7 +5656,9 @@ def test_modal_compiler_replays_long_embedded_section_heading_samples_for_8_1365
             assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_packet_todo_samples_for_7_425_10_2639_and_20_107e_1_with_coarse_procedural_headings() -> None:
+def test_modal_compiler_replays_packet_todo_samples_for_7_425_10_2639_and_20_107e_1_with_coarse_procedural_headings() -> (
+    None
+):
     heading = (
         "administrative notice and hearing procedures for eligibility review and petition records"
     )
@@ -6127,14 +5865,13 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
         == "adaptive_temporal_conditional_normative_outvoted_margin_low"
     )
     assert (
-        explicit_types[("temporal", "deontic")]
-        == "adaptive_temporal_deontic_outvoted_margin_low"
+        explicit_types[("temporal", "deontic")] == "adaptive_temporal_deontic_outvoted_margin_low"
     )
+    assert explicit_types[("temporal", "frame")] == "adaptive_temporal_frame_outvoted_margin_low"
     assert (
-        explicit_types[("temporal", "frame")]
-        == "adaptive_temporal_frame_outvoted_margin_low"
+        "adaptive_temporal_conditional_normative_outvoted_margin_low"
+        in explicit_adaptive_ambiguities
     )
-    assert "adaptive_temporal_conditional_normative_outvoted_margin_low" in explicit_adaptive_ambiguities
     assert "adaptive_temporal_deontic_outvoted_margin_low" in explicit_adaptive_ambiguities
     assert "adaptive_temporal_frame_outvoted_margin_low" in explicit_adaptive_ambiguities
     assert temporal_frame_pair.metadata["is_compiler_ambiguity_bundle_pair"] is True
@@ -6179,9 +5916,7 @@ def test_modal_compiler_backfills_missing_explicit_adaptive_ambiguity_from_base_
     assert len(explicit) == 1
     assert explicit[0].candidate_ids == ["frame", "deontic"]
     assert explicit[0].severity == "requires_rule"
-    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == (
-        "adaptive_family_margin_low"
-    )
+    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == ("adaptive_family_margin_low")
 
 
 def test_modal_compiler_derives_missing_explicit_adaptive_ambiguity_type_from_policy_pair() -> None:
@@ -6205,18 +5940,17 @@ def test_modal_compiler_derives_missing_explicit_adaptive_ambiguity_type_from_po
     explicit = [
         ambiguity
         for ambiguity in ambiguities
-        if ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_temporal_outvoted_margin_low"
+        if ambiguity.ambiguity_type == "adaptive_conditional_normative_temporal_outvoted_margin_low"
     ]
     assert len(explicit) == 1
     assert explicit[0].candidate_ids == ["conditional_normative", "temporal"]
     assert explicit[0].severity == "requires_rule"
-    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == (
-        "adaptive_family_margin_low"
-    )
+    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == ("adaptive_family_margin_low")
 
 
-def test_modal_compiler_canonicalizes_policy_pair_families_when_backfilling_explicit_adaptive_ambiguity() -> None:
+def test_modal_compiler_canonicalizes_policy_pair_families_when_backfilling_explicit_adaptive_ambiguity() -> (
+    None
+):
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     base_ambiguity = ModalCompilationAmbiguity(
         ambiguity_type="adaptive_family_margin_low",
@@ -6242,12 +5976,12 @@ def test_modal_compiler_canonicalizes_policy_pair_families_when_backfilling_expl
     assert explicit[0].candidate_ids == ["frame", "deontic"]
     assert explicit[0].metadata["predicted_family"] == "frame"
     assert explicit[0].metadata["target_family"] == "deontic"
-    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == (
-        "adaptive_family_margin_low"
-    )
+    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == ("adaptive_family_margin_low")
 
 
-def test_modal_compiler_prefers_directional_target_side_when_backfilling_explicit_adaptive_ambiguity() -> None:
+def test_modal_compiler_prefers_directional_target_side_when_backfilling_explicit_adaptive_ambiguity() -> (
+    None
+):
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     base_ambiguity = ModalCompilationAmbiguity(
         ambiguity_type="adaptive_family_margin_low",
@@ -6275,9 +6009,7 @@ def test_modal_compiler_prefers_directional_target_side_when_backfilling_explici
     assert explicit[0].candidate_ids == ["frame", "deontic"]
     assert explicit[0].metadata["predicted_family"] == "frame"
     assert explicit[0].metadata["target_family"] == "deontic"
-    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == (
-        "adaptive_family_margin_low"
-    )
+    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == ("adaptive_family_margin_low")
 
 
 def test_modal_compiler_does_not_duplicate_existing_explicit_adaptive_ambiguity_record() -> None:
@@ -6314,8 +6046,7 @@ def test_modal_compiler_does_not_duplicate_existing_explicit_adaptive_ambiguity_
         sum(
             1
             for ambiguity in ambiguities
-            if ambiguity.ambiguity_type
-            == "adaptive_frame_deontic_outvoted_margin_low"
+            if ambiguity.ambiguity_type == "adaptive_frame_deontic_outvoted_margin_low"
         )
         == 1
     )
@@ -6336,8 +6067,7 @@ def test_modal_compiler_backfills_explicit_adaptive_ambiguity_when_metadata_is_m
     assert any(
         ambiguity.ambiguity_type == "adaptive_frame_deontic_outvoted_margin_low"
         and ambiguity.candidate_ids == ["frame", "deontic"]
-        and ambiguity.metadata["adaptive_base_ambiguity_type"]
-        == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
         for ambiguity in ambiguities
     )
 
@@ -6362,15 +6092,9 @@ def test_modal_compiler_backfills_explicit_adaptive_ambiguity_from_direct_adapti
     ) -> str:
         key = (predicted_family, target_family, margin_direction)
         call_counts[key] = call_counts.get(key, 0) + 1
-        if (
-            key == ("temporal", "temporal", "contested")
-            and call_counts[key] == 1
-        ):
+        if key == ("temporal", "temporal", "contested") and call_counts[key] == 1:
             return "adaptive_family_margin_low"
-        return (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}"
-            "_margin_low"
-        )
+        return f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
 
     monkeypatch.setattr(
         DeterministicModalCompiler,
@@ -6446,8 +6170,7 @@ def test_modal_compiler_backfills_explicit_adaptive_ambiguity_from_direct_adapti
     assert any(
         ambiguity.ambiguity_type == "adaptive_temporal_temporal_contested_margin_low"
         and ambiguity.candidate_ids == ["temporal"]
-        and ambiguity.metadata["adaptive_base_ambiguity_type"]
-        == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
         and ambiguity.metadata["adaptive_policy_pair"] == "temporal->temporal"
         for ambiguity in ambiguities
     )
@@ -6674,8 +6397,7 @@ def test_modal_compiler_uses_compiled_family_as_adaptive_ambiguity_signal(monkey
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_deontic_temporal_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         for ambiguity in ambiguities
     )
 
@@ -6755,8 +6477,7 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
         for ambiguity in ambiguities
         if ambiguity.ambiguity_type == "adaptive_family_margin_low"
         and ambiguity.candidate_ids == ["deontic"]
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
     )
     assert (
         sum(
@@ -6764,8 +6485,7 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == ["deontic"]
-            and ambiguity.metadata["adaptive_predicted_family_source"]
-            == "compiled_primary_family"
+            and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         )
         == 1
     )
@@ -6774,17 +6494,13 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
     assert compiled_primary_self.metadata["is_compiler_ambiguity_bundle_pair"] is True
     assert compiled_primary_self.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert compiled_primary_self.metadata["runner_up_family"] == "temporal"
-    assert (
-        compiled_primary_self.metadata["runner_up_is_compiler_ambiguity_bundle_pair"]
-        is True
-    )
+    assert compiled_primary_self.metadata["runner_up_is_compiler_ambiguity_bundle_pair"] is True
     assert (
         compiled_primary_self.metadata["effective_compiler_ambiguity_policy_pair"]
         == "deontic->temporal"
     )
     assert (
-        compiled_primary_self.metadata["effective_ambiguity_policy_bundle"]
-        == "compiler_ambiguity"
+        compiled_primary_self.metadata["effective_ambiguity_policy_bundle"] == "compiler_ambiguity"
     )
     assert compiled_primary_self.metadata["family_margin"] == -0.04
     assert compiled_primary_self.metadata["adaptive_margin_direction"] == "outvoted"
@@ -6794,18 +6510,15 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_deontic_deontic_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         for ambiguity in ambiguities
     )
     assert (
         sum(
             1
             for ambiguity in ambiguities
-            if ambiguity.ambiguity_type
-            == "adaptive_deontic_deontic_outvoted_margin_low"
-            and ambiguity.metadata["adaptive_predicted_family_source"]
-            == "compiled_primary_family"
+            if ambiguity.ambiguity_type == "adaptive_deontic_deontic_outvoted_margin_low"
+            and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         )
         == 1
     )
@@ -7435,10 +7148,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_temporal_ad
         == "adaptive_conditional_normative_temporal_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_temporal_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_policy_pair"]
-        == "conditional_normative->temporal"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_temporal_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_policy_pair"] == "conditional_normative->temporal"
         for ambiguity in ambiguities
     )
 
@@ -7703,17 +7414,12 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
         assert set(expected_policy_pairs).issubset(by_policy_pair)
         for policy_pair in expected_policy_pairs:
             predicted, target = policy_pair.split("->", maxsplit=1)
-            expected_explicit_type = by_policy_pair[policy_pair].metadata[
-                "explicit_ambiguity_type"
-            ]
+            expected_explicit_type = by_policy_pair[policy_pair].metadata["explicit_ambiguity_type"]
             if predicted == target:
-                assert expected_explicit_type.startswith(
-                    f"adaptive_{predicted}_{target}_"
-                )
+                assert expected_explicit_type.startswith(f"adaptive_{predicted}_{target}_")
             else:
                 assert (
-                    expected_explicit_type
-                    == f"adaptive_{predicted}_{target}_outvoted_margin_low"
+                    expected_explicit_type == f"adaptive_{predicted}_{target}_outvoted_margin_low"
                 )
             assert any(
                 ambiguity.ambiguity_type == expected_explicit_type
@@ -7824,10 +7530,7 @@ def test_modal_compiler_packet_000207_emits_explicit_deontic_frame_ambiguities(
             )
             assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
             assert base_ambiguity.metadata["is_priority_policy_pair"] is True
-            assert (
-                base_ambiguity.metadata["explicit_ambiguity_type"]
-                == explicit_type
-            )
+            assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
             assert any(
                 ambiguity.ambiguity_type == explicit_type
                 and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
@@ -8050,7 +7753,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001605_pair
                 target_family,
             )
             >= 0.0015 - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001759_pairs() -> None:
@@ -8080,7 +7783,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001759_pair
                 target_family,
             )
             >= 0.0015 - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003252_pairs() -> None:
@@ -8114,7 +7817,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003252_pair
                 target_family,
             )
             >= 0.0015 - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003148_pairs() -> None:
@@ -8150,7 +7853,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003148_pair
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_terms_for_packet_001702_pairs() -> None:
@@ -8186,17 +7889,14 @@ def test_modal_registry_applies_refined_cue_terms_for_packet_001702_pairs() -> N
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
     encoder = SpaCyLegalEncoder()
     text = (
         "The Secretary shall award grants that remain available until expended "
         "subject to the terms and conditions of this chapter."
     )
-    extracted_cues = {
-        (cue.family, cue.cue.lower())
-        for cue in encoder.encode(text).cues
-    }
+    extracted_cues = {(cue.family, cue.cue.lower()) for cue in encoder.encode(text).cues}
     assert ("deontic", "shall") in extracted_cues
     assert ("temporal", "remain available until expended") in extracted_cues
     assert ("conditional_normative", "subject to") in extracted_cues
@@ -8271,7 +7971,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000043_pair
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000044_pairs() -> None:
@@ -8313,7 +8013,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000044_pair
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000112_pairs() -> None:
@@ -8351,7 +8051,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000112_pair
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000192_pairs() -> None:
@@ -8381,17 +8081,19 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000192_pair
                 target_family,
             )
             >= 0.0015 - 1e-12
-            )
+        )
     extracted_cues = {
         (cue.family, cue.cue.lower())
-        for cue in SpaCyLegalEncoder().encode(
+        for cue in SpaCyLegalEncoder()
+        .encode(
             (
                 "Requirement for on-site managers. Before obligating any "
                 "Cooperative Threat Reduction funds, the Secretary shall "
                 "appoint one on-site manager for the project. The on-site "
                 "manager requirement applies."
             )
-        ).cues
+        )
+        .cues
     }
     assert ("deontic", "requirement for") in extracted_cues
     assert ("deontic", "on-site manager requirement") in extracted_cues
@@ -8431,7 +8133,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000194_pair
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001095_pairs() -> None:
@@ -8467,7 +8169,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001095_pair
                 target_family,
             )
             >= expected_buffers[(predicted_family, target_family)] - 1e-12
-            )
+        )
 
 
 def test_modal_registry_packet_003819_exposes_family_margin_ambiguity_policy() -> None:
@@ -8524,7 +8226,7 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003624_pair
                 target_family,
             )
             >= 0.0015 - 1e-12
-            )
+        )
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000593_pairs() -> None:
@@ -8538,6 +8240,8 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_000593_pair
         ("temporal", "frame"),
     )
     assert tuple(COMPILER_REFINED_PACKET_000593_FAMILY_PAIRS) == packet_pairs
+
+
 def test_modal_registry_applies_refined_cue_policy_for_packet_002680_pairs() -> None:
     packet_pairs = (
         ("deontic", "alethic"),
@@ -8576,10 +8280,13 @@ def test_modal_registry_applies_refined_cue_policy_for_packet_002680_pairs() -> 
             )
             < 1e-12
         )
-        assert compiler_refined_modal_family_cue_margin_buffer(
-            predicted_family,
-            target_family,
-        ) >= 0.0015
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.0015
+        )
 
 
 def test_modal_registry_applies_refined_cue_policy_for_packet_002346_pairs() -> None:
@@ -8597,10 +8304,7 @@ def test_modal_registry_applies_refined_cue_policy_for_packet_002346_pairs() -> 
         assert is_compiler_required_adaptive_ambiguity_pair(*pair) is True
         assert is_signal_free_adaptive_ambiguity_pair(*pair) is True
         assert supports_signal_free_adaptive_ambiguity_pair(*pair) is True
-        assert (
-            compiler_refined_modal_family_cue_margin_buffer(*pair)
-            >= expected_min_buffer
-        )
+        assert compiler_refined_modal_family_cue_margin_buffer(*pair) >= expected_min_buffer
 
 
 def test_modal_registry_applies_refined_cue_policy_for_packet_006096_pairs() -> None:
@@ -8619,15 +8323,10 @@ def test_modal_registry_applies_refined_cue_policy_for_packet_006096_pairs() -> 
         assert is_compiler_required_adaptive_ambiguity_pair(*pair) is True
         assert is_signal_free_adaptive_ambiguity_pair(*pair) is True
         assert supports_signal_free_adaptive_ambiguity_pair(*pair) is True
-        assert (
-            compiler_refined_modal_family_cue_margin_buffer(*pair)
-            >= expected_min_buffer
-        )
+        assert compiler_refined_modal_family_cue_margin_buffer(*pair) >= expected_min_buffer
     assert (
         compiler_weak_typed_self_family_cue_margin_buffer("frame", "frame")
-        == COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR[
-            ("frame", "frame")
-        ]
+        == COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR[("frame", "frame")]
     )
 
 
@@ -8717,15 +8416,14 @@ def test_modal_registry_packet_002588_frame_temporal_outvote_keeps_adaptive_conf
     assert base_ambiguity.metadata["explicit_ambiguity_type"] == (
         "adaptive_frame_temporal_outvoted_margin_low"
     )
-    assert (
-        abs(float(base_ambiguity.metadata["family_margin_raw"]) + 0.613669708924)
-        < 1e-12
-    )
+    assert abs(float(base_ambiguity.metadata["family_margin_raw"]) + 0.613669708924) < 1e-12
     assert any(
         ambiguity.ambiguity_type == "adaptive_frame_temporal_outvoted_margin_low"
         and ambiguity.candidate_ids == ["frame", "temporal"]
         for ambiguity in ambiguities
     )
+
+
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_005786_pairs() -> None:
     packet_pairs = (
         ("deontic", "temporal"),
@@ -8771,8 +8469,7 @@ def test_modal_registry_packet_000001_rescue_keeps_signal_free_frame_policy() ->
         assert is_compiler_ambiguity_policy_pair(*rescue_pair) is True
         assert supports_signal_free_adaptive_ambiguity_pair(*rescue_pair) is True
         assert (
-            compiler_refined_modal_family_cue_margin_buffer(*rescue_pair)
-            >= expected_buffer - 1e-12
+            compiler_refined_modal_family_cue_margin_buffer(*rescue_pair) >= expected_buffer - 1e-12
         )
     assert ("frame", "dynamic") not in COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS
     assert is_compiler_ambiguity_policy_pair("frame", "dynamic") is True
@@ -8900,8 +8597,7 @@ def test_modal_compiler_preserves_packet_000606_compiler_ambiguity_policy_for_ev
             ]
 
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000606-adaptive-evidence-{index}",
@@ -8957,20 +8653,15 @@ def test_modal_compiler_preserves_packet_000606_compiler_ambiguity_policy_for_ev
             predicted_family_source="adaptive_logits",
         )
         margin_direction = "contested" if expected_margin > 0.0 else "outvoted"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         expected_priority = (
-            0.15 - expected_margin
-            if expected_margin > 0.0
-            else abs(expected_margin) + 0.15
+            0.15 - expected_margin if expected_margin > 0.0 else abs(expected_margin) + 0.15
         )
         matching = [
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == expected_type
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
             and ambiguity.metadata.get("predicted_family") == predicted_family
             and ambiguity.metadata.get("target_family") == target_family
         ]
@@ -8981,10 +8672,7 @@ def test_modal_compiler_preserves_packet_000606_compiler_ambiguity_policy_for_ev
         assert ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert abs(float(ambiguity.metadata["family_margin_raw"]) - expected_margin) <= 1e-12
         assert abs(float(ambiguity.metadata["priority"]) - expected_priority) <= 1e-12
-        assert (
-            abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
         if margin_direction == "outvoted":
             assert ambiguity.severity == "requires_rule"
         else:
@@ -9051,8 +8739,7 @@ def test_modal_compiler_preserves_packet_001809_frame_compiler_ambiguity_policy_
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001809-adaptive-evidence-{index}",
@@ -9109,16 +8796,13 @@ def test_modal_compiler_preserves_packet_001809_frame_compiler_ambiguity_policy_
             family_shares=family_shares,
             predicted_family_source="adaptive_logits",
         )
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         expected_priority = abs(expected_margin) + 0.15
         matching = [
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == expected_type
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
             and ambiguity.metadata.get("predicted_family") == predicted_family
             and ambiguity.metadata.get("target_family") == target_family
         ]
@@ -9130,10 +8814,7 @@ def test_modal_compiler_preserves_packet_001809_frame_compiler_ambiguity_policy_
         assert ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert abs(float(ambiguity.metadata["family_margin_raw"]) - expected_margin) <= 1e-12
         assert abs(float(ambiguity.metadata["priority"]) - expected_priority) <= 1e-12
-        assert (
-            abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
         assert ambiguity.metadata["adaptive_policy_pair"] == (
             f"{predicted_family}->{target_family}"
         )
@@ -9205,8 +8886,7 @@ def test_modal_compiler_preserves_packet_003168_compiler_ambiguity_policy_for_ev
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         sample_id = str(case["sample_id"])
         encoding = SpaCyLegalEncoding(
@@ -9262,15 +8942,12 @@ def test_modal_compiler_preserves_packet_003168_compiler_ambiguity_policy_for_ev
             family_shares=family_shares,
             predicted_family_source="adaptive_logits",
         )
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         matching = [
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == expected_type
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
             and ambiguity.metadata.get("predicted_family") == predicted_family
             and ambiguity.metadata.get("target_family") == target_family
         ]
@@ -9282,10 +8959,7 @@ def test_modal_compiler_preserves_packet_003168_compiler_ambiguity_policy_for_ev
         assert ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert abs(float(ambiguity.metadata["family_margin_raw"]) - expected_margin) <= 1e-12
         assert abs(float(ambiguity.metadata["priority"]) - expected_priority) <= 1e-12
-        assert (
-            abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
         assert ambiguity.metadata["adaptive_policy_pair"] == (
             f"{predicted_family}->{target_family}"
         )
@@ -9669,10 +9343,8 @@ def test_modal_compiler_surfaces_compiled_primary_deontic_conditional_policy_amb
         == "adaptive_deontic_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_deontic_conditional_normative_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        ambiguity.ambiguity_type == "adaptive_deontic_conditional_normative_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         for ambiguity in ambiguities
     )
 
@@ -9769,8 +9441,7 @@ def test_modal_compiler_surfaces_compiled_primary_deontic_self_pair_adaptive_amb
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_deontic_deontic_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         and ambiguity.metadata["is_self_pair"] is True
         for ambiguity in ambiguities
     )
@@ -9942,8 +9613,7 @@ def test_modal_compiler_uses_runner_up_priority_pair_for_compiled_primary_self_p
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == [str(scenario["compiled_primary_family"])]
-            and ambiguity.metadata["adaptive_predicted_family_source"]
-            == "compiled_primary_family"
+            and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         )
         assert compiled_primary_self.metadata["family_margin"] == 0.0
         assert compiled_primary_self.metadata["runner_up_family"] == str(
@@ -9955,10 +9625,7 @@ def test_modal_compiler_uses_runner_up_priority_pair_for_compiled_primary_self_p
         assert compiled_primary_self.metadata["adaptive_runner_up_policy_pair"] == (
             f"{scenario['compiled_primary_family']}->{scenario['runner_up_family']}"
         )
-        assert (
-            compiled_primary_self.metadata["runner_up_is_compiler_ambiguity_bundle_pair"]
-            is True
-        )
+        assert compiled_primary_self.metadata["runner_up_is_compiler_ambiguity_bundle_pair"] is True
         assert (
             compiled_primary_self.metadata["effective_compiler_ambiguity_policy_pair"]
             == f"{scenario['compiled_primary_family']}->{scenario['runner_up_family']}"
@@ -9977,8 +9644,7 @@ def test_modal_compiler_uses_runner_up_priority_pair_for_compiled_primary_self_p
         assert compiled_primary_self.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == scenario["expected_explicit_type"]
-            and ambiguity.metadata["adaptive_predicted_family_source"]
-            == "compiled_primary_family"
+            and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
             and ambiguity.metadata["adaptive_runner_up_policy_pair"]
             == f"{scenario['compiled_primary_family']}->{scenario['runner_up_family']}"
             and ambiguity.metadata["runner_up_is_priority_policy_pair"] is True
@@ -10077,8 +9743,7 @@ def test_modal_compiler_surfaces_compiled_primary_deontic_alethic_adaptive_ambig
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_deontic_alethic_contested_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         for ambiguity in ambiguities
     )
 
@@ -10165,8 +9830,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_conditional_ad
         == "adaptive_temporal_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_temporal_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_temporal_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -10257,8 +9921,7 @@ def test_modal_compiler_treats_zero_margin_temporal_conditional_priority_pair_as
     )
     assert adaptive_conditional.severity == "requires_rule"
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_temporal_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_temporal_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["family_margin"] == 0.0
         for ambiguity in ambiguities
     )
@@ -11051,16 +10714,13 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_conditional_adapt
     )
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is False
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is True
-    assert adaptive_conditional.metadata["adaptive_policy_pair"] == (
-        "frame->conditional_normative"
-    )
+    assert adaptive_conditional.metadata["adaptive_policy_pair"] == ("frame->conditional_normative")
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
         == "adaptive_frame_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_frame_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_frame_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -11150,8 +10810,7 @@ def test_modal_compiler_treats_zero_margin_frame_conditional_priority_pair_as_ou
     )
     assert adaptive_conditional.severity == "requires_rule"
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_frame_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_frame_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["family_margin"] == 0.0
         for ambiguity in ambiguities
     )
@@ -11451,21 +11110,15 @@ def test_modal_compiler_emits_explicit_frame_policy_pair_ambiguities_for_evidenc
         if ambiguity.ambiguity_type == "adaptive_family_margin_low"
         and ambiguity.candidate_ids == ["frame", "conditional_normative"]
     )
-    assert adaptive_conditional.metadata["adaptive_policy_pair"] == (
-        "frame->conditional_normative"
-    )
+    assert adaptive_conditional.metadata["adaptive_policy_pair"] == ("frame->conditional_normative")
     assert adaptive_conditional.metadata["family_margin"] == -0.735177
-    assert abs(
-        adaptive_conditional.metadata["family_margin_raw"] + 0.735177285536
-    ) < 1e-12
+    assert abs(adaptive_conditional.metadata["family_margin_raw"] + 0.735177285536) < 1e-12
     assert adaptive_conditional.metadata["explicit_ambiguity_type"] == (
         "adaptive_frame_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_frame_conditional_normative_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_policy_pair"]
-        == "frame->conditional_normative"
+        ambiguity.ambiguity_type == "adaptive_frame_conditional_normative_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_policy_pair"] == "frame->conditional_normative"
         for ambiguity in conditional_ambiguities
     )
 
@@ -11557,9 +11210,7 @@ def test_modal_compiler_exposes_packet_008285_frame_conditional_policy_ambiguity
         and ambiguity.candidate_ids == ["frame", "conditional_normative"]
     )
     assert adaptive_conditional.severity == "requires_rule"
-    assert adaptive_conditional.metadata["adaptive_policy_pair"] == (
-        "frame->conditional_normative"
-    )
+    assert adaptive_conditional.metadata["adaptive_policy_pair"] == ("frame->conditional_normative")
     assert adaptive_conditional.metadata["family_margin"] == -0.787491
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is False
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is True
@@ -11570,10 +11221,8 @@ def test_modal_compiler_exposes_packet_008285_frame_conditional_policy_ambiguity
         "adaptive_frame_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_frame_conditional_normative_outvoted_margin_low"
-        and ambiguity.metadata["adaptive_policy_pair"]
-        == "frame->conditional_normative"
+        ambiguity.ambiguity_type == "adaptive_frame_conditional_normative_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_policy_pair"] == "frame->conditional_normative"
         for ambiguity in ambiguities
     )
 
@@ -11748,8 +11397,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_temporal_ad
         == "adaptive_conditional_normative_temporal_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_temporal_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_temporal_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -11923,8 +11571,7 @@ def test_modal_compiler_treats_zero_margin_conditional_temporal_pair_as_outvoted
     )
     assert adaptive_temporal.severity == "requires_rule"
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_temporal_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_temporal_outvoted_margin_low"
         and ambiguity.metadata["family_margin"] == 0.0
         for ambiguity in ambiguities
     )
@@ -12014,8 +11661,7 @@ def test_modal_compiler_treats_zero_margin_temporal_conditional_priority_pair_as
     )
     assert adaptive_conditional.severity == "requires_rule"
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_temporal_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_temporal_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["family_margin"] == 0.0
         for ambiguity in ambiguities
     )
@@ -12103,8 +11749,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_deontic_ada
         == "adaptive_conditional_normative_deontic_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_deontic_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_deontic_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -12192,8 +11837,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_frame_adapt
         == "adaptive_conditional_normative_frame_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_frame_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_frame_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -12365,8 +12009,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_epistemic_a
         == "adaptive_conditional_normative_epistemic_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_epistemic_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_epistemic_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         and ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         for ambiguity in ambiguities
@@ -12453,8 +12096,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_dynamic_ada
         == "adaptive_conditional_normative_dynamic_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_dynamic_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_conditional_normative_dynamic_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -12861,10 +12503,7 @@ def test_modal_compiler_exposes_frame_temporal_epistemic_doxastic_policy_target_
         assert ambiguity.candidate_ids == ["frame", target_family]
         assert ambiguity.severity == "requires_rule"
         assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert (
-            ambiguity.metadata["compiler_ambiguity_policy_pair"]
-            == f"frame->{target_family}"
-        )
+        assert ambiguity.metadata["compiler_ambiguity_policy_pair"] == f"frame->{target_family}"
         assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert ambiguity.metadata["predicted_family"] == "frame"
         assert ambiguity.metadata["target_family"] == target_family
@@ -12908,9 +12547,7 @@ def test_modal_compiler_exposes_signal_free_frame_deontic_doxastic_policy_outvot
         ambiguity = by_type[ambiguity_type]
         assert ambiguity.candidate_ids == ["frame", target_family]
         assert ambiguity.severity == "requires_rule"
-        assert ambiguity.metadata["compiler_ambiguity_policy_pair"] == (
-            f"frame->{target_family}"
-        )
+        assert ambiguity.metadata["compiler_ambiguity_policy_pair"] == (f"frame->{target_family}")
         assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert ambiguity.metadata["signal_free_pair_policy_applied"] is True
         assert ambiguity.metadata["target_share"] == 0.0
@@ -12986,9 +12623,7 @@ def test_modal_compiler_emits_explicit_frame_bundle_ambiguities_for_autoencoder_
             ),
             "expected_margin": -0.988612205682,
             "expected_priority": 1.138612205682,
-            "expected_explicit_type": (
-                "adaptive_frame_conditional_normative_outvoted_margin_low"
-            ),
+            "expected_explicit_type": ("adaptive_frame_conditional_normative_outvoted_margin_low"),
         },
         {
             "target_family": "epistemic",
@@ -13005,9 +12640,7 @@ def test_modal_compiler_emits_explicit_frame_bundle_ambiguities_for_autoencoder_
     for scenario in scenarios:
         target_family = str(scenario["target_family"])
         ranking = [dict(item) for item in tuple(scenario["ranking"])]
-        family_shares = {
-            str(item["family"]): float(item["share"]) for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share"]) for item in ranking}
         ambiguities = compiler._adaptive_family_margin_ambiguities(
             encoding,
             modal_ir=modal_ir,
@@ -13021,9 +12654,7 @@ def test_modal_compiler_emits_explicit_frame_bundle_ambiguities_for_autoencoder_
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == ["frame", target_family]
         )
-        assert base_ambiguity.metadata["adaptive_policy_pair"] == (
-            f"frame->{target_family}"
-        )
+        assert base_ambiguity.metadata["adaptive_policy_pair"] == (f"frame->{target_family}")
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert (
             abs(
@@ -13040,21 +12671,20 @@ def test_modal_compiler_emits_explicit_frame_bundle_ambiguities_for_autoencoder_
             < 1e-12
         )
         assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == scenario["expected_explicit_type"]
+            base_ambiguity.metadata["explicit_ambiguity_type"] == scenario["expected_explicit_type"]
         )
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == scenario["expected_explicit_type"]
             and ambiguity.candidate_ids == ["frame", target_family]
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
 
-def test_modal_compiler_treats_zero_margin_epistemic_deontic_priority_pair_as_outvoted_adaptive_ambiguity(
-) -> None:
+def test_modal_compiler_treats_zero_margin_epistemic_deontic_priority_pair_as_outvoted_adaptive_ambiguity() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13219,8 +12849,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_epistemic_conditional_a
         == "adaptive_epistemic_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_epistemic_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_epistemic_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -13307,8 +12936,9 @@ def test_modal_compiler_uses_conditional_scope_signal_for_epistemic_conditional_
     )
 
 
-def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_zero_margin_tie(
-) -> None:
+def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_zero_margin_tie() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13396,7 +13026,9 @@ def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_zero
     )
 
 
-def test_modal_compiler_surfaces_deontic_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+def test_modal_compiler_surfaces_deontic_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13484,7 +13116,9 @@ def test_modal_compiler_surfaces_deontic_self_pair_adaptive_ambiguity_for_low_ru
     )
 
 
-def test_modal_compiler_treats_zero_margin_deontic_self_pair_as_outvoted_adaptive_ambiguity() -> None:
+def test_modal_compiler_treats_zero_margin_deontic_self_pair_as_outvoted_adaptive_ambiguity() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13571,7 +13205,9 @@ def test_modal_compiler_treats_zero_margin_deontic_self_pair_as_outvoted_adaptiv
     )
 
 
-def test_modal_compiler_treats_zero_margin_deontic_self_pair_as_outvoted_adaptive_ambiguity() -> None:
+def test_modal_compiler_treats_zero_margin_deontic_self_pair_as_outvoted_adaptive_ambiguity() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13662,7 +13298,9 @@ def test_modal_compiler_treats_zero_margin_deontic_self_pair_as_outvoted_adaptiv
     )
 
 
-def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13751,8 +13389,9 @@ def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_r
     )
 
 
-def test_modal_compiler_treats_zero_margin_temporal_self_pair_with_priority_runner_up_as_outvoted_adaptive_ambiguity(
-) -> None:
+def test_modal_compiler_treats_zero_margin_temporal_self_pair_with_priority_runner_up_as_outvoted_adaptive_ambiguity() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13842,8 +13481,9 @@ def test_modal_compiler_treats_zero_margin_temporal_self_pair_with_priority_runn
     )
 
 
-def test_modal_compiler_treats_zero_margin_temporal_self_pair_as_outvoted_when_self_pair_is_priority(
-) -> None:
+def test_modal_compiler_treats_zero_margin_temporal_self_pair_as_outvoted_when_self_pair_is_priority() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -13935,8 +13575,9 @@ def test_modal_compiler_treats_zero_margin_temporal_self_pair_as_outvoted_when_s
     )
 
 
-def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_runner_up_margin(
-) -> None:
+def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -14024,7 +13665,9 @@ def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_
     )
 
 
-def test_modal_compiler_surfaces_frame_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+def test_modal_compiler_surfaces_frame_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -14232,7 +13875,9 @@ def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_am
         6,
     )
     assert abs(adaptive_frame.metadata["family_margin_raw"] + 0.216733561973) < 1e-12
-    assert adaptive_frame.metadata["predicted_share_raw"] > adaptive_frame.metadata["target_share_raw"]
+    assert (
+        adaptive_frame.metadata["predicted_share_raw"] > adaptive_frame.metadata["target_share_raw"]
+    )
     assert adaptive_frame.metadata["predicted_share"] == round(
         adaptive_frame.metadata["predicted_share_raw"],
         6,
@@ -14250,8 +13895,7 @@ def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_am
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_hybrid_frame_outvoted_margin_low"
-        and ambiguity.metadata["family_margin"]
-        == round(ambiguity.metadata["family_margin_raw"], 6)
+        and ambiguity.metadata["family_margin"] == round(ambiguity.metadata["family_margin_raw"], 6)
         and abs(ambiguity.metadata["family_margin_raw"] + 0.216733561973) < 1e-12
         for ambiguity in compiled.ambiguities
     )
@@ -14339,8 +13983,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_deontic_conditional_ada
         == "adaptive_deontic_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_deontic_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_deontic_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -14892,9 +14535,7 @@ def test_modal_compiler_canonicalizes_frame_family_tokens_for_priority_policy_ma
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == ["frame", target_family]
         )
-        assert adaptive_pair.metadata["adaptive_policy_pair"] == (
-            f"frame->{target_family}"
-        )
+        assert adaptive_pair.metadata["adaptive_policy_pair"] == (f"frame->{target_family}")
         assert abs(adaptive_pair.metadata["family_margin_raw"] + predicted_share) < 1e-12
         assert abs(adaptive_pair.metadata["adaptive_priority"] - expected_priority) < 1e-12
         assert abs(adaptive_pair.metadata["priority"] - expected_priority) < 1e-12
@@ -15001,16 +14642,14 @@ def test_modal_compiler_canonicalizes_compiled_primary_family_shares_for_policy_
 
     assert any(
         ambiguity.ambiguity_type == "adaptive_family_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         and ambiguity.metadata["adaptive_policy_pair"] == "deontic->frame"
         and ambiguity.candidate_ids == ["deontic", "frame"]
         for ambiguity in ambiguities
     )
     assert not any(
         ambiguity.ambiguity_type == "adaptive_family_margin_low"
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         and ambiguity.metadata["adaptive_policy_pair"] == "deontic->temporal"
         for ambiguity in ambiguities
     )
@@ -15720,8 +15359,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_conditional_ada
         == "adaptive_alethic_conditional_normative_outvoted_margin_low"
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_alethic_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_alethic_conditional_normative_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
@@ -15981,8 +15619,7 @@ def test_modal_compiler_uses_conditional_signal_for_alethic_conditional_adaptive
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is True
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is False
     assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
@@ -16438,9 +16075,7 @@ def test_modal_compiler_treats_transferred_as_frame_scope_ambiguity_signal() -> 
         )
     )
 
-    compiled = compiler.compile(
-        "Within 30 days after review, the section is transferred."
-    )
+    compiled = compiler.compile("Within 30 days after review, the section is transferred.")
 
     adaptive_frame = next(
         ambiguity
@@ -16461,9 +16096,7 @@ def test_modal_compiler_uses_bm25_frame_support_for_temporal_adaptive_frame_ambi
         )
     )
 
-    compiled = compiler.compile(
-        "Within 30 days after review, the offense penalty applies."
-    )
+    compiled = compiler.compile("Within 30 days after review, the offense penalty applies.")
 
     adaptive_frame = next(
         ambiguity
@@ -16488,9 +16121,7 @@ def test_modal_compiler_treats_under_this_section_as_deontic_frame_adaptive_sign
         )
     )
 
-    compiled = compiler.compile(
-        "Applicants shall and must provide notice under this section."
-    )
+    compiled = compiler.compile("Applicants shall and must provide notice under this section.")
 
     adaptive_frame = next(
         ambiguity
@@ -16506,10 +16137,7 @@ def test_modal_compiler_treats_under_this_section_as_deontic_frame_adaptive_sign
         adaptive_frame.metadata["explicit_ambiguity_type"]
         == "adaptive_deontic_frame_outvoted_margin_low"
     )
-    assert (
-        adaptive_frame.metadata["lexical_signals"]["has_statutory_scope_reference"]
-        is True
-    )
+    assert adaptive_frame.metadata["lexical_signals"]["has_statutory_scope_reference"] is True
 
 
 def test_modal_codec_caps_repeated_generic_frame_cues_against_deontic_scope() -> None:
@@ -16570,7 +16198,9 @@ def test_modal_codec_does_not_generic_frame_debias_for_statutory_reference_only_
     assert _is_generic_frame_cue_debias_context(encoding, signals) is False
 
 
-def test_modal_codec_tightens_conditional_soft_cap_for_strong_deontic_statutory_competition() -> None:
+def test_modal_codec_tightens_conditional_soft_cap_for_strong_deontic_statutory_competition() -> (
+    None
+):
     counts = {
         "conditional_normative": 5.0,
         "deontic": 1.0,
@@ -16681,9 +16311,7 @@ def test_modal_codec_treats_policy_of_phrase_as_deontic_scope_phrase() -> None:
         )
     )
 
-    encoding = compiler.encoder.encode(
-        "It is the policy of the United States to protect children."
-    )
+    encoding = compiler.encoder.encode("It is the policy of the United States to protect children.")
     signals = modal_ambiguity_signals(encoding)
 
     assert signals["has_deontic_scope"] is True
@@ -16767,9 +16395,7 @@ def test_modal_codec_treats_date_of_enactment_as_temporal_scope_signal() -> None
         )
     )
 
-    encoding = compiler.encoder.encode(
-        "This authority expires on the date of enactment."
-    )
+    encoding = compiler.encoder.encode("This authority expires on the date of enactment.")
     signals = modal_ambiguity_signals(encoding)
 
     assert signals["has_temporal_scope"] is True
@@ -16799,9 +16425,7 @@ def test_modal_codec_treats_month_day_without_year_as_temporal_scope_signal() ->
         )
     )
 
-    encoding = compiler.encoder.encode(
-        "The authority may act on January 6th."
-    )
+    encoding = compiler.encoder.encode("The authority may act on January 6th.")
     signals = modal_ambiguity_signals(encoding)
 
     assert signals["has_calendar_date_scope"] is True
@@ -16816,9 +16440,7 @@ def test_modal_codec_treats_insofar_as_as_conditional_scope_phrase() -> None:
         )
     )
 
-    encoding = compiler.encoder.encode(
-        "The authority may act insofar as this section applies."
-    )
+    encoding = compiler.encoder.encode("The authority may act insofar as this section applies.")
     signals = modal_ambiguity_signals(encoding)
     ranking = ranked_modal_families(encoding)
     shares = {row["family"]: float(row["share"]) for row in ranking}
@@ -16851,9 +16473,7 @@ def test_modal_codec_treats_is_entitled_to_as_deontic_scope_phrase_signal() -> N
         )
     )
 
-    encoding = compiler.encoder.encode(
-        "A claimant is entitled to recover the amount due."
-    )
+    encoding = compiler.encoder.encode("A claimant is entitled to recover the amount due.")
     signals = modal_ambiguity_signals(encoding)
 
     assert signals["has_deontic_scope"] is True
@@ -16885,9 +16505,7 @@ def test_modal_codec_treats_as_provided_under_as_conditional_scope_phrase() -> N
         )
     )
 
-    encoding = compiler.encoder.encode(
-        "As provided under section 5, this authority applies."
-    )
+    encoding = compiler.encoder.encode("As provided under section 5, this authority applies.")
     signals = modal_ambiguity_signals(encoding)
 
     assert signals["has_statutory_scope_reference"] is True
@@ -16976,12 +16594,10 @@ def test_modal_compiler_surfaces_deontic_conditional_adaptive_ambiguity() -> Non
         == "adaptive_deontic_conditional_normative_outvoted_margin_low"
     )
     assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
     assert any(
-        ambiguity.ambiguity_type
-        == "adaptive_deontic_conditional_normative_outvoted_margin_low"
+        ambiguity.ambiguity_type == "adaptive_deontic_conditional_normative_outvoted_margin_low"
         for ambiguity in compiled.ambiguities
     )
 
@@ -16995,9 +16611,7 @@ def test_modal_compiler_surfaces_deontic_alethic_adaptive_ambiguity() -> None:
         )
     )
 
-    compiled = compiler.compile(
-        "The agency shall and must be unable to deny access to the record."
-    )
+    compiled = compiler.compile("The agency shall and must be unable to deny access to the record.")
 
     adaptive_alethic = next(
         ambiguity
@@ -17042,7 +16656,9 @@ def test_modal_compiler_surfaces_temporal_conditional_family_outvote_ambiguity()
     assert temporal_conditional.metadata["predicted_family"] == "temporal"
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
     assert temporal_conditional.metadata["family_margin"] < 0.0
-    assert temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
+    )
 
 
 def test_modal_compiler_treats_notwithstanding_as_temporal_conditional_ambiguity_signal() -> None:
@@ -17068,17 +16684,10 @@ def test_modal_compiler_treats_notwithstanding_as_temporal_conditional_ambiguity
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
     assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
-        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
-    assert (
-        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
-        is True
-    )
-    assert (
-        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_token"]
-        is True
-    )
+    assert temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
+    assert temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_token"] is True
 
 
 def test_modal_compiler_treats_in_the_case_of_as_conditional_scope_ambiguity_signal() -> None:
@@ -17103,13 +16712,9 @@ def test_modal_compiler_treats_in_the_case_of_as_conditional_scope_ambiguity_sig
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
     assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
-        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
-    assert (
-        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
-        is True
-    )
+    assert temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
 
 
 def test_modal_compiler_treats_as_provided_in_as_conditional_scope_ambiguity_signal() -> None:
@@ -17134,14 +16739,8 @@ def test_modal_compiler_treats_as_provided_in_as_conditional_scope_ambiguity_sig
     assert conditional_scope.metadata["predicted_family"] == "deontic"
     assert conditional_scope.metadata["target_family"] == "conditional_normative"
     assert conditional_scope.metadata["target_share"] > 0.0
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_statutory_scope_reference"]
-        is True
-    )
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
+    assert conditional_scope.metadata["lexical_signals"]["has_statutory_scope_reference"] is True
+    assert conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
 
 
 def test_modal_compiler_treats_as_provided_by_as_conditional_scope_ambiguity_signal() -> None:
@@ -17166,14 +16765,8 @@ def test_modal_compiler_treats_as_provided_by_as_conditional_scope_ambiguity_sig
     assert conditional_scope.metadata["predicted_family"] == "deontic"
     assert conditional_scope.metadata["target_family"] == "conditional_normative"
     assert conditional_scope.metadata["target_share"] > 0.0
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_statutory_scope_reference"]
-        is True
-    )
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
+    assert conditional_scope.metadata["lexical_signals"]["has_statutory_scope_reference"] is True
+    assert conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
 
 
 def test_modal_compiler_treats_terms_and_conditions_as_conditional_scope_cue() -> None:
@@ -17198,10 +16791,7 @@ def test_modal_compiler_treats_terms_and_conditions_as_conditional_scope_cue() -
     assert conditional_scope.metadata["predicted_family"] == "deontic"
     assert conditional_scope.metadata["target_family"] == "conditional_normative"
     assert conditional_scope.metadata["target_share"] > 0.0
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
+    assert conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
 
 
 def test_modal_compiler_treats_for_purposes_of_as_conditional_scope_ambiguity_signal() -> None:
@@ -17226,13 +16816,9 @@ def test_modal_compiler_treats_for_purposes_of_as_conditional_scope_ambiguity_si
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
     assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
-        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
-    assert (
-        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
-        is True
-    )
+    assert temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
 
 
 def test_modal_compiler_treats_with_respect_to_as_conditional_scope_ambiguity_signal() -> None:
@@ -17257,13 +16843,9 @@ def test_modal_compiler_treats_with_respect_to_as_conditional_scope_ambiguity_si
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
     assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
-        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
-    assert (
-        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
-        is True
-    )
+    assert temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
 
 
 def test_modal_compiler_surfaces_temporal_frame_family_outvote_ambiguity() -> None:
@@ -17329,9 +16911,7 @@ def test_modal_compiler_surfaces_frame_scope_family_outvote_ambiguity() -> None:
         )
     )
 
-    compiled = compiler.compile(
-        "The secretary shall and must provide written notice."
-    )
+    compiled = compiler.compile("The secretary shall and must provide written notice.")
 
     frame_scope = next(
         ambiguity
@@ -17354,9 +16934,7 @@ def test_modal_compiler_treats_court_as_frame_scope_ambiguity_signal() -> None:
         )
     )
 
-    compiled = compiler.compile(
-        "The court shall and must issue the order."
-    )
+    compiled = compiler.compile("The court shall and must issue the order.")
 
     frame_scope = next(
         ambiguity
@@ -17392,10 +16970,7 @@ def test_modal_compiler_surfaces_conditional_scope_family_outvote_ambiguity() ->
     assert conditional_scope.metadata["predicted_family"] == "deontic"
     assert conditional_scope.metadata["target_family"] == "conditional_normative"
     assert conditional_scope.metadata["family_margin"] < 0.0
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
+    assert conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
 
 
 def test_modal_compiler_treats_notwithstanding_as_conditional_scope_ambiguity_signal() -> None:
@@ -17421,17 +16996,10 @@ def test_modal_compiler_treats_notwithstanding_as_conditional_scope_ambiguity_si
     assert adaptive_conditional.metadata["target_family"] == "deontic"
     assert adaptive_conditional.metadata["target_share"] > 0.0
     assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
+        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
     )
-    assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
-        is True
-    )
-    assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_token"]
-        is True
-    )
+    assert adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
+    assert adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_token"] is True
 
 
 def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> None:
@@ -17568,9 +17136,7 @@ def test_modal_compiler_treats_filed_as_dynamic_scope_ambiguity_signal() -> None
         )
     )
 
-    compiled = compiler.compile(
-        "Within 30 days after review, the agency filed the report."
-    )
+    compiled = compiler.compile("Within 30 days after review, the agency filed the report.")
 
     dynamic_scope = next(
         ambiguity
@@ -17620,9 +17186,7 @@ def test_modal_compiler_treats_unable_to_as_alethic_scope_ambiguity_signal() -> 
         )
     )
 
-    compiled = compiler.compile(
-        "The agency shall and must be unable to deny access to the record."
-    )
+    compiled = compiler.compile("The agency shall and must be unable to deny access to the record.")
 
     alethic_scope = next(
         ambiguity
@@ -17675,7 +17239,9 @@ def test_modal_compiler_treats_not_later_than_scope_as_temporal_ambiguity_signal
     assert temporal_deontic.metadata["family_margin"] < 0.0
 
 
-def test_modal_compiler_treats_period_beginning_with_calendar_date_as_temporal_scope_signal() -> None:
+def test_modal_compiler_treats_period_beginning_with_calendar_date_as_temporal_scope_signal() -> (
+    None
+):
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -17734,10 +17300,7 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="regex", embedding_dimensions=8)
     )
-    source = (
-        "Section 1 contains definitions. "
-        "The agency must provide notice within 30 days."
-    )
+    source = "Section 1 contains definitions. The agency must provide notice within 30 days."
 
     result = codec.encode(source, document_id="context-doc")
     slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
@@ -17751,9 +17314,7 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     assert result.losses["text_reconstruction_loss"] == 0.0
     assert 0.0 < result.decoded_modal_text.modal_span_coverage < 1.0
     assert result.losses["modal_span_coverage_loss"] > 0.0
-    assert semantic_slot_texts["source_context_span"] == [
-        "Section 1 contains definitions."
-    ]
+    assert semantic_slot_texts["source_context_span"] == ["Section 1 contains definitions."]
     assert semantic_slot_texts["modal_source_span"] == [
         "The agency must provide notice within 30 days."
     ]
@@ -17910,9 +17471,9 @@ def test_modal_decompiler_routes_definition_proposal_and_capacity_atoms() -> Non
     assert "proposal_prescription_duty" in slot_texts["legal_semantic_atom"]
     assert "statutory_amendment" in slot_texts["legal_semantic_atom"]
     assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
@@ -17921,8 +17482,7 @@ def test_modal_decompiler_routes_definition_proposal_and_capacity_atoms() -> Non
 def test_modal_decompiler_surfaces_source_span_modal_transition_slots() -> None:
     source_id = "us-code-5-552-source-span-transitions"
     source_text = (
-        "The Secretary shall issue payments on or after January 1, 2030, "
-        "subject to section 552."
+        "The Secretary shall issue payments on or after January 1, 2030, subject to section 552."
     )
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
@@ -17954,8 +17514,7 @@ def test_modal_decompiler_surfaces_source_span_modal_transition_slots() -> None:
     assert "deontic:O" in slot_texts["modal_source_span_bridge_modal_formula_signature"]
     assert "deontic->temporal" in slot_texts["modal_source_span_bridge_modal_family_pair"]
     assert (
-        "deontic->conditional_normative"
-        in slot_texts["modal_source_span_bridge_modal_family_pair"]
+        "deontic->conditional_normative" in slot_texts["modal_source_span_bridge_modal_family_pair"]
     )
     assert "deontic->frame" in slot_texts["modal_source_span_bridge_modal_family_pair"]
     assert (
@@ -17966,10 +17525,10 @@ def test_modal_decompiler_surfaces_source_span_modal_transition_slots() -> None:
         "deontic:O->frame:Frame:subject_to"
         in slot_texts["modal_source_span_bridge_modal_transition_signature"]
     )
+
+
 def test_modal_decompiler_source_spans_emit_refined_directional_family_pairs() -> None:
-    source = (
-        "Authorities shall determine findings before certification for this section."
-    )
+    source = "Authorities shall determine findings before certification for this section."
     span_end = len(source)
     modal_ir = ModalIRDocument(
         document_id="refined-family-pairs-source-span",
@@ -18072,15 +17631,15 @@ def test_modal_decompiler_surfaces_typed_role_and_reference_dependency_slots() -
     decoded = decode_modal_ir_document(document)
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "subject+action+object+temporal" in slot_texts[
-        "modal_source_span_typed_decompiler_role_signature"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "modal_source_span_typed_decompiler_family_pair"
-    ]
-    assert "frame->deontic:subject+action+object+temporal" in slot_texts[
-        "modal_source_span_typed_decompiler_family_pair_bridge"
-    ]
+    assert (
+        "subject+action+object+temporal"
+        in slot_texts["modal_source_span_typed_decompiler_role_signature"]
+    )
+    assert "frame->temporal" in slot_texts["modal_source_span_typed_decompiler_family_pair"]
+    assert (
+        "frame->deontic:subject+action+object+temporal"
+        in slot_texts["modal_source_span_typed_decompiler_family_pair_bridge"]
+    )
     assert "direct_reference:statutory_section" in slot_texts["reference_dependency"]
     assert "statutory_section:337" in slot_texts["reference_dependency_target"]
     assert "direct_reference:section" in slot_texts["reference_dependency"]
@@ -18126,10 +17685,7 @@ def test_modal_decompiler_surfaces_frame_to_deontic_typed_ir_slots() -> None:
     assert "obligation" in slot_texts["typed_ir_deontic_force"]
     assert "frame->deontic" in slot_texts["typed_ir_deontic_candidate_family_pair"]
     assert "shall" in slot_texts["typed_ir_deontic_candidate_cue"]
-    assert (
-        "frame:Frame->deontic:O:shall"
-        in slot_texts["typed_ir_frame_deontic_bridge_signature"]
-    )
+    assert "frame:Frame->deontic:O:shall" in slot_texts["typed_ir_frame_deontic_bridge_signature"]
     assert "taxation_of_costs" in slot_texts["typed_ir_deontic_frame_context"]
 
 
@@ -18153,14 +17709,10 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert slot_texts["exception_unless"] == ["waived"]
     assert "deontic:O:must" in slot_texts["cue_modal_registry_signature"]
     assert "conditional_normative:O|:if" in slot_texts["condition_modal_registry_signature"]
-    assert "conditional_normative:O|:unless" in slot_texts[
-        "exception_modal_registry_signature"
-    ]
+    assert "conditional_normative:O|:unless" in slot_texts["exception_modal_registry_signature"]
     assert "conditional_normative:O|:if" in slot_texts["condition_modal_bridge_signature"]
     assert "conditional_normative" in slot_texts["condition_modal_bridge_family"]
-    assert "conditional_normative:O|:unless" in slot_texts[
-        "exception_modal_bridge_signature"
-    ]
+    assert "conditional_normative:O|:unless" in slot_texts["exception_modal_bridge_signature"]
     assert "conditional_normative" in slot_texts["exception_modal_bridge_family"]
     assert "family_shift" in slot_texts["condition_modal_registry_alignment"]
     assert "family_shift" in slot_texts["exception_modal_registry_alignment"]
@@ -18174,33 +17726,26 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert slot_texts["citation_section_component"] == ["552"]
     assert slot_texts["citation_section_number"] == ["552"]
     assert any(
-        triple["predicate"] == "condition"
-        and triple["object"] == "if the application is complete"
+        triple["predicate"] == "condition" and triple["object"] == "if the application is complete"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "exception"
-        and triple["object"] == "unless waived"
+        triple["predicate"] == "exception" and triple["object"] == "unless waived"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation"
-        and triple["object"] == "5 U.S.C. 552"
+        triple["predicate"] == "citation" and triple["object"] == "5 U.S.C. 552"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_canonical"
-        and triple["object"] == "5 U.S.C. 552"
+        triple["predicate"] == "citation_canonical" and triple["object"] == "5 U.S.C. 552"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "condition_prefix"
-        and triple["object"] == "if"
-        for triple in triples
+        triple["predicate"] == "condition_prefix" and triple["object"] == "if" for triple in triples
     )
     assert any(
-        triple["predicate"] == "condition_if"
-        and triple["object"] == "the application is complete"
+        triple["predicate"] == "condition_if" and triple["object"] == "the application is complete"
         for triple in triples
     )
     assert any(
@@ -18239,48 +17784,38 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "exception_prefix"
-        and triple["object"] == "unless"
+        triple["predicate"] == "exception_prefix" and triple["object"] == "unless"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "exception_unless"
-        and triple["object"] == "waived"
+        triple["predicate"] == "exception_unless" and triple["object"] == "waived"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_title"
-        and triple["object"] == "5"
+        triple["predicate"] == "citation_title" and triple["object"] == "5" for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_code" and triple["object"] == "U.S.C."
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_code"
-        and triple["object"] == "U.S.C."
+        triple["predicate"] == "citation_section" and triple["object"] == "552"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section"
-        and triple["object"] == "552"
+        triple["predicate"] == "citation_section_primary" and triple["object"] == "552"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_primary"
-        and triple["object"] == "552"
+        triple["predicate"] == "citation_section_component_count" and triple["object"] == "1"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_component_count"
-        and triple["object"] == "1"
+        triple["predicate"] == "citation_section_component" and triple["object"] == "552"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_component"
-        and triple["object"] == "552"
-        for triple in triples
-    )
-    assert any(
-        triple["predicate"] == "citation_section_number"
-        and triple["object"] == "552"
+        triple["predicate"] == "citation_section_number" and triple["object"] == "552"
         for triple in triples
     )
 
@@ -18344,8 +17879,7 @@ def test_modal_decompiler_and_triples_surface_temporal_for_purposes_bridge_slots
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "condition_bridge_operator_pair"
-        and triple["object"] == "F->Frame"
+        triple["predicate"] == "condition_bridge_operator_pair" and triple["object"] == "F->Frame"
         for triple in triples
     )
     assert any(
@@ -18354,8 +17888,7 @@ def test_modal_decompiler_and_triples_surface_temporal_for_purposes_bridge_slots
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "bridge_bridge_operator_pair"
-        and triple["object"] == "F->O|"
+        triple["predicate"] == "bridge_bridge_operator_pair" and triple["object"] == "F->O|"
         for triple in triples
     )
 
@@ -18395,14 +17928,10 @@ def test_modal_decompiler_and_triples_surface_temporal_after_cross_family_bridge
     assert "after" in slot_texts["condition_prefix_key"]
     assert "after" in slot_texts["condition_prefix_temporal_relation"]
     assert "temporal:X:after" in slot_texts["condition_modal_bridge_signature"]
-    assert "conditional_normative:O|:after" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
+    assert "conditional_normative:O|:after" in slot_texts["condition_modal_bridge_signature"]
     assert "dynamic:[a]:after" in slot_texts["condition_modal_bridge_signature"]
     assert "temporal->temporal" in slot_texts["condition_modal_bridge_family_pair"]
-    assert "temporal->conditional_normative" in slot_texts[
-        "condition_modal_bridge_family_pair"
-    ]
+    assert "temporal->conditional_normative" in slot_texts["condition_modal_bridge_family_pair"]
     assert "temporal->dynamic" in slot_texts["condition_modal_bridge_family_pair"]
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
@@ -18416,7 +17945,9 @@ def test_modal_decompiler_and_triples_surface_temporal_after_cross_family_bridge
     )
 
 
-def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_conditional_bridges() -> None:
+def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_conditional_bridges() -> (
+    None
+):
     source_id = "us-code-42-7385x-operator-pair-conditional"
     source_text = "If a transfer occurs, benefits follow."
     formula = ModalIRFormula(
@@ -18463,7 +17994,9 @@ def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_co
     )
 
 
-def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_deontic_bridges() -> None:
+def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_deontic_bridges() -> (
+    None
+):
     source_id = "us-code-42-7385y-operator-pair-deontic"
     source_text = "Required transfer follows."
     formula = ModalIRFormula(
@@ -18504,7 +18037,9 @@ def test_modal_decompiler_and_triples_surface_operator_pair_keys_for_temporal_de
     )
 
 
-def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_condition_cues() -> None:
+def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_condition_cues() -> (
+    None
+):
     source_id = "us-code-42-7385t-90217fde9b59d41a"
     source_text = "After transfer, the Secretary shall pay benefits."
     formula = ModalIRFormula(
@@ -18548,9 +18083,7 @@ def test_modal_decompiler_and_triples_reinforce_deontic_bridge_for_temporal_cond
 
 def test_modal_decompiler_and_triples_surface_deontic_epistemic_bridge_for_believed_cues() -> None:
     source_id = "us-code-42-2000dd-bridge-believed-8fcb91f1595a3cde"
-    source_text = (
-        "A person may be penalized if the agency believed the report was false."
-    )
+    source_text = "A person may be penalized if the agency believed the report was false."
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
         operator=ModalIROperator(
@@ -18586,8 +18119,7 @@ def test_modal_decompiler_and_triples_surface_deontic_epistemic_bridge_for_belie
     assert "doxastic:B:believed" in slot_texts["bridge_modal_bridge_signature"]
     assert "deontic->epistemic" in slot_texts["bridge_modal_bridge_family_pair"]
     assert any(
-        triple["predicate"] == "cue_modal_bridge_signature"
-        and triple["object"] == "deontic:P:may"
+        triple["predicate"] == "cue_modal_bridge_signature" and triple["object"] == "deontic:P:may"
         for triple in triples
     )
     assert any(
@@ -18648,12 +18180,8 @@ def test_modal_decompiler_and_triples_surface_subject_to_frame_and_scope_bridge_
     assert "temporal:F:fiscal_year" in slot_texts["bridge_modal_bridge_signature"]
     assert "epistemic:K:determines" in slot_texts["bridge_modal_bridge_signature"]
     assert "doxastic:B:determines" in slot_texts["bridge_modal_bridge_signature"]
-    assert "deontic->temporal" in slot_texts[
-        "predicate_refined_temporal_bridge_family_pair"
-    ]
-    assert "temporal:F:shall" in slot_texts[
-        "predicate_refined_temporal_bridge_signature"
-    ]
+    assert "deontic->temporal" in slot_texts["predicate_refined_temporal_bridge_family_pair"]
+    assert "temporal:F:shall" in slot_texts["predicate_refined_temporal_bridge_signature"]
     assert "fiscal_year" in slot_texts["predicate_refined_temporal_bridge_context"]
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
@@ -18726,9 +18254,7 @@ def test_modal_decompiler_and_triples_surface_frame_to_temporal_snapshot_bridge_
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
     triples = modal_ir_to_flogic_triples(document)
 
-    assert "frame->temporal" in slot_texts[
-        "predicate_refined_temporal_bridge_family_pair"
-    ]
+    assert "frame->temporal" in slot_texts["predicate_refined_temporal_bridge_family_pair"]
     assert "temporal:F:title" in slot_texts["predicate_refined_temporal_bridge_signature"]
     assert "edition_year" in slot_texts["predicate_refined_temporal_bridge_context"]
     assert any(
@@ -18777,22 +18303,15 @@ def test_modal_decompiler_surfaces_frame_to_alethic_scope_bridge_slots() -> None
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
     assert "frame->alethic" in slot_texts["typed_decompiler_family_pair"]
-    assert "frame->alethic" in slot_texts[
-        "modal_source_span_typed_decompiler_family_pair"
-    ]
-    assert "frame->alethic" in slot_texts[
-        "modal_source_span_refined_modal_family_pair"
-    ]
-    assert "alethic:□:necessary" in slot_texts[
-        "modal_source_span_refined_modal_bridge_signature"
-    ]
+    assert "frame->alethic" in slot_texts["modal_source_span_typed_decompiler_family_pair"]
+    assert "frame->alethic" in slot_texts["modal_source_span_refined_modal_family_pair"]
+    assert "alethic:□:necessary" in slot_texts["modal_source_span_refined_modal_bridge_signature"]
 
 
 def test_modal_decompiler_surfaces_frame_residual_clause_family_pair_cues() -> None:
     source_id = "us-code-36-152701-frame-residual-clause"
     source_text = (
-        "Sec. 152701 - Charter. This clause applies to the organization "
-        "under this chapter."
+        "Sec. 152701 - Charter. This clause applies to the organization under this chapter."
     )
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
@@ -18824,22 +18343,18 @@ def test_modal_decompiler_surfaces_frame_residual_clause_family_pair_cues() -> N
     decoded = decode_modal_ir_document(document)
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "frame->conditional_normative" in slot_texts[
-        "typed_decompiler_family_pair"
-    ]
+    assert "frame->conditional_normative" in slot_texts["typed_decompiler_family_pair"]
     assert "frame->epistemic" in slot_texts["typed_decompiler_family_pair"]
-    assert "frame->conditional_normative:clause" in slot_texts[
-        "typed_decompiler_family_pair_cue"
-    ]
-    assert "frame->epistemic:clause" in slot_texts[
-        "typed_decompiler_family_pair_cue"
-    ]
-    assert "frame->conditional_normative:uscode_residual_span_fallback" in slot_texts[
-        "typed_decompiler_family_pair_cue"
-    ]
-    assert "frame->epistemic:uscode_residual_span_coverage_v1" in slot_texts[
-        "typed_decompiler_family_pair_cue"
-    ]
+    assert "frame->conditional_normative:clause" in slot_texts["typed_decompiler_family_pair_cue"]
+    assert "frame->epistemic:clause" in slot_texts["typed_decompiler_family_pair_cue"]
+    assert (
+        "frame->conditional_normative:uscode_residual_span_fallback"
+        in slot_texts["typed_decompiler_family_pair_cue"]
+    )
+    assert (
+        "frame->epistemic:uscode_residual_span_coverage_v1"
+        in slot_texts["typed_decompiler_family_pair_cue"]
+    )
 
 
 def test_modal_decompiler_surfaces_deontic_to_temporal_snapshot_bridge_slots() -> None:
@@ -18880,22 +18395,18 @@ def test_modal_decompiler_surfaces_deontic_to_temporal_snapshot_bridge_slots() -
     decoded = decode_modal_ir_document(document)
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "deontic->temporal" in slot_texts[
-        "modal_source_span_refined_temporal_bridge_family_pair"
-    ]
-    assert "temporal:F:obligation" in slot_texts[
-        "modal_source_span_refined_temporal_bridge_signature"
-    ]
-    assert "edition_year" in slot_texts[
-        "modal_source_span_refined_temporal_bridge_context"
-    ]
+    assert (
+        "deontic->temporal" in slot_texts["modal_source_span_refined_temporal_bridge_family_pair"]
+    )
+    assert (
+        "temporal:F:obligation" in slot_texts["modal_source_span_refined_temporal_bridge_signature"]
+    )
+    assert "edition_year" in slot_texts["modal_source_span_refined_temporal_bridge_context"]
 
 
 def test_modal_decompiler_and_triples_surface_subject_to_section_specific_bridge_slots() -> None:
     source_id = "us-code-6-314-subject-to-section"
-    source_text = (
-        "The Secretary shall provide notice subject to section 314 of this title."
-    )
+    source_text = "The Secretary shall provide notice subject to section 314 of this title."
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
         operator=ModalIROperator(
@@ -18926,17 +18437,14 @@ def test_modal_decompiler_and_triples_surface_subject_to_section_specific_bridge
     triples = modal_ir_to_flogic_triples(document)
 
     assert slot_texts["condition_prefix_key"] == ["subject_to_section"]
-    assert slot_texts["condition_modal_signature"] == [
-        "deontic:O:subject_to_section"
-    ]
+    assert slot_texts["condition_modal_signature"] == ["deontic:O:subject_to_section"]
     assert slot_texts["condition_modal_bridge_signature"] == [
         "conditional_normative:O|:subject_to_section",
         "frame:Frame:subject_to_section",
     ]
     assert "subject_to_section" in slot_texts["bridge_cue"]
     assert any(
-        triple["predicate"] == "condition_prefix_key"
-        and triple["object"] == "subject_to_section"
+        triple["predicate"] == "condition_prefix_key" and triple["object"] == "subject_to_section"
         for triple in triples
     )
     assert any(
@@ -18953,9 +18461,7 @@ def test_modal_decompiler_and_triples_surface_subject_to_section_specific_bridge
 
 def test_modal_decompiler_inferred_frame_condition_surfaces_conditional_bridge_slots() -> None:
     source_id = "us-code-29-1400-frame-conditional-scope"
-    source_text = (
-        "The multiemployer plan provision is subject to section 1401 of this title."
-    )
+    source_text = "The multiemployer plan provision is subject to section 1401 of this title."
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
         operator=ModalIROperator(
@@ -18985,22 +18491,18 @@ def test_modal_decompiler_inferred_frame_condition_surfaces_conditional_bridge_s
 
     assert slot_texts["condition_prefix_key"] == ["subject_to_section"]
     assert "subject_to_section" in slot_texts["bridge_cue"]
-    assert "frame->conditional_normative" in slot_texts[
-        "condition_modal_bridge_family_pair"
-    ]
-    assert "conditional_normative:O|:subject_to_section" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
-    assert "frame->conditional_normative" in slot_texts[
-        "bridge_modal_bridge_family_pair"
-    ]
+    assert "frame->conditional_normative" in slot_texts["condition_modal_bridge_family_pair"]
+    assert (
+        "conditional_normative:O|:subject_to_section"
+        in slot_texts["condition_modal_bridge_signature"]
+    )
+    assert "frame->conditional_normative" in slot_texts["bridge_modal_bridge_family_pair"]
 
 
 def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() -> None:
     source_id = "us-code-42-12835.-efafc5db287e34c3"
     source_text = (
-        "The Secretary shall ensure compliance in accordance with section 12707 "
-        "of this title."
+        "The Secretary shall ensure compliance in accordance with section 12707 of this title."
     )
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
@@ -19033,15 +18535,12 @@ def test_modal_decompiler_and_triples_surface_in_accordance_with_bridge_slots() 
 
     assert "in_accordance_with" in slot_texts["condition_prefix_key"]
     assert "in_accordance_with" in slot_texts["bridge_cue"]
-    assert "conditional_normative:O|:in_accordance_with" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
-    assert "deontic:O:in_accordance_with" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
-    assert "frame:Frame:in_accordance_with" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
+    assert (
+        "conditional_normative:O|:in_accordance_with"
+        in slot_texts["condition_modal_bridge_signature"]
+    )
+    assert "deontic:O:in_accordance_with" in slot_texts["condition_modal_bridge_signature"]
+    assert "frame:Frame:in_accordance_with" in slot_texts["condition_modal_bridge_signature"]
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
         and triple["object"] == "frame:Frame:in_accordance_with"
@@ -19094,9 +18593,9 @@ def test_modal_decompiler_and_triples_surface_as_described_in_bridge_slots() -> 
     assert "as_described_in" in slot_texts["condition_prefix_key"]
     assert "section 552(a)(1)" in slot_texts["condition_scope"]
     assert "as_described_in" in slot_texts["bridge_cue"]
-    assert "conditional_normative:O|:as_described_in" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
+    assert (
+        "conditional_normative:O|:as_described_in" in slot_texts["condition_modal_bridge_signature"]
+    )
     assert "frame:Frame:as_described_in" in slot_texts["condition_modal_bridge_signature"]
     assert any(
         triple["predicate"] == "condition_modal_bridge_signature"
@@ -19146,12 +18645,9 @@ def test_modal_decompiler_and_triples_infer_condition_slots_from_source_span_whe
 
     assert "made" in slot_texts["condition_scope_token"]
     assert "after" in slot_texts["condition_prefix_key"]
-    assert "deontic->conditional_normative" in slot_texts[
-        "condition_modal_bridge_family_pair"
-    ]
+    assert "deontic->conditional_normative" in slot_texts["condition_modal_bridge_family_pair"]
     assert any(
-        triple["predicate"] == "condition_scope_token"
-        and triple["object"] == "made"
+        triple["predicate"] == "condition_scope_token" and triple["object"] == "made"
         for triple in triples
     )
     assert any(
@@ -19196,19 +18692,15 @@ def test_modal_decompiler_surfaces_suspension_as_deontic_dynamic_bridge() -> Non
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
     assert "deontic->dynamic" in slot_texts["bridge_modal_bridge_family_pair"]
-    assert "deontic->dynamic" in slot_texts[
-        "modal_source_span_typed_decompiler_family_pair"
-    ]
-    assert "dynamic:[a]:suspension" in slot_texts[
-        "modal_source_span_refined_modal_bridge_signature"
-    ]
+    assert "deontic->dynamic" in slot_texts["modal_source_span_typed_decompiler_family_pair"]
+    assert (
+        "dynamic:[a]:suspension" in slot_texts["modal_source_span_refined_modal_bridge_signature"]
+    )
 
 
 def test_modal_decompiler_and_triples_prefer_longest_condition_prefix_match() -> None:
     source_id = "us-code-5-552-longest-prefix"
-    source_text = (
-        "The agency shall provide records to the extent provided in section 552(a)(1)."
-    )
+    source_text = "The agency shall provide records to the extent provided in section 552(a)(1)."
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
         operator=ModalIROperator(
@@ -19241,9 +18733,10 @@ def test_modal_decompiler_and_triples_prefer_longest_condition_prefix_match() ->
     assert "to_the_extent_provided" in slot_texts["condition_prefix_key"]
     assert slot_texts["condition_to_the_extent_provided"] == ["in section 552(a)(1)"]
     assert "deontic:O:to_the_extent_provided" in slot_texts["condition_modal_signature"]
-    assert "conditional_normative:O|:to_the_extent_provided" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
+    assert (
+        "conditional_normative:O|:to_the_extent_provided"
+        in slot_texts["condition_modal_bridge_signature"]
+    )
     assert any(
         triple["predicate"] == "condition_prefix_key"
         and triple["object"] == "to_the_extent_provided"
@@ -19263,9 +18756,7 @@ def test_modal_decompiler_and_triples_prefer_longest_condition_prefix_match() ->
 
 def test_modal_decompiler_and_triples_surface_authority_and_required_bridge_cues() -> None:
     source_id = "us-code-16-580f-d159c17cca2fb07b"
-    source_text = (
-        "Transfer authority is required for approval by the Secretary."
-    )
+    source_text = "Transfer authority is required for approval by the Secretary."
     formula = ModalIRFormula(
         formula_id=f"{source_id}:f0001",
         operator=ModalIROperator(
@@ -19325,9 +18816,7 @@ def test_modal_decompiler_and_triples_surface_inflected_bridge_cue_variants() ->
             symbol="O|",
             label="conditional_obligation",
         ),
-        predicate=ModalIRPredicate(
-            name="determine_eligibility_requires_action_on_effective_dates"
-        ),
+        predicate=ModalIRPredicate(name="determine_eligibility_requires_action_on_effective_dates"),
         provenance=ModalIRProvenance(
             source_id=source_id,
             start_char=0,
@@ -19426,7 +18915,9 @@ def test_modal_decompiler_and_triples_bridge_epistemic_determinations_to_deontic
     )
 
 
-def test_modal_decompiler_and_triples_surface_predicate_and_argument_contextual_bridge_slots() -> None:
+def test_modal_decompiler_and_triples_surface_predicate_and_argument_contextual_bridge_slots() -> (
+    None
+):
     source_id = "us-code-43-1467a-49e61664c350948a"
     source_text = (
         "The Secretary must issue refunds on and after October 11, 2000, "
@@ -19469,12 +18960,11 @@ def test_modal_decompiler_and_triples_surface_predicate_and_argument_contextual_
     assert "temporal:F:on_and_after" in slot_texts["predicate_modal_bridge_signature"]
     assert "temporal:F:effective_dates" in slot_texts["predicate_modal_bridge_signature"]
     assert "temporal:F:on_or_after" in slot_texts["argument_modal_bridge_signature"]
-    assert "frame:Frame:in_accordance_with" in slot_texts[
-        "argument_modal_bridge_signature"
-    ]
-    assert "conditional_normative:O|:in_accordance_with" in slot_texts[
-        "argument_modal_bridge_signature"
-    ]
+    assert "frame:Frame:in_accordance_with" in slot_texts["argument_modal_bridge_signature"]
+    assert (
+        "conditional_normative:O|:in_accordance_with"
+        in slot_texts["argument_modal_bridge_signature"]
+    )
     assert any(
         triple["predicate"] == "predicate_modal_bridge_signature"
         and triple["object"] == "temporal:F:on_and_after"
@@ -19514,13 +19004,11 @@ def test_modal_decompiler_surfaces_metadata_citation_slots_without_formulas() ->
     assert slot_texts["citation_section_range_connector"] == ["to"]
     assert slot_texts["citation_section_component_profile"] == ["range"]
     assert any(
-        triple["predicate"] == "citation_section_range"
-        and triple["object"] == "431 to 447"
+        triple["predicate"] == "citation_section_range" and triple["object"] == "431 to 447"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_component_profile"
-        and triple["object"] == "range"
+        triple["predicate"] == "citation_section_component_profile" and triple["object"] == "range"
         for triple in triples
     )
 
@@ -19590,9 +19078,7 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
         document_id="citation-shape-doc",
         source="us_code",
         normalized_text=(
-            "Sec. 31a-2b. Example heading. "
-            "Sec. 6050K. Another heading. "
-            "Sec. 60604. Final heading."
+            "Sec. 31a-2b. Example heading. Sec. 6050K. Another heading. Sec. 60604. Final heading."
         ),
         formulas=[formula, secondary_formula, tertiary_formula],
     )
@@ -19654,23 +19140,19 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "4" in slot_texts["citation_section_number_digit_count"]
     assert "5" in slot_texts["citation_section_number_digit_count"]
     assert any(
-        triple["predicate"] == "citation_section_component"
-        and triple["object"] == "2b"
+        triple["predicate"] == "citation_section_component" and triple["object"] == "2b"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_suffix"
-        and triple["object"] == "K"
+        triple["predicate"] == "citation_section_suffix" and triple["object"] == "K"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_suffix_normalized"
-        and triple["object"] == "k"
+        triple["predicate"] == "citation_section_suffix_normalized" and triple["object"] == "k"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_suffix_case"
-        and triple["object"] == "upper"
+        triple["predicate"] == "citation_section_suffix_case" and triple["object"] == "upper"
         for triple in triples
     )
     assert any(
@@ -19679,58 +19161,47 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_token_suffix"
-        and triple["object"] == "6050k"
+        triple["predicate"] == "citation_section_token_suffix" and triple["object"] == "6050k"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_raw"
-        and triple["object"] == "60604."
+        triple["predicate"] == "citation_section_raw" and triple["object"] == "60604."
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_trailing_punct"
-        and triple["object"] == "."
+        triple["predicate"] == "citation_section_trailing_punct" and triple["object"] == "."
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_has_trailing_punct"
-        and triple["object"] == "true"
+        triple["predicate"] == "citation_section_has_trailing_punct" and triple["object"] == "true"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_has_trailing_punct"
-        and triple["object"] == "false"
+        triple["predicate"] == "citation_section_has_trailing_punct" and triple["object"] == "false"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_trailing_punct_count"
-        and triple["object"] == "1"
+        triple["predicate"] == "citation_section_trailing_punct_count" and triple["object"] == "1"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_trailing_punct_count"
-        and triple["object"] == "0"
+        triple["predicate"] == "citation_section_trailing_punct_count" and triple["object"] == "0"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_trailing_punct_kind"
-        and triple["object"] == "dot"
+        triple["predicate"] == "citation_section_trailing_punct_kind" and triple["object"] == "dot"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_canonical"
-        and triple["object"] == "51 U.S.C. 60604"
+        triple["predicate"] == "citation_canonical" and triple["object"] == "51 U.S.C. 60604"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_shape"
-        and triple["object"] == "NA-NA"
+        triple["predicate"] == "citation_section_shape" and triple["object"] == "NA-NA"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "citation_section_number_digit_count"
-        and triple["object"] == "5"
+        triple["predicate"] == "citation_section_number_digit_count" and triple["object"] == "5"
         for triple in triples
     )
 
@@ -19819,23 +19290,19 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert "cdf17e327d28e2de" in slot_texts["source_id_digest"]
     assert "87b0a223ec2f555f" in slot_texts["source_id_digest"]
     assert any(
-        triple["predicate"] == "source_id_section"
-        and triple["object"] == "10145."
+        triple["predicate"] == "source_id_section" and triple["object"] == "10145."
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_normalized"
-        and triple["object"] == "10145"
+        triple["predicate"] == "source_id_section_normalized" and triple["object"] == "10145"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_trailing_punct"
-        and triple["object"] == "."
+        triple["predicate"] == "source_id_section_trailing_punct" and triple["object"] == "."
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_has_trailing_punct"
-        and triple["object"] == "true"
+        triple["predicate"] == "source_id_section_has_trailing_punct" and triple["object"] == "true"
         for triple in triples
     )
     assert any(
@@ -19844,33 +19311,27 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_trailing_punct_count"
-        and triple["object"] == "1"
+        triple["predicate"] == "source_id_section_trailing_punct_count" and triple["object"] == "1"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_trailing_punct_count"
-        and triple["object"] == "0"
+        triple["predicate"] == "source_id_section_trailing_punct_count" and triple["object"] == "0"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_trailing_punct_kind"
-        and triple["object"] == "dot"
+        triple["predicate"] == "source_id_section_trailing_punct_kind" and triple["object"] == "dot"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_suffix"
-        and triple["object"] == "e"
+        triple["predicate"] == "source_id_section_suffix" and triple["object"] == "e"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_suffix_normalized"
-        and triple["object"] == "e"
+        triple["predicate"] == "source_id_section_suffix_normalized" and triple["object"] == "e"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_suffix_case"
-        and triple["object"] == "lower"
+        triple["predicate"] == "source_id_section_suffix_case" and triple["object"] == "lower"
         for triple in triples
     )
     assert any(
@@ -19884,8 +19345,7 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_section_shape"
-        and triple["object"] == "NA"
+        triple["predicate"] == "source_id_section_shape" and triple["object"] == "NA"
         for triple in triples
     )
     assert any(
@@ -19894,8 +19354,7 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "source_id_digest"
-        and triple["object"] == "87b0a223ec2f555f"
+        triple["predicate"] == "source_id_digest" and triple["object"] == "87b0a223ec2f555f"
         for triple in triples
     )
 
@@ -19919,22 +19378,12 @@ def test_modal_flogic_triples_and_decompiler_slots_include_typed_predicate_argum
     assert "argument_actor" in slot_texts
     assert "argument_scope" in slot_texts
     assert any(
-        triple["predicate"] == "predicate_argument"
-        and triple["object"].startswith("actor:")
+        triple["predicate"] == "predicate_argument" and triple["object"].startswith("actor:")
         for triple in result.kg_triples
     )
-    assert any(
-        triple["predicate"] == "predicate_argument_actor"
-        for triple in result.kg_triples
-    )
-    assert any(
-        triple["predicate"] == "predicate_argument_scope"
-        for triple in result.kg_triples
-    )
-    assert any(
-        triple["predicate"] == "modal_cue"
-        for triple in result.kg_triples
-    )
+    assert any(triple["predicate"] == "predicate_argument_actor" for triple in result.kg_triples)
+    assert any(triple["predicate"] == "predicate_argument_scope" for triple in result.kg_triples)
+    assert any(triple["predicate"] == "modal_cue" for triple in result.kg_triples)
 
 
 def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() -> None:
@@ -19992,10 +19441,7 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
     assert "condition" in slot_texts["statutory_condition_cue"]
     assert "section" in slot_texts["statutory_condition_unit"]
     assert "this" in slot_texts["statutory_condition_target"]
-    assert (
-        "condition:section:this"
-        in slot_texts["statutory_condition_grounding"]
-    )
+    assert "condition:section:this" in slot_texts["statutory_condition_grounding"]
     assert (
         "cross-reference-grounding:direct:section:this:conditioned"
         in slot_texts["constraint-grounding"]
@@ -20020,18 +19466,15 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_connector"
-        and triple["object"] == "as provided in"
+        triple["predicate"] == "statutory_scope_connector" and triple["object"] == "as provided in"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_unit"
-        and triple["object"] == "paragraph"
+        triple["predicate"] == "statutory_scope_unit" and triple["object"] == "paragraph"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_target"
-        and triple["object"] == "552(a)(1)"
+        triple["predicate"] == "statutory_scope_target" and triple["object"] == "552(a)(1)"
         for triple in triples
     )
     assert any(
@@ -20041,13 +19484,11 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
     )
     assert any(
         triple["predicate"] == "constraint-grounding"
-        and triple["object"]
-        == "cross-reference-grounding:direct:section:this:conditioned"
+        and triple["object"] == "cross-reference-grounding:direct:section:this:conditioned"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "predicate_token_suffix"
-        and triple["object"] == "notice"
+        triple["predicate"] == "predicate_token_suffix" and triple["object"] == "notice"
         for triple in triples
     )
 
@@ -20115,18 +19556,15 @@ def test_modal_decompiler_and_triples_expand_statutory_scope_units_and_connector
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_connector"
-        and triple["object"] == "within"
+        triple["predicate"] == "statutory_scope_connector" and triple["object"] == "within"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_unit"
-        and triple["object"] == "subclause"
+        triple["predicate"] == "statutory_scope_unit" and triple["object"] == "subclause"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_target"
-        and triple["object"] == "this ii"
+        triple["predicate"] == "statutory_scope_target" and triple["object"] == "this ii"
         for triple in triples
     )
 
@@ -20189,13 +19627,11 @@ def test_modal_decompiler_and_triples_capture_extended_statutory_scope_connector
     assert "(a)" in slot_texts["statutory_scope_target"]
     assert "(ii)" in slot_texts["statutory_scope_target"]
     assert any(
-        triple["predicate"] == "statutory_scope_connector"
-        and triple["object"] == "as described in"
+        triple["predicate"] == "statutory_scope_connector" and triple["object"] == "as described in"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statutory_scope_connector"
-        and triple["object"] == "referred to in"
+        triple["predicate"] == "statutory_scope_connector" and triple["object"] == "referred to in"
         for triple in triples
     )
     assert any(
@@ -20224,8 +19660,7 @@ def test_modal_decompiler_and_triples_surface_transferred_status_keyword_slot() 
     assert slot_texts["status_keyword_token"] == ["transferred"]
     assert slot_texts["status_keyword_stem"] == ["transferred"]
     assert any(
-        triple["predicate"] == "status_keyword"
-        and triple["object"] == "transferred"
+        triple["predicate"] == "status_keyword" and triple["object"] == "transferred"
         for triple in triples
     )
 
@@ -20261,23 +19696,19 @@ def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "fallback_rule_token"
-        and triple["object"] == "editorial"
+        triple["predicate"] == "fallback_rule_token" and triple["object"] == "editorial"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "fallback_rule_version"
-        and triple["object"] == "v1"
+        triple["predicate"] == "fallback_rule_version" and triple["object"] == "v1"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "status_keyword"
-        and triple["object"] == "repealed"
+        triple["predicate"] == "status_keyword" and triple["object"] == "repealed"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "status_keyword_token_count"
-        and triple["object"] == "1"
+        triple["predicate"] == "status_keyword_token_count" and triple["object"] == "1"
         for triple in triples
     )
 
@@ -20300,8 +19731,7 @@ def test_modal_decompiler_normalizes_secs_status_fallback_surface_text() -> None
     assert slot_texts["fallback_surface_text"][0].lower() == "repealed"
     assert "436" not in slot_texts["fallback_surface_text"][0]
     assert any(
-        triple["predicate"] == "fallback_surface_text"
-        and triple["object"].lower() == "repealed"
+        triple["predicate"] == "fallback_surface_text" and triple["object"].lower() == "repealed"
         for triple in triples
     )
 
@@ -20344,10 +19774,7 @@ def test_modal_decompiler_and_triples_skip_low_information_numeric_fallback_surf
 
     assert "fallback_surface_text" not in slot_texts
     assert "fallback_surface_text_token" not in slot_texts
-    assert all(
-        triple.get("predicate") != "fallback_surface_text"
-        for triple in triples
-    )
+    assert all(triple.get("predicate") != "fallback_surface_text" for triple in triples)
 
 
 def test_modal_decompiler_and_triples_surface_declarative_statement_hint_slot() -> None:
@@ -20370,18 +19797,15 @@ def test_modal_decompiler_and_triples_surface_declarative_statement_hint_slot() 
     assert slot_texts["statement_hint_token_suffix"] == ["congress"]
     assert slot_texts["statement_hint_stem"] == ["sense_of_congress"]
     assert any(
-        triple["predicate"] == "statement_hint"
-        and triple["object"] == "sense_of_congress"
+        triple["predicate"] == "statement_hint" and triple["object"] == "sense_of_congress"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statement_hint_token"
-        and triple["object"] == "sense"
+        triple["predicate"] == "statement_hint_token" and triple["object"] == "sense"
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "statement_hint_token"
-        and triple["object"] == "congress"
+        triple["predicate"] == "statement_hint_token" and triple["object"] == "congress"
         for triple in triples
     )
 
@@ -20422,8 +19846,7 @@ def test_modal_decompiler_and_triples_surface_section_heading_tail_slots() -> No
         for triple in triples
     )
     assert any(
-        triple["predicate"] == "section_heading_tail_token"
-        and triple["object"] == "definitions"
+        triple["predicate"] == "section_heading_tail_token" and triple["object"] == "definitions"
         for triple in triples
     )
     assert any(
@@ -20433,7 +19856,9 @@ def test_modal_decompiler_and_triples_surface_section_heading_tail_slots() -> No
     )
 
 
-def test_modal_decompiler_and_triples_surface_fallback_text_for_heading_without_section_reference() -> None:
+def test_modal_decompiler_and_triples_surface_fallback_text_for_heading_without_section_reference() -> (
+    None
+):
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(
         "Housing voucher benefits and utility allowances.",
@@ -20449,14 +19874,15 @@ def test_modal_decompiler_and_triples_surface_fallback_text_for_heading_without_
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
     triples = modal_ir_to_flogic_triples(compiled.modal_ir)
 
-    assert slot_texts["fallback_surface_text"] == ["Housing voucher benefits and utility allowances"]
+    assert slot_texts["fallback_surface_text"] == [
+        "Housing voucher benefits and utility allowances"
+    ]
     assert slot_texts["fallback_surface_text_token_count"] == ["6"]
     assert slot_texts["fallback_surface_text_token_prefix"] == ["housing"]
     assert slot_texts["fallback_surface_text_token_suffix"] == ["allowances"]
-    assert (
-        slot_texts["fallback_surface_text_stem"]
-        == ["housing_voucher_benefits_and_utility_allowances"]
-    )
+    assert slot_texts["fallback_surface_text_stem"] == [
+        "housing_voucher_benefits_and_utility_allowances"
+    ]
     assert "voucher" in slot_texts["fallback_surface_text_token"]
     assert any(
         triple["predicate"] == "fallback_surface_text"
@@ -20470,7 +19896,9 @@ def test_modal_decompiler_and_triples_surface_fallback_text_for_heading_without_
     )
 
 
-def test_modal_decompiler_and_triples_keep_compilation_fallback_slots_without_inline_section_ref() -> None:
+def test_modal_decompiler_and_triples_keep_compilation_fallback_slots_without_inline_section_ref() -> (
+    None
+):
     heading_span = (
         " United States Code, 2024 Edition Title 16 - CONSERVATION CHAPTER 30 - "
         "WILD HORSES AND BURROS:"
@@ -20618,9 +20046,7 @@ def test_modal_decompiler_and_triples_surface_selected_frame_modal_family_count_
     document = ModalIRDocument(
         document_id="selected-frame-family-doc",
         source="us_code",
-        normalized_text=(
-            "The agency must provide notice and knows compliance status."
-        ),
+        normalized_text=("The agency must provide notice and knows compliance status."),
         formulas=formulas,
         metadata={"selected_frame": "administrative_notice_hearing"},
     )
@@ -20639,9 +20065,7 @@ def test_modal_decompiler_and_triples_surface_selected_frame_modal_family_count_
         "epistemic:1",
     ]
     assert slot_texts["selected_frame_modal_family_count_value"] == ["1"]
-    assert slot_texts["selected_frame_modal_family_count_value_digit_count_bucket"] == [
-        "1_digit"
-    ]
+    assert slot_texts["selected_frame_modal_family_count_value_digit_count_bucket"] == ["1_digit"]
     assert slot_texts["selected_frame_modal_family_count_value_parity"] == ["odd"]
     assert slot_texts["selected_frame_modal_family_deontic"] == ["1"]
     assert slot_texts["selected_frame_modal_family_epistemic"] == ["1"]
@@ -20797,10 +20221,13 @@ def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:
     assert codec.encode_sample(sample).cues
     assert codec.compile_sample_ir(sample).frame_candidates
     assert len(codec.decode_sample_embedding(sample, dimensions=8)) == 8
-    assert codec.family_logits_for_sample(
-        sample,
-        modal_families=["deontic", "temporal", "frame"],
-    )["deontic"] > 0.0
+    assert (
+        codec.family_logits_for_sample(
+            sample,
+            modal_families=["deontic", "temporal", "frame"],
+        )["deontic"]
+        > 0.0
+    )
     feature_keys = codec.feature_keys_for_sample(sample)
     assert "frame:administrative_notice_hearing" in feature_keys
     assert any(feature.startswith("frame-term:") for feature in feature_keys)
@@ -20846,18 +20273,9 @@ def test_modal_codec_emits_frame_ontology_term_triples() -> None:
         source="us_code",
     )
 
-    assert any(
-        triple["predicate"] == "candidate_ontology_term"
-        for triple in result.kg_triples
-    )
-    assert any(
-        triple["predicate"] == "selected_ontology_term"
-        for triple in result.kg_triples
-    )
-    assert any(
-        triple["predicate"] == "interpreted_in_frame_term"
-        for triple in result.kg_triples
-    )
+    assert any(triple["predicate"] == "candidate_ontology_term" for triple in result.kg_triples)
+    assert any(triple["predicate"] == "selected_ontology_term" for triple in result.kg_triples)
+    assert any(triple["predicate"] == "interpreted_in_frame_term" for triple in result.kg_triples)
     assert result.flogic_result is not None
     assert result.flogic_result.metadata["frame_ontology_term_count"] > 0
 
@@ -20964,9 +20382,7 @@ def test_modal_codec_audits_frame_terms_when_metadata_is_partial() -> None:
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert selected_frame in selected_terms
@@ -21013,14 +20429,10 @@ def test_modal_codec_audits_frame_terms_when_metadata_contains_weight_maps() -> 
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
     candidate_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "candidate_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "candidate_ontology_term"
     }
 
     assert "hearing_rights" in selected_terms
@@ -21072,14 +20484,10 @@ def test_modal_codec_audits_frame_terms_when_metadata_contains_structured_entrie
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
     candidate_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "candidate_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "candidate_ontology_term"
     }
 
     assert "hearing_rights" in selected_terms
@@ -21121,9 +20529,7 @@ def test_modal_codec_audits_citation_coordinates_from_frame_term_metadata() -> N
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "42_6932" in selected_terms
@@ -21162,9 +20568,7 @@ def test_modal_codec_audits_slot_normalized_source_ids_from_frame_term_metadata(
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "54_101920" in selected_terms
@@ -21203,9 +20607,7 @@ def test_modal_codec_audits_matched_terms_metadata_without_key_noise() -> None:
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "hearing_rights" in selected_terms
@@ -21253,9 +20655,7 @@ def test_modal_codec_audits_citation_and_sample_metadata_without_structural_key_
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "43_641" in selected_terms
@@ -21299,9 +20699,7 @@ def test_modal_codec_audits_frame_feature_keys_from_term_metadata() -> None:
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "42_6932" in selected_terms
@@ -21356,9 +20754,7 @@ def test_modal_codec_audits_structured_hint_evidence_from_term_metadata_without_
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "hearing_rights" in selected_terms
@@ -21414,9 +20810,7 @@ def test_modal_codec_audits_structured_evidence_from_term_metadata_without_key_n
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "hearing_rights" in selected_terms
@@ -21534,7 +20928,9 @@ def test_modal_codec_frame_ontology_audit_feature_keys_include_autoencoder_contr
     assert "49_47126" in terms
 
 
-def test_modal_codec_frame_ontology_audit_feature_keys_include_family_scoring_metadata_fields() -> None:
+def test_modal_codec_frame_ontology_audit_feature_keys_include_family_scoring_metadata_fields() -> (
+    None
+):
     modal_ir = ModalIRDocument(
         document_id="frame-audit-family-fields-doc",
         source="us_code",
@@ -21607,9 +21003,7 @@ def test_modal_codec_audits_alphanumeric_usc_frame_term_feature_keys() -> None:
         selected_frame=selected_frame,
     )
     selected_terms = {
-        triple["object"]
-        for triple in triples
-        if triple["predicate"] == "selected_ontology_term"
+        triple["object"] for triple in triples if triple["predicate"] == "selected_ontology_term"
     }
 
     assert "42_1437q" in selected_terms
@@ -21643,7 +21037,8 @@ def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
     term_objects = {
         triple["object"]
         for triple in result.kg_triples
-        if triple["predicate"] in {
+        if triple["predicate"]
+        in {
             "candidate_ontology_term",
             "selected_ontology_term",
             "interpreted_in_frame_term",
@@ -21736,12 +21131,7 @@ def test_modal_codec_frame_ontology_audit_tracks_selected_frame_modal_families()
     )
     assert result.flogic_result is not None
 
-    expected_families = sorted(
-        {
-            formula.operator.family
-            for formula in result.modal_ir.formulas
-        }
-    )
+    expected_families = sorted({formula.operator.family for formula in result.modal_ir.formulas})
     assert expected_families
 
     audit_feature_keys = result.flogic_result.metadata["frame_audit_feature_keys"]
@@ -21866,9 +21256,7 @@ def test_modal_codec_frame_ontology_audit_reports_high_signal_terms() -> None:
     )
 
     raw_terms = result.modal_ir.metadata["frame_ontology_term_audit_terms"]
-    high_signal_terms = result.modal_ir.metadata[
-        "frame_ontology_high_signal_term_audit_terms"
-    ]
+    high_signal_terms = result.modal_ir.metadata["frame_ontology_high_signal_term_audit_terms"]
     assert "42_291" in high_signal_terms
     assert "0" in raw_terms
     assert "0" not in high_signal_terms
@@ -21919,9 +21307,9 @@ def test_modal_codec_frame_logic_target_guidance_infers_audit_route() -> None:
         },
     )
 
-    assert "audit_frame_logic_terms" in result.modal_ir.metadata[
-        "compiler_guidance_synthesis_focus"
-    ]
+    assert (
+        "audit_frame_logic_terms" in result.modal_ir.metadata["compiler_guidance_synthesis_focus"]
+    )
     selected_terms = {
         triple["object"]
         for triple in result.kg_triples
@@ -21956,10 +21344,7 @@ def test_frame_ontology_audit_terms_contextualize_low_signal_frame_features() ->
 
     assert "even" in frame_terms
     assert "citation_title_number_parity_even" in frame_terms
-    assert (
-        "citation_title_section_primary_number_span_trailing_zero_count_0"
-        in frame_terms
-    )
+    assert "citation_title_section_primary_number_span_trailing_zero_count_0" in frame_terms
     assert "by" in frame_terms
     assert "predicate_token_c" in frame_terms
     assert "predicate_token_pub" in frame_terms
@@ -22080,10 +21465,7 @@ def test_autoencoder_legal_ir_hint_signatures_include_component_gap_lane() -> No
         }
     )
 
-    assert any(
-        hint.action == "repair_multiview_legal_ir_prover_gate"
-        for hint in failure_routed
-    )
+    assert any(hint.action == "repair_multiview_legal_ir_prover_gate" for hint in failure_routed)
 
 
 def test_logic_extractor_uses_logic_layer_modal_codec_without_llm() -> None:
@@ -22348,9 +21730,7 @@ def test_modal_compiler_surfaces_compiler_ambiguity_pairs_when_other_target_tabl
         predicted_family = str(scenario["predicted_family"])
         target_family = str(scenario["target_family"])
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         encoding = SpaCyLegalEncoding(
             document_id=f"compiler-ambiguity-target-fallback-{index}",
             text=f"{predicted_family} policy ambiguity evidence.",
@@ -22417,8 +21797,7 @@ def test_modal_compiler_surfaces_compiler_ambiguity_pairs_when_other_target_tabl
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -22545,8 +21924,7 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
     for scenario in policy_scenarios:
         compiled_primary_family = str(scenario["compiled_primary_family"])
         family_shares = {
-            str(family): float(share)
-            for family, share in dict(scenario["family_shares"]).items()
+            str(family): float(share) for family, share in dict(scenario["family_shares"]).items()
         }
         ranking = [
             {"family": family, "count": 1, "share": share}
@@ -22601,8 +21979,7 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == scenario["expected_explicit_type"]
-            and ambiguity.metadata["adaptive_predicted_family_source"]
-            == "compiled_primary_family"
+            and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
             and ambiguity.metadata["adaptive_policy_pair"] == scenario["expected_pair"]
         )
         assert explicit_ambiguity.metadata["adaptive_base_ambiguity_type"] == (
@@ -22985,9 +22362,7 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             ),
             "family_margin": -0.257100608002,
             "adaptive_priority": 0.407100608002,
-            "expected_explicit_type": (
-                "adaptive_frame_conditional_normative_outvoted_margin_low"
-            ),
+            "expected_explicit_type": ("adaptive_frame_conditional_normative_outvoted_margin_low"),
             "expected_severity": "requires_rule",
             "is_self_pair": False,
         },
@@ -23047,9 +22422,7 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
         predicted_family = str(scenario["predicted_family"])
         target_family = str(scenario["target_family"])
         ranking = [dict(item) for item in tuple(scenario["ranking"])]
-        family_shares = {
-            str(item["family"]): float(item["share"]) for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=str(scenario["doc_id"]),
             text=f"{predicted_family} ambiguity evidence.",
@@ -23113,8 +22486,7 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == expected_candidate_ids
-            and ambiguity.metadata["adaptive_policy_pair"]
-            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata["adaptive_policy_pair"] == f"{predicted_family}->{target_family}"
         )
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert (
@@ -23133,14 +22505,12 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
         )
         assert base_ambiguity.severity == str(scenario["expected_severity"])
         assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == scenario["expected_explicit_type"]
+            base_ambiguity.metadata["explicit_ambiguity_type"] == scenario["expected_explicit_type"]
         )
         assert any(
             ambiguity.ambiguity_type == scenario["expected_explicit_type"]
             and ambiguity.candidate_ids == expected_candidate_ids
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             and ambiguity.metadata["is_compiler_required_policy_pair"] is True
             for ambiguity in ambiguities
         )
@@ -23428,16 +22798,13 @@ def test_modal_compiler_emits_explicit_ambiguity_for_todo_evidence_margin_pairs(
             predicted_family_source="adaptive_logits_fallback",
         )
 
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == "adaptive_family_margin_low"
             and ambiguity.candidate_ids == [predicted_family, target_family]
-            and ambiguity.metadata["adaptive_policy_pair"]
-            == f"{predicted_family}->{target_family}"
+            and ambiguity.metadata["adaptive_policy_pair"] == f"{predicted_family}->{target_family}"
         )
         assert (
             abs(
@@ -23447,18 +22814,14 @@ def test_modal_compiler_emits_explicit_ambiguity_for_todo_evidence_margin_pairs(
             < 1e-12
         )
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -23558,14 +22921,8 @@ def test_modal_compiler_emits_explicit_temporal_self_pair_for_todo_margin_eviden
         and ambiguity.candidate_ids == ["temporal"]
         and ambiguity.metadata["adaptive_policy_pair"] == "temporal->temporal"
     )
-    assert (
-        abs(float(base_ambiguity.metadata["family_margin_raw"]) - expected_margin)
-        < 1e-12
-    )
-    assert (
-        abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority)
-        < 1e-12
-    )
+    assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - expected_margin) < 1e-12
+    assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority) < 1e-12
     assert (
         base_ambiguity.metadata["explicit_ambiguity_type"]
         == "adaptive_temporal_temporal_contested_margin_low"
@@ -23573,8 +22930,7 @@ def test_modal_compiler_emits_explicit_temporal_self_pair_for_todo_margin_eviden
     assert any(
         ambiguity.ambiguity_type == "adaptive_temporal_temporal_contested_margin_low"
         and ambiguity.candidate_ids == ["temporal"]
-        and ambiguity.metadata["adaptive_base_ambiguity_type"]
-        == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
         for ambiguity in ambiguities
     )
 
@@ -23713,23 +23069,16 @@ def test_modal_compiler_surfaces_packet_001757_temporal_policy_explicit_ambiguit
         )
         assert base_ambiguity.candidate_ids == expected_candidate_ids
         assert base_ambiguity.severity == "requires_rule"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.metadata["adaptive_policy_pair"] == expected_policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -23835,13 +23184,9 @@ def test_modal_compiler_surfaces_packet_003180_compiler_ambiguity_policy_pairs(
         expected_policy_pair = f"{predicted_family}->{target_family}"
         expected_is_self_pair = predicted_family == target_family
         expected_candidate_ids = (
-            [predicted_family]
-            if expected_is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if expected_is_self_pair else [predicted_family, target_family]
         )
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_{scenario['expected_direction']}_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_{scenario['expected_direction']}_margin_low"
 
         ranking = [
             {
@@ -23946,8 +23291,7 @@ def test_modal_compiler_surfaces_packet_003180_compiler_ambiguity_policy_pairs(
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -24080,9 +23424,7 @@ def test_modal_compiler_marks_todo_policy_pairs_as_compiler_ambiguity_bundle(
             predicted_family_source="adaptive_logits_fallback",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -24092,23 +23434,16 @@ def test_modal_compiler_marks_todo_policy_pairs_as_compiler_ambiguity_bundle(
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -24139,9 +23474,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             "family_margin": -0.993831777206,
             "priority": 1.143831777206,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.993831777206},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.993831777206},),
         },
         {
             "sample_id": "us-code-42-1462 to 1464.-d3f2aa981c9b2a49",
@@ -24153,9 +23486,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             "family_margin": -0.997248992505,
             "priority": 1.147248992505,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.997248992505},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.997248992505},),
         },
         {
             "sample_id": "us-code-5-3322-9e1940d99b2f959b",
@@ -24167,9 +23498,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             "family_margin": -0.100948406036,
             "priority": 0.250948406036,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "temporal", "count": 1, "share": 0.100948406036},
-            ),
+            "ranking": ({"family": "temporal", "count": 1, "share": 0.100948406036},),
         },
         {
             "sample_id": "us-code-7-7938-2cfe2905ba85c147",
@@ -24181,9 +23510,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             "family_margin": -0.855052736961,
             "priority": 1.005052736961,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "deontic", "count": 1, "share": 0.855052736961},
-            ),
+            "ranking": ({"family": "deontic", "count": 1, "share": 0.855052736961},),
         },
         {
             "sample_id": "us-code-16-3839bb-4-2e2cffbbcd871d5d",
@@ -24195,9 +23522,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             "family_margin": -0.257220043655,
             "priority": 0.407220043655,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "deontic", "count": 1, "share": 0.257220043655},
-            ),
+            "ranking": ({"family": "deontic", "count": 1, "share": 0.257220043655},),
         },
         {
             "sample_id": "us-code-49-47145.-6f26cd3923bc5e97",
@@ -24209,9 +23534,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             "family_margin": -0.963701676952,
             "priority": 1.113701676952,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.963701676952},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.963701676952},),
         },
         {
             "sample_id": "us-code-43-3206.-3d30a15d59827936",
@@ -24234,9 +23557,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
         predicted_family = str(scenario["predicted_family"])
         target_family = str(scenario["target_family"])
         ranking = [dict(item) for item in tuple(scenario["ranking"])]
-        family_shares = {
-            str(item["family"]): float(item["share"]) for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000472-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -24297,9 +23618,7 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -24318,23 +23637,16 @@ def test_modal_compiler_surfaces_packet_000472_compiler_ambiguity_policy_pairs(
             < 1e-12
         )
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.severity == "requires_rule"
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -24365,9 +23677,7 @@ def test_modal_compiler_surfaces_packet_000566_compiler_ambiguity_policy_pairs(
             "family_margin": -0.494646959627,
             "priority": 0.644646959627,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.494646959627},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.494646959627},),
         },
         {
             "sample_id": "us-code-25-2105-2805749f4deed141",
@@ -24394,9 +23704,7 @@ def test_modal_compiler_surfaces_packet_000566_compiler_ambiguity_policy_pairs(
             "family_margin": -0.697957799282,
             "priority": 0.847957799282,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.697957799282},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.697957799282},),
         },
     )
 
@@ -24404,9 +23712,7 @@ def test_modal_compiler_surfaces_packet_000566_compiler_ambiguity_policy_pairs(
         predicted_family = str(scenario["predicted_family"])
         target_family = str(scenario["target_family"])
         ranking = [dict(item) for item in tuple(scenario["ranking"])]
-        family_shares = {
-            str(item["family"]): float(item["share"]) for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000566-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -24467,9 +23773,7 @@ def test_modal_compiler_surfaces_packet_000566_compiler_ambiguity_policy_pairs(
             else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -24488,27 +23792,19 @@ def test_modal_compiler_surfaces_packet_000566_compiler_ambiguity_policy_pairs(
             < 1e-12
         )
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            float(base_ambiguity.metadata["family_margin"])
-            == round(float(scenario["family_margin"]), 6)
+        assert float(base_ambiguity.metadata["family_margin"]) == round(
+            float(scenario["family_margin"]), 6
         )
         assert base_ambiguity.severity == "requires_rule"
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -24539,9 +23835,7 @@ def test_modal_compiler_surfaces_packet_000571_compiler_ambiguity_policy_pairs(
             "family_margin": -0.930605805155,
             "priority": 1.080605805155,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.930605805155},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.930605805155},),
         },
         {
             "sample_id": "us-code-10-687-62134f1eaa130df9",
@@ -24553,9 +23847,7 @@ def test_modal_compiler_surfaces_packet_000571_compiler_ambiguity_policy_pairs(
             "family_margin": -0.823053456348,
             "priority": 0.973053456348,
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.823053456348},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.823053456348},),
         },
         {
             "sample_id": "us-code-6-924-46b4e91da16607f0",
@@ -24596,9 +23888,7 @@ def test_modal_compiler_surfaces_packet_000571_compiler_ambiguity_policy_pairs(
         predicted_family = str(scenario["predicted_family"])
         target_family = str(scenario["target_family"])
         ranking = [dict(item) for item in tuple(scenario["ranking"])]
-        family_shares = {
-            str(item["family"]): float(item["share"]) for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000571-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -24659,9 +23949,7 @@ def test_modal_compiler_surfaces_packet_000571_compiler_ambiguity_policy_pairs(
             else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -24680,27 +23968,19 @@ def test_modal_compiler_surfaces_packet_000571_compiler_ambiguity_policy_pairs(
             < 1e-12
         )
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            float(base_ambiguity.metadata["family_margin"])
-            == round(float(scenario["family_margin"]), 6)
+        assert float(base_ambiguity.metadata["family_margin"]) == round(
+            float(scenario["family_margin"]), 6
         )
         assert base_ambiguity.severity == "requires_rule"
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -24733,9 +24013,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.848833625479},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.848833625479},),
         },
         {
             "sample_id": "us-code-16-423i-2b07507e97aa7637",
@@ -24749,9 +24027,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.605183972302},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.605183972302},),
         },
         {
             "sample_id": "us-code-26-241-490b4fbe06272fbe",
@@ -24765,9 +24041,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "deontic", "count": 1, "share": 0.430679318188},
-            ),
+            "ranking": ({"family": "deontic", "count": 1, "share": 0.430679318188},),
         },
         {
             "sample_id": "us-code-48-1392b.-2fa16cf7562506ec",
@@ -24781,9 +24055,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "temporal", "count": 1, "share": 0.646104845658},
-            ),
+            "ranking": ({"family": "temporal", "count": 1, "share": 0.646104845658},),
         },
         {
             "sample_id": "us-code-42-6250d.-3dd017ccfa5d3f72",
@@ -24797,9 +24069,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "temporal", "count": 1, "share": 0.647754849127},
-            ),
+            "ranking": ({"family": "temporal", "count": 1, "share": 0.647754849127},),
         },
         {
             "sample_id": "us-code-15-2305-83f6a735e1c266af",
@@ -24813,9 +24083,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "temporal", "count": 1, "share": 0.193521012315},
-            ),
+            "ranking": ({"family": "temporal", "count": 1, "share": 0.193521012315},),
         },
         {
             "sample_id": "us-code-42-9858p.-eaedff6fc6633cf1",
@@ -24829,9 +24097,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             "margin_direction": "outvoted",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
-            "ranking": (
-                {"family": "frame", "count": 1, "share": 0.733952923504},
-            ),
+            "ranking": ({"family": "frame", "count": 1, "share": 0.733952923504},),
         },
         {
             "sample_id": "us-code-19-536-014e91bc0d5b97af",
@@ -24856,9 +24122,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
         predicted_family = str(scenario["predicted_family"])
         target_family = str(scenario["target_family"])
         ranking = [dict(item) for item in tuple(scenario["ranking"])]
-        family_shares = {
-            str(item["family"]): float(item["share"]) for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000352-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -24920,8 +24184,7 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{scenario['margin_direction']}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{scenario['margin_direction']}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -24941,31 +24204,20 @@ def test_modal_compiler_surfaces_packet_000352_compiler_ambiguity_policy_pairs(
             < 1e-12
         )
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            float(base_ambiguity.metadata["family_margin"])
-            == round(float(scenario["family_margin"]), 6)
+        assert float(base_ambiguity.metadata["family_margin"]) == round(
+            float(scenario["family_margin"]), 6
         )
-        assert (
-            base_ambiguity.metadata["adaptive_margin_direction"]
-            == scenario["margin_direction"]
-        )
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == scenario["margin_direction"]
         assert base_ambiguity.severity == scenario["expected_severity"]
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -25145,10 +24397,7 @@ def test_modal_compiler_surfaces_packet_001621_compiler_ambiguity_policy_pairs(
                 }
             ]
 
-        family_shares = {
-            str(item["family"]): float(item["share_raw"])
-            for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001621-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -25204,22 +24453,14 @@ def test_modal_compiler_surfaces_packet_001621_compiler_ambiguity_policy_pairs(
         )
 
         expected_candidate_ids = (
-            [predicted_family]
-            if is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if is_self_pair else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested"
-            if is_self_pair and family_margin > 0.0
-            else "outvoted"
-        )
+        expected_direction = "contested" if is_self_pair and family_margin > 0.0 else "outvoted"
         expected_explicit_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
-        expected_severity = (
-            "review" if expected_direction == "contested" else "requires_rule"
-        )
+        expected_severity = "review" if expected_direction == "contested" else "requires_rule"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -25230,29 +24471,19 @@ def test_modal_compiler_surfaces_packet_001621_compiler_ambiguity_policy_pairs(
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.severity == expected_severity
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -25372,9 +24603,7 @@ def test_modal_compiler_surfaces_packet_001641_compiler_ambiguity_policy_pairs(
         )
 
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -25385,15 +24614,9 @@ def test_modal_compiler_surfaces_packet_001641_compiler_ambiguity_policy_pairs(
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
@@ -25402,8 +24625,7 @@ def test_modal_compiler_surfaces_packet_001641_compiler_ambiguity_policy_pairs(
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -25638,10 +24860,7 @@ def test_modal_compiler_surfaces_packet_000299_compiler_ambiguity_policy_pairs(
                 }
             ]
 
-        family_shares = {
-            str(item["family"]): float(item["share_raw"])
-            for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000299-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -25697,22 +24916,14 @@ def test_modal_compiler_surfaces_packet_000299_compiler_ambiguity_policy_pairs(
         )
 
         expected_candidate_ids = (
-            [predicted_family]
-            if is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if is_self_pair else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested"
-            if is_self_pair and family_margin > 0.0
-            else "outvoted"
-        )
+        expected_direction = "contested" if is_self_pair and family_margin > 0.0 else "outvoted"
         expected_explicit_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
-        expected_severity = (
-            "review" if expected_direction == "contested" else "requires_rule"
-        )
+        expected_severity = "review" if expected_direction == "contested" else "requires_rule"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -25723,29 +24934,19 @@ def test_modal_compiler_surfaces_packet_000299_compiler_ambiguity_policy_pairs(
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.severity == expected_severity
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -25934,10 +25135,7 @@ def test_modal_compiler_surfaces_packet_001093_compiler_ambiguity_policy_pairs(
                 }
             ]
 
-        family_shares = {
-            str(item["family"]): float(item["share_raw"])
-            for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
         sample_id = str(scenario["sample_id"])
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001093-policy-{index}",
@@ -25994,22 +25192,14 @@ def test_modal_compiler_surfaces_packet_001093_compiler_ambiguity_policy_pairs(
         )
 
         expected_candidate_ids = (
-            [predicted_family]
-            if is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if is_self_pair else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested"
-            if is_self_pair and family_margin > 0.0
-            else "outvoted"
-        )
+        expected_direction = "contested" if is_self_pair and family_margin > 0.0 else "outvoted"
         expected_explicit_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
-        expected_severity = (
-            "review" if expected_direction == "contested" else "requires_rule"
-        )
+        expected_severity = "review" if expected_direction == "contested" else "requires_rule"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -26020,29 +25210,19 @@ def test_modal_compiler_surfaces_packet_001093_compiler_ambiguity_policy_pairs(
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.severity == expected_severity
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -26200,10 +25380,7 @@ def test_modal_compiler_surfaces_packet_003453_compiler_ambiguity_policy_pairs(
                 }
             ]
 
-        family_shares = {
-            str(item["family"]): float(item["share_raw"])
-            for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-003453-policy-{index}",
             text=f"{predicted_family} ambiguity evidence",
@@ -26259,22 +25436,14 @@ def test_modal_compiler_surfaces_packet_003453_compiler_ambiguity_policy_pairs(
         )
 
         expected_candidate_ids = (
-            [predicted_family]
-            if is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if is_self_pair else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested"
-            if is_self_pair and family_margin > 0.0
-            else "outvoted"
-        )
+        expected_direction = "contested" if is_self_pair and family_margin > 0.0 else "outvoted"
         expected_explicit_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
-        expected_severity = (
-            "review" if expected_direction == "contested" else "requires_rule"
-        )
+        expected_severity = "review" if expected_direction == "contested" else "requires_rule"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -26285,29 +25454,19 @@ def test_modal_compiler_surfaces_packet_003453_compiler_ambiguity_policy_pairs(
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.severity == expected_severity
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -26485,10 +25644,7 @@ def test_modal_compiler_surfaces_packet_002693_compiler_ambiguity_policy_pairs(
                 }
             ]
 
-        family_shares = {
-            str(item["family"]): float(item["share_raw"])
-            for item in ranking
-        }
+        family_shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
         sample_id = str(scenario["sample_id"])
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-002693-policy-{index}",
@@ -26545,22 +25701,14 @@ def test_modal_compiler_surfaces_packet_002693_compiler_ambiguity_policy_pairs(
         )
 
         expected_candidate_ids = (
-            [predicted_family]
-            if is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if is_self_pair else [predicted_family, target_family]
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested"
-            if is_self_pair and family_margin > 0.0
-            else "outvoted"
-        )
+        expected_direction = "contested" if is_self_pair and family_margin > 0.0 else "outvoted"
         expected_explicit_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
-        expected_severity = (
-            "review" if expected_direction == "contested" else "requires_rule"
-        )
+        expected_severity = "review" if expected_direction == "contested" else "requires_rule"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -26571,29 +25719,19 @@ def test_modal_compiler_surfaces_packet_002693_compiler_ambiguity_policy_pairs(
 
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.severity == expected_severity
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -26750,8 +25888,7 @@ def test_modal_compiler_adaptive_policy_normalizes_prefixed_family_tokens(
         for ambiguity in ambiguities
         if ambiguity.ambiguity_type == "adaptive_frame_temporal_outvoted_margin_low"
         and ambiguity.candidate_ids == ["frame", "temporal"]
-        and ambiguity.metadata["adaptive_predicted_family_source"]
-        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "compiled_primary_family"
         and ambiguity.metadata["adaptive_policy_pair"] == "frame->temporal"
     )
     assert (
@@ -26924,9 +26061,7 @@ def test_modal_compiler_surfaces_packet_001206_compiler_ambiguity_policy_pairs(
         )
 
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -26936,15 +26071,9 @@ def test_modal_compiler_surfaces_packet_001206_compiler_ambiguity_policy_pairs(
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.severity == "requires_rule"
@@ -26953,8 +26082,7 @@ def test_modal_compiler_surfaces_packet_001206_compiler_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -27094,11 +26222,7 @@ def test_modal_compiler_surfaces_packet_001158_compiler_ambiguity_policy_pairs(
         sample_id = str(scenario["sample_id"])
         if predicted_family == target_family:
             predicted_share = (1.0 + family_margin) / 2.0
-            runner_up_family = (
-                "deontic"
-                if predicted_family != "deontic"
-                else "temporal"
-            )
+            runner_up_family = "deontic" if predicted_family != "deontic" else "temporal"
             runner_up_share = predicted_share - family_margin
             ranking = [
                 {
@@ -27203,15 +26327,9 @@ def test_modal_compiler_surfaces_packet_001158_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         if margin_direction == "outvoted":
@@ -27223,8 +26341,7 @@ def test_modal_compiler_surfaces_packet_001158_compiler_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -27363,28 +26480,20 @@ def test_modal_compiler_surfaces_packet_003558_compiler_ambiguity_policy_pairs(
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -27525,9 +26634,7 @@ def test_modal_compiler_surfaces_packet_004030_compiler_ambiguity_policy_pairs(
         )
 
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -27538,15 +26645,9 @@ def test_modal_compiler_surfaces_packet_004030_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.severity == "requires_rule"
@@ -27555,8 +26656,7 @@ def test_modal_compiler_surfaces_packet_004030_compiler_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -27697,9 +26797,7 @@ def test_modal_compiler_surfaces_packet_000028_compiler_ambiguity_policy_pairs(
         )
 
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -27709,15 +26807,9 @@ def test_modal_compiler_surfaces_packet_000028_compiler_ambiguity_policy_pairs(
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.severity == "requires_rule"
@@ -27726,8 +26818,7 @@ def test_modal_compiler_surfaces_packet_000028_compiler_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -27805,9 +26896,7 @@ def test_modal_compiler_surfaces_packet_001424_compiler_ambiguity_policy_pairs(
         sample_id = str(scenario["sample_id"])
         if predicted_family == target_family:
             predicted_share = (1.0 + family_margin) / 2.0
-            runner_up_family = (
-                "deontic" if predicted_family != "deontic" else "temporal"
-            )
+            runner_up_family = "deontic" if predicted_family != "deontic" else "temporal"
             runner_up_share = predicted_share - family_margin
             ranking = [
                 {
@@ -27844,8 +26933,7 @@ def test_modal_compiler_surfaces_packet_001424_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001424-adaptive-evidence-{index}",
@@ -27901,21 +26989,16 @@ def test_modal_compiler_surfaces_packet_001424_compiler_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         margin_direction = "contested" if family_margin > 0.0 else "outvoted"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         expected_priority = (
-            0.15 - family_margin
-            if family_margin > 0.0
-            else abs(family_margin) + 0.15
+            0.15 - family_margin if family_margin > 0.0 else abs(family_margin) + 0.15
         )
         policy_pair = f"{predicted_family}->{target_family}"
         matching = [
             ambiguity
             for ambiguity in ambiguities
             if ambiguity.ambiguity_type == expected_type
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
             and ambiguity.metadata.get("predicted_family") == predicted_family
             and ambiguity.metadata.get("target_family") == target_family
             and ambiguity.metadata.get("adaptive_policy_pair") == policy_pair
@@ -27927,10 +27010,7 @@ def test_modal_compiler_surfaces_packet_001424_compiler_ambiguity_policy_pairs(
         assert ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert abs(float(ambiguity.metadata["family_margin_raw"]) - family_margin) <= 1e-12
         assert abs(float(ambiguity.metadata["priority"]) - expected_priority) <= 1e-12
-        assert (
-            abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
 
 
 def test_modal_compiler_surfaces_packet_000697_compiler_ambiguity_policy_pairs(
@@ -28018,8 +27098,7 @@ def test_modal_compiler_surfaces_packet_000697_compiler_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000697-adaptive-evidence-{index}",
@@ -28076,9 +27155,7 @@ def test_modal_compiler_surfaces_packet_000697_compiler_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -28089,29 +27166,19 @@ def test_modal_compiler_surfaces_packet_000697_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -28207,8 +27274,7 @@ def test_modal_compiler_surfaces_packet_000152_compiler_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000152-adaptive-evidence-{index}",
@@ -28265,9 +27331,7 @@ def test_modal_compiler_surfaces_packet_000152_compiler_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -28278,37 +27342,24 @@ def test_modal_compiler_surfaces_packet_000152_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
         assert (
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= 0.1515 - 1e-12
         )
-        assert (
-            float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-            >= 0.0015 - 1e-12
-        )
+        assert float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) >= 0.0015 - 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -28358,9 +27409,7 @@ def test_modal_compiler_surfaces_packet_000749_refined_modal_family_cue_policy_p
         sample_id = str(scenario["sample_id"])
         if predicted_family == target_family:
             predicted_share = (1.0 + family_margin) / 2.0
-            runner_up_family = (
-                "deontic" if predicted_family != "deontic" else "temporal"
-            )
+            runner_up_family = "deontic" if predicted_family != "deontic" else "temporal"
             runner_up_share = predicted_share - family_margin
             ranking = [
                 {
@@ -28397,8 +27446,7 @@ def test_modal_compiler_surfaces_packet_000749_refined_modal_family_cue_policy_p
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -28480,10 +27528,7 @@ def test_modal_compiler_surfaces_packet_000749_refined_modal_family_cue_policy_p
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= 0.1515 - 1e-12
         )
-        assert (
-            float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-            >= 0.0015 - 1e-12
-        )
+        assert float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) >= 0.0015 - 1e-12
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == str(
@@ -28492,8 +27537,7 @@ def test_modal_compiler_surfaces_packet_000749_refined_modal_family_cue_policy_p
         assert any(
             ambiguity.ambiguity_type == str(scenario["expected_explicit_type"])
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -28606,8 +27650,7 @@ def test_modal_compiler_surfaces_packet_000112_refined_modal_family_cue_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000112-adaptive-evidence-{index}",
@@ -28694,21 +27737,16 @@ def test_modal_compiler_surfaces_packet_000112_refined_modal_family_cue_pairs(
             float(base_ambiguity.metadata["weak_typed_self_family_margin_buffer"])
             >= float(scenario["expected_weak_buffer"]) - 1e-12
         )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -28845,8 +27883,7 @@ def test_modal_compiler_surfaces_packet_000346_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -28922,32 +27959,21 @@ def test_modal_compiler_surfaces_packet_000346_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -29080,8 +28106,7 @@ def test_modal_compiler_surfaces_packet_001605_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -29161,36 +28186,22 @@ def test_modal_compiler_surfaces_packet_001605_compiler_ambiguity_policy_pairs(
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= 0.1515 - 1e-12
         )
+        assert float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) >= 0.0015 - 1e-12
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-            >= 0.0015 - 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -29264,8 +28275,7 @@ def test_modal_compiler_surfaces_packet_002993_compiler_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
 
         encoding = SpaCyLegalEncoding(
@@ -29322,9 +28332,7 @@ def test_modal_compiler_surfaces_packet_002993_compiler_ambiguity_policy_pairs(
             family_shares=family_shares,
             predicted_family_source="adaptive_logits",
         )
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         policy_pair = f"{predicted_family}->{target_family}"
         base_ambiguity = next(
             ambiguity
@@ -29339,15 +28347,11 @@ def test_modal_compiler_surfaces_packet_002993_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) <= 1e-12
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             <= 1e-12
         )
         assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            <= 1e-12
+            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) <= 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
         assert any(
@@ -29356,8 +28360,7 @@ def test_modal_compiler_surfaces_packet_002993_compiler_ambiguity_policy_pairs(
             and ambiguity.metadata.get("adaptive_policy_pair") == policy_pair
             and ambiguity.metadata.get("adaptive_base_ambiguity_type")
             == "adaptive_family_margin_low"
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
             for ambiguity in ambiguities
         )
 
@@ -29529,8 +28532,7 @@ def test_modal_compiler_surfaces_packet_003252_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -29610,36 +28612,22 @@ def test_modal_compiler_surfaces_packet_003252_compiler_ambiguity_policy_pairs(
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= 0.1515 - 1e-12
         )
+        assert float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) >= 0.0015 - 1e-12
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-            >= 0.0015 - 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -29750,8 +28738,7 @@ def test_modal_compiler_surfaces_packet_000964_frame_ambiguity_policy_pairs(
             candidate_ids = [predicted_family, target_family]
             margin_direction = "outvoted"
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         policy_pair = f"{predicted_family}->{target_family}"
         expected_explicit_type = (
@@ -29830,15 +28817,9 @@ def test_modal_compiler_surfaces_packet_000964_frame_ambiguity_policy_pairs(
             float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
             >= float(scenario["pair_buffer"]) - 1e-12
         )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.severity == (
@@ -29849,8 +28830,7 @@ def test_modal_compiler_surfaces_packet_000964_frame_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -29972,8 +28952,7 @@ def test_modal_compiler_surfaces_packet_004179_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -30053,36 +29032,22 @@ def test_modal_compiler_surfaces_packet_004179_compiler_ambiguity_policy_pairs(
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= 0.1515 - 1e-12
         )
+        assert float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) >= 0.0015 - 1e-12
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-            >= 0.0015 - 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -30184,8 +29149,7 @@ def test_modal_compiler_surfaces_packet_000127_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -30270,19 +29234,10 @@ def test_modal_compiler_surfaces_packet_000127_compiler_ambiguity_policy_pairs(
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= 0.1515 - 1e-12
         )
+        assert float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) >= 0.0015 - 1e-12
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-            >= 0.0015 - 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.severity == (
@@ -30293,8 +29248,7 @@ def test_modal_compiler_surfaces_packet_000127_compiler_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -30409,8 +29363,7 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
             candidate_ids = [predicted_family, target_family]
             margin_direction = "outvoted"
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         policy_pair = f"{predicted_family}->{target_family}"
         expected_explicit_type = (
@@ -30495,21 +29448,12 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
             < 1e-12
         )
         assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_pair_margin_buffer"])
-                - expected_buffer
-            )
+            abs(float(base_ambiguity.metadata["adaptive_pair_margin_buffer"]) - expected_buffer)
             < 1e-12
         )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
@@ -30517,8 +29461,7 @@ def test_modal_compiler_surfaces_packet_000111_compiler_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -30715,8 +29658,7 @@ def test_modal_compiler_surfaces_packet_000117_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -30792,28 +29734,20 @@ def test_modal_compiler_surfaces_packet_000117_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -30895,8 +29829,7 @@ def test_modal_compiler_surfaces_packet_000118_compiler_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000118-adaptive-evidence-{index}",
@@ -30965,23 +29898,16 @@ def test_modal_compiler_surfaces_packet_000118_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -31063,16 +29989,12 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -31143,8 +30065,7 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -31220,28 +30141,20 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -31373,8 +30286,7 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -31382,10 +30294,7 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
             else [predicted_family, target_family]
         )
         margin_direction = "contested" if family_margin > 0.0 else "outvoted"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{margin_direction}_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000161-adaptive-evidence-{index}",
             text=f"Synthetic {predicted_family} ambiguity evidence.",
@@ -31451,28 +30360,20 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -31500,9 +30401,7 @@ def test_modal_compiler_derives_packet_000161_directional_explicit_type() -> Non
         if ambiguity.ambiguity_type != "adaptive_family_margin_low"
     )
 
-    assert explicit_ambiguity.ambiguity_type == (
-        "adaptive_frame_temporal_outvoted_margin_low"
-    )
+    assert explicit_ambiguity.ambiguity_type == ("adaptive_frame_temporal_outvoted_margin_low")
     assert explicit_ambiguity.candidate_ids == ["frame", "temporal"]
     assert explicit_ambiguity.metadata["predicted_family"] == "frame"
     assert explicit_ambiguity.metadata["target_family"] == "temporal"
@@ -31621,8 +30520,7 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -31699,18 +30597,8 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         if predicted_family == target_family:
-            assert (
-                float(
-                    base_ambiguity.metadata[
-                        "weak_typed_self_family_margin_buffer"
-                    ]
-                )
-                > 0.0
-            )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+            assert float(base_ambiguity.metadata["weak_typed_self_family_margin_buffer"]) > 0.0
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
             abs(
                 float(base_ambiguity.metadata["adaptive_priority"])
@@ -31721,17 +30609,15 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
             )
             < 1e-12
         )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -31751,7 +30637,12 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
         lambda _: {},
     )
     scenarios = (
-        ("us-code-16-556i-32e4432ee41bc5bb", "conditional_normative", "conditional_normative", 0.043102274812),
+        (
+            "us-code-16-556i-32e4432ee41bc5bb",
+            "conditional_normative",
+            "conditional_normative",
+            0.043102274812,
+        ),
         ("us-code-42-19059.-91665c522bc27130", "frame", "conditional_normative", -0.63705791442),
         ("us-code-20-1132-3-80f3f53cc302786f", "frame", "epistemic", -0.349252987524),
         ("us-code-25-500e-890d173d23b6875b", "frame", "conditional_normative", -0.436370787702),
@@ -31761,8 +30652,7 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
         ("us-code-15-3711b-aef14a7692917860", "deontic", "temporal", -0.089043764536),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000168_FAMILY_PAIRS)
 
@@ -31786,8 +30676,18 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
         if predicted_family == target_family:
             runner_up_family = "temporal"
             ranking = [
-                {"family": predicted_family, "count": 0, "share_raw": predicted_share, "share": predicted_share},
-                {"family": runner_up_family, "count": 0, "share_raw": predicted_share - family_margin, "share": predicted_share - family_margin},
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": runner_up_family,
+                    "count": 0,
+                    "share_raw": predicted_share - family_margin,
+                    "share": predicted_share - family_margin,
+                },
             ]
         else:
             target_share = predicted_share + family_margin
@@ -31795,12 +30695,21 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
                 predicted_share = min(0.99, abs(family_margin) + 0.05)
                 target_share = predicted_share + family_margin
             ranking = [
-                {"family": predicted_family, "count": 0, "share_raw": predicted_share, "share": predicted_share},
-                {"family": target_family, "count": 0, "share_raw": target_share, "share": target_share},
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": target_share,
+                    "share": target_share,
+                },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000168 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -31858,9 +30767,7 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         margin_direction = "contested" if family_margin > 0.0 else "outvoted"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         policy_pair = f"{predicted_family}->{target_family}"
         base_ambiguity = next(
             ambiguity
@@ -31871,15 +30778,11 @@ def test_modal_compiler_surfaces_packet_000168_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -31949,8 +30852,7 @@ def test_modal_compiler_refines_packet_000126_family_cue_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000126 {predicted_family} {target_family} evidence."
         encoding = SpaCyLegalEncoding(
@@ -32019,10 +30921,7 @@ def test_modal_compiler_refines_packet_000126_family_cue_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= float(scenario["expected_threshold"]) - 1e-12
@@ -32034,8 +30933,7 @@ def test_modal_compiler_refines_packet_000126_family_cue_pairs(
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -32111,8 +31009,7 @@ def test_modal_compiler_refines_packet_000170_deontic_family_cue_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000170 deontic {target_family} evidence."
         encoding = SpaCyLegalEncoding(
@@ -32184,10 +31081,7 @@ def test_modal_compiler_refines_packet_000170_deontic_family_cue_pairs(
         )
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
             >= float(scenario["expected_threshold"]) - 1e-12
@@ -32207,8 +31101,7 @@ def test_modal_compiler_refines_packet_000170_deontic_family_cue_pairs(
                 f"{target_family}_{base_ambiguity.metadata['adaptive_margin_direction']}"
                 "_margin_low"
             )
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -32346,8 +31239,7 @@ def test_modal_compiler_surfaces_packet_000205_compiler_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         candidate_ids = (
             [predicted_family]
@@ -32423,32 +31315,21 @@ def test_modal_compiler_surfaces_packet_000205_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - float(scenario["priority"]))
             < 1e-12
         )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
-            )
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"]))
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["priority"]) - float(scenario["priority"])) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -32494,8 +31375,7 @@ def test_modal_compiler_surfaces_packet_000353_frame_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000353_FAMILY_PAIRS)
 
@@ -32523,8 +31403,7 @@ def test_modal_compiler_surfaces_packet_000353_frame_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000353 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -32582,9 +31461,7 @@ def test_modal_compiler_surfaces_packet_000353_frame_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -32597,23 +31474,16 @@ def test_modal_compiler_surfaces_packet_000353_frame_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - (abs(family_margin) + 0.15)
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - (abs(family_margin) + 0.15))
             < 1e-12
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -32663,8 +31533,7 @@ def test_modal_compiler_surfaces_packet_000354_deontic_frame_ambiguity_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000354_FAMILY_PAIRS)
 
@@ -32716,8 +31585,7 @@ def test_modal_compiler_surfaces_packet_000354_deontic_frame_ambiguity_pairs(
             candidate_ids = [predicted_family, target_family]
             margin_direction = "outvoted"
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "frame":
             predicted_system = "FRAME_BM25"
@@ -32783,9 +31651,7 @@ def test_modal_compiler_surfaces_packet_000354_deontic_frame_ambiguity_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -32797,24 +31663,16 @@ def test_modal_compiler_surfaces_packet_000354_deontic_frame_ambiguity_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["adaptive_priority"]) - priority)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - priority) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -32840,8 +31698,7 @@ def test_modal_compiler_surfaces_packet_000522_frame_ambiguity_policy_pairs(
         ("us-code-16-407d-ffe85671d5c04484", "frame", "deontic", -0.175030297001),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000522_FAMILY_PAIRS)
 
@@ -32869,8 +31726,7 @@ def test_modal_compiler_surfaces_packet_000522_frame_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000522 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -32928,9 +31784,7 @@ def test_modal_compiler_surfaces_packet_000522_frame_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -32943,23 +31797,16 @@ def test_modal_compiler_surfaces_packet_000522_frame_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - (abs(family_margin) + 0.15)
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - (abs(family_margin) + 0.15))
             < 1e-12
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -33005,8 +31852,7 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000099_FAMILY_PAIRS)
 
@@ -33034,8 +31880,7 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -33105,9 +31950,7 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -33120,15 +31963,9 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - (abs(family_margin) + 0.15)
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - (abs(family_margin) + 0.15))
             < 1e-12
         )
 
@@ -33136,8 +31973,7 @@ def test_modal_compiler_surfaces_packet_000099_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -33386,8 +32222,7 @@ def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_001248_FAMILY_PAIRS)
 
@@ -33413,8 +32248,7 @@ def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(
                 },
             ]
             family_shares = {
-                str(candidate["family"]): float(candidate["share_raw"])
-                for candidate in ranking
+                str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
             }
             candidate_ids = [predicted_family]
             margin_direction = "contested"
@@ -33439,8 +32273,7 @@ def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(
                 },
             ]
             family_shares = {
-                str(candidate["family"]): float(candidate["share_raw"])
-                for candidate in ranking
+                str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
             }
             candidate_ids = [predicted_family, target_family]
             margin_direction = "outvoted"
@@ -33509,9 +32342,7 @@ def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -33523,24 +32354,16 @@ def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -33610,8 +32433,7 @@ def test_modal_compiler_surfaces_packet_000104_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000104_FAMILY_PAIRS)
 
@@ -33662,8 +32484,7 @@ def test_modal_compiler_surfaces_packet_000104_ambiguity_policy_pairs(
             margin_direction = "outvoted"
             expected_priority = abs(family_margin) + 0.15
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -33733,9 +32554,7 @@ def test_modal_compiler_surfaces_packet_000104_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -33747,24 +32566,16 @@ def test_modal_compiler_surfaces_packet_000104_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -33828,8 +32639,7 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000130_FAMILY_PAIRS)
 
@@ -33880,8 +32690,7 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             margin_direction = "outvoted"
             expected_priority = abs(family_margin) + 0.15
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         operator_by_family = {
             "conditional_normative": ("KD", "O|", "conditional_obligation"),
@@ -33890,9 +32699,7 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             "frame": ("FRAME_BM25", "Frame", "frame"),
             "temporal": ("LTL", "F", "eventually"),
         }
-        predicted_system, predicted_symbol, predicted_label = operator_by_family[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = operator_by_family[predicted_family]
         text = f"Synthetic packet 000130 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000130-adaptive-evidence-{index}",
@@ -33949,9 +32756,7 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -33960,9 +32765,7 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -33983,24 +32786,16 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -34058,8 +32853,7 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000105_FAMILY_PAIRS)
 
@@ -34072,9 +32866,7 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
             runner_up_family = "deontic" if predicted_family == "frame" else "frame"
         predicted_share = 0.44 if predicted_family == target_family else 0.9
         if predicted_family == target_family:
-            runner_up_family = (
-                "temporal" if predicted_family == "deontic" else "deontic"
-            )
+            runner_up_family = "temporal" if predicted_family == "deontic" else "deontic"
             ranking = [
                 {
                     "family": predicted_family,
@@ -34115,8 +32907,7 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
             margin_direction = "outvoted"
             expected_priority = abs(family_margin) + 0.15
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "frame":
             predicted_system = "FRAME_BM25"
@@ -34182,9 +32973,7 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -34196,24 +32985,16 @@ def test_modal_compiler_surfaces_packet_000105_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -34283,8 +33064,7 @@ def test_modal_compiler_surfaces_packet_000108_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000108_FAMILY_PAIRS)
 
@@ -34335,8 +33115,7 @@ def test_modal_compiler_surfaces_packet_000108_ambiguity_policy_pairs(
             margin_direction = "outvoted"
             expected_priority = abs(family_margin) + 0.15
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -34406,9 +33185,7 @@ def test_modal_compiler_surfaces_packet_000108_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -34420,24 +33197,16 @@ def test_modal_compiler_surfaces_packet_000108_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            < 1e-12
-        )
-        assert (
-            base_ambiguity.severity
-            == ("review" if margin_direction == "contested" else "requires_rule")
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
+        assert abs(float(base_ambiguity.metadata["adaptive_priority"]) - expected_priority) < 1e-12
+        assert base_ambiguity.severity == (
+            "review" if margin_direction == "contested" else "requires_rule"
         )
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -34483,8 +33252,7 @@ def test_modal_compiler_surfaces_packet_000134_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000134_FAMILY_PAIRS)
 
@@ -34509,8 +33277,7 @@ def test_modal_compiler_surfaces_packet_000134_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -34576,9 +33343,7 @@ def test_modal_compiler_surfaces_packet_000134_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -34590,15 +33355,9 @@ def test_modal_compiler_surfaces_packet_000134_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
-        assert (
-            abs(
-                float(base_ambiguity.metadata["adaptive_priority"])
-                - (abs(family_margin) + 0.15)
-            )
+            abs(float(base_ambiguity.metadata["adaptive_priority"]) - (abs(family_margin) + 0.15))
             < 1e-12
         )
         assert base_ambiguity.severity == "requires_rule"
@@ -34606,8 +33365,7 @@ def test_modal_compiler_surfaces_packet_000134_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -34627,9 +33385,7 @@ def test_modal_registry_packet_000135_refines_family_cue_policy_pairs() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_000135_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -34700,8 +33456,7 @@ def test_modal_compiler_surfaces_packet_000498_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000498_FAMILY_PAIRS)
 
@@ -34726,8 +33481,7 @@ def test_modal_compiler_surfaces_packet_000498_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "deontic":
             predicted_system = "SDL"
@@ -34794,9 +33548,7 @@ def test_modal_compiler_surfaces_packet_000498_ambiguity_policy_pairs(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         margin_direction = "outvoted" if family_margin < 0.0 else "contested"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         candidate_ids = (
             [predicted_family]
             if predicted_family == target_family
@@ -34813,18 +33565,11 @@ def test_modal_compiler_surfaces_packet_000498_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
             abs(
                 float(base_ambiguity.metadata["adaptive_priority"])
-                - (
-                    0.15 - family_margin
-                    if family_margin > 0.0
-                    else abs(family_margin) + 0.15
-                )
+                - (0.15 - family_margin if family_margin > 0.0 else abs(family_margin) + 0.15)
             )
             < 1e-12
         )
@@ -34835,8 +33580,7 @@ def test_modal_compiler_surfaces_packet_000498_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -34912,8 +33656,7 @@ def test_modal_compiler_surfaces_packet_000157_ambiguity_policy_pairs(
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_000157_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -34955,8 +33698,7 @@ def test_modal_compiler_surfaces_packet_000157_ambiguity_policy_pairs(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "deontic":
             predicted_system = "D"
@@ -35030,9 +33772,7 @@ def test_modal_compiler_surfaces_packet_000157_ambiguity_policy_pairs(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested" if predicted_family == target_family else "outvoted"
-        )
+        expected_direction = "contested" if predicted_family == target_family else "outvoted"
         expected_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
@@ -35049,12 +33789,8 @@ def test_modal_compiler_surfaces_packet_000157_ambiguity_policy_pairs(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -35074,10 +33810,7 @@ def test_modal_compiler_surfaces_packet_000157_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -35085,8 +33818,7 @@ def test_modal_compiler_surfaces_packet_000157_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -35120,8 +33852,7 @@ def test_modal_compiler_surfaces_packet_000720_deontic_ambiguity_policy_pairs(
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_000720_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -35145,8 +33876,7 @@ def test_modal_compiler_surfaces_packet_000720_deontic_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000720 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -35205,9 +33935,7 @@ def test_modal_compiler_surfaces_packet_000720_deontic_ambiguity_policy_pairs(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         margin_direction = "outvoted" if family_margin < 0.0 else "contested"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         candidate_ids = (
             [predicted_family]
             if predicted_family == target_family
@@ -35224,10 +33952,7 @@ def test_modal_compiler_surfaces_packet_000720_deontic_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "requires_rule" if margin_direction == "outvoted" else "review"
         )
@@ -35235,8 +33960,7 @@ def test_modal_compiler_surfaces_packet_000720_deontic_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -35282,8 +34006,7 @@ def test_modal_compiler_surfaces_packet_000781_deontic_ambiguity_policy_pairs(
         ),
     )
     expected_pairs = {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000781_FAMILY_PAIRS)
 
@@ -35308,8 +34031,7 @@ def test_modal_compiler_surfaces_packet_000781_deontic_ambiguity_policy_pairs(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 000781 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -35368,18 +34090,14 @@ def test_modal_compiler_surfaces_packet_000781_deontic_ambiguity_policy_pairs(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         margin_direction = "outvoted" if family_margin < 0.0 else "contested"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         candidate_ids = (
             [predicted_family]
             if predicted_family == target_family
             else [predicted_family, target_family]
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -35402,10 +34120,7 @@ def test_modal_compiler_surfaces_packet_000781_deontic_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "requires_rule" if margin_direction == "outvoted" else "review"
         )
@@ -35413,8 +34128,7 @@ def test_modal_compiler_surfaces_packet_000781_deontic_ambiguity_policy_pairs(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -35460,8 +34174,7 @@ def test_modal_compiler_surfaces_packet_000721_deontic_frame_ambiguity_policy_pa
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_000721_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -35485,8 +34198,7 @@ def test_modal_compiler_surfaces_packet_000721_deontic_frame_ambiguity_policy_pa
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "deontic":
             predicted_system = "SDL"
@@ -35553,9 +34265,7 @@ def test_modal_compiler_surfaces_packet_000721_deontic_frame_ambiguity_policy_pa
         )
         policy_pair = f"{predicted_family}->{target_family}"
         margin_direction = "outvoted" if family_margin < 0.0 else "contested"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         candidate_ids = (
             [predicted_family]
             if predicted_family == target_family
@@ -35572,18 +34282,11 @@ def test_modal_compiler_surfaces_packet_000721_deontic_frame_ambiguity_policy_pa
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert (
             abs(
                 float(base_ambiguity.metadata["adaptive_priority"])
-                - (
-                    0.15 - family_margin
-                    if family_margin > 0.0
-                    else abs(family_margin) + 0.15
-                )
+                - (0.15 - family_margin if family_margin > 0.0 else abs(family_margin) + 0.15)
             )
             < 1e-12
         )
@@ -35594,8 +34297,7 @@ def test_modal_compiler_surfaces_packet_000721_deontic_frame_ambiguity_policy_pa
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -35633,8 +34335,7 @@ def test_modal_compiler_surfaces_packet_001059_policy_pairs(monkeypatch) -> None
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_001059_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -35658,8 +34359,7 @@ def test_modal_compiler_surfaces_packet_001059_policy_pairs(monkeypatch) -> None
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -35726,9 +34426,7 @@ def test_modal_compiler_surfaces_packet_001059_policy_pairs(monkeypatch) -> None
         )
         policy_pair = f"{predicted_family}->{target_family}"
         margin_direction = "outvoted" if family_margin < 0.0 else "contested"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         candidate_ids = (
             [predicted_family]
             if predicted_family == target_family
@@ -35745,10 +34443,7 @@ def test_modal_compiler_surfaces_packet_001059_policy_pairs(monkeypatch) -> None
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "requires_rule" if margin_direction == "outvoted" else "review"
         )
@@ -35756,8 +34451,7 @@ def test_modal_compiler_surfaces_packet_001059_policy_pairs(monkeypatch) -> None
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -35795,8 +34489,7 @@ def test_modal_compiler_surfaces_packet_001512_policy_pairs(monkeypatch) -> None
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_001512_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -35820,8 +34513,7 @@ def test_modal_compiler_surfaces_packet_001512_policy_pairs(monkeypatch) -> None
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "deontic":
             predicted_system = "D"
@@ -35887,9 +34579,7 @@ def test_modal_compiler_surfaces_packet_001512_policy_pairs(monkeypatch) -> None
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -35897,9 +34587,7 @@ def test_modal_compiler_surfaces_packet_001512_policy_pairs(monkeypatch) -> None
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -35909,17 +34597,13 @@ def test_modal_compiler_surfaces_packet_001512_policy_pairs(monkeypatch) -> None
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -35981,8 +34665,7 @@ def test_modal_compiler_surfaces_packet_000114_policy_pairs(monkeypatch) -> None
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_000114_FAMILY_PAIRS)
 
     for index, (
@@ -36027,8 +34710,7 @@ def test_modal_compiler_surfaces_packet_000114_policy_pairs(monkeypatch) -> None
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "deontic":
             predicted_system = "D"
@@ -36116,9 +34798,7 @@ def test_modal_compiler_surfaces_packet_000114_policy_pairs(monkeypatch) -> None
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -36132,10 +34812,7 @@ def test_modal_compiler_surfaces_packet_000114_policy_pairs(monkeypatch) -> None
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -36143,8 +34820,7 @@ def test_modal_compiler_surfaces_packet_000114_policy_pairs(monkeypatch) -> None
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -36176,14 +34852,10 @@ def test_modal_compiler_surfaces_packet_001529_frame_temporal_ambiguity(monkeypa
     policy_pair = f"{predicted_family}->{target_family}"
     expected_type = "adaptive_frame_temporal_outvoted_margin_low"
 
-    assert COMPILER_AMBIGUITY_PACKET_001529_FAMILY_PAIRS == (
-        (predicted_family, target_family),
-    )
+    assert COMPILER_AMBIGUITY_PACKET_001529_FAMILY_PAIRS == ((predicted_family, target_family),)
     assert target_family in compiler_ambiguity_policy_targets(predicted_family)
     assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-    assert target_family in compiler_required_adaptive_ambiguity_targets(
-        predicted_family
-    )
+    assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
     assert is_compiler_required_adaptive_ambiguity_pair(
         predicted_family,
         target_family,
@@ -36192,9 +34864,7 @@ def test_modal_compiler_surfaces_packet_001529_frame_temporal_ambiguity(monkeypa
         predicted_family,
         target_family,
     )
-    assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-        predicted_family
-    )
+    assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
     assert is_priority_signal_free_adaptive_ambiguity_pair(
         predicted_family,
         target_family,
@@ -36218,8 +34888,7 @@ def test_modal_compiler_surfaces_packet_001529_frame_temporal_ambiguity(monkeypa
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 001529 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -36288,17 +34957,13 @@ def test_modal_compiler_surfaces_packet_001529_frame_temporal_ambiguity(monkeypa
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -36338,8 +35003,7 @@ def test_modal_compiler_surfaces_packet_001550_adaptive_ambiguity_policy(
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_001550_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -36366,8 +35030,7 @@ def test_modal_compiler_surfaces_packet_001550_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 001550 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -36425,9 +35088,7 @@ def test_modal_compiler_surfaces_packet_001550_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -36436,12 +35097,8 @@ def test_modal_compiler_surfaces_packet_001550_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -36461,17 +35118,13 @@ def test_modal_compiler_surfaces_packet_001550_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -36509,8 +35162,7 @@ def test_modal_compiler_surfaces_packet_000119_refined_family_cues(monkeypatch) 
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_000119_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -36556,8 +35208,7 @@ def test_modal_compiler_surfaces_packet_000119_refined_family_cues(monkeypatch) 
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         if predicted_family == "temporal":
             predicted_system = "LTL"
@@ -36623,9 +35274,7 @@ def test_modal_compiler_surfaces_packet_000119_refined_family_cues(monkeypatch) 
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_direction = (
-            "contested" if predicted_family == target_family else "outvoted"
-        )
+        expected_direction = "contested" if predicted_family == target_family else "outvoted"
         expected_type = (
             f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
@@ -36642,12 +35291,8 @@ def test_modal_compiler_surfaces_packet_000119_refined_family_cues(monkeypatch) 
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -36667,10 +35312,7 @@ def test_modal_compiler_surfaces_packet_000119_refined_family_cues(monkeypatch) 
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -36678,8 +35320,7 @@ def test_modal_compiler_surfaces_packet_000119_refined_family_cues(monkeypatch) 
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -36841,8 +35482,7 @@ def test_modal_compiler_surfaces_packet_000214_deontic_frame_cue_policy(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000214-adaptive-evidence-{index}",
@@ -36916,12 +35556,8 @@ def test_modal_compiler_surfaces_packet_000214_deontic_frame_cue_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -36940,8 +35576,7 @@ def test_modal_compiler_surfaces_packet_000214_deontic_frame_cue_policy(
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert (
-            base_ambiguity.metadata["adaptive_margin_direction"]
-            == scenario["expected_direction"]
+            base_ambiguity.metadata["adaptive_margin_direction"] == scenario["expected_direction"]
         )
         assert (
             float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
@@ -36955,22 +35590,16 @@ def test_modal_compiler_surfaces_packet_000214_deontic_frame_cue_policy(
             float(base_ambiguity.metadata["weak_typed_self_family_margin_buffer"])
             >= float(scenario["expected_weak_buffer"]) - 1e-12
         )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
-            "review"
-            if scenario["expected_direction"] == "contested"
-            else "requires_rule"
+            "review" if scenario["expected_direction"] == "contested" else "requires_rule"
         )
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -37078,8 +35707,7 @@ def test_modal_compiler_surfaces_packet_000587_adaptive_ambiguity_policy(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000587-adaptive-evidence-{index}",
@@ -37143,8 +35771,7 @@ def test_modal_compiler_surfaces_packet_000587_adaptive_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -37154,12 +35781,8 @@ def test_modal_compiler_surfaces_packet_000587_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -37176,32 +35799,19 @@ def test_modal_compiler_surfaces_packet_000587_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
-        assert (
-            base_ambiguity.metadata["ambiguity_policy_bundle"]
-            == "compiler_ambiguity"
-        )
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
-        assert (
-            float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
-            >= 0.15
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"]) >= 0.15
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
-        assert (
-            base_ambiguity.metadata["explicit_ambiguity_type"]
-            == expected_explicit_type
-        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -37289,8 +35899,7 @@ def test_modal_compiler_surfaces_packet_002315_frame_ambiguity_policy(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-002315-adaptive-evidence-{index}",
@@ -37354,8 +35963,7 @@ def test_modal_compiler_surfaces_packet_002315_frame_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -37365,12 +35973,8 @@ def test_modal_compiler_surfaces_packet_002315_frame_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -37389,10 +35993,7 @@ def test_modal_compiler_surfaces_packet_002315_frame_ambiguity_policy(
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -37401,8 +36002,7 @@ def test_modal_compiler_surfaces_packet_002315_frame_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -37442,8 +36042,7 @@ def test_modal_compiler_surfaces_packet_004672_adaptive_ambiguity_policy(
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_004672_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -37470,8 +36069,7 @@ def test_modal_compiler_surfaces_packet_004672_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 004672 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -37529,9 +36127,7 @@ def test_modal_compiler_surfaces_packet_004672_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -37540,12 +36136,8 @@ def test_modal_compiler_surfaces_packet_004672_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -37565,17 +36157,13 @@ def test_modal_compiler_surfaces_packet_004672_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -37600,8 +36188,7 @@ def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
         ("us-code-2-6131-ab6242eedbe6fa8b", "frame", "deontic", -0.999997216251),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS)
 
     family_operator = {
@@ -37614,9 +36201,7 @@ def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
         scenarios,
         start=1,
     ):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
         if predicted_family == target_family:
             runner_up_family = "temporal"
@@ -37656,8 +36241,7 @@ def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
             expected_direction = "outvoted"
             expected_candidate_ids = [predicted_family, target_family]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 004828 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -37716,8 +36300,7 @@ def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -37727,12 +36310,8 @@ def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -37752,16 +36331,12 @@ def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -37801,8 +36376,7 @@ def test_modal_compiler_surfaces_packet_005115_temporal_ambiguity_policy(
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_005115_FAMILY_PAIRS)
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
@@ -37829,8 +36403,7 @@ def test_modal_compiler_surfaces_packet_005115_temporal_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 005115 {predicted_family} temporal ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -37888,9 +36461,7 @@ def test_modal_compiler_surfaces_packet_005115_temporal_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -37899,12 +36470,8 @@ def test_modal_compiler_surfaces_packet_005115_temporal_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -37924,17 +36491,13 @@ def test_modal_compiler_surfaces_packet_005115_temporal_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -37970,8 +36533,7 @@ def test_modal_compiler_surfaces_packet_004674_adaptive_ambiguity_policy(
         ),
     )
     assert {
-        (predicted_family, target_family)
-        for _, predicted_family, target_family, _, _ in scenarios
+        (predicted_family, target_family) for _, predicted_family, target_family, _, _ in scenarios
     } == set(COMPILER_AMBIGUITY_PACKET_004674_FAMILY_PAIRS)
 
     for index, (
@@ -38021,8 +36583,7 @@ def test_modal_compiler_surfaces_packet_004674_adaptive_ambiguity_policy(
             ]
             expected_candidate_ids = [predicted_family, target_family]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         text = f"Synthetic packet 004674 {predicted_family} ambiguity evidence."
         encoding = SpaCyLegalEncoding(
@@ -38080,9 +36641,7 @@ def test_modal_compiler_surfaces_packet_004674_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -38091,12 +36650,8 @@ def test_modal_compiler_surfaces_packet_004674_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38116,16 +36671,12 @@ def test_modal_compiler_surfaces_packet_004674_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -38197,8 +36748,7 @@ def test_modal_compiler_surfaces_packet_004656_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-004656-adaptive-evidence-{index}",
@@ -38255,9 +36805,7 @@ def test_modal_compiler_surfaces_packet_004656_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -38266,12 +36814,8 @@ def test_modal_compiler_surfaces_packet_004656_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38290,17 +36834,13 @@ def test_modal_compiler_surfaces_packet_004656_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -38388,8 +36928,7 @@ def test_modal_compiler_surfaces_packet_002602_adaptive_ambiguity_policy(
                 },
             ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-002602-adaptive-evidence-{index}",
@@ -38453,8 +36992,7 @@ def test_modal_compiler_surfaces_packet_002602_adaptive_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -38464,12 +37002,8 @@ def test_modal_compiler_surfaces_packet_002602_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38488,10 +37022,7 @@ def test_modal_compiler_surfaces_packet_002602_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -38500,8 +37031,7 @@ def test_modal_compiler_surfaces_packet_002602_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -38578,9 +37108,7 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system = (
-            "FRAME_BM25" if predicted_family == "frame" else "LTL"
-        )
+        predicted_system = "FRAME_BM25" if predicted_family == "frame" else "LTL"
         predicted_symbol = "Frame" if predicted_family == "frame" else "F"
         predicted_label = "frame" if predicted_family == "frame" else "eventually"
         predicted_share = (
@@ -38596,11 +37124,7 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
                 "share": predicted_share,
             },
             {
-                "family": (
-                    "frame"
-                    if predicted_family == target_family
-                    else target_family
-                ),
+                "family": ("frame" if predicted_family == target_family else target_family),
                 "count": 0,
                 "share_raw": (
                     predicted_share - family_margin
@@ -38615,8 +37139,7 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001068-adaptive-evidence-{index}",
@@ -38680,8 +37203,7 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -38691,12 +37213,8 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38715,14 +37233,8 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
-        assert (
-            float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"])
-            >= 0.15
-        )
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert float(base_ambiguity.metadata["adaptive_effective_family_margin_threshold"]) >= 0.15
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -38731,8 +37243,7 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -38746,15 +37257,9 @@ def test_modal_registry_packet_001002_exposes_frame_deontic_doxastic_policy() ->
     assert COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38784,15 +37289,9 @@ def test_modal_registry_packet_001309_exposes_explicit_ambiguity_policy() -> Non
     assert COMPILER_AMBIGUITY_PACKET_001309_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38844,8 +37343,7 @@ def test_modal_compiler_surfaces_packet_001309_adaptive_ambiguity_policy() -> No
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._compiled_primary_family_adaptive_pair_ambiguities(
             compiled_primary_family=predicted_family,
@@ -38860,9 +37358,7 @@ def test_modal_compiler_surfaces_packet_001309_adaptive_ambiguity_policy() -> No
             predicted_family_source="packet_001309_test",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
 
         base_ambiguity = next(
             ambiguity
@@ -38872,23 +37368,17 @@ def test_modal_compiler_surfaces_packet_001309_adaptive_ambiguity_policy() -> No
         assert base_ambiguity.candidate_ids == [predicted_family, target_family]
         assert base_ambiguity.severity == "requires_rule"
         assert base_ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == (
-            "compiler_ambiguity"
-        )
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == ("compiler_ambiguity")
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["has_target_signal_evidence"] is True
         assert base_ambiguity.metadata["signal_free_pair_policy_applied"] is False
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             for ambiguity in ambiguities
         )
@@ -38904,15 +37394,9 @@ def test_modal_registry_packet_001310_exposes_explicit_ambiguity_policy() -> Non
     assert COMPILER_AMBIGUITY_PACKET_001310_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -38964,8 +37448,7 @@ def test_modal_compiler_surfaces_packet_001310_adaptive_ambiguity_policy() -> No
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._compiled_primary_family_adaptive_pair_ambiguities(
             compiled_primary_family=predicted_family,
@@ -38980,9 +37463,7 @@ def test_modal_compiler_surfaces_packet_001310_adaptive_ambiguity_policy() -> No
             predicted_family_source="packet_001310_test",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
 
         base_ambiguity = next(
             ambiguity
@@ -38992,23 +37473,17 @@ def test_modal_compiler_surfaces_packet_001310_adaptive_ambiguity_policy() -> No
         assert base_ambiguity.candidate_ids == [predicted_family, target_family]
         assert base_ambiguity.severity == "requires_rule"
         assert base_ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == (
-            "compiler_ambiguity"
-        )
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == ("compiler_ambiguity")
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["has_target_signal_evidence"] is True
         assert base_ambiguity.metadata["signal_free_pair_policy_applied"] is False
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             for ambiguity in ambiguities
         )
@@ -39106,18 +37581,13 @@ def test_modal_compiler_surfaces_packet_000778_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000778-adaptive-evidence-{index}",
             text=f"Synthetic packet 000778 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 000778 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 000778 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -39170,8 +37640,7 @@ def test_modal_compiler_surfaces_packet_000778_adaptive_ambiguity_policy(
         )
         expected_direction = "contested" if family_margin > 0.0 else "outvoted"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         expected_candidate_ids = (
             [predicted_family] if is_self_pair else [predicted_family, target_family]
@@ -39185,12 +37654,8 @@ def test_modal_compiler_surfaces_packet_000778_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -39210,16 +37675,12 @@ def test_modal_compiler_surfaces_packet_000778_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -39275,8 +37736,7 @@ def test_modal_compiler_surfaces_packet_000580_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000580-adaptive-evidence-{index}",
@@ -39333,9 +37793,7 @@ def test_modal_compiler_surfaces_packet_000580_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -39344,12 +37802,8 @@ def test_modal_compiler_surfaces_packet_000580_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -39370,18 +37824,15 @@ def test_modal_compiler_surfaces_packet_000580_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
+
 
 def test_modal_compiler_surfaces_packet_002607_frame_temporal_policy(
     monkeypatch,
@@ -39405,16 +37856,10 @@ def test_modal_compiler_surfaces_packet_002607_frame_temporal_policy(
         ("us-code-42-242v.-de00ffae4beb85a1", -0.537810825307),
     )
 
-    assert COMPILER_AMBIGUITY_PACKET_002607_FAMILY_PAIRS == (
-        (predicted_family, target_family),
-    )
+    assert COMPILER_AMBIGUITY_PACKET_002607_FAMILY_PAIRS == ((predicted_family, target_family),)
     assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-    assert target_family in compiler_required_adaptive_ambiguity_targets(
-        predicted_family
-    )
-    assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-        predicted_family
-    )
+    assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+    assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
     assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
     assert is_compiler_required_adaptive_ambiguity_pair(
         predicted_family,
@@ -39447,8 +37892,7 @@ def test_modal_compiler_surfaces_packet_002607_frame_temporal_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-002607-adaptive-evidence-{index}",
@@ -39520,16 +37964,12 @@ def test_modal_compiler_surfaces_packet_002607_frame_temporal_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -39603,8 +38043,7 @@ def test_modal_compiler_surfaces_packet_000158_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         predicted_system = "FRAME_BM25" if predicted_family == "frame" else "LTL"
         predicted_symbol = "Frame" if predicted_family == "frame" else "G"
@@ -39612,9 +38051,7 @@ def test_modal_compiler_surfaces_packet_000158_adaptive_ambiguity_policy(
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000158-adaptive-evidence-{index}",
             text=f"Synthetic packet 000158 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 000158 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 000158 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -39666,9 +38103,7 @@ def test_modal_compiler_surfaces_packet_000158_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -39677,12 +38112,8 @@ def test_modal_compiler_surfaces_packet_000158_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -39703,16 +38134,12 @@ def test_modal_compiler_surfaces_packet_000158_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -39774,13 +38201,9 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
         predicted_symbol = "Frame" if predicted_family == "frame" else "O"
         predicted_label = "frame" if predicted_family == "frame" else "obligation"
         predicted_share = (
-            0.5
-            if predicted_family == target_family
-            else min(0.99, abs(family_margin) + 0.05)
+            0.5 if predicted_family == target_family else min(0.99, abs(family_margin) + 0.05)
         )
-        competing_family = (
-            "frame" if predicted_family == target_family else target_family
-        )
+        competing_family = "frame" if predicted_family == target_family else target_family
         competing_share = (
             predicted_share - family_margin
             if predicted_family == target_family
@@ -39801,15 +38224,12 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001692-adaptive-evidence-{index}",
             text=f"Synthetic packet 001692 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 001692 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 001692 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -39868,8 +38288,7 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -39879,12 +38298,8 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -39904,10 +38319,7 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -39915,8 +38327,7 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -39978,13 +38389,9 @@ def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
         predicted_symbol = "Frame" if predicted_family == "frame" else "O"
         predicted_label = "frame" if predicted_family == "frame" else "obligation"
         predicted_share = (
-            0.5
-            if predicted_family == target_family
-            else min(0.99, abs(family_margin) + 0.05)
+            0.5 if predicted_family == target_family else min(0.99, abs(family_margin) + 0.05)
         )
-        competing_family = (
-            "frame" if predicted_family == target_family else target_family
-        )
+        competing_family = "frame" if predicted_family == target_family else target_family
         competing_share = (
             predicted_share - family_margin
             if predicted_family == target_family
@@ -40005,15 +38412,12 @@ def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001392-adaptive-evidence-{index}",
             text=f"Synthetic packet 001392 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 001392 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 001392 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -40072,8 +38476,7 @@ def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -40083,12 +38486,8 @@ def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40108,10 +38507,7 @@ def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -40119,8 +38515,7 @@ def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -40145,9 +38540,7 @@ def test_modal_compiler_surfaces_packet_003238_frame_conditional_policy(
         ("us-code-26-4980G-d931ba8a12827695", -0.292103193385),
         ("us-code-27-1-9ebf30fa61982249", -0.321262233225),
     )
-    assert set(COMPILER_AMBIGUITY_PACKET_003238_FAMILY_PAIRS) == {
-        (predicted_family, target_family)
-    }
+    assert set(COMPILER_AMBIGUITY_PACKET_003238_FAMILY_PAIRS) == {(predicted_family, target_family)}
 
     for index, (sample_id, family_margin) in enumerate(scenarios, start=1):
         predicted_share = abs(family_margin) + 0.05
@@ -40167,8 +38560,7 @@ def test_modal_compiler_surfaces_packet_003238_frame_conditional_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-003238-adaptive-evidence-{index}",
@@ -40225,9 +38617,7 @@ def test_modal_compiler_surfaces_packet_003238_frame_conditional_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -40236,12 +38626,8 @@ def test_modal_compiler_surfaces_packet_003238_frame_conditional_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40261,17 +38647,13 @@ def test_modal_compiler_surfaces_packet_003238_frame_conditional_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -40333,9 +38715,7 @@ def test_modal_compiler_surfaces_packet_001618_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.99, abs(family_margin) + 0.05)
         target_share = predicted_share + family_margin
         ranking = [
@@ -40353,15 +38733,12 @@ def test_modal_compiler_surfaces_packet_001618_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001618-adaptive-evidence-{index}",
             text=f"Synthetic packet 001618 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 001618 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 001618 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -40413,9 +38790,7 @@ def test_modal_compiler_surfaces_packet_001618_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -40424,15 +38799,9 @@ def test_modal_compiler_surfaces_packet_001618_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40456,17 +38825,13 @@ def test_modal_compiler_surfaces_packet_001618_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -40481,15 +38846,9 @@ def test_modal_registry_packet_001446_exposes_compiler_ambiguity_pairs() -> None
     assert set(COMPILER_AMBIGUITY_PACKET_001446_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40524,15 +38883,9 @@ def test_modal_registry_packet_001449_exposes_compiler_ambiguity_pairs() -> None
     assert set(COMPILER_AMBIGUITY_PACKET_001449_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40636,13 +38989,9 @@ def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
         predicted_symbol = "Frame" if predicted_family == "frame" else "O"
         predicted_label = "frame" if predicted_family == "frame" else "obligation"
         predicted_share = (
-            0.5
-            if predicted_family == target_family
-            else min(0.99, abs(family_margin) + 0.05)
+            0.5 if predicted_family == target_family else min(0.99, abs(family_margin) + 0.05)
         )
-        competing_family = (
-            "deontic" if predicted_family == target_family else target_family
-        )
+        competing_family = "deontic" if predicted_family == target_family else target_family
         competing_share = (
             predicted_share - family_margin
             if predicted_family == target_family
@@ -40663,15 +39012,12 @@ def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-003171-adaptive-evidence-{index}",
             text=f"Synthetic packet 003171 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 003171 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 003171 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -40730,8 +39076,7 @@ def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
         )
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -40741,15 +39086,9 @@ def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40773,10 +39112,7 @@ def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -40784,8 +39120,7 @@ def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -40842,9 +39177,7 @@ def test_modal_compiler_surfaces_packet_003229_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = 0.5
         if predicted_family == target_family:
             ranking = [
@@ -40880,15 +39213,12 @@ def test_modal_compiler_surfaces_packet_003229_adaptive_ambiguity_policy(
             ]
             candidate_ids = [predicted_family, target_family]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-003229-adaptive-evidence-{index}",
             text=f"Synthetic packet 003229 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 003229 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 003229 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -40942,8 +39272,7 @@ def test_modal_compiler_surfaces_packet_003229_adaptive_ambiguity_policy(
         policy_pair = f"{predicted_family}->{target_family}"
         expected_direction = "outvoted" if family_margin < 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -40953,15 +39282,9 @@ def test_modal_compiler_surfaces_packet_003229_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -40985,10 +39308,7 @@ def test_modal_compiler_surfaces_packet_003229_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "review" if expected_direction == "contested" else "requires_rule"
         )
@@ -40996,8 +39316,7 @@ def test_modal_compiler_surfaces_packet_003229_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -41055,8 +39374,7 @@ def test_modal_compiler_surfaces_packet_003360_frame_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-003360-adaptive-evidence-{index}",
@@ -41113,9 +39431,7 @@ def test_modal_compiler_surfaces_packet_003360_frame_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -41124,15 +39440,9 @@ def test_modal_compiler_surfaces_packet_003360_frame_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -41156,17 +39466,13 @@ def test_modal_compiler_surfaces_packet_003360_frame_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -41224,8 +39530,7 @@ def test_modal_compiler_surfaces_packet_005348_frame_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-005348-adaptive-evidence-{index}",
@@ -41282,9 +39587,7 @@ def test_modal_compiler_surfaces_packet_005348_frame_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -41293,15 +39596,9 @@ def test_modal_compiler_surfaces_packet_005348_frame_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -41325,17 +39622,13 @@ def test_modal_compiler_surfaces_packet_005348_frame_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -41393,8 +39686,7 @@ def test_modal_compiler_surfaces_packet_003762_deontic_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-003762-adaptive-evidence-{index}",
@@ -41451,9 +39743,7 @@ def test_modal_compiler_surfaces_packet_003762_deontic_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -41462,15 +39752,9 @@ def test_modal_compiler_surfaces_packet_003762_deontic_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -41494,17 +39778,13 @@ def test_modal_compiler_surfaces_packet_003762_deontic_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -41551,8 +39831,7 @@ def test_modal_compiler_surfaces_packet_007710_frame_conditional_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-007710-adaptive-evidence-{index}",
@@ -41609,9 +39888,7 @@ def test_modal_compiler_surfaces_packet_007710_frame_conditional_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -41620,15 +39897,9 @@ def test_modal_compiler_surfaces_packet_007710_frame_conditional_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -41652,17 +39923,13 @@ def test_modal_compiler_surfaces_packet_007710_frame_conditional_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -41734,9 +40001,7 @@ def test_modal_compiler_surfaces_packet_005157_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
         target_share = predicted_share + family_margin
         ranking = [
@@ -41754,15 +40019,12 @@ def test_modal_compiler_surfaces_packet_005157_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-005157-adaptive-evidence-{index}",
             text=f"Synthetic packet 005157 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 005157 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 005157 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -41814,9 +40076,7 @@ def test_modal_compiler_surfaces_packet_005157_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -41825,12 +40085,8 @@ def test_modal_compiler_surfaces_packet_005157_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -41851,16 +40107,12 @@ def test_modal_compiler_surfaces_packet_005157_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -41923,9 +40175,7 @@ def test_modal_compiler_surfaces_packet_001559_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = max(0.2, abs(family_margin) + 0.05)
         target_share = predicted_share + family_margin
         ranking = [
@@ -41943,15 +40193,12 @@ def test_modal_compiler_surfaces_packet_001559_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001559-adaptive-evidence-{index}",
             text=f"Synthetic packet 001559 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 001559 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 001559 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -42020,15 +40267,9 @@ def test_modal_compiler_surfaces_packet_001559_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -42052,10 +40293,7 @@ def test_modal_compiler_surfaces_packet_001559_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "requires_rule" if expected_direction == "outvoted" else "review"
         )
@@ -42063,8 +40301,7 @@ def test_modal_compiler_surfaces_packet_001559_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -42080,23 +40317,17 @@ def test_modal_registry_packet_001560_exposes_explicit_ambiguity_pairs() -> None
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -42154,9 +40385,7 @@ def test_modal_compiler_surfaces_packet_001626_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.05))
         target_share = predicted_share + family_margin
         ranking = [
@@ -42174,15 +40403,12 @@ def test_modal_compiler_surfaces_packet_001626_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001626-adaptive-evidence-{index}",
             text=f"Synthetic packet 001626 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 001626 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 001626 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -42251,15 +40477,9 @@ def test_modal_compiler_surfaces_packet_001626_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -42283,10 +40503,7 @@ def test_modal_compiler_surfaces_packet_001626_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == (
             "requires_rule" if expected_direction == "outvoted" else "review"
         )
@@ -42294,8 +40511,7 @@ def test_modal_compiler_surfaces_packet_001626_adaptive_ambiguity_policy(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -42373,9 +40589,9 @@ def test_decompiler_corrects_temporal_family_from_rule_gap_and_time_scope() -> N
     )
 
     assert "temporal" in slot_texts["autoencoder_modal_target_family_guidance"]
-    assert "doxastic->temporal:until_after" in slot_texts[
-        "typed-decompiler-source-family-correction"
-    ]
+    assert (
+        "doxastic->temporal:until_after" in slot_texts["typed-decompiler-source-family-correction"]
+    )
     assert any(
         "temporal->temporal" in value
         for value in slot_texts["typed-decompiler-source-family-corrected-target-pair"]
@@ -42411,20 +40627,19 @@ def test_decompiler_corrects_dynamic_family_from_action_transition_cues() -> Non
         }
     ]
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "dynamic" in slot_texts["autoencoder_modal_target_family_guidance"]
-    assert "frame->dynamic:transfer_transferred" in slot_texts[
-        "typed-decompiler-source-family-correction"
-    ]
-    assert "dynamic->dynamic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "frame->dynamic:transfer_transferred"
+        in slot_texts["typed-decompiler-source-family-correction"]
+    )
+    assert "dynamic->dynamic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
 
 
-def test_decompiler_emits_frame_target_reconstruction_slots_for_conditioned_temporal_scope() -> None:
+def test_decompiler_emits_frame_target_reconstruction_slots_for_conditioned_temporal_scope() -> (
+    None
+):
     document = _single_formula_document(
         family="frame",
         symbol="Frame",
@@ -42437,21 +40652,17 @@ def test_decompiler_emits_frame_target_reconstruction_slots_for_conditioned_temp
         conditions=["after August 8, 2005"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "conditioned+temporal:frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-scope"
-    ]
+    assert (
+        "conditioned+temporal:frame->temporal"
+        in slot_texts["typed-decompiler-target-reconstruction-scope"]
+    )
     assert (
         "temporal-priority:temporal-guard:none:temporal:f:clause"
         in slot_texts["defeasible-priority"]
     )
-    assert (
-        "system-binding:ltl:temporal:f:temporal-order:clause"
-        in slot_texts["entity-binding"]
-    )
+    assert "system-binding:ltl:temporal:f:temporal-order:clause" in slot_texts["entity-binding"]
 
 
 def test_decompiler_corrects_frame_source_family_for_deontic_legal_cues() -> None:
@@ -42468,18 +40679,14 @@ def test_decompiler_corrects_frame_source_family_for_deontic_legal_cues() -> Non
         conditions=["only after review by the Technical Mapping Advisory Council"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "deontic" in slot_texts["typed-decompiler-source-semantic-family"]
     assert any(
         value.startswith("frame->deontic:shall")
         for value in slot_texts["typed-decompiler-source-family-correction"]
     )
-    assert "deontic->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "deontic->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert (
         "deontic||slot:typed-decompiler-family-pair:deontic->deontic||deontic.ir"
@@ -42504,8 +40711,7 @@ def test_decompiler_preserves_conditional_normative_family_from_source_cues() ->
         symbol="Frame",
         label="frame",
         text=(
-            "The program is available to eligible applicants provided that "
-            "funds remain available."
+            "The program is available to eligible applicants provided that funds remain available."
         ),
         predicate="program_funding_eligibility",
     )
@@ -42513,25 +40719,22 @@ def test_decompiler_preserves_conditional_normative_family_from_source_cues() ->
     conditional_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(conditional_document)
     )
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(frame_document)
-    )
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(frame_document))
 
-    assert "conditional_normative" in conditional_slots[
-        "typed_decompiler_family_preservation"
-    ]
-    assert "conditional_normative->conditional_normative" in conditional_slots[
-        "typed_decompiler_family_preservation_pair"
-    ]
-    assert "conditional_normative->conditional_normative:provided_that" in (
-        conditional_slots["typed_decompiler_family_pair_cue"]
+    assert "conditional_normative" in conditional_slots["typed_decompiler_family_preservation"]
+    assert (
+        "conditional_normative->conditional_normative"
+        in conditional_slots["typed_decompiler_family_preservation_pair"]
     )
-    assert "frame->conditional_normative" in frame_slots[
-        "typed_decompiler_family_pair"
-    ]
-    assert "frame->conditional_normative:provided_that" in frame_slots[
-        "typed_decompiler_family_pair_cue"
-    ]
+    assert (
+        "conditional_normative->conditional_normative:provided_that"
+        in (conditional_slots["typed_decompiler_family_pair_cue"])
+    )
+    assert "frame->conditional_normative" in frame_slots["typed_decompiler_family_pair"]
+    assert (
+        "frame->conditional_normative:provided_that"
+        in frame_slots["typed_decompiler_family_pair_cue"]
+    )
 
 
 def test_decompiler_binds_frame_conditional_deontic_cues_to_deontic_view() -> None:
@@ -42546,26 +40749,23 @@ def test_decompiler_binds_frame_conditional_deontic_cues_to_deontic_view() -> No
         ),
         predicate="administrator_application_approval",
         conditions=[
-            (
-                "When the Administrator determines that use is not in "
-                "accordance with this section"
-            )
+            ("When the Administrator determines that use is not in accordance with this section")
         ],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "when:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-cue"
-    ]
-    assert "in_accordance_with:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-cue"
-    ]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "when:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-cue"]
+    )
+    assert (
+        "in_accordance_with:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-cue"]
+    )
     assert (
         "conditional_normative||slot:typed-decompiler-family-pair-cue:"
         "frame->conditional_normative:when||deontic.ir"
@@ -42574,9 +40774,10 @@ def test_decompiler_binds_frame_conditional_deontic_cues_to_deontic_view() -> No
         "conditional_normative||slot:typed-decompiler-family-pair-cue:"
         "frame->conditional_normative:in_accordance_with||deontic.ir"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
-    assert "obligation:negative_scope:deontic.ir:frame->deontic" in slot_texts[
-        "typed-decompiler-force-polarity-view-family-pair"
-    ]
+    assert (
+        "obligation:negative_scope:deontic.ir:frame->deontic"
+        in slot_texts["typed-decompiler-force-polarity-view-family-pair"]
+    )
     assert (
         "deontic||slot:typed-decompiler-source-predicate-force-pair:"
         "frame:administrator|typed-decompiler-force-polarity:"
@@ -42590,27 +40791,21 @@ def test_decompiler_preserves_conditional_normative_family_reconstruction() -> N
         symbol="O|",
         label="conditional obligation",
         text=(
-            "Subject to subsection (b), the Secretary shall make grants to "
-            "eligible institutions."
+            "Subject to subsection (b), the Secretary shall make grants to eligible institutions."
         ),
         predicate="secretary_grant_award",
         conditions=["subject to subsection (b)"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     reconstruction_pairs = slot_texts["typed-decompiler-target-reconstruction-pair"]
-    assert reconstruction_pairs[0] == (
-        "conditional_normative->conditional_normative"
+    assert reconstruction_pairs[0] == ("conditional_normative->conditional_normative")
+    assert "conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-family"]
+    assert (
+        "conditional obligation source reconstruction"
+        in slot_texts["typed_ir_family_pair_reconstruction_support"]
     )
-    assert "conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-family"
-    ]
-    assert "conditional obligation source reconstruction" in slot_texts[
-        "typed_ir_family_pair_reconstruction_support"
-    ]
     assert any(
         text.startswith("conditional obligation")
         for text in slot_texts["typed_ir_semantic_reconstruction_clause"]
@@ -42640,12 +40835,8 @@ def test_decompiler_binds_packet_000328_family_pairs_to_typed_role_values() -> N
         predicate="secretary_function_authority",
     )
 
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(frame_document)
-    )
-    deontic_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(deontic_document)
-    )
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(frame_document))
+    deontic_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(deontic_document))
     frame_structural_text = _structural_decoded_text(
         decode_modal_ir_document(frame_document),
         modal_ir=frame_document,
@@ -42653,17 +40844,10 @@ def test_decompiler_binds_packet_000328_family_pairs_to_typed_role_values() -> N
     )
 
     frame_role_values = frame_slots["typed-decompiler-family-pair-role-value"]
+    assert any(value.startswith("frame->deontic:action:make") for value in frame_role_values)
+    assert any(value.startswith("frame->frame:object:appropriated") for value in frame_role_values)
     assert any(
-        value.startswith("frame->deontic:action:make")
-        for value in frame_role_values
-    )
-    assert any(
-        value.startswith("frame->frame:object:appropriated")
-        for value in frame_role_values
-    )
-    assert any(
-        value.startswith("frame->temporal:temporal:fiscal_year")
-        for value in frame_role_values
+        value.startswith("frame->temporal:temporal:fiscal_year") for value in frame_role_values
     )
     assert "TDFOL.prover" in frame_slots["legal_ir_view_prototype"]
     assert "CEC.native" in frame_slots["legal_ir_view_prototype"]
@@ -42673,16 +40857,10 @@ def test_decompiler_binds_packet_000328_family_pairs_to_typed_role_values() -> N
 
     deontic_role_values = deontic_slots["typed-decompiler-family-pair-role-value"]
     assert any(
-        value.startswith("deontic->frame:subject:secretary")
-        for value in deontic_role_values
+        value.startswith("deontic->frame:subject:secretary") for value in deontic_role_values
     )
-    assert any(
-        value.startswith("deontic->frame:action:perform")
-        for value in deontic_role_values
-    )
-    assert "knowledge_graphs.neo4j_compat" in deontic_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert any(value.startswith("deontic->frame:action:perform") for value in deontic_role_values)
+    assert "knowledge_graphs.neo4j_compat" in deontic_slots["legal_ir_view_prototype"]
 
 
 def test_decompiler_emits_provided_that_target_reconstruction_surface_cues() -> None:
@@ -42691,28 +40869,26 @@ def test_decompiler_emits_provided_that_target_reconstruction_surface_cues() -> 
         symbol="Frame",
         label="frame",
         text=(
-            "Fees may be charged provided that the amounts remain available "
-            "for each fiscal year."
+            "Fees may be charged provided that the amounts remain available for each fiscal year."
         ),
         predicate="internal_service_fee",
-        conditions=[
-            "provided that the amounts remain available for each fiscal year"
-        ],
+        conditions=["provided that the amounts remain available for each fiscal year"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "conditioned+temporal:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-scope"
-    ]
-    assert "provided_that:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-cue"
-    ]
-    assert "provided_that:frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-cue"
-    ]
+    assert (
+        "conditioned+temporal:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-reconstruction-scope"]
+    )
+    assert (
+        "provided_that:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-cue"]
+    )
+    assert (
+        "provided_that:frame->temporal"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-cue"]
+    )
 
 
 def test_decompiler_reconstructs_packet_199_payment_and_assistance_atoms() -> None:
@@ -42775,44 +40951,39 @@ def test_decompiler_reconstructs_packet_199_payment_and_assistance_atoms() -> No
         selected_frame=None,
     )
 
-    assert "treasury_requisition_payment" in interior_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "department_expenditure_authorization" in interior_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->conditional_normative" in interior_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "treasury_requisition_payment" in interior_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "department_expenditure_authorization"
+        in interior_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "deontic->conditional_normative"
+        in interior_slots["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "treasury requisition payment" in interior_structural
     assert "department expenditure authorization" in interior_structural
     assert "CEC.native" in interior_slots["legal_ir_view_prototype"]
 
-    assert "health_professional_education_assistance" in assistance_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "education_assistance_repayment" in assistance_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in assistance_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "health_professional_education_assistance"
+        in assistance_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "education_assistance_repayment"
+        in assistance_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in assistance_slots["typed-decompiler-target-reconstruction-pair"]
     assert "health professional education assistance" in assistance_structural
     assert "assistance benefit repayment" in assistance_structural
     assert "deontic.ir" in assistance_slots["legal_ir_view_prototype"]
 
-    assert "appropriation_authorization" in funding_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "no_year_funding_availability" in funding_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->conditional_normative" in funding_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in funding_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "appropriation_authorization" in funding_slots["typed-decompiler-source-semantic-atom"]
+    assert "no_year_funding_availability" in funding_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "frame->conditional_normative"
+        in funding_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->temporal" in funding_slots["typed-decompiler-target-reconstruction-pair"]
     assert "appropriation authorization" in funding_structural
     assert "no year funding availability" in funding_structural
 
@@ -42830,35 +41001,23 @@ def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -
         conditions=["In accordance with section 9303 of title 15"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-family"
-    ]
-    assert "deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-family"
-    ]
-    assert "frame->deontic:shall" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "in_accordance_with:conditional_normative" in slot_texts[
-        "typed-decompiler-target-family-surface-cue"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-family"]
+    assert "deontic" in slot_texts["typed-decompiler-target-reconstruction-family"]
+    assert "frame->deontic:shall" in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    assert (
+        "in_accordance_with:conditional_normative"
+        in slot_texts["typed-decompiler-target-family-surface-cue"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert (
         "slot:cue-family:in_accordance_with:conditional_normative||"
-        "knowledge_graphs.neo4j_compat"
-        in slot_texts["semantic_slot_legal_ir_view_prototype"]
+        "knowledge_graphs.neo4j_compat" in slot_texts["semantic_slot_legal_ir_view_prototype"]
     )
     assert (
         "conditional_normative||slot:cue-family:in_accordance_with:"
@@ -42931,30 +41090,26 @@ def test_decompiler_reconstructs_deontic_frame_bridge_semantics_from_typed_slots
         selected_frame=None,
     )
 
-    assert "fund_use_authority" in deontic_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "training_program_support:deontic->frame" in deontic_slots[
-        "typed_ir_semantic_bridge_atom_pair"
-    ]
-    assert "deontic->frame:obligation:positive_scope" in deontic_slots[
-        "typed_ir_semantic_bridge_signature"
-    ]
+    assert "fund_use_authority" in deontic_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "training_program_support:deontic->frame"
+        in deontic_slots["typed_ir_semantic_bridge_atom_pair"]
+    )
+    assert (
+        "deontic->frame:obligation:positive_scope"
+        in deontic_slots["typed_ir_semantic_bridge_signature"]
+    )
     assert "typed first order prover obligations" in deontic_structural_text
     assert "fund use authority" in deontic_structural_text
 
-    assert "statutory_construction" in frame_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "statutory_force_effect" in frame_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "construction_no_effect:frame->deontic" in frame_slots[
-        "typed_ir_semantic_bridge_atom_pair"
-    ]
-    assert "frame->deontic:frame:positive_scope" in frame_slots[
-        "typed_ir_semantic_bridge_signature"
-    ]
+    assert "statutory_construction" in frame_slots["typed-decompiler-source-semantic-atom"]
+    assert "statutory_force_effect" in frame_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "construction_no_effect:frame->deontic" in frame_slots["typed_ir_semantic_bridge_atom_pair"]
+    )
+    assert (
+        "frame->deontic:frame:positive_scope" in frame_slots["typed_ir_semantic_bridge_signature"]
+    )
     assert "knowledge graph legal relations" in frame_structural_text
     assert "statutory construction" in frame_structural_text
 
@@ -42983,9 +41138,7 @@ def test_decompiler_emits_source_semantic_sentence_for_packet_000161_public_heal
         "legal duty obligation secretary conduct asthma surveillance local "
         "activities collect data prevalence severity public health"
     ]
-    assert "public_health_surveillance" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "public_health_surveillance" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert "legal duty obligation secretary conduct asthma surveillance" in structural_text
     assert "public health" in structural_text
 
@@ -43014,12 +41167,9 @@ def test_decompiler_uses_autoencoder_target_family_in_typed_reconstruction() -> 
         selected_frame=None,
     )
 
-    assert "epistemic->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "epistemic->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert any(
-        "temporal deadline period" in value
-        for value in slot_texts["typed_ir_reconstruction"]
+        "temporal deadline period" in value for value in slot_texts["typed_ir_reconstruction"]
     )
     assert "temporal deadline period" in structural_text
 
@@ -43029,10 +41179,7 @@ def test_decompiler_uses_guided_family_pairs_in_typed_reconstruction() -> None:
         family="epistemic",
         symbol="K",
         label="knowledge",
-        text=(
-            "The Secretary determines that compliance is adequate for the "
-            "program."
-        ),
+        text=("The Secretary determines that compliance is adequate for the program."),
         predicate="secretary_determines_program_compliance",
     )
     document.metadata["hint_evidence"] = [
@@ -43060,15 +41207,9 @@ def test_decompiler_uses_guided_family_pairs_in_typed_reconstruction() -> None:
         selected_frame=None,
     )
 
-    assert "epistemic->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "epistemic->temporal" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
-    assert "epistemic->temporal" in slot_texts[
-        "autoencoder_modal_family_guided_pair"
-    ]
+    assert "epistemic->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "epistemic->temporal" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert "epistemic->temporal" in slot_texts["autoencoder_modal_family_guided_pair"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "event calculus native legal events" in structural_text
 
@@ -43112,15 +41253,12 @@ def test_decompiler_guides_typed_slot_reconstruction_for_packet_003763() -> None
         selected_frame=None,
     )
 
-    assert "rechargeable_battery_regulation" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "collection_storage_transport_regulation" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->conditional_normative" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "rechargeable_battery_regulation" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "collection_storage_transport_regulation"
+        in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert "deontic->conditional_normative" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert slot_texts["guided_typed_ir_semantic_reconstruction"]
     assert any(
         "conditional obligation" in value
@@ -43165,14 +41303,10 @@ def test_decompiler_emits_compact_reconstruction_profiles_for_packet_2064_pairs(
         }
     ]
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
     profiles = slot_texts["typed-decompiler-reconstruction-semantic-profile"]
 
-    assert "frame->doxastic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->doxastic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert any(
         value.startswith("frame->conditional_normative|view:CEC.native|")
         and "uscode_law_relationship_surface" in value
@@ -43218,12 +41352,8 @@ def test_decompiler_infers_within_condition_for_deontic_conditional_reconstructi
 
     assert "within" in slot_texts["condition_prefix_key"]
     assert "deadline" in slot_texts["condition_prefix_temporal_relation"]
-    assert "conditional_normative:O|:within" in slot_texts[
-        "condition_modal_bridge_signature"
-    ]
-    assert "deontic->conditional_normative" in slot_texts[
-        "condition_modal_bridge_family_pair"
-    ]
+    assert "conditional_normative:O|:within" in slot_texts["condition_modal_bridge_signature"]
+    assert "deontic->conditional_normative" in slot_texts["condition_modal_bridge_family_pair"]
     assert any(
         "conditional obligation" in value and "temporal deadline period" in value
         for value in slot_texts["typed_ir_reconstruction"]
@@ -43264,9 +41394,7 @@ def test_decompiler_renders_frame_conditional_deontic_source_semantics() -> None
         and "secretary expand facilities" in value
         for value in slot_texts["typed_ir_source_semantic_sentence"]
     )
-    assert "frame->conditional_normative" in slot_texts[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "frame->conditional_normative" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert "frame->deontic" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert "conditional legal duty" in structural_text
     assert "conditioned on subject to section 314" in structural_text
@@ -43324,10 +41452,7 @@ def test_decompiler_packet_000847_source_sentence_names_guided_family_pairs() ->
                 family="frame",
                 symbol="Frame",
                 label="frame",
-                text=(
-                    "The office record identifies the legal frame for program "
-                    "administration."
-                ),
+                text=("The office record identifies the legal frame for program administration."),
                 predicate="program_administration_frame_record",
             ),
             "legal frame source reconstruction",
@@ -43362,8 +41487,7 @@ def test_decompiler_packet_000847_source_sentence_names_guided_family_pairs() ->
 
         assert expected_pair in slot_texts["typed_ir_cross_family_semantic_support"]
         assert any(
-            expected_sentence in value
-            for value in slot_texts["typed_ir_source_semantic_sentence"]
+            expected_sentence in value for value in slot_texts["typed_ir_source_semantic_sentence"]
         )
         assert expected_sentence in structural_text
 
@@ -43412,15 +41536,12 @@ def test_decompiler_uses_heading_semantics_for_deontic_temporal_reconstruction()
         selected_frame=None,
     )
 
-    assert "buying_power_account_maintenance" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "buying_power_account_maintenance:deontic->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "deontic->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "buying_power_account_maintenance" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert (
+        "buying_power_account_maintenance:deontic->temporal"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "deontic->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "buying power account maintenance" in structural_text
 
 
@@ -43466,15 +41587,12 @@ def test_decompiler_uses_heading_semantics_for_frame_deontic_reconstruction() ->
         selected_frame=None,
     )
 
-    assert "predictive_analytics_disclosure" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "waste_fraud_abuse_prevention:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "predictive_analytics_disclosure" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert (
+        "waste_fraud_abuse_prevention:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "predictive analytics disclosure" in structural_text
 
@@ -43500,21 +41618,17 @@ def test_decompiler_reconstructs_packet_000124_irrigation_frame_targets() -> Non
         selected_frame=None,
     )
 
-    assert "irrigation_project" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "irrigation_project:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "irrigation_project:frame->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "irrigation_project" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "irrigation_project:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "irrigation_project:frame->temporal"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "irrigation project" in structural_text
     assert "temporal deadline period" in structural_text
 
@@ -43540,18 +41654,16 @@ def test_decompiler_reconstructs_packet_000124_foreign_service_deontic_targets()
         selected_frame=None,
     )
 
-    assert "foreign_commercial_service" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "foreign_commercial_service:deontic->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "foreign_service:deontic->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "deontic->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "foreign_commercial_service" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "foreign_commercial_service:deontic->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "foreign_service:deontic->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "deontic->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "foreign commercial service" in structural_text
     assert "obligation permission prohibition" in structural_text
 
@@ -43577,21 +41689,23 @@ def test_decompiler_reconstructs_packet_000278_implementation_funding_slots() ->
         selected_frame=None,
     )
 
-    assert "implementation_funding" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "health_insurance_reform_implementation_fund" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "patient_protection_affordable_care_act" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "implementation_funding:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "implementation_funding:frame->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "implementation_funding" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "health_insurance_reform_implementation_fund"
+        in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "patient_protection_affordable_care_act"
+        in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "implementation_funding:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "implementation_funding:frame->temporal"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "implementation funding" in structural_text
     assert "patient protection affordable care act" in structural_text
@@ -43617,26 +41731,23 @@ def test_decompiler_routes_office_seal_atoms_to_deontic_frame_and_legal_views() 
         selected_frame=None,
     )
 
-    assert "deontic->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "deontic->frame" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "official_seal:deontic->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "plant_variety_protection_office:deontic->frame" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "deontic->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->frame" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "official_seal:deontic->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "plant_variety_protection_office:deontic->frame"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "modal.frame_logic" in slot_texts["legal_ir_view_prototype"]
     assert any(
-        "obligation" in value
-        and "plant variety protection office official seal" in value
+        "obligation" in value and "plant variety protection office official seal" in value
         for value in slot_texts["typed_ir_reconstruction"]
     )
     assert "plant variety protection office official seal" in structural_text
@@ -43653,9 +41764,7 @@ def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() 
             "in excess of federal needs."
         ),
         predicate="dredge_vessel_disposal",
-        conditions=[
-            "if the Secretary declares the vessel to be in excess of federal needs"
-        ],
+        conditions=["if the Secretary declares the vessel to be in excess of federal needs"],
     )
     formula = document.formulas[0]
     formula.metadata["fallback_rule"] = "uscode_section_heading_v1"
@@ -43668,12 +41777,11 @@ def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() 
         selected_frame=None,
     )
 
-    assert "frame->conditional_normative:heading" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "frame->conditional_normative:heading" in slot_texts[
-        "typed_decompiler_family_pair_cue"
-    ]
+    assert (
+        "frame->conditional_normative:heading"
+        in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    )
+    assert "frame->conditional_normative:heading" in slot_texts["typed_decompiler_family_pair_cue"]
     assert any(
         "conditional obligation" in value
         and "disposal of dredge vessels" in value
@@ -43716,9 +41824,7 @@ def test_decompiler_reconstructs_unconditioned_frame_self_scope_from_semantic_at
         formulas=[formula],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "frame->frame" in slot_texts["typed_ir_cross_family_semantic_support"]
     assert any(
@@ -43774,16 +41880,10 @@ def test_decompiler_emits_packet_000169_semantic_reconstruction_clause() -> None
         selected_frame=None,
     )
 
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert slot_texts["typed_ir_semantic_reconstruction_clause"]
-    assert "implementation_action_report" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "implementation_action_report" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert any(
         "legal frame source reconstructs conditional obligation" in value
         and "permission prohibition" in value
@@ -43808,18 +41908,19 @@ def test_decompiler_emits_source_predicate_force_and_surface_family_slots() -> N
     decoded = decode_modal_ir_document(document)
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "deontic:secretary_shall_make_awards|obligation:positive_scope" in slot_texts[
-        "typed-decompiler-source-predicate-force-pair"
-    ]
-    assert "obligation:positive_scope:deontic->deontic" in slot_texts[
-        "typed-decompiler-force-polarity-family-pair"
-    ]
-    assert "under:deontic->frame" in slot_texts[
-        "typed-decompiler-surface-cue-family-pair"
-    ]
-    assert "deontic:secretary_shall_make_awards->frame" in slot_texts[
-        "typed-decompiler-source-predicate-family-pair"
-    ]
+    assert (
+        "deontic:secretary_shall_make_awards|obligation:positive_scope"
+        in slot_texts["typed-decompiler-source-predicate-force-pair"]
+    )
+    assert (
+        "obligation:positive_scope:deontic->deontic"
+        in slot_texts["typed-decompiler-force-polarity-family-pair"]
+    )
+    assert "under:deontic->frame" in slot_texts["typed-decompiler-surface-cue-family-pair"]
+    assert (
+        "deontic:secretary_shall_make_awards->frame"
+        in slot_texts["typed-decompiler-source-predicate-family-pair"]
+    )
 
 
 def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> None:
@@ -43844,15 +41945,10 @@ def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> 
         selected_frame=None,
     )
 
-    assert "frame->epistemic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->epistemic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert any(
-        "knowledge determination finding" in value
-        and "administrative offset" in value
+        "knowledge determination finding" in value and "administrative offset" in value
         for value in slot_texts["typed_ir_reconstruction"]
     )
     assert "knowledge determination finding" in structural_text
@@ -43881,9 +41977,7 @@ def test_decompiler_emits_direct_frame_target_reconstruction_view_anchors() -> N
     ]
     document.formulas[0].metadata["fallback_rule"] = "uscode_section_heading_v1"
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert {
         "frame->conditional_normative",
@@ -43902,8 +41996,7 @@ def test_decompiler_emits_direct_frame_target_reconstruction_view_anchors() -> N
     )
     assert (
         "epistemic||slot:typed-decompiler-target-reconstruction-family:"
-        "epistemic||deontic.ir"
-        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+        "epistemic||deontic.ir" in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
     )
 
 
@@ -43934,14 +42027,10 @@ def test_decompiler_uses_rule_gap_target_family_from_autoencoder_prose() -> None
         }
     ]
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "alethic" in slot_texts["autoencoder_modal_target_family_guidance"]
-    assert "frame->alethic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->alethic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "alethic" in slot_texts["typed-decompiler-target-reconstruction-family"]
 
 
@@ -43972,14 +42061,10 @@ def test_decompiler_uses_family_distribution_target_probability_gap() -> None:
         }
     ]
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "epistemic" in slot_texts["autoencoder_modal_target_family_guidance"]
-    assert "frame->epistemic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->epistemic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "epistemic" in slot_texts["typed-decompiler-target-reconstruction-family"]
 
 
@@ -44005,21 +42090,17 @@ def test_decompiler_reconstructs_housing_investment_authority_from_frame_slots()
         selected_frame=None,
     )
 
-    assert "housing_investment_authority" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "participating_jurisdiction" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "affordable_housing_supply" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "housing_investment_authority:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "affordable_housing_supply:frame->temporal" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "housing_investment_authority" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "participating_jurisdiction" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "affordable_housing_supply" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "housing_investment_authority:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "affordable_housing_supply:frame->temporal"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "obligation permission prohibition" in structural_text
     assert "housing investment authority" in structural_text
     assert "affordable housing supply" in structural_text
@@ -44046,24 +42127,18 @@ def test_decompiler_reconstructs_partnership_notice_epistemic_slots() -> None:
         selected_frame=None,
     )
 
-    assert "partnership_notice_proceeding" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "partnership_adjustment_notice" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "partnership_item" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "partnership" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "partnership_notice_proceeding:frame->epistemic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "partnership_notice_proceeding:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "partnership_notice_proceeding" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "partnership_adjustment_notice" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "partnership_item" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "partnership" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "partnership_notice_proceeding:frame->epistemic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "partnership_notice_proceeding:frame->conditional_normative"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "knowledge determination finding" in structural_text
     assert "partnership notice proceeding" in structural_text
     assert "partnership adjustment notice" in structural_text
@@ -44117,12 +42192,8 @@ def test_decompiler_reconstructs_packet_1588_frame_semantic_atoms() -> None:
     visitor_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(visitor_center_document)
     )
-    voter_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(voter_document)
-    )
-    fishery_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(fishery_document)
-    )
+    voter_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(voter_document))
+    fishery_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(fishery_document))
     purchasing_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(purchasing_document)
     )
@@ -44132,39 +42203,39 @@ def test_decompiler_reconstructs_packet_1588_frame_semantic_atoms() -> None:
         selected_frame=None,
     )
 
-    assert "capitol_visitor_center" in visitor_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "visitor_center_assistant:frame->epistemic" in visitor_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "capitol_visitor_center" in visitor_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "visitor_center_assistant:frame->epistemic"
+        in visitor_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "visitor center assistant" in visitor_structural_text
 
-    assert "absent_uniformed_services_voter" in voter_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "absent_uniformed_services_voter:frame->conditional_normative" in voter_slots[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "absent_uniformed_services_voter" in voter_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "absent_uniformed_services_voter:frame->conditional_normative"
+        in voter_slots["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "deontic.ir" in voter_slots["legal_ir_view_prototype"]
 
-    assert "fishery_vessel_property_disposition" in fishery_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "fishery_vessel_property_disposition:frame->temporal" in fishery_slots[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert (
+        "fishery_vessel_property_disposition"
+        in fishery_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "fishery_vessel_property_disposition:frame->temporal"
+        in fishery_slots["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "TDFOL.prover" in fishery_slots["legal_ir_view_prototype"]
 
-    assert "omitted:frame->temporal" in purchasing_slots[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "government_purchasing_authority:frame->temporal" in purchasing_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in purchasing_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert (
+        "omitted:frame->temporal"
+        in purchasing_slots["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "government_purchasing_authority:frame->temporal"
+        in purchasing_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in purchasing_slots["legal_ir_view_prototype"]
 
 
 def test_decompiler_routes_temporal_irrigation_status_to_epistemic_slots() -> None:
@@ -44178,9 +42249,7 @@ def test_decompiler_routes_temporal_irrigation_status_to_epistemic_slots() -> No
             "records shall eliminate the lands from irrigation status."
         ),
         predicate="project_records_eliminate_irrigation_status",
-        conditions=[
-            "When the Secretary determines that lands are permanently nonirrigable"
-        ],
+        conditions=["When the Secretary determines that lands are permanently nonirrigable"],
     )
 
     decoded = decode_modal_ir_document(document)
@@ -44191,27 +42260,24 @@ def test_decompiler_routes_temporal_irrigation_status_to_epistemic_slots() -> No
         selected_frame=None,
     )
 
-    assert "temporal->epistemic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "agency_determination:temporal->epistemic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "permanent_nonirrigable_land_status:temporal->epistemic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "temporal->epistemic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "agency_determination:temporal->epistemic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "permanent_nonirrigable_land_status:temporal->epistemic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "determines" in slot_texts["modal_source_span_typed_decompiler_action"]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert any(
         "knowledge determination finding" in value
         for value in slot_texts["typed_ir_reconstruction"]
     )
     assert any(
-        "permanent nonirrigable land status" in value
-        and "agency determination" in value
+        "permanent nonirrigable land status" in value and "agency determination" in value
         for value in slot_texts["typed_ir_compact_semantic_support"]
     )
     assert "knowledge determination finding" in structural_text
@@ -44223,29 +42289,26 @@ def test_decompiler_emits_formula_cue_surface_slots_for_conditioned_permission()
         family="conditional_normative",
         symbol="O|",
         label="conditional obligation",
-        text=(
-            "The Secretary may transfer funds except after fiscal year 2026."
-        ),
+        text=("The Secretary may transfer funds except after fiscal year 2026."),
         predicate="secretary_transfer_funds",
         conditions=["except after fiscal year 2026"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "conditional_normative->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "conditional_normative->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "may:deontic" in slot_texts[
-        "typed-decompiler-target-family-surface-cue"
-    ]
-    assert "after:conditional_normative->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-cue"
-    ]
+    assert (
+        "conditional_normative->deontic"
+        in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "conditional_normative->temporal"
+        in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "may:deontic" in slot_texts["typed-decompiler-target-family-surface-cue"]
+    assert (
+        "after:conditional_normative->temporal"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-cue"]
+    )
 
 
 def test_decompiler_emits_permission_enabling_and_temporal_to_deontic_slots() -> None:
@@ -44263,19 +42326,12 @@ def test_decompiler_emits_permission_enabling_and_temporal_to_deontic_slots() ->
         family="temporal",
         symbol="F",
         label="eventuality",
-        text=(
-            "The Center may provide services during fiscal year 2026 under "
-            "this section."
-        ),
+        text=("The Center may provide services during fiscal year 2026 under this section."),
         predicate="center_may_provide_services",
     )
 
-    deontic_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(deontic_document)
-    )
-    temporal_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(temporal_document)
-    )
+    deontic_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(deontic_document))
+    temporal_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(temporal_document))
 
     assert (
         "force-polarity-family-pair:permission:enabling:deontic->temporal"
@@ -44285,14 +42341,12 @@ def test_decompiler_emits_permission_enabling_and_temporal_to_deontic_slots() ->
         "typed-decompiler-target-reconstruction-scope",
         [],
     )
-    assert "temporal:temporal->deontic" in temporal_slots[
-        "typed-decompiler-target-reconstruction-scope"
-    ]
-    assert "under" in temporal_slots["typed-decompiler-source-scope-cue"]
     assert (
-        "source-ir-role:action:none:temporal:f:clause"
-        in temporal_slots["entity-binding"]
+        "temporal:temporal->deontic"
+        in temporal_slots["typed-decompiler-target-reconstruction-scope"]
     )
+    assert "under" in temporal_slots["typed-decompiler-source-scope-cue"]
+    assert "source-ir-role:action:none:temporal:f:clause" in temporal_slots["entity-binding"]
 
 
 def test_decompiler_reconstructs_force_temporal_and_conditional_family_pairs() -> None:
@@ -44317,36 +42371,27 @@ def test_decompiler_reconstructs_force_temporal_and_conditional_family_pairs() -
         predicate="secretary_transfer_available_funds",
     )
 
-    deontic_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(deontic_document)
-    )
+    deontic_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(deontic_document))
     conditional_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(conditional_document)
     )
 
-    assert "deontic->temporal" in deontic_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "temporal:deontic->temporal" in deontic_slots[
-        "typed-decompiler-target-reconstruction-scope"
-    ]
+    assert "deontic->temporal" in deontic_slots["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "temporal:deontic->temporal"
+        in deontic_slots["typed-decompiler-target-reconstruction-scope"]
+    )
     assert any(
         value.endswith("typed-decompiler-family-pair:deontic->temporal")
-        for value in deontic_slots[
-            "typed-decompiler-source-predicate-force-family-pair"
-        ]
+        for value in deontic_slots["typed-decompiler-source-predicate-force-family-pair"]
     )
-    assert "conditional_normative->conditional_normative" in conditional_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "conditional_normative->conditional_normative"
+        in conditional_slots["typed-decompiler-target-reconstruction-pair"]
+    )
     assert any(
-        value.endswith(
-            "typed-decompiler-family-pair:"
-            "conditional_normative->conditional_normative"
-        )
-        for value in conditional_slots[
-            "typed-decompiler-source-predicate-force-family-pair"
-        ]
+        value.endswith("typed-decompiler-family-pair:conditional_normative->conditional_normative")
+        for value in conditional_slots["typed-decompiler-source-predicate-force-family-pair"]
     )
 
 
@@ -44356,28 +42401,22 @@ def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> N
         symbol="O",
         label="obligation",
         text=(
-            "The agency must provide notice within 30 days and no later than "
-            "45 days after review."
+            "The agency must provide notice within 30 days and no later than 45 days after review."
         ),
         predicate="agency_must_provide_notice",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "within" in slot_texts["typed-decompiler-source-scope-cue"]
     assert "no_later_than" in slot_texts["typed-decompiler-source-scope-cue"]
     assert any(
-        value.startswith("deontic:")
-        and "|typed-decompiler-force-polarity:obligation:" in value
+        value.startswith("deontic:") and "|typed-decompiler-force-polarity:obligation:" in value
         for value in slot_texts["typed-decompiler-source-predicate-force-pair"]
     )
     assert any(
         value.startswith("condition+subject+action+object+temporal:deontic|")
-        for value in slot_texts[
-            "typed-decompiler-source-clause-topology-family-pair"
-        ]
+        for value in slot_texts["typed-decompiler-source-clause-topology-family-pair"]
     )
 
 
@@ -44394,23 +42433,16 @@ def test_decompiler_preserves_temporal_self_pair_role_topology_slots() -> None:
         conditions=["during fiscal year 2026"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     bridge_value = "temporal->temporal:subject+action+object+temporal"
-    assert bridge_value in slot_texts[
-        "typed-decompiler-family-pair-role-topology"
-    ]
-    assert bridge_value in slot_texts[
-        "typed-decompiler-family-pair-bridge"
-    ]
-    assert "temporal->temporal:fiscal_year" in slot_texts[
-        "typed-decompiler-family-pair-temporal-cue"
-    ]
+    assert bridge_value in slot_texts["typed-decompiler-family-pair-role-topology"]
+    assert bridge_value in slot_texts["typed-decompiler-family-pair-bridge"]
     assert (
-        "temporal||slot:typed-decompiler-family-pair-bridge:"
-        f"{bridge_value}||TDFOL.prover"
+        "temporal->temporal:fiscal_year" in slot_texts["typed-decompiler-family-pair-temporal-cue"]
+    )
+    assert (
+        f"temporal||slot:typed-decompiler-family-pair-bridge:{bridge_value}||TDFOL.prover"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 
@@ -44430,34 +42462,24 @@ def test_decompiler_preserves_frame_normative_pair_role_topology_slots() -> None
         ],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     bridge_value = "frame->deontic:subject+action+object+temporal"
-    conditional_bridge = (
-        "frame->conditional_normative:subject+action+object+temporal"
-    )
-    assert bridge_value in slot_texts[
-        "typed-decompiler-family-pair-role-topology"
-    ]
-    assert conditional_bridge in slot_texts[
-        "typed-decompiler-family-pair-role-topology"
-    ]
-    assert "frame->deontic:not_later_than" in slot_texts[
-        "typed-decompiler-family-pair-temporal-cue"
-    ]
+    conditional_bridge = "frame->conditional_normative:subject+action+object+temporal"
+    assert bridge_value in slot_texts["typed-decompiler-family-pair-role-topology"]
+    assert conditional_bridge in slot_texts["typed-decompiler-family-pair-role-topology"]
     assert (
-        "deontic||slot:typed-decompiler-family-pair-bridge:"
-        f"{bridge_value}||deontic.ir"
+        "frame->deontic:not_later_than" in slot_texts["typed-decompiler-family-pair-temporal-cue"]
+    )
+    assert (
+        f"deontic||slot:typed-decompiler-family-pair-bridge:{bridge_value}||deontic.ir"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
     assert (
         "conditional_normative||slot:typed-decompiler-family-pair-bridge:"
         f"{conditional_bridge}||TDFOL.prover"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
     assert (
-        "source-ir-role:object:none:conditional_normative:o:clause"
-        in slot_texts["entity-binding"]
+        "source-ir-role:object:none:conditional_normative:o:clause" in slot_texts["entity-binding"]
     )
     assert "condition:none:v_condition" in slot_texts["logical-variable-map"]
     assert "surface-role-edge:condition->action" in slot_texts["clause-topology"]
@@ -44476,21 +42498,14 @@ def test_decompiler_anchors_frame_self_transfer_status_to_tdfol_view() -> None:
         ),
         predicate="section_reclassified",
     )
-    document.formulas[0].metadata["fallback_rule"] = (
-        "uscode_editorial_status_heading_v1"
-    )
+    document.formulas[0].metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "frame->frame" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->frame" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert (
-        "frame||slot:typed-decompiler-target-reconstruction-pair:"
-        "frame->frame||TDFOL.prover"
+        "frame||slot:typed-decompiler-target-reconstruction-pair:frame->frame||TDFOL.prover"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 
@@ -44521,12 +42536,13 @@ def test_decompiler_treats_not_later_than_as_temporal_not_negative_scope() -> No
     assert "secretary file returns" in structural_text
     assert "shall" in structural_text
     assert "must not" not in structural_text
-    assert "obligation:positive_scope:temporal:frame->deontic" in slot_texts[
-        "typed-decompiler-force-polarity-scope-family-pair"
-    ]
-    assert "frame->temporal:not_later_than" in slot_texts[
-        "typed-decompiler-family-pair-temporal-cue"
-    ]
+    assert (
+        "obligation:positive_scope:temporal:frame->deontic"
+        in slot_texts["typed-decompiler-force-polarity-scope-family-pair"]
+    )
+    assert (
+        "frame->temporal:not_later_than" in slot_texts["typed-decompiler-family-pair-temporal-cue"]
+    )
 
 
 def test_decompiler_balances_deontic_temporal_force_slots_with_cec_and_kg_views() -> None:
@@ -44534,27 +42550,22 @@ def test_decompiler_balances_deontic_temporal_force_slots_with_cec_and_kg_views(
         family="deontic",
         symbol="O",
         label="obligation",
-        text=(
-            "The Secretary is required to file returns not later than "
-            "fiscal year 2026."
-        ),
+        text=("The Secretary is required to file returns not later than fiscal year 2026."),
         predicate="secretary_file_returns",
         conditions=["not later than fiscal year 2026"],
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "deontic->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "obligation:CEC.native:deontic->temporal" in slot_texts[
-        "typed-decompiler-force-view-family-pair"
-    ]
-    assert "obligation:knowledge_graphs.neo4j_compat:deontic->temporal" in slot_texts[
-        "typed-decompiler-force-view-family-pair"
-    ]
+    assert "deontic->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "obligation:CEC.native:deontic->temporal"
+        in slot_texts["typed-decompiler-force-view-family-pair"]
+    )
+    assert (
+        "obligation:knowledge_graphs.neo4j_compat:deontic->temporal"
+        in slot_texts["typed-decompiler-force-view-family-pair"]
+    )
 
 
 def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> None:
@@ -44571,24 +42582,17 @@ def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> No
     )
     document.formulas[0].exceptions.append("Except as provided in this chapter")
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    force_value = (
-        "frame:pub|typed-decompiler-force-polarity:obligation:mandatory"
-    )
-    assert force_value in slot_texts[
-        "typed-decompiler-source-predicate-force-pair"
-    ]
+    force_value = "frame:pub|typed-decompiler-force-polarity:obligation:mandatory"
+    assert force_value in slot_texts["typed-decompiler-source-predicate-force-pair"]
     assert (
         f"{force_value}|typed-decompiler-family-pair:frame->deontic"
         in slot_texts["typed-decompiler-source-predicate-force-family-pair"]
     )
     assert "conditional_normative" in slot_texts["family_exception_present"]
     assert (
-        "deontic||slot:typed-decompiler-source-predicate-force-pair:"
-        f"{force_value}||deontic.ir"
+        f"deontic||slot:typed-decompiler-source-predicate-force-pair:{force_value}||deontic.ir"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 
@@ -44606,20 +42610,15 @@ def test_decompiler_uses_semantic_predicate_head_for_air_carrier_force_slots() -
     )
     document.formulas[0].exceptions.append("Except as provided in this chapter")
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     semantic_force_value = (
-        "frame:air_transportation_service_duty|"
-        "typed-decompiler-force-polarity:obligation:mandatory"
+        "frame:air_transportation_service_duty|typed-decompiler-force-polarity:obligation:mandatory"
     )
-    assert "air_transportation_service_duty" in slot_texts[
-        "typed-decompiler-semantic-predicate-head"
-    ]
-    assert semantic_force_value in slot_texts[
-        "typed-decompiler-source-predicate-force-pair"
-    ]
+    assert (
+        "air_transportation_service_duty" in slot_texts["typed-decompiler-semantic-predicate-head"]
+    )
+    assert semantic_force_value in slot_texts["typed-decompiler-source-predicate-force-pair"]
     assert (
         f"{semantic_force_value}|typed-decompiler-family-pair:frame->deontic"
         in slot_texts["typed-decompiler-source-predicate-force-family-pair"]
@@ -44644,27 +42643,24 @@ def test_decompiler_emits_force_polarity_family_slots_for_frame_conditional_norm
     )
     document.formulas[0].exceptions.append("Except as provided in this chapter")
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "obligation:negative_scope:conditional_normative" in slot_texts[
-        "typed-decompiler-force-polarity"
-    ]
+    assert (
+        "obligation:negative_scope:conditional_normative"
+        in slot_texts["typed-decompiler-force-polarity"]
+    )
     assert (
         "obligation:negative_scope:frame->conditional_normative"
         in slot_texts["typed-decompiler-force-polarity-family-pair"]
     )
     assert (
         "force-polarity-family-pair:"
-        "obligation:negative_scope:frame->conditional_normative"
-        in slot_texts["decompiler-plan"]
+        "obligation:negative_scope:frame->conditional_normative" in slot_texts["decompiler-plan"]
     )
     assert (
         "slot:typed-decompiler-force-polarity:"
         "obligation:negative_scope:conditional_normative||"
-        "knowledge_graphs.neo4j_compat"
-        in slot_texts["semantic_slot_legal_ir_view_prototype"]
+        "knowledge_graphs.neo4j_compat" in slot_texts["semantic_slot_legal_ir_view_prototype"]
     )
     assert (
         "frame||slot:typed-decompiler-force-polarity:"
@@ -44694,9 +42690,7 @@ def test_decompiler_reuses_guided_family_pairs_for_cue_force_slots() -> None:
         }
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert (
         "shall:obligation:mandatory:doxastic->conditional_normative"
@@ -44735,24 +42729,18 @@ def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> No
         selected_frame=None,
     )
 
-    assert "submit_or_file" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "budget_program_submission" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "account_maintenance" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "audit_requirement" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "submit_or_file:deontic->frame" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "budget_program_submission:deontic->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "submit_or_file" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "budget_program_submission" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "account_maintenance" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "audit_requirement" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "submit_or_file:deontic->frame"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "budget_program_submission:deontic->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
@@ -44781,21 +42769,16 @@ def test_decompiler_emits_semantic_source_slots_for_annual_report_duty() -> None
         predicate="secretary_submit_report",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "annual_report_duty" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "report_duty:temporal->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "annual_report_duty" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "report_duty:temporal->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert any(
         value.startswith("subject+action+object+semantic:temporal|")
-        for value in slot_texts[
-            "typed-decompiler-source-clause-topology-family-pair"
-        ]
+        for value in slot_texts["typed-decompiler-source-clause-topology-family-pair"]
     )
 
 
@@ -44811,19 +42794,17 @@ def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() ->
         predicate="consultation_cooperation",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "consultation_cooperation" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "consultation_cooperation:frame->frame" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "consultation_cooperation:frame->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "consultation_cooperation" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "consultation_cooperation:frame->frame"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "consultation_cooperation:frame->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
 
 
 def test_decompiler_reconstructs_multilateral_investment_guarantee_slots() -> None:
@@ -44858,9 +42839,10 @@ def test_decompiler_reconstructs_multilateral_investment_guarantee_slots() -> No
         "frame->deontic",
         "frame->frame",
     }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
-    assert "multilateral_investment_guarantee:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert (
+        "multilateral_investment_guarantee:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
         set(slot_texts["legal_ir_view_prototype"])
     )
@@ -44889,47 +42871,34 @@ def test_decompiler_binds_packet_000208_family_pairs_to_legal_ir_views() -> None
         predicate="consultation_cooperation",
     )
 
-    deontic_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(deontic_document)
-    )
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(frame_document)
-    )
+    deontic_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(deontic_document))
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(frame_document))
 
     assert "deontic.ir" in deontic_slots["legal_ir_view_prototype"]
     assert "CEC.native" in deontic_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in deontic_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in deontic_slots["legal_ir_view_prototype"]
     assert (
-        "deontic||slot:typed-decompiler-family-pair:"
-        "deontic->conditional_normative||CEC.native"
+        "deontic||slot:typed-decompiler-family-pair:deontic->conditional_normative||CEC.native"
     ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
     assert (
         "conditional_normative||slot:typed-decompiler-family-pair:"
         "deontic->conditional_normative||TDFOL.prover"
     ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
     assert (
-        "deontic||slot:typed-decompiler-family-pair:"
-        "deontic->deontic||CEC.native"
+        "deontic||slot:typed-decompiler-family-pair:deontic->deontic||CEC.native"
     ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
     assert (
-        "deontic||slot:typed-decompiler-family-pair:"
-        "deontic->deontic||knowledge_graphs.neo4j_compat"
+        "deontic||slot:typed-decompiler-family-pair:deontic->deontic||knowledge_graphs.neo4j_compat"
     ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
 
     assert "deontic.ir" in frame_slots["legal_ir_view_prototype"]
     assert "CEC.native" in frame_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in frame_slots[
-        "legal_ir_view_prototype"
+    assert "knowledge_graphs.neo4j_compat" in frame_slots["legal_ir_view_prototype"]
+    assert ("frame||slot:typed-decompiler-family-pair:frame->deontic||CEC.native") in frame_slots[
+        "family_semantic_slot_legal_ir_view_prototype"
     ]
     assert (
-        "frame||slot:typed-decompiler-family-pair:"
-        "frame->deontic||CEC.native"
-    ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
-    assert (
-        "frame||slot:typed-decompiler-family-pair:"
-        "frame->frame||knowledge_graphs.neo4j_compat"
+        "frame||slot:typed-decompiler-family-pair:frame->frame||knowledge_graphs.neo4j_compat"
     ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
 
 
@@ -44945,28 +42914,20 @@ def test_decompiler_emits_temporal_role_anchors_for_frame_target_reconstruction(
         predicate="secretary_administer_reclamation_remedy",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "typed-role-temporal-target:frame->temporal:subject+action+object" in (
-        slot_texts["decompiler-plan"]
-    )
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert (
-        "ir-contract:temporal:ltl:f:subject+action+object"
-        in slot_texts["compiler-contract"]
+        "typed-role-temporal-target:frame->temporal:subject+action+object"
+        in (slot_texts["decompiler-plan"])
     )
+    assert "ir-contract:temporal:ltl:f:subject+action+object" in slot_texts["compiler-contract"]
     assert (
         "decompiler-proof-slot:prove-temporal-order:"
-        "frame->temporal:typed_role_temporal_target"
-        in slot_texts["proof-obligation"]
+        "frame->temporal:typed_role_temporal_target" in slot_texts["proof-obligation"]
     )
     assert (
-        "temporal||slot:source-ir-role:action:administer:temporal:f||"
-        "knowledge_graphs.neo4j_compat"
+        "temporal||slot:source-ir-role:action:administer:temporal:f||knowledge_graphs.neo4j_compat"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 
@@ -44992,31 +42953,20 @@ def test_decompiler_emits_predicate_class_slots_for_deontic_frame_family_pairs()
         predicate="statutory_construction_authority",
     )
 
-    deontic_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(deontic_document)
-    )
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(frame_document)
-    )
+    deontic_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(deontic_document))
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(frame_document))
 
-    assert "deontic->frame:statutory" in deontic_slots[
-        "typed-decompiler-family-pair-predicate"
-    ]
-    assert "frame->deontic:statutory" in frame_slots[
-        "typed-decompiler-family-pair-predicate"
-    ]
+    assert "deontic->frame:statutory" in deontic_slots["typed-decompiler-family-pair-predicate"]
+    assert "frame->deontic:statutory" in frame_slots["typed-decompiler-family-pair-predicate"]
     assert (
         "temporal||slot:typed-decompiler-family-pair-predicate:"
         "frame->deontic:statutory||modal.frame_logic"
     ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
     assert (
-        "slot:typed-decompiler-family-pair-predicate:"
-        "deontic->frame:statutory||modal.frame_logic"
+        "slot:typed-decompiler-family-pair-predicate:deontic->frame:statutory||modal.frame_logic"
     ) in deontic_slots["semantic_slot_legal_ir_view_prototype"]
     assert "deontic.ir" in frame_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in deontic_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in deontic_slots["legal_ir_view_prototype"]
 
 
 def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
@@ -45031,18 +42981,12 @@ def test_decompiler_emits_definition_slots_for_as_used_frame_span() -> None:
         predicate="complaint_definition",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "definition" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert "complaint" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "definition:frame->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "definition:frame->frame" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "definition:frame->deontic" in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    assert "definition:frame->frame" in slot_texts["typed-decompiler-target-semantic-family-pair"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
 
@@ -45070,31 +43014,30 @@ def test_decompiler_routes_packer_definition_to_conditional_normative_slots() ->
     )
 
     assert "definition" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "packer_definition" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "livestock_commerce" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "definition:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "packer_definition:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "packer_definition:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "livestock_commerce:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "packer_definition" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "livestock_commerce" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "definition:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "packer_definition:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "packer_definition:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "livestock_commerce:frame->conditional_normative"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert any(
-        "conditional obligation" in value
-        and "livestock commerce" in value
+        "conditional obligation" in value and "livestock commerce" in value
         for value in slot_texts["typed_ir_reconstruction"]
     )
     assert "conditional obligation" in structural_text
@@ -45123,18 +43066,15 @@ def test_decompiler_reconstructs_proposal_examination_payment_slots() -> None:
         selected_frame=None,
     )
 
-    assert "proposal_submission" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "proposal_examination_payment" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "proposal_examination_payment:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "proposal_submission" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "proposal_examination_payment" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "proposal_examination_payment:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "proposal examination payment" in structural_text
 
@@ -45178,29 +43118,24 @@ def test_decompiler_reconstructs_office_and_certificate_penalty_slots() -> None:
         selected_frame=None,
     )
 
-    assert "office_of_womens_health" in office_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "public_health_agency" in office_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "public_health_agency:frame->deontic" in office_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in office_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "office_of_womens_health" in office_slots["typed-decompiler-source-semantic-atom"]
+    assert "public_health_agency" in office_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "public_health_agency:frame->deontic"
+        in office_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in office_slots["legal_ir_view_prototype"]
     assert "public health agency" in office_structural_text
 
-    assert "documentation_certificate_requirement" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "undocumented_trading_penalty" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "undocumented_trading_penalty:deontic->deontic" in penalty_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert (
+        "documentation_certificate_requirement"
+        in penalty_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "undocumented_trading_penalty" in penalty_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "undocumented_trading_penalty:deontic->deontic"
+        in penalty_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "deontic.ir" in penalty_slots["legal_ir_view_prototype"]
     assert "undocumented trading penalty" in penalty_structural_text
 
@@ -45219,30 +43154,24 @@ def test_decompiler_routes_priority_state_definition_to_typed_legal_views() -> N
         predicate="priority_state_definition",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "priority_state" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "funding_eligibility" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "state_energy_program" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "per_capita_ranking" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "funding_eligibility" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "state_energy_program" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "per_capita_ranking" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert "state_ranking" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "priority_state:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "funding_eligibility:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "priority_state:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "funding_eligibility:frame->conditional_normative"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
@@ -45260,22 +43189,18 @@ def test_decompiler_emits_fee_collection_slots_for_admission_frame_span() -> Non
         predicate="admission_fee_authority",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "admission_fee_collection" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "fee_collection_authority" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "admission_fee_collection:frame->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "fee_collection_authority:frame->frame" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "admission_fee_collection" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "fee_collection_authority" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "admission_fee_collection:frame->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "fee_collection_authority:frame->frame"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
@@ -45293,25 +43218,19 @@ def test_decompiler_emits_claim_fraud_slots_for_epistemic_deontic_span() -> None
         predicate="fraudulent_claim_penalty",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "false_fraudulent_claim" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "false_claim_knowledge" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "government_claim" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "false_claim_knowledge:frame->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "false_fraudulent_claim:frame->frame" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "false_fraudulent_claim" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "false_claim_knowledge" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "government_claim" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "false_claim_knowledge:frame->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "false_fraudulent_claim:frame->frame"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
@@ -45329,22 +43248,18 @@ def test_decompiler_emits_establishment_slots_for_office_frame_span() -> None:
         predicate="office_established",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "office_establishment" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "office_of_womens_health" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "office_establishment:frame->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "office_establishment:frame->frame" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "office_establishment" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "office_of_womens_health" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "office_establishment:frame->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "office_establishment:frame->frame"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
@@ -45361,18 +43276,14 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
         source="us_code",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(compiled.modal_ir)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(compiled.modal_ir))
 
     assert "editorial_reclassification" in slot_texts["legal_semantic_atom"]
     assert "crime_control_law_enforcement" in slot_texts["legal_semantic_atom"]
     assert "3789l" in slot_texts["uscode_reclassification_source_section"]
     assert "10235" in slot_texts["uscode_reclassification_target_section"]
     assert "34" in slot_texts["uscode_reclassification_target_title"]
-    assert "34 U.S.C. 10235" in slot_texts[
-        "uscode_reclassification_target_citation"
-    ]
+    assert "34 U.S.C. 10235" in slot_texts["uscode_reclassification_target_citation"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
@@ -45388,31 +43299,23 @@ def test_decompiler_emits_typed_status_detail_legal_ir_slots() -> None:
         ),
         predicate="section_reclassified",
     )
-    document.formulas[0].metadata["fallback_rule"] = (
-        "uscode_editorial_status_heading_v1"
-    )
+    document.formulas[0].metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "34 U.S.C. 10235" in slot_texts[
-        "typed-decompiler-status-target_citation"
-    ]
+    assert "34 U.S.C. 10235" in slot_texts["typed-decompiler-status-target_citation"]
     assert (
         "typed-decompiler-status-target_citation:34 U.S.C. 10235:frame->temporal"
         in slot_texts["typed-decompiler-target-status-family-pair"]
     )
     assert (
         "slot:typed-decompiler-status-target_citation:34 U.S.C. 10235||"
-        "TDFOL.prover"
-        in slot_texts["semantic_slot_legal_ir_view_prototype"]
+        "TDFOL.prover" in slot_texts["semantic_slot_legal_ir_view_prototype"]
     )
     assert (
         "temporal||slot-pair:typed-decompiler-status-target_citation:"
         "34 U.S.C. 10235|typed-decompiler-family-pair:frame->temporal||"
-        "CEC.native"
-        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+        "CEC.native" in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
     )
 
     assert (
@@ -45459,9 +43362,7 @@ def test_decompiler_reconstructs_packet_276_authority_and_grant_atoms() -> None:
             "and conditions as the Secretary determines appropriate."
         ),
         predicate="secretary_convey_roads_to_state",
-        conditions=[
-            "subject to such terms and conditions as the Secretary determines appropriate"
-        ],
+        conditions=["subject to such terms and conditions as the Secretary determines appropriate"],
     )
     sea_grant = _single_formula_document(
         family="deontic",
@@ -45489,37 +43390,31 @@ def test_decompiler_reconstructs_packet_276_authority_and_grant_atoms() -> None:
         selected_frame=None,
     )
 
-    assert "state_conveyance_authority" in conveyance_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "historic_area_access_road" in conveyance_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "state_conveyance_authority:frame->deontic" in conveyance_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "state_conveyance_authority:frame->frame" in conveyance_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "state_conveyance_authority" in conveyance_slots["typed-decompiler-source-semantic-atom"]
+    assert "historic_area_access_road" in conveyance_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "state_conveyance_authority:frame->deontic"
+        in conveyance_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "state_conveyance_authority:frame->frame"
+        in conveyance_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in conveyance_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in conveyance_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in conveyance_slots["legal_ir_view_prototype"]
     assert "state conveyance authority" in conveyance_structural_text
     assert "legal frame" in conveyance_structural_text
 
-    assert "research_grant" in sea_grant_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "sea_grant_college_program" in sea_grant_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "research_grant:deontic->deontic" in sea_grant_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "sea_grant_college_program:deontic->temporal" in sea_grant_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "research_grant" in sea_grant_slots["typed-decompiler-source-semantic-atom"]
+    assert "sea_grant_college_program" in sea_grant_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "research_grant:deontic->deontic"
+        in sea_grant_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "sea_grant_college_program:deontic->temporal"
+        in sea_grant_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "deontic.ir" in sea_grant_slots["legal_ir_view_prototype"]
     assert "TDFOL.prover" in sea_grant_slots["legal_ir_view_prototype"]
     assert "research grant" in sea_grant_structural_text
@@ -45548,15 +43443,14 @@ def test_decompiler_reconstructs_mining_claim_date_range_from_typed_slots() -> N
     )
 
     assert "mining_claim" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "date_range_temporal_scope" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "patent_prohibition:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "mining_claim:frame->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "date_range_temporal_scope" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "patent_prohibition:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "mining_claim:frame->temporal" in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "mining claim" in structural_text
     assert "date range temporal scope" in structural_text
 
@@ -45572,9 +43466,7 @@ def test_decompiler_reconstructs_repealed_advisory_committee_slots() -> None:
         ),
         predicate="section_repealed_advisory_committee_appointment",
     )
-    document.formulas[0].metadata[
-        "fallback_rule"
-    ] = "uscode_editorial_status_heading_v1"
+    document.formulas[0].metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
 
     decoded = decode_modal_ir_document(document)
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
@@ -45585,18 +43477,16 @@ def test_decompiler_reconstructs_repealed_advisory_committee_slots() -> None:
     )
 
     assert "repealed" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "advisory_committee_appointment" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "appointment_authority" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "advisory_committee_appointment:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "advisory_committee_appointment:frame->temporal" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "advisory_committee_appointment" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "appointment_authority" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "advisory_committee_appointment:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "advisory_committee_appointment:frame->temporal"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "advisory committee appointment" in structural_text
@@ -45647,32 +43537,25 @@ def test_decompiler_binds_packet_365_self_family_pairs_to_force_and_views() -> N
         }
     ]
 
-    deontic_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(deontic_document)
-    )
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(frame_document)
-    )
+    deontic_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(deontic_document))
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(frame_document))
 
-    assert "deontic->deontic" in deontic_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "obligation:CEC.native:deontic->deontic" in deontic_slots[
-        "typed-decompiler-force-view-family-pair"
-    ]
+    assert "deontic->deontic" in deontic_slots["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "obligation:CEC.native:deontic->deontic"
+        in deontic_slots["typed-decompiler-force-view-family-pair"]
+    )
     assert (
         "deontic||slot:typed-decompiler-force-view-family-pair:"
         "obligation:deontic->deontic||knowledge_graphs.neo4j_compat"
     ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
-    assert "frame->frame" in frame_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame:knowledge_graphs.neo4j_compat:frame->frame" in frame_slots[
-        "typed-decompiler-force-view-family-pair"
-    ]
+    assert "frame->frame" in frame_slots["typed-decompiler-target-reconstruction-pair"]
     assert (
-        "frame||slot:typed-decompiler-force-view-family-pair:"
-        "frame:frame->frame||CEC.native"
+        "frame:knowledge_graphs.neo4j_compat:frame->frame"
+        in frame_slots["typed-decompiler-force-view-family-pair"]
+    )
+    assert (
+        "frame||slot:typed-decompiler-force-view-family-pair:frame:frame->frame||CEC.native"
     ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
 
 
@@ -45718,9 +43601,7 @@ def test_decompiler_reconstructs_findings_reports_and_law_override_slots() -> No
         modal_ir=findings,
         selected_frame=None,
     )
-    reports_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(reports)
-    )
+    reports_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(reports))
     override_decoded = decode_modal_ir_document(override)
     override_slots = decoded_modal_phrase_slot_text_map(override_decoded)
     override_structural_text = _structural_decoded_text(
@@ -45729,38 +43610,36 @@ def test_decompiler_reconstructs_findings_reports_and_law_override_slots() -> No
         selected_frame=None,
     )
 
-    assert "congressional_findings_declaration" in findings_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "mineral_development_technology" in findings_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "mining_law_application" in findings_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "congressional_findings_declaration:frame->epistemic" in findings_slots[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert (
+        "congressional_findings_declaration"
+        in findings_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "mineral_development_technology" in findings_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "mining_law_application" in findings_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "congressional_findings_declaration:frame->epistemic"
+        in findings_slots["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "knowledge determination finding" in findings_structural_text
     assert "congressional findings declaration" in findings_structural_text
 
-    assert "congressional_report_duty" in reports_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "classified_information_procedure" in reports_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "congressional_report_duty" in reports_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "classified_information_procedure" in reports_slots["typed-decompiler-source-semantic-atom"]
+    )
     assert "TDFOL.prover" in reports_slots["legal_ir_view_prototype"]
 
-    assert "legal_relationship_override" in override_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "legal_relationship_override:frame->conditional_normative" in override_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->conditional_normative" in override_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "legal_relationship_override" in override_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "legal_relationship_override:frame->conditional_normative"
+        in override_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "frame->conditional_normative"
+        in override_slots["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "conditional obligation" in override_structural_text
     assert "legal relationship override" in override_structural_text
 
@@ -45788,21 +43667,17 @@ def test_decompiler_reconstructs_report_contents_implementation_slots() -> None:
         selected_frame=None,
     )
 
-    assert "report_contents" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "implementation_action_report" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "implementation_action_report:frame->epistemic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "implementation_action_report:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "report_contents" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "implementation_action_report" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "implementation_action_report:frame->epistemic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "implementation_action_report:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "implementation action" in structural_text
@@ -45832,27 +43707,21 @@ def test_decompiler_uses_semantic_predicate_head_for_low_information_heads() -> 
         predicate="editorial",
     )
 
-    report_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(report_document)
-    )
-    custody_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(custody_document)
-    )
+    report_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(report_document))
+    custody_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(custody_document))
 
     assert "one" in report_slots["typed-decompiler-raw-predicate-head"]
-    assert "congressional_report_duty" in report_slots[
-        "typed-decompiler-semantic-predicate-head"
-    ]
-    assert "frame:congressional_report_duty->deontic" in report_slots[
-        "typed-decompiler-semantic-predicate-family-pair"
-    ]
+    assert "congressional_report_duty" in report_slots["typed-decompiler-semantic-predicate-head"]
+    assert (
+        "frame:congressional_report_duty->deontic"
+        in report_slots["typed-decompiler-semantic-predicate-family-pair"]
+    )
     assert "editorial" in custody_slots["typed-decompiler-raw-predicate-head"]
-    assert "museum_collection_custody" in custody_slots[
-        "typed-decompiler-semantic-predicate-head"
-    ]
-    assert "deontic:museum_collection_custody->conditional_normative" in custody_slots[
-        "typed-decompiler-semantic-predicate-family-pair"
-    ]
+    assert "museum_collection_custody" in custody_slots["typed-decompiler-semantic-predicate-head"]
+    assert (
+        "deontic:museum_collection_custody->conditional_normative"
+        in custody_slots["typed-decompiler-semantic-predicate-family-pair"]
+    )
 
 
 def test_decompiler_uses_semantic_predicate_head_for_uscode_catalog_headers() -> None:
@@ -45871,20 +43740,18 @@ def test_decompiler_uses_semantic_predicate_head_for_uscode_catalog_headers() ->
         predicate="u_s_c_title_33_navigation_and_navigable_waters",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "u" in slot_texts["typed-decompiler-raw-predicate-head"]
-    assert "cost_sharing_credit_treatment" in slot_texts[
-        "typed-decompiler-semantic-predicate-head"
-    ]
-    assert "frame:cost_sharing_credit_treatment->deontic" in slot_texts[
-        "typed-decompiler-semantic-predicate-family-pair"
-    ]
-    assert "non_federal_cost_share:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "cost_sharing_credit_treatment" in slot_texts["typed-decompiler-semantic-predicate-head"]
+    assert (
+        "frame:cost_sharing_credit_treatment->deontic"
+        in slot_texts["typed-decompiler-semantic-predicate-family-pair"]
+    )
+    assert (
+        "non_federal_cost_share:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
 
 
 def test_decompiler_reconstructs_award_program_and_fund_transfer_atoms() -> None:
@@ -45925,27 +43792,21 @@ def test_decompiler_reconstructs_award_program_and_fund_transfer_atoms() -> None
         selected_frame=None,
     )
 
-    assert "sustainable_chemistry_research" in awards_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "competitive_award_program:frame->deontic" in awards_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in awards_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "sustainable_chemistry_research" in awards_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "competitive_award_program:frame->deontic"
+        in awards_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in awards_slots["legal_ir_view_prototype"]
     assert "sustainable chemistry research" in awards_structural_text
     assert "competitive award program" in awards_structural_text
 
-    assert "fund_transfer_authority" in transfer_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "no_year_funding_availability" in transfer_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "fund_transfer_authority:conditional_normative->temporal" in transfer_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "fund_transfer_authority" in transfer_slots["typed-decompiler-source-semantic-atom"]
+    assert "no_year_funding_availability" in transfer_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "fund_transfer_authority:conditional_normative->temporal"
+        in transfer_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "fund transfer authority" in transfer_structural_text
     assert "no year funding availability" in transfer_structural_text
 
@@ -45976,8 +43837,7 @@ def test_decompiler_reconstructs_packet_000128_legal_program_atoms() -> None:
         symbol="Frame",
         label="frame",
         text=(
-            "Treatment of certain credit between Federal and non-Federal cost "
-            "sharing requirements."
+            "Treatment of certain credit between Federal and non-Federal cost sharing requirements."
         ),
         predicate="cost_sharing_credit_treatment",
     )
@@ -46004,33 +43864,30 @@ def test_decompiler_reconstructs_packet_000128_legal_program_atoms() -> None:
         selected_frame=None,
     )
 
-    assert "university_research_grant_program" in research_slots[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "carbon_capture_research:frame->temporal" in research_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in research_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert (
+        "university_research_grant_program"
+        in research_slots["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "carbon_capture_research:frame->temporal"
+        in research_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in research_slots["legal_ir_view_prototype"]
     assert "university research grant program" in research_structural_text
     assert "carbon capture" in research_structural_text
 
-    assert "open_market_paper_purchase" in purchase_slots[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "government_publication_purchase_authority" in purchase_slots[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert "open_market_paper_purchase" in purchase_slots["typed-decompiler-target-semantic-atom"]
+    assert (
+        "government_publication_purchase_authority"
+        in purchase_slots["typed-decompiler-target-semantic-atom"]
+    )
     assert "deontic.ir" in purchase_slots["legal_ir_view_prototype"]
     assert "open market paper purchase" in purchase_structural_text
 
-    assert "cost_sharing_credit_treatment" in cost_share_slots[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "non_federal_cost_share" in cost_share_slots[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert (
+        "cost_sharing_credit_treatment" in cost_share_slots["typed-decompiler-target-semantic-atom"]
+    )
+    assert "non_federal_cost_share" in cost_share_slots["typed-decompiler-target-semantic-atom"]
     assert "cost sharing credit treatment" in cost_share_structural_text
 
 
@@ -46058,12 +43915,10 @@ def test_decompiler_reconstructs_renumbered_status_transition_from_typed_slots()
 
     assert "renumbered" in slot_texts["uscode_editorial_status_keyword"]
     assert "322" in slot_texts["uscode_editorial_status_target_section"]
-    assert "this title section 322" in slot_texts[
-        "uscode_editorial_status_target_citation"
-    ]
-    assert "renumbered:frame->temporal" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "this title section 322" in slot_texts["uscode_editorial_status_target_citation"]
+    assert (
+        "renumbered:frame->temporal" in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "this title section 322" in slot_texts["typed_ir_semantic_support"]
     assert any(
         "temporal deadline period" in value
@@ -46100,18 +43955,11 @@ def test_decompiler_routes_repealed_status_fallback_to_frame_deontic_slots() -> 
     )
 
     assert "repealed" in slot_texts["status_keyword"]
-    assert "repealed:frame->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "frame->frame" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "repealed:frame->deontic" in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    assert "frame->frame" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert any(
-        "obligation permission prohibition" in value
-        and "repealed" in value
+        "obligation permission prohibition" in value and "repealed" in value
         for value in slot_texts["typed_ir_reconstruction"]
     )
     assert "repealed" in structural_text
@@ -46128,9 +43976,7 @@ def test_decompiler_reconstructs_autoencoder_target_legal_ir_view_support() -> N
             "shall appoint one on-site manager for the project."
         ),
         predicate="secretary_appoint_on_site_manager",
-        conditions=[
-            "Before obligating any Cooperative Threat Reduction funds"
-        ],
+        conditions=["Before obligating any Cooperative Threat Reduction funds"],
     )
     document.metadata["hint_evidence"] = [
         {
@@ -46161,12 +44007,8 @@ def test_decompiler_reconstructs_autoencoder_target_legal_ir_view_support() -> N
         selected_frame=None,
     )
 
-    assert "event calculus native legal events" in slot_texts[
-        "typed_ir_legal_view_support"
-    ]
-    assert "knowledge graph legal relations" in slot_texts[
-        "typed_ir_legal_view_support"
-    ]
+    assert "event calculus native legal events" in slot_texts["typed_ir_legal_view_support"]
+    assert "knowledge graph legal relations" in slot_texts["typed_ir_legal_view_support"]
     assert slot_texts["typed_ir_reconstruction"]
     assert "event calculus native legal events" in structural_text
     assert "knowledge graph legal relations" in structural_text
@@ -46194,18 +44036,16 @@ def test_decompiler_reconstructs_technology_transfer_report_assessment_slots() -
         selected_frame=None,
     )
 
-    assert "technology_transfer_assessment" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "congressional_committee_report" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deadline_report_duty:frame->temporal" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "technology_transfer_assessment:frame->epistemic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "technology_transfer_assessment" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "congressional_committee_report" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "deadline_report_duty:frame->temporal"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "technology_transfer_assessment:frame->epistemic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "technology transfer assessment" in structural_text
@@ -46233,18 +44073,10 @@ def test_decompiler_routes_thereafter_frame_scope_to_temporal_slots() -> None:
     )
 
     assert "thereafter" in slot_texts["typed-decompiler-source-scope-cue"]
-    assert "frame->temporal:thereafter" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "frame->temporal:thereafter" in slot_texts[
-        "refined_temporal_bridge_pair_cue"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "refined_temporal_bridge_family_pair"
-    ]
-    assert "not_later_than+year+thereafter" in slot_texts[
-        "typed_decompiler_temporal"
-    ]
+    assert "frame->temporal:thereafter" in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    assert "frame->temporal:thereafter" in slot_texts["refined_temporal_bridge_pair_cue"]
+    assert "frame->temporal" in slot_texts["refined_temporal_bridge_family_pair"]
+    assert "not_later_than+year+thereafter" in slot_texts["typed_decompiler_temporal"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "thereafter" in structural_text
 
@@ -46288,27 +44120,26 @@ def test_decompiler_reconstructs_jurisdiction_and_false_statement_frame_atoms() 
         selected_frame=None,
     )
 
-    assert "territorial_jurisdiction" in jurisdiction_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "hydraulic_mining:frame->conditional_normative" in jurisdiction_slots[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "california_debris_commission" in jurisdiction_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "territorial_jurisdiction" in jurisdiction_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "hydraulic_mining:frame->conditional_normative"
+        in jurisdiction_slots["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "california_debris_commission"
+        in jurisdiction_slots["typed-decompiler-source-semantic-atom"]
+    )
     assert "territorial jurisdiction" in jurisdiction_structural_text
     assert "hydraulic mining" in jurisdiction_structural_text
 
-    assert "false_statement_penalty" in false_statement_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "scienter_requirement" in false_statement_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "false_statement_penalty:frame->deontic" in false_statement_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert (
+        "false_statement_penalty" in false_statement_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "scienter_requirement" in false_statement_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "false_statement_penalty:frame->deontic"
+        in false_statement_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "knowledge determination finding" in false_statement_structural_text
     assert "false statement penalty" in false_statement_structural_text
 
@@ -46337,16 +44168,17 @@ def test_decompiler_reconstructs_perishable_commodity_nonapplication_slots() -> 
     )
 
     assert "exemption" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "perishable_agricultural_commodity" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "perishable_commodity_container_exemption" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert (
+        "perishable_agricultural_commodity" in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "perishable_commodity_container_exemption"
+        in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
     assert "does_not_apply" in slot_texts["typed-decompiler-source-scope-cue"]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
     assert (
         "perishable_commodity_container_exemption:frame->conditional_normative"
         in slot_texts["typed-decompiler-target-semantic-family-pair"]
@@ -46371,15 +44203,11 @@ def test_decompiler_emits_exemption_source_slots_for_test_platform_clauses() -> 
         predicate="provisions_apply_to_test_platform",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "exemption" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert "test_platform" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "facility_operation" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "facility_operation" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert "shall_not_apply" in slot_texts["typed-decompiler-source-scope-cue"]
     assert "testing_period" in slot_texts["typed-decompiler-source-scope-cue"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
@@ -46401,22 +44229,12 @@ def test_decompiler_recovers_certificate_entry_duty_semantics() -> None:
         predicate="produce_certificate_on_entry",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "certificate_production_on_entry" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "customs_entry_documentation" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "vessel_entry_documentation" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "certificate_production_on_entry" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "customs_entry_documentation" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "vessel_entry_documentation" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
 
@@ -46433,19 +44251,11 @@ def test_decompiler_recovers_ethics_financial_disclosure_semantics() -> None:
         predicate="file_financial_disclosure_report",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "financial_disclosure_requirement" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "ethics_government_requirement" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "financial_disclosure_requirement" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "ethics_government_requirement" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
 
@@ -46463,25 +44273,16 @@ def test_decompiler_recovers_active_measures_notification_semantics() -> None:
         predicate="notify_active_measures_campaign",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "active_measures_notification" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "active_measures_campaign" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "congressional_intelligence_committee" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "deontic->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "deontic->frame" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "active_measures_notification" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "active_measures_campaign" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert (
+        "congressional_intelligence_committee"
+        in slot_texts["typed-decompiler-target-semantic-atom"]
+    )
+    assert "deontic->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->frame" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "modal.frame_logic" in slot_texts["legal_ir_view_prototype"]
@@ -46500,25 +44301,13 @@ def test_decompiler_recovers_federal_building_compliance_semantics() -> None:
         predicate="federal_building_compliance",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "federal_compliance_requirement" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "procedure_adoption_duty" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "federal_building_energy_standard" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "federal_compliance_requirement" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "procedure_adoption_duty" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "federal_building_energy_standard" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
@@ -46536,19 +44325,11 @@ def test_decompiler_recovers_peacetime_death_compensation_semantics() -> None:
         predicate="pay_peacetime_death_compensation",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "peacetime_death_compensation" in slot_texts[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "peacetime_death_compensation" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
 
@@ -46572,9 +44353,7 @@ def test_decompiler_emits_document_semantic_atoms_for_formula_free_frame_text() 
 
     assert decoded.text == document.normalized_text
     assert "boundary_division_fence" in slot_texts["legal_semantic_atom"]
-    assert "white_horse_hill_game_preserve" in slot_texts[
-        "source_context_span_legal_semantic_atom"
-    ]
+    assert "white_horse_hill_game_preserve" in slot_texts["source_context_span_legal_semantic_atom"]
     assert "build_maintain_duty" in slot_texts["legal_semantic_atom"]
 
 
@@ -46601,15 +44380,12 @@ def test_decompiler_reconstructs_definition_condition_slots_for_priority_state()
     )
 
     assert "priority_state" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "funding_eligibility" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "per_capita_ranking" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "priority_state:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "funding_eligibility" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "per_capita_ranking" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "priority_state:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "definition_condition" in slot_texts["typed-decompiler-source-scope-cue"]
     assert "eligibility_condition" in slot_texts["typed-decompiler-source-scope-cue"]
     assert "ranking_condition" in slot_texts["typed-decompiler-source-scope-cue"]
@@ -46641,19 +44417,16 @@ def test_decompiler_reconstructs_monitoring_enforcement_epistemic_frame_slots() 
         selected_frame=None,
     )
 
-    assert "monitoring_enforcement" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "monitoring_enforcement:frame->epistemic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "monitoring_enforcement" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "monitoring_enforcement:frame->epistemic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "monitoring enforcement" in structural_text
 
 
@@ -46699,48 +44472,43 @@ def test_decompiler_reconstructs_packet_1586_grant_and_eligibility_slots() -> No
         selected_frame=None,
     )
 
-    assert "state_formula_grant" in grants_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "state_allotment_duty" in grants_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "substance_abuse_treatment_program" in grants_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "state_formula_grant:deontic->deontic" in grants_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "fiscal_year_allotment:deontic->temporal" in grants_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "state_formula_grant" in grants_slots["typed-decompiler-source-semantic-atom"]
+    assert "state_allotment_duty" in grants_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "substance_abuse_treatment_program" in grants_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "state_formula_grant:deontic->deontic"
+        in grants_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "fiscal_year_allotment:deontic->temporal"
+        in grants_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "deontic.ir" in grants_slots["legal_ir_view_prototype"]
     assert "TDFOL.prover" in grants_slots["legal_ir_view_prototype"]
     assert "state formula grant" in grants_structural_text
     assert "substance abuse treatment program" in grants_structural_text
 
-    assert "service_eligibility" in eligibility_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "eligibility_determination" in eligibility_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "professional_assessment_committee" in eligibility_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "congregate_services_program" in eligibility_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "eligibility_determination:epistemic->epistemic" in eligibility_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "service_eligibility:epistemic->conditional_normative" in eligibility_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "service_eligibility" in eligibility_slots["typed-decompiler-source-semantic-atom"]
+    assert "eligibility_determination" in eligibility_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "professional_assessment_committee"
+        in eligibility_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "congregate_services_program" in eligibility_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "eligibility_determination:epistemic->epistemic"
+        in eligibility_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "service_eligibility:epistemic->conditional_normative"
+        in eligibility_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "CEC.native" in eligibility_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in eligibility_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in eligibility_slots["legal_ir_view_prototype"]
     assert "professional assessment committee" in eligibility_structural_text
     assert "congregate services program" in eligibility_structural_text
 
@@ -46771,31 +44539,21 @@ def test_decompiler_reconstructs_sovereign_debt_discussion_epistemic_slots() -> 
         selected_frame=None,
     )
 
-    assert "interinstitutional_discussion" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "sovereign_debt_conversion" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "human_welfare_resource_program" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "development_advice_assistance" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "interinstitutional_discussion:frame->epistemic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "sovereign_debt_conversion:frame->epistemic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->epistemic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "interinstitutional_discussion" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "sovereign_debt_conversion" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "human_welfare_resource_program" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "development_advice_assistance" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "interinstitutional_discussion:frame->epistemic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "sovereign_debt_conversion:frame->epistemic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "frame->epistemic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "interinstitutional discussion" in structural_text
     assert "sovereign debt conversion" in structural_text
 
@@ -46821,21 +44579,17 @@ def test_decompiler_reconstructs_reserve_officer_promotion_slots() -> None:
         selected_frame=None,
     )
 
-    assert "officer_promotion_retention" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "reserve_active_status_list" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "statutory_chapter_applicability" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "officer_promotion_retention:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "statutory_chapter_applicability:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "officer_promotion_retention" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "reserve_active_status_list" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "statutory_chapter_applicability" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "officer_promotion_retention:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "statutory_chapter_applicability:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "reserve active status list" in structural_text
 
@@ -46860,18 +44614,13 @@ def test_decompiler_reconstructs_custody_accountability_slots() -> None:
         selected_frame=None,
     )
 
-    assert "departmental_record_custody" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "accountability_responsibility" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "departmental_record_custody:frame->epistemic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "departmental_record_custody" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "accountability_responsibility" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "departmental_record_custody:frame->epistemic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "departmental record custody" in structural_text
 
@@ -46912,28 +44661,24 @@ def test_decompiler_binds_uscode_catalog_surface_profiles_to_frame_targets() -> 
         metadata={"citation": "10 U.S.C. 7831"},
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "uscode_catalog_record" in slot_texts[
-        "typed-decompiler-source-surface-profile"
-    ]
-    assert "uscode_section_heading_surface" in slot_texts[
-        "typed-decompiler-target-surface-profile"
-    ]
-    assert "uscode_catalog_record:epistemic" in slot_texts[
-        "typed-decompiler-target-family-surface-profile"
-    ]
-    assert "uscode_catalog_record:frame->epistemic" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-profile"
-    ]
-    assert "uscode_catalog_record:frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-surface-profile"
-    ]
+    assert "uscode_catalog_record" in slot_texts["typed-decompiler-source-surface-profile"]
+    assert "uscode_section_heading_surface" in slot_texts["typed-decompiler-target-surface-profile"]
     assert (
-        "uscode-surface-profile-transition:"
-        "uscode_catalog_record->uscode_section_heading_surface"
+        "uscode_catalog_record:epistemic"
+        in slot_texts["typed-decompiler-target-family-surface-profile"]
+    )
+    assert (
+        "uscode_catalog_record:frame->epistemic"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert (
+        "uscode_catalog_record:frame->temporal"
+        in slot_texts["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert (
+        "uscode-surface-profile-transition:uscode_catalog_record->uscode_section_heading_surface"
     ) in slot_texts["decompiler-surface"]
     assert (
         "epistemic||slot:typed-decompiler-target-family-surface-profile:"
@@ -46974,19 +44719,20 @@ def test_decompiler_binds_uscode_catalog_surface_profiles_to_frame_targets() -> 
         formulas=[repealed_formula],
         metadata={"citation": "6 U.S.C. 1402"},
     )
-    repealed_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(repealed_document)
-    )
+    repealed_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(repealed_document))
 
-    assert "uscode_section_heading_surface" in repealed_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
-    assert "uscode_editorial_status_surface" in repealed_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
-    assert "uscode_catalog_record:frame->epistemic" in repealed_slots[
-        "typed-decompiler-target-reconstruction-surface-profile"
-    ]
+    assert (
+        "uscode_section_heading_surface"
+        in repealed_slots["typed-decompiler-target-surface-profile"]
+    )
+    assert (
+        "uscode_editorial_status_surface"
+        in repealed_slots["typed-decompiler-target-surface-profile"]
+    )
+    assert (
+        "uscode_catalog_record:frame->epistemic"
+        in repealed_slots["typed-decompiler-target-reconstruction-surface-profile"]
+    )
 
 
 def test_decompiler_reconstructs_museum_collection_custody_slots() -> None:
@@ -47010,21 +44756,17 @@ def test_decompiler_reconstructs_museum_collection_custody_slots() -> None:
         selected_frame=None,
     )
 
-    assert "museum_collection_custody" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "national_museum_american_indian" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "museum_board_trustees" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "museum_collection_custody:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "museum_collection_custody:frame->epistemic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "museum_collection_custody" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "national_museum_american_indian" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "museum_board_trustees" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "museum_collection_custody:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "museum_collection_custody:frame->epistemic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "museum collection custody" in structural_text
@@ -47052,18 +44794,18 @@ def test_decompiler_reconstructs_cyber_liability_information_sharing_slots() -> 
         selected_frame=None,
     )
 
-    assert "liability_protection" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "cybersecurity_information_sharing" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "liability_protection:deontic->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "cybersecurity_information_sharing:deontic->conditional_normative" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert "liability_protection" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "cybersecurity_information_sharing" in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "liability_protection:deontic->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert (
+        "cybersecurity_information_sharing:deontic->conditional_normative"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "liability protection" in structural_text
@@ -47091,27 +44833,23 @@ def test_decompiler_reconstructs_lie_detector_prohibition_frame_slots() -> None:
         selected_frame=None,
     )
 
-    assert "lie_detector_use_prohibition" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "lie_detector_test" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "lie_detector_use_prohibition:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "lie_detector_use_prohibition:frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "lie_detector_use_prohibition" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "lie_detector_test" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "lie_detector_use_prohibition:frame->deontic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "lie_detector_use_prohibition:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "lie detector use prohibition" in structural_text
 
 
@@ -47320,8 +45058,7 @@ def test_decompiler_semantic_profile_surfaces_guided_deontic_slots() -> None:
         and "permission prohibition force" in value
         and "predicate head secretary submit hearing transcripts" in value
         and "conditions 1" in value
-        and "subject action object tribal support statements congress distribution plan"
-        in value
+        and "subject action object tribal support statements congress distribution plan" in value
         and "event calculus native events" in value
         and "frame logic" in value
         for value in profiles
@@ -47353,18 +45090,13 @@ def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
         selected_frame=None,
     )
 
-    assert "timber_cutting" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "forest_resource_reservation" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "timber_cutting:frame->temporal" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "timber_cutting" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "forest_resource_reservation" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "timber_cutting:frame->temporal"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "timber cutting" in structural_text
 
@@ -47425,67 +45157,52 @@ def test_decompiler_reconstructs_packet_2014_frame_to_deontic_temporal_atoms() -
     appropriation_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(appropriation_document)
     )
-    property_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(property_document)
-    )
+    property_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(property_document))
     commission_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(commission_document)
     )
-    budget_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(budget_document)
-    )
+    budget_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(budget_document))
     former_jeopardy_decoded = decode_modal_ir_document(former_jeopardy_document)
-    former_jeopardy_slots = decoded_modal_phrase_slot_text_map(
-        former_jeopardy_decoded
-    )
+    former_jeopardy_slots = decoded_modal_phrase_slot_text_map(former_jeopardy_decoded)
     former_jeopardy_structural_text = _structural_decoded_text(
         former_jeopardy_decoded,
         modal_ir=former_jeopardy_document,
         selected_frame=None,
     )
 
-    assert "former_jeopardy_protection" in former_jeopardy_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in former_jeopardy_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "former_jeopardy_protection"
+        in former_jeopardy_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in former_jeopardy_slots["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in former_jeopardy_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in former_jeopardy_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in former_jeopardy_slots["legal_ir_view_prototype"]
     assert "former jeopardy protection" in former_jeopardy_structural_text
     assert "permission" in former_jeopardy_structural_text
     assert "prohibition" in former_jeopardy_structural_text
-    assert "appropriation_authorization" in appropriation_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->temporal" in appropriation_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "appropriation_authorization"
+        in appropriation_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->temporal" in appropriation_slots["typed-decompiler-target-reconstruction-pair"]
     assert any(
         "appropriation authorization" in value
         for value in appropriation_slots["typed_ir_reconstruction"]
     )
-    assert "deceased_veterans_property_disposition" in property_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "property_delivery_duty" in property_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in property_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "deceased_veterans_property_disposition"
+        in property_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "property_delivery_duty" in property_slots["typed-decompiler-source-semantic-atom"]
+    assert "frame->deontic" in property_slots["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in property_slots["legal_ir_view_prototype"]
-    assert "military_commission_procedure" in commission_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "military_trial_counsel_duty" in commission_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in commission_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "military_commission_procedure" in commission_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "military_trial_counsel_duty" in commission_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in commission_slots["typed-decompiler-target-reconstruction-pair"]
     assert (
         "deontic||slot-pair:conditions:0|"
         "typed-decompiler-target-reconstruction-family:deontic||deontic.ir"
@@ -47584,9 +45301,7 @@ def test_decompiler_reconstructs_packet_448_compliance_exemption_and_ethics_atom
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
@@ -47609,27 +45324,20 @@ def test_decompiler_reconstructs_packet_5048_relationship_noninterference_atoms(
         predicate="chapter_not_limit_public_safety_broadband_implementation",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(relationship_document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(relationship_document))
 
-    assert "legal_relationship_noninterference" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "implementation_noninterference" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "public_safety_broadband_network" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "implementation_noninterference:deontic->deontic" in slot_texts[
-        "typed-decompiler-source-semantic-family-pair"
-    ]
+    assert (
+        "legal_relationship_noninterference" in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert "implementation_noninterference" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "public_safety_broadband_network" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "implementation_noninterference:deontic->deontic"
+        in slot_texts["typed-decompiler-source-semantic-family-pair"]
+    )
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
 def test_decompiler_reconstructs_packet_2577_deontic_frame_temporal_atoms() -> None:
@@ -47656,36 +45364,26 @@ def test_decompiler_reconstructs_packet_2577_deontic_frame_temporal_atoms() -> N
         conditions=["before final project repayment"],
     )
 
-    consular_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(consular_document)
-    )
-    land_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(land_document)
-    )
+    consular_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(consular_document))
+    land_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(land_document))
 
-    assert "consular_officer_powers_duties_liabilities" in consular_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->frame" in consular_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "consular_officer_powers_duties_liabilities:deontic->frame" in (
-        consular_slots["typed-decompiler-target-semantic-family-pair"]
+    assert (
+        "consular_officer_powers_duties_liabilities"
+        in consular_slots["typed-decompiler-source-semantic-atom"]
     )
-    assert "knowledge_graphs.neo4j_compat" in consular_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "deontic->frame" in consular_slots["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "consular_officer_powers_duties_liabilities:deontic->frame"
+        in (consular_slots["typed-decompiler-target-semantic-family-pair"])
+    )
+    assert "knowledge_graphs.neo4j_compat" in consular_slots["legal_ir_view_prototype"]
     assert "deontic.ir" in consular_slots["legal_ir_view_prototype"]
 
-    assert "permanent_nonirrigable_land_status" in land_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in land_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in land_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "permanent_nonirrigable_land_status" in land_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in land_slots["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in land_slots["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in land_slots["legal_ir_view_prototype"]
 
 
@@ -47702,21 +45400,17 @@ def test_decompiler_roles_skip_authorization_scaffold_for_nonirrigable_land_slot
         predicate="secretary_classify_nonirrigable_lands",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "classify" in slot_texts["modal_source_span_typed_decompiler_action"]
     assert any(
         "permanently_nonirrigable_lands" in value
         for value in slot_texts["modal_source_span_typed_decompiler_object"]
     )
-    assert "subject+action+object" in slot_texts[
-        "modal_source_span_typed_decompiler_role_signature"
-    ]
-    assert "frame->epistemic" in slot_texts[
-        "modal_source_span_typed_decompiler_family_pair"
-    ]
+    assert (
+        "subject+action+object" in slot_texts["modal_source_span_typed_decompiler_role_signature"]
+    )
+    assert "frame->epistemic" in slot_texts["modal_source_span_typed_decompiler_family_pair"]
 
 
 def test_decompiler_reconstructs_packet_000160_veterans_and_nato_budget_slots() -> None:
@@ -47761,32 +45455,20 @@ def test_decompiler_reconstructs_packet_000160_veterans_and_nato_budget_slots() 
         selected_frame=None,
     )
 
-    assert "veterans_medical_care" in veterans_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "philippines_veteran_assistance" in veterans_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in veterans_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "veterans_medical_care" in veterans_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "philippines_veteran_assistance" in veterans_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in veterans_slots["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in veterans_slots["legal_ir_view_prototype"]
     assert "deontic.ir" in veterans_slots["legal_ir_view_prototype"]
     assert "veterans medical care" in veterans_structural_text
     assert "philippines assistance" in veterans_structural_text
 
-    assert "nato_common_funded_budget" in nato_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "nato_contribution_authority" in nato_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "temporal->frame" in nato_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "temporal->deontic" in nato_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "nato_common_funded_budget" in nato_slots["typed-decompiler-source-semantic-atom"]
+    assert "nato_contribution_authority" in nato_slots["typed-decompiler-source-semantic-atom"]
+    assert "temporal->frame" in nato_slots["typed-decompiler-target-reconstruction-pair"]
+    assert "temporal->deontic" in nato_slots["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in nato_slots["legal_ir_view_prototype"]
     assert "nato common funded budget" in nato_structural_text
     assert "contribution authority" in nato_structural_text
@@ -47823,30 +45505,18 @@ def test_decompiler_reconstructs_packet_2578_commodity_and_interagency_slots() -
         decode_modal_ir_document(interagency_document)
     )
 
-    assert "commodity_value_determination" in commodity_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "commodity_set_aside" in commodity_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in commodity_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "commodity_value_determination" in commodity_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "commodity_set_aside" in commodity_slots["typed-decompiler-source-semantic-atom"]
+    assert "frame->deontic" in commodity_slots["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in commodity_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in commodity_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in commodity_slots["legal_ir_view_prototype"]
     assert "TDFOL.prover" in commodity_slots["legal_ir_view_prototype"]
 
-    assert "interagency_coordination" in interagency_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "child_abduction_remedy" in interagency_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->deontic" in interagency_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "interagency_coordination" in interagency_slots["typed-decompiler-source-semantic-atom"]
+    assert "child_abduction_remedy" in interagency_slots["typed-decompiler-source-semantic-atom"]
+    assert "deontic->deontic" in interagency_slots["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in interagency_slots["legal_ir_view_prototype"]
     assert "TDFOL.prover" in interagency_slots["legal_ir_view_prototype"]
 
@@ -47889,37 +45559,33 @@ def test_decompiler_reconstructs_packet_126_conservation_transfer_slots() -> Non
         selected_frame=None,
     )
 
-    assert "natural_area_establishment" in natural_area_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "conservation_area_management" in natural_area_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "natural_area_establishment:frame->conditional_normative" in (
-        natural_area_slots["typed-decompiler-target-semantic-family-pair"]
+    assert (
+        "natural_area_establishment" in natural_area_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "conservation_area_management"
+        in natural_area_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "natural_area_establishment:frame->conditional_normative"
+        in (natural_area_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert "CEC.native" in natural_area_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in natural_area_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in natural_area_slots["legal_ir_view_prototype"]
     assert "natural area establishment" in natural_area_structural_text
     assert "conservation area management" in natural_area_structural_text
 
-    assert "national_seashore_recreation_area" in donation_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "land_donation_acceptance" in donation_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "land_acquisition_authority" in donation_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "land_donation_acceptance:frame->deontic" in donation_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->temporal" in donation_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "national_seashore_recreation_area"
+        in donation_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "land_donation_acceptance" in donation_slots["typed-decompiler-source-semantic-atom"]
+    assert "land_acquisition_authority" in donation_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "land_donation_acceptance:frame->deontic"
+        in donation_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "frame->temporal" in donation_slots["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in donation_slots["legal_ir_view_prototype"]
     assert "land donation acceptance" in donation_structural_text
     assert "national seashore recreation area" in donation_structural_text
@@ -47988,9 +45654,7 @@ def test_decompiler_reconstructs_packet_946_designation_guard_and_status_slots()
         modal_ir=guard_document,
         selected_frame=None,
     )
-    fiscal_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(fiscal_document)
-    )
+    fiscal_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(fiscal_document))
     salvage_decoded = decode_modal_ir_document(salvage_document)
     salvage_slots = decoded_modal_phrase_slot_text_map(salvage_decoded)
     salvage_structural = _structural_decoded_text(
@@ -47999,57 +45663,47 @@ def test_decompiler_reconstructs_packet_946_designation_guard_and_status_slots()
         selected_frame=None,
     )
 
-    assert "national_historic_site_designation" in historic_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "historic_site_preservation_designation" in historic_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->frame" in historic_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "national_historic_site_designation"
+        in historic_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "historic_site_preservation_designation"
+        in historic_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "deontic->frame" in historic_slots["typed-decompiler-target-reconstruction-pair"]
     assert "national historic site designation" in historic_structural
 
-    assert "national_guard_relocation_limit" in guard_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "unit_relocation_withdrawal_restriction" in guard_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "state_governor_consent_requirement" in guard_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->temporal" in guard_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->deontic" in guard_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "national_guard_relocation_limit" in guard_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "unit_relocation_withdrawal_restriction"
+        in guard_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "state_governor_consent_requirement" in guard_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->temporal" in guard_slots["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->deontic" in guard_slots["typed-decompiler-target-reconstruction-pair"]
     assert "national guard relocation limit" in guard_structural
     assert "state governor consent requirement" in guard_structural
 
-    assert "fiscal_year_appropriation_availability" in fiscal_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "codification_transition" in fiscal_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->temporal" in fiscal_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "fiscal_year_appropriation_availability"
+        in fiscal_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "codification_transition" in fiscal_slots["typed-decompiler-source-semantic-atom"]
+    assert "frame->temporal" in fiscal_slots["typed-decompiler-target-reconstruction-pair"]
 
-    assert "salvage_archeology_administration" in salvage_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "expert_consultant_service_authority" in salvage_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "salvage_fund_use_authority" in salvage_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in salvage_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "salvage_archeology_administration"
+        in salvage_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "expert_consultant_service_authority"
+        in salvage_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "salvage_fund_use_authority" in salvage_slots["typed-decompiler-source-semantic-atom"]
+    assert "frame->deontic" in salvage_slots["typed-decompiler-target-reconstruction-pair"]
     assert "salvage archeology" in salvage_structural
 
 
@@ -48058,15 +45712,10 @@ def test_decompiler_reconstructs_packet_126_editorial_and_china_oversight_slots(
         family="frame",
         symbol="Frame",
         label="frame",
-        text=(
-            "2 U.S.C. 130l: Sec. 130l - Transferred From the U.S. "
-            "Government Publishing Office."
-        ),
+        text=("2 U.S.C. 130l: Sec. 130l - Transferred From the U.S. Government Publishing Office."),
         predicate="section_transferred_from_gpo",
     )
-    transfer_document.formulas[0].metadata[
-        "fallback_rule"
-    ] = "uscode_editorial_status_heading_v1"
+    transfer_document.formulas[0].metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
     china_document = _single_formula_document(
         family="frame",
         symbol="Frame",
@@ -48078,9 +45727,7 @@ def test_decompiler_reconstructs_packet_126_editorial_and_china_oversight_slots(
         predicate="monitor_china_trade_rule_of_law_issues",
     )
 
-    transfer_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(transfer_document)
-    )
+    transfer_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(transfer_document))
     china_decoded = decode_modal_ir_document(china_document)
     china_slots = decoded_modal_phrase_slot_text_map(china_decoded)
     china_structural_text = _structural_decoded_text(
@@ -48089,27 +45736,18 @@ def test_decompiler_reconstructs_packet_126_editorial_and_china_oversight_slots(
         selected_frame=None,
     )
 
-    assert "editorial_transfer_status" in transfer_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "editorial_transfer_status" in transfer_slots["typed-decompiler-source-semantic-atom"]
     assert "transferred" in transfer_slots["typed-decompiler-source-semantic-atom"]
-    assert "frame->temporal" in transfer_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->temporal" in transfer_slots["typed-decompiler-target-reconstruction-pair"]
 
-    assert "china_relations_oversight" in china_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "trade_rule_of_law_compliance" in china_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "trade_rule_of_law_compliance:frame->conditional_normative" in (
-        china_slots["typed-decompiler-target-semantic-family-pair"]
+    assert "china_relations_oversight" in china_slots["typed-decompiler-source-semantic-atom"]
+    assert "trade_rule_of_law_compliance" in china_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "trade_rule_of_law_compliance:frame->conditional_normative"
+        in (china_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert "deontic.ir" in china_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in china_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in china_slots["legal_ir_view_prototype"]
     assert "china relations oversight" in china_structural_text
     assert "trade rule of law compliance" in china_structural_text
 
@@ -48136,43 +45774,37 @@ def test_decompiler_reconstructs_packet_288_program_administration_slots() -> No
         predicate="administration",
     )
 
-    it_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(it_document)
-    )
+    it_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(it_document))
     telemedicine_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(telemedicine_document)
     )
 
-    assert "program_administration" in it_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "information_technology_acquisition" in it_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "information_technology_management" in it_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "program_administration" in it_slots["typed-decompiler-source-semantic-atom"]
+    assert "information_technology_acquisition" in it_slots["typed-decompiler-source-semantic-atom"]
+    assert "information_technology_management" in it_slots["typed-decompiler-source-semantic-atom"]
     assert "frame->deontic" in it_slots["typed-decompiler-target-reconstruction-pair"]
     assert "frame->temporal" in it_slots["typed-decompiler-target-reconstruction-pair"]
-    assert "program_administration:frame->temporal" in it_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert (
+        "program_administration:frame->temporal"
+        in it_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
         set(it_slots["legal_ir_view_prototype"])
     )
 
-    assert "telemedicine_distance_learning" in telemedicine_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "program_administration" in telemedicine_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "telemedicine_distance_learning:frame->deontic" in telemedicine_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "program_administration:frame->temporal" in telemedicine_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert (
+        "telemedicine_distance_learning"
+        in telemedicine_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "program_administration" in telemedicine_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "telemedicine_distance_learning:frame->deontic"
+        in telemedicine_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "program_administration:frame->temporal"
+        in telemedicine_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
         set(telemedicine_slots["legal_ir_view_prototype"])
     )
@@ -48190,25 +45822,16 @@ def test_decompiler_reconstructs_packet_288_marshal_incapacity_temporal_slots() 
         predicate="marshal_incapacity_after_levy",
     )
 
-    slot_texts = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(document)
-    )
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "marshal_incapacity" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "judicial_sale_execution" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "temporal_condition" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "marshal_incapacity:frame->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert "marshal_incapacity" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "judicial_sale_execution" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "temporal_condition" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "marshal_incapacity:frame->temporal"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
 
 
 def test_decompiler_reconstructs_packet_130_uscode_domain_atoms() -> None:
@@ -48307,9 +45930,7 @@ def test_decompiler_reconstructs_packet_130_uscode_domain_atoms() -> None:
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert any(
             value.endswith("->deontic")
             for value in slot_texts["typed-decompiler-target-reconstruction-pair"]
@@ -48317,6 +45938,8 @@ def test_decompiler_reconstructs_packet_130_uscode_domain_atoms() -> None:
         assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
         assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
         assert structural_fragment in structural_text
+
+
 def test_decompiler_routes_deontic_intent_transport_to_doxastic_slots() -> None:
     document = _single_formula_document(
         family="deontic",
@@ -48338,18 +45961,15 @@ def test_decompiler_routes_deontic_intent_transport_to_doxastic_slots() -> None:
         selected_frame=None,
     )
 
-    assert "deontic->doxastic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "illegal_sexual_activity_transport" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "illegal_sexual_activity_transport:deontic->doxastic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in slot_texts[
-        "legal_ir_view_prototype"
-    ]
+    assert "deontic->doxastic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "illegal_sexual_activity_transport" in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "illegal_sexual_activity_transport:deontic->doxastic"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
     assert "belief intent state" in structural_text
     assert "illegal sexual activity transport" in structural_text
 
@@ -48376,24 +45996,25 @@ def test_decompiler_reconstructs_doxastic_intent_postal_matter_slots() -> None:
         selected_frame=None,
     )
 
-    assert "doxastic->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "doxastic->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "doxastic->conditional_normative"
+        in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "doxastic->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert {
         "postal_matter_deposit",
         "postal_mail_matter",
         "nonmailable_matter",
         "intent_condition",
     }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
-    assert "doxastic->conditional_normative:action:deposit" in slot_texts[
-        "typed-decompiler-family-pair-role-value"
-    ]
-    assert "doxastic->conditional_normative:object:nonmailable_mail_matter" in slot_texts[
-        "typed-decompiler-family-pair-role-value"
-    ]
+    assert (
+        "doxastic->conditional_normative:action:deposit"
+        in slot_texts["typed-decompiler-family-pair-role-value"]
+    )
+    assert (
+        "doxastic->conditional_normative:object:nonmailable_mail_matter"
+        in slot_texts["typed-decompiler-family-pair-role-value"]
+    )
     assert "deposit" in structural_text
     assert "postal matter deposit" in structural_text
     assert "nonmailable matter" in structural_text
@@ -48441,15 +46062,11 @@ def test_decompiler_routes_reclassified_status_to_frame_deontic_slots() -> None:
         selected_frame=None,
     )
 
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "reclassified:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "crime_control_law_enforcement" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "reclassified:frame->deontic" in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "crime_control_law_enforcement" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
     assert "obligation permission prohibition" in structural_text
     assert "crime control law enforcement" in structural_text
@@ -48528,16 +46145,12 @@ def test_decompiler_reconstructs_packet_331_typed_domain_atoms() -> None:
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
         assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
-        assert "knowledge_graphs.neo4j_compat" in slot_texts[
-            "legal_ir_view_prototype"
-        ]
+        assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
         assert structural_fragment in structural_text
 
 
@@ -48565,9 +46178,7 @@ def test_decompiler_reconstructs_packet_336_liability_and_status_slots() -> None
         ),
         predicate="editorial_reclassification_status",
     )
-    status.formulas[0].metadata[
-        "fallback_rule"
-    ] = "uscode_editorial_status_v1"
+    status.formulas[0].metadata["fallback_rule"] = "uscode_editorial_status_v1"
 
     penalty_decoded = decode_modal_ir_document(penalty)
     penalty_slots = decoded_modal_phrase_slot_text_map(penalty_decoded)
@@ -48576,44 +46187,31 @@ def test_decompiler_reconstructs_packet_336_liability_and_status_slots() -> None
         modal_ir=penalty,
         selected_frame=None,
     )
-    status_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(status)
-    )
+    status_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(status))
 
-    assert "civil_penalty_liability" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "penalty_value_multiplier" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "statutory_violation_condition" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "civil_penalty_liability:frame->deontic" in penalty_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "civil_penalty_liability:frame->conditional_normative" in penalty_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "statutory_violation_condition:frame->conditional_normative" in (
-        penalty_slots["typed-decompiler-target-semantic-family-pair"]
+    assert "civil_penalty_liability" in penalty_slots["typed-decompiler-source-semantic-atom"]
+    assert "penalty_value_multiplier" in penalty_slots["typed-decompiler-source-semantic-atom"]
+    assert "statutory_violation_condition" in penalty_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "civil_penalty_liability:frame->deontic"
+        in penalty_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "civil_penalty_liability:frame->conditional_normative"
+        in penalty_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "statutory_violation_condition:frame->conditional_normative"
+        in (penalty_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert "CEC.native" in penalty_slots["legal_ir_view_prototype"]
     assert "TDFOL.prover" in penalty_slots["legal_ir_view_prototype"]
     assert "civil penalty liability" in penalty_structural_text
 
-    assert "editorial_transfer_status" in status_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "editorial_reclassification" in status_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "crime_control_law_enforcement" in status_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->deontic" in status_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "editorial_transfer_status" in status_slots["typed-decompiler-source-semantic-atom"]
+    assert "editorial_reclassification" in status_slots["typed-decompiler-source-semantic-atom"]
+    assert "crime_control_law_enforcement" in status_slots["typed-decompiler-source-semantic-atom"]
+    assert "frame->deontic" in status_slots["typed-decompiler-target-reconstruction-pair"]
 
 
 def test_decompiler_reconstructs_packet_336_housing_and_authorization_slots() -> None:
@@ -48654,29 +46252,32 @@ def test_decompiler_reconstructs_packet_336_housing_and_authorization_slots() ->
         selected_frame=None,
     )
 
-    assert "special_adapted_housing_assistance" in housing_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "special_adapted_housing_assistance:frame->deontic" in housing_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "special_adapted_housing_assistance:frame->conditional_normative" in (
-        housing_slots["typed-decompiler-target-semantic-family-pair"]
+    assert (
+        "special_adapted_housing_assistance"
+        in housing_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "special_adapted_housing_assistance:frame->deontic"
+        in housing_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "special_adapted_housing_assistance:frame->conditional_normative"
+        in (housing_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert "deontic.ir" in housing_slots["legal_ir_view_prototype"]
     assert "CEC.native" in housing_slots["legal_ir_view_prototype"]
     assert "special adapted housing assistance" in housing_structural_text
 
-    assert "supplemental_authorization_policy" in supplemental_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "supplemental_authorization_policy:frame->conditional_normative" in (
-        supplemental_slots["typed-decompiler-target-semantic-family-pair"]
+    assert (
+        "supplemental_authorization_policy"
+        in supplemental_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "supplemental_authorization_policy:frame->conditional_normative"
+        in (supplemental_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert "CEC.native" in supplemental_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in supplemental_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in supplemental_slots["legal_ir_view_prototype"]
     assert "supplemental authorization policy" in supplemental_structural_text
 
 
@@ -48719,41 +46320,34 @@ def test_decompiler_reconstructs_packet_344_uscode_surface_profiles() -> None:
         predicate="minority_science_developing_institution_program",
     )
 
-    naval_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(naval_facility)
+    naval_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(naval_facility))
+    penalty_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(vessel_penalty))
+    education_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(higher_education))
+
+    assert "naval_facility_expansion" in naval_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "uscode_naval_facility_expansion_surface"
+        in naval_slots["typed-decompiler-target-surface-profile"]
     )
-    penalty_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(vessel_penalty)
+    assert (
+        "uscode_catalog_record:frame->deontic"
+        in naval_slots["typed-decompiler-target-reconstruction-surface-profile"]
     )
-    education_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(higher_education)
+    assert (
+        "naval_facility_expansion:frame->temporal"
+        in naval_slots["typed-decompiler-target-semantic-family-pair"]
     )
 
-    assert "naval_facility_expansion" in naval_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "uscode_naval_facility_expansion_surface" in naval_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
-    assert "uscode_catalog_record:frame->deontic" in naval_slots[
-        "typed-decompiler-target-reconstruction-surface-profile"
-    ]
-    assert "naval_facility_expansion:frame->temporal" in naval_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-
-    assert "civil_penalty_liability" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "statutory_violation_condition" in penalty_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "uscode_vessel_violation_penalty_surface" in penalty_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
-    assert "frame->conditional_normative" in penalty_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "civil_penalty_liability" in penalty_slots["typed-decompiler-source-semantic-atom"]
+    assert "statutory_violation_condition" in penalty_slots["typed-decompiler-source-semantic-atom"]
+    assert (
+        "uscode_vessel_violation_penalty_surface"
+        in penalty_slots["typed-decompiler-target-surface-profile"]
+    )
+    assert (
+        "frame->conditional_normative"
+        in penalty_slots["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "TDFOL.prover" in penalty_slots["legal_ir_view_prototype"]
 
     assert {
@@ -48761,12 +46355,11 @@ def test_decompiler_reconstructs_packet_344_uscode_surface_profiles() -> None:
         "higher_education_student_assistance",
         "science_engineering_education_program",
     }.issubset(set(education_slots["typed-decompiler-source-semantic-atom"]))
-    assert "uscode_higher_education_program_surface" in education_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
-    assert "frame->deontic" in education_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "uscode_higher_education_program_surface"
+        in education_slots["typed-decompiler-target-surface-profile"]
+    )
+    assert "frame->deontic" in education_slots["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in education_slots["legal_ir_view_prototype"]
 
 
@@ -48861,9 +46454,7 @@ def test_decompiler_reconstructs_packet_338_semantic_residual_slots() -> None:
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
@@ -48922,21 +46513,20 @@ def test_decompiler_reconstructs_packet_364_facility_and_retirement_slots() -> N
         "frame->frame",
         "frame->temporal",
     }.issubset(set(facilities_slots["typed-decompiler-target-reconstruction-pair"]))
-    assert "frame->conditional_normative:with_consent" in facilities_slots[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
+    assert (
+        "frame->conditional_normative:with_consent"
+        in facilities_slots["typed-decompiler-target-reconstruction-cue"]
+    )
     assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
         set(facilities_slots["legal_ir_view_prototype"])
     )
     assert "public facility use" in facilities_structural_text
     assert "government facility use" in facilities_structural_text
 
-    assert "armed_forces_retirement_home" in retirement_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "retirement_home_payment" in retirement_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert (
+        "armed_forces_retirement_home" in retirement_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "retirement_home_payment" in retirement_slots["typed-decompiler-source-semantic-atom"]
     assert {
         "frame->conditional_normative",
         "frame->deontic",
@@ -48985,12 +46575,8 @@ def test_decompiler_reconstructs_packet_341_scoped_family_pair_slots() -> None:
         predicate="federal_financing_bank_export_credit_authority",
     )
 
-    admission_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(admission)
-    )
-    false_claim_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(false_claim)
-    )
+    admission_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(admission))
+    false_claim_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(false_claim))
     determination_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(determination)
     )
@@ -49003,29 +46589,19 @@ def test_decompiler_reconstructs_packet_341_scoped_family_pair_slots() -> None:
         "obligation:negative_scope:temporal:frame->epistemic"
         in admission_slots["typed-decompiler-force-polarity-scope-family-pair"]
     )
-    assert "admission_fee_collection" in admission_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "admission_fee_collection" in admission_slots["typed-decompiler-source-semantic-atom"]
     assert (
         "obligation:positive_scope:mental_state:deontic->doxastic"
         in false_claim_slots["typed-decompiler-force-polarity-scope-family-pair"]
     )
-    assert "deontic->doxastic" in false_claim_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "false_claim_knowledge" in false_claim_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "knowledge_graphs.neo4j_compat" in false_claim_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "deontic->doxastic" in false_claim_slots["typed-decompiler-target-reconstruction-pair"]
+    assert "false_claim_knowledge" in false_claim_slots["typed-decompiler-source-semantic-atom"]
+    assert "knowledge_graphs.neo4j_compat" in false_claim_slots["legal_ir_view_prototype"]
     assert (
         "permission:positive_scope:mental_state:frame->doxastic"
         in determination_slots["typed-decompiler-force-polarity-scope-family-pair"]
     )
-    assert "frame->epistemic" in determination_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->epistemic" in determination_slots["typed-decompiler-target-reconstruction-pair"]
 
 
 def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> None:
@@ -49064,9 +46640,7 @@ def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> Non
     administration_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(administration)
     )
-    transfer_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(transfer)
-    )
+    transfer_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(transfer))
     transfer_structural_text = _structural_decoded_text(
         decode_modal_ir_document(transfer),
         modal_ir=transfer,
@@ -49081,23 +46655,13 @@ def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> Non
         "contracting_authority",
         "cooperative_agreement_authority",
     }.issubset(set(administration_slots["typed-decompiler-source-semantic-atom"]))
-    assert "frame->deontic" in administration_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->dynamic" in administration_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->deontic" in administration_slots["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->dynamic" in administration_slots["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in administration_slots["legal_ir_view_prototype"]
-    assert "knowledge_graphs.neo4j_compat" in administration_slots[
-        "legal_ir_view_prototype"
-    ]
+    assert "knowledge_graphs.neo4j_compat" in administration_slots["legal_ir_view_prototype"]
 
-    assert "fund_transfer_authority" in transfer_slots[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->dynamic" in transfer_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "fund_transfer_authority" in transfer_slots["typed-decompiler-source-semantic-atom"]
+    assert "deontic->dynamic" in transfer_slots["typed-decompiler-target-reconstruction-pair"]
     assert (
         "force-polarity-family-pair:permission:positive_scope:deontic->dynamic"
         in transfer_slots["decompiler-plan"]
@@ -49110,9 +46674,7 @@ def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> Non
         "developing_institution_program",
         "higher_education_student_assistance",
     }.issubset(set(developing_slots["typed-decompiler-source-semantic-atom"]))
-    assert "frame->deontic" in developing_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->deontic" in developing_slots["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in developing_slots["legal_ir_view_prototype"]
 
 
@@ -49170,9 +46732,7 @@ def test_decompiler_reconstructs_packet_186_research_and_administration_slots() 
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert {
             "frame->conditional_normative",
             "frame->deontic",
@@ -49230,12 +46790,14 @@ def test_decompiler_reconstructs_packet_188_frame_semantic_slots() -> None:
     assert {"frame->conditional_normative", "frame->epistemic"}.issubset(
         set(iss_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "legal frame reconstructs conditional obligation" in iss_slots[
-        "typed_ir_family_pair_semantic_bridge"
-    ]
-    assert "legal frame reconstructs knowledge finding" in iss_slots[
-        "typed_ir_family_pair_semantic_bridge"
-    ]
+    assert (
+        "legal frame reconstructs conditional obligation"
+        in iss_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert (
+        "legal frame reconstructs knowledge finding"
+        in iss_slots["typed_ir_family_pair_semantic_bridge"]
+    )
     assert "international space station" in iss_structural_text
     assert "knowledge determination finding" in iss_structural_text
 
@@ -49340,17 +46902,13 @@ def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
         predicate="receiver_operate_property_receivership",
     )
 
-    energy_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(energy_study)
-    )
+    energy_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(energy_study))
     energy_structural_text = _structural_decoded_text(
         decode_modal_ir_document(energy_study),
         modal_ir=energy_study,
         selected_frame=None,
     )
-    receivership_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(receivership)
-    )
+    receivership_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(receivership))
     receivership_structural_text = _structural_decoded_text(
         decode_modal_ir_document(receivership),
         modal_ir=receivership,
@@ -49363,11 +46921,10 @@ def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
         "renewable_energy_barrier_study",
         "utility_ratemaking_procedure",
     }.issubset(set(energy_slots["typed-decompiler-source-semantic-atom"]))
-    assert "deontic->temporal" in energy_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "renewable_energy_tax_rate_treatment:deontic->temporal" in (
-        energy_slots["typed-decompiler-target-semantic-family-pair"]
+    assert "deontic->temporal" in energy_slots["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "renewable_energy_tax_rate_treatment:deontic->temporal"
+        in (energy_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
         set(energy_slots["legal_ir_view_prototype"])
@@ -49379,11 +46936,10 @@ def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
         "receivership_administration",
         "receiver_duty",
     }.issubset(set(receivership_slots["typed-decompiler-source-semantic-atom"]))
-    assert "deontic->frame" in receivership_slots[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "receivership_administration:deontic->frame" in (
-        receivership_slots["typed-decompiler-target-semantic-family-pair"]
+    assert "deontic->frame" in receivership_slots["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "receivership_administration:deontic->frame"
+        in (receivership_slots["typed-decompiler-target-semantic-family-pair"])
     )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
         set(receivership_slots["legal_ir_view_prototype"])
@@ -49423,12 +46979,14 @@ def test_decompiler_reconstructs_inventory_study_report_temporal_bridge_slots() 
     assert {"deontic->frame", "deontic->temporal"}.issubset(
         set(slot_texts["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uranium_inventory_study:deontic->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "deontic duty reconstructs temporal deadline" in slot_texts[
-        "typed_ir_family_pair_semantic_bridge"
-    ]
+    assert (
+        "uranium_inventory_study:deontic->temporal"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert (
+        "deontic duty reconstructs temporal deadline"
+        in slot_texts["typed_ir_family_pair_semantic_bridge"]
+    )
     assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
         set(slot_texts["legal_ir_view_prototype"])
     )
@@ -49451,22 +47009,13 @@ def test_decompiler_reconstructs_packet_001953_frame_semantic_slots() -> None:
         family="frame",
         symbol="Frame",
         label="frame",
-        text=(
-            "26 U.S.C. 4980A: Sec. 4980A - Repealed. Pub. L. 105-34 "
-            "repealed this section."
-        ),
+        text=("26 U.S.C. 4980A: Sec. 4980A - Repealed. Pub. L. 105-34 repealed this section."),
         predicate="section_repealed",
     )
-    repealed.formulas[0].metadata[
-        "fallback_rule"
-    ] = "uscode_editorial_status_heading_v1"
+    repealed.formulas[0].metadata["fallback_rule"] = "uscode_editorial_status_heading_v1"
 
-    judicial_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(judicial_review)
-    )
-    repealed_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(repealed)
-    )
+    judicial_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(judicial_review))
+    repealed_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(repealed))
 
     assert {
         "judicial_review",
@@ -49491,12 +47040,14 @@ def test_decompiler_reconstructs_packet_001953_frame_semantic_slots() -> None:
         "frame->frame",
         "frame->temporal",
     }.issubset(set(repealed_slots["typed-decompiler-target-reconstruction-pair"]))
-    assert "uscode_catalog_record:frame->temporal" in repealed_slots[
-        "typed-decompiler-target-reconstruction-surface-profile"
-    ]
-    assert "uscode_editorial_status_surface" in repealed_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_catalog_record:frame->temporal"
+        in repealed_slots["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert (
+        "uscode_editorial_status_surface"
+        in repealed_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
         set(repealed_slots["legal_ir_view_prototype"])
     )
@@ -49527,12 +47078,8 @@ def test_decompiler_reconstructs_packet_001961_project_loan_and_award_slots() ->
         predicate="medal_of_honor_award_review",
     )
 
-    loan_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(project_loan)
-    )
-    medal_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(medal_review)
-    )
+    loan_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(project_loan))
+    medal_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(medal_review))
 
     assert {
         "geothermal_energy_program",
@@ -49545,12 +47092,11 @@ def test_decompiler_reconstructs_packet_001961_project_loan_and_award_slots() ->
         "frame->deontic",
         "frame->frame",
     }.issubset(set(loan_slots["typed-decompiler-target-reconstruction-pair"]))
-    assert "frame->deontic:may" in loan_slots[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "frame->conditional_normative:except_as_otherwise_provided" in loan_slots[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
+    assert "frame->deontic:may" in loan_slots["typed-decompiler-target-reconstruction-cue"]
+    assert (
+        "frame->conditional_normative:except_as_otherwise_provided"
+        in loan_slots["typed-decompiler-target-reconstruction-cue"]
+    )
     assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
         set(loan_slots["legal_ir_view_prototype"])
     )
@@ -49566,9 +47112,10 @@ def test_decompiler_reconstructs_packet_001961_project_loan_and_award_slots() ->
         "frame->deontic",
         "frame->frame",
     }.issubset(set(medal_slots["typed-decompiler-target-reconstruction-pair"]))
-    assert "medal_of_honor_award:frame->deontic" in medal_slots[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
+    assert (
+        "medal_of_honor_award:frame->deontic"
+        in medal_slots["typed-decompiler-target-semantic-family-pair"]
+    )
     assert {"deontic.ir", "CEC.native", "TDFOL.prover"}.issubset(
         set(medal_slots["legal_ir_view_prototype"])
     )
@@ -49683,9 +47230,7 @@ def test_decompiler_reconstructs_packet_002060_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
@@ -49791,9 +47336,7 @@ def test_decompiler_reconstructs_packet_002071_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
@@ -49889,9 +47432,7 @@ def test_decompiler_reconstructs_packet_003768_residual_uscode_surfaces() -> Non
     ]
 
     for document, expected_atoms, expected_pairs, expected_fragment in cases:
-        document.formulas[0].metadata[
-            "fallback_rule"
-        ] = "uscode_residual_span_fallback"
+        document.formulas[0].metadata["fallback_rule"] = "uscode_residual_span_fallback"
         decoded = decode_modal_ir_document(document)
         slot_texts = decoded_modal_phrase_slot_text_map(decoded)
         structural_text = _structural_decoded_text(
@@ -49900,9 +47441,7 @@ def test_decompiler_reconstructs_packet_003768_residual_uscode_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
@@ -50016,9 +47555,7 @@ def test_decompiler_reconstructs_packet_000819_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
@@ -50130,9 +47667,7 @@ def test_decompiler_reconstructs_packet_000348_fund_and_reclamation_slots() -> N
             }
         ]
 
-    fund_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(implementation_fund)
-    )
+    fund_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(implementation_fund))
     irrigation_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(irrigation_project)
     )
@@ -50204,15 +47739,9 @@ def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None
         conditions=["with respect to subsection (a)", "as described in this section"],
     )
 
-    tariff_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(tariff_penalty)
-    )
-    registry_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(registry)
-    )
-    construction_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(construction)
-    )
+    tariff_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(tariff_penalty))
+    registry_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(registry))
+    construction_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(construction))
 
     assert {
         "cargo_carriage",
@@ -50224,9 +47753,10 @@ def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None
     assert {"deontic->deontic", "deontic->temporal"}.issubset(
         set(tariff_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_suspended_tariff_service_contract_surface" in tariff_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_suspended_tariff_service_contract_surface"
+        in tariff_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
         set(tariff_slots["legal_ir_view_prototype"])
     )
@@ -50239,9 +47769,10 @@ def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None
     assert {"deontic->deontic", "deontic->frame"}.issubset(
         set(registry_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_registry_record_surface" in registry_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_registry_record_surface"
+        in registry_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
         set(registry_slots["legal_ir_view_prototype"])
     )
@@ -50253,18 +47784,19 @@ def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None
     assert {"frame->deontic", "frame->temporal", "frame->frame"}.issubset(
         set(construction_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert {"with_respect_to", "as_described_in"}.issubset(
-        set(construction_slots["bridge_cue"])
+    assert {"with_respect_to", "as_described_in"}.issubset(set(construction_slots["bridge_cue"]))
+    assert (
+        "frame->deontic:with_respect_to"
+        in construction_slots["typed-decompiler-target-reconstruction-cue"]
     )
-    assert "frame->deontic:with_respect_to" in construction_slots[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "as_described_in:frame->deontic" in construction_slots[
-        "typed-decompiler-surface-cue-family-pair"
-    ]
-    assert "uscode_construction_contract_surface" in construction_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "as_described_in:frame->deontic"
+        in construction_slots["typed-decompiler-surface-cue-family-pair"]
+    )
+    assert (
+        "uscode_construction_contract_surface"
+        in construction_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "TDFOL.prover", "modal.frame_logic"}.issubset(
         set(construction_slots["legal_ir_view_prototype"])
     )
@@ -50294,12 +47826,8 @@ def test_decompiler_reconstructs_packet_000587_measurement_and_status_slots() ->
         predicate="general_counsel_repealed_status",
     )
 
-    measurement_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(measurement)
-    )
-    status_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(repealed_status)
-    )
+    measurement_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(measurement))
+    status_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(repealed_status))
 
     assert {
         "agency_measurement_assignment",
@@ -50310,9 +47838,10 @@ def test_decompiler_reconstructs_packet_000587_measurement_and_status_slots() ->
     assert {"frame->frame", "frame->deontic", "frame->temporal"}.issubset(
         set(measurement_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_measurement_assignment_surface" in measurement_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_measurement_assignment_surface"
+        in measurement_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover", "modal.frame_logic"}.issubset(
         set(measurement_slots["legal_ir_view_prototype"])
     )
@@ -50320,9 +47849,9 @@ def test_decompiler_reconstructs_packet_000587_measurement_and_status_slots() ->
     assert {"frame->frame", "frame->temporal", "frame->deontic"}.issubset(
         set(status_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_editorial_status_surface" in status_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_editorial_status_surface" in status_slots["typed-decompiler-target-surface-profile"]
+    )
 
 
 def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() -> None:
@@ -50364,12 +47893,8 @@ def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() ->
     )
 
     job_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(job_corps))
-    foreign_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(foreign_relations)
-    )
-    postal_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(postal_penalty)
-    )
+    foreign_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(foreign_relations))
+    postal_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(postal_penalty))
 
     assert {"job_corps_program", "workforce_investment_system", "omitted"}.issubset(
         set(job_slots["typed-decompiler-source-semantic-atom"])
@@ -50377,9 +47902,10 @@ def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() ->
     assert {"frame->deontic", "frame->frame", "frame->temporal"}.issubset(
         set(job_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_job_corps_program_status_surface" in job_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_job_corps_program_status_surface"
+        in job_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
         set(job_slots["legal_ir_view_prototype"])
     )
@@ -50392,9 +47918,10 @@ def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() ->
     assert {"temporal->temporal", "temporal->frame", "temporal->deontic"}.issubset(
         set(foreign_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_friendly_foreign_relations_status_surface" in foreign_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_friendly_foreign_relations_status_surface"
+        in foreign_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "knowledge_graphs.neo4j_compat", "TDFOL.prover"}.issubset(
         set(foreign_slots["legal_ir_view_prototype"])
     )
@@ -50407,9 +47934,10 @@ def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() ->
     assert {"frame->deontic", "frame->frame"}.issubset(
         set(postal_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "uscode_postal_nonmailable_penalty_surface" in postal_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "uscode_postal_nonmailable_penalty_surface"
+        in postal_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
         set(postal_slots["legal_ir_view_prototype"])
     )
@@ -50466,12 +47994,8 @@ def test_decompiler_reconstructs_packet_000598_definition_and_wildlife_slots() -
             }
         ]
 
-    child_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(child_abduction)
-    )
-    wildlife_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(wildlife_omitted)
-    )
+    child_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(child_abduction))
+    wildlife_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(wildlife_omitted))
 
     assert {"child_abduction_remedy", "definition"}.issubset(
         set(child_slots["typed-decompiler-source-semantic-atom"])
@@ -50479,12 +48003,14 @@ def test_decompiler_reconstructs_packet_000598_definition_and_wildlife_slots() -
     assert {"frame->conditional_normative", "frame->deontic"}.issubset(
         set(child_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "definition:positive_scope:frame->conditional_normative" in child_slots[
-        "typed-decompiler-force-polarity-family-pair"
-    ]
-    assert "uscode_child_abduction_definition_surface" in child_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert (
+        "definition:positive_scope:frame->conditional_normative"
+        in child_slots["typed-decompiler-force-polarity-family-pair"]
+    )
+    assert (
+        "uscode_child_abduction_definition_surface"
+        in child_slots["typed-decompiler-target-surface-profile"]
+    )
 
     assert {
         "endangered_species_wildlife",
@@ -50495,12 +48021,11 @@ def test_decompiler_reconstructs_packet_000598_definition_and_wildlife_slots() -
     assert {"temporal->frame", "temporal->deontic"}.issubset(
         set(wildlife_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "under:temporal->frame" in wildlife_slots[
-        "typed-decompiler-surface-cue-family-pair"
-    ]
-    assert "uscode_wildlife_omitted_status_surface" in wildlife_slots[
-        "typed-decompiler-target-surface-profile"
-    ]
+    assert "under:temporal->frame" in wildlife_slots["typed-decompiler-surface-cue-family-pair"]
+    assert (
+        "uscode_wildlife_omitted_status_surface"
+        in wildlife_slots["typed-decompiler-target-surface-profile"]
+    )
     assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
         set(wildlife_slots["legal_ir_view_prototype"])
     )
@@ -50532,9 +48057,7 @@ def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> N
         predicate="generation_skipping_transfer_taxable_amount",
         conditions=["if a generation-skipping transfer is made"],
     )
-    generation_skipping_tax.formulas[0].exceptions.append(
-        "except as otherwise provided"
-    )
+    generation_skipping_tax.formulas[0].exceptions.append("except as otherwise provided")
     epistemic_frame = _single_formula_document(
         family="frame",
         symbol="Frame",
@@ -50545,14 +48068,10 @@ def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> N
             "report the determination to Congress."
         ),
         predicate="archivist_records_preservation_determination",
-        conditions=[
-            "if the Archivist determines that records are subject to this chapter"
-        ],
+        conditions=["if the Archivist determines that records are subject to this chapter"],
     )
 
-    floodway_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(floodway_report)
-    )
+    floodway_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(floodway_report))
     tax_decoded = decode_modal_ir_document(generation_skipping_tax)
     tax_slots = decoded_modal_phrase_slot_text_map(tax_decoded)
     tax_structural_text = _structural_decoded_text(
@@ -50560,9 +48079,7 @@ def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> N
         modal_ir=generation_skipping_tax,
         selected_frame=None,
     )
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(epistemic_frame)
-    )
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(epistemic_frame))
 
     assert {
         "colorado_river_floodway_report",
@@ -50591,12 +48108,14 @@ def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> N
     assert {"frame->conditional_normative", "frame->epistemic"}.issubset(
         set(frame_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "legal frame reconstructs conditional obligation" in frame_slots[
-        "typed_ir_family_pair_semantic_bridge"
-    ]
-    assert "legal frame reconstructs knowledge finding" in frame_slots[
-        "typed_ir_family_pair_semantic_bridge"
-    ]
+    assert (
+        "legal frame reconstructs conditional obligation"
+        in frame_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert (
+        "legal frame reconstructs knowledge finding"
+        in frame_slots["typed_ir_family_pair_semantic_bridge"]
+    )
 
 
 def test_decompiler_reconstructs_packet_000600_uscode_residual_surfaces() -> None:
@@ -50717,19 +48236,13 @@ def test_decompiler_reconstructs_packet_000600_uscode_residual_surfaces() -> Non
     ]
 
     for document, expected_atoms, expected_pairs, expected_surface in samples:
-        slot_texts = decoded_modal_phrase_slot_text_map(
-            decode_modal_ir_document(document)
-        )
+        slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -50796,15 +48309,11 @@ def test_decompiler_reconstructs_packet_000846_uscode_security_and_fee_surfaces(
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -50887,15 +48396,11 @@ def test_decompiler_reconstructs_packet_000901_adverse_action_equipment_payment_
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51007,15 +48512,11 @@ def test_decompiler_reconstructs_packet_000188_public_program_surfaces() -> None
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51057,9 +48558,7 @@ def test_decompiler_reconstructs_packet_000190_modal_ir_residual_slots() -> None
                     "by the Technical Mapping Advisory Council."
                 ),
                 predicate="administrator_implement_flood_mapping_program",
-                conditions=[
-                    "only after review by the Technical Mapping Advisory Council"
-                ],
+                conditions=["only after review by the Technical Mapping Advisory Council"],
             ),
             {
                 "flood_insurance_program",
@@ -51153,15 +48652,11 @@ def test_decompiler_reconstructs_packet_000190_modal_ir_residual_slots() -> None
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51262,15 +48757,11 @@ def test_decompiler_reconstructs_packet_000626_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51375,15 +48866,11 @@ def test_decompiler_reconstructs_packet_000627_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51507,15 +48994,11 @@ def test_decompiler_reconstructs_packet_000629_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51661,15 +49144,11 @@ def test_decompiler_reconstructs_packet_000630_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51798,15 +49277,11 @@ def test_decompiler_reconstructs_packet_000633_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -51931,15 +49406,11 @@ def test_decompiler_reconstructs_packet_000638_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -52066,15 +49537,11 @@ def test_decompiler_reconstructs_packet_000641_uscode_semantic_surfaces() -> Non
             selected_frame=None,
         )
 
-        assert expected_atoms.issubset(
-            set(slot_texts["typed-decompiler-source-semantic-atom"])
-        )
+        assert expected_atoms.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
         assert expected_pairs.issubset(
             set(slot_texts["typed-decompiler-target-reconstruction-pair"])
         )
-        assert expected_surface in slot_texts[
-            "typed-decompiler-target-surface-profile"
-        ]
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
         assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
             set(slot_texts["legal_ir_view_prototype"])
         )
@@ -52083,14 +49550,8 @@ def test_decompiler_reconstructs_packet_000641_uscode_semantic_surfaces() -> Non
 
 
 def _token_overlap_ratio(left: str, right: str) -> float:
-    left_tokens = {
-        token.lower()
-        for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_'-]*", left)
-    }
-    right_tokens = {
-        token.lower()
-        for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_'-]*", right)
-    }
+    left_tokens = {token.lower() for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_'-]*", left)}
+    right_tokens = {token.lower() for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_'-]*", right)}
     if not left_tokens:
         return 1.0 if not right_tokens else 0.0
     return len(left_tokens & right_tokens) / len(left_tokens)

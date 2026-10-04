@@ -174,23 +174,133 @@ GUARDRAIL_BOOLEAN_KEYS: Final = (
 )
 
 DEFAULT_PARAM_SETS: Final = (
-    {"lr": 0.28, "ce": 1.75, "rec": 0.60, "cos": 0.60, "legal": 1.35, "hard": 0.55, "fam": 1.05, "emb": 0.45},
-    {"lr": 0.30, "ce": 1.50, "rec": 0.70, "cos": 0.70, "legal": 1.25, "hard": 0.60, "fam": 0.95, "emb": 0.55},
-    {"lr": 0.33, "ce": 1.35, "rec": 0.80, "cos": 0.80, "legal": 1.15, "hard": 0.70, "fam": 1.15, "emb": 0.50},
-    {"lr": 0.26, "ce": 2.00, "rec": 0.50, "cos": 0.50, "legal": 1.50, "hard": 0.45, "fam": 0.85, "emb": 0.65},
-    {"lr": 0.31, "ce": 1.60, "rec": 0.65, "cos": 0.75, "legal": 1.40, "hard": 0.50, "fam": 1.10, "emb": 0.40},
-    {"lr": 0.29, "ce": 1.40, "rec": 0.75, "cos": 0.65, "legal": 1.30, "hard": 0.65, "fam": 1.00, "emb": 0.60},
-    {"lr": 0.24, "ce": 2.15, "rec": 0.55, "cos": 0.85, "legal": 1.55, "hard": 0.40, "fam": 1.20, "emb": 0.35},
-    {"lr": 0.35, "ce": 1.25, "rec": 0.90, "cos": 0.95, "legal": 1.05, "hard": 0.75, "fam": 0.90, "emb": 0.70},
-    {"lr": 0.27, "ce": 1.90, "rec": 0.85, "cos": 0.55, "legal": 1.45, "hard": 0.50, "fam": 1.25, "emb": 0.50},
-    {"lr": 0.32, "ce": 1.70, "rec": 0.60, "cos": 0.90, "legal": 1.20, "hard": 0.80, "fam": 0.80, "emb": 0.55},
-    {"lr": 0.25, "ce": 1.30, "rec": 0.95, "cos": 0.70, "legal": 1.60, "hard": 0.60, "fam": 1.05, "emb": 0.75},
-    {"lr": 0.34, "ce": 1.85, "rec": 0.45, "cos": 0.65, "legal": 1.10, "hard": 0.35, "fam": 1.30, "emb": 0.45},
+    {
+        "lr": 0.28,
+        "ce": 1.75,
+        "rec": 0.60,
+        "cos": 0.60,
+        "legal": 1.35,
+        "hard": 0.55,
+        "fam": 1.05,
+        "emb": 0.45,
+    },
+    {
+        "lr": 0.30,
+        "ce": 1.50,
+        "rec": 0.70,
+        "cos": 0.70,
+        "legal": 1.25,
+        "hard": 0.60,
+        "fam": 0.95,
+        "emb": 0.55,
+    },
+    {
+        "lr": 0.33,
+        "ce": 1.35,
+        "rec": 0.80,
+        "cos": 0.80,
+        "legal": 1.15,
+        "hard": 0.70,
+        "fam": 1.15,
+        "emb": 0.50,
+    },
+    {
+        "lr": 0.26,
+        "ce": 2.00,
+        "rec": 0.50,
+        "cos": 0.50,
+        "legal": 1.50,
+        "hard": 0.45,
+        "fam": 0.85,
+        "emb": 0.65,
+    },
+    {
+        "lr": 0.31,
+        "ce": 1.60,
+        "rec": 0.65,
+        "cos": 0.75,
+        "legal": 1.40,
+        "hard": 0.50,
+        "fam": 1.10,
+        "emb": 0.40,
+    },
+    {
+        "lr": 0.29,
+        "ce": 1.40,
+        "rec": 0.75,
+        "cos": 0.65,
+        "legal": 1.30,
+        "hard": 0.65,
+        "fam": 1.00,
+        "emb": 0.60,
+    },
+    {
+        "lr": 0.24,
+        "ce": 2.15,
+        "rec": 0.55,
+        "cos": 0.85,
+        "legal": 1.55,
+        "hard": 0.40,
+        "fam": 1.20,
+        "emb": 0.35,
+    },
+    {
+        "lr": 0.35,
+        "ce": 1.25,
+        "rec": 0.90,
+        "cos": 0.95,
+        "legal": 1.05,
+        "hard": 0.75,
+        "fam": 0.90,
+        "emb": 0.70,
+    },
+    {
+        "lr": 0.27,
+        "ce": 1.90,
+        "rec": 0.85,
+        "cos": 0.55,
+        "legal": 1.45,
+        "hard": 0.50,
+        "fam": 1.25,
+        "emb": 0.50,
+    },
+    {
+        "lr": 0.32,
+        "ce": 1.70,
+        "rec": 0.60,
+        "cos": 0.90,
+        "legal": 1.20,
+        "hard": 0.80,
+        "fam": 0.80,
+        "emb": 0.55,
+    },
+    {
+        "lr": 0.25,
+        "ce": 1.30,
+        "rec": 0.95,
+        "cos": 0.70,
+        "legal": 1.60,
+        "hard": 0.60,
+        "fam": 1.05,
+        "emb": 0.75,
+    },
+    {
+        "lr": 0.34,
+        "ce": 1.85,
+        "rec": 0.45,
+        "cos": 0.65,
+        "legal": 1.10,
+        "hard": 0.35,
+        "fam": 1.30,
+        "emb": 0.45,
+    },
 )
 
 
 def _canonical_json(value: Any) -> str:
-    return json.dumps(value, allow_nan=False, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return json.dumps(
+        value, allow_nan=False, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    )
 
 
 def _digest(value: Any) -> str:
@@ -262,7 +372,9 @@ class CompilerArtifactSet:
             if not value:
                 raise ValueError(f"{name} must be non-empty")
             object.__setattr__(self, name, value)
-        object.__setattr__(self, "compiler_config_digest", str(self.compiler_config_digest or "").strip())
+        object.__setattr__(
+            self, "compiler_config_digest", str(self.compiler_config_digest or "").strip()
+        )
         if not isinstance(self.deterministic, bool) or not isinstance(self.complete, bool):
             raise ValueError("compiler artifact deterministic and complete flags must be bools")
         if not self.artifacts:
@@ -351,9 +463,7 @@ class SharedBaseline:
             "family_metrics": _thaw(self.family_metrics),
             "split_guard": _thaw(self.split_guard),
             "compiler_artifact_set": (
-                None
-                if self.compiler_artifact_set is None
-                else self.compiler_artifact_set.to_dict()
+                None if self.compiler_artifact_set is None else self.compiler_artifact_set.to_dict()
             ),
         }
         if include_digest:
@@ -392,16 +502,23 @@ class HParamCandidate:
             for key, value in sorted(dict(params).items())
         )
         stable_seeds = tuple(int(item) for item in (seeds or (seed,)))
-        if not stable_seeds or len(set(stable_seeds)) != len(stable_seeds) or any(item < 0 for item in stable_seeds):
+        if (
+            not stable_seeds
+            or len(set(stable_seeds)) != len(stable_seeds)
+            or any(item < 0 for item in stable_seeds)
+        ):
             raise ValueError("candidate seeds must be unique non-negative integers")
-        candidate_id = "hparam-" + _digest(
-            {
-                "baseline_digest": baseline.digest,
-                "index": index,
-                "params": stable_params,
-                "seeds": stable_seeds,
-            }
-        )[:16]
+        candidate_id = (
+            "hparam-"
+            + _digest(
+                {
+                    "baseline_digest": baseline.digest,
+                    "index": index,
+                    "params": stable_params,
+                    "seeds": stable_seeds,
+                }
+            )[:16]
+        )
         return cls(
             candidate_id=candidate_id,
             index=index,
@@ -636,7 +753,12 @@ class HParamSearchConfig:
         if tuple(sorted(budgets)) != budgets or len(set(budgets)) != len(budgets):
             raise ValueError("rung_budgets_seconds must be strictly increasing")
         object.__setattr__(self, "rung_budgets_seconds", budgets)
-        for name in ("min_validation_cosine", "cosine_penalty", "ir_ce_weight", "ir_cosine_penalty"):
+        for name in (
+            "min_validation_cosine",
+            "cosine_penalty",
+            "ir_ce_weight",
+            "ir_cosine_penalty",
+        ):
             _finite(getattr(self, name), name=name, minimum=0.0)
         if not isinstance(self.metric_regression_tolerances, Mapping):
             raise ValueError("metric_regression_tolerances must be a mapping")
@@ -672,7 +794,9 @@ class HParamSearchConfig:
         survivor_count = self.initial_candidate_count
         rungs: list[HParamRung] = []
         for index, budget in enumerate(self.rung_budgets_seconds):
-            rungs.append(HParamRung(index=index, budget_seconds=budget, survivor_count=survivor_count))
+            rungs.append(
+                HParamRung(index=index, budget_seconds=budget, survivor_count=survivor_count)
+            )
             survivor_count = max(1, math.ceil(survivor_count / self.reduction_factor))
         return tuple(rungs)
 
@@ -762,13 +886,21 @@ class TrialSnapshot:
             candidate_id=str(value.get("candidate_id") or value.get("hparam_candidate_id") or ""),
             rung_index=int(value.get("rung_index", value.get("hparam_rung_index", -1))),
             budget_seconds=int(value.get("budget_seconds", value.get("duration_seconds", 0)) or 0),
-            elapsed_seconds=float(value.get("elapsed_seconds", value.get("wall_clock_seconds", 0.0)) or 0.0),
+            elapsed_seconds=float(
+                value.get("elapsed_seconds", value.get("wall_clock_seconds", 0.0)) or 0.0
+            ),
             status=str(value.get("status") or ""),
             snapshot_complete=value.get("snapshot_complete") is True,
             baseline_digest=str(value.get("baseline_digest") or ""),
-            lineage_digest=str(value.get("lineage_digest") or value.get("metric_lineage_digest") or ""),
-            metrics=value.get("metrics", value) if isinstance(value.get("metrics", value), Mapping) else {},
-            family_metrics=value.get("family_metrics", {}) if isinstance(value.get("family_metrics", {}), Mapping) else {},
+            lineage_digest=str(
+                value.get("lineage_digest") or value.get("metric_lineage_digest") or ""
+            ),
+            metrics=value.get("metrics", value)
+            if isinstance(value.get("metrics", value), Mapping)
+            else {},
+            family_metrics=value.get("family_metrics", {})
+            if isinstance(value.get("family_metrics", {}), Mapping)
+            else {},
             snapshot_id=str(value.get("snapshot_id") or value.get("run_id") or ""),
             compiler_artifact_set_digest=str(
                 value.get("compiler_artifact_set_digest")
@@ -788,10 +920,11 @@ class TrialSnapshot:
                 or ""
             ),
             cpu_fallback_used=(
-                value.get("cpu_fallback_used") is True
-                or value.get("cpu_fallback") is True
+                value.get("cpu_fallback_used") is True or value.get("cpu_fallback") is True
             ),
-            state_revision=str(value.get("state_revision") or value.get("evaluated_revision") or ""),
+            state_revision=str(
+                value.get("state_revision") or value.get("evaluated_revision") or ""
+            ),
             evidence_created_at_epoch=float(
                 value.get("evidence_created_at_epoch", value.get("created_at_epoch", 0.0)) or 0.0
             ),
@@ -981,9 +1114,7 @@ class LegalIRHParamScheduler:
                     if self.config.require_tensorized_objective
                     else []
                 ),
-                "metric_regression_tolerances": dict(
-                    self.config.metric_regression_tolerances
-                ),
+                "metric_regression_tolerances": dict(self.config.metric_regression_tolerances),
                 "min_confidence": self.config.guardrails.min_confidence,
             },
         }
@@ -1039,7 +1170,11 @@ class LegalIRHParamScheduler:
         return None
 
     def record_result(self, snapshot: TrialSnapshot | Mapping[str, Any]) -> TrialDecision:
-        trial = snapshot if isinstance(snapshot, TrialSnapshot) else TrialSnapshot.from_mapping(snapshot)
+        trial = (
+            snapshot
+            if isinstance(snapshot, TrialSnapshot)
+            else TrialSnapshot.from_mapping(snapshot)
+        )
         if trial.candidate_id not in self._candidate_by_id:
             raise ValueError(f"unknown candidate_id: {trial.candidate_id!r}")
         if trial.rung_index < 0 or trial.rung_index >= len(self.config.rungs):
@@ -1075,7 +1210,9 @@ class LegalIRHParamScheduler:
         if next_index >= len(self.config.rungs) or next_index in self._active_candidate_ids_by_rung:
             return
         active_ids = self._active_candidate_ids_by_rung.get(rung_index, ())
-        if not active_ids or any((rung_index, candidate_id) not in self._results for candidate_id in active_ids):
+        if not active_ids or any(
+            (rung_index, candidate_id) not in self._results for candidate_id in active_ids
+        ):
             return
         decisions = [
             self.score_snapshot(self._results[(rung_index, candidate_id)])
@@ -1104,13 +1241,19 @@ class LegalIRHParamScheduler:
             failures.append("incomplete_snapshot")
         if snapshot.status.lower() not in {"succeeded", "success", "completed"}:
             failures.append(f"status:{snapshot.status or 'missing'}")
-        if snapshot.elapsed_seconds <= 0 or snapshot.elapsed_seconds > snapshot.budget_seconds * 1.50:
+        if (
+            snapshot.elapsed_seconds <= 0
+            or snapshot.elapsed_seconds > snapshot.budget_seconds * 1.50
+        ):
             failures.append("elapsed_seconds_invalid")
         candidate = self._candidate_by_id.get(snapshot.candidate_id)
         if self.config.require_compiler_artifact_set:
             if not snapshot.compiler_artifact_set_digest:
                 failures.append("compiler_artifact_set_missing")
-            elif candidate is not None and snapshot.compiler_artifact_set_digest != candidate.compiler_artifact_set_digest:
+            elif (
+                candidate is not None
+                and snapshot.compiler_artifact_set_digest != candidate.compiler_artifact_set_digest
+            ):
                 failures.append("compiler_artifact_set_mismatch")
         if self.config.require_multi_seed_evidence:
             expected_seeds = set(candidate.seeds if candidate is not None else ())
@@ -1134,7 +1277,10 @@ class LegalIRHParamScheduler:
         if self.config.max_evidence_age_seconds > 0:
             if snapshot.evidence_created_at_epoch <= 0:
                 failures.append("evidence_timestamp_missing")
-            elif time.time() - snapshot.evidence_created_at_epoch > self.config.max_evidence_age_seconds:
+            elif (
+                time.time() - snapshot.evidence_created_at_epoch
+                > self.config.max_evidence_age_seconds
+            ):
                 failures.append("stale_evidence")
         if snapshot.state_revision and snapshot.state_revision != self.config.baseline.revision:
             failures.append("state_revision_mismatch")
@@ -1197,11 +1343,17 @@ class LegalIRHParamScheduler:
     def _objective_score(self, metrics: Mapping[str, Any]) -> float:
         ce = _metric(metrics, "best_validation_ce", "validation_ce", default=1e12)
         cosine = _metric(metrics, "best_validation_cosine", "validation_cosine", default=-1.0)
-        ir_ce = _metric(metrics, "best_validation_ir_ce", "compiler_ir_cross_entropy_loss", default=ce)
-        ir_cosine = _metric(metrics, "best_validation_ir_cosine", "compiler_ir_cosine", default=cosine)
+        ir_ce = _metric(
+            metrics, "best_validation_ir_ce", "compiler_ir_cross_entropy_loss", default=ce
+        )
+        ir_cosine = _metric(
+            metrics, "best_validation_ir_cosine", "compiler_ir_cosine", default=cosine
+        )
         score = ce + self.config.ir_ce_weight * ir_ce
         score += self.config.cosine_penalty * max(0.0, self.config.min_validation_cosine - cosine)
-        score += self.config.ir_cosine_penalty * max(0.0, self.config.min_validation_cosine - ir_cosine)
+        score += self.config.ir_cosine_penalty * max(
+            0.0, self.config.min_validation_cosine - ir_cosine
+        )
         return score if math.isfinite(score) else 1e12
 
     def _family_guardrail_failures(self, family_metrics: Mapping[str, Any]) -> list[str]:
@@ -1216,7 +1368,9 @@ class LegalIRHParamScheduler:
                     failures.append(f"{key}:{family}")
             confidence = _confidence(raw)
             if confidence is None or confidence < self.config.guardrails.min_confidence:
-                failures.append(f"family_confidence:{family}:{confidence if confidence is not None else 'missing'}")
+                failures.append(
+                    f"family_confidence:{family}:{confidence if confidence is not None else 'missing'}"
+                )
             baseline = raw.get("baseline")
             candidate = raw.get("candidate")
             compared = False
@@ -1250,7 +1404,11 @@ class LegalIRHParamScheduler:
                 failures.append(f"family_paired_metric_missing:{family}")
             if self.config.require_tensorized_objective and not semantic_compared:
                 failures.append(f"family_semantic_equivalence_missing:{family}")
-            if self.config.require_tensorized_objective and isinstance(baseline, Mapping) and isinstance(candidate, Mapping):
+            if (
+                self.config.require_tensorized_objective
+                and isinstance(baseline, Mapping)
+                and isinstance(candidate, Mapping)
+            ):
                 for metric in TENSORIZED_FAMILY_METRICS:
                     if metric == "semantic_equivalence":
                         aliases = ("semantic_equivalence", "semantic_equivalence_score")
@@ -1386,7 +1544,8 @@ class LegalIRHParamScheduler:
                         if self.config.require_measured_second_trainer_pressure
                         else 0
                     ),
-                    requires_gpu=gpu_capacity_known and self.config.resources.trainer_gpu_memory_mb > 0,
+                    requires_gpu=gpu_capacity_known
+                    and self.config.resources.trainer_gpu_memory_mb > 0,
                     timeout=self.config.resources.lease_timeout_seconds,
                     request_id=f"{item.run_id_suffix}:trainer",
                 )
@@ -1556,9 +1715,7 @@ def _confidence_proves_no_regression(
         candidate_conservative = _bound(
             raw, "candidate_lower_bound", "confidence_lower_bound", "lower_bound"
         )
-        baseline_conservative = _bound(
-            raw, "baseline_upper_bound"
-        )
+        baseline_conservative = _bound(raw, "baseline_upper_bound")
         if baseline_conservative is None:
             baseline_conservative = _bound(baseline_raw, "upper_bound", "confidence_upper_bound")
         return (
@@ -1572,9 +1729,7 @@ def _confidence_proves_no_regression(
     baseline_conservative = _bound(raw, "baseline_lower_bound")
     if baseline_conservative is None:
         baseline_conservative = _bound(baseline_raw, "lower_bound", "confidence_lower_bound")
-    return (
-        candidate_conservative if candidate_conservative is not None else candidate_value
-    ) <= (
+    return (candidate_conservative if candidate_conservative is not None else candidate_value) <= (
         baseline_conservative if baseline_conservative is not None else baseline_value
     ) + regression_tolerance + 1.0e-12
 
@@ -1611,12 +1766,11 @@ def _confidence(raw: Mapping[str, Any]) -> float | None:
 
 def default_baseline_from_env() -> SharedBaseline:
     revision = os.environ.get("LEGAL_IR_HPARAM_BASELINE_REVISION", "workspace")
-    dataset_digest = os.environ.get(
-        "LEGAL_IR_HPARAM_DATASET_DIGEST", "sha256:unknown-dataset"
-    )
+    dataset_digest = os.environ.get("LEGAL_IR_HPARAM_DATASET_DIGEST", "sha256:unknown-dataset")
     artifact_manifest_digest = os.environ.get(
         "LEGAL_IR_HPARAM_COMPILER_ARTIFACT_DIGEST",
-        "sha256:" + _digest(
+        "sha256:"
+        + _digest(
             {
                 "compiler_revision": revision,
                 "dataset_digest": dataset_digest,
@@ -1628,7 +1782,9 @@ def default_baseline_from_env() -> SharedBaseline:
         baseline_id=os.environ.get("LEGAL_IR_HPARAM_BASELINE_ID", "legal-ir-shared-baseline"),
         revision=revision,
         dataset_digest=dataset_digest,
-        metric_lineage_id=os.environ.get("LEGAL_IR_HPARAM_METRIC_LINEAGE_ID", "legal-ir-current-metrics"),
+        metric_lineage_id=os.environ.get(
+            "LEGAL_IR_HPARAM_METRIC_LINEAGE_ID", "legal-ir-current-metrics"
+        ),
         compiler_artifact_set=CompilerArtifactSet(
             compiler_revision=revision,
             compiler_config_digest=os.environ.get(
@@ -1677,12 +1833,9 @@ def _format_env(plan: Mapping[str, Any], *, run_id: str) -> str:
             f"hparam_candidate_count={plan['candidate_count']}",
             f"hparam_planned_resource_seconds={plan['planned_resource_seconds']}",
             f"hparam_total_budget_seconds={plan['total_budget_seconds']}",
-            "hparam_rung_budgets="
-            + ",".join(str(rung["budget_seconds"]) for rung in rungs),
-            "hparam_rung_survivors="
-            + ",".join(str(rung["survivor_count"]) for rung in rungs),
-            "hparam_parallel_lanes="
-            + ",".join(plan["resource_policy"]["parallel_lanes"]),
+            "hparam_rung_budgets=" + ",".join(str(rung["budget_seconds"]) for rung in rungs),
+            "hparam_rung_survivors=" + ",".join(str(rung["survivor_count"]) for rung in rungs),
+            "hparam_parallel_lanes=" + ",".join(plan["resource_policy"]["parallel_lanes"]),
             f"hparam_default_cuda_trainers={plan['resource_policy']['default_cuda_trainers']}",
             f"hparam_allow_concurrent_trainers={str(plan['resource_policy']['allow_concurrent_trainers']).lower()}",
             f"hparam_conditional_max_cuda_trainers={plan['resource_policy']['conditional_max_cuda_trainers']}",

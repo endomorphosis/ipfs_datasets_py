@@ -44,16 +44,16 @@ from .production_hardening import (
 
 class OptimizerArgparseCLI:
     """Command-line interface for agentic optimizer."""
-    
+
     def __init__(self) -> None:
         """Initialize CLI."""
         self.coordinator: Optional[AgentCoordinator] = None
         self.config_path = Path(".optimizer-config.json")
         self.config = self._load_config()
-        
+
         # Production hardening: Input sanitizer for security
         self._sanitizer = get_input_sanitizer()
-        
+
         # Production hardening: Resource monitor for tracking
         self._monitor = ResourceMonitor()
 
@@ -61,10 +61,10 @@ class OptimizerArgparseCLI:
     def _safe_error_text(error: Exception) -> str:
         """Return redacted error text for CLI output."""
         return redact_sensitive(str(error))
-    
+
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file.
-        
+
         Returns:
             Configuration dictionary
         """
@@ -74,10 +74,10 @@ class OptimizerArgparseCLI:
             except PathValidationError:
                 config_path = None
             if config_path is not None:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     loaded = json.load(f)
                     return cast(Dict[str, Any], loaded)
-        
+
         # Default configuration
         return {
             "change_control": "patch",
@@ -87,22 +87,22 @@ class OptimizerArgparseCLI:
             "github_repo": None,
             "github_token": None,
         }
-    
+
     def _save_config(self) -> None:
         """Save configuration to file."""
         try:
             config_path = validate_output_path(self.config_path, allow_overwrite=True)
         except PathValidationError:
             return
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(self.config, f, indent=2)
-    
+
     def cmd_optimize(self, args: argparse.Namespace) -> int:
         """Run optimization task.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
@@ -110,7 +110,7 @@ class OptimizerArgparseCLI:
         print(f"   Method: {args.method}")
         print(f"   Target: {args.target}")
         print(f"   Description: {args.description}")
-        
+
         # Parse target files
         target_files = []
         if args.target:
@@ -130,13 +130,13 @@ class OptimizerArgparseCLI:
                             target_files.append(py_file)
                 else:
                     print(f"⚠️  Warning: {pattern} not found")
-        
+
         if not target_files:
             print("❌ Error: No target files found")
             return 1
-        
+
         print(f"   Files: {len(target_files)} Python files")
-        
+
         # Create optimization task
         task = OptimizationTask(
             task_id=f"task-{args.method}-{len(target_files)}",
@@ -145,7 +145,7 @@ class OptimizerArgparseCLI:
             method=OptimizationMethod[args.method.upper()],
             priority=args.priority,
         )
-        
+
         # Create optimizer based on method
         try:
             # Note: LLM router would need to be provided here
@@ -153,288 +153,288 @@ class OptimizerArgparseCLI:
             print(f"\n📋 Task created: {task.task_id}")
             print(f"   Priority: {task.priority}")
             print(f"   Change control: {self.config['change_control']}")
-            
+
             if args.dry_run:
                 print("\n🔍 Dry run - no changes will be made")
                 return 0
-            
+
             # In production, would create and run optimizer here
             print("\n⏳ Optimization in progress...")
             print("   (Implementation requires LLM router configuration)")
-            
+
             return 0
-            
+
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Error: {self._safe_error_text(e)}")
             return 1
-    
+
     def cmd_agents_list(self, args: argparse.Namespace) -> int:
         """List all agents.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         print("🤖 Active Agents\n")
-        
+
         if not self.coordinator:
             print("No coordinator initialized")
             print("\nTo start agents, run:")
             print("  optimizer-cli agents start --count N")
             return 0
-        
+
         agents = self.coordinator.get_agent_states()
-        
+
         if not agents:
             print("No agents running")
             return 0
-        
+
         # Print table header
         print(f"{'ID':<15} {'Status':<12} {'Task':<25} {'Uptime':<10}")
         print("-" * 70)
-        
+
         for agent_id, state in agents.items():
             status = state.status
             task = state.current_task[:25] if state.current_task else "-"
             uptime = self._format_duration(state.uptime)
-            
+
             print(f"{agent_id:<15} {status:<12} {task:<25} {uptime:<10}")
-        
+
         print(f"\nTotal: {len(agents)} agent(s)")
         return 0
-    
+
     def cmd_agents_status(self, args: argparse.Namespace) -> int:
         """Show detailed status for an agent.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         agent_id = args.agent_id
-        
+
         print(f"🤖 Agent Status: {agent_id}\n")
-        
+
         if not self.coordinator:
             print("❌ No coordinator initialized")
             return 1
-        
+
         state = self.coordinator.get_agent_state(agent_id)
-        
+
         if not state:
             print(f"❌ Agent not found: {agent_id}")
             return 1
-        
+
         print(f"Status: {state.status}")
         print(f"Current Task: {state.current_task or 'None'}")
         print(f"Tasks Completed: {state.tasks_completed}")
         print(f"Tasks Failed: {state.tasks_failed}")
         print(f"Uptime: {self._format_duration(state.uptime)}")
         print(f"Last Activity: {state.last_activity}")
-        
+
         if state.error_message:
             print(f"\n⚠️  Last Error: {state.error_message}")
-        
+
         return 0
-    
+
     def cmd_queue_process(self, args: argparse.Namespace) -> int:
         """Process task queue.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         print("📋 Processing Task Queue\n")
-        
+
         if not self.coordinator:
             print("❌ No coordinator initialized")
             return 1
-        
+
         # Get queue status
         queue_size = len(self.coordinator.task_queue)
         print(f"Tasks in queue: {queue_size}")
-        
+
         if queue_size == 0:
             print("Queue is empty")
             return 0
-        
+
         # Process queue
         print("\n⏳ Processing tasks...")
-        
+
         try:
             # In production, would call coordinator.process_queue()
             print("   (Queue processing not yet implemented)")
             return 0
-            
+
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Error: {self._safe_error_text(e)}")
             return 1
-    
+
     def cmd_stats(self, args: argparse.Namespace) -> int:
         """Show optimization statistics.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         print("📊 Optimization Statistics\n")
-        
+
         if not self.coordinator:
             print("❌ No coordinator initialized")
             return 1
-        
+
         stats = self.coordinator.get_statistics()
-        
+
         print(f"Total Tasks: {stats.get('total_tasks', 0)}")
         print(f"Completed: {stats.get('completed', 0)}")
         print(f"Failed: {stats.get('failed', 0)}")
         print(f"In Progress: {stats.get('in_progress', 0)}")
         print(f"Queued: {stats.get('queued', 0)}")
-        
+
         success_rate = 0
-        if stats.get('total_tasks', 0) > 0:
-            success_rate = (stats.get('completed', 0) / stats['total_tasks']) * 100
+        if stats.get("total_tasks", 0) > 0:
+            success_rate = (stats.get("completed", 0) / stats["total_tasks"]) * 100
         print(f"\nSuccess Rate: {success_rate:.1f}%")
-        
-        if 'conflicts' in stats:
+
+        if "conflicts" in stats:
             print(f"\nConflicts Detected: {stats['conflicts']}")
             print(f"Auto-Resolved: {stats.get('conflicts_resolved', 0)}")
-        
+
         return 0
-    
+
     def cmd_rollback(self, args: argparse.Namespace) -> int:
         """Rollback a change.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         patch_id = args.patch_id
-        
+
         print(f"↩️  Rolling back patch: {patch_id}\n")
-        
+
         # Load patch manager
         from .patch_control import PatchManager
-        
+
         patch_manager = PatchManager()
-        
+
         try:
             # Check if patch exists
             patch = patch_manager.load_patch(patch_id)
-            
+
             if not patch:
                 print(f"❌ Patch not found: {patch_id}")
                 return 1
-            
+
             print(f"Patch: {patch.metadata.get('description', 'No description')}")
             print(f"Author: {patch.metadata.get('author', 'Unknown')}")
             print(f"Timestamp: {patch.timestamp}")
-            
+
             if not args.force:
                 confirm = input("\nProceed with rollback? [y/N]: ")
-                if confirm.lower() != 'y':
+                if confirm.lower() != "y":
                     print("Rollback cancelled")
                     return 0
-            
+
             # Create reversal patch
             print("\n⏳ Creating reversal patch...")
             reversal = patch_manager.create_reversal_patch(patch)
-            
+
             # Apply reversal
             print("⏳ Applying reversal...")
             success = patch_manager.apply_patch(reversal)
-            
+
             if success:
                 print("✅ Rollback successful")
                 return 0
             else:
                 print("❌ Rollback failed")
                 return 1
-                
+
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Error: {self._safe_error_text(e)}")
             return 1
-    
+
     def cmd_config(self, args: argparse.Namespace) -> int:
         """Manage configuration.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
-        if args.action == 'show':
+        if args.action == "show":
             print("⚙️  Current Configuration\n")
             for key, value in self.config.items():
                 # Mask sensitive values
-                if 'token' in key.lower() or 'password' in key.lower():
+                if "token" in key.lower() or "password" in key.lower():
                     value = "***" if value else None
                 print(f"{key}: {value}")
             return 0
-        
-        elif args.action == 'set':
+
+        elif args.action == "set":
             key = args.key
             value = args.value
-            
+
             print(f"⚙️  Setting {key} = {value}")
-            
+
             # Validate key
             if key not in self.config:
                 print(f"⚠️  Warning: {key} is not a standard config key")
-            
+
             # Parse value type
-            if value.lower() in ['true', 'false']:
-                value = value.lower() == 'true'
+            if value.lower() in ["true", "false"]:
+                value = value.lower() == "true"
             elif value.isdigit():
                 value = int(value)
-            
+
             self.config[key] = value
             self._save_config()
-            
+
             print("✅ Configuration updated")
             return 0
-        
-        elif args.action == 'reset':
+
+        elif args.action == "reset":
             print("⚙️  Resetting configuration to defaults")
-            
+
             if not args.force:
                 confirm = input("Are you sure? [y/N]: ")
-                if confirm.lower() != 'y':
+                if confirm.lower() != "y":
                     print("Reset cancelled")
                     return 0
-            
+
             self.config_path.unlink(missing_ok=True)
             self.config = self._load_config()
             self._save_config()
-            
+
             print("✅ Configuration reset")
             return 0
-        
+
         return 0
-    
+
     def cmd_validate(self, args: argparse.Namespace) -> int:
         """Validate code.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         print(f"🔍 Validating Code\n")
         print(f"   Level: {args.level}")
         print(f"   Target: {args.target}")
-        
+
         # Read code
         try:
             target_path = validate_input_path(args.target, must_exist=True)
@@ -447,16 +447,16 @@ class OptimizerArgparseCLI:
         if not target_path.exists():
             print(f"❌ File not found: {args.target}")
             return 1
-        
+
         code = target_path.read_text()
-        
+
         # Create validator
         level = ValidationLevel[args.level.upper()]
         validator = OptimizationValidator(level=level, parallel=not args.sequential)
-        
+
         # Run validation
         print("\n⏳ Running validation...")
-        
+
         try:
             # Production hardening: Monitor resources during validation
             with self._monitor.monitor():
@@ -465,50 +465,50 @@ class OptimizerArgparseCLI:
                     target_files=[target_path],
                     context={},
                 )
-            
+
             # Get resource stats
             stats = self._monitor.get_stats()
-            
+
             # Display results
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Validation Result: {'✅ PASSED' if result.passed else '❌ FAILED'}")
-            print(f"{'='*60}\n")
-            
+            print(f"{'=' * 60}\n")
+
             # Syntax
             if result.syntax:
                 status = "✅" if result.syntax.get("passed") else "❌"
                 print(f"{status} Syntax: {result.syntax.get('passed', False)}")
-            
+
             # Types
             if result.types:
                 status = "✅" if result.types.get("passed") else "❌"
                 print(f"{status} Type Checking: {result.types.get('passed', False)}")
-            
+
             # Tests
             if result.unit_tests:
                 status = "✅" if result.unit_tests.get("passed") else "❌"
                 tests_run = result.unit_tests.get("tests_run", 0)
                 tests_passed = result.unit_tests.get("tests_passed", 0)
                 print(f"{status} Unit Tests: {tests_passed}/{tests_run} passed")
-            
+
             # Performance
             if result.performance:
                 status = "✅" if result.performance.get("passed") else "❌"
                 improvement = result.performance.get("improvement", 0) * 100
                 print(f"{status} Performance: {improvement:+.1f}% change")
-            
+
             # Security
             if result.security:
                 status = "✅" if result.security.get("passed") else "❌"
                 issues = len(result.security.get("issues_found", []))
                 print(f"{status} Security: {issues} issue(s) found")
-            
+
             # Style
             if result.style:
                 status = "✅" if result.style.get("passed") else "❌"
                 score = result.style.get("score", 0)
                 print(f"{status} Style: {score:.1f}% score")
-            
+
             # Errors and warnings
             if result.errors:
                 print(f"\n❌ Errors ({len(result.errors)}):")
@@ -516,23 +516,23 @@ class OptimizerArgparseCLI:
                     print(f"   • {error}")
                 if len(result.errors) > 5:
                     print(f"   ... and {len(result.errors) - 5} more")
-            
+
             if result.warnings:
                 print(f"\n⚠️  Warnings ({len(result.warnings)}):")
                 for warning in result.warnings[:5]:  # Show first 5
                     print(f"   • {warning}")
                 if len(result.warnings) > 5:
                     print(f"   ... and {len(result.warnings) - 5} more")
-            
+
             print(f"\n⏱️  Validation time: {result.execution_time:.2f}s")
-            
+
             # Production hardening: Show resource usage
             print(f"📊 Resource usage:")
             print(f"   • Time: {stats['elapsed_time']:.2f}s")
             print(f"   • Peak memory: {stats['peak_memory_mb']:.1f}MB")
-            
+
             return 0 if result.passed else 1
-            
+
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Validation error: {self._safe_error_text(e)}")
             return 1
@@ -595,29 +595,29 @@ class OptimizerArgparseCLI:
             forwarded_args.extend(["--wayback-deny-glob", str(pattern)])
 
         return int(state_laws_loop_main(forwarded_args))
-    
+
     def _format_duration(self, seconds: float) -> str:
         """Format duration in human-readable format.
-        
+
         Args:
             seconds: Duration in seconds
-            
+
         Returns:
             Formatted string
         """
         if seconds < 60:
             return f"{seconds:.0f}s"
         elif seconds < 3600:
-            return f"{seconds/60:.0f}m"
+            return f"{seconds / 60:.0f}m"
         else:
-            return f"{seconds/3600:.1f}h"
-    
+            return f"{seconds / 3600:.1f}h"
+
     def run(self, argv: Optional[List[str]] = None) -> int:
         """Run CLI.
-        
+
         Args:
             argv: Command line arguments (None = sys.argv)
-            
+
         Returns:
             Exit code
         """
@@ -625,271 +625,272 @@ class OptimizerArgparseCLI:
             description="Agentic Optimizer CLI",
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
-        
-        subparsers = parser.add_subparsers(dest='command', help='Commands')
-        
+
+        subparsers = parser.add_subparsers(dest="command", help="Commands")
+
         # optimize command
         optimize_parser = subparsers.add_parser(
-            'optimize',
-            help='Run optimization task',
+            "optimize",
+            help="Run optimization task",
         )
         optimize_parser.add_argument(
-            '--method',
-            choices=['test_driven', 'adversarial', 'actor_critic', 'chaos'],
-            default='test_driven',
-            help='Optimization method',
+            "--method",
+            choices=["test_driven", "adversarial", "actor_critic", "chaos"],
+            default="test_driven",
+            help="Optimization method",
         )
         optimize_parser.add_argument(
-            '--target',
-            action='append',
+            "--target",
+            action="append",
             required=True,
-            help='Target files or directories',
+            help="Target files or directories",
         )
         optimize_parser.add_argument(
-            '--description',
+            "--description",
             required=True,
-            help='Optimization description',
+            help="Optimization description",
         )
         optimize_parser.add_argument(
-            '--priority',
+            "--priority",
             type=int,
             default=50,
-            help='Task priority (0-100)',
+            help="Task priority (0-100)",
         )
         optimize_parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Dry run without making changes',
+            "--dry-run",
+            action="store_true",
+            help="Dry run without making changes",
         )
-        
+
         # agents commands
-        agents_parser = subparsers.add_parser('agents', help='Manage agents')
-        agents_subparsers = agents_parser.add_subparsers(dest='agents_command')
-        
-        agents_subparsers.add_parser('list', help='List all agents')
-        
-        status_parser = agents_subparsers.add_parser('status', help='Show agent status')
-        status_parser.add_argument('agent_id', help='Agent ID')
-        
+        agents_parser = subparsers.add_parser("agents", help="Manage agents")
+        agents_subparsers = agents_parser.add_subparsers(dest="agents_command")
+
+        agents_subparsers.add_parser("list", help="List all agents")
+
+        status_parser = agents_subparsers.add_parser("status", help="Show agent status")
+        status_parser.add_argument("agent_id", help="Agent ID")
+
         # queue command
-        queue_parser = subparsers.add_parser('queue', help='Manage task queue')
+        queue_parser = subparsers.add_parser("queue", help="Manage task queue")
         queue_parser.add_argument(
-            'queue_command',
-            choices=['process', 'clear', 'list'],
-            help='Queue command',
+            "queue_command",
+            choices=["process", "clear", "list"],
+            help="Queue command",
         )
-        
+
         # stats command
-        subparsers.add_parser('stats', help='Show statistics')
-        
+        subparsers.add_parser("stats", help="Show statistics")
+
         # rollback command
-        rollback_parser = subparsers.add_parser('rollback', help='Rollback a change')
-        rollback_parser.add_argument('patch_id', help='Patch ID or CID')
-        rollback_parser.add_argument('--force', action='store_true', help='Skip confirmation')
-        
+        rollback_parser = subparsers.add_parser("rollback", help="Rollback a change")
+        rollback_parser.add_argument("patch_id", help="Patch ID or CID")
+        rollback_parser.add_argument("--force", action="store_true", help="Skip confirmation")
+
         # config command
-        config_parser = subparsers.add_parser('config', help='Manage configuration')
+        config_parser = subparsers.add_parser("config", help="Manage configuration")
         config_parser.add_argument(
-            'action',
-            choices=['show', 'set', 'reset'],
-            help='Config action',
+            "action",
+            choices=["show", "set", "reset"],
+            help="Config action",
         )
-        config_parser.add_argument('--key', help='Config key')
-        config_parser.add_argument('--value', help='Config value')
-        config_parser.add_argument('--force', action='store_true', help='Skip confirmation')
-        
+        config_parser.add_argument("--key", help="Config key")
+        config_parser.add_argument("--value", help="Config value")
+        config_parser.add_argument("--force", action="store_true", help="Skip confirmation")
+
         # validate command
-        validate_parser = subparsers.add_parser('validate', help='Validate code')
-        validate_parser.add_argument('target', help='File to validate')
+        validate_parser = subparsers.add_parser("validate", help="Validate code")
+        validate_parser.add_argument("target", help="File to validate")
         validate_parser.add_argument(
-            '--level',
-            choices=['basic', 'standard', 'strict', 'paranoid'],
-            default='standard',
-            help='Validation level',
+            "--level",
+            choices=["basic", "standard", "strict", "paranoid"],
+            default="standard",
+            help="Validation level",
         )
         validate_parser.add_argument(
-            '--sequential',
-            action='store_true',
-            help='Run validators sequentially',
+            "--sequential",
+            action="store_true",
+            help="Run validators sequentially",
         )
 
         # state-laws-optimize command
         state_laws_parser = subparsers.add_parser(
-            'state-laws-optimize',
-            help='Run actor/critic optimization loop for state law scrapers/parsers',
+            "state-laws-optimize",
+            help="Run actor/critic optimization loop for state law scrapers/parsers",
         )
         state_laws_parser.add_argument(
-            '--states',
+            "--states",
             type=str,
-            default='all',
+            default="all",
             help="Comma-separated state codes or 'all'",
         )
         state_laws_parser.add_argument(
-            '--max-rounds',
+            "--max-rounds",
             type=int,
             default=6,
-            help='Maximum actor/critic rounds',
+            help="Maximum actor/critic rounds",
         )
         state_laws_parser.add_argument(
-            '--actors-per-round',
+            "--actors-per-round",
             type=int,
             default=3,
-            help='Actor policies evaluated per round',
+            help="Actor policies evaluated per round",
         )
         state_laws_parser.add_argument(
-            '--actor-concurrency',
+            "--actor-concurrency",
             type=int,
             default=2,
-            help='Concurrent actor trials',
+            help="Concurrent actor trials",
         )
         state_laws_parser.add_argument(
-            '--target-score',
+            "--target-score",
             type=float,
             default=0.92,
-            help='Convergence target score',
+            help="Convergence target score",
         )
         state_laws_parser.add_argument(
-            '--max-statutes',
+            "--max-statutes",
             type=int,
             default=0,
-            help='Cap statutes per actor trial (0 = unlimited)',
+            help="Cap statutes per actor trial (0 = unlimited)",
         )
         state_laws_parser.add_argument(
-            '--top-n-diagnostics',
+            "--top-n-diagnostics",
             type=int,
             default=8,
-            help='Top-N weak states retained in diagnostics',
+            help="Top-N weak states retained in diagnostics",
         )
         state_laws_parser.add_argument(
-            '--output-dir',
+            "--output-dir",
             type=str,
-            default='',
-            help='Optional output directory for round artifacts',
+            default="",
+            help="Optional output directory for round artifacts",
         )
         state_laws_parser.add_argument(
-            '--emit-patch-plan',
-            action='store_true',
-            help='Emit ranked round/final patch-plan artifacts',
+            "--emit-patch-plan",
+            action="store_true",
+            help="Emit ranked round/final patch-plan artifacts",
         )
         state_laws_parser.add_argument(
-            '--apply-patch-plan',
-            action='store_true',
-            help='Emit actionable patch-task JSONL/TODO artifacts',
+            "--apply-patch-plan",
+            action="store_true",
+            help="Emit actionable patch-task JSONL/TODO artifacts",
         )
         state_laws_parser.add_argument(
-            '--patch-plan-limit',
+            "--patch-plan-limit",
             type=int,
             default=20,
-            help='Top-N patch-plan entries to include in apply artifacts',
+            help="Top-N patch-plan entries to include in apply artifacts",
         )
         state_laws_parser.add_argument(
-            '--execute-apply-plan',
-            action='store_true',
-            help='Build execution queue/report from apply tasks',
+            "--execute-apply-plan",
+            action="store_true",
+            help="Build execution queue/report from apply tasks",
         )
         state_laws_parser.add_argument(
-            '--apply-plan-file',
+            "--apply-plan-file",
             type=str,
-            default='',
-            help='Optional existing apply tasks JSONL file to execute',
+            default="",
+            help="Optional existing apply tasks JSONL file to execute",
         )
         state_laws_parser.add_argument(
-            '--execution-max-tasks',
+            "--execution-max-tasks",
             type=int,
             default=5,
-            help='Max tasks to include in execution report',
+            help="Max tasks to include in execution report",
         )
         state_laws_parser.add_argument(
-            '--auto-patch',
-            action='store_true',
-            help='Attempt guarded auto-patch stage from execution queue',
+            "--auto-patch",
+            action="store_true",
+            help="Attempt guarded auto-patch stage from execution queue",
         )
         state_laws_parser.add_argument(
-            '--auto-patch-max-tasks',
+            "--auto-patch-max-tasks",
             type=int,
             default=3,
-            help='Max ready tasks attempted by auto-patch stage',
+            help="Max ready tasks attempted by auto-patch stage",
         )
         state_laws_parser.add_argument(
-            '--auto-patch-no-dry-run',
-            action='store_true',
-            help='Disable dry-run and apply registered auto-patch transformations',
+            "--auto-patch-no-dry-run",
+            action="store_true",
+            help="Disable dry-run and apply registered auto-patch transformations",
         )
         state_laws_parser.add_argument(
-            '--auto-patch-allow-glob',
-            action='append',
+            "--auto-patch-allow-glob",
+            action="append",
             default=[],
-            help='Glob allowlist for auto-patch target paths (repeatable)',
+            help="Glob allowlist for auto-patch target paths (repeatable)",
         )
         state_laws_parser.add_argument(
-            '--auto-patch-deny-glob',
-            action='append',
+            "--auto-patch-deny-glob",
+            action="append",
             default=[],
-            help='Glob denylist for auto-patch target paths (repeatable)',
+            help="Glob denylist for auto-patch target paths (repeatable)",
         )
         state_laws_parser.add_argument(
-            '--wayback-allow-glob',
-            action='append',
+            "--wayback-allow-glob",
+            action="append",
             default=[],
-            help='Wayback strategy allowlist globs (repeatable)',
+            help="Wayback strategy allowlist globs (repeatable)",
         )
         state_laws_parser.add_argument(
-            '--wayback-deny-glob',
-            action='append',
+            "--wayback-deny-glob",
+            action="append",
             default=[],
-            help='Wayback strategy denylist globs (repeatable)',
+            help="Wayback strategy denylist globs (repeatable)",
         )
-        
+
         # Parse arguments
         args = parser.parse_args(argv)
-        
+
         if not args.command:
             parser.print_help()
             return 1
-        
+
         # Route to command handler
         try:
-            if args.command == 'optimize':
+            if args.command == "optimize":
                 return self.cmd_optimize(args)
-            elif args.command == 'agents':
-                if args.agents_command == 'list':
+            elif args.command == "agents":
+                if args.agents_command == "list":
                     return self.cmd_agents_list(args)
-                elif args.agents_command == 'status':
+                elif args.agents_command == "status":
                     return self.cmd_agents_status(args)
                 parser.print_help()
                 return 1
-            elif args.command == 'queue':
+            elif args.command == "queue":
                 return self.cmd_queue_process(args)
-            elif args.command == 'stats':
+            elif args.command == "stats":
                 return self.cmd_stats(args)
-            elif args.command == 'rollback':
+            elif args.command == "rollback":
                 return self.cmd_rollback(args)
-            elif args.command == 'config':
+            elif args.command == "config":
                 return self.cmd_config(args)
-            elif args.command == 'validate':
+            elif args.command == "validate":
                 return self.cmd_validate(args)
-            elif args.command == 'state-laws-optimize':
+            elif args.command == "state-laws-optimize":
                 return self.cmd_state_laws_optimize(args)
             else:
                 parser.print_help()
                 return 1
-                
+
         except KeyboardInterrupt:
             print("\n\n⚠️  Interrupted by user")
             return 130
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Unexpected error: {self._safe_error_text(e)}")
             import traceback
+
             traceback.print_exc()
             return 1
 
 
 def main(args: Optional[List[str]] = None) -> int:
     """Main entry point.
-    
+
     Args:
         args: Command-line arguments (defaults to sys.argv[1:])
-        
+
     Returns:
         Exit code
     """
@@ -897,7 +898,7 @@ def main(args: Optional[List[str]] = None) -> int:
     return cli.run(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
 
 # ============================================================================
@@ -954,7 +955,9 @@ class OptimizerCLI:
         task = OptimizationTask(
             task_id="cli-task",
             description=getattr(args, "description", ""),
-            target_files=[Path(getattr(args, "target", ""))] if getattr(args, "target", None) else [],
+            target_files=[Path(getattr(args, "target", ""))]
+            if getattr(args, "target", None)
+            else [],
             method=OptimizationMethod[getattr(args, "method", "test_driven").upper()],
             priority=int(getattr(args, "priority", 50)),
         )

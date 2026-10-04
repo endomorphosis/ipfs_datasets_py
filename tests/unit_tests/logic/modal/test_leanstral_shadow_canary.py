@@ -18,14 +18,16 @@ from ipfs_datasets_py.logic.modal import (
     validate_leanstral_audit_response,
 )
 
-from ipfs_datasets_py.logic.modal import IntrospectionAnalysisConfig, analyze_introspection_disagreements
+from ipfs_datasets_py.logic.modal import (
+    IntrospectionAnalysisConfig,
+    analyze_introspection_disagreements,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
 )
 
 _SCRIPT_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "scripts/ops/legal_ir/run_leanstral_shadow_canary.py"
+    Path(__file__).resolve().parents[4] / "scripts/ops/legal_ir/run_leanstral_shadow_canary.py"
 )
 _SPEC = importlib.util.spec_from_file_location("run_leanstral_shadow_canary", _SCRIPT_PATH)
 assert _SPEC is not None and _SPEC.loader is not None
@@ -91,12 +93,8 @@ def test_latest_disagreement_input_honors_minimum_record_count(tmp_path) -> None
     time.sleep(0.01)
     smoke.write_text("\n".join("{}" for _ in range(4)) + "\n", encoding="utf-8")
 
-    assert discover_latest_disagreement_inputs(tmp_path, min_records=25) == [
-        str(production)
-    ]
-    assert discover_latest_disagreement_inputs(tmp_path, min_records=4) == [
-        str(smoke)
-    ]
+    assert discover_latest_disagreement_inputs(tmp_path, min_records=25) == [str(production)]
+    assert discover_latest_disagreement_inputs(tmp_path, min_records=4) == [str(smoke)]
 
 
 def test_latest_disagreement_input_sentinel_keeps_explicit_paths(tmp_path) -> None:
@@ -142,11 +140,7 @@ def _real_packet(
     sample_id = f"real-shadow-sample-{index:03d}"
     modal_hash = _canary.canonical_sha256({"modal": sample_id})
     span_hash = _canary.canonical_sha256({"span": sample_id})
-    component = (
-        "deontic.ir.obligation_scope"
-        if index % 2
-        else "modal.temporal.deadline_order"
-    )
+    component = "deontic.ir.obligation_scope" if index % 2 else "modal.temporal.deadline_order"
     family = "deontic" if index % 2 else "temporal"
     predicted = "temporal" if family == "deontic" else "deontic"
     return {
@@ -218,7 +212,9 @@ def _real_packets(count: int = 25, **kwargs):
     return [_real_packet(index, **kwargs) for index in range(1, count + 1)]
 
 
-def _verifier_example(text: str = "The agency must provide notice within 30 days after application.") -> dict:
+def _verifier_example(
+    text: str = "The agency must provide notice within 30 days after application.",
+) -> dict:
     sample = build_us_code_sample(title="5", section="552", text=text)
     return {
         "citation": sample.citation,
@@ -227,9 +223,7 @@ def _verifier_example(text: str = "The agency must provide notice within 30 days
         "section": sample.section,
         "source_span_hashes": {
             formula.formula_id: hashlib.sha256(
-                sample.normalized_text[
-                    formula.provenance.start_char : formula.provenance.end_char
-                ]
+                sample.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
                 .strip()
                 .encode("utf-8")
             ).hexdigest()
@@ -609,9 +603,7 @@ def test_real_shadow_canary_prefers_expected_snapshot_in_append_only_export(
     assert result.invalid_packet_count == 0
     assert result.canonical_state["state_hash"] == "state-expected"
     assert result.canonical_state["compiler_commit"] == "commit-expected"
-    assert result.canonical_state["snapshot_selection"]["selection_reason"].startswith(
-        "expected_"
-    )
+    assert result.canonical_state["snapshot_selection"]["selection_reason"].startswith("expected_")
     assert "expected_state_hash_mismatch" not in result.blocked_reasons
     assert "expected_compiler_commit_mismatch" not in result.blocked_reasons
 

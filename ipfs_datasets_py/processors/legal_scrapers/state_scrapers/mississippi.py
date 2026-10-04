@@ -85,19 +85,21 @@ class MississippiScraper(BaseStateScraper):
         re.IGNORECASE,
     )
     _UNICOURT_SECTION_HEADING_RE = re.compile(r"§+\s*([0-9A-Za-z.\-]+)")
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Mississippi's legislative website."""
         return "http://www.legislature.ms.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Mississippi."""
-        return [{
-            "name": "Mississippi Code",
-            "url": "https://www.legislature.ms.gov/legislation/",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Mississippi Code",
+                "url": "https://www.legislature.ms.gov/legislation/",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -105,11 +107,11 @@ class MississippiScraper(BaseStateScraper):
         max_statutes: int | None = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Mississippi's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -120,7 +122,9 @@ class MississippiScraper(BaseStateScraper):
             os.getenv("STATE_SCRAPER_MS_COMMON_CRAWL_TIMEOUT_SECONDS", "45") or "45"
         ).strip()
         try:
-            common_crawl_timeout = float(common_crawl_timeout_raw) if common_crawl_timeout_raw else 45.0
+            common_crawl_timeout = (
+                float(common_crawl_timeout_raw) if common_crawl_timeout_raw else 45.0
+            )
         except Exception:
             common_crawl_timeout = 45.0
         common_crawl_timeout = max(0.0, min(300.0, common_crawl_timeout))
@@ -170,7 +174,11 @@ class MississippiScraper(BaseStateScraper):
                 or str(phase_timeout_defaults.get(phase_name, 180.0))
             ).strip()
             try:
-                value = float(raw_value) if raw_value else float(phase_timeout_defaults.get(phase_name, 180.0))
+                value = (
+                    float(raw_value)
+                    if raw_value
+                    else float(phase_timeout_defaults.get(phase_name, 180.0))
+                )
             except Exception:
                 value = float(phase_timeout_defaults.get(phase_name, 180.0))
             return max(0.0, min(900.0, value))
@@ -208,7 +216,9 @@ class MississippiScraper(BaseStateScraper):
             if common_crawl:
                 return common_crawl[:limit] if limit is not None else common_crawl
 
-            recovery = await self._scrape_jina_justia_seed_sections(code_name=code_name, max_statutes=limit or 1)
+            recovery = await self._scrape_jina_justia_seed_sections(
+                code_name=code_name, max_statutes=limit or 1
+            )
             if recovery:
                 return recovery[:limit] if limit is not None else recovery
 
@@ -256,7 +266,9 @@ class MississippiScraper(BaseStateScraper):
                 os.getenv("STATE_SCRAPER_MS_COMMON_CRAWL_SEED_TARGET", "") or ""
             ).strip()
             try:
-                common_crawl_seed_target = int(common_crawl_seed_target_raw) if common_crawl_seed_target_raw else 600
+                common_crawl_seed_target = (
+                    int(common_crawl_seed_target_raw) if common_crawl_seed_target_raw else 600
+                )
             except Exception:
                 common_crawl_seed_target = 600
             common_crawl_seed_target = max(25, min(2000, common_crawl_seed_target))
@@ -317,7 +329,9 @@ class MississippiScraper(BaseStateScraper):
                         len(seed_statutes),
                     )
 
-            justia_target_raw = str(os.getenv("STATE_SCRAPER_MS_JUSTIA_TARGET", "30000") or "30000").strip()
+            justia_target_raw = str(
+                os.getenv("STATE_SCRAPER_MS_JUSTIA_TARGET", "30000") or "30000"
+            ).strip()
             try:
                 justia_target = int(justia_target_raw) if justia_target_raw else 30000
             except Exception:
@@ -502,9 +516,7 @@ class MississippiScraper(BaseStateScraper):
             },
         )
         run_archive_fallback = (
-            not self._full_corpus_enabled()
-            or max_statutes is not None
-            or allow_archive_full_corpus
+            not self._full_corpus_enabled() or max_statutes is not None or allow_archive_full_corpus
         )
         if run_archive_fallback:
             archival = await self._scrape_archived_bill_history(
@@ -530,7 +542,9 @@ class MississippiScraper(BaseStateScraper):
                     "codes_completed": 1,
                 },
             )
-            self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
+            self.logger.info(
+                f"Mississippi archive history fallback: Scraped {len(archival)} records"
+            )
             return archival[:limit] if limit is not None else archival
 
         candidate_urls = [
@@ -602,7 +616,9 @@ class MississippiScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Miss. Code Ann.", max_sections=limit)
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Miss. Code Ann.", max_sections=limit
+            )
             if statutes:
                 checkpoint.write_progress(
                     statutes=statutes,
@@ -631,7 +647,9 @@ class MississippiScraper(BaseStateScraper):
                     "codes_completed": 1,
                 },
             )
-            self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
+            self.logger.info(
+                f"Mississippi archive history fallback: Scraped {len(archival)} records"
+            )
             if limit is not None:
                 return archival[:limit]
             return list(archival)
@@ -763,7 +781,9 @@ class MississippiScraper(BaseStateScraper):
                         sibling = sibling.next_sibling
                         continue
                     if name:
-                        piece = self._normalize_legal_text(getattr(sibling, "get_text", lambda *_a, **_k: "")(" ", strip=True))
+                        piece = self._normalize_legal_text(
+                            getattr(sibling, "get_text", lambda *_a, **_k: "")(" ", strip=True)
+                        )
                     else:
                         piece = self._normalize_legal_text(str(sibling).strip())
                     if piece:
@@ -973,7 +993,9 @@ class MississippiScraper(BaseStateScraper):
             or str(html_scan_cap_default)
         ).strip()
         try:
-            section_scan_cap = int(html_scan_cap_raw) if html_scan_cap_raw else html_scan_cap_default
+            section_scan_cap = (
+                int(html_scan_cap_raw) if html_scan_cap_raw else html_scan_cap_default
+            )
         except Exception:
             section_scan_cap = html_scan_cap_default
         section_scan_cap = max(500, min(120000, section_scan_cap))
@@ -1063,11 +1085,7 @@ class MississippiScraper(BaseStateScraper):
             scanned += 1
             statute = await task
             if statute is None:
-                if (
-                    scanned == 1
-                    or scanned % 500 == 0
-                    or scanned == len(section_urls)
-                ):
+                if scanned == 1 or scanned % 500 == 0 or scanned == len(section_urls):
                     self._write_partial_checkpoint(
                         statutes,
                         code_name=code_name,
@@ -1253,7 +1271,9 @@ class MississippiScraper(BaseStateScraper):
                 seen_snapshot_indexes.add(value)
                 snapshot_indexes.append(value)
             if not discovered:
-                for fallback_snapshot_url in self._JUSTIA_WAYBACK_INDEX_FALLBACKS.get(index_url, ()):
+                for fallback_snapshot_url in self._JUSTIA_WAYBACK_INDEX_FALLBACKS.get(
+                    index_url, ()
+                ):
                     value = str(fallback_snapshot_url or "").strip()
                     if not value or value in seen_snapshot_indexes:
                         continue
@@ -1276,12 +1296,16 @@ class MississippiScraper(BaseStateScraper):
         seen_section_fetch_urls: set[str] = set()
 
         def _classify_link(base_url: str, href: str) -> tuple[str, str]:
-            full_url = urljoin(str(base_url or ""), str(href or "").strip()).split("#", 1)[0].strip()
+            full_url = (
+                urljoin(str(base_url or ""), str(href or "").strip()).split("#", 1)[0].strip()
+            )
             if not full_url:
                 return "", ""
             if "/web/" in full_url and "*/" in full_url:
                 return "", ""
-            original_url = self._extract_original_justia_url_from_wayback(full_url).split("#", 1)[0].strip()
+            original_url = (
+                self._extract_original_justia_url_from_wayback(full_url).split("#", 1)[0].strip()
+            )
             if not original_url:
                 return "", ""
             if "/codes/mississippi/" not in original_url.lower():
@@ -1336,7 +1360,9 @@ class MississippiScraper(BaseStateScraper):
                 continue
             soup = BeautifulSoup(html, "html.parser")
             for anchor in soup.find_all("a", href=True):
-                fetch_url, original_url = _classify_link(snapshot_index_url, str(anchor.get("href") or ""))
+                fetch_url, original_url = _classify_link(
+                    snapshot_index_url, str(anchor.get("href") or "")
+                )
                 if not fetch_url or not original_url:
                     continue
                 lower = original_url.lower()
@@ -1360,7 +1386,9 @@ class MississippiScraper(BaseStateScraper):
             or str(wayback_scan_cap_default)
         ).strip()
         try:
-            section_scan_cap = int(wayback_scan_cap_raw) if wayback_scan_cap_raw else wayback_scan_cap_default
+            section_scan_cap = (
+                int(wayback_scan_cap_raw) if wayback_scan_cap_raw else wayback_scan_cap_default
+            )
         except Exception:
             section_scan_cap = wayback_scan_cap_default
         section_scan_cap = max(500, min(120000, section_scan_cap))
@@ -1434,10 +1462,9 @@ class MississippiScraper(BaseStateScraper):
             return "", fetch_value
 
         for title_fetch_url in list(title_fetch_urls):
-            title_original_url = (
-                title_original_url_by_fetch_url.get(title_fetch_url)
-                or self._extract_original_justia_url_from_wayback(title_fetch_url)
-            )
+            title_original_url = title_original_url_by_fetch_url.get(
+                title_fetch_url
+            ) or self._extract_original_justia_url_from_wayback(title_fetch_url)
             html, resolved_title_fetch_url = await _fetch_wayback_html_with_snapshot_fallback(
                 title_fetch_url,
                 title_original_url,
@@ -1449,7 +1476,9 @@ class MississippiScraper(BaseStateScraper):
                 continue
             soup = BeautifulSoup(html, "html.parser")
             for anchor in soup.find_all("a", href=True):
-                fetch_url, original_url = _classify_link(resolved_title_fetch_url, str(anchor.get("href") or ""))
+                fetch_url, original_url = _classify_link(
+                    resolved_title_fetch_url, str(anchor.get("href") or "")
+                )
                 if not fetch_url or not original_url:
                     continue
                 if self._JUSTIA_SECTION_URL_RE.search(original_url):
@@ -1460,10 +1489,9 @@ class MississippiScraper(BaseStateScraper):
         for chapter_fetch_url in list(chapter_fetch_urls):
             if len(section_fetch_urls) >= section_scan_cap:
                 break
-            chapter_original_url = (
-                chapter_original_url_by_fetch_url.get(chapter_fetch_url)
-                or self._extract_original_justia_url_from_wayback(chapter_fetch_url)
-            )
+            chapter_original_url = chapter_original_url_by_fetch_url.get(
+                chapter_fetch_url
+            ) or self._extract_original_justia_url_from_wayback(chapter_fetch_url)
             html, resolved_chapter_fetch_url = await _fetch_wayback_html_with_snapshot_fallback(
                 chapter_fetch_url,
                 chapter_original_url,
@@ -1475,7 +1503,9 @@ class MississippiScraper(BaseStateScraper):
                 continue
             soup = BeautifulSoup(html, "html.parser")
             for anchor in soup.find_all("a", href=True):
-                fetch_url, original_url = _classify_link(resolved_chapter_fetch_url, str(anchor.get("href") or ""))
+                fetch_url, original_url = _classify_link(
+                    resolved_chapter_fetch_url, str(anchor.get("href") or "")
+                )
                 if not fetch_url or not original_url:
                     continue
                 _add_section(fetch_url, original_url)
@@ -1592,11 +1622,7 @@ class MississippiScraper(BaseStateScraper):
             scanned += 1
             statute = await task
             if statute is None:
-                if (
-                    scanned == 1
-                    or scanned % 400 == 0
-                    or scanned == len(section_fetch_urls)
-                ):
+                if scanned == 1 or scanned % 400 == 0 or scanned == len(section_fetch_urls):
                     self._write_partial_checkpoint(
                         statutes,
                         code_name=code_name,
@@ -1617,11 +1643,7 @@ class MississippiScraper(BaseStateScraper):
             if statute_key:
                 seen_statute_keys.add(statute_key)
             statutes.append(statute)
-            if (
-                len(statutes) == 1
-                or len(statutes) % 100 == 0
-                or scanned == len(section_fetch_urls)
-            ):
+            if len(statutes) == 1 or len(statutes) % 100 == 0 or scanned == len(section_fetch_urls):
                 self.logger.info(
                     "Mississippi Justia Wayback crawl: scanned_sections=%s/%s statutes_so_far=%s",
                     scanned,
@@ -1664,7 +1686,9 @@ class MississippiScraper(BaseStateScraper):
         )
         return statutes[:target]
 
-    async def _scrape_jina_justia_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+    async def _scrape_jina_justia_seed_sections(
+        self, code_name: str, max_statutes: int = 1
+    ) -> List[NormalizedStatute]:
         seeds = [
             (
                 "97-3-7",
@@ -1678,8 +1702,12 @@ class MississippiScraper(BaseStateScraper):
             text = self._clean_jina_markdown(text)
             if len(text) < 280:
                 continue
-            title_match = re.search(rf"Mississippi Code §\s*{re.escape(section_number)}\s*\(2024\)\s*-\s*(.+)", text)
-            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
+            title_match = re.search(
+                rf"Mississippi Code §\s*{re.escape(section_number)}\s*\(2024\)\s*-\s*(.+)", text
+            )
+            section_name = (
+                title_match.group(1).strip() if title_match else f"Section {section_number}"
+            )
             out.append(
                 NormalizedStatute(
                     state_code=self.state_code,
@@ -1771,7 +1799,9 @@ class MississippiScraper(BaseStateScraper):
             or str(reader_scan_cap_default)
         ).strip()
         try:
-            reader_scan_cap = int(reader_scan_cap_raw) if reader_scan_cap_raw else reader_scan_cap_default
+            reader_scan_cap = (
+                int(reader_scan_cap_raw) if reader_scan_cap_raw else reader_scan_cap_default
+            )
         except Exception:
             reader_scan_cap = reader_scan_cap_default
         reader_scan_cap = max(500, min(120000, reader_scan_cap))
@@ -1823,7 +1853,11 @@ class MississippiScraper(BaseStateScraper):
                 return None
             section_number = self._extract_ms_section_number_from_justia_url(section_url)
             if not section_number:
-                section_number = self._extract_ms_reader_section_number(cleaned) or self._extract_section_number(cleaned) or ""
+                section_number = (
+                    self._extract_ms_reader_section_number(cleaned)
+                    or self._extract_section_number(cleaned)
+                    or ""
+                )
             if not section_number:
                 return None
             section_name = self._extract_ms_reader_section_name(cleaned, section_number)
@@ -1852,11 +1886,7 @@ class MississippiScraper(BaseStateScraper):
             scanned += 1
             statute = await task
             if statute is None:
-                if (
-                    scanned == 1
-                    or scanned % 500 == 0
-                    or scanned == len(section_urls)
-                ):
+                if scanned == 1 or scanned % 500 == 0 or scanned == len(section_urls):
                     self._write_partial_checkpoint(
                         statutes,
                         code_name=code_name,
@@ -1952,7 +1982,9 @@ class MississippiScraper(BaseStateScraper):
                     value = match.group(1) if match.lastindex else match.group(0)
                 except Exception:
                     value = match.group(0)
-                candidate = self._normalize_justia_corpus_url(str(value or "").strip().rstrip(".,;"))
+                candidate = self._normalize_justia_corpus_url(
+                    str(value or "").strip().rstrip(".,;")
+                )
                 if not candidate or candidate in seen:
                     continue
                 seen.add(candidate)
@@ -2057,10 +2089,7 @@ class MississippiScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         archive_target_cap = max(
             100,
-            int(
-                os.getenv("STATE_SCRAPER_MS_ARCHIVE_TARGET", "25000")
-                or "25000"
-            ),
+            int(os.getenv("STATE_SCRAPER_MS_ARCHIVE_TARGET", "25000") or "25000"),
         )
         if self._full_corpus_enabled():
             max_statutes = min(max(1, int(max_statutes)), archive_target_cap)
@@ -2162,7 +2191,9 @@ class MississippiScraper(BaseStateScraper):
                     cancelled_early = True
                     break
                 batch_urls = candidate_history_urls[batch_start : batch_start + history_batch_size]
-                tasks = [asyncio.create_task(_fetch_history(history_url)) for history_url in batch_urls]
+                tasks = [
+                    asyncio.create_task(_fetch_history(history_url)) for history_url in batch_urls
+                ]
                 for task in asyncio.as_completed(tasks):
                     scanned_from_index += 1
                     statute = await task
@@ -2273,16 +2304,24 @@ class MississippiScraper(BaseStateScraper):
 
     def _extract_ms_common_crawl_section_number(self, source_url: str, text: str) -> str:
         text_value = str(text or "")
-        url_match = re.search(r"/code_sections/\d+/(\d{3})-(\d{4})-(\d{4}(?:_\d+)?)", source_url, re.IGNORECASE)
+        url_match = re.search(
+            r"/code_sections/\d+/(\d{3})-(\d{4})-(\d{4}(?:_\d+)?)", source_url, re.IGNORECASE
+        )
         if not url_match:
-            url_match = re.search(r"/code_sections/\d+/(\d{3})/(\d{4})(\d{4}(?:_\d+)?)\.(?:xml|htm|html)$", source_url, re.IGNORECASE)
+            url_match = re.search(
+                r"/code_sections/\d+/(\d{3})/(\d{4})(\d{4}(?:_\d+)?)\.(?:xml|htm|html)$",
+                source_url,
+                re.IGNORECASE,
+            )
         if url_match:
             if len(url_match.groups()) == 3:
                 title, chapter, section = url_match.groups()
                 section = section.replace("_", ".")
                 return f"{int(title)}-{int(chapter)}-{section.lstrip('0') or '0'}"
 
-        text_match = re.search(r"Code Section\s+(\d{3})[- ](\d{4})[- ](\d{4}(?:_\d+)?)", text_value, re.IGNORECASE)
+        text_match = re.search(
+            r"Code Section\s+(\d{3})[- ](\d{4})[- ](\d{4}(?:_\d+)?)", text_value, re.IGNORECASE
+        )
         if text_match:
             title, chapter, section = text_match.groups()
             section = section.replace("_", ".")
@@ -2293,7 +2332,9 @@ class MississippiScraper(BaseStateScraper):
 
     def _extract_ms_common_crawl_section_name(self, text: str, section_number: str) -> str:
         text_value = str(text or "")
-        title_match = re.search(r"HB\s+\d+\s+(.+?)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+\d{2}/\d{2}", text_value)
+        title_match = re.search(
+            r"HB\s+\d+\s+(.+?)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+\d{2}/\d{2}", text_value
+        )
         if title_match:
             return self._normalize_legal_text(title_match.group(1))[:200]
         section_match = re.search(rf"{re.escape(section_number)}\s*[-.:]\s*(.+)", text_value)
@@ -2519,8 +2560,12 @@ def _statute_from_checkpoint_row(
         kwargs["metadata"] = None
 
     kwargs["state_code"] = str(kwargs.get("state_code") or default_state_code).upper()
-    kwargs["state_name"] = str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
-    kwargs["code_name"] = str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    kwargs["state_name"] = (
+        str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
+    )
+    kwargs["code_name"] = (
+        str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    )
     kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
     if not kwargs["statute_id"]:
         return None
@@ -2539,10 +2584,14 @@ class _MississippiCheckpoint:
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
-            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path = (
+                Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            )
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self.state_code = state_code.upper()
-        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.interval = max(
+            1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500))
+        )
         self.last_count = 0
         self.last_write_ts = 0.0
 
@@ -2652,7 +2701,9 @@ class _MississippiCheckpoint:
                 if isinstance(raw_progress, dict):
                     existing_progress = dict(raw_progress)
 
-        serialized_rows = [statute.to_dict() for statute in statutes if isinstance(statute, NormalizedStatute)]
+        serialized_rows = [
+            statute.to_dict() for statute in statutes if isinstance(statute, NormalizedStatute)
+        ]
         if not serialized_rows and existing_rows:
             serialized_rows = list(existing_rows)
         elif serialized_rows and existing_rows and len(serialized_rows) < len(existing_rows):

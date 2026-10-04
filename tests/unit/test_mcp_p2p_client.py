@@ -53,9 +53,11 @@ def _frame(obj: dict) -> bytes:
 
 def test_client_detects_mismatched_response_id() -> None:
     # Client sends id=1, but remote responds with id=2.
-    stream = FakeStream([
-        _frame({"jsonrpc": "2.0", "id": 2, "result": {"ok": True}}),
-    ])
+    stream = FakeStream(
+        [
+            _frame({"jsonrpc": "2.0", "id": 2, "result": {"ok": True}}),
+        ]
+    )
 
     async def _go() -> None:
         client = MCPP2PClient(stream)
@@ -67,9 +69,17 @@ def test_client_detects_mismatched_response_id() -> None:
 
 
 def test_client_raises_remote_error() -> None:
-    stream = FakeStream([
-        _frame({"jsonrpc": "2.0", "id": 7, "error": {"code": -32601, "message": "method_not_found"}}),
-    ])
+    stream = FakeStream(
+        [
+            _frame(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 7,
+                    "error": {"code": -32601, "message": "method_not_found"},
+                }
+            ),
+        ]
+    )
 
     async def _go() -> None:
         client = MCPP2PClient(stream)

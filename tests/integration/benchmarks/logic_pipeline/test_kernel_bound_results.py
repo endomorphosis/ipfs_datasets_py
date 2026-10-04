@@ -50,9 +50,7 @@ def _hammer_payload() -> dict[str, object]:
         "reconstruction_kernel_accepted": True,
         "status": "verified",
     }
-    evidence_id = hashlib.sha256(
-        contracts.canonical_json(body).encode("utf-8")
-    ).hexdigest()
+    evidence_id = hashlib.sha256(contracts.canonical_json(body).encode("utf-8")).hexdigest()
     return {"evidence_id": evidence_id, **body}
 
 
@@ -103,20 +101,12 @@ def _native_kernel_receipt(
         }
         body.update(
             {
-                "compiled_obligation_sha256": hashlib.sha256(
-                    b"compiled"
-                ).hexdigest(),
-                "obligation_sha256": hashlib.sha256(
-                    b"obligation"
-                ).hexdigest(),
+                "compiled_obligation_sha256": hashlib.sha256(b"compiled").hexdigest(),
+                "obligation_sha256": hashlib.sha256(b"obligation").hexdigest(),
                 "candidate_source": attempt["candidate_source"],
-                "candidate_artifact_sha256": attempt[
-                    "candidate_artifact_sha256"
-                ],
+                "candidate_artifact_sha256": attempt["candidate_artifact_sha256"],
                 "source_sha256": attempt["source_sha256"],
-                "semantic_context_sha256": hashlib.sha256(
-                    b"semantic-context"
-                ).hexdigest(),
+                "semantic_context_sha256": hashlib.sha256(b"semantic-context").hexdigest(),
                 "semantic_artifact_sha256s": [SHA_OTHER],
                 "command_sha256": attempt["command_sha256"],
                 "stdout_sha256": attempt["stdout_sha256"],
@@ -179,8 +169,7 @@ def _case_result(
                         "graph_invoked": True,
                         "consumed_artifact_sha256": [SHA_OTHER],
                     }
-                    if native_kernel_receipt
-                    and stage_name is contracts.StageName.KERNEL
+                    if native_kernel_receipt and stage_name is contracts.StageName.KERNEL
                     else {}
                 ),
             },
@@ -195,10 +184,7 @@ def _case_result(
             input_items=1,
             output_items=1,
             model_calls=(
-                1
-                if stage_name
-                in {contracts.StageName.SYMAI, contracts.StageName.LEANSTRAL}
-                else 0
+                1 if stage_name in {contracts.StageName.SYMAI, contracts.StageName.LEANSTRAL} else 0
             ),
             bytes_in=20,
             bytes_out=10,
@@ -233,14 +219,10 @@ def _case_result(
                 provenance=provenance,
                 telemetry=telemetry,
                 data=data,
-                kernel_accepted=(
-                    kernel_accepted
-                    and stage_name is contracts.StageName.KERNEL
-                ),
+                kernel_accepted=(kernel_accepted and stage_name is contracts.StageName.KERNEL),
                 kernel_receipt_sha256=(
                     receipt_sha256
-                    if kernel_accepted
-                    and stage_name is contracts.StageName.KERNEL
+                    if kernel_accepted and stage_name is contracts.StageName.KERNEL
                     else None
                 ),
             )
@@ -258,9 +240,7 @@ def _with_stage_failure(
     stages: list[contracts.StageRecord] = []
     for original in result.stages:
         payload = copy.deepcopy(original.to_dict())
-        payload["provenance"]["upstream_stage_digests"] = [
-            item.digest for item in stages
-        ]
+        payload["provenance"]["upstream_stage_digests"] = [item.digest for item in stages]
         if original.stage is stage_name:
             payload.update(
                 {
@@ -289,21 +269,13 @@ def _rebuild_kernel(
     kernel_receipt_sha256: str | None = None,
 ) -> contracts.StageRecord:
     rebuilt_status = original.status if status is None else status
-    rebuilt_failure_code = (
-        original.failure_code if status is None else failure_code
-    )
-    rebuilt_failure_detail = (
-        original.failure_detail if status is None else failure_detail
-    )
+    rebuilt_failure_code = original.failure_code if status is None else failure_code
+    rebuilt_failure_detail = original.failure_detail if status is None else failure_detail
     rebuilt_kernel_accepted = (
-        original.kernel_accepted
-        if kernel_accepted is None
-        else kernel_accepted
+        original.kernel_accepted if kernel_accepted is None else kernel_accepted
     )
     rebuilt_kernel_receipt_sha256 = (
-        original.kernel_receipt_sha256
-        if kernel_accepted is None
-        else kernel_receipt_sha256
+        original.kernel_receipt_sha256 if kernel_accepted is None else kernel_receipt_sha256
     )
     return contracts.StageRecord.create(
         protocol_sha256=original.protocol_sha256,
@@ -356,11 +328,7 @@ def _executed_kernel_rejection(
         attempt[lifecycle_field] = 1
     elif lifecycle_field is not None:
         attempt[lifecycle_field] = True
-    attempt_body = {
-        key: value
-        for key, value in attempt.items()
-        if key != "attempt_sha256"
-    }
+    attempt_body = {key: value for key, value in attempt.items() if key != "attempt_sha256"}
     attempt["attempt_sha256"] = hashlib.sha256(
         contracts.canonical_json(attempt_body).encode("utf-8")
     ).hexdigest()
@@ -388,11 +356,7 @@ def _executed_kernel_rejection(
     data["candidate_attempts_sha256"] = hashlib.sha256(
         contracts.canonical_json(data["candidate_attempts"]).encode("utf-8")
     ).hexdigest()
-    body = {
-        key: value
-        for key, value in data.items()
-        if key != "receipt_sha256"
-    }
+    body = {key: value for key, value in data.items() if key != "receipt_sha256"}
     data["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(body).encode("utf-8")
     ).hexdigest()
@@ -402,9 +366,7 @@ def _executed_kernel_rejection(
         status=status,
         failure_code=failure_code,
         failure_detail=(
-            None
-            if failure_code is None
-            else "synthetic native-kernel lifecycle failure"
+            None if failure_code is None else "synthetic native-kernel lifecycle failure"
         ),
         kernel_accepted=False,
         kernel_receipt_sha256=None,
@@ -420,11 +382,7 @@ def _accepted_kernel_with_termination_reason(
     data = copy.deepcopy(original.to_dict()["data"])
     attempt = data["candidate_attempts"][-1]
     attempt["termination_reason"] = termination_reason
-    attempt_body = {
-        key: value
-        for key, value in attempt.items()
-        if key != "attempt_sha256"
-    }
+    attempt_body = {key: value for key, value in attempt.items() if key != "attempt_sha256"}
     attempt["attempt_sha256"] = hashlib.sha256(
         contracts.canonical_json(attempt_body).encode("utf-8")
     ).hexdigest()
@@ -433,11 +391,7 @@ def _accepted_kernel_with_termination_reason(
     data["candidate_attempts_sha256"] = hashlib.sha256(
         contracts.canonical_json(data["candidate_attempts"]).encode("utf-8")
     ).hexdigest()
-    body = {
-        key: value
-        for key, value in data.items()
-        if key != "receipt_sha256"
-    }
+    body = {key: value for key, value in data.items() if key != "receipt_sha256"}
     data["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(body).encode("utf-8")
     ).hexdigest()
@@ -456,9 +410,7 @@ def _serialized(result: contracts.CaseResultRecord) -> dict[str, object]:
 def test_verified_result_binds_complete_route_receipts_and_resources() -> None:
     result = _case_result()
 
-    assert contracts.HSSLEV0357C0D() == (
-        "kernel and provenance receipts for all claimed successes"
-    )
+    assert contracts.HSSLEV0357C0D() == ("kernel and provenance receipts for all claimed successes")
     assert metrics.HSSLEV0357C0D() == contracts.HSSLEV0357C0D()
     assert result.status is contracts.OutcomeStatus.VERIFIED
     assert result.receipt is not None
@@ -483,9 +435,7 @@ def test_verified_result_binds_complete_route_receipts_and_resources() -> None:
     assert aggregate.kernel_verified_completion_rate == 1.0
     assert aggregate.verified_result_digests == (result.digest,)
     assert aggregate.resource_lane_measurements["kernel"]["stage_count"] == 1
-    assert metrics.KernelBoundAggregate.from_dict(
-        aggregate.to_dict()
-    ).digest == aggregate.digest
+    assert metrics.KernelBoundAggregate.from_dict(aggregate.to_dict()).digest == aggregate.digest
 
 
 def test_recoverable_proof_failure_is_degraded_but_kernel_verified() -> None:
@@ -510,9 +460,7 @@ def test_recoverable_proof_failure_is_degraded_but_kernel_verified() -> None:
     masked.update(
         {
             "status": contracts.OutcomeStatus.REJECTED.value,
-            "verification_authority": (
-                contracts.VerificationAuthority.NONE.value
-            ),
+            "verification_authority": (contracts.VerificationAuthority.NONE.value),
             "kernel_accepted": False,
             "kernel_receipt_sha256": None,
         }
@@ -521,9 +469,7 @@ def test_recoverable_proof_failure_is_degraded_but_kernel_verified() -> None:
     # runs can still be audited.  Current v2 ablation envelopes independently
     # require this canonical reconstruction and reject the masked projection.
     legacy_masked = contracts.CaseResultRecord.from_dict(masked)
-    reconstructed = contracts.CaseResultRecord.from_stages(
-        legacy_masked.stages
-    )
+    reconstructed = contracts.CaseResultRecord.from_stages(legacy_masked.stages)
     assert legacy_masked.status is contracts.OutcomeStatus.REJECTED
     assert reconstructed.status is contracts.OutcomeStatus.VERIFIED
     assert reconstructed.kernel_accepted is True
@@ -631,37 +577,23 @@ def test_native_kernel_validator_rejects_copied_or_tampered_receipts() -> None:
 
     copied = copy.deepcopy(kernel.to_dict()["data"])
     copied["case_id"] = "case-copied"
-    copied_body = {
-        key: value
-        for key, value in copied.items()
-        if key != "receipt_sha256"
-    }
+    copied_body = {key: value for key, value in copied.items() if key != "receipt_sha256"}
     copied["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(copied_body).encode("utf-8")
     ).hexdigest()
     copied_stage = _rebuild_kernel(kernel, data=copied)
-    with pytest.raises(
-        contracts.ProtocolContractError, match="coordinate|source binding"
-    ):
+    with pytest.raises(contracts.ProtocolContractError, match="coordinate|source binding"):
         contracts.validate_native_kernel_stage_receipt(copied_stage)
 
     stale_body = copy.deepcopy(kernel.to_dict()["data"])
     stale_body["termination_reason"] = "tampered"
-    with pytest.raises(
-        contracts.ProtocolContractError, match="self-digest"
-    ):
-        contracts.validate_native_kernel_stage_receipt(
-            _rebuild_kernel(kernel, data=stale_body)
-        )
+    with pytest.raises(contracts.ProtocolContractError, match="self-digest"):
+        contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(kernel, data=stale_body))
 
     stale_digest = copy.deepcopy(kernel.to_dict()["data"])
     stale_digest["receipt_sha256"] = "0" * 64
-    with pytest.raises(
-        contracts.ProtocolContractError, match="self-digest"
-    ):
-        contracts.validate_native_kernel_stage_receipt(
-            _rebuild_kernel(kernel, data=stale_digest)
-        )
+    with pytest.raises(contracts.ProtocolContractError, match="self-digest"):
+        contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(kernel, data=stale_digest))
 
 
 def test_native_kernel_outer_attachments_are_independently_bound() -> None:
@@ -682,23 +614,17 @@ def test_native_kernel_outer_attachments_are_independently_bound() -> None:
         **copy.deepcopy(kernel.to_dict()["data"]),
         "routing_policy": policy,
     }
-    assert contracts.validate_native_kernel_stage_receipt(
-        _rebuild_kernel(kernel, data=attached)
-    )
+    assert contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(kernel, data=attached))
 
     attached["routing_policy"]["decision"] = "skip"
     with pytest.raises(
         contracts.ProtocolContractError,
         match="routing-policy self-digest",
     ):
-        contracts.validate_native_kernel_stage_receipt(
-            _rebuild_kernel(kernel, data=attached)
-        )
+        contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(kernel, data=attached))
 
     invalid_diagnostic = copy.deepcopy(kernel.to_dict()["data"])
-    invalid_diagnostic.update(
-        {"diagnostic_only": True, "authority_withheld": True}
-    )
+    invalid_diagnostic.update({"diagnostic_only": True, "authority_withheld": True})
     with pytest.raises(
         contracts.ProtocolContractError,
         match="diagnostic authority attachment",
@@ -736,26 +662,18 @@ def test_native_kernel_validator_rejects_minimal_or_incoherent_execution() -> No
             contracts.canonical_json(minimal_body).encode("utf-8")
         ).hexdigest(),
     }
-    with pytest.raises(
-        contracts.ProtocolContractError, match="executed Lean evidence"
-    ):
-        contracts.validate_native_kernel_stage_receipt(
-            _rebuild_kernel(kernel, data=minimal)
-        )
+    with pytest.raises(contracts.ProtocolContractError, match="executed Lean evidence"):
+        contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(kernel, data=minimal))
 
     selected_tamper = copy.deepcopy(complete)
     selected_tamper["selected_attempt"]["attempt_sha256"] = "1" * 64
     selected_body = {
-        key: value
-        for key, value in selected_tamper.items()
-        if key != "receipt_sha256"
+        key: value for key, value in selected_tamper.items() if key != "receipt_sha256"
     }
     selected_tamper["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(selected_body).encode("utf-8")
     ).hexdigest()
-    with pytest.raises(
-        contracts.ProtocolContractError, match="selected attempt"
-    ):
+    with pytest.raises(contracts.ProtocolContractError, match="selected attempt"):
         contracts.validate_native_kernel_stage_receipt(
             _rebuild_kernel(kernel, data=selected_tamper)
         )
@@ -804,12 +722,8 @@ def test_native_kernel_negative_receipt_and_graph_suppression_are_strict() -> No
 
     tampered = copy.deepcopy(negative.to_dict()["data"])
     tampered["reason"] = "copied rejection"
-    with pytest.raises(
-        contracts.ProtocolContractError, match="self-digest"
-    ):
-        contracts.validate_native_kernel_stage_receipt(
-            _rebuild_kernel(negative, data=tampered)
-        )
+    with pytest.raises(contracts.ProtocolContractError, match="self-digest"):
+        contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(negative, data=tampered))
 
     accepted = _case_result(native_kernel_receipt=True)
     kernel = accepted.stages[-1]
@@ -822,12 +736,8 @@ def test_native_kernel_negative_receipt_and_graph_suppression_are_strict() -> No
             effective_identity=suppressed_identity,
         ),
     )
-    with pytest.raises(
-        contracts.ProtocolContractError, match="explicit graph invocation"
-    ):
-        contracts.CaseResultRecord.from_stages(
-            (*accepted.stages[:-1], suppressed)
-        )
+    with pytest.raises(contracts.ProtocolContractError, match="explicit graph invocation"):
+        contracts.CaseResultRecord.from_stages((*accepted.stages[:-1], suppressed))
 
     markerless_identity = dict(kernel.provenance.effective_identity)
     markerless_identity.pop("graph_invoked")
@@ -838,20 +748,12 @@ def test_native_kernel_negative_receipt_and_graph_suppression_are_strict() -> No
             effective_identity=markerless_identity,
         ),
     )
-    with pytest.raises(
-        contracts.ProtocolContractError, match="explicit graph invocation"
-    ):
-        contracts.CaseResultRecord.from_stages(
-            (*accepted.stages[:-1], markerless)
-        )
+    with pytest.raises(contracts.ProtocolContractError, match="explicit graph invocation"):
+        contracts.CaseResultRecord.from_stages((*accepted.stages[:-1], markerless))
 
     serialized = _serialized(accepted)
-    del serialized["stages"][-1]["provenance"]["effective_identity"][
-        "graph_invoked"
-    ]
-    with pytest.raises(
-        contracts.ProtocolContractError, match="explicit graph invocation"
-    ):
+    del serialized["stages"][-1]["provenance"]["effective_identity"]["graph_invoked"]
+    with pytest.raises(contracts.ProtocolContractError, match="explicit graph invocation"):
         contracts.CaseResultRecord.from_dict(serialized)
 
 
@@ -924,10 +826,7 @@ def test_executed_kernel_lifecycle_failures_cannot_claim_success(
         failure_code=expected_failure_code,
         returncode=returncode,
     )
-    assert (
-        contracts.validate_native_kernel_stage_receipt(typed_failure)
-        is False
-    )
+    assert contracts.validate_native_kernel_stage_receipt(typed_failure) is False
 
     wrong_failure = _executed_kernel_rejection(
         kernel,
@@ -961,10 +860,7 @@ def test_process_error_rejections_require_infrastructure_failure(
         failure_code=contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
         returncode=returncode,
     )
-    assert (
-        contracts.validate_native_kernel_stage_receipt(typed_failure)
-        is False
-    )
+    assert contracts.validate_native_kernel_stage_receipt(typed_failure) is False
 
     masked_failure = _executed_kernel_rejection(
         kernel,
@@ -1106,11 +1002,7 @@ def test_pre_execution_kernel_rejection_cannot_leave_an_orphan() -> None:
     ).stages[-1]
     data = copy.deepcopy(negative.to_dict()["data"])
     data["active_process_count"] = 1
-    body = {
-        key: value
-        for key, value in data.items()
-        if key != "receipt_sha256"
-    }
+    body = {key: value for key, value in data.items() if key != "receipt_sha256"}
     data["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(body).encode("utf-8")
     ).hexdigest()
@@ -1119,9 +1011,7 @@ def test_pre_execution_kernel_rejection_cannot_leave_an_orphan() -> None:
         contracts.ProtocolContractError,
         match="left active processes",
     ):
-        contracts.validate_native_kernel_stage_receipt(
-            _rebuild_kernel(negative, data=data)
-        )
+        contracts.validate_native_kernel_stage_receipt(_rebuild_kernel(negative, data=data))
 
 
 def test_nested_payload_and_digest_chain_tampering_fail_deserialization() -> None:
@@ -1136,9 +1026,7 @@ def test_nested_payload_and_digest_chain_tampering_fail_deserialization() -> Non
     stage["output_sha256"] = hashlib.sha256(
         contracts.canonical_json(stage["data"]).encode("utf-8")
     ).hexdigest()
-    with pytest.raises(
-        contracts.ProtocolContractError, match="digest chain|receipt"
-    ):
+    with pytest.raises(contracts.ProtocolContractError, match="digest chain|receipt"):
         contracts.CaseResultRecord.from_dict(payload)
 
 
@@ -1151,29 +1039,21 @@ def test_mixed_request_and_reconstruction_records_fail_closed() -> None:
     payload = _serialized(_case_result())
     hammer = payload["stages"][3]
     hammer["data"]["reconstruction"]["request_id"] = "other-request"
-    body = {
-        key: value
-        for key, value in hammer["data"].items()
-        if key != "evidence_id"
-    }
+    body = {key: value for key, value in hammer["data"].items() if key != "evidence_id"}
     hammer["data"]["evidence_id"] = hashlib.sha256(
         contracts.canonical_json(body).encode("utf-8")
     ).hexdigest()
     hammer["output_sha256"] = hashlib.sha256(
         contracts.canonical_json(hammer["data"]).encode("utf-8")
     ).hexdigest()
-    with pytest.raises(
-        contracts.ProtocolContractError, match="digest chain|reconstruction"
-    ):
+    with pytest.raises(contracts.ProtocolContractError, match="digest chain|reconstruction"):
         contracts.CaseResultRecord.from_dict(payload)
 
 
 def test_stale_or_incoherent_environment_cannot_verify_or_aggregate() -> None:
     payload = _serialized(_case_result())
     payload["stages"][4]["provenance"]["environment_sha256"] = SHA_OTHER
-    with pytest.raises(
-        contracts.ProtocolContractError, match="digest chain|environment"
-    ):
+    with pytest.raises(contracts.ProtocolContractError, match="digest chain|environment"):
         contracts.CaseResultRecord.from_dict(payload)
 
     coherent_but_stale = _case_result(environment_sha256=SHA_OTHER)
@@ -1219,9 +1099,7 @@ def test_model_and_solver_claims_do_not_enter_verified_numerator() -> None:
     stages: list[contracts.StageRecord] = []
     for stage_payload in payload["stages"]:
         stage_payload = copy.deepcopy(stage_payload)
-        stage_payload["provenance"]["upstream_stage_digests"] = [
-            item.digest for item in stages
-        ]
+        stage_payload["provenance"]["upstream_stage_digests"] = [item.digest for item in stages]
         stages.append(contracts.StageRecord.from_dict(stage_payload))
     claimed = contracts.CaseResultRecord.from_stages(stages)
 

@@ -109,7 +109,12 @@ def test_local_wallet_repository_persists_analytics_ledger(tmp_path):
     assert len(restored.analytics_consents) == 2
     assert len(restored.analytics_contributions) == 2
     assert restored.aggregate_results[result.result_id].group_by == ["county", "need_category"]
-    assert restored.analytics_query_budget_spent[f"template:{template.template_id}:group:county,need_category"] == 0.25
+    assert (
+        restored.analytics_query_budget_spent[
+            f"template:{template.template_id}:group:county,need_category"
+        ]
+        == 0.25
+    )
 
 
 def test_local_wallet_repository_rejects_tampered_snapshot(tmp_path):

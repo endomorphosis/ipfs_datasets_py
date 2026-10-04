@@ -34,7 +34,7 @@ class TestEntityHashability:
         e1 = Entity(id="e1", type="Person", text="Alice")
         e2 = Entity(id="e1", type="Person", text="Alice")
         e3 = Entity(id="e2", type="Person", text="Bob")
-        
+
         entity_set = {e1, e2, e3}
         assert len(entity_set) == 2  # e1 and e2 deduplicated by ID
 
@@ -42,7 +42,7 @@ class TestEntityHashability:
         """Entities should be usable as dict keys."""
         e1 = Entity(id="e1", type="Person", text="Alice")
         e2 = Entity(id="e2", type="Person", text="Bob")
-        
+
         entity_dict = {e1: "data1", e2: "data2"}
         assert entity_dict[e1] == "data1"
         assert len(entity_dict) == 2
@@ -66,7 +66,9 @@ class TestRelationshipHashability:
     def test_relationship_hashability_same_id(self):
         """Relationships with same ID should have same hash."""
         r1 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
-        r2 = Relationship(id="r1", source_id="e3", target_id="e4", type="uses")  # Different endpoints, same ID
+        r2 = Relationship(
+            id="r1", source_id="e3", target_id="e4", type="uses"
+        )  # Different endpoints, same ID
         assert hash(r1) == hash(r2)
 
     def test_relationship_in_set(self):
@@ -74,7 +76,7 @@ class TestRelationshipHashability:
         r1 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
         r2 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
         r3 = Relationship(id="r2", source_id="e1", target_id="e3", type="uses")
-        
+
         rel_set = {r1, r2, r3}
         assert len(rel_set) == 2  # r1 and r2 deduplicated by ID
 
@@ -82,7 +84,7 @@ class TestRelationshipHashability:
         """Relationships should be usable as dict keys."""
         r1 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
         r2 = Relationship(id="r2", source_id="e1", target_id="e3", type="uses")
-        
+
         rel_dict = {r1: "ownership", r2: "usage"}
         assert rel_dict[r1] == "ownership"
         assert len(rel_dict) == 2
@@ -155,32 +157,52 @@ class TestCriticScoreHashability:
     def test_critic_score_in_set(self):
         """CriticScores should be usable in sets."""
         s1 = CriticScore(
-            completeness=0.8, consistency=0.9, clarity=0.7,
-            granularity=0.6, relationship_coherence=0.82, domain_alignment=0.88,
+            completeness=0.8,
+            consistency=0.9,
+            clarity=0.7,
+            granularity=0.6,
+            relationship_coherence=0.82,
+            domain_alignment=0.88,
         )
         s2 = CriticScore(
-            completeness=0.8, consistency=0.9, clarity=0.7,
-            granularity=0.6, relationship_coherence=0.82, domain_alignment=0.88,
+            completeness=0.8,
+            consistency=0.9,
+            clarity=0.7,
+            granularity=0.6,
+            relationship_coherence=0.82,
+            domain_alignment=0.88,
         )
         s3 = CriticScore(
-            completeness=0.7, consistency=0.8, clarity=0.6,  # Different
-            granularity=0.5, relationship_coherence=0.75, domain_alignment=0.80,
+            completeness=0.7,
+            consistency=0.8,
+            clarity=0.6,  # Different
+            granularity=0.5,
+            relationship_coherence=0.75,
+            domain_alignment=0.80,
         )
-        
+
         score_set = {s1, s2, s3}
         assert len(score_set) == 2  # s1 and s2 deduplicated
 
     def test_critic_score_as_dict_key(self):
         """CriticScores should be usable as dict keys."""
         s1 = CriticScore(
-            completeness=0.8, consistency=0.9, clarity=0.7,
-            granularity=0.6, relationship_coherence=0.82, domain_alignment=0.88,
+            completeness=0.8,
+            consistency=0.9,
+            clarity=0.7,
+            granularity=0.6,
+            relationship_coherence=0.82,
+            domain_alignment=0.88,
         )
         s2 = CriticScore(
-            completeness=0.7, consistency=0.8, clarity=0.6,
-            granularity=0.5, relationship_coherence=0.75, domain_alignment=0.80,
+            completeness=0.7,
+            consistency=0.8,
+            clarity=0.6,
+            granularity=0.5,
+            relationship_coherence=0.75,
+            domain_alignment=0.80,
         )
-        
+
         score_dict = {s1: "high quality", s2: "medium quality"}
         assert score_dict[s1] == "high quality"
         assert len(score_dict) == 2
@@ -193,7 +215,7 @@ class TestCrossBehavior:
         """Entities and relationships should coexist in collections."""
         e1 = Entity(id="e1", type="Person", text="Alice")
         r1 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
-        
+
         # This is a type error in static typing, but demonstrates runtime behavior
         # In practice, you wouldn't mix these types
         items = {e1: "entity", r1: "relationship"}
@@ -205,7 +227,7 @@ class TestCrossBehavior:
         for i in range(10):
             # Create identical entities (same ID and all fields) - these will deduplicate
             entities.append(Entity(id=f"e{i % 3}", type="Person", text=f"Person{i % 3}"))
-        
+
         unique_entities = set(entities)
         assert len(unique_entities) == 3  # Only 3 unique entities: e0, e1, e2
 
@@ -215,8 +237,10 @@ class TestCrossBehavior:
         for i in range(10):
             # Create identical relationships (same ID and all fields) - these will deduplicate
             relationships.append(
-                Relationship(id=f"r{i % 4}", source_id=f"e{i % 4}", target_id=f"e{(i % 4) + 1}", type="conn")
+                Relationship(
+                    id=f"r{i % 4}", source_id=f"e{i % 4}", target_id=f"e{(i % 4) + 1}", type="conn"
+                )
             )
-        
+
         unique_rels = set(relationships)
         assert len(unique_rels) == 4  # Only 4 unique relationships: r0, r1, r2, r3

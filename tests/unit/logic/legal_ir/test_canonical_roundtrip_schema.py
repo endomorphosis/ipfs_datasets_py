@@ -54,13 +54,8 @@ GATE_PATH = (
     / "workspace/benchmarks/semantic-roundtrip-compositions"
     / "replacement_selection_gate.json"
 )
-POLICY_PATH = (
-    ROOT / "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json"
-)
-SCHEMA_RELATIVE = (
-    "ipfs_datasets_py/logic/legal_ir/schemas/"
-    "canonical_roundtrip_ir.schema.json"
-)
+POLICY_PATH = ROOT / "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json"
+SCHEMA_RELATIVE = "ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json"
 
 
 def _rule() -> CanonicalRule:
@@ -105,10 +100,7 @@ def test_authorized_gate_and_exact_tie_lineage_are_bound() -> None:
     assert gate["status"] == "authorized"
     assert gate["replacement_selection_outcome"] == "exact_tie"
     assert tuple(gate["selectable_arm_ids"]) == SELECTABLE_ARM_IDS
-    assert (
-        gate["implementation_representative_arm_id"]
-        == IMPLEMENTATION_REPRESENTATIVE_ARM_ID
-    )
+    assert gate["implementation_representative_arm_id"] == IMPLEMENTATION_REPRESENTATIVE_ARM_ID
     assert gate["selection_basis"] == SELECTION_BASIS
     assert gate["srt014_report_cid"] == SRT014_REPORT_CID
     assert gate["srt014_gate_cid"] == SRT014_GATE_CID
@@ -137,12 +129,8 @@ def test_parity_policy_is_canonical_and_binds_both_runs() -> None:
         policy["aggregation_order"]
         == "repeats_within_case_then_unweighted_macro_average_across_cases"
     )
-    assert policy["bootstrap_method"] == (
-        "seeded_percentile_case_cluster_bootstrap"
-    )
-    assert policy["resampling_unit"] == (
-        "case_after_within_case_repeat_aggregation"
-    )
+    assert policy["bootstrap_method"] == ("seeded_percentile_case_cluster_bootstrap")
+    assert policy["resampling_unit"] == ("case_after_within_case_repeat_aggregation")
     assert policy["confidence_level"] == 0.95
     assert policy["bootstrap_samples"] == 10_000
     assert policy["bootstrap_seed"] == 17_291
@@ -157,9 +145,7 @@ def test_packaged_schema_matches_contract_and_embedded_policy() -> None:
     policy = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
 
     assert schema["x-interface"] == "CanonicalRoundTripIR@1"
-    assert schema["x-schema-version"] == (
-        "ipfs-datasets.canonical-roundtrip-ir.v1"
-    )
+    assert schema["x-schema-version"] == ("ipfs-datasets.canonical-roundtrip-ir.v1")
     assert schema["x-canonical-cid"] == {
         "base": "base32",
         "codec": "dag-json",
@@ -208,9 +194,7 @@ def test_compiler_request_wire_round_trip_binds_body_and_vocabulary() -> None:
     wire = request.to_dict()
 
     assert CompilerRequest.from_dict(wire) == request
-    assert wire["source_cid"] == cid_for_bytes(
-        request.source_text.encode("utf-8")
-    )
+    assert wire["source_cid"] == cid_for_bytes(request.source_text.encode("utf-8"))
     assert wire["request_cid"] == cid_for_dag_json(request.identity_payload())
     assert isinstance(request.config, MappingProxyType)
     assert isinstance(request.atom_vocabulary.actors, tuple)
@@ -257,18 +241,10 @@ def test_decompiler_accepts_only_measured_source_withheld_profile() -> None:
     request = DecompilerRequest(ir, "decompile-1")
     wire = request.to_dict()
 
-    assert dict(SOURCE_WITHHELD_DECOMPILER_CONFIG) == dict(
-        FROZEN_REPLACEMENT_CONFIG
-    )
-    assert SOURCE_WITHHELD_DECOMPILER_CONFIG_CID == (
-        FROZEN_REPLACEMENT_CONFIG_CID
-    )
-    assert SOURCE_WITHHELD_RENDERING_SPEC_CID == (
-        SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID
-    )
-    assert cid_for_dag_json(dict(request.config)) == (
-        SOURCE_WITHHELD_DECOMPILER_CONFIG_CID
-    )
+    assert dict(SOURCE_WITHHELD_DECOMPILER_CONFIG) == dict(FROZEN_REPLACEMENT_CONFIG)
+    assert SOURCE_WITHHELD_DECOMPILER_CONFIG_CID == (FROZEN_REPLACEMENT_CONFIG_CID)
+    assert SOURCE_WITHHELD_RENDERING_SPEC_CID == (SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID)
+    assert cid_for_dag_json(dict(request.config)) == (SOURCE_WITHHELD_DECOMPILER_CONFIG_CID)
     assert wire["rendering_spec_cid"] == SOURCE_WITHHELD_RENDERING_SPEC_CID
     assert set(wire) == {
         "interface",
@@ -423,8 +399,5 @@ def test_schema_is_declared_in_all_distribution_manifests() -> None:
 
     assert '"logic/legal_ir/schemas/*.json"' in setup_text
     assert '"logic/legal_ir/schemas/*.json"' in pyproject_text
-    assert (
-        "recursive-include ipfs_datasets_py/logic/legal_ir/schemas *.json"
-        in manifest_text
-    )
+    assert "recursive-include ipfs_datasets_py/logic/legal_ir/schemas *.json" in manifest_text
     assert (ROOT / SCHEMA_RELATIVE).is_file()

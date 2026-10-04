@@ -53,6 +53,7 @@ def _make_symai_mock():
 #    Must reset SYMBOLIC_AI_AVAILABLE=False so the early-return guard doesn't fire.
 # ===========================================================================
 
+
 class TestEnableSymbolicAIAutoconfigureSession27:
     """Cover integration/__init__.py lines 80-82: autoconfigure_engine_env() called."""
 
@@ -101,6 +102,7 @@ class TestEnableSymbolicAIAutoconfigureSession27:
 #    Requires logger bug fix (now fixed by adding import logging + logger).
 # ===========================================================================
 
+
 class TestProverInstallerOSErrorSession27:
     """Cover prover_installer.py line 129: OSError exception → return False."""
 
@@ -133,6 +135,7 @@ class TestProverInstallerOSErrorSession27:
 # 3. symbolic_fol_bridge.py line 28 — SYMBOLIC_AI_AVAILABLE=True block
 #    and line 137 — AttributeError when parse_fol missing in fol_parser
 # ===========================================================================
+
 
 class TestSymbolicFOLBridgeSession27:
     """Cover symbolic_fol_bridge.py lines 28 and 137."""
@@ -185,8 +188,8 @@ class TestSymbolicFOLBridgeSession27:
         bridge.fallback_available = False
 
         # Build a fake fol.utils.fol_parser module without parse_fol
-        fake_fol_parser = MagicMock()       # standard mock; parse_fol set to None below
-        fake_fol_parser.parse_fol = None    # getattr returns None → AttributeError (line 137)
+        fake_fol_parser = MagicMock()  # standard mock; parse_fol set to None below
+        fake_fol_parser.parse_fol = None  # getattr returns None → AttributeError (line 137)
 
         # Fake predicate_extractor module
         fake_extractor = MagicMock()
@@ -219,6 +222,7 @@ class TestSymbolicFOLBridgeSession27:
 # ===========================================================================
 # 4. tdfol_cec_bridge.py line 254 — cec_prover.add_axiom(ax_formula)
 # ===========================================================================
+
 
 class TestTDFOLCECBridgeAxiomSession27:
     """Cover tdfol_cec_bridge.py line 254: cec_prover.add_axiom() in axiom loop."""
@@ -254,6 +258,7 @@ class TestTDFOLCECBridgeAxiomSession27:
         mock_prover_core.Prover.return_value = mock_prover
 
         import ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge as tcb_mod
+
         fn_globals = TDFOLCECBridge.prove_with_cec.__globals__
 
         orig_prover_core = fn_globals.get("prover_core")
@@ -265,6 +270,7 @@ class TestTDFOLCECBridgeAxiomSession27:
 
         # Also patch dcec_parsing as attribute on CEC.native package
         import ipfs_datasets_py.logic.CEC.native as cec_native_pkg
+
         orig_dcec_parsing_attr = getattr(cec_native_pkg, "dcec_parsing", _MISSING)
         cec_native_pkg.dcec_parsing = mock_dcec_parsing
 
@@ -297,6 +303,7 @@ class TestTDFOLCECBridgeAxiomSession27:
 #    _fallback_parse with bridge.available = True
 # ===========================================================================
 
+
 class TestTDFOLGrammarBridgeAvailableSession27:
     """Cover tdfol_grammar_bridge.py lines 264 and 271-272 with bridge.available=True."""
 
@@ -305,6 +312,7 @@ class TestTDFOLGrammarBridgeAvailableSession27:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
             TDFOLGrammarBridge,
         )
+
         bridge = TDFOLGrammarBridge.__new__(TDFOLGrammarBridge)
         bridge.available = True
         bridge.grammar_engine = None
@@ -332,9 +340,11 @@ class TestTDFOLGrammarBridgeAvailableSession27:
 
         # Mock nl_converter in globals to raise AttributeError
         orig_nl_converter = fn_globals.get("nl_converter", _MISSING)
+
         class _FakeNLConverter:
             def convert_to_dcec(self, text):
                 raise AttributeError("no convert_to_dcec")
+
         fn_globals["nl_converter"] = _FakeNLConverter()
 
         try:
@@ -367,9 +377,11 @@ class TestTDFOLGrammarBridgeAvailableSession27:
 
         fn_globals = TDFOLGrammarBridge._fallback_parse.__globals__
         orig_nl_converter = fn_globals.get("nl_converter", _MISSING)
+
         class _FakeNLConverter:
             def convert_to_dcec(self, text):
                 raise AttributeError("no convert_to_dcec")
+
         fn_globals["nl_converter"] = _FakeNLConverter()
 
         try:
@@ -396,6 +408,7 @@ class TestTDFOLGrammarBridgeAvailableSession27:
 # 6. ipfs_proof_cache.py line 329 — pin_proof → key not in _cache → return False
 # ===========================================================================
 
+
 class TestIPFSProofCachePinProofSession27:
     """Cover ipfs_proof_cache.py line 329: key not in _cache → return False."""
 
@@ -415,7 +428,7 @@ class TestIPFSProofCachePinProofSession27:
         cache.enable_ipfs = True
         cache.ipfs_client = MagicMock()
         cache._cache = {}  # compat cache — intentionally empty
-        cache.cache = {}   # CID-based cache — also empty
+        cache.cache = {}  # CID-based cache — also empty
         cache.lock = MagicMock()
         cache.lock.__enter__ = MagicMock(return_value=None)
         cache.lock.__exit__ = MagicMock(return_value=False)
@@ -443,6 +456,7 @@ class TestIPFSProofCachePinProofSession27:
 # 7. temporal_deontic_rag_store.py lines 25, 30
 #    Fallback BaseVectorStore.add_vectors and BaseEmbedding.embed_text stubs
 # ===========================================================================
+
 
 class TestTemporalDeonticRAGStoreFallbackStubsSession27:
     """Cover temporal_deontic_rag_store.py lines 25 and 30: fallback stub bodies."""
@@ -540,6 +554,7 @@ class TestTemporalDeonticRAGStoreFallbackStubsSession27:
 #    symai engine registration paths
 # ===========================================================================
 
+
 class TestLegalSymbolicAnalyzerEngineRegistrationSession27:
     """Cover legal_symbolic_analyzer.py symai engine registration body lines."""
 
@@ -577,9 +592,7 @@ class TestLegalSymbolicAnalyzerEngineRegistrationSession27:
 
         orig_symai = sys.modules.get("symai", _MISSING)
         orig_func = sys.modules.get("symai.functional", _MISSING)
-        orig_utils_ce = sys.modules.get(
-            "ipfs_datasets_py.utils.symai_codex_engine", _MISSING
-        )
+        orig_utils_ce = sys.modules.get("ipfs_datasets_py.utils.symai_codex_engine", _MISSING)
         sys.modules["symai"] = symai_mock
         sys.modules["symai.functional"] = symai_mock.functional
         sys.modules["ipfs_datasets_py.utils.symai_codex_engine"] = codex_engine_mock
@@ -590,9 +603,7 @@ class TestLegalSymbolicAnalyzerEngineRegistrationSession27:
             lsa_mod = importlib.import_module(lsa_path)
 
             # Call _initialize_symai with codex engine config
-            result = lsa_mod._initialize_symai(
-                chosen_engine={"model": "codex:test-model"}
-            )
+            result = lsa_mod._initialize_symai(chosen_engine={"model": "codex:test-model"})
             # Lines 63-66 were executed if EngineRepository.register was called
             engine_repo_mock.register.assert_called()
         except Exception:
@@ -614,9 +625,7 @@ class TestLegalSymbolicAnalyzerEngineRegistrationSession27:
             if orig_utils_ce is _MISSING:
                 sys.modules.pop("ipfs_datasets_py.utils.symai_codex_engine", None)
             else:
-                sys.modules[
-                    "ipfs_datasets_py.utils.symai_codex_engine"
-                ] = orig_utils_ce
+                sys.modules["ipfs_datasets_py.utils.symai_codex_engine"] = orig_utils_ce
 
     def test_initialize_symai_ipfs_engine_registration_lines_75_76(self):
         """
@@ -633,9 +642,7 @@ class TestLegalSymbolicAnalyzerEngineRegistrationSession27:
         ipfs_engine_mock.register_ipfs_symai_engines = register_fn_mock
 
         orig_symai = sys.modules.get("symai", _MISSING)
-        orig_ipfs_eng = sys.modules.get(
-            "ipfs_datasets_py.utils.symai_ipfs_engine", _MISSING
-        )
+        orig_ipfs_eng = sys.modules.get("ipfs_datasets_py.utils.symai_ipfs_engine", _MISSING)
         sys.modules["symai"] = symai_mock
         sys.modules["symai.functional"] = symai_mock.functional
         sys.modules["ipfs_datasets_py.utils.symai_ipfs_engine"] = ipfs_engine_mock
@@ -704,6 +711,7 @@ class TestLegalSymbolicAnalyzerEngineRegistrationSession27:
 #    Fallback BaseModel stub: default_factory path (line 43) and
 #    non-callable cls_val path (line 45)
 # ===========================================================================
+
 
 class TestSymbolicContractsFallbackBaseModelSession27:
     """Cover symbolic_contracts.py lines 43 and 45: fallback BaseModel stub bodies."""
@@ -791,6 +799,7 @@ class TestSymbolicContractsFallbackBaseModelSession27:
 #     setattr exception in SYMBOLIC_AI_AVAILABLE=True block
 # ===========================================================================
 
+
 class TestSymbolicLogicPrimitivesSetAttrExceptionSession27:
     """Cover symbolic_logic_primitives.py lines 506-507: setattr exception caught."""
 
@@ -812,8 +821,9 @@ class TestSymbolicLogicPrimitivesSetAttrExceptionSession27:
             def __init__(self, value, semantic=False):
                 self.value = value
                 self._semantic = semantic
+
             def __setattr__(self, name, value):
-                if not name.startswith('_') and name != 'value' and name != '_semantic':
+                if not name.startswith("_") and name != "value" and name != "_semantic":
                     raise RuntimeError(f"Cannot set {name}")
                 object.__setattr__(self, name, value)
 
@@ -821,7 +831,7 @@ class TestSymbolicLogicPrimitivesSetAttrExceptionSession27:
         symai_mock = MagicMock()
         symai_mock.Symbol = _RaisingSymbol
         symai_mock.core = MagicMock()
-        symai_mock.core.interpret = lambda **kw: (lambda fn: fn)
+        symai_mock.core.interpret = lambda **kw: lambda fn: fn
         sys.modules["symai"] = symai_mock
         sys.modules.pop(slp_path, None)
 
@@ -850,6 +860,7 @@ class TestSymbolicLogicPrimitivesSetAttrExceptionSession27:
 # ===========================================================================
 # 11. Regression guard: session26 grammar bridge fix still works in sequence
 # ===========================================================================
+
 
 class TestSession26GrammarBridgeRegressionSession27:
     """Verify the session26 _dcec_to_natural_language fix works after session24."""

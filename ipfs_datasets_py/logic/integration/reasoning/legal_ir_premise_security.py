@@ -388,7 +388,9 @@ def scan_hammer_premise(premise: HammerPremise) -> LegalIRPremiseSecurityReport:
     )
     extra_findings = list(report.findings)
     metadata = _mapping(premise.metadata)
-    source_module = _atom(metadata.get("source_module") or metadata.get("source_kind") or metadata.get("source"))
+    source_module = _atom(
+        metadata.get("source_module") or metadata.get("source_kind") or metadata.get("source")
+    )
     premise_kind = _atom(metadata.get("premise_kind") or metadata.get("source_kind"))
     if (
         any(marker in source_module for marker in _UNTRUSTED_SOURCE_MARKERS)
@@ -761,7 +763,15 @@ def _as_premise(value: HammerPremise | Mapping[str, Any] | str, index: int) -> H
 
 def _artifact_id(value: Any) -> str:
     data = _mapping(value)
-    for key in ("guidance_id", "promotion_id", "todo_id", "candidate_id", "request_id", "name", "id"):
+    for key in (
+        "guidance_id",
+        "promotion_id",
+        "todo_id",
+        "candidate_id",
+        "request_id",
+        "name",
+        "id",
+    ):
         if str(data.get(key) or "").strip():
             return str(data[key]).strip()
     return ""
@@ -801,14 +811,19 @@ def _string_tuple(value: Any) -> tuple[str, ...]:
 
 def _json_ready(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return {str(key): _json_ready(child) for key, child in sorted(value.items(), key=lambda item: str(item[0]))}
+        return {
+            str(key): _json_ready(child)
+            for key, child in sorted(value.items(), key=lambda item: str(item[0]))
+        }
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_ready(item) for item in value]
     return value
 
 
 def _stable_json(value: Any) -> str:
-    return json.dumps(_json_ready(value), default=str, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
+    return json.dumps(
+        _json_ready(value), default=str, ensure_ascii=True, separators=(",", ":"), sort_keys=True
+    )
 
 
 def _stable_hash(value: Any) -> str:
@@ -821,7 +836,11 @@ def _hash_text(value: Any) -> str:
 
 def _stable_text(value: Any) -> str:
     if isinstance(value, (str, bytes, bytearray)):
-        return str(value.decode("utf-8", errors="replace") if isinstance(value, (bytes, bytearray)) else value)
+        return str(
+            value.decode("utf-8", errors="replace")
+            if isinstance(value, (bytes, bytearray))
+            else value
+        )
     return _stable_json(value)
 
 

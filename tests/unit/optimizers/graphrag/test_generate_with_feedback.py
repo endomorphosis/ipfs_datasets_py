@@ -4,8 +4,8 @@ Comprehensive tests for OntologyGenerator.generate_with_feedback().
 Tests cover:
 - Basic feedback application (confidence filtering, entity/relationship removal, type corrections)
 - Entity merging with relationship redirect
-- Critic integration  
-- Metadata tracking  
+- Critic integration
+- Metadata tracking
 - Edge cases (empty feedback, non-existent IDs, invalid data)
 - Round-trip validation
 """
@@ -42,36 +42,38 @@ class TestGenerateWithFeedbackBasic:
     def test_generate_with_feedback_no_feedback(self, generator, context):
         """No feedback = same as generate_ontology."""
         text = "Alice works for Acme Corporation. Bob manages the project."
-        
+
         result_with_feedback = generator.generate_with_feedback(text, context)
         result_without_feedback = generator.generate_ontology(text, context)
-        
+
         # Check structure and counts are same (IDs are randomly generated)
         assert len(result_with_feedback["entities"]) == len(result_without_feedback["entities"])
-        assert len(result_with_feedback["relationships"]) == len(result_without_feedback["relationships"])
-        
+        assert len(result_with_feedback["relationships"]) == len(
+            result_without_feedback["relationships"]
+        )
+
         # Check entity texts match
         texts_with = {e["text"] for e in result_with_feedback["entities"]}
         texts_without = {e["text"] for e in result_without_feedback["entities"]}
         assert texts_with == texts_without
-        
+
         assert result_with_feedback["metadata"]["feedback_applied"] == False
 
     def test_generate_with_feedback_empty_feedback(self, generator, context):
         """Empty feedback dict should mark as applied but make no changes."""
         text = "Test data with entities and relationships."
-        
+
         result = generator.generate_with_feedback(text, context, feedback={})
-        
+
         assert result["metadata"]["feedback_applied"] == False
 
     def test_generate_with_feedback_metadata_tracking(self, generator, context):
         """Metadata should track feedback application."""
         text = "Alice works at Acme."
         feedback = {"confidence_floor": 0.9}
-        
+
         result = generator.generate_with_feedback(text, context, feedback=feedback)
-        
+
         assert result["metadata"]["feedback_applied"] == True
         assert "feedback_keys" in result["metadata"]
         assert "confidence_floor" in result["metadata"]["feedback_keys"]
@@ -80,7 +82,7 @@ class TestGenerateWithFeedbackBasic:
         """Return value should be dict with standard ontology structure."""
         text = "Test data."
         result = generator.generate_with_feedback(text, context)
-        
+
         assert isinstance(result, dict)
         assert "entities" in result
         assert "relationships" in result
@@ -109,17 +111,17 @@ class TestConfidenceFiltering:
         """Confidence floor should filter out low-confidence entities."""
         # Create a synthetic ontology
         text = "A contract between parties."
-        
+
         result_before = generator.generate_ontology(text, context)
         initial_count = len(result_before["entities"])
-        
+
         # Apply high confidence floor
         feedback = {"confidence_floor": 0.9}
         result_after = generator.generate_with_feedback(text, context, feedback=feedback)
-        
+
         # Should have fewer or equal entities
         assert len(result_after["entities"]) <= initial_count
-        
+
         # All remaining entities should meet threshold
         for entity in result_after["entities"]:
             assert entity.get("confidence", 0) >= 0.9
@@ -128,9 +130,9 @@ class TestConfidenceFiltering:
         """Confidence floor of 0 should keep all entities."""
         text = "Test data with entities."
         feedback = {"confidence_floor": 0.0}
-        
+
         result = generator.generate_with_feedback(text, context, feedback=feedback)
-        
+
         # No filtering should occur
         assert len(result["entities"]) > 0
 
@@ -138,9 +140,9 @@ class TestConfidenceFiltering:
         """Confidence floor of 1.0 should keep only perfect entities."""
         text = "Test data."
         feedback = {"confidence_floor": 1.0}
-        
+
         result = generator.generate_with_feedback(text, context, feedback=feedback)
-        
+
         # Very few entities should be perfect
         for entity in result["entities"]:
             assert entity.get("confidence", 0) >= 1.0
@@ -174,10 +176,10 @@ class TestEntityRemoval:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"entities_to_remove": ["e_1"]}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert len(ontology["entities"]) == 1
         assert ontology["entities"][0]["id"] == "e_2"
@@ -192,10 +194,10 @@ class TestEntityRemoval:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"entities_to_remove": ["e_nonexistent"]}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == False
         assert len(ontology["entities"]) == 1
 
@@ -220,14 +222,14 @@ class TestEntityMerging:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"entities_to_merge": [("e_1", "e_2")]}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert len(ontology["entities"]) == 1
         assert ontology["entities"][0]["id"] == "e_1"
-        
+
         # Relationship should redirect e_2 → e_1
         assert ontology["relationships"][0]["source_id"] == "e_1"
 
@@ -239,10 +241,10 @@ class TestEntityMerging:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"entities_to_merge": [("e_nonexistent", "e_other")]}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == False
         assert len(ontology["entities"]) == 1
 
@@ -264,10 +266,10 @@ class TestTypeCorrection:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"type_corrections": {"e_1": "Company"}}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert ontology["entities"][0]["type"] == "Company"
 
@@ -279,10 +281,10 @@ class TestTypeCorrection:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"type_corrections": {"e_nonexistent": "Robot"}}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == False
 
 
@@ -307,10 +309,10 @@ class TestRelationshipModifications:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {"relationships_to_remove": ["r_1"]}
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert len(ontology["relationships"]) == 1
         assert ontology["relationships"][0]["id"] == "r_2"
@@ -326,14 +328,14 @@ class TestRelationshipModifications:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {
             "relationships_to_add": [
                 {"source_id": "e_1", "target_id": "e_2", "type": "knows"},
             ]
         }
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert len(ontology["relationships"]) == 1
         assert ontology["relationships"][0]["source_id"] == "e_1"
@@ -362,17 +364,17 @@ class TestMultipleFeedbackCombined:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {
             "confidence_floor": 0.7,  # Removes e_2
             "type_corrections": {"e_3": "Executive"},
             "relationships_to_add": [
                 {"source_id": "e_1", "target_id": "e_3", "type": "manages"},
-            ]
+            ],
         }
-        
+
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert len(ontology["entities"]) == 2  # e_2 filtered out
         assert ontology["entities"][1]["type"] == "Executive"  # e_3 type updated
@@ -394,12 +396,12 @@ class TestFeedbackEdgeCases:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {
             "confidence_floor": 0.8,
             "entities_to_remove": ["nonexistent"],
         }
-        
+
         result = generator._apply_feedback_to_ontology(ontology, feedback)
         assert result == False
 
@@ -413,11 +415,11 @@ class TestFeedbackEdgeCases:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {
             "type_corrections": {"e_1": "金融機関"}  # Japanese
         }
-        
+
         result = generator._apply_feedback_to_ontology(ontology, feedback)
         assert result == True
         assert ontology["entities"][0]["type"] == "金融機関"
@@ -430,13 +432,13 @@ class TestFeedbackEdgeCases:
             "metadata": {},
             "domain": "general",
         }
-        
+
         # These should either be ignored or handled gracefully
         feedback = {
             "confidence_floor": "invalid",  # String instead of float
             "entities_to_remove": "should_be_list",  # String instead of list
         }
-        
+
         # Method should not crash
         try:
             result = generator._apply_feedback_to_ontology(ontology, feedback)
@@ -468,20 +470,15 @@ class TestIntegrationWithCritic:
         """Should work without critic."""
         text = "Simple test."
         result = generator.generate_with_feedback(text, context)
-        
+
         assert "critic_score" not in result["metadata"]
         assert result["metadata"]["feedback_applied"] == False
 
     def test_generate_with_feedback_with_none_critic(self, generator, context):
         """Passing critic=None should work."""
         text = "Test data."
-        result = generator.generate_with_feedback(
-            text,
-            context,
-            feedback=None,
-            critic=None
-        )
-        
+        result = generator.generate_with_feedback(text, context, feedback=None, critic=None)
+
         assert isinstance(result, dict)
         assert "critic_score" not in result["metadata"]
 
@@ -503,13 +500,13 @@ class TestFeedbackRoundTrip:
             "metadata": {},
             "domain": "general",
         }
-        
+
         feedback = {
             "type_corrections": {"e_1": "Director"},
             "confidence_floor": 0.85,
         }
-        
+
         result = generator._apply_feedback_to_ontology(ontology, feedback)
-        
+
         assert result == True
         assert ontology["entities"][0]["type"] == "Director"

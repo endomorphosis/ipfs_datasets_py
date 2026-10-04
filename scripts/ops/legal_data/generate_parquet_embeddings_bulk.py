@@ -71,6 +71,7 @@ def _ensure_ipfs_accelerate_path() -> None:
 
     try:
         import ipfs_accelerate_py.p2p_tasks  # type: ignore  # noqa: F401
+
         return
     except Exception:
         pass
@@ -85,6 +86,7 @@ def _ensure_ipfs_accelerate_path() -> None:
             importlib.invalidate_caches()
             try:
                 import ipfs_accelerate_py.p2p_tasks  # type: ignore  # noqa: F401
+
                 return
             except Exception:
                 # If an empty namespace package was already cached from another
@@ -93,6 +95,7 @@ def _ensure_ipfs_accelerate_path() -> None:
                 importlib.invalidate_caches()
                 try:
                     import ipfs_accelerate_py.p2p_tasks  # type: ignore  # noqa: F401
+
                     return
                 except Exception:
                     continue
@@ -472,11 +475,21 @@ def _discover_taskqueue_targets(
     # "auto" prioritizes the common mesh channels: mdns + dht + configured
     # bootstrap peers.
     if mode in {"mdns", "auto", "all"}:
-        out.extend(discover_peers_via_mdns_sync(timeout_s=timeout_s, limit=limit, exclude_self=True))
+        out.extend(
+            discover_peers_via_mdns_sync(timeout_s=timeout_s, limit=limit, exclude_self=True)
+        )
     if mode in {"dht", "auto", "all"}:
-        out.extend(discover_peers_via_dht_sync(timeout_s=timeout_s, limit=limit, exclude_self=True, namespace=""))
+        out.extend(
+            discover_peers_via_dht_sync(
+                timeout_s=timeout_s, limit=limit, exclude_self=True, namespace=""
+            )
+        )
     if mode in {"rendezvous", "all"}:
-        out.extend(discover_peers_via_rendezvous_sync(timeout_s=timeout_s, limit=limit, exclude_self=True, namespace=""))
+        out.extend(
+            discover_peers_via_rendezvous_sync(
+                timeout_s=timeout_s, limit=limit, exclude_self=True, namespace=""
+            )
+        )
     if mode in {"bootstrap", "auto", "all"}:
         out.extend(_bootstrap_targets_from_env())
 
@@ -519,7 +532,9 @@ def _probe_taskqueue_remotes(
         for idx, remote in enumerate(remotes):
             ok = False
             try:
-                status = request_status_sync(remote=remote, timeout_s=max(0.1, float(timeout_s)), detail=False)
+                status = request_status_sync(
+                    remote=remote, timeout_s=max(0.1, float(timeout_s)), detail=False
+                )
                 ok = bool(isinstance(status, dict) and status.get("ok"))
             except Exception:
                 ok = False
@@ -557,17 +572,23 @@ def _parse_target_specs(target_specs: list[str]) -> list[Any]:
         if not text:
             continue
         if "::" not in text:
-            raise ValueError(f"Invalid --taskqueue-target value: {text}. Expected 'peer_id::multiaddr'.")
+            raise ValueError(
+                f"Invalid --taskqueue-target value: {text}. Expected 'peer_id::multiaddr'."
+            )
         peer_id, multiaddr = text.split("::", 1)
         peer_id = str(peer_id).strip()
         multiaddr = str(multiaddr).strip()
         if not peer_id or not multiaddr:
-            raise ValueError(f"Invalid --taskqueue-target value: {text}. Expected 'peer_id::multiaddr'.")
+            raise ValueError(
+                f"Invalid --taskqueue-target value: {text}. Expected 'peer_id::multiaddr'."
+            )
         out.append(RemoteQueue(peer_id=peer_id, multiaddr=multiaddr))
     return out
 
 
-async def _wait_remote_task_async(*, remote: Any, task_id: str, timeout_s: float) -> dict[str, Any] | None:
+async def _wait_remote_task_async(
+    *, remote: Any, task_id: str, timeout_s: float
+) -> dict[str, Any] | None:
     _ensure_ipfs_accelerate_path()
     from ipfs_accelerate_py.p2p_tasks.client import wait_task  # type: ignore
 
@@ -625,13 +646,18 @@ def _submit_remote_with_retries(
 
     def _candidate_indices(*, allow_penalty_skip: bool) -> list[int]:
         now = time.monotonic()
-        ordered_indices = [((int(preferred_remote_index) + i) % n_remotes) for i in range(n_remotes)]
+        ordered_indices = [
+            ((int(preferred_remote_index) + i) % n_remotes) for i in range(n_remotes)
+        ]
         if isinstance(remote_penalties, list) and len(remote_penalties) == n_remotes:
             # Re-evaluate penalties each attempt so a remote that just failed is
             # deprioritized immediately for the next retry.
             ordered_indices = sorted(
                 ordered_indices,
-                key=lambda i: (int(remote_penalties[i]), (i - int(preferred_remote_index)) % n_remotes),
+                key=lambda i: (
+                    int(remote_penalties[i]),
+                    (i - int(preferred_remote_index)) % n_remotes,
+                ),
             )
 
             threshold = int(remote_penalty_skip_threshold)
@@ -644,7 +670,10 @@ def _submit_remote_with_retries(
 
         # Prefer remotes that are not in a short local cooldown window. If all
         # remotes are cooling down, keep fallback behavior by allowing all.
-        if isinstance(remote_unavailable_until, list) and len(remote_unavailable_until) == n_remotes:
+        if (
+            isinstance(remote_unavailable_until, list)
+            and len(remote_unavailable_until) == n_remotes
+        ):
             available = [i for i in ordered_indices if float(remote_unavailable_until[i]) <= now]
             if available:
                 ordered_indices = available
@@ -664,11 +693,25 @@ def _submit_remote_with_retries(
         tried_remote_indices.add(remote_idx)
         remote = remotes[remote_idx]
         if verbose:
-            penalty = int(remote_penalties[remote_idx]) if isinstance(remote_penalties, list) and len(remote_penalties) == n_remotes else -1
-            streak = int(remote_failure_streaks[remote_idx]) if isinstance(remote_failure_streaks, list) and len(remote_failure_streaks) == n_remotes else -1
+            penalty = (
+                int(remote_penalties[remote_idx])
+                if isinstance(remote_penalties, list) and len(remote_penalties) == n_remotes
+                else -1
+            )
+            streak = (
+                int(remote_failure_streaks[remote_idx])
+                if isinstance(remote_failure_streaks, list)
+                and len(remote_failure_streaks) == n_remotes
+                else -1
+            )
             unavailable_for_s = 0.0
-            if isinstance(remote_unavailable_until, list) and len(remote_unavailable_until) == n_remotes:
-                unavailable_for_s = max(0.0, float(remote_unavailable_until[remote_idx]) - time.monotonic())
+            if (
+                isinstance(remote_unavailable_until, list)
+                and len(remote_unavailable_until) == n_remotes
+            ):
+                unavailable_for_s = max(
+                    0.0, float(remote_unavailable_until[remote_idx]) - time.monotonic()
+                )
             print(
                 "[queue:submit] "
                 f"attempt={attempt + 1}/{total_attempts} "
@@ -685,15 +728,18 @@ def _submit_remote_with_retries(
             )
             if isinstance(remote_penalties, list) and len(remote_penalties) == n_remotes:
                 remote_penalties[remote_idx] = max(0, int(remote_penalties[remote_idx]) - 1)
-            if isinstance(remote_failure_streaks, list) and len(remote_failure_streaks) == n_remotes:
+            if (
+                isinstance(remote_failure_streaks, list)
+                and len(remote_failure_streaks) == n_remotes
+            ):
                 remote_failure_streaks[remote_idx] = 0
-            if isinstance(remote_unavailable_until, list) and len(remote_unavailable_until) == n_remotes:
+            if (
+                isinstance(remote_unavailable_until, list)
+                and len(remote_unavailable_until) == n_remotes
+            ):
                 remote_unavailable_until[remote_idx] = 0.0
             if verbose:
-                print(
-                    "[queue:submit] "
-                    f"ok task_id={str(task_id)} remote_index={remote_idx}"
-                )
+                print(f"[queue:submit] ok task_id={str(task_id)} remote_index={remote_idx}")
             return str(task_id), remote, int(remote_idx)
         except Exception as exc:
             if verbose:
@@ -710,16 +756,31 @@ def _submit_remote_with_retries(
             )
             if isinstance(remote_penalties, list) and len(remote_penalties) == n_remotes:
                 penalty_bump = 1
-                if isinstance(remote_failure_streaks, list) and len(remote_failure_streaks) == n_remotes:
+                if (
+                    isinstance(remote_failure_streaks, list)
+                    and len(remote_failure_streaks) == n_remotes
+                ):
                     current_streak = int(remote_failure_streaks[remote_idx])
                     penalty_bump = min(4, 1 + (current_streak // 2))
-                remote_penalties[remote_idx] = min(1_000_000, int(remote_penalties[remote_idx]) + penalty_bump)
-            if isinstance(remote_failure_streaks, list) and len(remote_failure_streaks) == n_remotes:
-                remote_failure_streaks[remote_idx] = min(1_000_000, int(remote_failure_streaks[remote_idx]) + 1)
+                remote_penalties[remote_idx] = min(
+                    1_000_000, int(remote_penalties[remote_idx]) + penalty_bump
+                )
+            if (
+                isinstance(remote_failure_streaks, list)
+                and len(remote_failure_streaks) == n_remotes
+            ):
+                remote_failure_streaks[remote_idx] = min(
+                    1_000_000, int(remote_failure_streaks[remote_idx]) + 1
+                )
                 streak = int(remote_failure_streaks[remote_idx])
                 cooldown_ms = min(cooldown_max_ms, cooldown_base_ms * (2 ** min(streak, 8)))
-                if isinstance(remote_unavailable_until, list) and len(remote_unavailable_until) == n_remotes:
-                    remote_unavailable_until[remote_idx] = time.monotonic() + (float(cooldown_ms) / 1000.0)
+                if (
+                    isinstance(remote_unavailable_until, list)
+                    and len(remote_unavailable_until) == n_remotes
+                ):
+                    remote_unavailable_until[remote_idx] = time.monotonic() + (
+                        float(cooldown_ms) / 1000.0
+                    )
             if attempt >= (total_attempts - 1):
                 break
             # While there are still untried remotes in the current sweep,
@@ -778,7 +839,7 @@ def _wait_remote_with_retries(
             pass
         if attempt >= retries:
             break
-        stage_delay_ms = min(delay_cap_ms, base_ms * (2**max(0, int(attempt))))
+        stage_delay_ms = min(delay_cap_ms, base_ms * (2 ** max(0, int(attempt))))
         jitter_cap_ms = max(1.0, min(float(base_ms), float(stage_delay_ms)))
         delay_s = (stage_delay_ms / 1000.0) + (random.uniform(0.0, jitter_cap_ms) / 1000.0)
         time.sleep(delay_s)
@@ -816,7 +877,7 @@ def _get_remote_task_with_retries(
             pass
         if attempt >= retries:
             break
-        stage_delay_ms = min(delay_cap_ms, base_ms * (2**max(0, int(attempt))))
+        stage_delay_ms = min(delay_cap_ms, base_ms * (2 ** max(0, int(attempt))))
         jitter_cap_ms = max(1.0, min(float(base_ms), float(stage_delay_ms)))
         delay_s = (stage_delay_ms / 1000.0) + (random.uniform(0.0, jitter_cap_ms) / 1000.0)
         time.sleep(delay_s)
@@ -1027,28 +1088,56 @@ def _embed_file_via_taskqueue(
     from ipfs_accelerate_py.p2p_tasks.task_queue import TaskQueue  # type: ignore
 
     # Keep p2p client submit behavior aligned with script retry controls.
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_SUBMIT_RETRIES"] = str(max(0, int(queue_submit_retries)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_SUBMIT_RETRY_BASE_MS"] = str(max(10, int(queue_submit_retry_base_ms)))
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_SUBMIT_RETRIES"] = str(
+        max(0, int(queue_submit_retries))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_SUBMIT_RETRY_BASE_MS"] = str(
+        max(10, int(queue_submit_retry_base_ms))
+    )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_STATUS_RETRIES"] = str(max(0, int(queue_wait_retries)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_STATUS_RETRY_BASE_MS"] = str(max(10, int(queue_wait_retry_base_ms)))
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_STATUS_RETRY_BASE_MS"] = str(
+        max(10, int(queue_wait_retry_base_ms))
+    )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_WAIT_RETRIES"] = str(max(0, int(queue_wait_retries)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_WAIT_RETRY_BASE_MS"] = str(max(10, int(queue_wait_retry_base_ms)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RPC_RETRIES"] = str(max(int(queue_submit_retries), int(queue_wait_retries), 0))
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_WAIT_RETRY_BASE_MS"] = str(
+        max(10, int(queue_wait_retry_base_ms))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RPC_RETRIES"] = str(
+        max(int(queue_submit_retries), int(queue_wait_retries), 0)
+    )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RPC_RETRY_BASE_MS"] = str(
         max(10, int(queue_submit_retry_base_ms), int(queue_wait_retry_base_ms))
     )
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DIAL_TIMEOUT_SCALE"] = str(max(1.0, float(queue_retry_dial_timeout_scale)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DIAL_TIMEOUT_MAX_S"] = str(max(1.0, float(queue_retry_dial_timeout_max_s)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DELAY_MAX_MS"] = str(max(10, int(queue_retry_delay_max_ms)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_MAX_CONCURRENT_DIALS"] = str(max(1, int(queue_max_concurrent_dials)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_MAX_CONCURRENT_WAIT_DIALS"] = str(max(1, int(queue_max_concurrent_wait_dials)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_DIAL_SLOT_TIMEOUT_S"] = str(max(0.1, float(queue_dial_slot_timeout_s)))
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DIAL_TIMEOUT_SCALE"] = str(
+        max(1.0, float(queue_retry_dial_timeout_scale))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DIAL_TIMEOUT_MAX_S"] = str(
+        max(1.0, float(queue_retry_dial_timeout_max_s))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DELAY_MAX_MS"] = str(
+        max(10, int(queue_retry_delay_max_ms))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_MAX_CONCURRENT_DIALS"] = str(
+        max(1, int(queue_max_concurrent_dials))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_MAX_CONCURRENT_WAIT_DIALS"] = str(
+        max(1, int(queue_max_concurrent_wait_dials))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_DIAL_SLOT_TIMEOUT_S"] = str(
+        max(0.1, float(queue_dial_slot_timeout_s))
+    )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_WAIT_DIAL_SLOT_TIMEOUT_S"] = str(
         max(0.1, float(queue_wait_dial_slot_timeout_s))
     )
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_CACHE_MAX_KEYS"] = str(max(64, int(queue_cache_max_keys)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_CACHE_STALE_S"] = str(max(30.0, float(queue_cache_stale_s)))
-    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_COOLDOWN_BASE_MS"] = str(max(10, int(queue_remote_cooldown_base_ms)))
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_CACHE_MAX_KEYS"] = str(
+        max(64, int(queue_cache_max_keys))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_CACHE_STALE_S"] = str(
+        max(30.0, float(queue_cache_stale_s))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_COOLDOWN_BASE_MS"] = str(
+        max(10, int(queue_remote_cooldown_base_ms))
+    )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_COOLDOWN_MAX_MS"] = str(
         max(int(queue_remote_cooldown_base_ms), int(queue_remote_cooldown_max_ms))
     )
@@ -1109,14 +1198,13 @@ def _embed_file_via_taskqueue(
             if healthy_remotes:
                 remotes = list(healthy_remotes)
                 if bool(queue_verbose):
-                    print(
-                        "[queue:probe] "
-                        f"auto backend using healthy remotes only: {len(remotes)}"
-                    )
+                    print(f"[queue:probe] auto backend using healthy remotes only: {len(remotes)}")
             else:
                 remotes = []
                 if bool(queue_verbose):
-                    print("[queue:probe] auto backend found no healthy remotes; falling back to local queue")
+                    print(
+                        "[queue:probe] auto backend found no healthy remotes; falling back to local queue"
+                    )
 
         max_active = max(0, int(queue_remote_max_active))
         if max_active > 0 and len(remotes) > max_active:
@@ -1258,7 +1346,9 @@ def _embed_file_via_taskqueue(
         task_age_s = max(0.0, float(t0) - float(submitted_at_monotonic))
         wait_remaining_s = max(0.0, float(task_timeout_s) - float(task_age_s))
         wait_slice_timeout_s = max(1.0, float(queue_wait_slice_timeout_s))
-        per_call_wait_timeout_s = max(1.0, min(wait_slice_timeout_s, wait_remaining_s or wait_slice_timeout_s))
+        per_call_wait_timeout_s = max(
+            1.0, min(wait_slice_timeout_s, wait_remaining_s or wait_slice_timeout_s)
+        )
         if bool(queue_verbose):
             print(
                 "[queue:wait] "
@@ -1370,7 +1460,9 @@ def _embed_file_via_taskqueue(
                                         )
                                     completed += 1
                                     if completed % log_every == 0:
-                                        print(f"[queue] completed={completed}/{len(texts)} failures={failed}")
+                                        print(
+                                            f"[queue] completed={completed}/{len(texts)} failures={failed}"
+                                        )
                                     return
                             if status in {"failed", "cancelled", "error"}:
                                 break
@@ -1426,10 +1518,14 @@ def _embed_file_via_taskqueue(
                                 remote_penalties=remote_penalties,
                                 remote_failure_streaks=remote_failure_streaks,
                                 remote_unavailable_until=remote_unavailable_until,
-                                remote_penalty_skip_threshold=int(queue_remote_penalty_skip_threshold),
+                                remote_penalty_skip_threshold=int(
+                                    queue_remote_penalty_skip_threshold
+                                ),
                                 verbose=bool(queue_verbose),
                             )
-                            next_preferred_remote_index = (int(new_remote_index) + 1) % max(1, len(remotes))
+                            next_preferred_remote_index = (int(new_remote_index) + 1) % max(
+                                1, len(remotes)
+                            )
                             pending.append(
                                 {
                                     "row_index": int(row_index),
@@ -1478,7 +1574,9 @@ def _embed_file_via_taskqueue(
                                 f" model={runtime.get('model', '')}"
                             )
                             if runtime.get("accelerate_error"):
-                                runtime_suffix += f" accelerate_error={runtime.get('accelerate_error', '')}"
+                                runtime_suffix += (
+                                    f" accelerate_error={runtime.get('accelerate_error', '')}"
+                                )
                         print(
                             "[queue:wait] "
                             f"completed row_index={row_index} remote_index={remote_index} "
@@ -1581,10 +1679,14 @@ def _embed_file_via_taskqueue(
                 model_name=str(model),
                 payload=payload,
             )
-            pending.append({"row_index": int(row_index), "task_id": str(task_id), "backend": "local"})
+            pending.append(
+                {"row_index": int(row_index), "task_id": str(task_id), "backend": "local"}
+            )
 
         if idx % log_every == 0:
-            print(f"[queue] submitted={idx}/{len(texts)} backend={'remote' if use_remote else 'local'}")
+            print(
+                f"[queue] submitted={idx}/{len(texts)} backend={'remote' if use_remote else 'local'}"
+            )
 
         # Keep in-flight queue bounded so large batch runs do not accumulate
         # excessive outstanding tasks before consuming results.
@@ -1642,17 +1744,32 @@ def _embed_file_via_taskqueue(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate bulk embeddings for parquet files")
-    parser.add_argument("--input-dir", required=True, help="Input directory containing parquet files")
+    parser.add_argument(
+        "--input-dir", required=True, help="Input directory containing parquet files"
+    )
     parser.add_argument("--glob", default="*.parquet", help="Glob for parquet files")
     parser.add_argument("--recursive", action="store_true", help="Search recursively")
     parser.add_argument("--model", default=DEFAULT_MODEL, help="Embedding model")
     parser.add_argument("--provider", default=DEFAULT_PROVIDER, help="Embeddings provider")
     parser.add_argument("--device", default="cuda", help="Embedding device, e.g. cuda/cpu")
-    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Router batch size")
-    parser.add_argument("--flush-size", type=int, default=DEFAULT_FLUSH_SIZE, help="Rows to accumulate before each router call")
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing *_embeddings.parquet")
-    parser.add_argument("--min-text-chars", type=int, default=24, help="Minimum chars for semantic snippets")
-    parser.add_argument("--min-words", type=int, default=3, help="Minimum words for final semantic text")
+    parser.add_argument(
+        "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Router batch size"
+    )
+    parser.add_argument(
+        "--flush-size",
+        type=int,
+        default=DEFAULT_FLUSH_SIZE,
+        help="Rows to accumulate before each router call",
+    )
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing *_embeddings.parquet"
+    )
+    parser.add_argument(
+        "--min-text-chars", type=int, default=24, help="Minimum chars for semantic snippets"
+    )
+    parser.add_argument(
+        "--min-words", type=int, default=3, help="Minimum words for final semantic text"
+    )
     parser.add_argument(
         "--mode",
         choices=["taskqueue", "inline"],
@@ -1979,7 +2096,10 @@ def main() -> int:
     )
 
     backend_choice = str(args.taskqueue_backend).strip().lower()
-    using_remote_queue = str(args.mode).strip().lower() == "taskqueue" and backend_choice in {"remote", "auto"}
+    using_remote_queue = str(args.mode).strip().lower() == "taskqueue" and backend_choice in {
+        "remote",
+        "auto",
+    }
     if using_remote_queue:
         print(f"p2p_effective_knobs {_format_kv_pairs(_effective_p2p_knobs(args))}")
     if using_remote_queue and bool(args.queue_reset_p2p_retry_metrics):

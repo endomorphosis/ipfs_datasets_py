@@ -43,7 +43,7 @@ from ipfs_datasets_py.monitoring_engine import (
 
 class TestSystemHealthDict:
     """Test SystemHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_system_health_structure(self):
         """Verify _check_system_health returns valid SystemHealthDict."""
@@ -52,7 +52,7 @@ class TestSystemHealthDict:
         assert "status" in result
         assert isinstance(result["status"], str)
         assert result["status"] in ["healthy", "warning", "error"]
-    
+
     @pytest.mark.asyncio
     async def test_system_health_has_optional_uptime(self):
         """Verify uptime_hours is included when psutil available."""
@@ -61,7 +61,7 @@ class TestSystemHealthDict:
         if "uptime_hours" in result:
             assert isinstance(result["uptime_hours"], (int, float))
             assert result["uptime_hours"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_system_health_process_count(self):
         """Verify process_count when included."""
@@ -69,7 +69,7 @@ class TestSystemHealthDict:
         if "process_count" in result:
             assert isinstance(result["process_count"], int)
             assert result["process_count"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_system_health_boot_time_iso_format(self):
         """Verify boot_time is ISO format when included."""
@@ -85,7 +85,7 @@ class TestSystemHealthDict:
 
 class TestMemoryHealthDict:
     """Test MemoryHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_memory_health_structure(self):
         """Verify _check_memory_health returns valid MemoryHealthDict."""
@@ -93,13 +93,13 @@ class TestMemoryHealthDict:
         assert isinstance(result, dict)
         assert "status" in result
         assert isinstance(result["status"], str)
-    
+
     @pytest.mark.asyncio
     async def test_memory_health_status_valid(self):
         """Verify status is one of expected values."""
         result = await _check_memory_health()
         assert result["status"] in ["healthy", "warning", "critical", "error"]
-    
+
     @pytest.mark.asyncio
     async def test_memory_health_usage_percent(self):
         """Verify usage_percent when included."""
@@ -107,7 +107,7 @@ class TestMemoryHealthDict:
         if "usage_percent" in result:
             assert isinstance(result["usage_percent"], (int, float))
             assert 0 <= result["usage_percent"] <= 100
-    
+
     @pytest.mark.asyncio
     async def test_memory_health_gb_values(self):
         """Verify GB values are non-negative when included."""
@@ -120,14 +120,14 @@ class TestMemoryHealthDict:
 
 class TestCPUHealthDict:
     """Test CPUHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_cpu_health_structure(self):
         """Verify _check_cpu_health returns valid CPUHealthDict."""
         result = await _check_cpu_health()
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_cpu_health_usage_percent(self):
         """Verify usage_percent when included."""
@@ -135,7 +135,7 @@ class TestCPUHealthDict:
         if "usage_percent" in result:
             assert isinstance(result["usage_percent"], (int, float))
             assert 0 <= result["usage_percent"] <= 100
-    
+
     @pytest.mark.asyncio
     async def test_cpu_health_count(self):
         """Verify CPU count when included."""
@@ -147,14 +147,14 @@ class TestCPUHealthDict:
 
 class TestDiskHealthDict:
     """Test DiskHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_disk_health_structure(self):
         """Verify _check_disk_health returns valid DiskHealthDict."""
         result = await _check_disk_health()
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_disk_health_usage_percent(self):
         """Verify usage_percent is valid percentage."""
@@ -162,7 +162,7 @@ class TestDiskHealthDict:
         if "usage_percent" in result:
             assert isinstance(result["usage_percent"], (int, float))
             assert 0 <= result["usage_percent"] <= 100
-    
+
     @pytest.mark.asyncio
     async def test_disk_health_gb_values(self):
         """Verify GB values are valid."""
@@ -175,14 +175,14 @@ class TestDiskHealthDict:
 
 class TestNetworkHealthDict:
     """Test NetworkHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_network_health_structure(self):
         """Verify _check_network_health returns valid NetworkHealthDict."""
         result = await _check_network_health()
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_network_health_io_counters(self):
         """Verify I/O counters are non-negative integers."""
@@ -195,14 +195,14 @@ class TestNetworkHealthDict:
 
 class TestServicesHealthDict:
     """Test ServicesHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_services_health_structure(self):
         """Verify _check_services_health returns valid ServicesHealthDict."""
         result = await _check_services_health()
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_services_health_counts(self):
         """Verify service counts are non-negative."""
@@ -213,7 +213,7 @@ class TestServicesHealthDict:
         if "total_services" in result:
             assert isinstance(result["total_services"], int)
             assert result["total_services"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_services_health_services_dict(self):
         """Verify services dict contains status strings."""
@@ -227,14 +227,14 @@ class TestServicesHealthDict:
 
 class TestEmbeddingsHealthDict:
     """Test EmbeddingsHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_embeddings_health_structure(self):
         """Verify _check_embeddings_health returns valid EmbeddingsHealthDict."""
         result = await _check_embeddings_health()
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_embeddings_health_model_count(self):
         """Verify active_models is non-negative."""
@@ -242,7 +242,7 @@ class TestEmbeddingsHealthDict:
         if "active_models" in result:
             assert isinstance(result["active_models"], int)
             assert result["active_models"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_embeddings_health_endpoints(self):
         """Verify endpoints_available is non-negative."""
@@ -250,7 +250,7 @@ class TestEmbeddingsHealthDict:
         if "endpoints_available" in result:
             assert isinstance(result["endpoints_available"], int)
             assert result["endpoints_available"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_embeddings_health_cache_hit_rate(self):
         """Verify cache_hit_rate is valid percentage."""
@@ -262,14 +262,14 @@ class TestEmbeddingsHealthDict:
 
 class TestVectorStoresHealthDict:
     """Test VectorStoresHealthDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_vector_stores_health_structure(self):
         """Verify _check_vector_stores_health returns valid VectorStoresHealthDict."""
         result = await _check_vector_stores_health()
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_vector_stores_health_counts(self):
         """Verify store counts are non-negative."""
@@ -280,7 +280,7 @@ class TestVectorStoresHealthDict:
         if "healthy_stores" in result:
             assert isinstance(result["healthy_stores"], int)
             assert result["healthy_stores"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_vector_stores_health_healthy_lte_total(self):
         """Verify healthy_stores <= total_stores."""
@@ -291,14 +291,14 @@ class TestVectorStoresHealthDict:
 
 class TestServiceStatusDict:
     """Test ServiceStatusDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_service_status_structure(self):
         """Verify _check_service_status returns valid ServiceStatusDict."""
         result = await _check_service_status("test_service")
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_service_status_response_time(self):
         """Verify response_time is non-negative when included."""
@@ -306,14 +306,14 @@ class TestServiceStatusDict:
         if "response_time" in result:
             assert isinstance(result["response_time"], (int, float))
             assert result["response_time"] >= 0
-    
+
     @pytest.mark.asyncio
     async def test_service_status_message(self):
         """Verify message is string when included."""
         result = await _check_service_status("test_service")
         if "message" in result:
             assert isinstance(result["message"], str)
-    
+
     @pytest.mark.asyncio
     async def test_service_status_timestamp(self):
         """Verify last_check is ISO timestamp when included."""
@@ -328,13 +328,13 @@ class TestServiceStatusDict:
 
 class TestPerformanceMetricsDict:
     """Test PerformanceMetricsDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_performance_metrics_structure(self):
         """Verify _get_performance_metrics returns valid PerformanceMetricsDict."""
         result = await _get_performance_metrics()
         assert isinstance(result, dict)
-    
+
     @pytest.mark.asyncio
     async def test_performance_metrics_cpu_memory(self):
         """Verify CPU and memory usage are valid percentages."""
@@ -343,7 +343,7 @@ class TestPerformanceMetricsDict:
             if field in result:
                 assert isinstance(result[field], (int, float))
                 assert 0 <= result[field] <= 100
-    
+
     @pytest.mark.asyncio
     async def test_performance_metrics_counts(self):
         """Verify count fields are non-negative integers."""
@@ -356,7 +356,7 @@ class TestPerformanceMetricsDict:
 
 class TestMockMonitoringServiceCheckHealth:
     """Test MockMonitoringService.check_health() TypedDict contract."""
-    
+
     @pytest.mark.asyncio
     async def test_check_health_structure(self):
         """Verify check_health returns valid HealthCheckResultDict."""
@@ -365,7 +365,7 @@ class TestMockMonitoringServiceCheckHealth:
         assert isinstance(result, dict)
         assert "overall_status" in result
         assert isinstance(result["overall_status"], str)
-    
+
     @pytest.mark.asyncio
     async def test_check_health_timestamp(self):
         """Verify timestamp is ISO format."""
@@ -377,7 +377,7 @@ class TestMockMonitoringServiceCheckHealth:
             datetime.fromisoformat(result["timestamp"])
         except ValueError:
             pytest.fail(f"timestamp not ISO format: {result['timestamp']}")
-    
+
     @pytest.mark.asyncio
     async def test_check_health_checks_performed(self):
         """Verify checks_performed is list of strings."""
@@ -386,7 +386,7 @@ class TestMockMonitoringServiceCheckHealth:
         if "checks_performed" in result:
             assert isinstance(result["checks_performed"], list)
             assert all(isinstance(c, str) for c in result["checks_performed"])
-    
+
     @pytest.mark.asyncio
     async def test_check_health_issues(self):
         """Verify issues is list of strings."""
@@ -395,7 +395,7 @@ class TestMockMonitoringServiceCheckHealth:
         if "issues" in result:
             assert isinstance(result["issues"], list)
             assert all(isinstance(i, str) for i in result["issues"])
-    
+
     @pytest.mark.asyncio
     async def test_check_health_with_services(self):
         """Verify service_health included when requested."""
@@ -406,7 +406,7 @@ class TestMockMonitoringServiceCheckHealth:
             for svc in result["service_health"]:
                 assert "service_name" in svc
                 assert "status" in svc
-    
+
     @pytest.mark.asyncio
     async def test_check_health_without_services(self):
         """Verify service_health behavior with include_services=False."""
@@ -418,7 +418,7 @@ class TestMockMonitoringServiceCheckHealth:
 
 class TestTypeConsistency:
     """Test consistency across health check functions."""
-    
+
     @pytest.mark.asyncio
     async def test_all_health_checks_have_status(self):
         """Verify all health check functions return status field."""
@@ -436,7 +436,7 @@ class TestTypeConsistency:
         for result in results:
             assert "status" in result
             assert isinstance(result["status"], str)
-    
+
     @pytest.mark.asyncio
     async def test_status_values_are_valid(self):
         """Verify status values are from expected set."""
@@ -458,21 +458,21 @@ class TestTypeConsistency:
 
 class TestEdgeCases:
     """Test edge cases and error handling."""
-    
+
     @pytest.mark.asyncio
     async def test_service_status_with_empty_string(self):
         """Verify _check_service_status handles empty service name."""
         result = await _check_service_status("")
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_service_status_with_unknown_service(self):
         """Verify _check_service_status handles unknown service."""
         result = await _check_service_status("unknown_service_xyz_123")
         assert isinstance(result, dict)
         assert "status" in result
-    
+
     @pytest.mark.asyncio
     async def test_check_health_status_degradation(self):
         """Verify check_health properly sets overall_status."""

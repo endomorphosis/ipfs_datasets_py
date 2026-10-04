@@ -5,7 +5,13 @@ from __future__ import annotations
 import json
 from typing import Any, Iterable, Mapping
 
-from .schema import SecurityModelIR, domain_coverage_report, json_ready, validate_domain_coverage, validate_ir
+from .schema import (
+    SecurityModelIR,
+    domain_coverage_report,
+    json_ready,
+    validate_domain_coverage,
+    validate_ir,
+)
 
 
 def _normalize(value: Any) -> Any:
@@ -24,13 +30,13 @@ def canonicalize_ir_json(model: SecurityModelIR | Mapping[str, Any]) -> str:
 
     normalized = validate_ir(model)
     payload = _normalize(json_ready(normalized))
-    return json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
 def canonicalize_ir(model: SecurityModelIR | Mapping[str, Any]) -> bytes:
     """Return canonical UTF-8 bytes for a security model."""
 
-    return canonicalize_ir_json(model).encode('utf-8')
+    return canonicalize_ir_json(model).encode("utf-8")
 
 
 def canonicalize_domain_coverage_report_json(
@@ -51,7 +57,7 @@ def canonicalize_domain_coverage_report_json(
         validate_domain_coverage(model, required_domains=required_domains)
     report = domain_coverage_report(model, required_domains=required_domains)
     payload = _normalize(json_ready(report))
-    return json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
 def canonicalize_domain_coverage_report(
@@ -66,4 +72,4 @@ def canonicalize_domain_coverage_report(
         model,
         required_domains=required_domains,
         fail_closed=fail_closed,
-    ).encode('utf-8')
+    ).encode("utf-8")

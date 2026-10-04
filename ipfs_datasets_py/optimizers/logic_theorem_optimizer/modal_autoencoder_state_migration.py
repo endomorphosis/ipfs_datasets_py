@@ -323,9 +323,7 @@ def _vector_table(
         row_kind=kind,
         column_kind=None,
         row_component_kinds=(
-            _interaction_components(name)
-            if kind is TensorKeyKind.INTERACTION
-            else ()
+            _interaction_components(name) if kind is TensorKeyKind.INTERACTION else ()
         ),
         registry=registry,
         row_ids=row_ids,
@@ -371,9 +369,7 @@ def _matrix_table(
         row_kind=row_kind,
         column_kind=column_kind,
         row_component_kinds=(
-            _interaction_components(name)
-            if row_kind is TensorKeyKind.INTERACTION
-            else ()
+            _interaction_components(name) if row_kind is TensorKeyKind.INTERACTION else ()
         ),
         registry=registry,
         row_ids=row_ids,
@@ -420,7 +416,9 @@ def _proof_table(
             raw_contexts, field=f"proof_auxiliary_head_logits.{raw_head}"
         ).items():
             context = TypedParameterKey.target(str(raw_context))
-            value = json.dumps([head.value, context.value], ensure_ascii=True, separators=(",", ":"))
+            value = json.dumps(
+                [head.value, context.value], ensure_ascii=True, separators=(",", ":")
+            )
             key = TypedParameterKey.interaction(value, head, context)
             flattened[key] = _mapping(
                 raw_logits,
@@ -515,9 +513,7 @@ def pack_modal_autoencoder_state(
         int(overflow_capacity),
     )
 
-    non_parameter = {
-        name: data.get(name, {}) for name in sorted(_SAMPLE_MEMORY_FIELDS)
-    }
+    non_parameter = {name: data.get(name, {}) for name in sorted(_SAMPLE_MEMORY_FIELDS)}
     metadata = {
         str(name): value
         for name, value in sorted(data.items())
@@ -581,9 +577,7 @@ def load_and_pack_modal_autoencoder_checkpoint(
             from .modal_autoencoder_checkpoint import deserialize_checkpoint
 
             loaded = deserialize_checkpoint(source)
-            return pack_modal_autoencoder_state(
-                loaded.state, overflow_capacity=overflow_capacity
-            )
+            return pack_modal_autoencoder_state(loaded.state, overflow_capacity=overflow_capacity)
         return load_and_pack_modal_autoencoder_checkpoint(
             json.loads(source.decode("utf-8")),
             overflow_capacity=overflow_capacity,
@@ -598,9 +592,7 @@ def load_and_pack_modal_autoencoder_checkpoint(
         from .modal_autoencoder_checkpoint import load_checkpoint
 
         loaded = load_checkpoint(path)
-        return pack_modal_autoencoder_state(
-            loaded.state, overflow_capacity=overflow_capacity
-        )
+        return pack_modal_autoencoder_state(loaded.state, overflow_capacity=overflow_capacity)
     return load_and_pack_modal_autoencoder_checkpoint(
         json.loads(raw.decode("utf-8")), overflow_capacity=overflow_capacity
     )
@@ -644,9 +636,7 @@ def _legacy_factorized_records(
     for raw_key, vector in _mapping(
         data.get(TRIPLE_EMBEDDING_HEAD, {}), field=TRIPLE_EMBEDDING_HEAD
     ).items():
-        family, slot, view = _split_interaction_key(
-            raw_key, 3, field=TRIPLE_EMBEDDING_HEAD
-        )
+        family, slot, view = _split_interaction_key(raw_key, 3, field=TRIPLE_EMBEDDING_HEAD)
         if isinstance(vector, (str, bytes)) or not isinstance(vector, Sequence):
             raise TypeError(f"{TRIPLE_EMBEDDING_HEAD}.{raw_key} must be a vector")
         embedding[(family, slot, view)] = tuple(float(value) for value in vector)
@@ -655,9 +645,7 @@ def _legacy_factorized_records(
     for raw_key, raw_logits in _mapping(
         data.get(LEGAL_IR_VIEW_LOGIT_HEAD, {}), field=LEGAL_IR_VIEW_LOGIT_HEAD
     ).items():
-        family, slot = _split_interaction_key(
-            raw_key, 2, field=LEGAL_IR_VIEW_LOGIT_HEAD
-        )
+        family, slot = _split_interaction_key(raw_key, 2, field=LEGAL_IR_VIEW_LOGIT_HEAD)
         for raw_view, value in _mapping(
             raw_logits, field=f"{LEGAL_IR_VIEW_LOGIT_HEAD}.{raw_key}"
         ).items():

@@ -46,6 +46,7 @@ from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus, 
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _pred(name: str, arg: str = "a") -> Predicate:
     return Predicate(name, [Constant(arg)])
 
@@ -73,6 +74,7 @@ def _make_proof_result(goal, premises, step_formula=None):
 # FormulaType and DependencyType enums
 # ---------------------------------------------------------------------------
 
+
 class TestFormulaTypeEnum:
     def test_all_values_exist(self):
         assert FormulaType.AXIOM.value == "axiom"
@@ -97,6 +99,7 @@ class TestDependencyTypeEnum:
 # DependencyNode
 # ---------------------------------------------------------------------------
 
+
 class TestDependencyNode:
     def test_basic_construction(self):
         p = _pred("P")
@@ -108,8 +111,9 @@ class TestDependencyNode:
 
     def test_with_name_and_metadata(self):
         p = _pred("P")
-        node = DependencyNode(formula=p, node_type=FormulaType.THEOREM,
-                              name="myThm", metadata={"source": "test"})
+        node = DependencyNode(
+            formula=p, node_type=FormulaType.THEOREM, name="myThm", metadata={"source": "test"}
+        )
         assert node.name == "myThm"
         assert node.metadata["source"] == "test"
 
@@ -132,8 +136,9 @@ class TestDependencyNode:
 
     def test_to_dict(self):
         p = _pred("P")
-        node = DependencyNode(formula=p, node_type=FormulaType.AXIOM,
-                              name="ax1", metadata={"k": "v"})
+        node = DependencyNode(
+            formula=p, node_type=FormulaType.AXIOM, name="ax1", metadata={"k": "v"}
+        )
         d = node.to_dict()
         assert d["formula"] == str(p)
         assert d["type"] == "axiom"
@@ -152,13 +157,18 @@ class TestDependencyNode:
 # DependencyEdge
 # ---------------------------------------------------------------------------
 
+
 class TestDependencyEdge:
     def _make_edge(self, src_name="P", tgt_name="Q"):
         src_node = DependencyNode(formula=_pred(src_name), node_type=FormulaType.PREMISE)
         tgt_node = DependencyNode(formula=_pred(tgt_name), node_type=FormulaType.DERIVED)
-        return DependencyEdge(source=src_node, target=tgt_node,
-                              rule_name="Rule1", justification="j",
-                              edge_type=DependencyType.DIRECT)
+        return DependencyEdge(
+            source=src_node,
+            target=tgt_node,
+            rule_name="Rule1",
+            justification="j",
+            edge_type=DependencyType.DIRECT,
+        )
 
     def test_basic_construction(self):
         edge = self._make_edge()
@@ -194,6 +204,7 @@ class TestDependencyEdge:
 # CircularDependencyError
 # ---------------------------------------------------------------------------
 
+
 class TestCircularDependencyError:
     def test_construction_with_cycle(self):
         p = _pred("P")
@@ -210,6 +221,7 @@ class TestCircularDependencyError:
 # ---------------------------------------------------------------------------
 # FormulaDependencyGraph — Initialization
 # ---------------------------------------------------------------------------
+
 
 class TestFormulaDependencyGraphInit:
     def test_empty_init(self):
@@ -268,6 +280,7 @@ class TestFormulaDependencyGraphInit:
 # ---------------------------------------------------------------------------
 # FormulaDependencyGraph — add_formula and add_proof
 # ---------------------------------------------------------------------------
+
 
 class TestFormulaDependencyGraphAddFormula:
     def test_add_single_formula_no_deps(self):
@@ -332,8 +345,12 @@ class TestFormulaDependencyGraphAddFormula:
         q = _pred("Q")
         step = ProofStep(formula=q, justification="step", rule_name="R", premises=[p])
         result = ProofResult(
-            status=ProofStatus.DISPROVED, formula=q,
-            proof_steps=[step], time_ms=1.0, method="t", message="no"
+            status=ProofStatus.DISPROVED,
+            formula=q,
+            proof_steps=[step],
+            time_ms=1.0,
+            method="t",
+            message="no",
         )
         g = FormulaDependencyGraph()
         g.add_proof(result)  # Should not raise, just warn
@@ -342,8 +359,12 @@ class TestFormulaDependencyGraphAddFormula:
     def test_add_proof_no_steps(self):
         q = _pred("Q")
         result = ProofResult(
-            status=ProofStatus.PROVED, formula=q,
-            proof_steps=[], time_ms=1.0, method="t", message="ok"
+            status=ProofStatus.PROVED,
+            formula=q,
+            proof_steps=[],
+            time_ms=1.0,
+            method="t",
+            message="ok",
         )
         g = FormulaDependencyGraph()
         g.add_proof(result)
@@ -354,6 +375,7 @@ class TestFormulaDependencyGraphAddFormula:
 # ---------------------------------------------------------------------------
 # get_dependencies / get_dependents
 # ---------------------------------------------------------------------------
+
 
 class TestGetDependencies:
     def setup_method(self):
@@ -445,6 +467,7 @@ class TestGetDependencies:
 # Cycle Detection and Topological Sort
 # ---------------------------------------------------------------------------
 
+
 class TestCycleDetectionAndTopologicalSort:
     def test_no_cycles_in_dag(self):
         p = _pred("P")
@@ -508,6 +531,7 @@ class TestCycleDetectionAndTopologicalSort:
 # ---------------------------------------------------------------------------
 # Path Finding
 # ---------------------------------------------------------------------------
+
 
 class TestPathFinding:
     def setup_method(self):
@@ -584,6 +608,7 @@ class TestPathFinding:
 # Unused Axioms and Redundant Formulas
 # ---------------------------------------------------------------------------
 
+
 class TestUnusedAxiomsAndRedundantFormulas:
     def test_find_unused_axioms_all_used(self):
         p = _pred("P")
@@ -634,6 +659,7 @@ class TestUnusedAxiomsAndRedundantFormulas:
 # Statistics
 # ---------------------------------------------------------------------------
 
+
 class TestGetStatistics:
     def test_empty_graph_stats(self):
         g = FormulaDependencyGraph()
@@ -675,6 +701,7 @@ class TestGetStatistics:
 # ---------------------------------------------------------------------------
 # Export Methods
 # ---------------------------------------------------------------------------
+
 
 class TestExportDot:
     def setup_method(self):
@@ -875,6 +902,7 @@ class TestExportAdjacencyMatrix:
 # Convenience Functions
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzeProofDependencies:
     def test_returns_graph(self):
         p = _pred("P")
@@ -899,8 +927,12 @@ class TestAnalyzeProofDependencies:
     def test_without_output_dir(self):
         q = _pred("Q")
         result = ProofResult(
-            status=ProofStatus.PROVED, formula=q,
-            proof_steps=[], time_ms=1.0, method="t", message="ok"
+            status=ProofStatus.PROVED,
+            formula=q,
+            proof_steps=[],
+            time_ms=1.0,
+            method="t",
+            message="ok",
         )
         g = analyze_proof_dependencies(result)
         assert g is not None

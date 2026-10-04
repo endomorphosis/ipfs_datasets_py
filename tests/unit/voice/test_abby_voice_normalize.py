@@ -28,11 +28,7 @@ from ipfs_datasets_py.voice.schema import (
 
 
 def _codes(result):
-    return {
-        code
-        for item in result.quarantine
-        for code in item.reason_codes
-    }
+    return {code for item in result.quarantine for code in item.reason_codes}
 
 
 def _response(identifier: str, text: str, **values):
@@ -50,9 +46,7 @@ def test_spoken_text_normalization_is_deterministic_and_tts_safe():
     first = normalize_indextts_spoken_text(raw)
     second = normalize_indextts_spoken_text(first)
 
-    assert first == (
-        "Call two one one or five zero three, five five five, zero one zero zero."
-    )
+    assert first == ("Call two one one or five zero three, five five five, zero one zero zero.")
     assert second == first
     assert "http" not in first
     assert "<" not in first
@@ -69,9 +63,7 @@ def test_normalization_does_not_mutate_input_and_is_order_independent():
     ]
     snapshot = copy.deepcopy(records)
 
-    forward = normalize_manifest(
-        {"responses": records}, source_uri="fixture://responses"
-    )
+    forward = normalize_manifest({"responses": records}, source_uri="fixture://responses")
     reverse = normalize_manifest(
         {"responses": list(reversed(records))}, source_uri="fixture://responses"
     )
@@ -150,13 +142,7 @@ def test_ungrounded_factual_claim_is_rejected_but_grounded_claim_passes():
     ungrounded = normalize_manifest(
         {"responses": [{"id": "bad", "text": "Call 503-555-0100 today."}]}
     )
-    grounded = normalize_manifest(
-        {
-            "responses": [
-                _response("good", "Call 503-555-0100 today.")
-            ]
-        }
-    )
+    grounded = normalize_manifest({"responses": [_response("good", "Call 503-555-0100 today.")]})
 
     assert "ungrounded_claim" in _codes(ungrounded)
     assert len(grounded.responses) == 1
@@ -218,9 +204,7 @@ def test_missing_audio_can_warn_or_quarantine_by_policy():
     manifest = {"responses": [_response("no-audio", "I can help.")]}
 
     permissive = normalize_manifest(manifest)
-    strict = normalize_manifest(
-        manifest, config=NormalizationConfig(require_audio=True)
-    )
+    strict = normalize_manifest(manifest, config=NormalizationConfig(require_audio=True))
 
     assert len(permissive.responses) == 1
     assert permissive.warnings[0].reason_codes == ("missing_audio",)
@@ -385,17 +369,11 @@ def test_quality_summary_counts_are_sorted_and_reconciled():
     assert summary["reconciliation"]["quarantine_is_non_destructive"] is True
 
 
-def test_builder_writes_byte_identical_outputs_and_preserves_source(
-    tmp_path, capsys
-):
+def test_builder_writes_byte_identical_outputs_and_preserves_source(tmp_path, capsys):
     source = tmp_path / "input.json"
     source.write_text(
         json.dumps(
-            {
-                "responses": [
-                    _response("builder", "This is a deterministic build.")
-                ]
-            },
+            {"responses": [_response("builder", "This is a deterministic build.")]},
             indent=4,
         )
         + "\n",
@@ -439,12 +417,8 @@ def test_builder_writes_byte_identical_outputs_and_preserves_source(
     assert second_run.returncode == 0, second_run.stderr
 
     assert source.read_bytes() == original
-    first_files = {
-        item.name: item.read_bytes() for item in first.iterdir() if item.is_file()
-    }
-    second_files = {
-        item.name: item.read_bytes() for item in second.iterdir() if item.is_file()
-    }
+    first_files = {item.name: item.read_bytes() for item in first.iterdir() if item.is_file()}
+    second_files = {item.name: item.read_bytes() for item in second.iterdir() if item.is_file()}
     assert first_files == second_files
     quality = json.loads(first_files["quality-report.json"])
     assert quality["accepted"]["responses"] == 1

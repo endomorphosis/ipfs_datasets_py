@@ -29,6 +29,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipel
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _mediator():
     gen = OntologyGenerator()
     crit = OntologyCritic(use_llm=False)
@@ -36,7 +37,14 @@ def _mediator():
 
 
 def _score(**kw):
-    defaults = dict(completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9)
+    defaults = dict(
+        completeness=0.7,
+        consistency=0.8,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.9,
+        domain_alignment=0.9,
+    )
     defaults.update(kw)
     return CriticScore(**defaults)
 
@@ -56,6 +64,7 @@ def _report(avg=0.7):
 # ---------------------------------------------------------------------------
 # OntologyCritic.score_batch_summary
 # ---------------------------------------------------------------------------
+
 
 class TestScoreBatchSummary:
     def test_returns_dict(self):
@@ -86,8 +95,22 @@ class TestScoreBatchSummary:
 
     def test_mean_correct(self):
         critic = OntologyCritic(use_llm=False)
-        s1 = _score(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
-        s2 = _score(completeness=1.0, consistency=1.0, clarity=1.0, granularity=1.0, relationship_coherence=1.0, domain_alignment=1.0)
+        s1 = _score(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
+        s2 = _score(
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
+        )
         summary = critic.score_batch_summary([s1, s2])
         assert abs(summary["mean_overall"] - 0.75) < 0.01  # rough check
 
@@ -95,6 +118,7 @@ class TestScoreBatchSummary:
 # ---------------------------------------------------------------------------
 # OntologyMediator.clear_recommendation_history
 # ---------------------------------------------------------------------------
+
 
 class TestClearRecommendationHistory:
     def test_returns_int(self):
@@ -126,6 +150,7 @@ class TestClearRecommendationHistory:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.entity_type_counts
 # ---------------------------------------------------------------------------
+
 
 class TestEntityTypeCounts:
     def test_returns_dict(self):
@@ -164,6 +189,7 @@ class TestEntityTypeCounts:
 # OntologyOptimizer.history_length
 # ---------------------------------------------------------------------------
 
+
 class TestHistoryLength:
     @pytest.mark.parametrize(
         "seed_reports,expected",
@@ -190,6 +216,7 @@ class TestHistoryLength:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.domain_list
 # ---------------------------------------------------------------------------
+
 
 class TestDomainList:
     def test_returns_list(self):

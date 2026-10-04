@@ -39,9 +39,7 @@ def _persisted_state_fields() -> tuple[str, ...]:
     """Return every mutable dataclass field represented in a checkpoint."""
 
     state = ModalAutoencoderTrainingState()
-    return tuple(
-        sorted(name for name in state.to_dict() if hasattr(state, name))
-    )
+    return tuple(sorted(name for name in state.to_dict() if hasattr(state, name)))
 
 
 PERSISTED_STATE_FIELDS = _persisted_state_fields()
@@ -66,9 +64,7 @@ def _populated_state() -> ModalAutoencoderTrainingState:
             setattr(state, name, [f"{name}-a"])
         elif name == "legal_ir_view_logits":
             setattr(state, name, {"deontic": 0.125})
-        elif name == "decoded_embeddings" or name.endswith(
-            "embedding_weights"
-        ):
+        elif name == "decoded_embeddings" or name.endswith("embedding_weights"):
             setattr(state, name, {"key-a": [0.125, -0.25]})
         elif name.endswith("logits"):
             setattr(state, name, {"key-a": {"label-a": 0.125}})
@@ -136,7 +132,9 @@ def test_identity_is_deterministic_and_stable_across_save_reload(
     assert restored.component_digests == first.component_digests
 
 
-def test_unchanged_identity_is_constant_time_after_warmup_and_only_touched_component_rehashes() -> None:
+def test_unchanged_identity_is_constant_time_after_warmup_and_only_touched_component_rehashes() -> (
+    None
+):
     state = _populated_state()
     before_identity = state.state_identity(metric_lineage=METRIC_LINEAGE)
     before_revision = state.state_revision
@@ -149,9 +147,10 @@ def test_unchanged_identity_is_constant_time_after_warmup_and_only_touched_compo
         assert state.component_digests == before_digests
 
     warm_stats = dict(state.identity_stats)
-    assert warm_stats["component_digest_compute_count"] == before_stats[
-        "component_digest_compute_count"
-    ]
+    assert (
+        warm_stats["component_digest_compute_count"]
+        == before_stats["component_digest_compute_count"]
+    )
     assert _component_compute_counts(warm_stats) == before_counts
 
     state.feature_embedding_weights["key-a"][0] = 0.875
@@ -162,20 +161,18 @@ def test_unchanged_identity_is_constant_time_after_warmup_and_only_touched_compo
     after_counts = _component_compute_counts(after_stats)
 
     assert after_identity != before_identity
-    assert {
-        name for name in after_digests if after_digests[name] != before_digests[name]
-    } == {"feature_embedding_weights"}
+    assert {name for name in after_digests if after_digests[name] != before_digests[name]} == {
+        "feature_embedding_weights"
+    }
     assert after_stats["component_digest_compute_count"] == (
         before_stats["component_digest_compute_count"] + 1
     )
     assert after_counts["feature_embedding_weights"] == (
         before_counts["feature_embedding_weights"] + 1
     )
-    assert {
-        name
-        for name in after_counts
-        if after_counts[name] != before_counts.get(name, 0)
-    } == {"feature_embedding_weights"}
+    assert {name for name in after_counts if after_counts[name] != before_counts.get(name, 0)} == {
+        "feature_embedding_weights"
+    }
 
 
 @pytest.mark.parametrize("field_name", PERSISTED_STATE_FIELDS)
@@ -224,9 +221,7 @@ def test_identity_binds_state_and_proof_schema_versions(
         "MODAL_AUTOENCODER_STATE_SCHEMA_VERSION",
         "modal-autoencoder-state-schema-test-next",
     )
-    state_schema_changed = _populated_state().state_identity(
-        metric_lineage=METRIC_LINEAGE
-    )
+    state_schema_changed = _populated_state().state_identity(metric_lineage=METRIC_LINEAGE)
     assert state_schema_changed != original
 
     monkeypatch.setattr(
@@ -234,9 +229,7 @@ def test_identity_binds_state_and_proof_schema_versions(
         "PROOF_AUXILIARY_HEAD_SCHEMA_VERSION",
         "proof-auxiliary-head-schema-test-next",
     )
-    proof_schema_changed = _populated_state().state_identity(
-        metric_lineage=METRIC_LINEAGE
-    )
+    proof_schema_changed = _populated_state().state_identity(metric_lineage=METRIC_LINEAGE)
     assert proof_schema_changed != state_schema_changed
 
 
@@ -257,9 +250,7 @@ def test_hot_lineage_identity_and_revision_guards_do_not_serialize_full_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     state = _populated_state()
-    expected = state.state_identity(
-        metric_lineage=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION
-    )
+    expected = state.state_identity(metric_lineage=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION)
 
     def fail_to_json(_self: ModalAutoencoderTrainingState) -> str:
         raise AssertionError("hot state lineage check called state.to_json()")
@@ -346,11 +337,14 @@ def test_snapshot_evaluator_rejects_result_after_trainer_revision_changes() -> N
         )
 
         assert current_versions.state_version != snapshot.versions.state_version
-        assert evaluator.accept_result(
-            result,
-            current_versions,
-            expected_sequence=snapshot.sequence,
-        ) is False
+        assert (
+            evaluator.accept_result(
+                result,
+                current_versions,
+                expected_sequence=snapshot.sequence,
+            )
+            is False
+        )
         summary = evaluator.summary()
         assert summary["rejected_result_count"] == 1
     finally:

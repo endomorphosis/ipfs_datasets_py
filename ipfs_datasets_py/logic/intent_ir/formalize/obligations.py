@@ -110,9 +110,7 @@ class IntentProofAuthorityPolicy:
     """
 
     accepted_backend_ids: tuple[str, ...] = ()
-    accepted_authority_kinds: tuple[AuthorityKind, ...] = (
-        AuthorityKind.THEOREM_PROOF,
-    )
+    accepted_authority_kinds: tuple[AuthorityKind, ...] = (AuthorityKind.THEOREM_PROOF,)
     allow_context_assumptions: bool = False
     require_source_grounding: bool = True
     max_obligations: int = 256
@@ -128,9 +126,7 @@ class IntentProofAuthorityPolicy:
                 "accepted_backend_ids must contain trimmed non-empty strings"
             )
         if len(backend_ids) != len(set(backend_ids)):
-            raise IntentProofObligationError(
-                "accepted_backend_ids must not contain duplicates"
-            )
+            raise IntentProofObligationError("accepted_backend_ids must not contain duplicates")
         object.__setattr__(self, "accepted_backend_ids", tuple(sorted(backend_ids)))
         try:
             authority_kinds = tuple(
@@ -151,21 +147,15 @@ class IntentProofAuthorityPolicy:
             tuple(sorted(authority_kinds, key=lambda item: item.value)),
         )
         if not isinstance(self.allow_context_assumptions, bool):
-            raise IntentProofObligationError(
-                "allow_context_assumptions must be a boolean"
-            )
+            raise IntentProofObligationError("allow_context_assumptions must be a boolean")
         if not isinstance(self.require_source_grounding, bool):
-            raise IntentProofObligationError(
-                "require_source_grounding must be a boolean"
-            )
+            raise IntentProofObligationError("require_source_grounding must be a boolean")
         if (
             isinstance(self.max_obligations, bool)
             or not isinstance(self.max_obligations, int)
             or self.max_obligations <= 0
         ):
-            raise IntentProofObligationError(
-                "max_obligations must be a positive integer"
-            )
+            raise IntentProofObligationError("max_obligations must be a positive integer")
         if self.schema_version != INTENT_PROOF_OBLIGATIONS_VERSION:
             raise IntentProofObligationError(
                 f"unsupported authority policy schema: {self.schema_version}"
@@ -182,19 +172,13 @@ class IntentProofAuthorityPolicy:
     def accepts_result(self, result: BoundedResult) -> bool:
         """Check issuer and exact authority kind; never infer authority by status."""
 
-        return (
-            result.authority.kind in self.accepted_authority_kinds
-            and (
-                not self.accepted_backend_ids
-                or result.backend_id in self.accepted_backend_ids
-            )
+        return result.authority.kind in self.accepted_authority_kinds and (
+            not self.accepted_backend_ids or result.backend_id in self.accepted_backend_ids
         )
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "accepted_authority_kinds": [
-                item.value for item in self.accepted_authority_kinds
-            ],
+            "accepted_authority_kinds": [item.value for item in self.accepted_authority_kinds],
             "accepted_backend_ids": list(self.accepted_backend_ids),
             "allow_context_assumptions": self.allow_context_assumptions,
             "max_obligations": self.max_obligations,
@@ -203,9 +187,7 @@ class IntentProofAuthorityPolicy:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "IntentProofAuthorityPolicy":
+    def from_dict(cls, value: Mapping[str, Any]) -> "IntentProofAuthorityPolicy":
         payload = _mapping(value, "authority policy")
         allowed = {
             "accepted_authority_kinds",
@@ -221,25 +203,17 @@ class IntentProofAuthorityPolicy:
                 "unknown authority policy field(s): " + ", ".join(unknown)
             )
         return cls(
-            accepted_backend_ids=tuple(
-                payload.get("accepted_backend_ids", ())
-            ),
+            accepted_backend_ids=tuple(payload.get("accepted_backend_ids", ())),
             accepted_authority_kinds=tuple(
                 payload.get(
                     "accepted_authority_kinds",
                     (AuthorityKind.THEOREM_PROOF.value,),
                 )
             ),
-            allow_context_assumptions=payload.get(
-                "allow_context_assumptions", False
-            ),
-            require_source_grounding=payload.get(
-                "require_source_grounding", True
-            ),
+            allow_context_assumptions=payload.get("allow_context_assumptions", False),
+            require_source_grounding=payload.get("require_source_grounding", True),
             max_obligations=payload.get("max_obligations", 256),
-            schema_version=payload.get(
-                "schema_version", INTENT_PROOF_OBLIGATIONS_VERSION
-            ),
+            schema_version=payload.get("schema_version", INTENT_PROOF_OBLIGATIONS_VERSION),
         )
 
 
@@ -260,9 +234,7 @@ class IntentProofPacket:
             or not self.artifact_digest.startswith("sha256:")
             or len(self.artifact_digest) != 71
         ):
-            raise IntentProofObligationError(
-                "artifact_digest must be a sha256:<hex> digest"
-            )
+            raise IntentProofObligationError("artifact_digest must be a sha256:<hex> digest")
         if not isinstance(self.claim, IRClaim):
             raise IntentProofObligationError("claim must be an IRClaim")
         if not isinstance(self.authority_policy, IntentProofAuthorityPolicy):
@@ -271,24 +243,18 @@ class IntentProofPacket:
             )
         requests = tuple(self.requests)
         if not all(isinstance(item, BackendRequest) for item in requests):
-            raise IntentProofObligationError(
-                "requests must contain BackendRequest values"
-            )
+            raise IntentProofObligationError("requests must contain BackendRequest values")
         if len(requests) > self.authority_policy.max_obligations:
             raise IntentProofObligationError("proof packet exceeds max_obligations")
         request_obligations = [item.obligation_id for item in requests]
         if len(request_obligations) != len(set(request_obligations)):
-            raise IntentProofObligationError(
-                "proof packet must contain one request per obligation"
-            )
+            raise IntentProofObligationError("proof packet must contain one request per obligation")
         known = {item.obligation_id for item in self.claim.obligations}
         if set(request_obligations) != known:
-            raise IntentProofObligationError(
-                "proof requests must exactly cover claim obligations"
-            )
-        object.__setattr__(self, "requests", tuple(sorted(
-            requests, key=lambda item: item.obligation_id
-        )))
+            raise IntentProofObligationError("proof requests must exactly cover claim obligations")
+        object.__setattr__(
+            self, "requests", tuple(sorted(requests, key=lambda item: item.obligation_id))
+        )
         object.__setattr__(
             self,
             "obligation_kinds",
@@ -342,25 +308,14 @@ class IntentProofPacket:
         }
         unknown = sorted(set(payload) - allowed)
         if unknown:
-            raise IntentProofObligationError(
-                "unknown proof packet field(s): " + ", ".join(unknown)
-            )
+            raise IntentProofObligationError("unknown proof packet field(s): " + ", ".join(unknown))
         requests = payload.get("requests", ())
-        if (
-            isinstance(requests, (str, bytes, bytearray))
-            or not isinstance(requests, Sequence)
-        ):
-            raise IntentProofObligationError(
-                "proof packet requests must be a sequence"
-            )
+        if isinstance(requests, (str, bytes, bytearray)) or not isinstance(requests, Sequence):
+            raise IntentProofObligationError("proof packet requests must be a sequence")
         return cls(
             artifact_digest=payload.get("artifact_digest", ""),
-            claim=IRClaim.from_dict(
-                _mapping(payload.get("claim", {}), "claim")
-            ),
-            requests=tuple(
-                BackendRequest.from_dict(item) for item in requests
-            ),
+            claim=IRClaim.from_dict(_mapping(payload.get("claim", {}), "claim")),
+            requests=tuple(BackendRequest.from_dict(item) for item in requests),
             obligation_kinds=FrozenMap(
                 _mapping(
                     payload.get("obligation_kinds", {}),
@@ -373,9 +328,7 @@ class IntentProofPacket:
                     "authority_policy",
                 )
             ),
-            schema_version=payload.get(
-                "schema_version", INTENT_PROOF_OBLIGATIONS_VERSION
-            ),
+            schema_version=payload.get("schema_version", INTENT_PROOF_OBLIGATIONS_VERSION),
         )
 
 
@@ -392,10 +345,7 @@ class IntentProofOutcome:
 
     @property
     def positive(self) -> bool:
-        return (
-            self.disposition is IntentProofDisposition.POSITIVE
-            and self.authoritative
-        )
+        return self.disposition is IntentProofDisposition.POSITIVE and self.authoritative
 
     @property
     def counterexample(self) -> bool:
@@ -420,9 +370,7 @@ class IntentProofExecution:
     outcomes: tuple[IntentProofOutcome, ...]
 
     def __post_init__(self) -> None:
-        outcomes = tuple(sorted(
-            self.outcomes, key=lambda item: item.obligation_id
-        ))
+        outcomes = tuple(sorted(self.outcomes, key=lambda item: item.obligation_id))
         expected = {item.obligation_id for item in self.packet.obligations}
         actual = {item.obligation_id for item in outcomes}
         if actual != expected or len(actual) != len(outcomes):
@@ -483,9 +431,7 @@ class IntentProofObligations:
         """Derive a deterministic claim and one bounded request per obligation."""
 
         if not isinstance(artifact, FormalizationArtifact):
-            raise IntentProofObligationError(
-                "artifact must be a FormalizationArtifact"
-            )
+            raise IntentProofObligationError("artifact must be a FormalizationArtifact")
         if artifact.domain != "intent":
             raise IntentProofObligationError(
                 "Intent obligations require an intent formalization artifact"
@@ -500,9 +446,7 @@ class IntentProofObligations:
             raise IntentProofObligationError("bounds must be ExecutionBounds")
 
         eligible_assumptions = tuple(
-            item
-            for item in artifact.assumptions
-            if policy.permits_assumption(item.metadata)
+            item for item in artifact.assumptions if policy.permits_assumption(item.metadata)
         )
         eligible_ids = {item.assumption_id for item in eligible_assumptions}
         declared_ids = {
@@ -516,9 +460,7 @@ class IntentProofObligations:
             declared_assumption_ids=declared_ids,
         )
         if not specs:
-            raise IntentProofObligationError(
-                "artifact has no proof-relevant Intent semantics"
-            )
+            raise IntentProofObligationError("artifact has no proof-relevant Intent semantics")
         if len(specs) > policy.max_obligations:
             raise IntentProofObligationError(
                 f"generated {len(specs)} obligations, exceeding "
@@ -562,14 +504,10 @@ class IntentProofObligations:
             claim_id=_stable_id("claim:intent", artifact.digest),
             statement=f"Intent semantic obligations for {artifact.declaration_id}",
             assumptions=eligible_assumptions,
-            obligations=tuple(sorted(
-                obligations, key=lambda item: item.obligation_id
-            )),
+            obligations=tuple(sorted(obligations, key=lambda item: item.obligation_id)),
             domain="intent",
             declaration_id=artifact.declaration_id,
-            source_refs=tuple(
-                sorted(item.ref_id for item in artifact.source_map.sources)
-            ),
+            source_refs=tuple(sorted(item.ref_id for item in artifact.source_map.sources)),
             metadata={
                 "artifact_digest": artifact.digest,
                 "authority_policy": policy.to_dict(),
@@ -619,13 +557,9 @@ class IntentProofObligations:
         if not isinstance(packet, IntentProofPacket):
             raise IntentProofObligationError("packet must be an IntentProofPacket")
         if not isinstance(registry, ProofBackendRegistry):
-            raise IntentProofObligationError(
-                "registry must be a ProofBackendRegistry"
-            )
+            raise IntentProofObligationError("registry must be a ProofBackendRegistry")
         outcomes: list[IntentProofOutcome] = []
-        obligations = {
-            item.obligation_id: item for item in packet.obligations
-        }
+        obligations = {item.obligation_id: item for item in packet.obligations}
         for request in packet.requests:
             obligation = obligations[request.obligation_id]
             if obligation.metadata.get("opaque_semantics") is True:
@@ -634,9 +568,7 @@ class IntentProofObligations:
                         obligation_id=request.obligation_id,
                         disposition=IntentProofDisposition.UNSUPPORTED,
                         authoritative=False,
-                        diagnostics=(
-                            "opaque Intent semantics cannot be submitted as a theorem",
-                        ),
+                        diagnostics=("opaque Intent semantics cannot be submitted as a theorem",),
                     )
                 )
                 continue
@@ -708,9 +640,7 @@ class IntentProofObligations:
             authoritative=authoritative,
             attempt=attempt,
             result=result,
-            diagnostics=tuple(
-                dict.fromkeys((*attempt.diagnostics, *result.diagnostics))
-            ),
+            diagnostics=tuple(dict.fromkeys((*attempt.diagnostics, *result.diagnostics))),
         )
 
     @staticmethod
@@ -730,13 +660,12 @@ class IntentProofObligations:
             *,
             logic_family: str | None = None,
         ) -> None:
-            assumptions = tuple(sorted(
-                (
-                    set(formula.assumption_ids)
-                    | declared_assumption_ids
+            assumptions = tuple(
+                sorted(
+                    (set(formula.assumption_ids) | declared_assumption_ids)
+                    & eligible_assumption_ids
                 )
-                & eligible_assumption_ids
-            ))
+            )
             specs.append(
                 _ObligationSpec(
                     kind=kind,
@@ -825,14 +754,16 @@ class IntentProofObligations:
                     semantic_id,
                     expression,
                 )
-        return tuple(sorted(
-            specs,
-            key=lambda item: (
-                item.kind.value,
-                item.semantic_id,
-                item.formula_id,
-            ),
-        ))
+        return tuple(
+            sorted(
+                specs,
+                key=lambda item: (
+                    item.kind.value,
+                    item.semantic_id,
+                    item.formula_id,
+                ),
+            )
+        )
 
 
 generate_intent_proof_obligations = IntentProofObligations().generate

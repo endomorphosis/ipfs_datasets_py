@@ -21,13 +21,16 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_merge_result(added: int = 0, conflicts: int = 0, revocations: int = 0):
     from ipfs_datasets_py.mcp_server.ucan_delegation import MergeResult
+
     return MergeResult(added_count=added, conflict_count=conflicts, revocations_copied=revocations)
 
 
 def _make_reload_result(count: int = 4, failed: int = 0):
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
     pin_results = {}
     for i in range(count - failed):
         pin_results[f"p{i}"] = f"Qm{i:040d}"
@@ -39,6 +42,7 @@ def _make_reload_result(count: int = 4, failed: int = 0):
 # ---------------------------------------------------------------------------
 # 1. MergeResult.__bool__
 # ---------------------------------------------------------------------------
+
 
 class TestMergeResultBool:
     def test_bool_zero_added_is_false(self):
@@ -82,7 +86,12 @@ class TestMergeResultBool:
         assert not r
 
     def test_bool_truthy_filter(self):
-        results = [_make_merge_result(0), _make_merge_result(2), _make_merge_result(0), _make_merge_result(1)]
+        results = [
+            _make_merge_result(0),
+            _make_merge_result(2),
+            _make_merge_result(0),
+            _make_merge_result(1),
+        ]
         truthy = [r for r in results if r]
         assert len(truthy) == 2
 
@@ -96,6 +105,7 @@ class TestMergeResultBool:
 # ---------------------------------------------------------------------------
 # 2. IPFSReloadResult.__bool__
 # ---------------------------------------------------------------------------
+
 
 class TestIPFSReloadResultBool:
     def test_bool_all_succeed_is_true(self):
@@ -158,9 +168,11 @@ class TestIPFSReloadResultBool:
 # 3. PubSubBus.topic_handler_map()
 # ---------------------------------------------------------------------------
 
+
 class TestPubSubBusTopicHandlerMap:
     def _make_bus(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         return PubSubBus()
 
     def test_empty_returns_empty_dict(self):
@@ -254,15 +266,18 @@ class TestPubSubBusTopicHandlerMap:
 # 4. ComplianceChecker.newest_backup_path(path)
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceCheckerNewestBackupPath:
     def test_no_backup_returns_none(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             assert ComplianceChecker.newest_backup_path(path) is None
 
     def test_primary_bak_returned(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             bak = path + ".bak"
@@ -273,6 +288,7 @@ class TestComplianceCheckerNewestBackupPath:
 
     def test_returns_dot_bak_not_dot_bak_1(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             bak = path + ".bak"
@@ -287,6 +303,7 @@ class TestComplianceCheckerNewestBackupPath:
     def test_numbered_only_bak_returned(self):
         """Without .bak but with .bak.1, list_bak_files still returns it."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             bak1 = path + ".bak.1"
@@ -299,6 +316,7 @@ class TestComplianceCheckerNewestBackupPath:
 
     def test_is_static_method(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         # Should callable without instance
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "x.json")
@@ -308,6 +326,7 @@ class TestComplianceCheckerNewestBackupPath:
     def test_complement_of_oldest_backup_age(self):
         """newest_backup_path returns path[0], oldest_backup_age uses path[-1]."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             bak = path + ".bak"
@@ -325,6 +344,7 @@ class TestComplianceCheckerNewestBackupPath:
     def test_after_rotate_bak_newest_is_updated(self):
         """After rotate_bak, the primary .bak is consumed; .bak.1 becomes the newest."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             with open(path, "w") as f:
@@ -342,6 +362,7 @@ class TestComplianceCheckerNewestBackupPath:
 
     def test_returns_string_path(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             bak = path + ".bak"
@@ -355,18 +376,25 @@ class TestComplianceCheckerNewestBackupPath:
 # 5. E2E Session 79
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESession79:
     def test_merge_result_bool_in_pipeline(self):
         """MergeResult bool used in a typical dispatch pattern."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability,
+            DelegationManager,
+            Delegation,
+            Capability,
         )
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         cap = Capability(resource="tool:read", ability="invoke")
         d = Delegation(
-            cid="cid_bool_test", issuer="alice", audience="bob",
-            capabilities=[cap], expiry=9999999999,
+            cid="cid_bool_test",
+            issuer="alice",
+            audience="bob",
+            capabilities=[cap],
+            expiry=9999999999,
         )
         mgr1.add(d)
         with warnings.catch_warnings():
@@ -392,6 +420,7 @@ class TestE2ESession79:
     def test_topic_handler_map_snapshot_isolation(self):
         """Mutation of snapshot does not affect live bus."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         bus = PubSubBus()
         cb = lambda t, p: None
         sid = bus.subscribe("events", cb)
@@ -402,6 +431,7 @@ class TestE2ESession79:
     def test_newest_backup_path_in_restore_flow(self):
         """newest_backup_path used to conditionally restore."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.json")
             with open(path, "w") as f:
@@ -419,7 +449,10 @@ class TestE2ESession79:
 
     @pytest.mark.skipif(
         not any(
-            hasattr(__import__("importlib").util.find_spec(m) or type("", (), {"origin": None})(), "origin")
+            hasattr(
+                __import__("importlib").util.find_spec(m) or type("", (), {"origin": None})(),
+                "origin",
+            )
             for m in ["ipfs_kit_py"]
         ),
         reason="ipfs_kit_py not installed",

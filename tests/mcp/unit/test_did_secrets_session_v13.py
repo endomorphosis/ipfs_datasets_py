@@ -10,6 +10,7 @@ Covers:
 - engine_env: _get_from_vault returns vault value; autoconfigure_engine_env
   pulls OPENAI_API_KEY from vault when env var absent.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -26,12 +27,14 @@ import pytest
 
 try:
     import ucan as _ucan_lib  # noqa: F401
+
     _UCAN_OK = True
 except ImportError:
     _UCAN_OK = False
 
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
+
     _CRYPTO_OK = True
 except ImportError:
     _CRYPTO_OK = False
@@ -44,6 +47,7 @@ _skip_no_both = pytest.mark.skipif(
 )
 
 # ── helpers ────────────────────────────────────────────────────────────────
+
 
 def _tmp_key_file(tmp_path: Path) -> Path:
     return tmp_path / "test_did_key.json"
@@ -64,6 +68,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_generates_did_key_string(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         assert mgr.did is not None
         assert mgr.did.startswith("did:key:z6Mk"), f"unexpected DID: {mgr.did}"
@@ -71,6 +76,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_key_file_created_on_disk(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         kf = _tmp_key_file(tmp_path)
         assert not kf.exists()
         DIDKeyManager(key_file=kf)
@@ -79,6 +85,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_key_file_contains_did_and_version(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         kf = _tmp_key_file(tmp_path)
         mgr = DIDKeyManager(key_file=kf)
         data = json.loads(kf.read_text())
@@ -91,6 +98,7 @@ class TestDIDKeyManagerGeneration:
     def test_key_file_has_restricted_permissions(self, tmp_path):
         """Key file should be owner-readable only (0o600)."""
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         kf = _tmp_key_file(tmp_path)
         DIDKeyManager(key_file=kf)
         mode = oct(kf.stat().st_mode)[-3:]
@@ -99,6 +107,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_reload_produces_same_did(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         kf = _tmp_key_file(tmp_path)
         mgr1 = DIDKeyManager(key_file=kf)
         did1 = mgr1.did
@@ -108,6 +117,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_export_secret_b64_is_string(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         b64 = mgr.export_secret_b64()
         assert isinstance(b64, str)
@@ -116,6 +126,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_rotate_key_changes_did(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         did1 = mgr.did
         new_did = mgr.rotate_key()
@@ -125,6 +136,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_info_dict_has_required_keys(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         info = mgr.info()
         assert "did" in info
@@ -135,6 +147,7 @@ class TestDIDKeyManagerGeneration:
     @_skip_no_ucan
     def test_ucan_available_property(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         assert mgr.ucan_available is True
 
@@ -165,11 +178,13 @@ class TestDIDKeyManagerDelegation:
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         aud_kp = _ucan.EdKeypair.generate()
 
-        token = asyncio.run(mgr.mint_delegation(
-            audience_did=aud_kp.did(),
-            capabilities=[("secrets://project/", "secrets/read")],
-            lifetime_seconds=3600,
-        ))
+        token = asyncio.run(
+            mgr.mint_delegation(
+                audience_did=aud_kp.did(),
+                capabilities=[("secrets://project/", "secrets/read")],
+                lifetime_seconds=3600,
+            )
+        )
         assert isinstance(token, str)
         assert token.startswith("eyJ")  # JWT header
 
@@ -178,12 +193,15 @@ class TestDIDKeyManagerDelegation:
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
 
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
-        token = asyncio.run(mgr.mint_self_delegation(
-            capabilities=[("tools://admin/", "tools/invoke")],
-        ))
+        token = asyncio.run(
+            mgr.mint_self_delegation(
+                capabilities=[("tools://admin/", "tools/invoke")],
+            )
+        )
         assert isinstance(token, str)
         # Decode the JWT payload (middle segment)
         import base64
+
         parts = token.split(".")
         payload_raw = parts[1] + "=="
         payload = json.loads(base64.urlsafe_b64decode(payload_raw))
@@ -195,13 +213,17 @@ class TestDIDKeyManagerDelegation:
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
 
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
-        token = asyncio.run(mgr.mint_self_delegation(
-            capabilities=[("secrets://project/", "secrets/read")],
-        ))
-        ok = asyncio.run(mgr.verify_delegation(
-            token,
-            required_capabilities=[("secrets://project/", "secrets/read")],
-        ))
+        token = asyncio.run(
+            mgr.mint_self_delegation(
+                capabilities=[("secrets://project/", "secrets/read")],
+            )
+        )
+        ok = asyncio.run(
+            mgr.verify_delegation(
+                token,
+                required_capabilities=[("secrets://project/", "secrets/read")],
+            )
+        )
         assert ok is True
 
     @_skip_no_ucan
@@ -211,14 +233,16 @@ class TestDIDKeyManagerDelegation:
 
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         aud_kp = _ucan.EdKeypair.generate()
-        token = asyncio.run(mgr.mint_delegation(
-            audience_did=aud_kp.did(),
-            capabilities=[
-                ("secrets://project/openai", "secrets/read"),
-                ("tools://admin/", "tools/invoke"),
-            ],
-            lifetime_seconds=600,
-        ))
+        token = asyncio.run(
+            mgr.mint_delegation(
+                audience_did=aud_kp.did(),
+                capabilities=[
+                    ("secrets://project/openai", "secrets/read"),
+                    ("tools://admin/", "tools/invoke"),
+                ],
+                lifetime_seconds=600,
+            )
+        )
         assert isinstance(token, str)
         assert len(token) > 100
 
@@ -227,6 +251,7 @@ class TestDIDKeyManagerSingleton:
     @_skip_no_ucan
     def test_get_did_key_manager_returns_same_instance(self, tmp_path):
         from ipfs_datasets_py.mcp_server import did_key_manager as did_mod
+
         # Reset singleton for test isolation
         did_mod._default_manager = None
         mgr1 = did_mod.get_did_key_manager(key_file=_tmp_key_file(tmp_path))
@@ -237,6 +262,7 @@ class TestDIDKeyManagerSingleton:
     @_skip_no_ucan
     def test_get_did_key_manager_new_key_file_resets(self, tmp_path):
         from ipfs_datasets_py.mcp_server import did_key_manager as did_mod
+
         did_mod._default_manager = None
         kf1 = tmp_path / "key1.json"
         kf2 = tmp_path / "key2.json"
@@ -258,13 +284,13 @@ def vault_with_mgr(tmp_path):
         pytest.skip("py-ucan and cryptography required")
     from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
     from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
     mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
     vault = SecretsVault(vault_file=_tmp_vault_file(tmp_path), did_key_manager=mgr)
     return vault, mgr
 
 
 class TestSecretsVaultCRUD:
-
     @_skip_no_both
     def test_set_and_get_roundtrip(self, vault_with_mgr):
         vault, _ = vault_with_mgr
@@ -358,11 +384,11 @@ class TestSecretsVaultCRUD:
 
 
 class TestSecretsVaultPersistence:
-
     @_skip_no_both
     def test_reload_vault_from_disk_decrypts_correctly(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         kf = _tmp_key_file(tmp_path)
         vf = _tmp_vault_file(tmp_path)
         mgr = DIDKeyManager(key_file=kf)
@@ -377,6 +403,7 @@ class TestSecretsVaultPersistence:
     def test_missing_vault_file_gives_empty_vault(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         vf = tmp_path / "nonexistent_vault.json"
         vault = SecretsVault(vault_file=vf, did_key_manager=mgr)
@@ -386,6 +413,7 @@ class TestSecretsVaultPersistence:
     def test_vault_did_recorded_in_file(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         kf = _tmp_key_file(tmp_path)
         mgr = DIDKeyManager(key_file=kf)
         vault = SecretsVault(vault_file=_tmp_vault_file(tmp_path), did_key_manager=mgr)
@@ -395,7 +423,6 @@ class TestSecretsVaultPersistence:
 
 
 class TestSecretsVaultEnvIntegration:
-
     @_skip_no_both
     def test_load_into_env_injects_secret(self, vault_with_mgr, monkeypatch):
         vault, _ = vault_with_mgr
@@ -434,7 +461,6 @@ class TestSecretsVaultEnvIntegration:
 
 
 class TestSecretsVaultInfo:
-
     @_skip_no_both
     def test_info_dict_keys(self, vault_with_mgr):
         vault, _ = vault_with_mgr
@@ -455,6 +481,7 @@ class TestSecretsVaultInfo:
     def test_singleton_factory(self, tmp_path):
         from ipfs_datasets_py.mcp_server import secrets_vault as sv_mod
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=_tmp_key_file(tmp_path))
         vf = _tmp_vault_file(tmp_path)
         sv_mod._default_vault = None
@@ -472,7 +499,6 @@ class TestSecretsVaultInfo:
 
 
 class TestEngineEnvVaultIntegration:
-
     @_skip_no_both
     def test_get_from_vault_returns_stored_secret(self, tmp_path, monkeypatch):
         """_get_from_vault should delegate to SecretsVault.get()."""

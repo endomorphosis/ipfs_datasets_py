@@ -26,6 +26,7 @@ class TestFastAPIService:
         """
         try:
             from ipfs_datasets_py.fastapi_service import app, get_current_user
+
             assert app is not None
             assert get_current_user is not None
         except ImportError as e:
@@ -40,6 +41,7 @@ class TestFastAPIService:
         """
         try:
             from ipfs_datasets_py.fastapi_config import FastAPISettings
+
             config = FastAPISettings()
             assert config is not None
         except ImportError as e:
@@ -55,10 +57,10 @@ class TestFastAPIService:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
         response = client.get("/health")
-        
+
         assert response.status_code == 200
         response_json = response.json()
         assert "status" in response_json
@@ -74,22 +76,25 @@ class TestFastAPIService:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test with valid credentials (should accept any for demo)
-        response = client.post("/auth/login", json={
-            "username": "test_user",
-            "password": "test_password"
-        })
-        
+        response = client.post(
+            "/auth/login", json={"username": "test_user", "password": "test_password"}
+        )
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have token or similar auth response
-            assert "access_token" in response_json or "token" in response_json or "message" in response_json
+            assert (
+                "access_token" in response_json
+                or "token" in response_json
+                or "message" in response_json
+            )
 
 
 class TestFastAPIEmbeddingEndpoints:
@@ -105,24 +110,25 @@ class TestFastAPIEmbeddingEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test embedding generation with sample data
-        test_data = {
-            "texts": ["Hello world", "This is a test"],
-            "model": "all-MiniLM-L6-v2"
-        }
-        
+        test_data = {"texts": ["Hello world", "This is a test"], "model": "all-MiniLM-L6-v2"}
+
         response = client.post("/embeddings/generate", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have embeddings or similar response
-            assert "embeddings" in response_json or "data" in response_json or "result" in response_json
+            assert (
+                "embeddings" in response_json
+                or "data" in response_json
+                or "result" in response_json
+            )
 
     @pytest.mark.asyncio
     async def test_search_embeddings_endpoint(self):
@@ -134,25 +140,23 @@ class TestFastAPIEmbeddingEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test semantic search with sample data
-        test_data = {
-            "query": "machine learning algorithms",
-            "top_k": 5,
-            "threshold": 0.7
-        }
-        
+        test_data = {"query": "machine learning algorithms", "top_k": 5, "threshold": 0.7}
+
         response = client.post("/search/semantic", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have results or similar response
-            assert "results" in response_json or "matches" in response_json or "data" in response_json
+            assert (
+                "results" in response_json or "matches" in response_json or "data" in response_json
+            )
 
 
 class TestFastAPIDatasetEndpoints:
@@ -168,25 +172,25 @@ class TestFastAPIDatasetEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test dataset loading with sample data
-        test_data = {
-            "source": "sample_dataset.json",
-            "format": "json",
-            "options": {}
-        }
-        
+        test_data = {"source": "sample_dataset.json", "format": "json", "options": {}}
+
         response = client.post("/datasets/load", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have dataset info or similar response
-            assert "dataset_id" in response_json or "status" in response_json or "result" in response_json
+            assert (
+                "dataset_id" in response_json
+                or "status" in response_json
+                or "result" in response_json
+            )
 
     @pytest.mark.asyncio
     async def test_process_dataset_endpoint(self):
@@ -198,25 +202,27 @@ class TestFastAPIDatasetEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test dataset processing with sample data
         test_data = {
             "dataset_id": "test_dataset_123",
             "operations": ["normalize", "embed"],
-            "options": {"batch_size": 32}
+            "options": {"batch_size": 32},
         }
-        
+
         response = client.post("/datasets/process", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have task info or similar response
-            assert "task_id" in response_json or "status" in response_json or "result" in response_json
+            assert (
+                "task_id" in response_json or "status" in response_json or "result" in response_json
+            )
 
 
 class TestFastAPIVectorEndpoints:
@@ -232,26 +238,30 @@ class TestFastAPIVectorEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test vector index creation with sample data
         test_data = {
             "index_name": "test_index",
             "dimension": 384,
             "metric": "cosine",
-            "index_type": "faiss"
+            "index_type": "faiss",
         }
-        
+
         response = client.post("/vectors/create-index", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have index info or similar response
-            assert "index_id" in response_json or "status" in response_json or "result" in response_json
+            assert (
+                "index_id" in response_json
+                or "status" in response_json
+                or "result" in response_json
+            )
 
     @pytest.mark.asyncio
     async def test_search_vector_index_endpoint(self):
@@ -263,26 +273,28 @@ class TestFastAPIVectorEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test vector search with sample data
         test_data = {
             "index_name": "test_index",
             "query_vector": [0.1] * 384,  # Sample 384-dimensional vector
             "top_k": 5,
-            "threshold": 0.8
+            "threshold": 0.8,
         }
-        
+
         response = client.post("/vectors/search", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have search results or similar response
-            assert "results" in response_json or "matches" in response_json or "data" in response_json
+            assert (
+                "results" in response_json or "matches" in response_json or "data" in response_json
+            )
 
 
 class TestFastAPIIPFSEndpoints:
@@ -298,21 +310,21 @@ class TestFastAPIIPFSEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test IPFS pinning with sample data
         test_data = {
             "content": "test content for IPFS",
             "recursive": True,
-            "metadata": {"name": "test_file"}
+            "metadata": {"name": "test_file"},
         }
-        
+
         response = client.post("/ipfs/pin", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have CID or similar response
@@ -328,17 +340,17 @@ class TestFastAPIIPFSEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test IPFS retrieval with sample CID
         test_cid = "QmTest123456789abcdef"  # Sample IPFS CID format
-        
+
         response = client.get(f"/ipfs/get/{test_cid}")
-        
+
         # Should be 200 (success), 401 (unauthorized), 403 (forbidden), 404 (not found), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 404, 422]
-        
+
         if response.status_code == 200:
             # Could be JSON response with content info or actual file content
             # Just verify we get some response
@@ -358,28 +370,30 @@ class TestFastAPIWorkflowEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test workflow execution with sample data
         test_data = {
             "workflow_name": "test_workflow",
             "steps": [
                 {"action": "load_data", "source": "test.json"},
-                {"action": "process", "operation": "normalize"}
+                {"action": "process", "operation": "normalize"},
             ],
-            "parameters": {"batch_size": 16}
+            "parameters": {"batch_size": 16},
         }
-        
+
         response = client.post("/workflows/execute", json=test_data)
-        
+
         # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have task_id or status info
-            assert "task_id" in response_json or "status" in response_json or "result" in response_json
+            assert (
+                "task_id" in response_json or "status" in response_json or "result" in response_json
+            )
 
     @pytest.mark.asyncio
     async def test_workflow_status_endpoint(self):
@@ -391,21 +405,23 @@ class TestFastAPIWorkflowEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test workflow status with sample task ID
         test_task_id = "test_task_123456"
-        
+
         response = client.get(f"/workflows/status/{test_task_id}")
-        
+
         # Should be 200 (success), 401 (unauthorized), 403 (forbidden), 404 (not found), or 422 (validation error)
         assert response.status_code in [200, 401, 403, 404, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have status info
-            assert "status" in response_json or "state" in response_json or "result" in response_json
+            assert (
+                "status" in response_json or "state" in response_json or "result" in response_json
+            )
 
 
 class TestFastAPIAdminEndpoints:
@@ -421,18 +437,20 @@ class TestFastAPIAdminEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         response = client.get("/admin/health")
-        
+
         # Should be 200 (success), 401 (unauthorized), or 403 (forbidden)
         assert response.status_code in [200, 401, 403]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have system health info
-            assert "status" in response_json or "health" in response_json or "system" in response_json
+            assert (
+                "status" in response_json or "health" in response_json or "system" in response_json
+            )
 
     @pytest.mark.asyncio
     async def test_cache_management_endpoint(self):
@@ -444,23 +462,22 @@ class TestFastAPIAdminEndpoints:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test cache stats endpoint
         response = client.get("/cache/stats")
         assert response.status_code in [200, 401, 403]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             # Should have cache statistics
             assert "stats" in response_json or "cache" in response_json or "result" in response_json
-        
+
         # Test cache clear endpoint
-        response = client.post("/cache/clear", json={
-            "cache_type": "embedding",
-            "pattern": "test_*"
-        })
+        response = client.post(
+            "/cache/clear", json={"cache_type": "embedding", "pattern": "test_*"}
+        )
         assert response.status_code in [200, 401, 403, 422]
 
 
@@ -477,12 +494,12 @@ class TestFastAPIErrorHandling:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         response = client.get("/nonexistent/endpoint")
         assert response.status_code == 404
-        
+
         response_json = response.json()
         assert "detail" in response_json or "error" in response_json
 
@@ -496,18 +513,15 @@ class TestFastAPIErrorHandling:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test with malformed request data
-        invalid_data = {
-            "invalid_field": "test",
-            "missing_required_fields": True
-        }
-        
+        invalid_data = {"invalid_field": "test", "missing_required_fields": True}
+
         response = client.post("/embeddings/generate", json=invalid_data)
         assert response.status_code in [401, 403, 422]
-        
+
         if response.status_code == 422:
             response_json = response.json()
             assert "detail" in response_json or "error" in response_json
@@ -522,13 +536,13 @@ class TestFastAPIErrorHandling:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Remove any default headers that might contain auth
         response = client.get("/admin/health")
         assert response.status_code in [401, 403, 200]  # 200 if auth is optional for demo
-        
+
         if response.status_code in [401, 403]:
             response_json = response.json()
             assert "detail" in response_json or "error" in response_json
@@ -547,12 +561,12 @@ class TestFastAPIDocumentation:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         response = client.get("/openapi.json")
         assert response.status_code == 200
-        
+
         response_json = response.json()
         assert "info" in response_json
         assert "paths" in response_json
@@ -568,9 +582,9 @@ class TestFastAPIDocumentation:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         response = client.get("/docs")
         assert response.status_code == 200
         assert "text/html" in response.headers.get("content-type", "")
@@ -589,22 +603,25 @@ class TestFastAPIMiddleware:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test CORS preflight request
         headers = {
             "Origin": "http://localhost:3000",
             "Access-Control-Request-Method": "GET",
-            "Access-Control-Request-Headers": "Authorization"
+            "Access-Control-Request-Headers": "Authorization",
         }
-        
+
         response = client.options("/health", headers=headers)
         assert response.status_code in [200, 204, 405]  # 405 if OPTIONS not specifically handled
-        
+
         # Should have CORS headers in response
         cors_headers = ["access-control-allow-origin", "access-control-allow-methods"]
-        has_cors = any(header.lower() in [k.lower() for k in response.headers.keys()] for header in cors_headers)
+        has_cors = any(
+            header.lower() in [k.lower() for k in response.headers.keys()]
+            for header in cors_headers
+        )
         # Note: CORS might be configured but not active in test client
 
     @pytest.mark.asyncio
@@ -617,19 +634,19 @@ class TestFastAPIMiddleware:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Make multiple rapid requests
         status_codes = []
         for _ in range(10):
             response = client.get("/health")
             status_codes.append(response.status_code)
-        
+
         # Should be 200 (normal) or 429 (rate limited)
         for status_code in status_codes:
             assert status_code in [200, 429]
-        
+
         # At least some requests should succeed
         assert 200 in status_codes
 
@@ -648,13 +665,13 @@ class TestFastAPIIntegration:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test MCP tools list endpoint (which uses MCP tools internally)
         response = client.get("/tools/list")
         assert response.status_code in [200, 401, 403]
-        
+
         if response.status_code == 200:
             response_json = response.json()
             assert "tools" in response_json or "data" in response_json or "result" in response_json
@@ -669,21 +686,22 @@ class TestFastAPIIntegration:
         """
         from fastapi.testclient import TestClient
         from ipfs_datasets_py.fastapi_service import app
-        
+
         client = TestClient(app)
-        
+
         # Test embedding generation endpoint (which uses embedding tools internally)
-        test_data = {
-            "texts": ["test embedding integration"],
-            "model": "all-MiniLM-L6-v2"
-        }
-        
+        test_data = {"texts": ["test embedding integration"], "model": "all-MiniLM-L6-v2"}
+
         response = client.post("/embeddings/generate", json=test_data)
         assert response.status_code in [200, 401, 403, 422]
-        
+
         if response.status_code == 200:
             response_json = response.json()
-            assert "embeddings" in response_json or "data" in response_json or "result" in response_json
+            assert (
+                "embeddings" in response_json
+                or "data" in response_json
+                or "result" in response_json
+            )
 
 
 if __name__ == "__main__":

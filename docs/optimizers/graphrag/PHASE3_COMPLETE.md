@@ -229,15 +229,15 @@ from ipfs_datasets_py.optimizers.graphrag import (
     OntologyVisualizer,
     MetricsVisualizer,
     DataType,
-    ExtractionStrategy
+    ExtractionStrategy,
 )
 
 # Initialize components
 harness = OntologyHarness(
-    generator_config={'model': 'bert-base-uncased'},
-    critic_config={'model': 'gpt-4'},
-    validator_config={'strategy': 'AUTO'},
-    parallelism=4
+    generator_config={"model": "bert-base-uncased"},
+    critic_config={"model": "gpt-4"},
+    validator_config={"strategy": "AUTO"},
+    parallelism=4,
 )
 
 metrics = MetricsCollector()
@@ -249,50 +249,47 @@ contexts = [
     OntologyGenerationContext(
         data_source=doc.name,
         data_type=DataType.PDF,
-        domain='legal',
-        extraction_strategy=ExtractionStrategy.LLM_BASED
+        domain="legal",
+        extraction_strategy=ExtractionStrategy.LLM_BASED,
     )
     for doc in documents
 ]
 
 # Run SGD optimization with visualization
 for cycle in range(10):
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"SGD Cycle {cycle + 1}".center(80))
-    print('='*80)
-    
+    print("=" * 80)
+
     # Run batch
     batch = harness.run_sessions(documents, contexts)
-    
+
     # Collect metrics
     for session in batch.sessions:
         metrics.record_session(session)
-        
+
         # Visualize best ontology
         if session == batch.best_session:
             print("\n=== Best Ontology Graph ===")
-            graph = ontology_viz.visualize_ontology(
-                session.ontology,
-                highlight_entities=None
-            )
+            graph = ontology_viz.visualize_ontology(session.ontology, highlight_entities=None)
             print(ontology_viz.export_to_text(graph, include_properties=True))
-            
+
             # Graph statistics
             stats = ontology_viz.get_summary_stats(graph)
             print(f"\nGraph Density: {stats['density']:.3f}")
             print(f"Avg Node Confidence: {stats['avg_node_confidence']:.3f}")
-    
+
     # Show metrics dashboard
     print("\n" + metrics_viz.create_dashboard(metrics))
-    
+
     # Show quality trend
     print(metrics_viz.plot_quality_trend(metrics, window_size=30))
-    
+
     # Check convergence
     if batch.average_score >= 0.85:
         print(f"\n✓ Converged at cycle {cycle + 1}")
         break
-    
+
     # Show recommendations
     if batch.optimization_report:
         print("\n=== Optimization Recommendations ===")
@@ -300,9 +297,9 @@ for cycle in range(10):
             print(f"  • {rec}")
 
 # Final summary
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Optimization Complete".center(80))
-print("="*80)
+print("=" * 80)
 
 final_stats = metrics.get_statistics()
 print(f"\nTotal Sessions: {final_stats['total_sessions']}")
@@ -310,10 +307,10 @@ print(f"Final Quality: {final_stats['average_quality_score']:.3f}")
 print(f"Convergence Rate: {final_stats['convergence_rate']:.1%}")
 
 # Export results
-with open('metrics.json', 'w') as f:
-    f.write(metrics.export_metrics(format='json'))
+with open("metrics.json", "w") as f:
+    f.write(metrics.export_metrics(format="json"))
 
-with open('final_ontology.json', 'w') as f:
+with open("final_ontology.json", "w") as f:
     final_graph = ontology_viz.visualize_ontology(batch.best_session.ontology)
     f.write(ontology_viz.export_to_json(final_graph))
 
@@ -429,14 +426,14 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyVisualizer
 
 viz = OntologyVisualizer()
 test_ontology = {
-    'entities': [
-        {'id': 'e1', 'type': 'Party', 'text': 'Alice', 'confidence': 1.0},
-        {'id': 'e2', 'type': 'Party', 'text': 'Bob', 'confidence': 1.0},
+    "entities": [
+        {"id": "e1", "type": "Party", "text": "Alice", "confidence": 1.0},
+        {"id": "e2", "type": "Party", "text": "Bob", "confidence": 1.0},
     ],
-    'relationships': [
-        {'id': 'r1', 'source_id': 'e1', 'target_id': 'e2', 'type': 'pays', 'confidence': 0.9}
+    "relationships": [
+        {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "pays", "confidence": 0.9}
     ],
-    'domain': 'legal'
+    "domain": "legal",
 }
 
 graph = viz.visualize_ontology(test_ontology)

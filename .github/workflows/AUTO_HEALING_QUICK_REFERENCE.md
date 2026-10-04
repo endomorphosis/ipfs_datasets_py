@@ -97,7 +97,7 @@ try:
     # Your code
     risky_operation()
 except Exception as e:
-    reporter.report_error(e, context={'component': 'cli', 'command': 'test'})
+    reporter.report_error(e, context={"component": "cli", "command": "test"})
 ```
 
 ### JavaScript (SDK/Dashboard)
@@ -285,6 +285,7 @@ gh pr close <number> --delete-branch
 ```python
 # Clear reported errors cache
 from ipfs_datasets_py.error_reporting.error_reporter import ErrorReporter
+
 reporter = ErrorReporter(enabled=True)
 reporter._reported_errors.clear()
 ```

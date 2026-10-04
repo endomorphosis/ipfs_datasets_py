@@ -55,62 +55,47 @@ from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon impor
 )
 
 
-CONFIG_SCHEMA = (
-    "ipfs_datasets_py.benchmarks.semantic_roundtrip.scheduler_config@1"
-)
-BUNDLE_INDEX_SCHEMA = (
-    "ipfs_datasets_py.benchmarks.semantic_roundtrip.taskboard_bundle_index@1"
-)
-PROVIDER_CAPACITY_SCHEMA = (
-    "ipfs_datasets_py.benchmarks.semantic_roundtrip.provider_capacity@1"
-)
+CONFIG_SCHEMA = "ipfs_datasets_py.benchmarks.semantic_roundtrip.scheduler_config@1"
+BUNDLE_INDEX_SCHEMA = "ipfs_datasets_py.benchmarks.semantic_roundtrip.taskboard_bundle_index@1"
+PROVIDER_CAPACITY_SCHEMA = "ipfs_datasets_py.benchmarks.semantic_roundtrip.provider_capacity@1"
 SRT014_DOWNSTREAM_GATE_SCHEMA = (
     "ipfs_datasets_py.benchmarks.semantic_roundtrip.srt014_downstream_gate@1"
 )
 SRT014_REPORT_RELATIVE_PATH = Path(
-    "docs/performance_snapshots/"
-    "2026-07-26_semantic_roundtrip_composition_pilot.json"
+    "docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json"
 )
 REPLACEMENT_REPORT_RELATIVE_PATH = Path(
-    "docs/performance_snapshots/"
-    "2026-07-27_semantic_roundtrip_composition_replacement.json"
+    "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json"
 )
 NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "no_eligible_remediation_manifest.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/no_eligible_remediation_manifest.json"
 )
 CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "replacement_selection_gate.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/replacement_selection_gate.json"
 )
 SRT014_GATED_TASK_ID = "SRT-015"
 SRT014_REMEDIATION_ROOT_TASK_ID = "SRT-021"
 SRT014_REPLACEMENT_GATE_TASK_ID = "SRT-027"
 REPLACEMENT_SELECTION_GATE_SCHEMA = (
-    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
-    "replacement_selection_gate@1"
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip.replacement_selection_gate@1"
 )
 CANONICAL_DESIGN_GATE_SCHEMA = (
     "ipfs_datasets_py.benchmarks.semantic_roundtrip.canonical_design_gate@1"
 )
 CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA = (
-    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
-    "canonical_design_gate_artifact_validation@1"
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip.canonical_design_gate_artifact_validation@1"
 )
 CANONICAL_DESIGN_GATE_TERMINAL_STATUSES = frozenset(
     {"authorized", "replacement_remediation_required"}
 )
 REPLACEMENT_EXPECTED_MODEL_REPEAT_COUNT = 5
 REPLACEMENT_EXPECTED_TERMINAL_COORDINATE_COUNT = 670
-NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE = (
-    "SRT014NoEligibleRemediationManifest@1"
-)
+NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE = "SRT014NoEligibleRemediationManifest@1"
 NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA = (
     "ipfs-datasets.semantic-roundtrip-no-eligible-remediation.v1"
 )
 NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA = (
-    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
-    "no_eligible_remediation_manifest_gate@1"
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip.no_eligible_remediation_manifest_gate@1"
 )
 SRT014_SELECTION_GATE_IDS = (
     "source_copy_exclusion",
@@ -120,13 +105,9 @@ SRT014_SELECTION_GATE_IDS = (
 DEFAULT_TASK_PREFIX = "## SRT-"
 DEFAULT_RUNTIME_ROOT = Path("/var/tmp/hssl-srt-dynamic-supervisor")
 DEFAULT_CONFIG_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "config"
-    / "semantic_roundtrip_scheduler.json"
+    Path(__file__).resolve().parents[1] / "config" / "semantic_roundtrip_scheduler.json"
 )
-SUPPORTED_RESOURCE_CLASSES = frozenset(
-    {*LEGACY_RESOURCE_CLASSES, *PROOF_RESOURCE_CLASSES}
-)
+SUPPORTED_RESOURCE_CLASSES = frozenset({*LEGACY_RESOURCE_CLASSES, *PROOF_RESOURCE_CLASSES})
 TERMINAL_STATUSES = frozenset(
     {"complete", "completed", "done", "merged", "passed", "success", "succeeded"}
 )
@@ -156,8 +137,7 @@ def _gate_receipt_has_valid_identity(
         if (
             receipt.get("schema") != schema
             or receipt.get("gate_cid_codec") != "dag-json"
-            or receipt.get("gate_cid_scope")
-            != "payload_without_gate_cid_fields"
+            or receipt.get("gate_cid_scope") != "payload_without_gate_cid_fields"
         ):
             return False
         gate_cid = validate_cid(
@@ -167,8 +147,7 @@ def _gate_receipt_has_valid_identity(
         payload = {
             key: value
             for key, value in receipt.items()
-            if key
-            not in {"gate_cid", "gate_cid_codec", "gate_cid_scope"}
+            if key not in {"gate_cid", "gate_cid_codec", "gate_cid_scope"}
         }
         return cid_for_dag_json(payload) == gate_cid
     except (TypeError, ValueError):
@@ -189,9 +168,7 @@ def _srt014_remediation_summary(
     for partition in ("deterministic", "model_backed"):
         group = execution.get(partition)
         if not isinstance(group, Mapping):
-            raise SchedulerPreparationError(
-                f"SRT-014 execution.{partition} must be an object"
-            )
+            raise SchedulerPreparationError(f"SRT-014 execution.{partition} must be an object")
         values = group.get("records")
         if not isinstance(values, list) or any(
             not isinstance(record, Mapping) for record in values
@@ -202,23 +179,15 @@ def _srt014_remediation_summary(
         records.extend(values)
 
     arm_set = set(arm_order)
-    by_arm: dict[str, list[Mapping[str, Any]]] = {
-        arm_id: [] for arm_id in arm_order
-    }
+    by_arm: dict[str, list[Mapping[str, Any]]] = {arm_id: [] for arm_id in arm_order}
     for record in records:
         arm_id = record.get("arm_id", record.get("cell_id"))
         if arm_id not in arm_set:
-            raise SchedulerPreparationError(
-                "SRT-014 remediation record identifies an unknown arm"
-            )
+            raise SchedulerPreparationError("SRT-014 remediation record identifies an unknown arm")
         by_arm[str(arm_id)].append(record)
 
-    gate_coordinate_counts = Counter(
-        {gate_id: 0 for gate_id in SRT014_SELECTION_GATE_IDS}
-    )
-    gate_arm_ids: dict[str, list[str]] = {
-        gate_id: [] for gate_id in SRT014_SELECTION_GATE_IDS
-    }
+    gate_coordinate_counts = Counter({gate_id: 0 for gate_id in SRT014_SELECTION_GATE_IDS})
+    gate_arm_ids: dict[str, list[str]] = {gate_id: [] for gate_id in SRT014_SELECTION_GATE_IDS}
     terminal_reason_counts: Counter[str] = Counter()
     terminal_stage_counts: Counter[str] = Counter()
     arm_summaries: dict[str, dict[str, Any]] = {}
@@ -228,9 +197,7 @@ def _srt014_remediation_summary(
             raise SchedulerPreparationError(
                 f"SRT-014 remediation evidence has no records for {arm_id!r}"
             )
-        failed_counts = Counter(
-            {gate_id: 0 for gate_id in SRT014_SELECTION_GATE_IDS}
-        )
+        failed_counts = Counter({gate_id: 0 for gate_id in SRT014_SELECTION_GATE_IDS})
         affected_cases: dict[str, set[str]] = {
             gate_id: set() for gate_id in SRT014_SELECTION_GATE_IDS
         }
@@ -249,10 +216,7 @@ def _srt014_remediation_summary(
             case_id = str(record.get("case_id") or "")
             coordinate_key = str(
                 record.get("coordinate_key")
-                or (
-                    f"{case_id}:{record.get('repeat_index')}:{arm_id}:"
-                    f"{record_index}"
-                )
+                or (f"{case_id}:{record.get('repeat_index')}:{arm_id}:{record_index}")
             )
             for gate_id in SRT014_SELECTION_GATE_IDS:
                 if gates.get(gate_id) is False:
@@ -288,9 +252,7 @@ def _srt014_remediation_summary(
             terminal_stage_counts[stage] += 1
 
         failed_gate_ids = [
-            gate_id
-            for gate_id in SRT014_SELECTION_GATE_IDS
-            if failed_counts[gate_id] > 0
+            gate_id for gate_id in SRT014_SELECTION_GATE_IDS if failed_counts[gate_id] > 0
         ]
         if not failed_gate_ids:
             raise SchedulerPreparationError(
@@ -302,21 +264,15 @@ def _srt014_remediation_summary(
             "coordinate_count": len(arm_records),
             "failed_gate_ids": failed_gate_ids,
             "failed_coordinate_count_by_gate": {
-                gate_id: failed_counts[gate_id]
-                for gate_id in SRT014_SELECTION_GATE_IDS
+                gate_id: failed_counts[gate_id] for gate_id in SRT014_SELECTION_GATE_IDS
             },
             "affected_case_ids_by_gate": {
-                gate_id: sorted(affected_cases[gate_id])
-                for gate_id in SRT014_SELECTION_GATE_IDS
+                gate_id: sorted(affected_cases[gate_id]) for gate_id in SRT014_SELECTION_GATE_IDS
             },
             "sample_coordinate_keys_by_gate": sample_coordinates,
             "terminal_failure_count": terminal_failure_count,
-            "terminal_failure_reason_counts": dict(
-                sorted(arm_terminal_reasons.items())
-            ),
-            "terminal_failure_stage_counts": dict(
-                sorted(arm_terminal_stages.items())
-            ),
+            "terminal_failure_reason_counts": dict(sorted(arm_terminal_reasons.items())),
+            "terminal_failure_stage_counts": dict(sorted(arm_terminal_stages.items())),
         }
 
     gate_evidence = {
@@ -345,12 +301,8 @@ def _srt014_remediation_summary(
         task_inputs.append(
             {
                 "task_kind": "diagnose_and_repair_terminal_failures",
-                "failure_reason_counts": dict(
-                    sorted(terminal_reason_counts.items())
-                ),
-                "failure_stage_counts": dict(
-                    sorted(terminal_stage_counts.items())
-                ),
+                "failure_reason_counts": dict(sorted(terminal_reason_counts.items())),
+                "failure_stage_counts": dict(sorted(terminal_stage_counts.items())),
             }
         )
     task_inputs.append(
@@ -371,15 +323,10 @@ def _srt014_remediation_summary(
         "component_local_gate_ids": [
             gate_id
             for gate_id in SRT014_SELECTION_GATE_IDS
-            if gate_coordinate_counts[gate_id] > 0
-            and gate_id not in systemic_gate_ids
+            if gate_coordinate_counts[gate_id] > 0 and gate_id not in systemic_gate_ids
         ],
-        "terminal_failure_reason_counts": dict(
-            sorted(terminal_reason_counts.items())
-        ),
-        "terminal_failure_stage_counts": dict(
-            sorted(terminal_stage_counts.items())
-        ),
+        "terminal_failure_reason_counts": dict(sorted(terminal_reason_counts.items())),
+        "terminal_failure_stage_counts": dict(sorted(terminal_stage_counts.items())),
         "arms": arm_summaries,
         "recommended_task_inputs": task_inputs,
         "srt015_must_remain_fenced": True,
@@ -479,14 +426,11 @@ def evaluate_srt014_downstream_gate(
 
         validated = validate_composition_report(
             report,
-            fixture_path=(
-                repo_root / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-            ),
+            fixture_path=(repo_root / "tests/fixtures/semantic_roundtrip/pilot_cases.json"),
         )
         if (
             expected_model_repeat_count is not None
-            and validated.get("model_repeat_count")
-            != expected_model_repeat_count
+            and validated.get("model_repeat_count") != expected_model_repeat_count
         ):
             raise SchedulerPreparationError(
                 "composition report model_repeat_count must be exactly "
@@ -495,8 +439,7 @@ def evaluate_srt014_downstream_gate(
             )
         if (
             expected_terminal_coordinate_count is not None
-            and validated.get("terminal_coordinate_count")
-            != expected_terminal_coordinate_count
+            and validated.get("terminal_coordinate_count") != expected_terminal_coordinate_count
         ):
             raise SchedulerPreparationError(
                 "composition report terminal_coordinate_count must be "
@@ -505,27 +448,18 @@ def evaluate_srt014_downstream_gate(
             )
         preregistration = report.get("preregistration")
         if not isinstance(preregistration, Mapping):
-            raise SchedulerPreparationError(
-                "SRT-014 preregistration must be an object"
-            )
+            raise SchedulerPreparationError("SRT-014 preregistration must be an object")
         deterministic_ids = preregistration.get("deterministic_cell_ids")
         model_ids = preregistration.get("model_backed_cell_ids")
-        if (
-            not isinstance(deterministic_ids, list)
-            or not isinstance(model_ids, list)
-        ):
-            raise SchedulerPreparationError(
-                "SRT-014 preregistered arm IDs must be arrays"
-            )
+        if not isinstance(deterministic_ids, list) or not isinstance(model_ids, list):
+            raise SchedulerPreparationError("SRT-014 preregistered arm IDs must be arrays")
         arm_order = [*deterministic_ids, *model_ids]
         if (
             len(arm_order) != 30
             or len(set(arm_order)) != 30
             or any(not isinstance(arm_id, str) for arm_id in arm_order)
         ):
-            raise SchedulerPreparationError(
-                "SRT-014 tie bound requires exactly 30 unique arm IDs"
-            )
+            raise SchedulerPreparationError("SRT-014 tie bound requires exactly 30 unique arm IDs")
         outcome = str(validated["selection_outcome"])
         if outcome == "selected":
             selectable = [str(validated["winner_arm_id"])]
@@ -536,12 +470,8 @@ def evaluate_srt014_downstream_gate(
             reasons = ["srt014_unique_full_coverage_winner"]
             remediation = None
         elif outcome == "exact_tie" and validated["bounded_tie"] is True:
-            selectable = [
-                str(arm_id) for arm_id in validated["co_winner_arm_ids"]
-            ]
-            representative = next(
-                arm_id for arm_id in arm_order if arm_id in set(selectable)
-            )
+            selectable = [str(arm_id) for arm_id in validated["co_winner_arm_ids"]]
+            representative = next(arm_id for arm_id in arm_order if arm_id in set(selectable))
             selection_basis = "srt015_bounded_tie_policy"
             status = "authorized"
             authorized = True
@@ -579,11 +509,7 @@ def evaluate_srt014_downstream_gate(
                 "status": "invalid",
                 "launch_authorized": False,
                 "report_path": relative_path,
-                "report_cid": (
-                    report.get("report_cid")
-                    if isinstance(report, Mapping)
-                    else None
-                ),
+                "report_cid": (report.get("report_cid") if isinstance(report, Mapping) else None),
                 "report_raw_cid": cid_for_bytes(raw),
                 "selection_outcome": None,
                 "selection_basis": None,
@@ -632,9 +558,7 @@ def _evaluate_no_eligible_remediation_manifest_gate(
         "srt014_gate_cid": original.get("gate_cid"),
         "srt014_report_cid": original.get("report_cid"),
         "srt014_report_raw_cid": original.get("report_raw_cid"),
-        "manifest_path": str(
-            NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
-        ),
+        "manifest_path": str(NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH),
         "manifest_cid": None,
         "manifest_raw_cid": None,
         "reason_codes": [],
@@ -645,9 +569,7 @@ def _evaluate_no_eligible_remediation_manifest_gate(
                 **base,
                 "status": "not_admissible",
                 "valid": False,
-                "reason_codes": [
-                    "remediation_manifest_requires_no_eligible_srt014"
-                ],
+                "reason_codes": ["remediation_manifest_requires_no_eligible_srt014"],
             }
         )
     if not path.is_file():
@@ -664,9 +586,7 @@ def _evaluate_no_eligible_remediation_manifest_gate(
         raw = path.read_bytes()
         value = json.loads(raw)
         if not isinstance(value, Mapping):
-            raise SchedulerPreparationError(
-                "no-eligible remediation manifest must be an object"
-            )
+            raise SchedulerPreparationError("no-eligible remediation manifest must be an object")
         expected_keys = {
             "interface",
             "schema_version",
@@ -679,18 +599,12 @@ def _evaluate_no_eligible_remediation_manifest_gate(
             "manifest_cid",
         }
         if set(value) != expected_keys:
-            raise SchedulerPreparationError(
-                "no-eligible remediation manifest fields changed"
-            )
+            raise SchedulerPreparationError("no-eligible remediation manifest fields changed")
         if (
-            value.get("interface")
-            != NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE
-            or value.get("schema_version")
-            != NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA
+            value.get("interface") != NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE
+            or value.get("schema_version") != NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA
         ):
-            raise SchedulerPreparationError(
-                "no-eligible remediation manifest identity changed"
-            )
+            raise SchedulerPreparationError("no-eligible remediation manifest identity changed")
         manifest_cid = value.get("manifest_cid")
         validate_cid(manifest_cid, codecs=("dag-json",))
         cid_payload = dict(value)
@@ -753,9 +667,7 @@ def _evaluate_no_eligible_remediation_manifest_gate(
                 **base,
                 "status": "invalid",
                 "valid": False,
-                "manifest_raw_cid": (
-                    cid_for_bytes(raw) if raw is not None else None
-                ),
+                "manifest_raw_cid": (cid_for_bytes(raw) if raw is not None else None),
                 "reason_codes": [
                     "no_eligible_remediation_manifest_invalid",
                     f"{type(exc).__name__}:{exc}",
@@ -786,26 +698,17 @@ def evaluate_no_eligible_remediation_manifest_gate(
     if not _supplied_receipt_matches(srt014_gate, original):
         return _gate_receipt(
             {
-                "schema": (
-                    NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA
-                ),
+                "schema": (NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA),
                 "status": "invalid",
                 "valid": False,
                 "report_path": str(SRT014_REPORT_RELATIVE_PATH),
                 "srt014_gate_cid": original.get("gate_cid"),
                 "srt014_report_cid": original.get("report_cid"),
                 "srt014_report_raw_cid": original.get("report_raw_cid"),
-                "manifest_path": str(
-                    NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
-                ),
+                "manifest_path": str(NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH),
                 "manifest_cid": None,
                 "manifest_raw_cid": None,
-                "reason_codes": [
-                    (
-                        "supplied_srt014_receipt_"
-                        "does_not_match_repo_evidence"
-                    )
-                ],
+                "reason_codes": [("supplied_srt014_receipt_does_not_match_repo_evidence")],
             }
         )
     return _evaluate_no_eligible_remediation_manifest_gate(
@@ -823,9 +726,7 @@ def evaluate_replacement_selection_gate(
         repo_root,
         report_path=repo_root.resolve() / REPLACEMENT_REPORT_RELATIVE_PATH,
         expected_model_repeat_count=REPLACEMENT_EXPECTED_MODEL_REPEAT_COUNT,
-        expected_terminal_coordinate_count=(
-            REPLACEMENT_EXPECTED_TERMINAL_COORDINATE_COUNT
-        ),
+        expected_terminal_coordinate_count=(REPLACEMENT_EXPECTED_TERMINAL_COORDINATE_COUNT),
     )
     payload = {
         key: value
@@ -875,10 +776,7 @@ def _compose_canonical_design_gate(
         replacement,
         schema=REPLACEMENT_SELECTION_GATE_SCHEMA,
     )
-    original_admissible = (
-        original_identity_valid
-        and original_status == "remediation_required"
-    )
+    original_admissible = original_identity_valid and original_status == "remediation_required"
     if not original_admissible:
         status = (
             "original_evidence_pending"
@@ -888,10 +786,7 @@ def _compose_canonical_design_gate(
         authorized = False
         reasons = [
             "canonical_design_requires_valid_original_srt014_evidence",
-            *(
-                str(reason)
-                for reason in original.get("reason_codes") or ()
-            ),
+            *(str(reason) for reason in original.get("reason_codes") or ()),
         ]
     elif not (
         manifest_identity_valid
@@ -900,19 +795,13 @@ def _compose_canonical_design_gate(
     ):
         status = (
             "remediation_manifest_pending"
-            if (
-                manifest_identity_valid
-                and manifest.get("status") == "pending"
-            )
+            if (manifest_identity_valid and manifest.get("status") == "pending")
             else "remediation_manifest_invalid"
         )
         authorized = False
         reasons = [
             "canonical_design_requires_valid_remediation_manifest",
-            *(
-                str(reason)
-                for reason in manifest.get("reason_codes") or ()
-            ),
+            *(str(reason) for reason in manifest.get("reason_codes") or ()),
         ]
     elif (
         replacement_identity_valid
@@ -923,19 +812,13 @@ def _compose_canonical_design_gate(
         authorized = True
         reasons = [
             "replacement_report_independently_authorizes_selection",
-            *(
-                str(reason)
-                for reason in replacement.get("reason_codes") or ()
-            ),
+            *(str(reason) for reason in replacement.get("reason_codes") or ()),
         ]
     elif replacement_identity_valid and replacement_status == "pending":
         status = "replacement_pending"
         authorized = False
         reasons = ["replacement_report_missing"]
-    elif (
-        replacement_identity_valid
-        and replacement_status == "replacement_remediation_required"
-    ):
+    elif replacement_identity_valid and replacement_status == "replacement_remediation_required":
         status = "replacement_remediation_required"
         authorized = False
         reasons = ["replacement_report_has_no_eligible_composition"]
@@ -944,10 +827,7 @@ def _compose_canonical_design_gate(
         authorized = False
         reasons = [
             "replacement_report_invalid_or_unbounded",
-            *(
-                str(reason)
-                for reason in replacement.get("reason_codes") or ()
-            ),
+            *(str(reason) for reason in replacement.get("reason_codes") or ()),
         ]
     return _gate_receipt(
         {
@@ -962,21 +842,13 @@ def _compose_canonical_design_gate(
             "remediation_manifest_raw_cid": manifest.get("manifest_raw_cid"),
             "replacement_gate_cid": replacement.get("gate_cid"),
             "replacement_report_cid": replacement.get("report_cid"),
-            "replacement_selection_outcome": replacement.get(
-                "selection_outcome"
-            ),
-            "selection_basis": (
-                replacement.get("selection_basis") if authorized else None
-            ),
+            "replacement_selection_outcome": replacement.get("selection_outcome"),
+            "selection_basis": (replacement.get("selection_basis") if authorized else None),
             "selectable_arm_ids": (
-                list(replacement.get("selectable_arm_ids") or ())
-                if authorized
-                else []
+                list(replacement.get("selectable_arm_ids") or ()) if authorized else []
             ),
             "implementation_representative_arm_id": (
-                replacement.get("implementation_representative_arm_id")
-                if authorized
-                else None
+                replacement.get("implementation_representative_arm_id") if authorized else None
             ),
             "reason_codes": list(dict.fromkeys(reasons)),
             "remediation": (
@@ -1031,15 +903,11 @@ def _canonical_design_receipt_mismatch_gate(
             "remediation_manifest_raw_cid": manifest.get("manifest_raw_cid"),
             "replacement_gate_cid": replacement.get("gate_cid"),
             "replacement_report_cid": replacement.get("report_cid"),
-            "replacement_selection_outcome": replacement.get(
-                "selection_outcome"
-            ),
+            "replacement_selection_outcome": replacement.get("selection_outcome"),
             "selection_basis": None,
             "selectable_arm_ids": [],
             "implementation_representative_arm_id": None,
-            "reason_codes": [
-                f"supplied_{mismatch_kind}_receipt_does_not_match_repo_evidence"
-            ],
+            "reason_codes": [f"supplied_{mismatch_kind}_receipt_does_not_match_repo_evidence"],
             "remediation": (
                 original.get("remediation")
                 if original.get("status") == "remediation_required"
@@ -1123,9 +991,7 @@ def _evaluate_canonical_design_gate_artifact(
                 **base,
                 "status": "invalid",
                 "valid": False,
-                "reason_codes": [
-                    "recomputed_canonical_design_gate_invalid"
-                ],
+                "reason_codes": ["recomputed_canonical_design_gate_invalid"],
             }
         )
     if not path.is_file():
@@ -1134,9 +1000,7 @@ def _evaluate_canonical_design_gate_artifact(
                 **base,
                 "status": "pending",
                 "valid": False,
-                "reason_codes": [
-                    "canonical_design_gate_artifact_missing"
-                ],
+                "reason_codes": ["canonical_design_gate_artifact_missing"],
             }
         )
     raw: bytes | None = None
@@ -1144,9 +1008,7 @@ def _evaluate_canonical_design_gate_artifact(
         raw = path.read_bytes()
         value = json.loads(raw)
         if not isinstance(value, Mapping):
-            raise SchedulerPreparationError(
-                "canonical design gate artifact must be an object"
-            )
+            raise SchedulerPreparationError("canonical design gate artifact must be an object")
         if dict(value) != expected:
             raise SchedulerPreparationError(
                 "canonical design gate artifact differs from recomputed gate"
@@ -1157,9 +1019,7 @@ def _evaluate_canonical_design_gate_artifact(
                 **base,
                 "status": "invalid",
                 "valid": False,
-                "artifact_raw_cid": (
-                    cid_for_bytes(raw) if raw is not None else None
-                ),
+                "artifact_raw_cid": (cid_for_bytes(raw) if raw is not None else None),
                 "reason_codes": [
                     "canonical_design_gate_artifact_invalid",
                     f"{type(exc).__name__}:{exc}",
@@ -1172,9 +1032,7 @@ def _evaluate_canonical_design_gate_artifact(
             "status": "valid",
             "valid": True,
             "artifact_raw_cid": cid_for_bytes(raw),
-            "reason_codes": [
-                "canonical_design_gate_artifact_matches_recomputed_gate"
-            ],
+            "reason_codes": ["canonical_design_gate_artifact_matches_recomputed_gate"],
         }
     )
 
@@ -1195,19 +1053,14 @@ def evaluate_canonical_design_gate_artifact(
         relative_path = _repo_relative(repo_root, path.resolve())
         return _gate_receipt(
             {
-                "schema": (
-                    CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA
-                ),
+                "schema": (CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA),
                 "status": "invalid",
                 "valid": False,
                 "artifact_path": relative_path,
                 "artifact_raw_cid": None,
                 "canonical_design_gate_cid": expected.get("gate_cid"),
                 "reason_codes": [
-                    (
-                        "supplied_canonical_design_gate_receipt_"
-                        "does_not_match_repo_evidence"
-                    )
+                    ("supplied_canonical_design_gate_receipt_does_not_match_repo_evidence")
                 ],
             }
         )
@@ -1232,9 +1085,7 @@ def _dependent_task_ids(
         for task in tasks:
             task_id = str(task.get("task_id") or "")
             dependencies = set(task.get("depends_on") or ())
-            if task_id not in dependents and dependencies.intersection(
-                dependents
-            ):
+            if task_id not in dependents and dependencies.intersection(dependents):
                 dependents.add(task_id)
                 changed = True
     return dependents
@@ -1256,9 +1107,7 @@ def _apply_no_eligible_remediation_gate(
             continue
         task["srt014_remediation_gate_cid"] = gate["gate_cid"]
         task["srt014_remediation_gate_status"] = gate["status"]
-        task["srt014_remediation_gate_reason_codes"] = list(
-            gate["reason_codes"]
-        )
+        task["srt014_remediation_gate_reason_codes"] = list(gate["reason_codes"])
         if gate.get("status") not in {"pending", "remediation_required"}:
             task["is_schedulable"] = False
             task["preflight_blocked"] = True
@@ -1278,9 +1127,7 @@ def _apply_canonical_design_gate(
             continue
         task["canonical_design_gate_cid"] = gate["gate_cid"]
         task["canonical_design_gate_status"] = gate["status"]
-        task["canonical_design_gate_reason_codes"] = list(
-            gate["reason_codes"]
-        )
+        task["canonical_design_gate_reason_codes"] = list(gate["reason_codes"])
         if gate.get("status") in {
             "original_evidence_invalid_or_not_no_eligible",
             "remediation_manifest_invalid",
@@ -1325,9 +1172,7 @@ def _repo_relative(repo_root: Path, path: Path) -> str:
     try:
         return path.resolve().relative_to(repo_root.resolve()).as_posix()
     except ValueError as exc:
-        raise SchedulerPreparationError(
-            f"taskboard must be inside the repository: {path}"
-        ) from exc
+        raise SchedulerPreparationError(f"taskboard must be inside the repository: {path}") from exc
 
 
 def load_scheduler_config(path: Path = DEFAULT_CONFIG_PATH) -> dict[str, Any]:
@@ -1344,13 +1189,9 @@ def load_scheduler_config(path: Path = DEFAULT_CONFIG_PATH) -> dict[str, Any]:
     if not isinstance(provider, dict):
         raise SchedulerPreparationError("scheduler config requires provider")
     if str(provider.get("provider_id") or "").strip().lower() != "leanstral-local":
-        raise SchedulerPreparationError(
-            "semantic round-trip provider_id must be leanstral-local"
-        )
+        raise SchedulerPreparationError("semantic round-trip provider_id must be leanstral-local")
     if int(provider.get("max_concurrency") or 0) != 1:
-        raise SchedulerPreparationError(
-            "Leanstral provider max_concurrency must be exactly one"
-        )
+        raise SchedulerPreparationError("Leanstral provider max_concurrency must be exactly one")
     return payload
 
 
@@ -1370,8 +1211,7 @@ def resolve_taskboard(
 
 def _normalized_metadata(task: PortalTask) -> dict[str, Any]:
     metadata: dict[str, Any] = {
-        _canonical_field_name(key): value
-        for key, value in task.metadata.items()
+        _canonical_field_name(key): value for key, value in task.metadata.items()
     }
     list_fields = {
         "allow_concurrent_with",
@@ -1404,9 +1244,7 @@ def _normalized_metadata(task: PortalTask) -> dict[str, Any]:
         "implementation_timeout_seconds" in metadata
         and metadata["implementation_timeout_seconds"] <= 0
     ):
-        raise SchedulerPreparationError(
-            "implementation_timeout_seconds must be a positive integer"
-        )
+        raise SchedulerPreparationError("implementation_timeout_seconds must be a positive integer")
     for field in ("is_schedulable", "requires_provider", "review_only"):
         if field in metadata:
             metadata[field] = _parse_bool(metadata[field])
@@ -1420,14 +1258,10 @@ def _task_resource_binding(
 ) -> tuple[str, str, str, bool]:
     metadata = _normalized_metadata(task)
     resource_class = normalize_resource_class(metadata.get("resource_class"))
-    resource_stage = normalize_adaptive_stage(
-        metadata.get("resource_stage") or "analysis"
+    resource_stage = normalize_adaptive_stage(metadata.get("resource_stage") or "analysis")
+    task_provider = (
+        str(metadata.get("provider_id") or metadata.get("llm_provider") or "").strip().lower()
     )
-    task_provider = str(
-        metadata.get("provider_id")
-        or metadata.get("llm_provider")
-        or ""
-    ).strip().lower()
     requires_provider = _parse_bool(
         metadata.get("requires_provider"),
         bool(task_provider),
@@ -1439,15 +1273,12 @@ def _task_resource_binding(
             f"choose one of {', '.join(sorted(SUPPORTED_RESOURCE_CLASSES))}"
         )
     is_model_lane = (
-        resource_class == ProofResourceClass.MODEL_DRAFT.value
-        or task_provider
-        or requires_provider
+        resource_class == ProofResourceClass.MODEL_DRAFT.value or task_provider or requires_provider
     )
     if is_model_lane:
         if resource_class != ProofResourceClass.MODEL_DRAFT.value:
             raise SchedulerPreparationError(
-                f"{task.task_id}: provider work must use "
-                f"{ProofResourceClass.MODEL_DRAFT.value!r}"
+                f"{task.task_id}: provider work must use {ProofResourceClass.MODEL_DRAFT.value!r}"
             )
         if resource_stage != "inference":
             raise SchedulerPreparationError(
@@ -1462,9 +1293,7 @@ def _task_resource_binding(
                 f"{task.task_id}: provider work must declare Requires provider: true"
             )
     elif resource_stage == "inference":
-        raise SchedulerPreparationError(
-            f"{task.task_id}: inference work must bind a provider"
-        )
+        raise SchedulerPreparationError(f"{task.task_id}: inference work must bind a provider")
     return resource_class, resource_stage, task_provider, requires_provider
 
 
@@ -1490,18 +1319,13 @@ def validate_taskboard_for_dynamic_scheduler(
         if not bundle_key:
             raise SchedulerPreparationError(f"{task.task_id}: Bundle is required")
         if not parallel_lane:
-            raise SchedulerPreparationError(
-                f"{task.task_id}: Parallel lane is required"
-            )
+            raise SchedulerPreparationError(f"{task.task_id}: Parallel lane is required")
         binding = _task_resource_binding(task, provider_id=provider_id)
         bundle_bindings[bundle_key].add(binding)
         bundle_lanes[bundle_key].add(parallel_lane)
 
     unknown_dependencies = {
-        dependency
-        for task in tasks
-        for dependency in task.depends_on
-        if dependency not in seen_ids
+        dependency for task in tasks for dependency in task.depends_on if dependency not in seen_ids
     }
     if unknown_dependencies:
         raise SchedulerPreparationError(
@@ -1510,8 +1334,7 @@ def validate_taskboard_for_dynamic_scheduler(
     for bundle_key, lanes in sorted(bundle_lanes.items()):
         if len(lanes) != 1:
             raise SchedulerPreparationError(
-                f"bundle {bundle_key!r} spans multiple parallel lanes: "
-                + ", ".join(sorted(lanes))
+                f"bundle {bundle_key!r} spans multiple parallel lanes: " + ", ".join(sorted(lanes))
             )
         if len(bundle_bindings[bundle_key]) != 1:
             raise SchedulerPreparationError(
@@ -1526,8 +1349,8 @@ def _task_payload(
     provider_id: str,
 ) -> dict[str, Any]:
     metadata = _normalized_metadata(task)
-    resource_class, resource_stage, task_provider, requires_provider = (
-        _task_resource_binding(task, provider_id=provider_id)
+    resource_class, resource_stage, task_provider, requires_provider = _task_resource_binding(
+        task, provider_id=provider_id
     )
     status = str(task.status or "todo").strip().lower()
     is_schedulable = (
@@ -1580,25 +1403,18 @@ def build_taskboard_bundle_index(
     validate_taskboard_for_dynamic_scheduler(tasks, provider_id=provider_id)
     source_todo = _repo_relative(repo_root, taskboard_path)
     source_todo_raw_cid = cid_for_bytes(taskboard_path.read_bytes())
-    task_payloads = [
-        _task_payload(task, provider_id=provider_id)
-        for task in tasks
-    ]
+    task_payloads = [_task_payload(task, provider_id=provider_id) for task in tasks]
     task_cids_by_id = {
-        str(task["task_id"]): str(task["canonical_task_cid"])
-        for task in task_payloads
+        str(task["task_id"]): str(task["canonical_task_cid"]) for task in task_payloads
     }
     for task in task_payloads:
         task["dependency_task_cids"] = [
-            task_cids_by_id[dependency_id]
-            for dependency_id in task["depends_on"]
+            task_cids_by_id[dependency_id] for dependency_id in task["depends_on"]
         ]
     srt014_gate = evaluate_srt014_downstream_gate(repo_root)
-    remediation_manifest_gate = (
-        _evaluate_no_eligible_remediation_manifest_gate(
-            repo_root,
-            srt014_gate=srt014_gate,
-        )
+    remediation_manifest_gate = _evaluate_no_eligible_remediation_manifest_gate(
+        repo_root,
+        srt014_gate=srt014_gate,
     )
     replacement_gate = evaluate_replacement_selection_gate(repo_root)
     canonical_design_gate = _compose_canonical_design_gate(
@@ -1620,9 +1436,7 @@ def build_taskboard_bundle_index(
     for bundle_key, members in sorted(grouped.items()):
         first = members[0]
         schedulable = [
-            member
-            for member in members
-            if member["is_schedulable"] and not member["review_only"]
+            member for member in members if member["is_schedulable"] and not member["review_only"]
         ]
         bundles[bundle_key] = {
             "bundle_key": bundle_key,
@@ -1640,8 +1454,7 @@ def build_taskboard_bundle_index(
             "llm_provider": first["llm_provider"],
             "requires_provider": first["requires_provider"],
             "is_schedulable": bool(schedulable),
-            "review_only": bool(members)
-            and all(bool(member["review_only"]) for member in members),
+            "review_only": bool(members) and all(bool(member["review_only"]) for member in members),
             "tasks": members,
         }
 
@@ -1684,9 +1497,7 @@ def _http_json(url: str, timeout_seconds: float) -> tuple[object, int]:
 
 def _probe_mapping(value: object, endpoint: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
-        raise SchedulerPreparationError(
-            f"{endpoint} returned non-object JSON"
-        )
+        raise SchedulerPreparationError(f"{endpoint} returned non-object JSON")
     return value
 
 
@@ -1708,19 +1519,13 @@ def _slot_rows(value: object) -> list[Mapping[str, Any]]:
     else:
         raw_slots = None
     if not isinstance(raw_slots, list) or not raw_slots:
-        raise SchedulerPreparationError(
-            "slots probe must return a nonempty slot array"
-        )
+        raise SchedulerPreparationError("slots probe must return a nonempty slot array")
     slots: list[Mapping[str, Any]] = []
     for index, raw_slot in enumerate(raw_slots):
         if not isinstance(raw_slot, Mapping):
-            raise SchedulerPreparationError(
-                f"slots[{index}] must be an object"
-            )
+            raise SchedulerPreparationError(f"slots[{index}] must be an object")
         if type(raw_slot.get("is_processing")) is not bool:
-            raise SchedulerPreparationError(
-                f"slots[{index}].is_processing must be boolean"
-            )
+            raise SchedulerPreparationError(f"slots[{index}].is_processing must be boolean")
         slots.append(raw_slot)
     return slots
 
@@ -1741,11 +1546,7 @@ def probe_provider_capacity(
         raise SchedulerPreparationError(
             "provider capacity must bind leanstral-local at max_concurrency one"
         )
-    if (
-        not math.isfinite(timeout_seconds)
-        or timeout_seconds <= 0
-        or timeout_seconds > 10
-    ):
+    if not math.isfinite(timeout_seconds) or timeout_seconds <= 0 or timeout_seconds > 10:
         raise SchedulerPreparationError(
             "provider probe timeout_seconds must be in the bounded range (0, 10]"
         )
@@ -1846,23 +1647,15 @@ def probe_provider_capacity(
         latency_ms = max(latency_ms, slots_latency)
         slots = _slot_rows(slots_value)
         observed_slot_count = len(slots)
-        active_requests = sum(
-            1 for slot in slots if bool(slot["is_processing"])
-        )
+        active_requests = sum(1 for slot in slots if bool(slot["is_processing"]))
         if observed_slot_count != max_concurrency:
             errors.append("observed_slot_count_mismatch")
         if active_requests > max_concurrency:
             errors.append("active_request_count_exceeds_capacity")
         for index, slot in enumerate(slots):
             raw_id = slot.get("id", index)
-            if (
-                not isinstance(raw_id, int)
-                or isinstance(raw_id, bool)
-                or raw_id < 0
-            ):
-                raise SchedulerPreparationError(
-                    f"slots[{index}].id must be a nonnegative integer"
-                )
+            if not isinstance(raw_id, int) or isinstance(raw_id, bool) or raw_id < 0:
+                raise SchedulerPreparationError(f"slots[{index}].id must be a nonnegative integer")
             slot_ids.append(raw_id)
         if len(slot_ids) != len(set(slot_ids)):
             errors.append("duplicate_slot_ids")
@@ -1889,9 +1682,7 @@ def probe_provider_capacity(
                 "healthy": healthy,
                 "max_concurrency": max_concurrency,
                 "active_requests": active_requests,
-                "available_concurrency": max(
-                    0, max_concurrency - active_requests
-                ),
+                "available_concurrency": max(0, max_concurrency - active_requests),
                 "observed_slot_count": observed_slot_count,
                 "slot_ids": slot_ids,
                 "latency_ms": latency_ms,
@@ -1977,24 +1768,14 @@ def prepare_scheduler_inputs(
         "no_eligible_remediation_manifest_gate": dict(
             index["no_eligible_remediation_manifest_gate"]
         ),
-        "replacement_selection_gate": dict(
-            index["replacement_selection_gate"]
-        ),
+        "replacement_selection_gate": dict(index["replacement_selection_gate"]),
         "canonical_design_gate": dict(index["canonical_design_gate"]),
-        "srt015_launch_authorized": bool(
-            index["canonical_design_gate"]["launch_authorized"]
-        ),
+        "srt015_launch_authorized": bool(index["canonical_design_gate"]["launch_authorized"]),
         "bundle_count": len(index["bundles"]),
-        "task_count": sum(
-            len(bundle["tasks"]) for bundle in index["bundles"].values()
-        ),
-        "provider_healthy": bool(
-            capacity["providers"][provider_config["provider_id"]]["healthy"]
-        ),
+        "task_count": sum(len(bundle["tasks"]) for bundle in index["bundles"].values()),
+        "provider_healthy": bool(capacity["providers"][provider_config["provider_id"]]["healthy"]),
         "provider_max_concurrency": int(
-            capacity["providers"][provider_config["provider_id"]][
-                "max_concurrency"
-            ]
+            capacity["providers"][provider_config["provider_id"]]["max_concurrency"]
         ),
         "provider_probe_errors": list(capacity["probe_errors"]),
     }
@@ -2010,9 +1791,7 @@ def _current_branch(repo_root: Path) -> str:
     )
     branch = result.stdout.strip()
     if result.returncode != 0 or not branch:
-        raise SchedulerPreparationError(
-            "scheduler launch requires a named merge-target branch"
-        )
+        raise SchedulerPreparationError("scheduler launch requires a named merge-target branch")
     return branch
 
 
@@ -2031,14 +1810,9 @@ def build_bundle_supervisor_command(
     lanes = int(max_lanes or config.get("max_lanes") or 1)
     if lanes < 1:
         raise SchedulerPreparationError("max_lanes must be positive")
-    config_path = Path(
-        str(preparation.get("config_path") or DEFAULT_CONFIG_PATH)
-    ).resolve()
+    config_path = Path(str(preparation.get("config_path") or DEFAULT_CONFIG_PATH)).resolve()
     taskboard_path = Path(
-        str(
-            preparation.get("taskboard_path")
-            or resolve_taskboard(repo_root, config, None)
-        )
+        str(preparation.get("taskboard_path") or resolve_taskboard(repo_root, config, None))
     ).resolve()
     refresh_command = [
         sys.executable,
@@ -2138,10 +1912,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--require-authorized",
         action="store_true",
-        help=(
-            "For gate, return nonzero unless replacement evidence authorizes "
-            "SRT-015"
-        ),
+        help=("For gate, return nonzero unless replacement evidence authorizes SRT-015"),
     )
     parser.add_argument(
         "--require-terminal",
@@ -2224,19 +1995,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return int(
-            (
-                bool(args.require_authorized)
-                and gate.get("launch_authorized") is not True
-            )
+            (bool(args.require_authorized) and gate.get("launch_authorized") is not True)
             or (
                 bool(args.require_terminal)
-                and gate.get("status")
-                not in CANONICAL_DESIGN_GATE_TERMINAL_STATUSES
+                and gate.get("status") not in CANONICAL_DESIGN_GATE_TERMINAL_STATUSES
             )
-            or (
-                artifact_validation is not None
-                and artifact_validation.get("valid") is not True
-            )
+            or (artifact_validation is not None and artifact_validation.get("valid") is not True)
         )
     if args.action == "remediation-gate":
         gate = evaluate_srt014_downstream_gate(repo_root)

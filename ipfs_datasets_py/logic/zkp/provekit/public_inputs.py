@@ -88,9 +88,7 @@ class ProveKitPublicInputRecord:
                 self.compiler_guidance_version,
             )
         elif self.compiler_guidance_version:
-            raise ValueError(
-                "compiler_guidance_version requires compiler_guidance_ref"
-            )
+            raise ValueError("compiler_guidance_version requires compiler_guidance_ref")
 
         if self.attestation_ref:
             _validate_hex_32_bytes("attestation_ref", self.attestation_ref)
@@ -142,9 +140,7 @@ class ProveKitPublicInputRecord:
             circuit_version=circuit_version,
             ruleset_id=str(public.get("ruleset_id") or DEFAULT_PROVEKIT_RULESET_ID),
             hash_backend=str(
-                hash_backend
-                or metadata_dict.get("hash_backend")
-                or DEFAULT_PROVEKIT_HASH_BACKEND
+                hash_backend or metadata_dict.get("hash_backend") or DEFAULT_PROVEKIT_HASH_BACKEND
             ),
             compiler_guidance_ref=guidance_ref,
             compiler_guidance_version=guidance_version,
@@ -179,9 +175,7 @@ class ProveKitPublicInputRecord:
 
         return {
             "theorem_hash_field": field_element_from_hex_digest(self.theorem_hash),
-            "axioms_commitment_field": field_element_from_hex_digest(
-                self.axioms_commitment
-            ),
+            "axioms_commitment_field": field_element_from_hex_digest(self.axioms_commitment),
             "circuit_version": self.circuit_version,
             "ruleset_id_field": field_element_from_text(self.ruleset_id),
             "circuit_ref_field": field_element_from_text(self.circuit_ref),

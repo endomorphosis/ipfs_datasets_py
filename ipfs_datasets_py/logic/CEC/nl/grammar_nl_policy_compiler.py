@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 try:
     from ..native.dcec_english_grammar import DCECEnglishGrammar, create_dcec_grammar
+
     _GRAMMAR_AVAILABLE = True
 except Exception:  # pragma: no cover — grammar may have optional deps
     _GRAMMAR_AVAILABLE = False
@@ -47,6 +48,7 @@ except Exception:  # pragma: no cover — grammar may have optional deps
 # Optional import: DeonticFormula/DeonticOperator from dcec_core
 try:
     from ..native.dcec_core import DeonticFormula, DeonticOperator
+
     _DCEC_AVAILABLE = True
 except Exception:  # pragma: no cover
     _DCEC_AVAILABLE = False
@@ -59,11 +61,13 @@ try:
         PolicyEvaluator,
         make_simple_permission_policy,
     )
+
     _POLICY_AVAILABLE = True
 except Exception:
     try:
         # Fallback: try relative import from mcp_server at package root
         import importlib
+
         _tp = importlib.import_module("ipfs_datasets_py.mcp_server.temporal_policy")
         PolicyClause = _tp.PolicyClause
         PolicyObject = _tp.PolicyObject
@@ -81,20 +85,20 @@ CLAUSE_TYPE_PROHIBITION = "prohibition"
 _OP_TO_CLAUSE_TYPE: dict = {}
 if _DCEC_AVAILABLE:
     _OP_TO_CLAUSE_TYPE = {
-        DeonticOperator.OBLIGATION:     CLAUSE_TYPE_OBLIGATION,
-        DeonticOperator.PERMISSION:     CLAUSE_TYPE_PERMISSION,
-        DeonticOperator.PROHIBITION:    CLAUSE_TYPE_PROHIBITION,
+        DeonticOperator.OBLIGATION: CLAUSE_TYPE_OBLIGATION,
+        DeonticOperator.PERMISSION: CLAUSE_TYPE_PERMISSION,
+        DeonticOperator.PROHIBITION: CLAUSE_TYPE_PROHIBITION,
     }
     # Add aliases present in some DCEC builds
     for _name, _ct in [
-        ("OBLIGATORY",      CLAUSE_TYPE_OBLIGATION),
-        ("FORBIDDEN",       CLAUSE_TYPE_PROHIBITION),
-        ("IMPERMISSIBLE",   CLAUSE_TYPE_PROHIBITION),
-        ("RIGHT",           CLAUSE_TYPE_PERMISSION),
-        ("LIBERTY",         CLAUSE_TYPE_PERMISSION),
-        ("POWER",           CLAUSE_TYPE_PERMISSION),
-        ("IMMUNITY",        CLAUSE_TYPE_PERMISSION),
-        ("SUPEREROGATION",  CLAUSE_TYPE_PERMISSION),
+        ("OBLIGATORY", CLAUSE_TYPE_OBLIGATION),
+        ("FORBIDDEN", CLAUSE_TYPE_PROHIBITION),
+        ("IMPERMISSIBLE", CLAUSE_TYPE_PROHIBITION),
+        ("RIGHT", CLAUSE_TYPE_PERMISSION),
+        ("LIBERTY", CLAUSE_TYPE_PERMISSION),
+        ("POWER", CLAUSE_TYPE_PERMISSION),
+        ("IMMUNITY", CLAUSE_TYPE_PERMISSION),
+        ("SUPEREROGATION", CLAUSE_TYPE_PERMISSION),
     ]:
         _op = getattr(DeonticOperator, _name, None)
         if _op is not None:
@@ -104,6 +108,7 @@ if _DCEC_AVAILABLE:
 # ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GrammarCompilationResult:
@@ -149,6 +154,7 @@ class GrammarCompilationResult:
 # ---------------------------------------------------------------------------
 # Main compiler class
 # ---------------------------------------------------------------------------
+
 
 class GrammarNLPolicyCompiler:
     """
@@ -224,13 +230,15 @@ class GrammarNLPolicyCompiler:
             if triple is not None:
                 actor, action, clause_type = triple
                 result.formula_triples.append(triple)
-                result.clauses.append({
-                    "actor": actor,
-                    "action": action,
-                    "clause_type": clause_type,
-                    "resource": f"logic/{action}",
-                    "source_sentence": sentence,
-                })
+                result.clauses.append(
+                    {
+                        "actor": actor,
+                        "action": action,
+                        "clause_type": clause_type,
+                        "resource": f"logic/{action}",
+                        "source_sentence": sentence,
+                    }
+                )
 
         if not result.clauses:
             result.warnings.append(
@@ -264,6 +272,7 @@ class GrammarNLPolicyCompiler:
     def _split_sentences(self, text: str) -> List[str]:
         """Split text into individual sentences on sentence-ending punctuation."""
         import re
+
         # Split on period, semicolon, exclamation, question mark, or newline
         # but avoid splitting on abbreviations (simplistic)
         parts = re.split(r"(?<=[.!?;])\s+|[\n]+", text)
@@ -352,17 +361,33 @@ class GrammarNLPolicyCompiler:
     # ------------------------------------------------------------------
 
     _PROHIBITION_PATTERNS = [
-        "must not", "should not", "cannot", "can not",
-        "is forbidden to", "is prohibited from", "may not",
-        "is not permitted to", "is not allowed to",
+        "must not",
+        "should not",
+        "cannot",
+        "can not",
+        "is forbidden to",
+        "is prohibited from",
+        "may not",
+        "is not permitted to",
+        "is not allowed to",
     ]
     _OBLIGATION_PATTERNS = [
-        "must", "should", "is required to", "is obligated to",
-        "ought to", "has to", "needs to", "is expected to",
+        "must",
+        "should",
+        "is required to",
+        "is obligated to",
+        "ought to",
+        "has to",
+        "needs to",
+        "is expected to",
     ]
     _PERMISSION_PATTERNS = [
-        "may", "can", "is permitted to", "is allowed to",
-        "has the right to", "is entitled to",
+        "may",
+        "can",
+        "is permitted to",
+        "is allowed to",
+        "has the right to",
+        "is entitled to",
     ]
 
     def _parse_with_heuristic(self, sentence: str) -> Optional[Tuple[str, str, str]]:
@@ -404,6 +429,7 @@ class GrammarNLPolicyCompiler:
         word is the action.
         """
         import re
+
         words = re.findall(r"\b[A-Za-z]\w*\b", sentence)
         if not words:
             return (self._default_actor, "action")
@@ -417,9 +443,33 @@ class GrammarNLPolicyCompiler:
 
         # Action: last word that is not a stop-word or modal
         _stop = {
-            "must", "should", "may", "can", "not", "to", "the", "a", "an",
-            "is", "are", "be", "has", "have", "it", "they", "he", "she",
-            "all", "and", "or", "of", "in", "on", "at", "for", "by",
+            "must",
+            "should",
+            "may",
+            "can",
+            "not",
+            "to",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "be",
+            "has",
+            "have",
+            "it",
+            "they",
+            "he",
+            "she",
+            "all",
+            "and",
+            "or",
+            "of",
+            "in",
+            "on",
+            "at",
+            "for",
+            "by",
         }
         action_words = [w.lower() for w in words if w.lower() not in _stop]
         action = action_words[-1] if action_words else "action"
@@ -464,6 +514,7 @@ class GrammarNLPolicyCompiler:
 # ---------------------------------------------------------------------------
 # Module-level convenience function
 # ---------------------------------------------------------------------------
+
 
 def grammar_compile_nl_to_policy(
     text: str,

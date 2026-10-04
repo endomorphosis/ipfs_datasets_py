@@ -129,8 +129,9 @@ Tests 1 scraper:
 ```python
 from bs4 import BeautifulSoup
 
+
 def clean_html(text):
-    soup = BeautifulSoup(text, 'html.parser')
+    soup = BeautifulSoup(text, "html.parser")
     return soup.get_text()
 ```
 
@@ -146,7 +147,7 @@ def clean_html(text):
 **Fix**: Filter out navigation elements:
 ```python
 # Skip elements with common menu classes/ids
-if 'nav' in element.get('class', []) or 'menu' in element.get('id', ''):
+if "nav" in element.get("class", []) or "menu" in element.get("id", ""):
     continue
 ```
 
@@ -162,7 +163,7 @@ if 'nav' in element.get('class', []) or 'menu' in element.get('id', ''):
 **Fix**: Target specific content containers:
 ```python
 # Get only the main content area
-main_content = soup.find('div', class_='main-content')
+main_content = soup.find("div", class_="main-content")
 text = main_content.get_text()
 ```
 

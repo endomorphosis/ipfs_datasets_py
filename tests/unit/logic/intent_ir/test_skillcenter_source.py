@@ -120,9 +120,9 @@ def test_reader_inspects_and_pages_records_deterministically(tmp_path: Path) -> 
     assert [record.skill_id for record in records] == ["skill-a", "skill-b"]
     assert records[0].license_expression == "MIT"
     assert records[0].license_risk == "allow"
-    assert records[0].content_sha256 == hashlib.sha256(
-        records[0].skill_md.encode("utf-8")
-    ).hexdigest()
+    assert (
+        records[0].content_sha256 == hashlib.sha256(records[0].skill_md.encode("utf-8")).hexdigest()
+    )
 
 
 def test_source_ref_binds_snapshot_bundle_and_skill_body(tmp_path: Path) -> None:
@@ -136,9 +136,7 @@ def test_source_ref_binds_snapshot_bundle_and_skill_body(tmp_path: Path) -> None
         ).iter_records(limit=1)
     )
 
-    source_ref = record.to_source_ref(
-        review_status=ReviewStatus.MACHINE_EXTRACTED
-    )
+    source_ref = record.to_source_ref(review_status=ReviewStatus.MACHINE_EXTRACTED)
     source_ref.validate()
 
     assert source_ref.source_revision == "revision-123"
@@ -153,10 +151,7 @@ def test_source_ref_binds_snapshot_bundle_and_skill_body(tmp_path: Path) -> None
         source_id="another-source",
         primary_source_id="another-primary",
     )
-    assert (
-        duplicate_body_from_another_source.to_source_ref().ref_id
-        != source_ref.ref_id
-    )
+    assert duplicate_body_from_another_source.to_source_ref().ref_id != source_ref.ref_id
 
 
 def test_entry_cid_is_multiformats_primary_key_independent_of_container(
@@ -232,9 +227,7 @@ def test_reader_filters_by_domain_and_score(tmp_path: Path) -> None:
     _write_bundle(path)
     reader = SkillCenterBundleReader(path, dataset_revision="revision-123")
 
-    records = list(
-        reader.iter_records(domain="security", minimum_score=4.0)
-    )
+    records = list(reader.iter_records(domain="security", minimum_score=4.0))
 
     assert [record.skill_id for record in records] == ["skill-a"]
 
@@ -243,19 +236,13 @@ def test_reader_rejects_orphaned_bundle_rows(tmp_path: Path) -> None:
     path = tmp_path / "orphaned.sqlite"
     _write_bundle(path)
     connection = sqlite3.connect(path)
-    connection.execute(
-        "DELETE FROM skills_content WHERE skill_id = ?", ("skill-b",)
-    )
-    connection.execute(
-        "UPDATE bundle_meta SET value = '1' WHERE key = 'total_skills'"
-    )
+    connection.execute("DELETE FROM skills_content WHERE skill_id = ?", ("skill-b",))
+    connection.execute("UPDATE bundle_meta SET value = '1' WHERE key = 'total_skills'")
     connection.commit()
     connection.close()
 
     with pytest.raises(SkillCenterBundleSchemaError, match="row counts disagree"):
-        SkillCenterBundleReader(
-            path, dataset_revision="revision-123"
-        ).inspect()
+        SkillCenterBundleReader(path, dataset_revision="revision-123").inspect()
 
 
 def test_reader_can_audit_declared_count_mismatch_without_losing_rows(
@@ -264,9 +251,7 @@ def test_reader_can_audit_declared_count_mismatch_without_losing_rows(
     path = tmp_path / "declared-mismatch.sqlite"
     _write_bundle(path)
     connection = sqlite3.connect(path)
-    connection.execute(
-        "UPDATE bundle_meta SET value = '99' WHERE key = 'total_skills'"
-    )
+    connection.execute("UPDATE bundle_meta SET value = '99' WHERE key = 'total_skills'")
     connection.commit()
     connection.close()
 

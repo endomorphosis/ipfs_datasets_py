@@ -21,7 +21,12 @@ DEFAULT_TOKEN_ROOT = Path.home() / ".config" / "hacc" / "google_drive_oauth"
 
 
 def _slugify(value: str) -> str:
-    return "".join(char if char.isalnum() else "-" for char in str(value or "").strip().lower()).strip("-") or "drive"
+    return (
+        "".join(char if char.isalnum() else "-" for char in str(value or "").strip().lower()).strip(
+            "-"
+        )
+        or "drive"
+    )
 
 
 def default_token_cache_path(account_hint: str) -> Path:
@@ -29,7 +34,9 @@ def default_token_cache_path(account_hint: str) -> Path:
 
 
 def load_client_profile(client_secrets_path: str) -> dict[str, Any]:
-    payload = json.loads(Path(client_secrets_path).expanduser().resolve().read_text(encoding="utf-8"))
+    payload = json.loads(
+        Path(client_secrets_path).expanduser().resolve().read_text(encoding="utf-8")
+    )
     profile = payload.get("installed") or payload.get("web") or {}
     if not profile:
         raise ValueError("Client secrets JSON must contain an 'installed' or 'web' section.")
@@ -95,7 +102,9 @@ def _loopback_redirect_uri(profile: dict[str, Any], port: int) -> str:
     return f"http://127.0.0.1:{port}"
 
 
-def _build_auth_url(profile: dict[str, Any], *, redirect_uri: str, state: str, account_hint: str = "") -> str:
+def _build_auth_url(
+    profile: dict[str, Any], *, redirect_uri: str, state: str, account_hint: str = ""
+) -> str:
     params = {
         "client_id": profile["client_id"],
         "redirect_uri": redirect_uri,
@@ -110,7 +119,9 @@ def _build_auth_url(profile: dict[str, Any], *, redirect_uri: str, state: str, a
     return f"{profile['auth_uri']}?{urlencode(params)}"
 
 
-def _exchange_code_for_token(profile: dict[str, Any], *, code: str, redirect_uri: str) -> dict[str, Any]:
+def _exchange_code_for_token(
+    profile: dict[str, Any], *, code: str, redirect_uri: str
+) -> dict[str, Any]:
     response = requests.post(
         profile["token_uri"],
         data={
@@ -159,7 +170,9 @@ def run_local_server_oauth_flow(
 
     server = HTTPServer(("127.0.0.1", 0), _Handler)
     redirect_uri = _loopback_redirect_uri(profile, server.server_port)
-    auth_url = _build_auth_url(profile, redirect_uri=redirect_uri, state=state, account_hint=account_hint)
+    auth_url = _build_auth_url(
+        profile, redirect_uri=redirect_uri, state=state, account_hint=account_hint
+    )
 
     thread = threading.Thread(target=server.handle_request, daemon=True)
     thread.start()
@@ -181,7 +194,11 @@ def run_local_server_oauth_flow(
         raise RuntimeError("Google OAuth did not return an authorization code.")
 
     token_payload = _exchange_code_for_token(profile, code=code, redirect_uri=redirect_uri)
-    cache_path = Path(token_cache_path).expanduser().resolve() if token_cache_path else default_token_cache_path(account_hint)
+    cache_path = (
+        Path(token_cache_path).expanduser().resolve()
+        if token_cache_path
+        else default_token_cache_path(account_hint)
+    )
     save_cached_token(cache_path, token_payload)
     return token_payload
 
@@ -194,7 +211,11 @@ def resolve_drive_oauth_access_token(
     open_browser: bool = True,
 ) -> tuple[str, dict[str, Any]]:
     profile = load_client_profile(client_secrets_path)
-    cache_path = Path(token_cache_path).expanduser().resolve() if token_cache_path else default_token_cache_path(account_hint)
+    cache_path = (
+        Path(token_cache_path).expanduser().resolve()
+        if token_cache_path
+        else default_token_cache_path(account_hint)
+    )
     token_payload = load_cached_token(cache_path)
 
     if token_is_usable(token_payload):

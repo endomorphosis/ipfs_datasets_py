@@ -24,6 +24,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.parallelism_autotuner i
     canonical_digest,
     write_reproducible_profile,
 )
+
+
 def test_dry_run_trials_cover_fixed_baseline_and_balanced_candidate() -> None:
     trials = dry_run_trials()
     assert [item.profile.name for item in trials] == [
@@ -58,9 +60,9 @@ def test_global_bounds_reject_oversubscription(changes: dict[str, int], violatio
 def test_quality_regression_blocks_faster_candidate() -> None:
     baseline, candidate, _ = dry_run_trials()
     degraded_quality = dict(candidate.metrics.quality_metrics)
-    degraded_quality["hammer_proof_success_rate"] = baseline.metrics.quality_metrics[
-        "hammer_proof_success_rate"
-    ] - 0.01
+    degraded_quality["hammer_proof_success_rate"] = (
+        baseline.metrics.quality_metrics["hammer_proof_success_rate"] - 0.01
+    )
     candidate = BenchmarkTrial(
         candidate.profile,
         replace(candidate.metrics, quality_metrics=degraded_quality),
@@ -82,7 +84,9 @@ def test_failure_memory_swap_queue_and_cycle_bounds_fail_closed() -> None:
         queue_lag_p95_seconds=121.0,
         cycle_seconds=401.0,
     )
-    evaluation = ParallelismAutotuner().evaluate(baseline, BenchmarkTrial(candidate.profile, metrics))
+    evaluation = ParallelismAutotuner().evaluate(
+        baseline, BenchmarkTrial(candidate.profile, metrics)
+    )
     assert evaluation.eligible is False
     assert set(evaluation.violations) >= {
         "transient_failure_rate_exceeded",
@@ -210,7 +214,10 @@ def test_benchmark_document_digest_and_candidate_design_are_stable() -> None:
     second = benchmark_document(dry_run_trials(), dry_run=True)
     assert first == second
     assert first["evidence_digest"] == second["evidence_digest"]
-    assert canonical_digest({key: value for key, value in first.items() if key != "evidence_digest"}) == first["evidence_digest"]
+    assert (
+        canonical_digest({key: value for key, value in first.items() if key != "evidence_digest"})
+        == first["evidence_digest"]
+    )
     candidates = generate_candidate_profiles()
     assert len(candidates) == 3
     assert all(profile.trainer_count == 1 for profile in candidates)
@@ -221,6 +228,8 @@ def test_baseline_name_and_candidate_uniqueness_are_enforced() -> None:
     baseline, candidate, _ = dry_run_trials()
     tuner = ParallelismAutotuner(trust_bounds=TrustBounds())
     with pytest.raises(ValueError, match="fixed_baseline"):
-        tuner.tune(BenchmarkTrial(baseline.profile.with_name("other"), baseline.metrics), [candidate])
+        tuner.tune(
+            BenchmarkTrial(baseline.profile.with_name("other"), baseline.metrics), [candidate]
+        )
     with pytest.raises(ValueError, match="unique"):
         tuner.tune(baseline, [candidate, candidate])

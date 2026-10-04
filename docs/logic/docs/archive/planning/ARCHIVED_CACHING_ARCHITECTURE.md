@@ -62,7 +62,7 @@ from ipfs_datasets_py.logic.deontic import DeonticConverter
 fol = FOLConverter(
     use_cache=True,
     cache_maxsize=1000,  # Maximum 1000 entries
-    cache_ttl=3600,      # 1 hour TTL
+    cache_ttl=3600,  # 1 hour TTL
 )
 result1 = fol.convert("text")  # Miss - computed
 result2 = fol.convert("text")  # Hit - from cache (14x faster)
@@ -70,8 +70,8 @@ result2 = fol.convert("text")  # Hit - from cache (14x faster)
 # Deontic conversion with custom cache settings
 deontic = DeonticConverter(
     use_cache=True,
-    cache_maxsize=500,   # Smaller cache
-    cache_ttl=1800,      # 30 minute TTL
+    cache_maxsize=500,  # Smaller cache
+    cache_ttl=1800,  # 30 minute TTL
 )
 result = deontic.convert("The tenant must pay rent")
 
@@ -194,11 +194,7 @@ result = cache.get(formula)
 from ipfs_datasets_py.logic.integration.caching import IPFSProofCache
 
 # Initialize with IPFS support
-cache = IPFSProofCache(
-    maxsize=1000,
-    ipfs_client=ipfs_client,
-    auto_pin=True
-)
+cache = IPFSProofCache(maxsize=1000, ipfs_client=ipfs_client, auto_pin=True)
 
 # Store proof (cached locally + uploaded to IPFS)
 cid = await cache.store_proof_async(formula, result)
@@ -239,6 +235,7 @@ converter = FOLConverter(use_cache=True)
 
 ```python
 from ipfs_datasets_py.logic.external_provers import cache_proof_result
+
 
 @cache_proof_result
 def prove_theorem(formula, axioms):
@@ -312,7 +309,7 @@ config = CacheConfig(
     maxsize=100,
     ttl_seconds=600,  # 10 minutes
     strategy="dict",  # Simple
-    enable_persistence=False
+    enable_persistence=False,
 )
 ```
 
@@ -324,7 +321,7 @@ config = CacheConfig(
     ttl_seconds=3600,  # 1 hour
     strategy="lru+ttl",  # Bounded with expiration
     enable_persistence=True,  # Survive restarts
-    enable_stats=True
+    enable_stats=True,
 )
 ```
 
@@ -337,7 +334,7 @@ config = CacheConfig(
     strategy="cid",  # Content-addressable
     enable_persistence=True,  # IPFS storage
     enable_distribution=True,  # P2P sharing
-    enable_monitoring=True  # Prometheus
+    enable_monitoring=True,  # Prometheus
 )
 ```
 

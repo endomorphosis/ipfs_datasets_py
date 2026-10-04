@@ -474,6 +474,7 @@ class TestTrioMCPServerAdapterStart:
                 # Manually call the body that would execute if TRIO_AVAILABLE==True
                 # by re-implementing the check in the test
                 import ipfs_datasets_py.mcp_server.trio_adapter as _mod
+
                 original = _mod.TRIO_AVAILABLE
                 _mod.TRIO_AVAILABLE = True
                 try:
@@ -490,6 +491,7 @@ class TestTrioMCPServerAdapterStart:
         a.is_running = True
         # Should log a warning and return without error (no TRIO_AVAILABLE check)
         import ipfs_datasets_py.mcp_server.trio_adapter as _mod
+
         original = _mod.TRIO_AVAILABLE
         _mod.TRIO_AVAILABLE = True
         try:
@@ -669,6 +671,7 @@ class TestDualServerManager:
     async def test_start_trio_creates_and_starts_adapter(self):
         mgr = DualServerManager()
         import ipfs_datasets_py.mcp_server.trio_adapter as _mod
+
         original = _mod.TRIO_AVAILABLE
         _mod.TRIO_AVAILABLE = True
         try:
@@ -744,7 +747,7 @@ class TestRegisterP2PTools:
             "metadata": mock_meta,
         }
         mock_registry = MagicMock()
-        mock_registry._tools = {}          # empty → not already registered
+        mock_registry._tools = {}  # empty → not already registered
         mock_registry.list_all.return_value = []
 
         with patch.object(reg_mod, "discover_p2p_tools", return_value=[tool_info]):
@@ -829,6 +832,7 @@ class TestGetP2PToolSummary:
 
     def test_p2p_tool_counted_by_category(self):
         from ipfs_datasets_py.mcp_server.tool_metadata import RUNTIME_TRIO
+
         mock_tool = MagicMock()
         mock_tool.runtime = RUNTIME_TRIO
         mock_tool.requires_p2p = True
@@ -865,6 +869,7 @@ class TestValidateP2PToolMetadata:
 
     def test_valid_tool_counts_as_valid(self):
         from ipfs_datasets_py.mcp_server.tool_metadata import RUNTIME_TRIO
+
         mock_tool = MagicMock()
         mock_tool.runtime = RUNTIME_TRIO
         mock_tool.requires_p2p = True
@@ -884,10 +889,11 @@ class TestValidateP2PToolMetadata:
 
     def test_tool_with_missing_name_flagged(self):
         from ipfs_datasets_py.mcp_server.tool_metadata import RUNTIME_TRIO
+
         mock_tool = MagicMock()
         mock_tool.runtime = RUNTIME_TRIO
         mock_tool.requires_p2p = True
-        mock_tool.name = ""           # missing name
+        mock_tool.name = ""  # missing name
         mock_tool.category = "p2p_test"
         mock_tool.mcp_description = "desc"
         mock_tool.timeout_seconds = 30
@@ -905,13 +911,14 @@ class TestValidateP2PToolMetadata:
 
     def test_tool_with_invalid_timeout_flagged(self):
         from ipfs_datasets_py.mcp_server.tool_metadata import RUNTIME_TRIO
+
         mock_tool = MagicMock()
         mock_tool.runtime = RUNTIME_TRIO
         mock_tool.requires_p2p = True
         mock_tool.name = "t1"
         mock_tool.category = "p2p_test"
         mock_tool.mcp_description = "desc"
-        mock_tool.timeout_seconds = -1   # invalid
+        mock_tool.timeout_seconds = -1  # invalid
 
         mock_registry = MagicMock()
         mock_registry.list_all.return_value = [mock_tool]
@@ -925,11 +932,12 @@ class TestValidateP2PToolMetadata:
 
     def test_tool_with_generic_category_flagged(self):
         from ipfs_datasets_py.mcp_server.tool_metadata import RUNTIME_TRIO
+
         mock_tool = MagicMock()
         mock_tool.runtime = RUNTIME_TRIO
         mock_tool.requires_p2p = True
         mock_tool.name = "t2"
-        mock_tool.category = "general"   # generic
+        mock_tool.category = "general"  # generic
         mock_tool.mcp_description = "desc"
         mock_tool.timeout_seconds = 30
 

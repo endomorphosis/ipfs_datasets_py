@@ -10,11 +10,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_plateau_length(tolerance)
   - OntologyMediator.action_count_total()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,11 +29,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, confidence=1.0):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
@@ -44,6 +48,7 @@ def _make_rel_mock(source_id, target_id):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -53,11 +58,13 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -68,21 +75,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.score_below_threshold_rate ─────────────────────────────
+
 
 class TestScoreBelowThresholdRate:
     def test_empty_returns_zero(self):
@@ -116,6 +129,7 @@ class TestScoreBelowThresholdRate:
 
 # ── OntologyOptimizer.history_plateau_count ───────────────────────────────────
 
+
 class TestHistoryPlateauCount:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -148,6 +162,7 @@ class TestHistoryPlateauCount:
 
 # ── OntologyOptimizer.history_run_last_improvement ───────────────────────────
 
+
 class TestHistoryRunLastImprovement:
     def test_empty_returns_minus_one(self):
         o = _make_optimizer()
@@ -174,6 +189,7 @@ class TestHistoryRunLastImprovement:
 
 # ── OntologyGenerator.entity_avg_id_length ────────────────────────────────────
 
+
 class TestEntityAvgIdLength:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -192,6 +208,7 @@ class TestEntityAvgIdLength:
 
 
 # ── OntologyGenerator.relationship_isolated_ids ──────────────────────────────
+
 
 class TestRelationshipIsolatedIds:
     def test_no_relationships_returns_empty(self):
@@ -222,6 +239,7 @@ class TestRelationshipIsolatedIds:
 
 # ── OntologyPipeline.run_score_harmonic_mean ──────────────────────────────────
 
+
 class TestRunScoreHarmonicMean:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -247,6 +265,7 @@ class TestRunScoreHarmonicMean:
 
 
 # ── OntologyLearningAdapter.feedback_plateau_length ──────────────────────────
+
 
 class TestFeedbackPlateauLength:
     def test_empty_returns_zero(self):
@@ -278,6 +297,7 @@ class TestFeedbackPlateauLength:
 
 
 # ── OntologyMediator.action_count_total ──────────────────────────────────────
+
 
 class TestActionCountTotal:
     def test_empty_returns_zero(self):

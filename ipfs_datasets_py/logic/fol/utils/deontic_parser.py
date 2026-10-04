@@ -90,14 +90,10 @@ def extract_legal_subject(sentence: str) -> List[str]:
 def extract_legal_action(sentence: str) -> List[str]:
     actions: List[str] = []
 
-    modal_verb_pattern = (
-        r"(?:must|shall|may|can|cannot|must not|shall not)\s+(?:not\s+)?(\w+(?:\s+\w+)*?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
-    )
+    modal_verb_pattern = r"(?:must|shall|may|can|cannot|must not|shall not)\s+(?:not\s+)?(\w+(?:\s+\w+)*?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
     actions.extend([m.strip() for m in re.findall(modal_verb_pattern, sentence.lower())])
 
-    prohibited_pattern = (
-        r"(?:prohibited from|prohibited to|forbidden to)\s+([^.]+?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
-    )
+    prohibited_pattern = r"(?:prohibited from|prohibited to|forbidden to)\s+([^.]+?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
     actions.extend([m.strip() for m in re.findall(prohibited_pattern, sentence.lower())])
 
     legal_action_patterns = [
@@ -144,7 +140,9 @@ def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
     for pattern in date_patterns:
         for match in re.findall(pattern, sentence.lower()):
             if isinstance(match, str):
-                constraints.append({"type": "deadline" if "by" in pattern else "period", "value": match.strip()})
+                constraints.append(
+                    {"type": "deadline" if "by" in pattern else "period", "value": match.strip()}
+                )
 
     duration_pattern = r"\bfor\s+(\d+\s+(?:days?|weeks?|months?|years?))"
     for match in re.findall(duration_pattern, sentence.lower()):

@@ -5,7 +5,9 @@ import subprocess
 
 import pytest
 
-from ipfs_datasets_py.processors.legal_scrapers import state_procedure_rules_scraper as procedure_module
+from ipfs_datasets_py.processors.legal_scrapers import (
+    state_procedure_rules_scraper as procedure_module,
+)
 
 
 class _DummyFetcher:
@@ -13,13 +15,17 @@ class _DummyFetcher:
         self.events = []
         self.cached = []
 
-    async def _fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 120):
+    async def _fetch_page_content_with_archival_fallback(
+        self, url: str, timeout_seconds: int = 120
+    ):
         return b""
 
     def _record_fetch_event(self, provider: str, success: bool, error: str | None = None) -> None:
         self.events.append({"provider": provider, "success": success, "error": error})
 
-    async def _store_page_bytes_in_ipfs_cache(self, url: str, payload: bytes, provider: str) -> None:
+    async def _store_page_bytes_in_ipfs_cache(
+        self, url: str, payload: bytes, provider: str
+    ) -> None:
         self.cached.append({"url": url, "payload": payload, "provider": provider})
 
 
@@ -170,7 +176,9 @@ def test_extract_ohio_rules_from_text_parses_rule_blocks() -> None:
 
     assert len(statutes) == 2
     assert statutes[0].section_number == "1"
-    assert statutes[0].section_name.startswith("Scope of rules: applicability; construction; exceptions")
+    assert statutes[0].section_name.startswith(
+        "Scope of rules: applicability; construction; exceptions"
+    )
     assert statutes[0].official_cite == "Ohio Rules of Civil Procedure Rule 1"
     assert statutes[0].structured_data["effective_date"] == "July 1, 2025"
     assert "procedure to be followed" in statutes[0].full_text
@@ -513,7 +521,10 @@ def test_extract_hawaii_rules_from_html() -> None:
 
     assert len(statutes) == 2
     assert statutes[0].section_number == "1"
-    assert statutes[0].section_name == "SCOPE OF RULES; INTERPRETATION AND ENFORCEMENT; EFFECT OF ELECTRONIC FILING"
+    assert (
+        statutes[0].section_name
+        == "SCOPE OF RULES; INTERPRETATION AND ENFORCEMENT; EFFECT OF ELECTRONIC FILING"
+    )
     assert statutes[0].official_cite == "HRCP Rule 1"
     assert statutes[0].structured_data["effective_date"] == "January 1, 2026"
     assert "circuit courts of the State" in statutes[0].full_text
@@ -660,7 +671,9 @@ def test_extract_new_mexico_rules_from_page_texts() -> None:
     assert statutes[1].section_number == "1-002"
     assert "annotations should not be included" not in statutes[1].full_text.lower()
     assert statutes[2].section_number == "1-003"
-    assert statutes[2].section_name == "Service and filing of pleadings and other papers by facsimile"
+    assert (
+        statutes[2].section_name == "Service and filing of pleadings and other papers by facsimile"
+    )
 
 
 def test_extract_west_virginia_civil_rules_from_page_texts() -> None:
@@ -1467,7 +1480,10 @@ def test_extract_north_carolina_rules_from_page_texts() -> None:
 
     assert [statute.section_number for statute in statutes[:2]] == ["1", "2"]
     assert statutes[0].section_name == "Philosophy of General Rules of Practice"
-    assert "These rules are applicable in the Superior and District Court Divisions." in statutes[0].full_text
+    assert (
+        "These rules are applicable in the Superior and District Court Divisions."
+        in statutes[0].full_text
+    )
     assert "History Note." not in statutes[0].full_text
     assert statutes[0].structured_data["current_as_of"] == "August 6, 2025"
 
@@ -1698,9 +1714,7 @@ def test_extract_illinois_rule_links_and_text() -> None:
 
 @pytest.mark.anyio
 async def test_scrape_illinois_court_rules_supplement_preserves_article_family() -> None:
-    rules, _analytics = await procedure_module._scrape_illinois_court_rules_supplement(
-        max_rules=3
-    )
+    rules, _analytics = await procedure_module._scrape_illinois_court_rules_supplement(max_rules=3)
 
     assert len(rules) == 3
     assert rules[2]["section_number"] == "102.1"
@@ -2072,7 +2086,9 @@ async def test_fetch_html_with_direct_fallback_uses_curl_when_requests_fail(
         )
 
     monkeypatch.setattr(procedure_module.requests, "get", _fake_requests_get)
-    monkeypatch.setattr(procedure_module, "_fetch_url_via_curl", lambda *args, **kwargs: (_fake_run().stdout, None))
+    monkeypatch.setattr(
+        procedure_module, "_fetch_url_via_curl", lambda *args, **kwargs: (_fake_run().stdout, None)
+    )
 
     html = await procedure_module._fetch_html_with_direct_fallback(
         fetcher,
@@ -2097,7 +2113,9 @@ async def test_fetch_json_with_direct_fallback_uses_curl_when_requests_fail(
 
     payload = json.dumps([{"key": "26666", "title": "3:1-1-Scope"}]).encode("utf-8")
     monkeypatch.setattr(procedure_module.requests, "get", _fake_requests_get)
-    monkeypatch.setattr(procedure_module, "_fetch_url_via_curl", lambda *args, **kwargs: (payload, None))
+    monkeypatch.setattr(
+        procedure_module, "_fetch_url_via_curl", lambda *args, **kwargs: (payload, None)
+    )
 
     parsed = await procedure_module._fetch_json_with_direct_fallback(
         fetcher,
@@ -2135,7 +2153,9 @@ def test_extract_new_jersey_rule_from_description() -> None:
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_rhode_island_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_rhode_island_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "success",
@@ -2173,7 +2193,8 @@ async def test_scrape_state_procedure_rules_adds_rhode_island_supplement(monkeyp
                     "statute_id": "Rhode Island Court Rule Rules-Of-Civil-Procedure",
                     "section_number": "Rules-Of-Civil-Procedure",
                     "section_name": "Rules of Civil Procedure",
-                    "full_text": "Rule 1. These rules govern civil actions in the Rhode Island superior court." + (" x" * 90),
+                    "full_text": "Rule 1. These rules govern civil actions in the Rhode Island superior court."
+                    + (" x" * 90),
                     "source_url": "https://www.courts.ri.gov/Courts/superiorcourt/Documents/SuperiorCourtRulesOfCivilProcedure.pdf",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2183,7 +2204,8 @@ async def test_scrape_state_procedure_rules_adds_rhode_island_supplement(monkeyp
                             "name": "Rules of Civil Procedure",
                             "sectionNumber": "Rules-Of-Civil-Procedure",
                             "sectionName": "Rules of Civil Procedure",
-                            "text": "Rule 1. These rules govern civil actions in the Rhode Island superior court." + (" x" * 90),
+                            "text": "Rule 1. These rules govern civil actions in the Rhode Island superior court."
+                            + (" x" * 90),
                             "sourceUrl": "https://www.courts.ri.gov/Courts/superiorcourt/Documents/SuperiorCourtRulesOfCivilProcedure.pdf",
                         }
                     },
@@ -2223,7 +2245,9 @@ async def test_scrape_state_procedure_rules_adds_rhode_island_supplement(monkeyp
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_oregon_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_oregon_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2261,7 +2285,8 @@ async def test_scrape_state_procedure_rules_adds_oregon_supplement(monkeypatch: 
                     "statute_id": "ORCP 1",
                     "section_number": "1",
                     "section_name": "Scope; Construction; Application; Rule; Citation",
-                    "full_text": "ORCP 1 Scope; Construction; Application; Rule; Citation" + (" x" * 120),
+                    "full_text": "ORCP 1 Scope; Construction; Application; Rule; Citation"
+                    + (" x" * 120),
                     "source_url": "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2271,7 +2296,8 @@ async def test_scrape_state_procedure_rules_adds_oregon_supplement(monkeypatch: 
                             "name": "Scope; Construction; Application; Rule; Citation",
                             "sectionNumber": "1",
                             "sectionName": "Scope; Construction; Application; Rule; Citation",
-                            "text": "ORCP 1 Scope; Construction; Application; Rule; Citation" + (" x" * 120),
+                            "text": "ORCP 1 Scope; Construction; Application; Rule; Citation"
+                            + (" x" * 120),
                             "sourceUrl": "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx#rule-1",
                         }
                     },
@@ -2311,7 +2337,9 @@ async def test_scrape_state_procedure_rules_adds_oregon_supplement(monkeypatch: 
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_michigan_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_michigan_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2349,7 +2377,8 @@ async def test_scrape_state_procedure_rules_adds_michigan_supplement(monkeypatch
                     "statute_id": "MCR 2.001",
                     "section_number": "2.001",
                     "section_name": "Applicability",
-                    "full_text": "The rules in this chapter govern procedure in all civil proceedings." + (" x" * 120),
+                    "full_text": "The rules in this chapter govern procedure in all civil proceedings."
+                    + (" x" * 120),
                     "source_url": "https://www.courts.michigan.gov/example/ch2.htm#rule-2.001",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2359,7 +2388,8 @@ async def test_scrape_state_procedure_rules_adds_michigan_supplement(monkeypatch
                             "name": "Applicability",
                             "sectionNumber": "2.001",
                             "sectionName": "Applicability",
-                            "text": "The rules in this chapter govern procedure in all civil proceedings." + (" x" * 120),
+                            "text": "The rules in this chapter govern procedure in all civil proceedings."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.courts.michigan.gov/example/ch2.htm#rule-2.001",
                         }
                     },
@@ -2399,7 +2429,9 @@ async def test_scrape_state_procedure_rules_adds_michigan_supplement(monkeypatch
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_california_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_california_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2437,7 +2469,8 @@ async def test_scrape_state_procedure_rules_adds_california_supplement(monkeypat
                     "statute_id": "Cal. Rules of Court, rule 3.10",
                     "section_number": "3.10",
                     "section_name": "Application",
-                    "full_text": "These rules apply to civil cases in California courts." + (" x" * 120),
+                    "full_text": "These rules apply to civil cases in California courts."
+                    + (" x" * 120),
                     "source_url": "https://courts.ca.gov/cms/rules/index/three/rule3_10",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2447,7 +2480,8 @@ async def test_scrape_state_procedure_rules_adds_california_supplement(monkeypat
                             "name": "Application",
                             "sectionNumber": "3.10",
                             "sectionName": "Application",
-                            "text": "These rules apply to civil cases in California courts." + (" x" * 120),
+                            "text": "These rules apply to civil cases in California courts."
+                            + (" x" * 120),
                             "sourceUrl": "https://courts.ca.gov/cms/rules/index/three/rule3_10",
                         }
                     },
@@ -2487,7 +2521,9 @@ async def test_scrape_state_procedure_rules_adds_california_supplement(monkeypat
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_washington_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_washington_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2525,7 +2561,8 @@ async def test_scrape_state_procedure_rules_adds_washington_supplement(monkeypat
                     "statute_id": "CR 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules",
-                    "full_text": "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court." + (" x" * 120),
+                    "full_text": "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court."
+                    + (" x" * 120),
                     "source_url": "https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_01_00_00.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2535,7 +2572,8 @@ async def test_scrape_state_procedure_rules_adds_washington_supplement(monkeypat
                             "name": "Scope of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules",
-                            "text": "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court." + (" x" * 120),
+                            "text": "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_01_00_00.pdf#rule-1",
                         }
                     },
@@ -2575,7 +2613,9 @@ async def test_scrape_state_procedure_rules_adds_washington_supplement(monkeypat
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2613,7 +2653,8 @@ async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(monkeypat
                     "statute_id": "N.J. Ct. R. 3:1-1",
                     "section_number": "3:1-1",
                     "section_name": "Scope",
-                    "full_text": "Unless otherwise stated, the rules in Part III govern criminal proceedings." + (" x" * 120),
+                    "full_text": "Unless otherwise stated, the rules in Part III govern criminal proceedings."
+                    + (" x" * 120),
                     "source_url": "https://www.njcourts.gov/njcourts_rules_of_court/get-term?tid=26666#rule-3-1-1",
                     "procedure_family": "criminal_procedure",
                     "structured_data": {
@@ -2623,7 +2664,8 @@ async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(monkeypat
                             "name": "Scope",
                             "sectionNumber": "3:1-1",
                             "sectionName": "Scope",
-                            "text": "Unless otherwise stated, the rules in Part III govern criminal proceedings." + (" x" * 120),
+                            "text": "Unless otherwise stated, the rules in Part III govern criminal proceedings."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.njcourts.gov/njcourts_rules_of_court/get-term?tid=26666#rule-3-1-1",
                         }
                     },
@@ -2663,7 +2705,9 @@ async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(monkeypat
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_new_hampshire_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_new_hampshire_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2701,7 +2745,8 @@ async def test_scrape_state_procedure_rules_adds_new_hampshire_supplement(monkey
                     "statute_id": "N.H. R. Crim. P. 1",
                     "section_number": "1",
                     "section_name": "Scope and Interpretation",
-                    "full_text": "Rule 1. Scope and Interpretation. These rules govern criminal procedure in superior court." + (" x" * 120),
+                    "full_text": "Rule 1. Scope and Interpretation. These rules govern criminal procedure in superior court."
+                    + (" x" * 120),
                     "source_url": "https://www.courts.nh.gov/new-hampshire-rules-criminal-procedure#page-id-4781",
                     "procedure_family": "criminal_procedure",
                     "structured_data": {
@@ -2711,7 +2756,8 @@ async def test_scrape_state_procedure_rules_adds_new_hampshire_supplement(monkey
                             "name": "Scope and Interpretation",
                             "sectionNumber": "1",
                             "sectionName": "Scope and Interpretation",
-                            "text": "Rule 1. Scope and Interpretation. These rules govern criminal procedure in superior court." + (" x" * 120),
+                            "text": "Rule 1. Scope and Interpretation. These rules govern criminal procedure in superior court."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.courts.nh.gov/new-hampshire-rules-criminal-procedure#page-id-4781",
                         }
                     },
@@ -2751,7 +2797,9 @@ async def test_scrape_state_procedure_rules_adds_new_hampshire_supplement(monkey
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_nevada_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_nevada_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2789,7 +2837,8 @@ async def test_scrape_state_procedure_rules_adds_nevada_supplement(monkeypatch: 
                     "statute_id": "NRCP 1",
                     "section_number": "1",
                     "section_name": "Scope and Purpose",
-                    "full_text": "Rule 1. Scope and Purpose. These rules govern civil actions in the district courts." + (" x" * 120),
+                    "full_text": "Rule 1. Scope and Purpose. These rules govern civil actions in the district courts."
+                    + (" x" * 120),
                     "source_url": "https://www.leg.state.nv.us/Division/Legal/LawLibrary/CourtRules/NRCP.html#NRCPRule1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2799,7 +2848,8 @@ async def test_scrape_state_procedure_rules_adds_nevada_supplement(monkeypatch: 
                             "name": "Scope and Purpose",
                             "sectionNumber": "1",
                             "sectionName": "Scope and Purpose",
-                            "text": "Rule 1. Scope and Purpose. These rules govern civil actions in the district courts." + (" x" * 120),
+                            "text": "Rule 1. Scope and Purpose. These rules govern civil actions in the district courts."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.leg.state.nv.us/Division/Legal/LawLibrary/CourtRules/NRCP.html#NRCPRule1",
                         }
                     },
@@ -2839,7 +2889,9 @@ async def test_scrape_state_procedure_rules_adds_nevada_supplement(monkeypatch: 
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_connecticut_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_connecticut_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2877,7 +2929,8 @@ async def test_scrape_state_procedure_rules_adds_connecticut_supplement(monkeypa
                     "statute_id": "Conn. Practice Book § 11-1",
                     "section_number": "11-1",
                     "section_name": "Form of Motion and Request",
-                    "full_text": "Sec. 11-1. Form of Motion and Request\n(a) Every motion shall be in writing." + (" x" * 120),
+                    "full_text": "Sec. 11-1. Form of Motion and Request\n(a) Every motion shall be in writing."
+                    + (" x" * 120),
                     "source_url": "https://jud.ct.gov/Publications/PracticeBook/PB.pdf#page=221",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2887,7 +2940,8 @@ async def test_scrape_state_procedure_rules_adds_connecticut_supplement(monkeypa
                             "name": "Form of Motion and Request",
                             "sectionNumber": "11-1",
                             "sectionName": "Form of Motion and Request",
-                            "text": "Sec. 11-1. Form of Motion and Request\n(a) Every motion shall be in writing." + (" x" * 120),
+                            "text": "Sec. 11-1. Form of Motion and Request\n(a) Every motion shall be in writing."
+                            + (" x" * 120),
                             "sourceUrl": "https://jud.ct.gov/Publications/PracticeBook/PB.pdf#page=221",
                         }
                     },
@@ -2927,7 +2981,9 @@ async def test_scrape_state_procedure_rules_adds_connecticut_supplement(monkeypa
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_idaho_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_idaho_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -2965,7 +3021,8 @@ async def test_scrape_state_procedure_rules_adds_idaho_supplement(monkeypatch: p
                     "statute_id": "I.R.C.P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules; District Court Rules",
-                    "full_text": "Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules." + (" x" * 120),
+                    "full_text": "Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules."
+                    + (" x" * 120),
                     "source_url": "https://isc.idaho.gov/ircp1-new#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -2975,7 +3032,8 @@ async def test_scrape_state_procedure_rules_adds_idaho_supplement(monkeypatch: p
                             "name": "Scope of Rules; District Court Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules; District Court Rules",
-                            "text": "Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules." + (" x" * 120),
+                            "text": "Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules."
+                            + (" x" * 120),
                             "sourceUrl": "https://isc.idaho.gov/ircp1-new#rule-1",
                         }
                     },
@@ -3015,7 +3073,9 @@ async def test_scrape_state_procedure_rules_adds_idaho_supplement(monkeypatch: p
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_maine_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_maine_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -3053,7 +3113,8 @@ async def test_scrape_state_procedure_rules_adds_maine_supplement(monkeypatch: p
                     "statute_id": "Me. R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules",
-                    "full_text": "RULE 1. SCOPE OF RULES These rules govern the procedure in civil actions." + (" x" * 120),
+                    "full_text": "RULE 1. SCOPE OF RULES These rules govern the procedure in civil actions."
+                    + (" x" * 120),
                     "source_url": "https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%201.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3063,7 +3124,8 @@ async def test_scrape_state_procedure_rules_adds_maine_supplement(monkeypatch: p
                             "name": "Scope of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules",
-                            "text": "RULE 1. SCOPE OF RULES These rules govern the procedure in civil actions." + (" x" * 120),
+                            "text": "RULE 1. SCOPE OF RULES These rules govern the procedure in civil actions."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%201.pdf#rule-1",
                         }
                     },
@@ -3103,7 +3165,9 @@ async def test_scrape_state_procedure_rules_adds_maine_supplement(monkeypatch: p
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_nebraska_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_nebraska_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -3141,7 +3205,8 @@ async def test_scrape_state_procedure_rules_adds_nebraska_supplement(monkeypatch
                     "statute_id": "Neb. Ct. R. Pldg. § 6-1101",
                     "section_number": "6-1101",
                     "section_name": "Scope and purpose of rules",
-                    "full_text": "§ 6-1101. Scope and purpose of rules. These Rules govern pleading in civil actions." + (" x" * 120),
+                    "full_text": "§ 6-1101. Scope and purpose of rules. These Rules govern pleading in civil actions."
+                    + (" x" * 120),
                     "source_url": "https://nebraskajudicial.gov/example/%C2%A7-6-1101#section-6-1101",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3151,7 +3216,8 @@ async def test_scrape_state_procedure_rules_adds_nebraska_supplement(monkeypatch
                             "name": "Scope and purpose of rules",
                             "sectionNumber": "6-1101",
                             "sectionName": "Scope and purpose of rules",
-                            "text": "§ 6-1101. Scope and purpose of rules. These Rules govern pleading in civil actions." + (" x" * 120),
+                            "text": "§ 6-1101. Scope and purpose of rules. These Rules govern pleading in civil actions."
+                            + (" x" * 120),
                             "sourceUrl": "https://nebraskajudicial.gov/example/%C2%A7-6-1101#section-6-1101",
                         }
                     },
@@ -3191,7 +3257,9 @@ async def test_scrape_state_procedure_rules_adds_nebraska_supplement(monkeypatch
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_maryland_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_maryland_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -3229,7 +3297,8 @@ async def test_scrape_state_procedure_rules_adds_maryland_supplement(monkeypatch
                     "statute_id": "Md. Rule 2-101",
                     "section_number": "2-101",
                     "section_name": "COMMENCEMENT OF ACTION",
-                    "full_text": "RULE 2-101. COMMENCEMENT OF ACTION A civil action is commenced by filing a complaint." + (" x" * 120),
+                    "full_text": "RULE 2-101. COMMENCEMENT OF ACTION A civil action is commenced by filing a complaint."
+                    + (" x" * 120),
                     "source_url": "https://govt.westlaw.com/mdc/Document/rule2101?viewType=FullText#rule-2-101",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3239,7 +3308,8 @@ async def test_scrape_state_procedure_rules_adds_maryland_supplement(monkeypatch
                             "name": "COMMENCEMENT OF ACTION",
                             "sectionNumber": "2-101",
                             "sectionName": "COMMENCEMENT OF ACTION",
-                            "text": "RULE 2-101. COMMENCEMENT OF ACTION A civil action is commenced by filing a complaint." + (" x" * 120),
+                            "text": "RULE 2-101. COMMENCEMENT OF ACTION A civil action is commenced by filing a complaint."
+                            + (" x" * 120),
                             "sourceUrl": "https://govt.westlaw.com/mdc/Document/rule2101?viewType=FullText#rule-2-101",
                         }
                     },
@@ -3319,7 +3389,8 @@ async def test_scrape_state_procedure_rules_adds_south_carolina_supplement(
                     "statute_id": "SCRCP Rule 1",
                     "section_number": "1",
                     "section_name": "SCOPE OF RULES",
-                    "full_text": "RULE 1 SCOPE OF RULES These rules govern the procedure in all South Carolina courts." + (" x" * 120),
+                    "full_text": "RULE 1 SCOPE OF RULES These rules govern the procedure in all South Carolina courts."
+                    + (" x" * 120),
                     "source_url": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-1/#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3329,7 +3400,8 @@ async def test_scrape_state_procedure_rules_adds_south_carolina_supplement(
                             "name": "SCOPE OF RULES",
                             "sectionNumber": "1",
                             "sectionName": "SCOPE OF RULES",
-                            "text": "RULE 1 SCOPE OF RULES These rules govern the procedure in all South Carolina courts." + (" x" * 120),
+                            "text": "RULE 1 SCOPE OF RULES These rules govern the procedure in all South Carolina courts."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-1/#rule-1",
                         }
                     },
@@ -3409,7 +3481,8 @@ async def test_scrape_state_procedure_rules_adds_alaska_supplement(
                     "statute_id": "Alaska R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules-Construction",
-                    "full_text": "Rule 1 Scope of Rules-Construction. These rules govern the procedure in civil cases." + (" x" * 120),
+                    "full_text": "Rule 1 Scope of Rules-Construction. These rules govern the procedure in civil cases."
+                    + (" x" * 120),
                     "source_url": "https://courts.alaska.gov/rules/docs/civ.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3419,7 +3492,8 @@ async def test_scrape_state_procedure_rules_adds_alaska_supplement(
                             "name": "Scope of Rules-Construction",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules-Construction",
-                            "text": "Rule 1 Scope of Rules-Construction. These rules govern the procedure in civil cases." + (" x" * 120),
+                            "text": "Rule 1 Scope of Rules-Construction. These rules govern the procedure in civil cases."
+                            + (" x" * 120),
                             "sourceUrl": "https://courts.alaska.gov/rules/docs/civ.pdf#rule-1",
                         }
                     },
@@ -3499,7 +3573,8 @@ async def test_scrape_state_procedure_rules_adds_hawaii_supplement(
                     "statute_id": "HRCP Rule 1",
                     "section_number": "1",
                     "section_name": "SCOPE OF RULES",
-                    "full_text": "Rule 1. SCOPE OF RULES. These Rules govern the procedure in the circuit courts of the State." + (" x" * 120),
+                    "full_text": "Rule 1. SCOPE OF RULES. These Rules govern the procedure in the circuit courts of the State."
+                    + (" x" * 120),
                     "source_url": "https://www.courts.state.hi.us/wp-content/uploads/2024/09/hrcp_ada.htm#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3509,7 +3584,8 @@ async def test_scrape_state_procedure_rules_adds_hawaii_supplement(
                             "name": "SCOPE OF RULES",
                             "sectionNumber": "1",
                             "sectionName": "SCOPE OF RULES",
-                            "text": "Rule 1. SCOPE OF RULES. These Rules govern the procedure in the circuit courts of the State." + (" x" * 120),
+                            "text": "Rule 1. SCOPE OF RULES. These Rules govern the procedure in the circuit courts of the State."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.courts.state.hi.us/wp-content/uploads/2024/09/hrcp_ada.htm#rule-1",
                         }
                     },
@@ -3589,7 +3665,8 @@ async def test_scrape_state_procedure_rules_adds_utah_supplement(
                     "statute_id": "Utah R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "General provisions",
-                    "full_text": "Rule 1. General provisions. These rules govern the procedure in the courts of the state of Utah." + (" x" * 120),
+                    "full_text": "Rule 1. General provisions. These rules govern the procedure in the courts of the state of Utah."
+                    + (" x" * 120),
                     "source_url": "https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=1#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3599,7 +3676,8 @@ async def test_scrape_state_procedure_rules_adds_utah_supplement(
                             "name": "General provisions",
                             "sectionNumber": "1",
                             "sectionName": "General provisions",
-                            "text": "Rule 1. General provisions. These rules govern the procedure in the courts of the state of Utah." + (" x" * 120),
+                            "text": "Rule 1. General provisions. These rules govern the procedure in the courts of the state of Utah."
+                            + (" x" * 120),
                             "sourceUrl": "https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=1#rule-1",
                         }
                     },
@@ -3679,7 +3757,8 @@ async def test_scrape_state_procedure_rules_adds_new_mexico_supplement(
                     "statute_id": "Rule 1-001 NMRA",
                     "section_number": "1-001",
                     "section_name": "Scope of rules; definitions",
-                    "full_text": "1-001. Scope of rules; definitions. These rules govern the procedure in the district courts of New Mexico." + (" x" * 120),
+                    "full_text": "1-001. Scope of rules; definitions. These rules govern the procedure in the district courts of New Mexico."
+                    + (" x" * 120),
                     "source_url": "https://www.nmonesource.com/nmos/nmra/en/5687/1/document.do#rule-1-001",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3689,7 +3768,8 @@ async def test_scrape_state_procedure_rules_adds_new_mexico_supplement(
                             "name": "Scope of rules; definitions",
                             "sectionNumber": "1-001",
                             "sectionName": "Scope of rules; definitions",
-                            "text": "1-001. Scope of rules; definitions. These rules govern the procedure in the district courts of New Mexico." + (" x" * 120),
+                            "text": "1-001. Scope of rules; definitions. These rules govern the procedure in the district courts of New Mexico."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.nmonesource.com/nmos/nmra/en/5687/1/document.do#rule-1-001",
                         }
                     },
@@ -3769,7 +3849,8 @@ async def test_scrape_state_procedure_rules_adds_west_virginia_supplement(
                     "statute_id": "W. Va. R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope and purpose",
-                    "full_text": "Rule 1. Scope and purpose. These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record." + (" x" * 120),
+                    "full_text": "Rule 1. Scope and purpose. These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record."
+                    + (" x" * 120),
                     "source_url": "https://www.courtswv.gov/sites/default/pubfilesmnt/2025-04/RCP%20Final%204-28-2025.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3779,7 +3860,8 @@ async def test_scrape_state_procedure_rules_adds_west_virginia_supplement(
                             "name": "Scope and purpose",
                             "sectionNumber": "1",
                             "sectionName": "Scope and purpose",
-                            "text": "Rule 1. Scope and purpose. These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record." + (" x" * 120),
+                            "text": "Rule 1. Scope and purpose. These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.courtswv.gov/sites/default/pubfilesmnt/2025-04/RCP%20Final%204-28-2025.pdf#rule-1",
                         }
                     },
@@ -3859,7 +3941,8 @@ async def test_scrape_state_procedure_rules_adds_north_dakota_supplement(
                     "statute_id": "N.D.R.Civ.P. 1",
                     "section_number": "1",
                     "section_name": "Scope and Purpose of Rules",
-                    "full_text": "Rule 1. Scope and Purpose of Rules. These rules govern the procedure in all civil actions and proceedings in district court." + (" x" * 120),
+                    "full_text": "Rule 1. Scope and Purpose of Rules. These rules govern the procedure in all civil actions and proceedings in district court."
+                    + (" x" * 120),
                     "source_url": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp/1#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3869,7 +3952,8 @@ async def test_scrape_state_procedure_rules_adds_north_dakota_supplement(
                             "name": "Scope and Purpose of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope and Purpose of Rules",
-                            "text": "Rule 1. Scope and Purpose of Rules. These rules govern the procedure in all civil actions and proceedings in district court." + (" x" * 120),
+                            "text": "Rule 1. Scope and Purpose of Rules. These rules govern the procedure in all civil actions and proceedings in district court."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp/1#rule-1",
                         }
                     },
@@ -3949,7 +4033,8 @@ async def test_scrape_state_procedure_rules_adds_minnesota_supplement(
                     "statute_id": "Minn. R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules",
-                    "full_text": "Rule 1. Scope of Rules. These rules govern the procedure in the district courts of the State of Minnesota." + (" x" * 120),
+                    "full_text": "Rule 1. Scope of Rules. These rules govern the procedure in the district courts of the State of Minnesota."
+                    + (" x" * 120),
                     "source_url": "https://www.revisor.mn.gov/court_rules/cp/id/1/#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -3959,7 +4044,8 @@ async def test_scrape_state_procedure_rules_adds_minnesota_supplement(
                             "name": "Scope of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules",
-                            "text": "Rule 1. Scope of Rules. These rules govern the procedure in the district courts of the State of Minnesota." + (" x" * 120),
+                            "text": "Rule 1. Scope of Rules. These rules govern the procedure in the district courts of the State of Minnesota."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.revisor.mn.gov/court_rules/cp/id/1/#rule-1",
                         }
                     },
@@ -4039,7 +4125,8 @@ async def test_scrape_state_procedure_rules_adds_iowa_supplement(
                     "statute_id": "Iowa R. Civ. P. 1.101",
                     "section_number": "1.101",
                     "section_name": "Applicability; statutes affected",
-                    "full_text": "Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state." + (" x" * 120),
+                    "full_text": "Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state."
+                    + (" x" * 120),
                     "source_url": "https://www.legis.iowa.gov/docs/ACO/CR/LINC/02-27-2026.chapter.1.pdf#rule-1.101",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4049,7 +4136,8 @@ async def test_scrape_state_procedure_rules_adds_iowa_supplement(
                             "name": "Applicability; statutes affected",
                             "sectionNumber": "1.101",
                             "sectionName": "Applicability; statutes affected",
-                            "text": "Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state." + (" x" * 120),
+                            "text": "Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.legis.iowa.gov/docs/ACO/CR/LINC/02-27-2026.chapter.1.pdf#rule-1.101",
                         }
                     },
@@ -4139,7 +4227,8 @@ async def test_scrape_state_procedure_rules_adds_arkansas_supplement(
                     "statute_id": "Ark. R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules",
-                    "full_text": "Rule 1. Scope of Rules. These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature." + (" x" * 120),
+                    "full_text": "Rule 1. Scope of Rules. These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature."
+                    + (" x" * 120),
                     "source_url": "https://opinions.arcourts.gov/ark/cr/en/16712/1/document.do#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4149,7 +4238,8 @@ async def test_scrape_state_procedure_rules_adds_arkansas_supplement(
                             "name": "Scope of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules",
-                            "text": "Rule 1. Scope of Rules. These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature." + (" x" * 120),
+                            "text": "Rule 1. Scope of Rules. These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature."
+                            + (" x" * 120),
                             "sourceUrl": "https://opinions.arcourts.gov/ark/cr/en/16712/1/document.do#rule-1",
                         }
                     },
@@ -4229,7 +4319,8 @@ async def test_scrape_state_procedure_rules_adds_alabama_supplement(
                     "statute_id": "Ala. R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules",
-                    "full_text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction." + (" x" * 120),
+                    "full_text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction."
+                    + (" x" * 120),
                     "source_url": "https://judicial.alabama.gov/docs/library/rules/cv1.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4239,7 +4330,8 @@ async def test_scrape_state_procedure_rules_adds_alabama_supplement(
                             "name": "Scope of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules",
-                            "text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction." + (" x" * 120),
+                            "text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction."
+                            + (" x" * 120),
                             "sourceUrl": "https://judicial.alabama.gov/docs/library/rules/cv1.pdf#rule-1",
                         }
                     },
@@ -4319,7 +4411,8 @@ async def test_scrape_state_procedure_rules_adds_tennessee_supplement(
                     "statute_id": "Tenn. R. Civ. P. 1",
                     "section_number": "1",
                     "section_name": "Scope of Rules",
-                    "full_text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit or chancery courts in all civil actions." + (" x" * 120),
+                    "full_text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit or chancery courts in all civil actions."
+                    + (" x" * 120),
                     "source_url": "https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4329,7 +4422,8 @@ async def test_scrape_state_procedure_rules_adds_tennessee_supplement(
                             "name": "Scope of Rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of Rules",
-                            "text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit or chancery courts in all civil actions." + (" x" * 120),
+                            "text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit or chancery courts in all civil actions."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules#rule-1",
                         }
                     },
@@ -4409,7 +4503,8 @@ async def test_scrape_state_procedure_rules_adds_virginia_supplement(
                     "statute_id": "Va. Sup. Ct. R. 3:1",
                     "section_number": "3:1",
                     "section_name": "Scope",
-                    "full_text": "Rule 3:1. Scope. There is one form of civil case, known as a civil action." + (" x" * 120),
+                    "full_text": "Rule 3:1. Scope. There is one form of civil case, known as a civil action."
+                    + (" x" * 120),
                     "source_url": "https://www.vacourts.gov/courts/scv/rulesofcourt.pdf#page=182",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4419,7 +4514,8 @@ async def test_scrape_state_procedure_rules_adds_virginia_supplement(
                             "name": "Scope",
                             "sectionNumber": "3:1",
                             "sectionName": "Scope",
-                            "text": "Rule 3:1. Scope. There is one form of civil case, known as a civil action." + (" x" * 120),
+                            "text": "Rule 3:1. Scope. There is one form of civil case, known as a civil action."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.vacourts.gov/courts/scv/rulesofcourt.pdf#page=182",
                         }
                     },
@@ -4499,7 +4595,8 @@ async def test_scrape_state_procedure_rules_adds_indiana_supplement(
                     "statute_id": "Ind. Trial Rule 1",
                     "section_number": "1",
                     "section_name": "Scope of the rules",
-                    "full_text": "Rule 1. Scope of the rules. These rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature." + (" x" * 120),
+                    "full_text": "Rule 1. Scope of the rules. These rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature."
+                    + (" x" * 120),
                     "source_url": "https://rules.incourts.gov/Content/trial/rule1/current.htm#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4509,7 +4606,8 @@ async def test_scrape_state_procedure_rules_adds_indiana_supplement(
                             "name": "Scope of the rules",
                             "sectionNumber": "1",
                             "sectionName": "Scope of the rules",
-                            "text": "Rule 1. Scope of the rules. These rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature." + (" x" * 120),
+                            "text": "Rule 1. Scope of the rules. These rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature."
+                            + (" x" * 120),
                             "sourceUrl": "https://rules.incourts.gov/Content/trial/rule1/current.htm#rule-1",
                         }
                     },
@@ -4589,7 +4687,8 @@ async def test_scrape_state_procedure_rules_adds_illinois_supplement(
                     "statute_id": "Ill. S. Ct. R. 101",
                     "section_number": "101",
                     "section_name": "Summons and Original Process--Form and Issuance",
-                    "full_text": "Rule 101. Summons and Original Process--Form and Issuance. The summons shall be issued under the seal of the court." + (" x" * 120),
+                    "full_text": "Rule 101. Summons and Original Process--Form and Issuance. The summons shall be issued under the seal of the court."
+                    + (" x" * 120),
                     "source_url": "https://www.illinoiscourts.gov/resources/abc/file#rule-101",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -4599,7 +4698,8 @@ async def test_scrape_state_procedure_rules_adds_illinois_supplement(
                             "name": "Summons and Original Process--Form and Issuance",
                             "sectionNumber": "101",
                             "sectionName": "Summons and Original Process--Form and Issuance",
-                            "text": "Rule 101. Summons and Original Process--Form and Issuance. The summons shall be issued under the seal of the court." + (" x" * 120),
+                            "text": "Rule 101. Summons and Original Process--Form and Issuance. The summons shall be issued under the seal of the court."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.illinoiscourts.gov/resources/abc/file#rule-101",
                         }
                     },
@@ -4679,7 +4779,8 @@ async def test_scrape_state_procedure_rules_adds_georgia_supplement(
                     "statute_id": "Ga. Unif. Super. Ct. R. 1",
                     "section_number": "1",
                     "section_name": "PREAMBLE",
-                    "full_text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions." + (" x" * 120),
+                    "full_text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions."
+                    + (" x" * 120),
                     "source_url": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1",
                     "procedure_family": "civil_and_criminal_procedure",
                     "structured_data": {
@@ -4689,7 +4790,8 @@ async def test_scrape_state_procedure_rules_adds_georgia_supplement(
                             "identifier": "GA-uscr-1",
                             "name": "PREAMBLE",
                             "sectionNumber": "1",
-                            "text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions." + (" x" * 120),
+                            "text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1",
                         },
                     },
@@ -4770,7 +4872,8 @@ async def test_scrape_state_procedure_rules_adds_pennsylvania_supplement(
                     "statute_id": "Pa.R.Crim.P. 100",
                     "section_number": "100",
                     "section_name": "Scope of Rules",
-                    "full_text": "Rule 100. Scope of Rules. These rules shall govern criminal proceedings in all courts." + (" x" * 120),
+                    "full_text": "Rule 100. Scope of Rules. These rules shall govern criminal proceedings in all courts."
+                    + (" x" * 120),
                     "source_url": "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/234/chapter1/chap1toc.html&d=reduce#rule-100",
                     "procedure_family": "criminal_procedure",
                     "structured_data": {
@@ -4780,7 +4883,8 @@ async def test_scrape_state_procedure_rules_adds_pennsylvania_supplement(
                             "identifier": "PA-crim-100",
                             "name": "Scope of Rules",
                             "sectionNumber": "100",
-                            "text": "Rule 100. Scope of Rules. These rules shall govern criminal proceedings in all courts." + (" x" * 120),
+                            "text": "Rule 100. Scope of Rules. These rules shall govern criminal proceedings in all courts."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/234/chapter1/chap1toc.html&d=reduce#rule-100",
                         },
                     },
@@ -4825,7 +4929,9 @@ async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_replacem
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def _unexpected_scrape_state_laws(**_kwargs):
-        raise AssertionError("base scrape_state_laws should be skipped for bounded GA supplement runs")
+        raise AssertionError(
+            "base scrape_state_laws should be skipped for bounded GA supplement runs"
+        )
 
     async def _fake_ga_supplement(*, existing_source_urls=None, max_rules=None):
         assert existing_source_urls == set()
@@ -4838,7 +4944,8 @@ async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_replacem
                     "statute_id": "Ga. Unif. Super. Ct. R. 1",
                     "section_number": "1",
                     "section_name": "PREAMBLE",
-                    "full_text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions." + (" x" * 120),
+                    "full_text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions."
+                    + (" x" * 120),
                     "source_url": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1",
                     "procedure_family": "civil_and_criminal_procedure",
                     "structured_data": {"procedure_family": "civil_and_criminal_procedure"},
@@ -4883,7 +4990,9 @@ async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_replacem
     assert result["status"] == "success"
     assert result["metadata"]["rules_count"] == 2
     assert result["metadata"]["base_status"] == "success"
-    assert result["metadata"]["base_metadata"]["base_laws_skipped_for_replacement_supplements"] is True
+    assert (
+        result["metadata"]["base_metadata"]["base_laws_skipped_for_replacement_supplements"] is True
+    )
     assert result["metadata"]["fetch_analytics_by_state"]["GA"]["attempted"] == 2
     assert result["data"][0]["statutes"][0]["section_number"] == "1"
 
@@ -4929,7 +5038,8 @@ async def test_scrape_state_procedure_rules_adds_louisiana_supplement(
                     "statute_id": "La. Sup. Ct. R. X",
                     "section_number": "X",
                     "section_name": "WRIT APPLICATIONS",
-                    "full_text": "Rule X. WRIT APPLICATIONS. The grant or denial of an application for writs rests within the sound judicial discretion of this Court." + (" x" * 120),
+                    "full_text": "Rule X. WRIT APPLICATIONS. The grant or denial of an application for writs rests within the sound judicial discretion of this Court."
+                    + (" x" * 120),
                     "source_url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleX#rule-X",
                     "procedure_family": "civil_and_criminal_procedure",
                     "structured_data": {
@@ -4939,7 +5049,8 @@ async def test_scrape_state_procedure_rules_adds_louisiana_supplement(
                             "identifier": "LA-sc-x",
                             "name": "WRIT APPLICATIONS",
                             "sectionNumber": "X",
-                            "text": "Rule X. WRIT APPLICATIONS. The grant or denial of an application for writs rests within the sound judicial discretion of this Court." + (" x" * 120),
+                            "text": "Rule X. WRIT APPLICATIONS. The grant or denial of an application for writs rests within the sound judicial discretion of this Court."
+                            + (" x" * 120),
                             "sourceUrl": "https://www.lasc.org/Supreme_Court_Rules?p=RuleX#rule-X",
                         },
                     },
@@ -4984,7 +5095,9 @@ async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_louisian
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def _unexpected_scrape_state_laws(**_kwargs):
-        raise AssertionError("base scrape_state_laws should be skipped for bounded LA supplement runs")
+        raise AssertionError(
+            "base scrape_state_laws should be skipped for bounded LA supplement runs"
+        )
 
     async def _fake_la_supplement(*, existing_source_urls=None, max_rules=None):
         assert existing_source_urls == set()
@@ -4997,7 +5110,8 @@ async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_louisian
                     "statute_id": "La. Sup. Ct. R. I",
                     "section_number": "I",
                     "section_name": "GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS",
-                    "full_text": "Rule I. GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS." + (" x" * 120),
+                    "full_text": "Rule I. GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS."
+                    + (" x" * 120),
                     "source_url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleI",
                     "procedure_family": "civil_and_criminal_procedure",
                     "structured_data": {"procedure_family": "civil_and_criminal_procedure"},
@@ -5031,13 +5145,17 @@ async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_louisian
     assert result["status"] == "success"
     assert result["metadata"]["rules_count"] == 1
     assert result["metadata"]["base_status"] == "success"
-    assert result["metadata"]["base_metadata"]["base_laws_skipped_for_replacement_supplements"] is True
+    assert (
+        result["metadata"]["base_metadata"]["base_laws_skipped_for_replacement_supplements"] is True
+    )
     assert result["metadata"]["fetch_analytics_by_state"]["LA"]["attempted"] == 1
     assert result["data"][0]["statutes"][0]["section_number"] == "I"
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_ohio_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_ohio_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -5075,7 +5193,8 @@ async def test_scrape_state_procedure_rules_adds_ohio_supplement(monkeypatch: py
                     "statute_id": "Ohio Rules of Civil Procedure Rule 1",
                     "section_number": "1",
                     "section_name": "Scope of rules: applicability; construction; exceptions",
-                    "full_text": "RULE 1. Scope of rules: applicability; construction; exceptions " + ("x " * 140),
+                    "full_text": "RULE 1. Scope of rules: applicability; construction; exceptions "
+                    + ("x " * 140),
                     "source_url": "https://www.supremecourt.ohio.gov/docs/LegalResources/Rules/civil/CivilProcedure.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -5085,7 +5204,8 @@ async def test_scrape_state_procedure_rules_adds_ohio_supplement(monkeypatch: py
                             "name": "Scope of rules: applicability; construction; exceptions",
                             "sectionNumber": "1",
                             "sectionName": "Scope of rules: applicability; construction; exceptions",
-                            "text": "RULE 1. Scope of rules: applicability; construction; exceptions " + ("x " * 140),
+                            "text": "RULE 1. Scope of rules: applicability; construction; exceptions "
+                            + ("x " * 140),
                             "sourceUrl": "https://www.supremecourt.ohio.gov/docs/LegalResources/Rules/civil/CivilProcedure.pdf#rule-1",
                         }
                     },
@@ -5125,7 +5245,9 @@ async def test_scrape_state_procedure_rules_adds_ohio_supplement(monkeypatch: py
 
 
 @pytest.mark.anyio
-async def test_scrape_state_procedure_rules_adds_arizona_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_scrape_state_procedure_rules_adds_arizona_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {
             "status": "partial_success",
@@ -5163,7 +5285,8 @@ async def test_scrape_state_procedure_rules_adds_arizona_supplement(monkeypatch:
                     "statute_id": "Arizona Rules of Civil Procedure Rule 1",
                     "section_number": "1",
                     "section_name": "Scope and Purpose",
-                    "full_text": "Rule 1. Scope and Purpose. These rules govern the procedure in all civil actions and proceedings in the superior court of Arizona." + (" x" * 100),
+                    "full_text": "Rule 1. Scope and Purpose. These rules govern the procedure in all civil actions and proceedings in the superior court of Arizona."
+                    + (" x" * 100),
                     "source_url": "https://www.azcourts.gov/example/arcp.pdf#rule-1",
                     "procedure_family": "civil_procedure",
                     "structured_data": {
@@ -5173,7 +5296,8 @@ async def test_scrape_state_procedure_rules_adds_arizona_supplement(monkeypatch:
                             "name": "Scope and Purpose",
                             "sectionNumber": "1",
                             "sectionName": "Scope and Purpose",
-                            "text": "Rule 1. Scope and Purpose. These rules govern the procedure in all civil actions and proceedings in the superior court of Arizona." + (" x" * 100),
+                            "text": "Rule 1. Scope and Purpose. These rules govern the procedure in all civil actions and proceedings in the superior court of Arizona."
+                            + (" x" * 100),
                             "sourceUrl": "https://www.azcourts.gov/example/arcp.pdf#rule-1",
                         }
                     },

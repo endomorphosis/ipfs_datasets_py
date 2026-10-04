@@ -93,9 +93,7 @@ def _mutations(family: str = "deontic") -> dict:
     }
 
 
-def _attribution(
-    family: str = "deontic", *, improvement: float = 0.04
-) -> dict:
+def _attribution(family: str = "deontic", *, improvement: float = 0.04) -> dict:
     return {
         family: {
             "attribution_id": f"{family}-heldout-attribution",
@@ -152,9 +150,7 @@ def test_distills_all_stable_pattern_kinds_into_deterministic_bounded_rule() -> 
     assert payload["mutation_evidence"][0]["passed"] is True
     assert payload["owned_paths"]
     assert all(path.startswith("ipfs_datasets_py/") for path in payload["owned_paths"])
-    assert payload["rollback_metadata"]["restore_mode"] == (
-        "candidate_registry_snapshot"
-    )
+    assert payload["rollback_metadata"]["restore_mode"] == ("candidate_registry_snapshot")
     assert payload["rollback_metadata"]["previous_distillation_id"] == (
         "lir-rule-distillation-previous"
     )
@@ -182,9 +178,7 @@ def test_decompiler_patterns_resolve_only_to_decompiler_owned_paths() -> None:
     assert candidate.target_component == "modal.ir_decompiler"
     assert candidate.owned_paths
     contract = legal_ir_view_contract("modal.ir_decompiler")
-    canonical_paths = {
-        path for lane in contract.repair_lanes for path in lane.allowed_paths
-    }
+    canonical_paths = {path for lane in contract.repair_lanes for path in lane.allowed_paths}
     assert set(candidate.owned_paths) <= canonical_paths
 
 

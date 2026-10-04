@@ -5,6 +5,7 @@ Improved MCP Tools Test Suite
 This script provides comprehensive testing for all MCP tools with proper
 async handling and correct mocking based on actual implementations.
 """
+
 import os
 import sys
 import json
@@ -28,6 +29,7 @@ logger = logging.getLogger("improved_mcp_test")
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
+
 class AsyncTestCase(unittest.TestCase):
     """Base test case that supports async test methods."""
 
@@ -41,6 +43,7 @@ class AsyncTestCase(unittest.TestCase):
     def async_test(self, coro):
         """Helper to run async test methods."""
         return self.loop.run_until_complete(coro)
+
 
 class BaseToolTester(AsyncTestCase):
     """Base class for MCP tool tests with async support."""
@@ -57,10 +60,11 @@ class BaseToolTester(AsyncTestCase):
             logger.warning(f"Could not import {import_path}: {e}")
             return None
 
+
 class DatasetToolsTest(BaseToolTester):
     """Tests for dataset tools."""
 
-    @patch('datasets.load_dataset')
+    @patch("datasets.load_dataset")
     def test_load_dataset(self, mock_hf_load_dataset):
         """Test load_dataset tool."""
         tool_func = self.get_tool_func("dataset_tools", "load_dataset")
@@ -70,7 +74,10 @@ class DatasetToolsTest(BaseToolTester):
         # Set up mock return value
         mock_dataset = MagicMock()
         mock_info = MagicMock()
-        mock_info.to_dict.return_value = {"dataset_name": "test_dataset", "description": "Test dataset"}
+        mock_info.to_dict.return_value = {
+            "dataset_name": "test_dataset",
+            "description": "Test dataset",
+        }
         mock_dataset.info = mock_info
         mock_dataset.features = {"text": "string"}
         mock_dataset.__len__ = MagicMock(return_value=100)
@@ -95,7 +102,9 @@ class DatasetToolsTest(BaseToolTester):
             # Mock the entire DatasetManager import chain
             mock_dataset = MagicMock()
             mock_dataset.format = "json"
-            mock_dataset.save_async = AsyncMock(return_value={"size": 1024, "location": "/tmp/test.json"})
+            mock_dataset.save_async = AsyncMock(
+                return_value={"size": 1024, "location": "/tmp/test.json"}
+            )
 
             mock_manager = MagicMock()
             mock_manager.get_dataset = MagicMock(return_value=mock_dataset)
@@ -105,7 +114,7 @@ class DatasetToolsTest(BaseToolTester):
             mock_ipfs_datasets_py.DatasetManager = MagicMock(return_value=mock_manager)
 
             # Patch sys.modules to handle the dynamic import
-            with patch.dict('sys.modules', {'ipfs_datasets_py': mock_ipfs_datasets_py}):
+            with patch.dict("sys.modules", {"ipfs_datasets_py": mock_ipfs_datasets_py}):
                 result = await tool_func("test_dataset_id", "/tmp/test.json", format="json")
                 self.assertEqual(result["status"], "success")
 
@@ -137,7 +146,9 @@ class DatasetToolsTest(BaseToolTester):
             mock_dataset.save_async = AsyncMock(return_value={"size": 1024})
 
             # Mock the DistributedDatasetManager from the stub
-            with patch('ipfs_datasets_py.libp2p_kit.DistributedDatasetManager') as mock_manager_class:
+            with patch(
+                "ipfs_datasets_py.libp2p_kit.DistributedDatasetManager"
+            ) as mock_manager_class:
                 mock_manager = MagicMock()
                 mock_manager_class.return_value = mock_manager
 
@@ -150,6 +161,7 @@ class DatasetToolsTest(BaseToolTester):
 
         self.async_test(run_test())
 
+
 class IPFSToolsTest(BaseToolTester):
     """Tests for IPFS tools."""
 
@@ -160,7 +172,7 @@ class IPFSToolsTest(BaseToolTester):
             self.skipTest("pin_to_ipfs tool not found")
 
         async def run_test():
-            with patch('ipfs_datasets_py.ipfs_kit_py.high_level_api.IPFSSimpleAPI') as mock_api:
+            with patch("ipfs_datasets_py.ipfs_kit_py.high_level_api.IPFSSimpleAPI") as mock_api:
                 mock_client = MagicMock()
                 mock_api.return_value = mock_client
                 mock_client.pin_add = MagicMock(return_value={"Pins": ["QmTest123"]})
@@ -170,6 +182,7 @@ class IPFSToolsTest(BaseToolTester):
                 self.assertIn("cid", result)
 
         self.async_test(run_test())
+
 
 class AuditToolsTest(BaseToolTester):
     """Tests for audit tools."""
@@ -185,7 +198,7 @@ class AuditToolsTest(BaseToolTester):
             action="test_action",
             resource_id="test_resource",
             resource_type="dataset",
-            user_id="test_user"
+            user_id="test_user",
         )
         self.assertEqual(result["status"], "success")
 
@@ -199,11 +212,12 @@ class AuditToolsTest(BaseToolTester):
             result = await tool_func(
                 report_type="comprehensive",
                 start_time="2025-01-01T00:00:00Z",
-                end_time="2025-01-31T23:59:59Z"
+                end_time="2025-01-31T23:59:59Z",
             )
             self.assertEqual(result["status"], "success")
 
         self.async_test(run_test())
+
 
 class WebArchiveToolsTest(BaseToolTester):
     """Tests for web archive tools."""
@@ -214,7 +228,7 @@ class WebArchiveToolsTest(BaseToolTester):
         if not tool_func:
             self.skipTest("create_warc tool not found")
 
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_processor:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_processor:
             mock_instance = MagicMock()
             mock_processor.return_value = mock_instance
             mock_instance.create_warc = MagicMock(return_value="/tmp/test.warc")
@@ -228,7 +242,7 @@ class WebArchiveToolsTest(BaseToolTester):
         if not tool_func:
             self.skipTest("index_warc tool not found")
 
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_processor:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_processor:
             mock_instance = MagicMock()
             mock_processor.return_value = mock_instance
             mock_instance.index_warc = MagicMock(return_value="/tmp/test.cdxj")
@@ -242,7 +256,7 @@ class WebArchiveToolsTest(BaseToolTester):
         if not tool_func:
             self.skipTest("extract_dataset_from_cdxj tool not found")
 
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_processor:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_processor:
             mock_instance = MagicMock()
             mock_processor.return_value = mock_instance
             mock_instance.extract_dataset_from_cdxj = MagicMock(return_value={"status": "success"})
@@ -256,10 +270,12 @@ class WebArchiveToolsTest(BaseToolTester):
         if not tool_func:
             self.skipTest("extract_text_from_warc tool not found")
 
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_processor:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_processor:
             mock_instance = MagicMock()
             mock_processor.return_value = mock_instance
-            mock_instance.extract_text_from_warc = MagicMock(return_value=[{"uri": "test", "text": "content"}])
+            mock_instance.extract_text_from_warc = MagicMock(
+                return_value=[{"uri": "test", "text": "content"}]
+            )
 
             result = tool_func("/tmp/test.warc")
             self.assertEqual(result["status"], "success")
@@ -270,10 +286,12 @@ class WebArchiveToolsTest(BaseToolTester):
         if not tool_func:
             self.skipTest("extract_links_from_warc tool not found")
 
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_processor:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_processor:
             mock_instance = MagicMock()
             mock_processor.return_value = mock_instance
-            mock_instance.extract_links_from_warc = MagicMock(return_value=[{"uri": "test", "links": ["http://example.com"]}])
+            mock_instance.extract_links_from_warc = MagicMock(
+                return_value=[{"uri": "test", "links": ["http://example.com"]}]
+            )
 
             result = tool_func("/tmp/test.warc")
             self.assertEqual(result["status"], "success")
@@ -284,13 +302,16 @@ class WebArchiveToolsTest(BaseToolTester):
         if not tool_func:
             self.skipTest("extract_metadata_from_warc tool not found")
 
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_processor:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_processor:
             mock_instance = MagicMock()
             mock_processor.return_value = mock_instance
-            mock_instance.extract_metadata_from_warc = MagicMock(return_value=[{"uri": "test", "metadata": {"title": "Test"}}])
+            mock_instance.extract_metadata_from_warc = MagicMock(
+                return_value=[{"uri": "test", "metadata": {"title": "Test"}}]
+            )
 
             result = tool_func("/tmp/test.warc")
             self.assertEqual(result["status"], "success")
+
 
 class CLIToolsTest(BaseToolTester):
     """Tests for CLI tools."""
@@ -309,6 +330,7 @@ class CLIToolsTest(BaseToolTester):
 
         self.async_test(run_test())
 
+
 class FunctionToolsTest(BaseToolTester):
     """Tests for function tools."""
 
@@ -321,6 +343,7 @@ class FunctionToolsTest(BaseToolTester):
         # This is likely a sync function that returns a dict directly
         result = tool_func("x = 2 + 2\nprint(x)")
         self.assertEqual(result["status"], "success")
+
 
 class SecurityToolsTest(BaseToolTester):
     """Tests for security tools."""
@@ -336,12 +359,13 @@ class SecurityToolsTest(BaseToolTester):
                 resource_id="test_resource_123",
                 user_id="test_user_456",
                 permission_type="read",
-                resource_type="dataset"
+                resource_type="dataset",
             )
             self.assertEqual(result["status"], "success")
             self.assertIn("allowed", result)
 
         self.async_test(run_test())
+
 
 class IPFSToolsExtendedTest(BaseToolTester):
     """Tests for additional IPFS tools."""
@@ -354,12 +378,13 @@ class IPFSToolsExtendedTest(BaseToolTester):
 
         async def run_test():
             # Mock the ipfs_kit_py import and the configs
-            with patch('ipfs_datasets_py.ipfs_kit_py') as mock_ipfs_kit, \
-                 patch('ipfs_datasets_py.configs') as mock_configs, \
-                 patch('os.path.exists', return_value=True), \
-                 patch('os.path.getsize', return_value=1024), \
-                 patch('os.path.isfile', return_value=True):
-
+            with (
+                patch("ipfs_datasets_py.ipfs_kit_py") as mock_ipfs_kit,
+                patch("ipfs_datasets_py.configs") as mock_configs,
+                patch("os.path.exists", return_value=True),
+                patch("os.path.getsize", return_value=1024),
+                patch("os.path.isfile", return_value=True),
+            ):
                 mock_configs.ipfs_kit_integration = "direct"
                 mock_ipfs_kit.get_async = AsyncMock()
 
@@ -368,6 +393,7 @@ class IPFSToolsExtendedTest(BaseToolTester):
                 self.assertIn("output_path", result)
 
         self.async_test(run_test())
+
 
 class VectorToolsTest(BaseToolTester):
     """Tests for vector tools."""
@@ -381,10 +407,7 @@ class VectorToolsTest(BaseToolTester):
         async def run_test():
             vectors = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
             result = await tool_func(
-                vectors=vectors,
-                dimension=3,
-                metric="cosine",
-                index_name="test_index"
+                vectors=vectors, dimension=3, metric="cosine", index_name="test_index"
             )
             self.assertEqual(result["status"], "success")
             self.assertIn("index_id", result)
@@ -399,15 +422,12 @@ class VectorToolsTest(BaseToolTester):
 
         async def run_test():
             query_vector = [0.1, 0.2, 0.3]
-            result = await tool_func(
-                index_id="test_index_123",
-                query_vector=query_vector,
-                k=5
-            )
+            result = await tool_func(index_id="test_index_123", query_vector=query_vector, k=5)
             self.assertEqual(result["status"], "success")
             self.assertIn("results", result)
 
         self.async_test(run_test())
+
 
 class GraphToolsTest(BaseToolTester):
     """Tests for graph tools."""
@@ -420,14 +440,13 @@ class GraphToolsTest(BaseToolTester):
 
         async def run_test():
             result = await tool_func(
-                graph_id="test_graph_123",
-                query="MATCH (n) RETURN n LIMIT 10",
-                query_type="cypher"
+                graph_id="test_graph_123", query="MATCH (n) RETURN n LIMIT 10", query_type="cypher"
             )
             self.assertEqual(result["status"], "success")
             self.assertIn("results", result)
 
         self.async_test(run_test())
+
 
 class ProvenanceToolsTest(BaseToolTester):
     """Tests for provenance tools."""
@@ -444,16 +463,15 @@ class ProvenanceToolsTest(BaseToolTester):
                 "entity_type": "dataset",
                 "source_id": "source_456",
                 "transformation": "filter_operation",
-                "timestamp": "2025-05-24T16:00:00Z"
+                "timestamp": "2025-05-24T16:00:00Z",
             }
             result = await tool_func(
-                entity_id="dataset_123",
-                entity_type="dataset",
-                provenance_data=provenance_data
+                entity_id="dataset_123", entity_type="dataset", provenance_data=provenance_data
             )
             self.assertEqual(result["status"], "success")
 
         self.async_test(run_test())
+
 
 def discover_and_test_missing_tools():
     """
@@ -503,6 +521,7 @@ def discover_and_test_missing_tools():
 
     return missing_tests
 
+
 def generate_missing_tests(missing_tools):
     """Generate basic test templates for missing tools."""
     test_templates = []
@@ -539,6 +558,7 @@ def generate_missing_tests(missing_tools):
         test_templates.append((category, tool_name, template))
 
     return test_templates
+
 
 def run_comprehensive_tests():
     """Run all tests and generate reports."""
@@ -590,11 +610,13 @@ def run_comprehensive_tests():
         "tests_run": result.testsRun,
         "failures": len(result.failures),
         "errors": len(result.errors),
-        "skipped": len(result.skipped) if hasattr(result, 'skipped') else 0,
-        "success_rate": (result.testsRun - len(result.failures) - len(result.errors)) / max(result.testsRun, 1) * 100,
+        "skipped": len(result.skipped) if hasattr(result, "skipped") else 0,
+        "success_rate": (result.testsRun - len(result.failures) - len(result.errors))
+        / max(result.testsRun, 1)
+        * 100,
         "missing_tools": missing_tools,
         "failure_details": [{"test": str(test), "error": error} for test, error in result.failures],
-        "error_details": [{"test": str(test), "error": error} for test, error in result.errors]
+        "error_details": [{"test": str(test), "error": error} for test, error in result.errors],
     }
 
     with open("mcp_tools_test_report.json", "w") as f:
@@ -604,6 +626,7 @@ def run_comprehensive_tests():
     logger.info(f"Success rate: {report['success_rate']:.1f}%")
 
     return result
+
 
 if __name__ == "__main__":
     run_comprehensive_tests()

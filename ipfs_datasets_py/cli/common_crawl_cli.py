@@ -11,7 +11,7 @@ from typing import Optional
 def handle_common_crawl_command(args):
     """
     Handle common-crawl CLI commands.
-    
+
     Commands:
         common-crawl search <domain> [options]
         common-crawl collections [options]
@@ -22,20 +22,20 @@ def handle_common_crawl_command(args):
     if len(args) < 2:
         print_common_crawl_help()
         return
-    
+
     subcommand = args[1]
-    
-    if subcommand == 'search':
+
+    if subcommand == "search":
         handle_search_command(args[2:])
-    elif subcommand == 'collections' or subcommand == 'list':
+    elif subcommand == "collections" or subcommand == "list":
         handle_collections_command(args[2:])
-    elif subcommand == 'fetch':
+    elif subcommand == "fetch":
         handle_fetch_command(args[2:])
-    elif subcommand == 'info':
+    elif subcommand == "info":
         handle_info_command(args[2:])
-    elif subcommand == 'config':
+    elif subcommand == "config":
         handle_config_command(args[2:])
-    elif subcommand in ['help', '--help', '-h']:
+    elif subcommand in ["help", "--help", "-h"]:
         print_common_crawl_help()
     else:
         print(f"Error: Unknown subcommand '{subcommand}'")
@@ -47,54 +47,60 @@ def handle_search_command(args):
     """Handle 'common-crawl search' command."""
     if len(args) < 1:
         print("Error: domain required")
-        print("Usage: ipfs-datasets common-crawl search <domain> [--max-matches N] [--collection NAME] [--mode local|remote|cli] [--endpoint URL] [--json]")
+        print(
+            "Usage: ipfs-datasets common-crawl search <domain> [--max-matches N] [--collection NAME] [--mode local|remote|cli] [--endpoint URL] [--json]"
+        )
         sys.exit(1)
-    
+
     domain = args[0]
     max_matches = 100
     collection = None
     mode = "local"
     endpoint = None
     json_output = False
-    
+
     # Parse options
     i = 1
     while i < len(args):
-        if args[i] in ['--max-matches', '-n'] and i + 1 < len(args):
+        if args[i] in ["--max-matches", "-n"] and i + 1 < len(args):
             max_matches = int(args[i + 1])
             i += 2
-        elif args[i] in ['--collection', '-c'] and i + 1 < len(args):
+        elif args[i] in ["--collection", "-c"] and i + 1 < len(args):
             collection = args[i + 1]
             i += 2
-        elif args[i] in ['--mode', '-m'] and i + 1 < len(args):
+        elif args[i] in ["--mode", "-m"] and i + 1 < len(args):
             mode = args[i + 1]
             i += 2
-        elif args[i] in ['--endpoint', '-e'] and i + 1 < len(args):
+        elif args[i] in ["--endpoint", "-e"] and i + 1 < len(args):
             endpoint = args[i + 1]
             i += 2
-        elif args[i] == '--json':
+        elif args[i] == "--json":
             json_output = True
             i += 1
         else:
             i += 1
-    
+
     # Execute search
     try:
         from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
-        
+
         # Initialize engine based on mode
         engine_kwargs = {"mode": mode}
         if endpoint:
             engine_kwargs["mcp_endpoint"] = endpoint
-        
+
         engine = CommonCrawlSearchEngine(**engine_kwargs)
-        
+
         if not engine.is_available():
             if json_output:
-                print(json.dumps({
-                    "status": "error",
-                    "error": f"Common Crawl Search Engine not available in {mode} mode"
-                }))
+                print(
+                    json.dumps(
+                        {
+                            "status": "error",
+                            "error": f"Common Crawl Search Engine not available in {mode} mode",
+                        }
+                    )
+                )
             else:
                 print(f"Error: Common Crawl Search Engine not available in {mode} mode")
                 if mode == "local":
@@ -102,20 +108,25 @@ def handle_search_command(args):
                 elif mode == "remote":
                     print(f"Hint: Ensure MCP server is running at: {endpoint}")
             sys.exit(1)
-        
+
         # Perform search
         results = engine.search_domain(domain, max_matches=max_matches, collection=collection)
-        
+
         if json_output:
-            print(json.dumps({
-                "status": "success",
-                "domain": domain,
-                "max_matches": max_matches,
-                "collection": collection,
-                "mode": mode,
-                "count": len(results),
-                "results": results
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "success",
+                        "domain": domain,
+                        "max_matches": max_matches,
+                        "collection": collection,
+                        "mode": mode,
+                        "count": len(results),
+                        "results": results,
+                    },
+                    indent=2,
+                )
+            )
         else:
             print(f"Search results for domain: {domain}")
             print(f"Mode: {mode}")
@@ -123,17 +134,17 @@ def handle_search_command(args):
                 print(f"Collection: {collection}")
             print(f"Found {len(results)} results")
             print()
-            
+
             for i, result in enumerate(results[:10], 1):  # Show first 10
                 print(f"{i}. {result.get('url', 'N/A')}")
                 print(f"   Timestamp: {result.get('timestamp', 'N/A')}")
                 print(f"   WARC: {result.get('warc_filename', 'N/A')}")
                 print()
-            
+
             if len(results) > 10:
                 print(f"... and {len(results) - 10} more results")
                 print("Tip: Use --json flag to get all results in JSON format")
-    
+
     except Exception as e:
         if json_output:
             print(json.dumps({"status": "error", "error": str(e)}))
@@ -147,52 +158,57 @@ def handle_collections_command(args):
     mode = "local"
     endpoint = None
     json_output = False
-    
+
     # Parse options
     i = 0
     while i < len(args):
-        if args[i] in ['--mode', '-m'] and i + 1 < len(args):
+        if args[i] in ["--mode", "-m"] and i + 1 < len(args):
             mode = args[i + 1]
             i += 2
-        elif args[i] in ['--endpoint', '-e'] and i + 1 < len(args):
+        elif args[i] in ["--endpoint", "-e"] and i + 1 < len(args):
             endpoint = args[i + 1]
             i += 2
-        elif args[i] == '--json':
+        elif args[i] == "--json":
             json_output = True
             i += 1
         else:
             i += 1
-    
+
     try:
         from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
-        
+
         engine_kwargs = {"mode": mode}
         if endpoint:
             engine_kwargs["mcp_endpoint"] = endpoint
-        
+
         engine = CommonCrawlSearchEngine(**engine_kwargs)
-        
+
         if not engine.is_available():
             if json_output:
                 print(json.dumps({"status": "error", "error": "Engine not available"}))
             else:
                 print("Error: Engine not available")
             sys.exit(1)
-        
+
         collections = engine.list_collections()
-        
+
         if json_output:
-            print(json.dumps({
-                "status": "success",
-                "mode": mode,
-                "count": len(collections),
-                "collections": collections
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "success",
+                        "mode": mode,
+                        "count": len(collections),
+                        "collections": collections,
+                    },
+                    indent=2,
+                )
+            )
         else:
             print(f"Available Common Crawl Collections ({len(collections)}):")
             for coll in collections:
                 print(f"  - {coll}")
-    
+
     except Exception as e:
         if json_output:
             print(json.dumps({"status": "error", "error": str(e)}))
@@ -205,64 +221,71 @@ def handle_fetch_command(args):
     """Handle 'common-crawl fetch' command."""
     if len(args) < 3:
         print("Error: warc-filename, offset, and length required")
-        print("Usage: ipfs-datasets common-crawl fetch <warc-file> <offset> <length> [--mode local|remote|cli] [--endpoint URL] [--json]")
+        print(
+            "Usage: ipfs-datasets common-crawl fetch <warc-file> <offset> <length> [--mode local|remote|cli] [--endpoint URL] [--json]"
+        )
         sys.exit(1)
-    
+
     warc_filename = args[0]
     warc_offset = int(args[1])
     warc_length = int(args[2])
     mode = "local"
     endpoint = None
     json_output = False
-    
+
     # Parse options
     i = 3
     while i < len(args):
-        if args[i] in ['--mode', '-m'] and i + 1 < len(args):
+        if args[i] in ["--mode", "-m"] and i + 1 < len(args):
             mode = args[i + 1]
             i += 2
-        elif args[i] in ['--endpoint', '-e'] and i + 1 < len(args):
+        elif args[i] in ["--endpoint", "-e"] and i + 1 < len(args):
             endpoint = args[i + 1]
             i += 2
-        elif args[i] == '--json':
+        elif args[i] == "--json":
             json_output = True
             i += 1
         else:
             i += 1
-    
+
     try:
         from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
-        
+
         engine_kwargs = {"mode": mode}
         if endpoint:
             engine_kwargs["mcp_endpoint"] = endpoint
-        
+
         engine = CommonCrawlSearchEngine(**engine_kwargs)
-        
+
         if not engine.is_available():
             if json_output:
                 print(json.dumps({"status": "error", "error": "Engine not available"}))
             else:
                 print("Error: Engine not available")
             sys.exit(1)
-        
+
         content = engine.fetch_warc_record(warc_filename, warc_offset, warc_length)
-        
+
         if json_output:
-            print(json.dumps({
-                "status": "success",
-                "warc_filename": warc_filename,
-                "warc_offset": warc_offset,
-                "warc_length": warc_length,
-                "content_length": len(content)
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "success",
+                        "warc_filename": warc_filename,
+                        "warc_offset": warc_offset,
+                        "warc_length": warc_length,
+                        "content_length": len(content),
+                    },
+                    indent=2,
+                )
+            )
         else:
             print(f"Fetched WARC record:")
             print(f"  File: {warc_filename}")
             print(f"  Offset: {warc_offset}")
             print(f"  Length: {warc_length}")
             print(f"  Content size: {len(content)} bytes")
-    
+
     except Exception as e:
         if json_output:
             print(json.dumps({"status": "error", "error": str(e)}))
@@ -275,57 +298,57 @@ def handle_info_command(args):
     """Handle 'common-crawl info' command."""
     if len(args) < 1:
         print("Error: collection name required")
-        print("Usage: ipfs-datasets common-crawl info <collection> [--mode local|remote|cli] [--endpoint URL] [--json]")
+        print(
+            "Usage: ipfs-datasets common-crawl info <collection> [--mode local|remote|cli] [--endpoint URL] [--json]"
+        )
         sys.exit(1)
-    
+
     collection = args[0]
     mode = "local"
     endpoint = None
     json_output = False
-    
+
     # Parse options
     i = 1
     while i < len(args):
-        if args[i] in ['--mode', '-m'] and i + 1 < len(args):
+        if args[i] in ["--mode", "-m"] and i + 1 < len(args):
             mode = args[i + 1]
             i += 2
-        elif args[i] in ['--endpoint', '-e'] and i + 1 < len(args):
+        elif args[i] in ["--endpoint", "-e"] and i + 1 < len(args):
             endpoint = args[i + 1]
             i += 2
-        elif args[i] == '--json':
+        elif args[i] == "--json":
             json_output = True
             i += 1
         else:
             i += 1
-    
+
     try:
         from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
-        
+
         engine_kwargs = {"mode": mode}
         if endpoint:
             engine_kwargs["mcp_endpoint"] = endpoint
-        
+
         engine = CommonCrawlSearchEngine(**engine_kwargs)
-        
+
         if not engine.is_available():
             if json_output:
                 print(json.dumps({"status": "error", "error": "Engine not available"}))
             else:
                 print("Error: Engine not available")
             sys.exit(1)
-        
+
         info = engine.get_collection_info(collection)
-        
+
         if json_output:
-            print(json.dumps({
-                "status": "success",
-                "collection": collection,
-                "info": info
-            }, indent=2))
+            print(
+                json.dumps({"status": "success", "collection": collection, "info": info}, indent=2)
+            )
         else:
             print(f"Collection: {collection}")
             print(f"Info: {json.dumps(info, indent=2)}")
-    
+
     except Exception as e:
         if json_output:
             print(json.dumps({"status": "error", "error": str(e)}))
@@ -336,21 +359,21 @@ def handle_info_command(args):
 
 def handle_config_command(args):
     """Handle 'common-crawl config' command."""
-    json_output = '--json' in args
-    
+    json_output = "--json" in args
+
     try:
         from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
-        
+
         # Show current configuration
         engine = CommonCrawlSearchEngine()
-        
+
         config = {
             "submodule_available": engine.is_available(),
             "mode": "local",
             "state_dir": str(engine.state_dir),
-            "supported_modes": ["local", "remote", "cli"]
+            "supported_modes": ["local", "remote", "cli"],
         }
-        
+
         if json_output:
             print(json.dumps(config, indent=2))
         else:
@@ -359,7 +382,7 @@ def handle_config_command(args):
             print(f"  Default mode: {config['mode']}")
             print(f"  State directory: {config['state_dir']}")
             print(f"  Supported modes: {', '.join(config['supported_modes'])}")
-    
+
     except Exception as e:
         if json_output:
             print(json.dumps({"status": "error", "error": str(e)}))

@@ -14,6 +14,7 @@ FB216 – compile_batch_with_explain(fail_fast=True) variant
 
 Grand total (v25): 3,457 + 56 = 3,513 tests
 """
+
 from __future__ import annotations
 
 import sys
@@ -30,13 +31,16 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
 
+
 def _make_manager(path=None):
     from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
     return DelegationManager(path or tempfile.mkdtemp())
 
 
 def _make_token(resource="tools/invoke", ability="*", nonce=None):
     from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
+
     return DelegationToken(
         issuer="did:key:issuer",
         audience="did:key:audience",
@@ -47,8 +51,10 @@ def _make_token(resource="tools/invoke", ability="*", nonce=None):
 
 def _make_checker():
     from ipfs_datasets_py.mcp_server.compliance_checker import (
-        ComplianceChecker, ComplianceRule,
+        ComplianceChecker,
+        ComplianceRule,
     )
+
     checker = ComplianceChecker()
     # Add a removable custom rule for merge tests
     rule = ComplianceRule(
@@ -63,6 +69,7 @@ def _make_checker():
 
 def _empty_checker():
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     return ComplianceChecker()
 
 
@@ -70,17 +77,20 @@ def _make_compiler():
     from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
         NLUCANPolicyCompiler,
     )
+
     return NLUCANPolicyCompiler()
 
 
 def _make_report(by_language):
     from ipfs_datasets_py.logic.api import I18NConflictReport
+
     return I18NConflictReport(by_language=by_language)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ES207 – active_tokens_by_resource("*") wildcard
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestES207WildcardResource:
     """ES207: active_tokens_by_resource("*") matches wildcard-capability tokens."""
@@ -117,6 +127,7 @@ class TestES207WildcardResource:
     def test_wildcard_token_yielded_once_even_multi_capability(self):
         """Each token yielded at most once even with multiple capabilities."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
+
         mgr = _make_manager()
         tok = DelegationToken(
             issuer="did:key:issuer",
@@ -140,6 +151,7 @@ class TestES207WildcardResource:
 # ═══════════════════════════════════════════════════════════════════════════
 # ET208 – compile_batch_with_explain + fail_fast=True
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestET208CompileBatchWithExplainFailFast:
     """ET208: compile_batch_with_explain(fail_fast=True) stops on first erroring batch."""
@@ -186,17 +198,20 @@ class TestET208CompileBatchWithExplainFailFast:
 # EU209 – ComplianceMergeResult.to_dict()
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEU209ComplianceMergeResultToDict:
     """EU209: ComplianceMergeResult.to_dict()."""
 
     def test_to_dict_has_four_keys(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=3, skipped_protected=1, skipped_duplicate=2)
         d = r.to_dict()
         assert set(d.keys()) == {"added", "skipped_protected", "skipped_duplicate", "total"}
 
     def test_to_dict_values_correct(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=5, skipped_protected=2, skipped_duplicate=1)
         d = r.to_dict()
         assert d["added"] == 5
@@ -206,11 +221,13 @@ class TestEU209ComplianceMergeResultToDict:
 
     def test_to_dict_total_matches_property(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=4, skipped_protected=3, skipped_duplicate=2)
         assert r.to_dict()["total"] == r.total
 
     def test_to_dict_zeros(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=0, skipped_protected=0, skipped_duplicate=0)
         d = r.to_dict()
         assert d["total"] == 0
@@ -218,8 +235,10 @@ class TestEU209ComplianceMergeResultToDict:
 
     def test_to_dict_from_merge_call(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule,
+            ComplianceChecker,
+            ComplianceRule,
         )
+
         a = ComplianceChecker()
         b = ComplianceChecker()
         rule = ComplianceRule(
@@ -240,12 +259,14 @@ class TestEU209ComplianceMergeResultToDict:
 # EV210 – I18NConflictReport.least_conflicted_language()
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEV210LeastConflictedLanguage:
     """EV210: I18NConflictReport.least_conflicted_language()."""
 
     def _conflict(self):
         """Return a dummy conflict-like object."""
         from types import SimpleNamespace
+
         return SimpleNamespace(to_dict=lambda: {})
 
     def test_returns_none_when_all_empty(self):
@@ -253,19 +274,23 @@ class TestEV210LeastConflictedLanguage:
         assert r.least_conflicted_language() is None
 
     def test_returns_language_with_fewest_conflicts(self):
-        r = _make_report({
-            "fr": [self._conflict(), self._conflict()],
-            "es": [self._conflict()],
-            "de": [self._conflict(), self._conflict(), self._conflict()],
-        })
+        r = _make_report(
+            {
+                "fr": [self._conflict(), self._conflict()],
+                "es": [self._conflict()],
+                "de": [self._conflict(), self._conflict(), self._conflict()],
+            }
+        )
         assert r.least_conflicted_language() == "es"
 
     def test_complement_of_most_conflicted(self):
-        r = _make_report({
-            "fr": [self._conflict(), self._conflict()],
-            "es": [self._conflict()],
-            "de": [self._conflict(), self._conflict(), self._conflict()],
-        })
+        r = _make_report(
+            {
+                "fr": [self._conflict(), self._conflict()],
+                "es": [self._conflict()],
+                "de": [self._conflict(), self._conflict(), self._conflict()],
+            }
+        )
         assert r.least_conflicted_language() == "es"
         assert r.most_conflicted_language() == "de"
         assert r.least_conflicted_language() != r.most_conflicted_language()
@@ -279,10 +304,12 @@ class TestEV210LeastConflictedLanguage:
         assert r.least_conflicted_language() == "en"
 
     def test_all_same_count_returns_first(self):
-        r = _make_report({
-            "fr": [self._conflict()],
-            "es": [self._conflict()],
-        })
+        r = _make_report(
+            {
+                "fr": [self._conflict()],
+                "es": [self._conflict()],
+            }
+        )
         # Both have count=1; should return first in insertion order
         result = r.least_conflicted_language()
         assert result in ("fr", "es")
@@ -292,6 +319,7 @@ class TestEV210LeastConflictedLanguage:
 # EW211 – _ZH_DEONTIC_KEYWORDS obligation keyword coverage
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEW211ChineseKeywordCoverage:
     """EW211: _ZH_DEONTIC_KEYWORDS obligation keywords present and non-empty."""
 
@@ -299,30 +327,35 @@ class TestEW211ChineseKeywordCoverage:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert "obligation" in _ZH_DEONTIC_KEYWORDS
 
     def test_obligation_has_keywords(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert len(_ZH_DEONTIC_KEYWORDS["obligation"]) >= 3
 
     def test_permission_key_exists(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert "permission" in _ZH_DEONTIC_KEYWORDS
 
     def test_prohibition_key_exists(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert "prohibition" in _ZH_DEONTIC_KEYWORDS
 
     def test_must_keyword_present(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         obligations = _ZH_DEONTIC_KEYWORDS["obligation"]
         # At least one of the standard Chinese obligation words
         assert any(kw in obligations for kw in ["必须", "应当", "需要", "应该", "须"])
@@ -331,6 +364,7 @@ class TestEW211ChineseKeywordCoverage:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _load_i18n_keywords,
         )
+
         kw = _load_i18n_keywords("zh")
         assert "obligation" in kw
         assert len(kw["obligation"]) >= 3
@@ -339,6 +373,7 @@ class TestEW211ChineseKeywordCoverage:
 # ═══════════════════════════════════════════════════════════════════════════
 # EX212 – compile_batch policy_ids shorter than batches
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestEX212CompileBatchShortPolicyIds:
     """EX212: compile_batch(policy_ids=...) shorter than sentences_list → auto-ID fills tail."""
@@ -387,6 +422,7 @@ class TestEX212CompileBatchShortPolicyIds:
 # EY213 – active_tokens_by_resource + revocation combined
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEY213ActiveTokensByResourceRevocation:
     """EY213: active_tokens_by_resource respects revocation."""
 
@@ -433,6 +469,7 @@ class TestEY213ActiveTokensByResourceRevocation:
 # EZ214 – Chinese text → by_language["zh"] non-empty E2E (HIGH)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEZ214ChineseTextE2E:
     """EZ214: Chinese text with simultaneous permission+prohibition → conflict detected."""
 
@@ -440,6 +477,7 @@ class TestEZ214ChineseTextE2E:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _load_i18n_keywords,
         )
+
         kw = _load_i18n_keywords("zh")
         assert "可以" in kw.get("permission", []) or "允许" in kw.get("permission", [])
 
@@ -447,17 +485,20 @@ class TestEZ214ChineseTextE2E:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _load_i18n_keywords,
         )
+
         kw = _load_i18n_keywords("zh")
         assert "不得" in kw.get("prohibition", []) or "禁止" in kw.get("prohibition", [])
 
     def test_detect_all_languages_includes_zh_slot(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test text")
         assert "zh" in report.by_language
 
     def test_chinese_text_permission_prohibition_conflict(self):
         """Text with both a permission and prohibition keyword yields ≥0 conflicts."""
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         # Text containing Chinese permission AND prohibition keywords
         zh_text = "用户可以访问数据库，但不得删除记录。"
         report = detect_all_languages(zh_text)
@@ -469,11 +510,13 @@ class TestEZ214ChineseTextE2E:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_clauses,
         )
+
         result = detect_i18n_clauses("可以访问不得删除", "zh")
         assert isinstance(result, list)
 
     def test_zh_slot_present_in_9_language_report(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("Alice may read")
         languages = set(report.by_language.keys())
         assert "zh" in languages
@@ -485,11 +528,13 @@ class TestEZ214ChineseTextE2E:
 # FA215 – conflict_density() with all 9 languages populated
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestFA215ConflictDensityAllLanguages:
     """FA215: conflict_density() computed correctly for all 9 languages."""
 
     def _conflict(self):
         from types import SimpleNamespace
+
         return SimpleNamespace(to_dict=lambda: {})
 
     def test_density_zero_when_all_empty(self):
@@ -512,6 +557,7 @@ class TestFA215ConflictDensityAllLanguages:
 
     def test_density_all_nine_languages(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         density = report.conflict_density()
         assert isinstance(density, float)
@@ -531,21 +577,18 @@ class TestFA215ConflictDensityAllLanguages:
 # FB216 – compile_batch_with_explain(fail_fast=True) variant
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestFB216CompileBatchWithExplainFailFastVariant:
     """FB216: compile_batch_with_explain(fail_fast=True) accepts and forwards flag."""
 
     def test_accepts_fail_fast_true(self):
         compiler = _make_compiler()
-        results = compiler.compile_batch_with_explain(
-            [["Alice may read"]], fail_fast=True
-        )
+        results = compiler.compile_batch_with_explain([["Alice may read"]], fail_fast=True)
         assert len(results) >= 1
 
     def test_accepts_fail_fast_false(self):
         compiler = _make_compiler()
-        results = compiler.compile_batch_with_explain(
-            [["Alice may read"]], fail_fast=False
-        )
+        results = compiler.compile_batch_with_explain([["Alice may read"]], fail_fast=False)
         assert len(results) >= 1
 
     def test_fail_fast_returns_tuples(self):
@@ -563,9 +606,7 @@ class TestFB216CompileBatchWithExplainFailFastVariant:
 
     def test_explain_content_non_empty(self):
         compiler = _make_compiler()
-        results = compiler.compile_batch_with_explain(
-            [["Alice may read files"]], fail_fast=False
-        )
+        results = compiler.compile_batch_with_explain([["Alice may read files"]], fail_fast=False)
         assert len(results) == 1
         result, explain = results[0]
         assert "succeeded" in explain.lower() or "failed" in explain.lower() or len(explain) > 5

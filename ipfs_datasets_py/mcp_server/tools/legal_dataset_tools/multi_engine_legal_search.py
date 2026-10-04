@@ -3,6 +3,7 @@ Compatibility shim — business logic moved to ipfs_datasets_py.processors.legal
 
 Do not add new code here. Use the canonical package location instead.
 """
+
 from typing import Any, Dict, List, Optional
 
 from ipfs_datasets_py.processors.legal_scrapers import (  # noqa: F401

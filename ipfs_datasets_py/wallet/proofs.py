@@ -288,7 +288,9 @@ class DeterministicLocationDistanceProofBackend:
         witness: Dict[str, Any],
         witness_record_ids: List[str],
     ) -> ProofReceipt:
-        raise NotImplementedError("DeterministicLocationDistanceProofBackend only supports location_distance")
+        raise NotImplementedError(
+            "DeterministicLocationDistanceProofBackend only supports location_distance"
+        )
 
     def verify(self, receipt: ProofReceipt) -> bool:
         if receipt.is_simulated or receipt.verifier_id != self.verifier_id:

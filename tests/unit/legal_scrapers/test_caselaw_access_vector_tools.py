@@ -57,7 +57,9 @@ async def test_ingest_bundle_requires_collection_names() -> None:
 
 
 @pytest.mark.anyio
-async def test_list_files_uses_runner_and_sets_tool_version(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_list_files_uses_runner_and_sets_tool_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """File-list API should use internal runner and return expected envelope."""
     captured = {}
 
@@ -180,7 +182,10 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert docket_params["input_kind"]["default"] == "auto"
 
     recovery_params = by_name["recover_missing_legal_citation_source"]["parameters"]
-    assert "candidate-file fetch artifacts" in by_name["recover_missing_legal_citation_source"]["description"]
+    assert (
+        "candidate-file fetch artifacts"
+        in by_name["recover_missing_legal_citation_source"]["description"]
+    )
     assert recovery_params["citation_text"].get("required") is True
     assert recovery_params["max_candidates"]["default"] == 8
     assert recovery_params["archive_top_k"]["default"] == 3
@@ -198,7 +203,9 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert merge_params["manifest_path"].get("required") is True
     assert merge_params["write_promotion_parquet"]["default"] is True
 
-    packaged_collect_params = by_name["collect_packaged_docket_citation_recovery_candidates"]["parameters"]
+    packaged_collect_params = by_name["collect_packaged_docket_citation_recovery_candidates"][
+        "parameters"
+    ]
     assert packaged_collect_params["manifest_path"].get("required") is True
 
     packaged_recovery_params = by_name["recover_packaged_docket_missing_authorities"]["parameters"]
@@ -211,7 +218,9 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert packaged_plan_params["max_candidates"]["default"] == 8
     assert packaged_plan_params["archive_top_k"]["default"] == 3
 
-    packaged_execute_params = by_name["execute_packaged_docket_missing_authority_follow_up"]["parameters"]
+    packaged_execute_params = by_name["execute_packaged_docket_missing_authority_follow_up"][
+        "parameters"
+    ]
     assert packaged_execute_params["manifest_path"].get("required") is True
     assert packaged_execute_params["execute_publish"]["default"] is False
 
@@ -260,7 +269,9 @@ async def test_search_requires_query_vector() -> None:
 
 
 @pytest.mark.anyio
-async def test_mcp_workspace_search_auto_loads_single_bundle_and_returns_grouped_results(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_mcp_workspace_search_auto_loads_single_bundle_and_returns_grouped_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Workspace MCP search should auto-load a single bundle and return grouped results."""
     captured = {}
 
@@ -364,7 +375,9 @@ async def test_mcp_workspace_search_rejects_unknown_backend() -> None:
 
 
 @pytest.mark.anyio
-async def test_mcp_docket_search_auto_loads_dataset_json_and_dispatches_bm25(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_mcp_docket_search_auto_loads_dataset_json_and_dispatches_bm25(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Docket MCP search should auto-load dataset JSON artifacts and dispatch BM25 search."""
     dataset_path = tmp_path / "docket_dataset.json"
     dataset_path.write_text('{"dataset_id": "docket_1"}', encoding="utf-8")
@@ -725,7 +738,10 @@ async def test_state_court_rules_search_uses_canonical_state_defaults(
     assert captured["payload"]["cid_metadata_field"] == "ipfs_cid"
     assert captured["payload"]["cid_column"] == "ipfs_cid"
     assert "STATE-OR.parquet" in captured["payload"]["preferred_case_parquet_names"]
-    assert "state_court_rules_all_states.parquet" in captured["payload"]["preferred_case_parquet_names"]
+    assert (
+        "state_court_rules_all_states.parquet"
+        in captured["payload"]["preferred_case_parquet_names"]
+    )
 
 
 @pytest.mark.anyio
@@ -816,7 +832,9 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
 
     captured = {}
 
-    async def _fake_recover_missing_legal_citation_source_from_parameters(parameters, *, tool_version="1.0.0"):
+    async def _fake_recover_missing_legal_citation_source_from_parameters(
+        parameters, *, tool_version="1.0.0"
+    ):
         captured["parameters"] = dict(parameters)
         captured["tool_version"] = tool_version
         return {
@@ -834,17 +852,23 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
             },
         }
 
-    async def _fake_promote_recovery_manifest_to_canonical_bundle_from_parameters(parameters, *, tool_version="1.0.0"):
+    async def _fake_promote_recovery_manifest_to_canonical_bundle_from_parameters(
+        parameters, *, tool_version="1.0.0"
+    ):
         captured["promote_parameters"] = dict(parameters)
         captured["promote_tool_version"] = tool_version
         return {"status": "success", "operation": "promote_recovery_manifest_to_canonical_bundle"}
 
-    async def _fake_preview_recovery_manifest_release_plan_from_parameters(parameters, *, tool_version="1.0.0"):
+    async def _fake_preview_recovery_manifest_release_plan_from_parameters(
+        parameters, *, tool_version="1.0.0"
+    ):
         captured["release_plan_parameters"] = dict(parameters)
         captured["release_plan_tool_version"] = tool_version
         return {"status": "planned", "operation": "preview_recovery_manifest_release_plan"}
 
-    async def _fake_merge_recovery_manifest_into_canonical_dataset_from_parameters(parameters, *, tool_version="1.0.0"):
+    async def _fake_merge_recovery_manifest_into_canonical_dataset_from_parameters(
+        parameters, *, tool_version="1.0.0"
+    ):
         captured["merge_parameters"] = dict(parameters)
         captured["merge_tool_version"] = tool_version
         return {"status": "success", "operation": "merge_recovery_manifest_into_canonical_dataset"}
@@ -883,12 +907,18 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
         {"manifest_path": "/tmp/recovery_manifest.json", "python_bin": "/usr/bin/python3"}
     )
     merge_result = await mcp_tools.merge_recovery_manifest_into_canonical_dataset(
-        {"manifest_path": "/tmp/recovery_manifest.json", "target_local_parquet_path": "/tmp/target.parquet"}
+        {
+            "manifest_path": "/tmp/recovery_manifest.json",
+            "target_local_parquet_path": "/tmp/target.parquet",
+        }
     )
 
     assert result["status"] == "tracked"
     assert result["candidate_files"][0]["fetch_success"] is True
-    assert result["scraper_patch"]["target_file"] == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    assert (
+        result["scraper_patch"]["target_file"]
+        == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    )
     assert promote_result["status"] == "success"
     assert release_plan_result["status"] == "planned"
     assert merge_result["status"] == "success"
@@ -907,7 +937,9 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.anyio
-async def test_mcp_packaged_docket_recovery_tools_delegate_to_api(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_mcp_packaged_docket_recovery_tools_delegate_to_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api as real_api
 
     captured = {}
@@ -915,7 +947,10 @@ async def test_mcp_packaged_docket_recovery_tools_delegate_to_api(monkeypatch: p
     async def _fake_collect(parameters, *, tool_version="1.0.0"):
         captured["collect_parameters"] = dict(parameters)
         captured["collect_tool_version"] = tool_version
-        return {"status": "success", "operation": "collect_packaged_docket_citation_recovery_candidates"}
+        return {
+            "status": "success",
+            "operation": "collect_packaged_docket_citation_recovery_candidates",
+        }
 
     async def _fake_recover(parameters, *, tool_version="1.0.0"):
         captured["recover_parameters"] = dict(parameters)
@@ -925,12 +960,18 @@ async def test_mcp_packaged_docket_recovery_tools_delegate_to_api(monkeypatch: p
     async def _fake_plan(parameters, *, tool_version="1.0.0"):
         captured["plan_parameters"] = dict(parameters)
         captured["plan_tool_version"] = tool_version
-        return {"status": "success", "operation": "plan_packaged_docket_missing_authority_follow_up"}
+        return {
+            "status": "success",
+            "operation": "plan_packaged_docket_missing_authority_follow_up",
+        }
 
     async def _fake_execute(parameters, *, tool_version="1.0.0"):
         captured["execute_parameters"] = dict(parameters)
         captured["execute_tool_version"] = tool_version
-        return {"status": "success", "operation": "execute_packaged_docket_missing_authority_follow_up"}
+        return {
+            "status": "success",
+            "operation": "execute_packaged_docket_missing_authority_follow_up",
+        }
 
     monkeypatch.setattr(
         real_api,
@@ -1035,22 +1076,26 @@ async def test_state_case_search_rejects_invalid_state() -> None:
 @pytest.mark.anyio
 async def test_centroid_search_requires_collection_names_and_query() -> None:
     """Centroid search should validate required fields before execution."""
-    missing_query = await legal_dataset_api.search_caselaw_access_vectors_with_centroids_from_parameters(
-        {
-            "target_collection_name": "cap_docs",
-            "centroid_collection_name": "cap_centroids",
-            "auto_setup_venv": False,
-        }
+    missing_query = (
+        await legal_dataset_api.search_caselaw_access_vectors_with_centroids_from_parameters(
+            {
+                "target_collection_name": "cap_docs",
+                "centroid_collection_name": "cap_centroids",
+                "auto_setup_venv": False,
+            }
+        )
     )
     assert missing_query["status"] == "error"
     assert missing_query["operation"] == "centroid_search"
     assert "query_vector is required" in missing_query["error"]
 
-    missing_names = await legal_dataset_api.search_caselaw_access_vectors_with_centroids_from_parameters(
-        {
-            "query_vector": [0.2, 0.4],
-            "auto_setup_venv": False,
-        }
+    missing_names = (
+        await legal_dataset_api.search_caselaw_access_vectors_with_centroids_from_parameters(
+            {
+                "query_vector": [0.2, 0.4],
+                "auto_setup_venv": False,
+            }
+        )
     )
     assert missing_names["status"] == "error"
     assert "target_collection_name" in missing_names["error"]
@@ -1063,21 +1108,35 @@ async def test_centroid_routing_merges_and_ranks_results(monkeypatch: pytest.Mon
     cap = vector_search_integration.CaselawAccessVectorSearch()
 
     centroid_hits = [
-        SimpleNamespace(chunk_id="c1", score=0.91, metadata={"cluster_id": "cluster-a"}, content=""),
-        SimpleNamespace(chunk_id="c2", score=0.87, metadata={"cluster_id": "cluster-b"}, content=""),
+        SimpleNamespace(
+            chunk_id="c1", score=0.91, metadata={"cluster_id": "cluster-a"}, content=""
+        ),
+        SimpleNamespace(
+            chunk_id="c2", score=0.87, metadata={"cluster_id": "cluster-b"}, content=""
+        ),
     ]
     cluster_a_hits = [
-        SimpleNamespace(chunk_id="doc-1", score=0.82, metadata={"cluster_id": "cluster-a"}, content="A1"),
-        SimpleNamespace(chunk_id="doc-2", score=0.71, metadata={"cluster_id": "cluster-a"}, content="A2"),
+        SimpleNamespace(
+            chunk_id="doc-1", score=0.82, metadata={"cluster_id": "cluster-a"}, content="A1"
+        ),
+        SimpleNamespace(
+            chunk_id="doc-2", score=0.71, metadata={"cluster_id": "cluster-a"}, content="A2"
+        ),
     ]
     cluster_b_hits = [
-        SimpleNamespace(chunk_id="doc-1", score=0.93, metadata={"cluster_id": "cluster-b"}, content="B1"),
-        SimpleNamespace(chunk_id="doc-3", score=0.65, metadata={"cluster_id": "cluster-b"}, content="B3"),
+        SimpleNamespace(
+            chunk_id="doc-1", score=0.93, metadata={"cluster_id": "cluster-b"}, content="B1"
+        ),
+        SimpleNamespace(
+            chunk_id="doc-3", score=0.65, metadata={"cluster_id": "cluster-b"}, content="B3"
+        ),
     ]
 
     calls = []
 
-    async def _fake_search_by_vector(*, collection_name, query_vector, store_type="faiss", top_k=10, filter_dict=None, **kwargs):
+    async def _fake_search_by_vector(
+        *, collection_name, query_vector, store_type="faiss", top_k=10, filter_dict=None, **kwargs
+    ):
         calls.append(
             {
                 "collection_name": collection_name,
@@ -1130,17 +1189,31 @@ async def test_centroid_routing_uses_cluster_cid_map_when_provided(
     cap = vector_search_integration.CaselawAccessVectorSearch()
 
     centroid_hits = [
-        SimpleNamespace(chunk_id="cent-1", score=0.9, metadata={"cluster_id": "cluster-a"}, content=""),
+        SimpleNamespace(
+            chunk_id="cent-1", score=0.9, metadata={"cluster_id": "cluster-a"}, content=""
+        ),
     ]
     target_hits = [
-        SimpleNamespace(chunk_id="doc-allowed", score=0.88, metadata={"cid": "cid-allow"}, content="ok"),
-        SimpleNamespace(chunk_id="doc-blocked", score=0.95, metadata={"cid": "cid-block"}, content="no"),
+        SimpleNamespace(
+            chunk_id="doc-allowed", score=0.88, metadata={"cid": "cid-allow"}, content="ok"
+        ),
+        SimpleNamespace(
+            chunk_id="doc-blocked", score=0.95, metadata={"cid": "cid-block"}, content="no"
+        ),
     ]
 
     calls = []
 
-    async def _fake_search_by_vector(*, collection_name, query_vector, store_type="faiss", top_k=10, filter_dict=None, **kwargs):
-        calls.append({"collection_name": collection_name, "top_k": top_k, "filter_dict": dict(filter_dict or {})})
+    async def _fake_search_by_vector(
+        *, collection_name, query_vector, store_type="faiss", top_k=10, filter_dict=None, **kwargs
+    ):
+        calls.append(
+            {
+                "collection_name": collection_name,
+                "top_k": top_k,
+                "filter_dict": dict(filter_dict or {}),
+            }
+        )
         if collection_name == "cap_centroids":
             return centroid_hits
         return target_hits

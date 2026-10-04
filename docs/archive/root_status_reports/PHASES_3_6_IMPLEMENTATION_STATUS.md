@@ -106,15 +106,17 @@ Architecture validation tests for processors.
 
 Ensures 5-layer architecture boundaries are maintained.
 """
+
 import ast
 from pathlib import Path
 import pytest
+
 
 def get_imports(file_path):
     """Extract all imports from a Python file."""
     with open(file_path) as f:
         tree = ast.parse(f.read())
-    
+
     imports = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -122,11 +124,12 @@ def get_imports(file_path):
                 imports.append(node.module)
     return imports
 
+
 def test_core_no_internal_dependencies():
     """Core layer should not import from other layers."""
     core_dir = Path("ipfs_datasets_py/processors/core")
     forbidden = ["adapters", "specialized", "domains", "infrastructure"]
-    
+
     for py_file in core_dir.glob("*.py"):
         if py_file.name == "__init__.py":
             continue
@@ -134,15 +137,14 @@ def test_core_no_internal_dependencies():
         for imp in imports:
             for forbidden_layer in forbidden:
                 if forbidden_layer in imp:
-                    pytest.fail(
-                        f"{py_file.name} imports from {forbidden_layer}: {imp}"
-                    )
+                    pytest.fail(f"{py_file.name} imports from {forbidden_layer}: {imp}")
+
 
 def test_infrastructure_only_depends_on_core():
     """Infrastructure should only import from core."""
     infra_dir = Path("ipfs_datasets_py/processors/infrastructure")
     forbidden = ["adapters", "specialized", "domains"]
-    
+
     for py_file in infra_dir.glob("*.py"):
         if py_file.name == "__init__.py":
             continue
@@ -150,15 +152,14 @@ def test_infrastructure_only_depends_on_core():
         for imp in imports:
             for forbidden_layer in forbidden:
                 if forbidden_layer in imp:
-                    pytest.fail(
-                        f"{py_file.name} imports from {forbidden_layer}: {imp}"
-                    )
+                    pytest.fail(f"{py_file.name} imports from {forbidden_layer}: {imp}")
+
 
 def test_adapters_only_depend_on_core():
     """Adapters should only import from core + specialized."""
     adapters_dir = Path("ipfs_datasets_py/processors/adapters")
     forbidden = ["domains"]  # Adapters can use specialized
-    
+
     for py_file in adapters_dir.glob("*.py"):
         if py_file.name == "__init__.py":
             continue
@@ -166,9 +167,7 @@ def test_adapters_only_depend_on_core():
         for imp in imports:
             for forbidden_layer in forbidden:
                 if forbidden_layer in imp:
-                    pytest.fail(
-                        f"{py_file.name} imports from {forbidden_layer}: {imp}"
-                    )
+                    pytest.fail(f"{py_file.name} imports from {forbidden_layer}: {imp}")
 ```
 
 **Time:** 1 day to create comprehensive tests
@@ -236,13 +235,14 @@ Update 3-5 key processors as examples (not all - that would be too much work):
 ```python
 from ipfs_datasets_py.processors.core.protocol import ProcessorProtocol
 
+
 class XProcessor(ProcessorProtocol):
     """Standard processor pattern."""
-    
+
     async def process(self, input_data):
         """Implement ProcessorProtocol.process()"""
         # ... implementation
-        
+
     def can_handle(self, input_data):
         """Implement ProcessorProtocol.can_handle()"""
         # ... implementation
@@ -290,32 +290,37 @@ Benchmark processors with anyio vs asyncio baseline.
 
 Tests that anyio migration didn't cause performance regression.
 """
+
 import anyio
 import time
+
 
 async def benchmark_error_handling():
     """Benchmark error_handling.py retry logic."""
     from ipfs_datasets_py.processors.infrastructure.error_handling import (
-        RetryWithBackoff, RetryConfig
+        RetryWithBackoff,
+        RetryConfig,
     )
-    
+
     config = RetryConfig(max_retries=3)
     retry = RetryWithBackoff(config)
-    
+
     async def test_func():
         await anyio.sleep(0.01)
         return "success"
-    
+
     start = time.time()
     for _ in range(100):
         await retry.execute(test_func)
     duration = time.time() - start
-    
+
     print(f"Error handling: {duration:.3f}s for 100 iterations")
-    print(f"Average: {duration*10:.3f}ms per operation")
+    print(f"Average: {duration * 10:.3f}ms per operation")
+
 
 async def main():
     await benchmark_error_handling()
+
 
 if __name__ == "__main__":
     anyio.run(main)

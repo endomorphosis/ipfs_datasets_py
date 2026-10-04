@@ -175,7 +175,9 @@ class DependencyGraph:
             node_counts[node.node_type.value] = node_counts.get(node.node_type.value, 0) + 1
         dependency_counts: Dict[str, int] = {}
         for dependency in self.dependencies.values():
-            dependency_counts[dependency.dependency_type.value] = dependency_counts.get(dependency.dependency_type.value, 0) + 1
+            dependency_counts[dependency.dependency_type.value] = (
+                dependency_counts.get(dependency.dependency_type.value, 0) + 1
+            )
         return {
             "total_nodes": len(self.nodes),
             "total_dependencies": len(self.dependencies),
@@ -189,7 +191,8 @@ class DependencyGraph:
             "metadata": dict(self.metadata),
             "nodes": {node_id: node.to_dict() for node_id, node in self.nodes.items()},
             "dependencies": {
-                dependency_id: dependency.to_dict() for dependency_id, dependency in self.dependencies.items()
+                dependency_id: dependency.to_dict()
+                for dependency_id, dependency in self.dependencies.items()
             },
             "summary": self.summary(),
         }
@@ -233,7 +236,9 @@ class DependencyGraphBuilder:
         self.node_counter = 0
         self.dependency_counter = 0
 
-    def build_for_claim(self, claim_type: Any, *, claim_id: str = "", claim_name: str = "") -> DependencyGraph:
+    def build_for_claim(
+        self, claim_type: Any, *, claim_id: str = "", claim_name: str = ""
+    ) -> DependencyGraph:
         normalized_claim_type = normalize_claim_type(claim_type)
         registry = registry_for_claim_type(normalized_claim_type)
         graph = DependencyGraph()
@@ -243,7 +248,8 @@ class DependencyGraphBuilder:
             DependencyNode(
                 id=resolved_claim_id,
                 node_type=NodeType.CLAIM,
-                name=claim_name or str(registry.get("label") or normalized_claim_type.replace("_", " ").title()),
+                name=claim_name
+                or str(registry.get("label") or normalized_claim_type.replace("_", " ").title()),
                 satisfied=False,
                 confidence=1.0,
                 attributes={"claim_type": normalized_claim_type},

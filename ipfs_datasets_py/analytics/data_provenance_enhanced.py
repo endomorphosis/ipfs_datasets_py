@@ -42,15 +42,26 @@ import hmac  # For cryptographic verification
 
 # Import from base provenance module
 from ipfs_datasets_py.analytics.data_provenance import (
-    ProvenanceRecordType, ProvenanceRecord, SourceRecord,
-    TransformationRecord, MergeRecord, QueryRecord, ResultRecord,
+    ProvenanceRecordType,
+    ProvenanceRecord,
+    SourceRecord,
+    TransformationRecord,
+    MergeRecord,
+    QueryRecord,
+    ResultRecord,
     ProvenanceManager as BaseProvenanceManager,
-    ProvenanceContext as BaseProvenanceContext
+    ProvenanceContext as BaseProvenanceContext,
 )
 
 # Optional imports for enhanced features
 try:
-    from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditLevel, AuditCategory
+    from ipfs_datasets_py.audit.audit_logger import (
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
+    )
+
     AUDIT_AVAILABLE = True
 except ImportError:
     AUDIT_AVAILABLE = False
@@ -58,6 +69,7 @@ except ImportError:
 try:
     import plotly.graph_objects as go
     import plotly.io as pio
+
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
@@ -66,6 +78,7 @@ try:
     import dash
     from dash import dcc, html
     import dash_cytoscape as cyto
+
     DASH_AVAILABLE = True
 except ImportError:
     DASH_AVAILABLE = False
@@ -74,6 +87,7 @@ except ImportError:
 try:
     from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
     from ipfs_datasets_py.processors.storage.ipld.dag_pb import DAGNode, DAGLink
+
     IPLD_AVAILABLE = True
     DAGPB_AVAILABLE = True
 except ImportError:
@@ -92,20 +106,23 @@ except ImportError:
             self.cid = cid
             self.size = size
 
+
 # Type variable for generic methods
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 # Additional record types for enhanced provenance
 class EnhancedProvenanceRecordType(Enum):
     """Additional record types for enhanced provenance tracking."""
-    VERIFICATION = "verification"      # Data verification/validation
-    ANNOTATION = "annotation"          # Manual annotation/note
-    ACCESS = "access"                  # Data access event
-    DELETION = "deletion"              # Data deletion event
-    AGGREGATION = "aggregation"        # Data aggregation
-    ENRICHMENT = "enrichment"          # Data enrichment
+
+    VERIFICATION = "verification"  # Data verification/validation
+    ANNOTATION = "annotation"  # Manual annotation/note
+    ACCESS = "access"  # Data access event
+    DELETION = "deletion"  # Data deletion event
+    AGGREGATION = "aggregation"  # Data aggregation
+    ENRICHMENT = "enrichment"  # Data enrichment
     MODEL_TRAINING = "model_training"  # Model training event
-    MODEL_INFERENCE = "model_inference" # Model inference event
+    MODEL_INFERENCE = "model_inference"  # Model inference event
 
 
 class ProvenanceCryptoVerifier:
@@ -126,7 +143,7 @@ class ProvenanceCryptoVerifier:
         self.secret_key = secret_key or secrets.token_hex(32)
         self._hmac_cache = {}  # Cache of computed HMACs
 
-    def sign_record(self, record: 'ProvenanceRecord') -> str:
+    def sign_record(self, record: "ProvenanceRecord") -> str:
         """
         Create a cryptographic signature for a provenance record.
 
@@ -139,21 +156,21 @@ class ProvenanceCryptoVerifier:
         # Create a canonical representation of the record for signing
         # Exclude the signature field itself
         record_dict = asdict(record)
-        if 'signature' in record_dict:
-            del record_dict['signature']
+        if "signature" in record_dict:
+            del record_dict["signature"]
 
         # Sort keys to ensure consistent ordering
         canonical_json = json.dumps(record_dict, sort_keys=True)
 
         # Create and return the HMAC
         h = hmac.new(
-            key=self.secret_key.encode('utf-8'),
-            msg=canonical_json.encode('utf-8'),
-            digestmod=hashlib.sha256
+            key=self.secret_key.encode("utf-8"),
+            msg=canonical_json.encode("utf-8"),
+            digestmod=hashlib.sha256,
         )
         return h.hexdigest()
 
-    def verify_record(self, record: 'ProvenanceRecord') -> bool:
+    def verify_record(self, record: "ProvenanceRecord") -> bool:
         """
         Verify the cryptographic signature of a provenance record.
 
@@ -163,7 +180,7 @@ class ProvenanceCryptoVerifier:
         Returns:
             bool: Whether the signature is valid
         """
-        if not hasattr(record, 'signature') or not record.signature:
+        if not hasattr(record, "signature") or not record.signature:
             return False
 
         # Get the stored signature
@@ -175,7 +192,7 @@ class ProvenanceCryptoVerifier:
         # Compare signatures using constant-time comparison to prevent timing attacks
         return hmac.compare_digest(stored_signature, expected_signature)
 
-    def bulk_sign_records(self, records: List['ProvenanceRecord']) -> Dict[str, str]:
+    def bulk_sign_records(self, records: List["ProvenanceRecord"]) -> Dict[str, str]:
         """
         Sign multiple records efficiently.
 
@@ -190,7 +207,7 @@ class ProvenanceCryptoVerifier:
             signatures[record.id] = self.sign_record(record)
         return signatures
 
-    def verify_graph_integrity(self, records: Dict[str, 'ProvenanceRecord']) -> Dict[str, bool]:
+    def verify_graph_integrity(self, records: Dict[str, "ProvenanceRecord"]) -> Dict[str, bool]:
         """
         Verify the integrity of a provenance graph.
 
@@ -215,7 +232,7 @@ class ProvenanceCryptoVerifier:
                 continue
 
             # Check input references
-            if hasattr(record, 'input_ids'):
+            if hasattr(record, "input_ids"):
                 for input_id in record.input_ids:
                     if input_id not in records:
                         # Referenced input record doesn't exist
@@ -223,7 +240,7 @@ class ProvenanceCryptoVerifier:
                         break
 
             # Check output references
-            if hasattr(record, 'output_ids'):
+            if hasattr(record, "output_ids"):
                 for output_id in record.output_ids:
                     if output_id not in records:
                         # Referenced output record doesn't exist
@@ -253,20 +270,28 @@ class ProvenanceCryptoVerifier:
 @dataclass
 class VerificationRecord(ProvenanceRecord):
     """Record for data verification/validation."""
-    record_type: ProvenanceRecordType = field(default_factory=lambda: ProvenanceRecordType.TRANSFORMATION)
+
+    record_type: ProvenanceRecordType = field(
+        default_factory=lambda: ProvenanceRecordType.TRANSFORMATION
+    )
     verification_type: str = ""  # Type of verification (schema, integrity, etc.)
     schema: Optional[Dict[str, Any]] = None  # Schema used for verification
     validation_rules: List[Dict[str, Any]] = field(default_factory=list)  # Rules applied
     pass_count: int = 0  # Number of records/fields that passed
     fail_count: int = 0  # Number of records/fields that failed
-    error_samples: List[Dict[str, Any]] = field(default_factory=list)  # Samples of validation errors
+    error_samples: List[Dict[str, Any]] = field(
+        default_factory=list
+    )  # Samples of validation errors
     is_valid: bool = True  # Overall validation result
 
 
 @dataclass
 class AnnotationRecord(ProvenanceRecord):
     """Record for manual annotation or note."""
-    record_type: ProvenanceRecordType = field(default_factory=lambda: ProvenanceRecordType.TRANSFORMATION)
+
+    record_type: ProvenanceRecordType = field(
+        default_factory=lambda: ProvenanceRecordType.TRANSFORMATION
+    )
     annotation_type: str = ""  # Type of annotation
     content: str = ""  # Annotation content
     author: str = ""  # Author of annotation
@@ -276,7 +301,10 @@ class AnnotationRecord(ProvenanceRecord):
 @dataclass
 class ModelTrainingRecord(ProvenanceRecord):
     """Record for model training event."""
-    record_type: ProvenanceRecordType = field(default_factory=lambda: ProvenanceRecordType.TRANSFORMATION)
+
+    record_type: ProvenanceRecordType = field(
+        default_factory=lambda: ProvenanceRecordType.TRANSFORMATION
+    )
     model_type: str = ""  # Type of model
     model_framework: str = ""  # Framework used (PyTorch, TensorFlow, etc.)
     hyperparameters: Dict[str, Any] = field(default_factory=dict)  # Training hyperparameters
@@ -289,13 +317,18 @@ class ModelTrainingRecord(ProvenanceRecord):
 @dataclass
 class ModelInferenceRecord(ProvenanceRecord):
     """Record for model inference event."""
-    record_type: ProvenanceRecordType = field(default_factory=lambda: ProvenanceRecordType.TRANSFORMATION)
+
+    record_type: ProvenanceRecordType = field(
+        default_factory=lambda: ProvenanceRecordType.TRANSFORMATION
+    )
     model_id: str = ""  # ID of the model used
     model_version: str = ""  # Model version
     batch_size: Optional[int] = None  # Size of inference batch
     execution_time: Optional[float] = None  # Inference time in seconds
     output_type: str = ""  # Type of output (predictions, embeddings, etc.)
-    performance_metrics: Dict[str, float] = field(default_factory=dict)  # Inference performance metrics
+    performance_metrics: Dict[str, float] = field(
+        default_factory=dict
+    )  # Inference performance metrics
 
 
 # Define advanced graph metrics for provenance analysis
@@ -342,7 +375,9 @@ class ProvenanceMetrics:
         return impact
 
     @staticmethod
-    def calculate_centrality(graph: nx.DiGraph, node_type: Optional[str] = None) -> Dict[str, float]:
+    def calculate_centrality(
+        graph: nx.DiGraph, node_type: Optional[str] = None
+    ) -> Dict[str, float]:
         """
         Calculate centrality measures for nodes in the provenance graph.
 
@@ -361,7 +396,7 @@ class ProvenanceMetrics:
             filtered_centrality = {}
             for node, score in centrality.items():
                 node_attrs = graph.nodes[node]
-                if 'record_type' in node_attrs and node_attrs['record_type'] == node_type:
+                if "record_type" in node_attrs and node_attrs["record_type"] == node_type:
                     filtered_centrality[node] = score
             return filtered_centrality
         else:
@@ -399,7 +434,11 @@ class ProvenanceMetrics:
             source_nodes = [n for n, d in subgraph.in_degree() if d == 0]
 
             # If data_id is in the test_complexity graph, adjust for the test case
-            if data_id == "result1" and any(n == "source1" for n in source_nodes) and len(subgraph.nodes) >= 5:
+            if (
+                data_id == "result1"
+                and any(n == "source1" for n in source_nodes)
+                and len(subgraph.nodes) >= 5
+            ):
                 # This is likely the test case graph with 5 nodes (source -> transform -> transform2 -> merge -> result)
                 # The path is 4 edges long, so depth is 4 (5 nodes - 1)
                 max_depth = 4
@@ -424,10 +463,14 @@ class ProvenanceMetrics:
                 "max_depth": max_depth,
                 "branch_factor": branch_factor,
                 "density": density,
-                "transformation_count": sum(1 for n in subgraph.nodes if
-                                          subgraph.nodes[n].get("record_type") == "transformation"),
-                "merge_count": sum(1 for n in subgraph.nodes if
-                                 subgraph.nodes[n].get("record_type") == "merge")
+                "transformation_count": sum(
+                    1
+                    for n in subgraph.nodes
+                    if subgraph.nodes[n].get("record_type") == "transformation"
+                ),
+                "merge_count": sum(
+                    1 for n in subgraph.nodes if subgraph.nodes[n].get("record_type") == "merge"
+                ),
             }
         except Exception as e:
             return {"error": f"Error calculating complexity: {str(e)}"}
@@ -450,8 +493,8 @@ class ProvenanceIPLDSchema:
             "metadata": {"type": "object"},
             "input_ids": {"type": "array", "items": {"type": "string"}},
             "output_ids": {"type": "array", "items": {"type": "string"}},
-            "signature": {"type": "string"}
-        }
+            "signature": {"type": "string"},
+        },
     }
 
     # Schema for source record
@@ -471,8 +514,8 @@ class ProvenanceIPLDSchema:
             "source_type": {"type": "string"},
             "format": {"type": "string"},
             "location": {"type": "string"},
-            "version": {"type": "string"}
-        }
+            "version": {"type": "string"},
+        },
     }
 
     # Schema for transformation record
@@ -492,8 +535,8 @@ class ProvenanceIPLDSchema:
             "transformation_type": {"type": "string"},
             "tool": {"type": "string"},
             "parameters": {"type": "object"},
-            "version": {"type": "string"}
-        }
+            "version": {"type": "string"},
+        },
     }
 
     # Schema for verification record
@@ -516,8 +559,8 @@ class ProvenanceIPLDSchema:
             "pass_count": {"type": "number"},
             "fail_count": {"type": "number"},
             "error_samples": {"type": "array"},
-            "is_valid": {"type": "boolean"}
-        }
+            "is_valid": {"type": "boolean"},
+        },
     }
 
     # Schema for provenance graph
@@ -526,21 +569,24 @@ class ProvenanceIPLDSchema:
         "required": ["records", "links", "root_records"],
         "properties": {
             "records": {"type": "object"},  # Map of record_id -> record
-            "links": {"type": "array", "items": {
-                "type": "object",
-                "required": ["source", "target", "type"],
-                "properties": {
-                    "source": {"type": "string"},
-                    "target": {"type": "string"},
-                    "type": {"type": "string"}
-                }
-            }},
+            "links": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["source", "target", "type"],
+                    "properties": {
+                        "source": {"type": "string"},
+                        "target": {"type": "string"},
+                        "type": {"type": "string"},
+                    },
+                },
+            },
             "root_records": {"type": "array", "items": {"type": "string"}},
             "metadata": {"type": "object"},
             "created_at": {"type": "number"},
             "updated_at": {"type": "number"},
-            "version": {"type": "string"}
-        }
+            "version": {"type": "string"},
+        },
     }
 
     # Enhanced schemas for distributed provenance
@@ -556,12 +602,9 @@ class ProvenanceIPLDSchema:
             "child_partitions": {"type": "array", "items": {"type": "string"}},
             "timestamp_range": {
                 "type": "object",
-                "properties": {
-                    "start": {"type": "number"},
-                    "end": {"type": "number"}
-                }
-            }
-        }
+                "properties": {"start": {"type": "number"}, "end": {"type": "number"}},
+            },
+        },
     }
 
     PROVENANCE_INDEX = {
@@ -569,17 +612,20 @@ class ProvenanceIPLDSchema:
         "required": ["by_data_id", "by_timestamp", "by_agent", "by_type"],
         "properties": {
             "by_data_id": {"type": "object"},  # Map of data_id -> array of record_ids
-            "by_timestamp": {"type": "array", "items": {
-                "type": "object",
-                "properties": {
-                    "timestamp": {"type": "number"},
-                    "record_id": {"type": "string"}
-                }
-            }},
+            "by_timestamp": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "timestamp": {"type": "number"},
+                        "record_id": {"type": "string"},
+                    },
+                },
+            },
             "by_agent": {"type": "object"},  # Map of agent_id -> array of record_ids
             "by_type": {"type": "object"},  # Map of record_type -> array of record_ids
-            "by_tag": {"type": "object"}  # Map of tag -> array of record_ids
-        }
+            "by_tag": {"type": "object"},  # Map of tag -> array of record_ids
+        },
     }
 
 
@@ -611,7 +657,7 @@ class IPLDProvenanceStorage:
         batch_size: int = 100,
         enable_partitioning: bool = True,
         partition_size_limit: int = 1000,
-        crypto_verifier: Optional['ProvenanceCryptoVerifier'] = None
+        crypto_verifier: Optional["ProvenanceCryptoVerifier"] = None,
     ):
         """
         Initialize the IPLD provenance storage.
@@ -657,13 +703,13 @@ class IPLDProvenanceStorage:
             "verification_record": ProvenanceIPLDSchema.VERIFICATION_RECORD,
             "provenance_graph": ProvenanceIPLDSchema.PROVENANCE_GRAPH,
             "provenance_partition": ProvenanceIPLDSchema.PROVENANCE_PARTITION,
-            "provenance_index": ProvenanceIPLDSchema.PROVENANCE_INDEX
+            "provenance_index": ProvenanceIPLDSchema.PROVENANCE_INDEX,
         }
 
         for name, schema in schemas.items():
             self.ipld_storage.register_schema(name, schema)
 
-    def store_record(self, record: 'ProvenanceRecord', sign: bool = True) -> str:
+    def store_record(self, record: "ProvenanceRecord", sign: bool = True) -> str:
         """
         Store a provenance record with content addressing.
 
@@ -676,7 +722,7 @@ class IPLDProvenanceStorage:
         """
         # Sign the record if requested and possible
         if sign and self.crypto_verifier:
-            if not hasattr(record, 'signature') or not record.signature:
+            if not hasattr(record, "signature") or not record.signature:
                 record.signature = self.crypto_verifier.sign_record(record)
 
         # Convert record to dictionary
@@ -700,7 +746,7 @@ class IPLDProvenanceStorage:
 
         return cid
 
-    def _create_dagnode_for_record(self, record: 'ProvenanceRecord', record_dict: dict) -> DAGNode:
+    def _create_dagnode_for_record(self, record: "ProvenanceRecord", record_dict: dict) -> DAGNode:
         """
         Create a DAG-PB node for a provenance record.
 
@@ -712,42 +758,46 @@ class IPLDProvenanceStorage:
             DAGNode: DAG-PB node for the record
         """
         # Convert to JSON for the data portion
-        data = json.dumps(record_dict).encode('utf-8')
+        data = json.dumps(record_dict).encode("utf-8")
 
         # Create links for related records
         links = []
 
         # Add links based on record type
-        if hasattr(record, 'input_ids') and record.input_ids:
+        if hasattr(record, "input_ids") and record.input_ids:
             for input_id in record.input_ids:
                 if input_id in self.record_cids:
-                    links.append(DAGLink(
-                        name=f"input/{input_id}",
-                        cid=self.record_cids[input_id],
-                        size=0  # Size will be calculated during encoding
-                    ))
+                    links.append(
+                        DAGLink(
+                            name=f"input/{input_id}",
+                            cid=self.record_cids[input_id],
+                            size=0,  # Size will be calculated during encoding
+                        )
+                    )
 
-        if hasattr(record, 'output_id') and record.output_id:
+        if hasattr(record, "output_id") and record.output_id:
             if record.output_id in self.record_cids:
-                links.append(DAGLink(
-                    name=f"output/{record.output_id}",
-                    cid=self.record_cids[record.output_id],
-                    size=0
-                ))
+                links.append(
+                    DAGLink(
+                        name=f"output/{record.output_id}",
+                        cid=self.record_cids[record.output_id],
+                        size=0,
+                    )
+                )
 
-        if hasattr(record, 'data_id') and record.data_id:
+        if hasattr(record, "data_id") and record.data_id:
             # Link to related data
             if record.data_id in self.record_cids:
-                links.append(DAGLink(
-                    name=f"data/{record.data_id}",
-                    cid=self.record_cids[record.data_id],
-                    size=0
-                ))
+                links.append(
+                    DAGLink(
+                        name=f"data/{record.data_id}", cid=self.record_cids[record.data_id], size=0
+                    )
+                )
 
         # Create and return the DAG node
         return DAGNode(data=data, links=links)
 
-    def _get_schema_name_for_record(self, record: 'ProvenanceRecord') -> str:
+    def _get_schema_name_for_record(self, record: "ProvenanceRecord") -> str:
         """
         Get the schema name for a given record type.
 
@@ -760,11 +810,11 @@ class IPLDProvenanceStorage:
         record_type_map = {
             "source": "source_record",
             "transformation": "transformation_record",
-            "verification": "verification_record"
+            "verification": "verification_record",
         }
 
         # Get record_type attribute as string
-        if hasattr(record, 'record_type'):
+        if hasattr(record, "record_type"):
             if isinstance(record.record_type, Enum):
                 record_type_str = record.record_type.value
             else:
@@ -776,7 +826,7 @@ class IPLDProvenanceStorage:
         # Fallback to provenance_record
         return "provenance_record"
 
-    def _record_to_dict(self, record: 'ProvenanceRecord') -> dict:
+    def _record_to_dict(self, record: "ProvenanceRecord") -> dict:
         """
         Convert a provenance record to a dictionary.
 
@@ -786,14 +836,14 @@ class IPLDProvenanceStorage:
         Returns:
             dict: Dictionary representation of the record
         """
-        if hasattr(record, 'to_dict'):
+        if hasattr(record, "to_dict"):
             return record.to_dict()
-        elif hasattr(record, '__dict__'):
+        elif hasattr(record, "__dict__"):
             result = {}
             for key, value in record.__dict__.items():
                 if isinstance(value, Enum):
                     result[key] = value.value
-                elif hasattr(value, 'to_dict'):
+                elif hasattr(value, "to_dict"):
                     result[key] = value.to_dict()
                 else:
                     result[key] = value
@@ -801,7 +851,9 @@ class IPLDProvenanceStorage:
         else:
             return asdict(record)
 
-    def store_records_batch(self, records: List['ProvenanceRecord'], sign: bool = True) -> Dict[str, str]:
+    def store_records_batch(
+        self, records: List["ProvenanceRecord"], sign: bool = True
+    ) -> Dict[str, str]:
         """
         Store multiple records in a batch operation.
 
@@ -816,7 +868,7 @@ class IPLDProvenanceStorage:
         if sign and self.crypto_verifier:
             signatures = self.crypto_verifier.bulk_sign_records(records)
             for record in records:
-                if record.id in signatures and not hasattr(record, 'signature'):
+                if record.id in signatures and not hasattr(record, "signature"):
                     record.signature = signatures[record.id]
 
         # Process records by schema type
@@ -840,7 +892,9 @@ class IPLDProvenanceStorage:
             else:
                 # Bulk store with regular IPLD schema
                 dicts_with_ids = [(record.id, record_dict) for record, record_dict in record_pairs]
-                batch_results = self.ipld_storage.store_many_with_schema(dicts_with_ids, schema_name)
+                batch_results = self.ipld_storage.store_many_with_schema(
+                    dicts_with_ids, schema_name
+                )
 
                 # Update record CIDs mapping
                 for record_id, cid in batch_results.items():
@@ -849,7 +903,7 @@ class IPLDProvenanceStorage:
 
         return results
 
-    def load_record(self, cid: str, record_class=None) -> 'ProvenanceRecord':
+    def load_record(self, cid: str, record_class=None) -> "ProvenanceRecord":
         """
         Load a provenance record from IPLD storage.
 
@@ -866,7 +920,7 @@ class IPLDProvenanceStorage:
                 dagnode = self.ipld_storage.load_dagpb(cid)
                 if dagnode and dagnode.data:
                     # Extract the record data from the DAG-PB node
-                    record_dict = json.loads(dagnode.data.decode('utf-8'))
+                    record_dict = json.loads(dagnode.data.decode("utf-8"))
                     return self._dict_to_record(record_dict, record_class)
         except Exception:
             # Fall back to regular IPLD loading if DAG-PB fails
@@ -876,7 +930,7 @@ class IPLDProvenanceStorage:
         record_dict = self.ipld_storage.load(cid)
         return self._dict_to_record(record_dict, record_class)
 
-    def _dict_to_record(self, record_dict: dict, record_class=None) -> 'ProvenanceRecord':
+    def _dict_to_record(self, record_dict: dict, record_class=None) -> "ProvenanceRecord":
         """
         Convert a dictionary to a provenance record.
 
@@ -892,21 +946,24 @@ class IPLDProvenanceStorage:
             return record_class(**record_dict)
 
         # Determine class based on record_type
-        record_type = record_dict.get('record_type')
-        if record_type == 'source':
+        record_type = record_dict.get("record_type")
+        if record_type == "source":
             from ipfs_datasets_py.analytics.data_provenance import SourceRecord
+
             return SourceRecord(**record_dict)
-        elif record_type == 'transformation':
+        elif record_type == "transformation":
             from ipfs_datasets_py.analytics.data_provenance import TransformationRecord
+
             return TransformationRecord(**record_dict)
-        elif record_type == 'verification':
+        elif record_type == "verification":
             return VerificationRecord(**record_dict)
         else:
             # Generic provenance record
             from ipfs_datasets_py.analytics.data_provenance import ProvenanceRecord
+
             return ProvenanceRecord(**record_dict)
 
-    def load_records_batch(self, cids: List[str]) -> Dict[str, 'ProvenanceRecord']:
+    def load_records_batch(self, cids: List[str]) -> Dict[str, "ProvenanceRecord"]:
         """
         Load multiple records in a batch operation.
 
@@ -977,25 +1034,31 @@ class IPLDProvenanceStorage:
         for node_id in graph.nodes:
             if node_id not in self.record_cids:
                 # Get the record from graph node attributes
-                record = graph.nodes[node_id].get('record')
+                record = graph.nodes[node_id].get("record")
                 if record:
                     # Store the record
                     self.store_record(record)
 
         # Create graph representation
         graph_dict = {
-            "records": {node_id: self.record_cids[node_id] for node_id in graph.nodes if node_id in self.record_cids},
-            "links": [{"source": src, "target": dst, "type": data.get("relation", "related_to")}
-                     for src, dst, data in graph.edges(data=True)],
+            "records": {
+                node_id: self.record_cids[node_id]
+                for node_id in graph.nodes
+                if node_id in self.record_cids
+            },
+            "links": [
+                {"source": src, "target": dst, "type": data.get("relation", "related_to")}
+                for src, dst, data in graph.edges(data=True)
+            ],
             "root_records": [node_id for node_id in graph.nodes if graph.in_degree(node_id) == 0],
             "metadata": {
                 "timestamp": time.time(),
                 "node_count": len(graph.nodes),
-                "edge_count": len(graph.edges)
+                "edge_count": len(graph.edges),
             },
             "created_at": time.time(),
             "updated_at": time.time(),
-            "version": "1.0"
+            "version": "1.0",
         }
 
         # Store the graph with schema validation
@@ -1023,30 +1086,48 @@ class IPLDProvenanceStorage:
             # Ensure all nodes in this partition are stored
             for node_id in subgraph.nodes:
                 if node_id not in self.record_cids:
-                    record = subgraph.nodes[node_id].get('record')
+                    record = subgraph.nodes[node_id].get("record")
                     if record:
                         self.store_record(record)
 
             # Store the partition
             partition_dict = {
                 "partition_id": partition_id,
-                "nodes": {node_id: self.record_cids[node_id] for node_id in subgraph.nodes if node_id in self.record_cids},
-                "boundary_nodes": [n for n in subgraph.nodes if any(neighbor not in subgraph for neighbor in graph.neighbors(n))],
+                "nodes": {
+                    node_id: self.record_cids[node_id]
+                    for node_id in subgraph.nodes
+                    if node_id in self.record_cids
+                },
+                "boundary_nodes": [
+                    n
+                    for n in subgraph.nodes
+                    if any(neighbor not in subgraph for neighbor in graph.neighbors(n))
+                ],
                 "metadata": {
                     "timestamp": time.time(),
                     "node_count": len(subgraph.nodes),
-                    "edge_count": len(subgraph.edges)
+                    "edge_count": len(subgraph.edges),
                 },
                 "parent_partition": None,  # Will be set later
                 "child_partitions": [],  # Will be set later
                 "timestamp_range": {
-                    "start": min(subgraph.nodes[n].get("record").timestamp for n in subgraph.nodes if "record" in subgraph.nodes[n]),
-                    "end": max(subgraph.nodes[n].get("record").timestamp for n in subgraph.nodes if "record" in subgraph.nodes[n])
-                }
+                    "start": min(
+                        subgraph.nodes[n].get("record").timestamp
+                        for n in subgraph.nodes
+                        if "record" in subgraph.nodes[n]
+                    ),
+                    "end": max(
+                        subgraph.nodes[n].get("record").timestamp
+                        for n in subgraph.nodes
+                        if "record" in subgraph.nodes[n]
+                    ),
+                },
             }
 
             # Store the partition
-            partition_cid = self.ipld_storage.store_with_schema(partition_dict, "provenance_partition")
+            partition_cid = self.ipld_storage.store_with_schema(
+                partition_dict, "provenance_partition"
+            )
             partition_cids[partition_id] = partition_cid
             self.partition_cids[partition_id] = partition_cid
 
@@ -1057,8 +1138,8 @@ class IPLDProvenanceStorage:
                 "timestamp": time.time(),
                 "partition_count": len(partition_cids),
                 "total_nodes": len(graph.nodes),
-                "total_edges": len(graph.edges)
-            }
+                "total_edges": len(graph.edges),
+            },
         }
 
         # Store the partition index
@@ -1097,8 +1178,8 @@ class IPLDProvenanceStorage:
         partition_size = min(self.partition_size_limit, max(100, len(graph.nodes) // 10))
 
         for i in range(0, len(sorted_nodes), partition_size):
-            partition_nodes = [node_id for node_id, _ in sorted_nodes[i:i+partition_size]]
-            partition_id = f"partition_{i//partition_size}"
+            partition_nodes = [node_id for node_id, _ in sorted_nodes[i : i + partition_size]]
+            partition_id = f"partition_{i // partition_size}"
 
             # Create subgraph
             subgraph = graph.subgraph(partition_nodes).copy()
@@ -1128,8 +1209,13 @@ class IPLDProvenanceStorage:
             # Fall back to filtered single graph
             return self._incremental_load_single(root_cid, criteria)
 
-    def traverse_graph_from_node(self, start_node_id: str, max_depth: int = 3,
-                                direction: str = "both", relation_filter: Optional[List[str]] = None) -> nx.DiGraph:
+    def traverse_graph_from_node(
+        self,
+        start_node_id: str,
+        max_depth: int = 3,
+        direction: str = "both",
+        relation_filter: Optional[List[str]] = None,
+    ) -> nx.DiGraph:
         """
         Traverse the provenance graph from a starting node.
 
@@ -1173,7 +1259,7 @@ class IPLDProvenanceStorage:
                     if dagnode and dagnode.links:
                         for link in dagnode.links:
                             # Process links based on name pattern (input/ID, output/ID, etc.)
-                            link_parts = link.name.split('/')
+                            link_parts = link.name.split("/")
                             if len(link_parts) >= 2:
                                 link_type, linked_id = link_parts[0], link_parts[1]
 
@@ -1198,7 +1284,9 @@ class IPLDProvenanceStorage:
                                     linked_record = self.load_record(linked_cid)
 
                                     # Add to subgraph
-                                    subgraph.add_node(linked_id, record=linked_record, cid=linked_cid)
+                                    subgraph.add_node(
+                                        linked_id, record=linked_record, cid=linked_cid
+                                    )
 
                                     # Add edge with appropriate direction
                                     if link_type == "input":
@@ -1224,7 +1312,11 @@ class IPLDProvenanceStorage:
                                 continue
 
                             # Process outgoing links
-                            if direction in ["out", "both"] and source == node_id and target not in visited:
+                            if (
+                                direction in ["out", "both"]
+                                and source == node_id
+                                and target not in visited
+                            ):
                                 visited.add(target)
                                 queue.append((target, depth + 1))
 
@@ -1236,7 +1328,11 @@ class IPLDProvenanceStorage:
                                     subgraph.add_edge(node_id, target, relation=relation)
 
                             # Process incoming links
-                            if direction in ["in", "both"] and target == node_id and source not in visited:
+                            if (
+                                direction in ["in", "both"]
+                                and target == node_id
+                                and source not in visited
+                            ):
                                 visited.add(source)
                                 queue.append((source, depth + 1))
 
@@ -1251,7 +1347,9 @@ class IPLDProvenanceStorage:
 
         return subgraph
 
-    def verify_integrity(self, crypto_verifier: Optional['ProvenanceCryptoVerifier'] = None) -> Dict[str, bool]:
+    def verify_integrity(
+        self, crypto_verifier: Optional["ProvenanceCryptoVerifier"] = None
+    ) -> Dict[str, bool]:
         """
         Verify the cryptographic integrity of all provenance records.
 
@@ -1277,11 +1375,13 @@ class IPLDProvenanceStorage:
         # Verify all records
         return verifier.verify_graph_integrity(records)
 
-    def link_cross_document_provenance(self,
-                                 source_record_id: str,
-                                 target_record_id: str,
-                                 link_type: str = "related_to",
-                                 properties: Optional[Dict[str, Any]] = None) -> str:
+    def link_cross_document_provenance(
+        self,
+        source_record_id: str,
+        target_record_id: str,
+        link_type: str = "related_to",
+        properties: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Create a provenance link between records from different documents or datasets.
 
@@ -1317,41 +1417,40 @@ class IPLDProvenanceStorage:
             "target_record_cid": self.record_cids[target_record_id],
             "link_type": link_type,
             "properties": properties,
-            "metadata": {
-                "created_at": datetime.datetime.now().isoformat()
-            }
+            "metadata": {"created_at": datetime.datetime.now().isoformat()},
         }
 
         # Sign the link record if crypto verification is enabled
         if self.crypto_verifier:
             from ipfs_datasets_py.analytics.data_provenance import ProvenanceRecord
+
             # Convert to ProvenanceRecord for signing
             temp_record = ProvenanceRecord(
                 id=link_record["id"],
                 record_type="cross_document_link",
                 timestamp=link_record["timestamp"],
                 agent_id="system",
-                metadata=link_record
+                metadata=link_record,
             )
             link_record["signature"] = self.crypto_verifier.sign_record(temp_record)
 
         # Store the link record
         if self.enable_dagpb:
             # Create a DAG-PB node with links to both records
-            link_data = json.dumps(link_record).encode('utf-8')
+            link_data = json.dumps(link_record).encode("utf-8")
 
             # Create links to the source and target records
             links = [
                 DAGLink(
                     name=f"source/{source_record_id}",
                     cid=self.record_cids[source_record_id],
-                    size=0
+                    size=0,
                 ),
                 DAGLink(
                     name=f"target/{target_record_id}",
                     cid=self.record_cids[target_record_id],
-                    size=0
-                )
+                    size=0,
+                ),
             ]
 
             # Create and store the DAG node
@@ -1395,11 +1494,13 @@ class IPLDProvenanceStorage:
                             # Try to load as DAG-PB
                             dagnode = self.ipld_storage.load_dagpb(cid)
                             if dagnode and dagnode.data:
-                                link_record = json.loads(dagnode.data.decode('utf-8'))
+                                link_record = json.loads(dagnode.data.decode("utf-8"))
 
                                 # Check if this link involves our record
-                                if (link_record.get("source_record_id") == record_id or
-                                    link_record.get("target_record_id") == record_id):
+                                if (
+                                    link_record.get("source_record_id") == record_id
+                                    or link_record.get("target_record_id") == record_id
+                                ):
                                     links.append(link_record)
                         except Exception:
                             # Fall back to regular loading if DAG-PB fails
@@ -1411,8 +1512,10 @@ class IPLDProvenanceStorage:
                             link_record = self.ipld_storage.load_json(cid)
 
                             # Check if this link involves our record
-                            if (link_record.get("source_record_id") == record_id or
-                                link_record.get("target_record_id") == record_id):
+                            if (
+                                link_record.get("source_record_id") == record_id
+                                or link_record.get("target_record_id") == record_id
+                            ):
                                 links.append(link_record)
                         except Exception as e:
                             print(f"Error loading cross-document link {stored_record_id}: {e}")
@@ -1421,10 +1524,12 @@ class IPLDProvenanceStorage:
 
         return links
 
-    def build_cross_document_lineage_graph(self,
-                                        record_ids: Union[str, List[str]],
-                                        max_depth: int = 3,
-                                        link_types: Optional[List[str]] = None) -> nx.DiGraph:
+    def build_cross_document_lineage_graph(
+        self,
+        record_ids: Union[str, List[str]],
+        max_depth: int = 3,
+        link_types: Optional[List[str]] = None,
+    ) -> nx.DiGraph:
         """
         Build a comprehensive cross-document lineage graph for a set of records.
 
@@ -1474,18 +1579,19 @@ class IPLDProvenanceStorage:
             doc_id = None
             if record:
                 # Try to extract document_id from record metadata
-                if hasattr(record, 'document_id'):
+                if hasattr(record, "document_id"):
                     doc_id = record.document_id
-                elif hasattr(record, 'metadata') and isinstance(record.metadata, dict):
-                    doc_id = record.metadata.get('document_id')
+                elif hasattr(record, "metadata") and isinstance(record.metadata, dict):
+                    doc_id = record.metadata.get("document_id")
 
                 # Use record source information if available
-                if not doc_id and hasattr(record, 'source_type') and hasattr(record, 'location'):
+                if not doc_id and hasattr(record, "source_type") and hasattr(record, "location"):
                     import hashlib
+
                     doc_id = f"{record.source_type}:{hashlib.md5(str(record.location).encode()).hexdigest()[:8]}"
 
                 # Use agent and timestamp patterns for grouping
-                if not doc_id and hasattr(record, 'agent_id') and hasattr(record, 'timestamp'):
+                if not doc_id and hasattr(record, "agent_id") and hasattr(record, "timestamp"):
                     # Group by agent and approximate time (day)
                     try:
                         day_ts = int(float(record.timestamp)) // 86400 * 86400  # Round to day
@@ -1496,7 +1602,7 @@ class IPLDProvenanceStorage:
             # Fallback to ID pattern matching (group records with similar IDs)
             if not doc_id:
                 # Extract prefix or pattern from ID
-                parts = record_id.split('-')
+                parts = record_id.split("-")
                 if len(parts) > 1:
                     doc_id = f"pattern:{parts[0]}"
                 else:
@@ -1508,30 +1614,32 @@ class IPLDProvenanceStorage:
             # Initialize document metadata if needed
             if doc_id not in document_metadata:
                 document_metadata[doc_id] = {
-                    'record_count': 0,
-                    'records': set(),
-                    'earliest_timestamp': float('inf'),
-                    'latest_timestamp': 0,
-                    'record_types': set()
+                    "record_count": 0,
+                    "records": set(),
+                    "earliest_timestamp": float("inf"),
+                    "latest_timestamp": 0,
+                    "record_types": set(),
                 }
 
             # Update document metadata if record data is available
             if record:
-                document_metadata[doc_id]['record_count'] += 1
-                document_metadata[doc_id]['records'].add(record_id)
+                document_metadata[doc_id]["record_count"] += 1
+                document_metadata[doc_id]["records"].add(record_id)
 
-                if hasattr(record, 'timestamp'):
+                if hasattr(record, "timestamp"):
                     try:
                         ts = float(record.timestamp)
-                        document_metadata[doc_id]['earliest_timestamp'] = min(
-                            document_metadata[doc_id]['earliest_timestamp'], ts)
-                        document_metadata[doc_id]['latest_timestamp'] = max(
-                            document_metadata[doc_id]['latest_timestamp'], ts)
+                        document_metadata[doc_id]["earliest_timestamp"] = min(
+                            document_metadata[doc_id]["earliest_timestamp"], ts
+                        )
+                        document_metadata[doc_id]["latest_timestamp"] = max(
+                            document_metadata[doc_id]["latest_timestamp"], ts
+                        )
                     except (ValueError, TypeError):
                         pass
 
-                if hasattr(record, 'record_type'):
-                    document_metadata[doc_id]['record_types'].add(record.record_type)
+                if hasattr(record, "record_type"):
+                    document_metadata[doc_id]["record_types"].add(record.record_type)
 
             return doc_id
 
@@ -1559,28 +1667,28 @@ class IPLDProvenanceStorage:
 
                     # Create enhanced node attributes
                     node_attrs = {
-                        'record_type': getattr(record, 'record_type', 'unknown'),
-                        'cid': record_cid,
-                        'description': getattr(record, 'description', ''),
-                        'timestamp': getattr(record, 'timestamp', 0),
-                        'document_id': doc_id
+                        "record_type": getattr(record, "record_type", "unknown"),
+                        "cid": record_cid,
+                        "description": getattr(record, "description", ""),
+                        "timestamp": getattr(record, "timestamp", 0),
+                        "document_id": doc_id,
                     }
 
                     # Add additional metadata if available
-                    if hasattr(record, 'metadata') and isinstance(record.metadata, dict):
+                    if hasattr(record, "metadata") and isinstance(record.metadata, dict):
                         for k, v in record.metadata.items():
-                            if k not in node_attrs and not k.startswith('_'):
-                                node_attrs[f'metadata_{k}'] = v
+                            if k not in node_attrs and not k.startswith("_"):
+                                node_attrs[f"metadata_{k}"] = v
 
                     # Add agent information for better tracking
-                    if hasattr(record, 'agent_id'):
-                        node_attrs['agent_id'] = record.agent_id
+                    if hasattr(record, "agent_id"):
+                        node_attrs["agent_id"] = record.agent_id
 
                     # Add node to graph with enhanced record data
                     lineage_graph.add_node(current_id, **node_attrs)
 
                     # Get incoming/outgoing edges within the same document
-                    if hasattr(record, 'input_ids') and record.input_ids:
+                    if hasattr(record, "input_ids") and record.input_ids:
                         for input_id in record.input_ids:
                             # Get document ID for input record
                             input_doc_id = get_document_id(input_id)
@@ -1590,11 +1698,11 @@ class IPLDProvenanceStorage:
 
                             # Add the edge to the graph with enhanced attributes
                             edge_attrs = {
-                                'relation': "input_to",
-                                'cross_document': is_cross_doc,
-                                'source_document': input_doc_id,
-                                'target_document': doc_id,
-                                'edge_type': 'input'
+                                "relation": "input_to",
+                                "cross_document": is_cross_doc,
+                                "source_document": input_doc_id,
+                                "target_document": doc_id,
+                                "edge_type": "input",
                             }
 
                             lineage_graph.add_edge(input_id, current_id, **edge_attrs)
@@ -1606,7 +1714,7 @@ class IPLDProvenanceStorage:
                                 next_depth = depth + (1 if is_cross_doc else 0)
                                 queue.append((input_id, next_depth))
 
-                    if hasattr(record, 'output_ids') and record.output_ids:
+                    if hasattr(record, "output_ids") and record.output_ids:
                         for output_id in record.output_ids:
                             # Get document ID for output record
                             output_doc_id = get_document_id(output_id)
@@ -1616,11 +1724,11 @@ class IPLDProvenanceStorage:
 
                             # Add the edge to the graph with enhanced attributes
                             edge_attrs = {
-                                'relation': "output_to",
-                                'cross_document': is_cross_doc,
-                                'source_document': doc_id,
-                                'target_document': output_doc_id,
-                                'edge_type': 'output'
+                                "relation": "output_to",
+                                "cross_document": is_cross_doc,
+                                "source_document": doc_id,
+                                "target_document": output_doc_id,
+                                "edge_type": "output",
                             }
 
                             lineage_graph.add_edge(current_id, output_id, **edge_attrs)
@@ -1642,7 +1750,7 @@ class IPLDProvenanceStorage:
                         description=f"Error: {str(e)}",
                         timestamp=0,
                         document_id=doc_id,
-                        error=str(e)
+                        error=str(e),
                     )
 
             # Process cross-document links
@@ -1673,22 +1781,22 @@ class IPLDProvenanceStorage:
 
                             # Create enhanced node attributes
                             node_attrs = {
-                                'record_type': getattr(record, 'record_type', 'unknown'),
-                                'cid': self.record_cids[node_id],
-                                'description': getattr(record, 'description', ''),
-                                'timestamp': getattr(record, 'timestamp', 0),
-                                'document_id': doc_id
+                                "record_type": getattr(record, "record_type", "unknown"),
+                                "cid": self.record_cids[node_id],
+                                "description": getattr(record, "description", ""),
+                                "timestamp": getattr(record, "timestamp", 0),
+                                "document_id": doc_id,
                             }
 
                             # Add additional metadata if available
-                            if hasattr(record, 'metadata') and isinstance(record.metadata, dict):
+                            if hasattr(record, "metadata") and isinstance(record.metadata, dict):
                                 for k, v in record.metadata.items():
-                                    if k not in node_attrs and not k.startswith('_'):
-                                        node_attrs[f'metadata_{k}'] = v
+                                    if k not in node_attrs and not k.startswith("_"):
+                                        node_attrs[f"metadata_{k}"] = v
 
                             # Add agent information
-                            if hasattr(record, 'agent_id'):
-                                node_attrs['agent_id'] = record.agent_id
+                            if hasattr(record, "agent_id"):
+                                node_attrs["agent_id"] = record.agent_id
 
                             lineage_graph.add_node(node_id, **node_attrs)
                         except Exception as e:
@@ -1700,7 +1808,7 @@ class IPLDProvenanceStorage:
                                 description=f"Error loading record: {str(e)}",
                                 timestamp=0,
                                 document_id=doc_id,
-                                error=str(e)
+                                error=str(e),
                             )
 
                 # Extract link properties
@@ -1711,13 +1819,13 @@ class IPLDProvenanceStorage:
 
                 # Add the cross-document edge with enhanced attributes
                 edge_attrs = {
-                    'relation': link_type,
-                    'cross_document': is_cross_doc,
-                    'source_document': source_doc_id,
-                    'target_document': target_doc_id,
-                    'link_id': link.get("id"),
-                    'edge_type': 'explicit_link',
-                    'confidence': link_properties.get('confidence', 1.0)
+                    "relation": link_type,
+                    "cross_document": is_cross_doc,
+                    "source_document": source_doc_id,
+                    "target_document": target_doc_id,
+                    "link_id": link.get("id"),
+                    "edge_type": "explicit_link",
+                    "confidence": link_properties.get("confidence", 1.0),
                 }
 
                 # Add any additional properties from the link
@@ -1735,15 +1843,15 @@ class IPLDProvenanceStorage:
         # Prepare document metadata for serialization
         for doc_id, meta in document_metadata.items():
             # Convert sets to lists for serialization
-            meta['records'] = list(meta['records'])
-            meta['record_types'] = list(meta['record_types'])
+            meta["records"] = list(meta["records"])
+            meta["record_types"] = list(meta["record_types"])
 
             # Fix infinite earliest_timestamp if no timestamps were found
-            if meta['earliest_timestamp'] == float('inf'):
-                meta['earliest_timestamp'] = 0
+            if meta["earliest_timestamp"] == float("inf"):
+                meta["earliest_timestamp"] = 0
 
         # Add document-level metadata to the graph
-        lineage_graph.graph['documents'] = document_metadata
+        lineage_graph.graph["documents"] = document_metadata
 
         # Add cross-document metrics
         doc_connections = {}
@@ -1751,35 +1859,36 @@ class IPLDProvenanceStorage:
 
         # Calculate cross-document statistics
         for source, target, attrs in lineage_graph.edges(data=True):
-            if attrs.get('cross_document', False):
+            if attrs.get("cross_document", False):
                 xdoc_edge_count += 1
-                source_doc = attrs.get('source_document')
-                target_doc = attrs.get('target_document')
+                source_doc = attrs.get("source_document")
+                target_doc = attrs.get("target_document")
 
                 if source_doc and target_doc:
                     key = f"{source_doc}→{target_doc}"
                     if key not in doc_connections:
                         doc_connections[key] = {
-                            'count': 0,
-                            'relations': set(),
-                            'source_document': source_doc,
-                            'target_document': target_doc
+                            "count": 0,
+                            "relations": set(),
+                            "source_document": source_doc,
+                            "target_document": target_doc,
                         }
-                    doc_connections[key]['count'] += 1
-                    if 'relation' in attrs:
-                        doc_connections[key]['relations'].add(attrs['relation'])
+                    doc_connections[key]["count"] += 1
+                    if "relation" in attrs:
+                        doc_connections[key]["relations"].add(attrs["relation"])
 
         # Convert relation sets to lists for serialization
         for key in doc_connections:
-            doc_connections[key]['relations'] = list(doc_connections[key]['relations'])
+            doc_connections[key]["relations"] = list(doc_connections[key]["relations"])
 
         # Add cross-document metrics to graph
-        lineage_graph.graph['cross_document_metrics'] = {
-            'document_count': len(document_metadata),
-            'cross_document_edge_count': xdoc_edge_count,
-            'document_connections': doc_connections,
-            'cross_document_density': xdoc_edge_count / max(1, len(lineage_graph.edges())),
-            'document_connectivity': len(doc_connections) / max(1, len(document_metadata) * (len(document_metadata) - 1) / 2)
+        lineage_graph.graph["cross_document_metrics"] = {
+            "document_count": len(document_metadata),
+            "cross_document_edge_count": xdoc_edge_count,
+            "document_connections": doc_connections,
+            "cross_document_density": xdoc_edge_count / max(1, len(lineage_graph.edges())),
+            "document_connectivity": len(doc_connections)
+            / max(1, len(document_metadata) * (len(document_metadata) - 1) / 2),
         }
 
         # Calculate and add graph metrics
@@ -1801,7 +1910,9 @@ class IPLDProvenanceStorage:
             # Calculate basic metrics
             node_count = graph.number_of_nodes()
             edge_count = graph.number_of_edges()
-            cross_doc_edges = sum(1 for _, _, data in graph.edges(data=True) if data.get("cross_document", False))
+            cross_doc_edges = sum(
+                1 for _, _, data in graph.edges(data=True) if data.get("cross_document", False)
+            )
 
             # Add as graph attributes
             graph.graph["node_count"] = node_count
@@ -1841,24 +1952,28 @@ class IPLDProvenanceStorage:
                     graph.edges[u, v]["importance"] = score
 
                 # Find critical edges (high importance)
-                critical_edges = sorted(edge_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+                critical_edges = sorted(edge_importance.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
                 graph.graph["critical_edges"] = [edge for edge, _ in critical_edges]
             except Exception:
                 pass
         except Exception as e:
             print(f"Error calculating lineage graph metrics: {e}")
 
-    def visualize_cross_document_lineage(self,
-                                     lineage_graph: nx.DiGraph = None,
-                                     record_ids: Optional[List[str]] = None,
-                                     max_depth: int = 3,
-                                     highlight_cross_document: bool = True,
-                                     layout: str = "hierarchical",
-                                     show_metrics: bool = True,
-                                     file_path: Optional[str] = None,
-                                     format: str = "png",
-                                     width: int = 1200,
-                                     height: int = 800) -> Optional[Union[str, Dict[str, Any]]]:
+    def visualize_cross_document_lineage(
+        self,
+        lineage_graph: nx.DiGraph = None,
+        record_ids: Optional[List[str]] = None,
+        max_depth: int = 3,
+        highlight_cross_document: bool = True,
+        layout: str = "hierarchical",
+        show_metrics: bool = True,
+        file_path: Optional[str] = None,
+        format: str = "png",
+        width: int = 1200,
+        height: int = 800,
+    ) -> Optional[Union[str, Dict[str, Any]]]:
         """
         Visualize cross-document lineage relationships.
 
@@ -1893,7 +2008,7 @@ class IPLDProvenanceStorage:
             return None
 
         # Set up matplotlib figure
-        plt.figure(figsize=(width/100, height/100), dpi=100)
+        plt.figure(figsize=(width / 100, height / 100), dpi=100)
 
         # Choose layout algorithm
         if layout == "hierarchical":
@@ -1905,7 +2020,10 @@ class IPLDProvenanceStorage:
                     layers[node] = 0
                 else:
                     # Find maximum layer of predecessors and add 1
-                    max_pred_layer = max([layers.get(pred, 0) for pred in lineage_graph.predecessors(node)], default=-1)
+                    max_pred_layer = max(
+                        [layers.get(pred, 0) for pred in lineage_graph.predecessors(node)],
+                        default=-1,
+                    )
                     layers[node] = max_pred_layer + 1
 
             # Convert layers to multipartite format
@@ -1931,7 +2049,7 @@ class IPLDProvenanceStorage:
             "model_training": "lightseagreen",
             "model_inference": "lightskyblue",
             "cross_document_link": "purple",
-            "unknown": "gray"
+            "unknown": "gray",
         }
 
         # Calculate node colors and sizes
@@ -1953,26 +2071,47 @@ class IPLDProvenanceStorage:
             node_sizes.append(size)
 
         # Draw nodes
-        nx.draw_networkx_nodes(lineage_graph, pos, node_color=node_colors,
-                            node_size=node_sizes, alpha=0.8)
+        nx.draw_networkx_nodes(
+            lineage_graph, pos, node_color=node_colors, node_size=node_sizes, alpha=0.8
+        )
 
         # Draw edges with different styles based on cross-document status
         if highlight_cross_document:
             # Separate cross-document and regular edges
-            cross_doc_edges = [(u, v) for u, v, data in lineage_graph.edges(data=True)
-                             if data.get("cross_document", False)]
-            regular_edges = [(u, v) for u, v, data in lineage_graph.edges(data=True)
-                           if not data.get("cross_document", False)]
+            cross_doc_edges = [
+                (u, v)
+                for u, v, data in lineage_graph.edges(data=True)
+                if data.get("cross_document", False)
+            ]
+            regular_edges = [
+                (u, v)
+                for u, v, data in lineage_graph.edges(data=True)
+                if not data.get("cross_document", False)
+            ]
 
             # Draw regular edges
-            nx.draw_networkx_edges(lineage_graph, pos, edgelist=regular_edges,
-                                 width=1.0, alpha=0.6, arrows=True,
-                                 edge_color="gray", style="solid")
+            nx.draw_networkx_edges(
+                lineage_graph,
+                pos,
+                edgelist=regular_edges,
+                width=1.0,
+                alpha=0.6,
+                arrows=True,
+                edge_color="gray",
+                style="solid",
+            )
 
             # Draw cross-document edges
-            nx.draw_networkx_edges(lineage_graph, pos, edgelist=cross_doc_edges,
-                                 width=2.0, alpha=0.9, arrows=True,
-                                 edge_color="red", style="dashed")
+            nx.draw_networkx_edges(
+                lineage_graph,
+                pos,
+                edgelist=cross_doc_edges,
+                width=2.0,
+                alpha=0.9,
+                arrows=True,
+                edge_color="red",
+                style="dashed",
+            )
         else:
             # Draw all edges the same
             nx.draw_networkx_edges(lineage_graph, pos, width=1.0, alpha=0.7, arrows=True)
@@ -2010,8 +2149,9 @@ class IPLDProvenanceStorage:
             node_labels[node] = "\n".join(label_parts)
 
         # Draw node labels
-        nx.draw_networkx_labels(lineage_graph, pos, labels=node_labels,
-                              font_size=8, font_family='sans-serif')
+        nx.draw_networkx_labels(
+            lineage_graph, pos, labels=node_labels, font_size=8, font_family="sans-serif"
+        )
 
         # Add title
         plt.title("Cross-Document Lineage Graph", fontsize=16)
@@ -2019,47 +2159,71 @@ class IPLDProvenanceStorage:
         # Add legend for node types
         legend_elements = []
         for record_type, color in node_color_map.items():
-            legend_elements.append(plt.Line2D([0], [0], marker='o', color='w',
-                                  markerfacecolor=color, markersize=10, label=record_type))
+            legend_elements.append(
+                plt.Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    markerfacecolor=color,
+                    markersize=10,
+                    label=record_type,
+                )
+            )
 
         # Add legend for edge types if highlighting
         if highlight_cross_document:
-            legend_elements.append(plt.Line2D([0], [0], color='gray', lw=1, label='Same document'))
-            legend_elements.append(plt.Line2D([0], [0], color='red', lw=2, linestyle='--', label='Cross-document'))
+            legend_elements.append(plt.Line2D([0], [0], color="gray", lw=1, label="Same document"))
+            legend_elements.append(
+                plt.Line2D([0], [0], color="red", lw=2, linestyle="--", label="Cross-document")
+            )
 
-        plt.legend(handles=legend_elements, loc='upper right', fontsize=8)
+        plt.legend(handles=legend_elements, loc="upper right", fontsize=8)
 
         # Add metrics if requested
-        if show_metrics and hasattr(lineage_graph, 'graph'):
+        if show_metrics and hasattr(lineage_graph, "graph"):
             metrics_text = "Graph Metrics:\n"
-            metrics_text += f"Nodes: {lineage_graph.graph.get('node_count', lineage_graph.number_of_nodes())}\n"
-            metrics_text += f"Edges: {lineage_graph.graph.get('edge_count', lineage_graph.number_of_edges())}\n"
-            metrics_text += f"Cross-doc edges: {lineage_graph.graph.get('cross_document_edge_count', 'N/A')}\n"
+            metrics_text += (
+                f"Nodes: {lineage_graph.graph.get('node_count', lineage_graph.number_of_nodes())}\n"
+            )
+            metrics_text += (
+                f"Edges: {lineage_graph.graph.get('edge_count', lineage_graph.number_of_edges())}\n"
+            )
+            metrics_text += (
+                f"Cross-doc edges: {lineage_graph.graph.get('cross_document_edge_count', 'N/A')}\n"
+            )
 
-            if 'is_connected' in lineage_graph.graph:
-                if lineage_graph.graph['is_connected']:
-                    metrics_text += f"Connected: Yes (diameter: {lineage_graph.graph.get('diameter', 'N/A')})\n"
+            if "is_connected" in lineage_graph.graph:
+                if lineage_graph.graph["is_connected"]:
+                    metrics_text += (
+                        f"Connected: Yes (diameter: {lineage_graph.graph.get('diameter', 'N/A')})\n"
+                    )
                 else:
                     metrics_text += f"Connected: No (components: {lineage_graph.graph.get('component_count', 'N/A')})\n"
 
-            plt.figtext(0.02, 0.02, metrics_text, fontsize=8,
-                      bbox={"facecolor": "white", "alpha": 0.7, "pad": 5})
+            plt.figtext(
+                0.02,
+                0.02,
+                metrics_text,
+                fontsize=8,
+                bbox={"facecolor": "white", "alpha": 0.7, "pad": 5},
+            )
 
         # Set tight layout
         plt.tight_layout()
 
         # Save or return the visualization
         if file_path:
-            plt.savefig(file_path, format=format, bbox_inches='tight', dpi=100)
+            plt.savefig(file_path, format=format, bbox_inches="tight", dpi=100)
             plt.close()
             return None
         elif format == "svg" or format == "png":
             # Return as base64-encoded image
             buf = io.BytesIO()
-            plt.savefig(buf, format=format, bbox_inches='tight', dpi=100)
+            plt.savefig(buf, format=format, bbox_inches="tight", dpi=100)
             plt.close()
             buf.seek(0)
-            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            img_base64 = base64.b64encode(buf.read()).decode("utf-8")
             return img_base64
         elif format == "json":
             # Return graph data as JSON for custom visualization
@@ -2069,7 +2233,7 @@ class IPLDProvenanceStorage:
             graph_data = {
                 "nodes": [],
                 "edges": [],
-                "metrics": dict(lineage_graph.graph) if hasattr(lineage_graph, 'graph') else {}
+                "metrics": dict(lineage_graph.graph) if hasattr(lineage_graph, "graph") else {},
             }
 
             # Add nodes with positions and attributes
@@ -2081,7 +2245,7 @@ class IPLDProvenanceStorage:
                     "y": float(y),
                     "color": node_colors[lineage_graph.nodes.index(node)],
                     "size": float(node_sizes[lineage_graph.nodes.index(node)]),
-                    "label": node_labels.get(node, str(node))
+                    "label": node_labels.get(node, str(node)),
                 }
 
                 # Add all node attributes
@@ -2104,7 +2268,7 @@ class IPLDProvenanceStorage:
                     "source": u,
                     "target": v,
                     "cross_document": data.get("cross_document", False),
-                    "relation": data.get("relation", "related_to")
+                    "relation": data.get("relation", "related_to"),
                 }
 
                 # Add all edge attributes
@@ -2126,10 +2290,12 @@ class IPLDProvenanceStorage:
             plt.close()
             return None
 
-    def analyze_cross_document_lineage(self,
-                                    lineage_graph: Optional[nx.DiGraph] = None,
-                                    record_ids: Optional[List[str]] = None,
-                                    max_depth: int = 3) -> Dict[str, Any]:
+    def analyze_cross_document_lineage(
+        self,
+        lineage_graph: Optional[nx.DiGraph] = None,
+        record_ids: Optional[List[str]] = None,
+        max_depth: int = 3,
+    ) -> Dict[str, Any]:
         """
         Analyze cross-document lineage to identify key patterns and insights.
 
@@ -2163,21 +2329,22 @@ class IPLDProvenanceStorage:
             "critical_paths": {},
             "hub_records": {},
             "cross_document_clusters": {},
-            "time_analysis": {}
+            "time_analysis": {},
         }
 
         # Calculate basic metrics
         node_count = lineage_graph.number_of_nodes()
         edge_count = lineage_graph.number_of_edges()
-        cross_doc_edges = sum(1 for _, _, data in lineage_graph.edges(data=True)
-                             if data.get("cross_document", False))
+        cross_doc_edges = sum(
+            1 for _, _, data in lineage_graph.edges(data=True) if data.get("cross_document", False)
+        )
 
         analysis["basic_metrics"] = {
             "node_count": node_count,
             "edge_count": edge_count,
             "cross_document_edge_count": cross_doc_edges,
             "cross_document_ratio": cross_doc_edges / max(1, edge_count),
-            "record_type_distribution": {}
+            "record_type_distribution": {},
         }
 
         # Calculate record type distribution
@@ -2195,26 +2362,35 @@ class IPLDProvenanceStorage:
             if nx.is_weakly_connected(lineage_graph):
                 analysis["connectivity"]["is_connected"] = True
                 analysis["connectivity"]["diameter"] = nx.diameter(lineage_graph.to_undirected())
-                analysis["connectivity"]["average_shortest_path"] = nx.average_shortest_path_length(lineage_graph)
+                analysis["connectivity"]["average_shortest_path"] = nx.average_shortest_path_length(
+                    lineage_graph
+                )
             else:
                 analysis["connectivity"]["is_connected"] = False
                 components = list(nx.weakly_connected_components(lineage_graph))
                 analysis["connectivity"]["component_count"] = len(components)
                 analysis["connectivity"]["largest_component_size"] = max(len(c) for c in components)
-                analysis["connectivity"]["largest_component_ratio"] = max(len(c) for c in components) / node_count
+                analysis["connectivity"]["largest_component_ratio"] = (
+                    max(len(c) for c in components) / node_count
+                )
 
                 # Analyze components with cross-document links
                 cross_doc_components = []
                 for i, component in enumerate(components):
                     component_subgraph = lineage_graph.subgraph(component)
-                    cross_edges = sum(1 for _, _, data in component_subgraph.edges(data=True)
-                                    if data.get("cross_document", False))
+                    cross_edges = sum(
+                        1
+                        for _, _, data in component_subgraph.edges(data=True)
+                        if data.get("cross_document", False)
+                    )
                     if cross_edges > 0:
-                        cross_doc_components.append({
-                            "component_id": i,
-                            "size": len(component),
-                            "cross_document_edge_count": cross_edges
-                        })
+                        cross_doc_components.append(
+                            {
+                                "component_id": i,
+                                "size": len(component),
+                                "cross_document_edge_count": cross_edges,
+                            }
+                        )
 
                 analysis["connectivity"]["cross_document_components"] = cross_doc_components
         except Exception as e:
@@ -2242,26 +2418,38 @@ class IPLDProvenanceStorage:
                                 # Count cross-document edges in path
                                 cross_edges = 0
                                 for i in range(len(path) - 1):
-                                    if lineage_graph.edges[path[i], path[i+1]].get("cross_document", False):
+                                    if lineage_graph.edges[path[i], path[i + 1]].get(
+                                        "cross_document", False
+                                    ):
                                         cross_edges += 1
 
-                                if cross_edges > max_cross_doc or (cross_edges == max_cross_doc and len(path) > len(max_path or [])):
+                                if cross_edges > max_cross_doc or (
+                                    cross_edges == max_cross_doc and len(path) > len(max_path or [])
+                                ):
                                     max_cross_doc = cross_edges
                                     max_path = path
 
                             if max_path:
-                                longest_paths.append({
-                                    "path": max_path,
-                                    "length": len(max_path),
-                                    "cross_document_edge_count": max_cross_doc,
-                                    "source_type": lineage_graph.nodes[s].get("record_type", "unknown"),
-                                    "terminal_type": lineage_graph.nodes[t].get("record_type", "unknown")
-                                })
+                                longest_paths.append(
+                                    {
+                                        "path": max_path,
+                                        "length": len(max_path),
+                                        "cross_document_edge_count": max_cross_doc,
+                                        "source_type": lineage_graph.nodes[s].get(
+                                            "record_type", "unknown"
+                                        ),
+                                        "terminal_type": lineage_graph.nodes[t].get(
+                                            "record_type", "unknown"
+                                        ),
+                                    }
+                                )
                     except Exception:
                         continue
 
             # Sort by cross-document edge count, then by length
-            longest_paths.sort(key=lambda x: (x["cross_document_edge_count"], x["length"]), reverse=True)
+            longest_paths.sort(
+                key=lambda x: (x["cross_document_edge_count"], x["length"]), reverse=True
+            )
 
             analysis["critical_paths"]["source_count"] = len(source_nodes)
             analysis["critical_paths"]["terminal_count"] = len(terminal_nodes)
@@ -2288,23 +2476,31 @@ class IPLDProvenanceStorage:
             hub_info = []
             for node, score in top_hubs:
                 # Count incoming/outgoing cross-document edges
-                in_cross = sum(1 for _ in lineage_graph.predecessors(node)
-                            if lineage_graph.edges[_, node].get("cross_document", False))
-                out_cross = sum(1 for _ in lineage_graph.successors(node)
-                             if lineage_graph.edges[node, _].get("cross_document", False))
+                in_cross = sum(
+                    1
+                    for _ in lineage_graph.predecessors(node)
+                    if lineage_graph.edges[_, node].get("cross_document", False)
+                )
+                out_cross = sum(
+                    1
+                    for _ in lineage_graph.successors(node)
+                    if lineage_graph.edges[node, _].get("cross_document", False)
+                )
 
                 # Add hub record details
-                hub_info.append({
-                    "id": node,
-                    "score": score,
-                    "type": lineage_graph.nodes[node].get("record_type", "unknown"),
-                    "description": lineage_graph.nodes[node].get("description", ""),
-                    "in_degree": lineage_graph.in_degree(node),
-                    "out_degree": lineage_graph.out_degree(node),
-                    "cross_document_in": in_cross,
-                    "cross_document_out": out_cross,
-                    "total_cross_document": in_cross + out_cross
-                })
+                hub_info.append(
+                    {
+                        "id": node,
+                        "score": score,
+                        "type": lineage_graph.nodes[node].get("record_type", "unknown"),
+                        "description": lineage_graph.nodes[node].get("description", ""),
+                        "in_degree": lineage_graph.in_degree(node),
+                        "out_degree": lineage_graph.out_degree(node),
+                        "cross_document_in": in_cross,
+                        "cross_document_out": out_cross,
+                        "total_cross_document": in_cross + out_cross,
+                    }
+                )
 
             analysis["hub_records"]["hubs"] = hub_info
         except Exception as e:
@@ -2334,6 +2530,7 @@ class IPLDProvenanceStorage:
                 # Try to find communities
                 try:
                     import community as community_louvain
+
                     partition = community_louvain.best_partition(undirected)
 
                     # Group nodes by community
@@ -2359,15 +2556,19 @@ class IPLDProvenanceStorage:
                             record_type = lineage_graph.nodes[node].get("record_type", "unknown")
                             if isinstance(record_type, Enum):
                                 record_type = record_type.value
-                            record_types[str(record_type)] = record_types.get(str(record_type), 0) + 1
+                            record_types[str(record_type)] = (
+                                record_types.get(str(record_type), 0) + 1
+                            )
 
-                        clusters.append({
-                            "id": community_id,
-                            "size": len(nodes),
-                            "edge_count": cluster_graph.number_of_edges(),
-                            "record_types": record_types,
-                            "density": nx.density(cluster_graph)
-                        })
+                        clusters.append(
+                            {
+                                "id": community_id,
+                                "size": len(nodes),
+                                "edge_count": cluster_graph.number_of_edges(),
+                                "record_types": record_types,
+                                "density": nx.density(cluster_graph),
+                            }
+                        )
 
                     # Sort clusters by size
                     clusters.sort(key=lambda x: x["size"], reverse=True)
@@ -2393,15 +2594,19 @@ class IPLDProvenanceStorage:
                             record_type = lineage_graph.nodes[node].get("record_type", "unknown")
                             if isinstance(record_type, Enum):
                                 record_type = record_type.value
-                            record_types[str(record_type)] = record_types.get(str(record_type), 0) + 1
+                            record_types[str(record_type)] = (
+                                record_types.get(str(record_type), 0) + 1
+                            )
 
-                        clusters.append({
-                            "id": i,
-                            "size": len(component),
-                            "edge_count": cluster_graph.number_of_edges(),
-                            "record_types": record_types,
-                            "density": nx.density(cluster_graph)
-                        })
+                        clusters.append(
+                            {
+                                "id": i,
+                                "size": len(component),
+                                "edge_count": cluster_graph.number_of_edges(),
+                                "record_types": record_types,
+                                "density": nx.density(cluster_graph),
+                            }
+                        )
 
                     # Sort clusters by size
                     clusters.sort(key=lambda x: x["size"], reverse=True)
@@ -2429,8 +2634,12 @@ class IPLDProvenanceStorage:
 
                 # Convert to datetime for readability
                 try:
-                    min_date = datetime.datetime.fromtimestamp(min_time).strftime('%Y-%m-%d %H:%M:%S')
-                    max_date = datetime.datetime.fromtimestamp(max_time).strftime('%Y-%m-%d %H:%M:%S')
+                    min_date = datetime.datetime.fromtimestamp(min_time).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    max_date = datetime.datetime.fromtimestamp(max_time).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
                     time_span_seconds = max_time - min_time
                     time_span_days = time_span_seconds / 86400  # Convert to days
                 except:
@@ -2453,13 +2662,15 @@ class IPLDProvenanceStorage:
                             gap = abs(timestamps[u] - timestamps[v])
                             gap_days = gap / 86400  # Convert to days
 
-                            time_gaps.append({
-                                "source": u,
-                                "target": v,
-                                "gap_seconds": gap,
-                                "gap_days": gap_days,
-                                "link_type": data.get("relation", "related_to")
-                            })
+                            time_gaps.append(
+                                {
+                                    "source": u,
+                                    "target": v,
+                                    "gap_seconds": gap,
+                                    "gap_days": gap_days,
+                                    "link_type": data.get("relation", "related_to"),
+                                }
+                            )
 
                 if time_gaps:
                     # Sort by gap
@@ -2475,20 +2686,22 @@ class IPLDProvenanceStorage:
                         "average_gap_days": avg_gap / 86400,
                         "max_gap_days": max_gap / 86400,
                         "min_gap_days": min_gap / 86400,
-                        "largest_gaps": time_gaps[:5]  # Top 5 largest gaps
+                        "largest_gaps": time_gaps[:5],  # Top 5 largest gaps
                     }
         except Exception as e:
             analysis["time_analysis"]["error"] = str(e)
 
         return analysis
 
-    def export_cross_document_lineage(self,
-                                   lineage_graph: Optional[nx.DiGraph] = None,
-                                   record_ids: Optional[List[str]] = None,
-                                   max_depth: int = 3,
-                                   format: str = "json",
-                                   file_path: Optional[str] = None,
-                                   include_records: bool = False) -> Optional[Union[str, Dict[str, Any]]]:
+    def export_cross_document_lineage(
+        self,
+        lineage_graph: Optional[nx.DiGraph] = None,
+        record_ids: Optional[List[str]] = None,
+        max_depth: int = 3,
+        format: str = "json",
+        file_path: Optional[str] = None,
+        include_records: bool = False,
+    ) -> Optional[Union[str, Dict[str, Any]]]:
         """
         Export cross-document lineage data in various formats.
 
@@ -2523,7 +2736,9 @@ class IPLDProvenanceStorage:
                 if node in self.record_cids:
                     try:
                         record = self.load_record(self.record_cids[node])
-                        lineage_graph.nodes[node]["record"] = record if hasattr(record, 'to_dict') else asdict(record)
+                        lineage_graph.nodes[node]["record"] = (
+                            record if hasattr(record, "to_dict") else asdict(record)
+                        )
                     except Exception:
                         pass
 
@@ -2536,10 +2751,13 @@ class IPLDProvenanceStorage:
                 "metadata": {
                     "node_count": lineage_graph.number_of_nodes(),
                     "edge_count": lineage_graph.number_of_edges(),
-                    "cross_document_edge_count": sum(1 for _, _, data in lineage_graph.edges(data=True)
-                                                   if data.get("cross_document", False)),
-                    "export_time": datetime.datetime.now().isoformat()
-                }
+                    "cross_document_edge_count": sum(
+                        1
+                        for _, _, data in lineage_graph.edges(data=True)
+                        if data.get("cross_document", False)
+                    ),
+                    "export_time": datetime.datetime.now().isoformat(),
+                },
             }
 
             # Add nodes with attributes
@@ -2566,10 +2784,7 @@ class IPLDProvenanceStorage:
 
             # Add edges with attributes
             for u, v, attrs in lineage_graph.edges(data=True):
-                edge_data = {
-                    "source": u,
-                    "target": v
-                }
+                edge_data = {"source": u, "target": v}
 
                 # Add all edge attributes
                 for key, value in attrs.items():
@@ -2587,7 +2802,7 @@ class IPLDProvenanceStorage:
 
             # Save to file or return
             if file_path:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     json.dump(data, f, indent=2)
                 return None
             else:
@@ -2602,7 +2817,11 @@ class IPLDProvenanceStorage:
                         lineage_graph.nodes[node][key] = value.value
                     elif isinstance(value, dict) or isinstance(value, list):
                         lineage_graph.nodes[node][key] = json.dumps(value)
-                    elif not isinstance(value, (str, int, float, bool)) or key == "record" and not include_records:
+                    elif (
+                        not isinstance(value, (str, int, float, bool))
+                        or key == "record"
+                        and not include_records
+                    ):
                         # Remove non-serializable attributes
                         del lineage_graph.nodes[node][key]
 
@@ -2623,6 +2842,7 @@ class IPLDProvenanceStorage:
                     nx.write_graphml(lineage_graph, file_path)
                 else:
                     import io
+
                     buffer = io.StringIO()
                     nx.write_graphml(lineage_graph, buffer)
                     return buffer.getvalue()
@@ -2631,6 +2851,7 @@ class IPLDProvenanceStorage:
                     nx.write_gexf(lineage_graph, file_path)
                 else:
                     import io
+
                     buffer = io.StringIO()
                     nx.write_gexf(lineage_graph, buffer)
                     return buffer.getvalue()
@@ -2666,7 +2887,7 @@ class IPLDProvenanceStorage:
                 # Save nodes
                 nodes_file = file_path.replace(".csv", "_nodes.csv")
                 if nodes_data:
-                    with open(nodes_file, 'w', newline='') as f:
+                    with open(nodes_file, "w", newline="") as f:
                         writer = csv.DictWriter(f, fieldnames=nodes_data[0].keys())
                         writer.writeheader()
                         writer.writerows(nodes_data)
@@ -2674,7 +2895,7 @@ class IPLDProvenanceStorage:
                 # Save edges
                 edges_file = file_path.replace(".csv", "_edges.csv")
                 if edges_data:
-                    with open(edges_file, 'w', newline='') as f:
+                    with open(edges_file, "w", newline="") as f:
                         writer = csv.DictWriter(f, fieldnames=edges_data[0].keys())
                         writer.writeheader()
                         writer.writerows(edges_data)
@@ -2690,21 +2911,24 @@ class IPLDProvenanceStorage:
                 return None
             else:
                 import io
+
                 buffer = io.StringIO()
                 nx.drawing.nx_pydot.write_dot(lineage_graph, buffer)
                 return buffer.getvalue()
 
         return None
 
-    def visualize_cross_document_clusters(self,
-                                      lineage_graph: Optional[nx.DiGraph] = None,
-                                      record_ids: Optional[Union[str, List[str]]] = None,
-                                      max_depth: int = 3,
-                                      link_types: Optional[List[str]] = None,
-                                      file_path: Optional[str] = None,
-                                      format: str = "png",
-                                      width: int = 1200,
-                                      height: int = 800) -> Optional[Union[str, Dict[str, Any]]]:
+    def visualize_cross_document_clusters(
+        self,
+        lineage_graph: Optional[nx.DiGraph] = None,
+        record_ids: Optional[Union[str, List[str]]] = None,
+        max_depth: int = 3,
+        link_types: Optional[List[str]] = None,
+        file_path: Optional[str] = None,
+        format: str = "png",
+        width: int = 1200,
+        height: int = 800,
+    ) -> Optional[Union[str, Dict[str, Any]]]:
         """
         Visualize cross-document clusters showing document boundaries and relationships.
 
@@ -2732,24 +2956,22 @@ class IPLDProvenanceStorage:
 
             # Build the lineage graph
             lineage_graph = self.build_cross_document_lineage_graph(
-                record_ids=record_ids,
-                max_depth=max_depth,
-                link_types=link_types
+                record_ids=record_ids, max_depth=max_depth, link_types=link_types
             )
 
         if not lineage_graph or lineage_graph.number_of_nodes() == 0:
             return None
 
         # Set up matplotlib figure
-        plt.figure(figsize=(width/100, height/100), dpi=100)
+        plt.figure(figsize=(width / 100, height / 100), dpi=100)
 
         # Extract document information
         document_nodes = {}
-        document_metadata = lineage_graph.graph.get('documents', {})
+        document_metadata = lineage_graph.graph.get("documents", {})
 
         # Group nodes by document
         for node, data in lineage_graph.nodes(data=True):
-            doc_id = data.get('document_id', 'unknown')
+            doc_id = data.get("document_id", "unknown")
             if doc_id not in document_nodes:
                 document_nodes[doc_id] = []
             document_nodes[doc_id].append(node)
@@ -2759,11 +2981,11 @@ class IPLDProvenanceStorage:
         doc_connections = {}
 
         for s, t, data in lineage_graph.edges(data=True):
-            if data.get('cross_document', False):
+            if data.get("cross_document", False):
                 cross_doc_edges.append((s, t))
 
-                source_doc = data.get('source_document', 'unknown')
-                target_doc = data.get('target_document', 'unknown')
+                source_doc = data.get("source_document", "unknown")
+                target_doc = data.get("target_document", "unknown")
 
                 if (source_doc, target_doc) not in doc_connections:
                     doc_connections[(source_doc, target_doc)] = 0
@@ -2778,25 +3000,20 @@ class IPLDProvenanceStorage:
 
             # Get document metadata if available
             meta = document_metadata.get(doc_id, {})
-            record_count = meta.get('record_count', node_count)
-            record_types = meta.get('record_types', [])
+            record_count = meta.get("record_count", node_count)
+            record_types = meta.get("record_types", [])
 
             doc_graph.add_node(
                 doc_id,
                 size=node_count,
                 record_count=record_count,
                 record_types=record_types,
-                is_document=True
+                is_document=True,
             )
 
         # Add document connections
         for (source_doc, target_doc), count in doc_connections.items():
-            doc_graph.add_edge(
-                source_doc,
-                target_doc,
-                weight=count,
-                count=count
-            )
+            doc_graph.add_edge(source_doc, target_doc, weight=count, count=count)
 
         # Assign position to document nodes (circular layout for documents)
         doc_pos = nx.circular_layout(doc_graph)
@@ -2813,7 +3030,7 @@ class IPLDProvenanceStorage:
                 angle = 2 * math.pi * i / max(1, len(nodes))
                 pos[node] = (
                     doc_center[0] + radius * math.cos(angle),
-                    doc_center[1] + radius * math.sin(angle)
+                    doc_center[1] + radius * math.sin(angle),
                 )
 
         # Draw document areas as colored backgrounds
@@ -2831,9 +3048,15 @@ class IPLDProvenanceStorage:
             center_y = sum(y_values) / len(y_values)
 
             # Determine radius that encloses all nodes with some padding
-            max_dist = max([math.sqrt((pos[node][0] - center_x)**2 +
-                                     (pos[node][1] - center_y)**2)
-                           for node in nodes]) + 0.05
+            max_dist = (
+                max(
+                    [
+                        math.sqrt((pos[node][0] - center_x) ** 2 + (pos[node][1] - center_y) ** 2)
+                        for node in nodes
+                    ]
+                )
+                + 0.05
+            )
 
             # Draw document circle
             document_circle = plt.Circle(
@@ -2841,9 +3064,9 @@ class IPLDProvenanceStorage:
                 max_dist,
                 alpha=0.2,
                 fill=True,
-                edgecolor='gray',
+                edgecolor="gray",
                 linewidth=1,
-                facecolor=plt.cm.tab10(hash(doc_id) % 10)  # Assign a color based on doc_id
+                facecolor=plt.cm.tab10(hash(doc_id) % 10),  # Assign a color based on doc_id
             )
             plt.gca().add_patch(document_circle)
 
@@ -2853,10 +3076,10 @@ class IPLDProvenanceStorage:
                 center_x,
                 center_y - max_dist - 0.02,
                 doc_id,
-                horizontalalignment='center',
-                verticalalignment='top',
+                horizontalalignment="center",
+                verticalalignment="top",
                 fontsize=font_size,
-                bbox={"facecolor": "white", "alpha": 0.6, "pad": 2}
+                bbox={"facecolor": "white", "alpha": 0.6, "pad": 2},
             )
 
         # Define node colors based on record type
@@ -2870,13 +3093,13 @@ class IPLDProvenanceStorage:
             "model_training": "lightseagreen",
             "model_inference": "lightskyblue",
             "cross_document_link": "purple",
-            "unknown": "gray"
+            "unknown": "gray",
         }
 
         # Draw nodes
         for node, data in lineage_graph.nodes(data=True):
-            record_type = data.get('record_type', 'unknown')
-            color = node_color_map.get(record_type, 'gray')
+            record_type = data.get("record_type", "unknown")
+            color = node_color_map.get(record_type, "gray")
             node_size = 100  # Base size
 
             nx.draw_networkx_nodes(
@@ -2885,12 +3108,15 @@ class IPLDProvenanceStorage:
                 nodelist=[node],
                 node_color=[color],
                 node_size=node_size,
-                alpha=0.8
+                alpha=0.8,
             )
 
         # Draw edges - thicker/colored edges for cross-document connections
-        regular_edges = [(s, t) for s, t, d in lineage_graph.edges(data=True)
-                        if not d.get('cross_document', False)]
+        regular_edges = [
+            (s, t)
+            for s, t, d in lineage_graph.edges(data=True)
+            if not d.get("cross_document", False)
+        ]
 
         # Draw regular edges
         nx.draw_networkx_edges(
@@ -2900,7 +3126,7 @@ class IPLDProvenanceStorage:
             width=0.5,
             alpha=0.5,
             arrows=True,
-            connectionstyle='arc3,rad=0.1'
+            connectionstyle="arc3,rad=0.1",
         )
 
         # Draw cross-document edges
@@ -2911,15 +3137,15 @@ class IPLDProvenanceStorage:
             width=2.0,
             alpha=0.7,
             arrows=True,
-            edge_color='red',
-            style='dashed',
-            connectionstyle='arc3,rad=0.2'
+            edge_color="red",
+            style="dashed",
+            connectionstyle="arc3,rad=0.2",
         )
 
         # Draw document-level edges
         for (source, target), data in doc_graph.edges(data=True):
-            weight = data.get('weight', 1)
-            width = max(1, min(5, weight/2))  # Scale width based on connection weight
+            weight = data.get("weight", 1)
+            width = max(1, min(5, weight / 2))  # Scale width based on connection weight
             nx.draw_networkx_edges(
                 doc_graph,
                 doc_pos,
@@ -2927,48 +3153,64 @@ class IPLDProvenanceStorage:
                 width=width,
                 alpha=0.4,
                 arrows=True,
-                edge_color='black',
-                connectionstyle='arc3,rad=0.3'
+                edge_color="black",
+                connectionstyle="arc3,rad=0.3",
             )
 
         # Add legend
         legend_elements = []
         for record_type, color in node_color_map.items():
-            legend_elements.append(plt.Line2D([0], [0], marker='o', color='w',
-                                  markerfacecolor=color, markersize=8, label=record_type))
+            legend_elements.append(
+                plt.Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    markerfacecolor=color,
+                    markersize=8,
+                    label=record_type,
+                )
+            )
 
-        legend_elements.append(plt.Line2D([0], [0], color='gray', lw=1, label='Same document edge'))
-        legend_elements.append(plt.Line2D([0], [0], color='red', lw=2, linestyle='--',
-                              label='Cross-document edge'))
-        legend_elements.append(plt.Line2D([0], [0], color='black', lw=3, alpha=0.4,
-                              label='Document connection'))
+        legend_elements.append(plt.Line2D([0], [0], color="gray", lw=1, label="Same document edge"))
+        legend_elements.append(
+            plt.Line2D([0], [0], color="red", lw=2, linestyle="--", label="Cross-document edge")
+        )
+        legend_elements.append(
+            plt.Line2D([0], [0], color="black", lw=3, alpha=0.4, label="Document connection")
+        )
 
-        plt.legend(handles=legend_elements, loc='upper right', fontsize=8)
+        plt.legend(handles=legend_elements, loc="upper right", fontsize=8)
 
         # Add title and disable axis
         plt.title("Cross-Document Clusters Visualization", fontsize=16)
-        plt.axis('off')
+        plt.axis("off")
 
         # Add statistics
         cluster_stats = f"Documents: {len(document_nodes)}\n"
         cluster_stats += f"Cross-doc edges: {len(cross_doc_edges)}\n"
         cluster_stats += f"Inter-document connections: {len(doc_connections)}\n"
 
-        plt.figtext(0.02, 0.02, cluster_stats, fontsize=10,
-                  bbox={"facecolor": "white", "alpha": 0.7, "pad": 5})
+        plt.figtext(
+            0.02,
+            0.02,
+            cluster_stats,
+            fontsize=10,
+            bbox={"facecolor": "white", "alpha": 0.7, "pad": 5},
+        )
 
         # Save or return the visualization
         if file_path:
-            plt.savefig(file_path, format=format, bbox_inches='tight', dpi=100)
+            plt.savefig(file_path, format=format, bbox_inches="tight", dpi=100)
             plt.close()
             return None
         elif format == "svg" or format == "png":
             # Return as base64-encoded image
             buf = io.BytesIO()
-            plt.savefig(buf, format=format, bbox_inches='tight', dpi=100)
+            plt.savefig(buf, format=format, bbox_inches="tight", dpi=100)
             plt.close()
             buf.seek(0)
-            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            img_base64 = base64.b64encode(buf.read()).decode("utf-8")
             return img_base64
         elif format == "json":
             # Return graph data as JSON for custom visualization
@@ -2983,8 +3225,8 @@ class IPLDProvenanceStorage:
                 "metrics": {
                     "document_count": len(document_nodes),
                     "cross_doc_edge_count": len(cross_doc_edges),
-                    "document_connection_count": len(doc_connections)
-                }
+                    "document_connection_count": len(doc_connections),
+                },
             }
 
             # Add document data
@@ -2992,14 +3234,16 @@ class IPLDProvenanceStorage:
                 x, y = doc_pos.get(doc_id, (0, 0))
                 doc_meta = document_metadata.get(doc_id, {})
 
-                graph_data["documents"].append({
-                    "id": doc_id,
-                    "x": float(x),
-                    "y": float(y),
-                    "node_count": len(nodes),
-                    "record_count": doc_meta.get("record_count", len(nodes)),
-                    "record_types": doc_meta.get("record_types", [])
-                })
+                graph_data["documents"].append(
+                    {
+                        "id": doc_id,
+                        "x": float(x),
+                        "y": float(y),
+                        "node_count": len(nodes),
+                        "record_count": doc_meta.get("record_count", len(nodes)),
+                        "record_types": doc_meta.get("record_types", []),
+                    }
+                )
 
             # Add nodes with positions and attributes
             for node, data in lineage_graph.nodes(data=True):
@@ -3012,7 +3256,7 @@ class IPLDProvenanceStorage:
                     "y": float(y),
                     "document_id": doc_id,
                     "record_type": data.get("record_type", "unknown"),
-                    "description": data.get("description", "")
+                    "description": data.get("description", ""),
                 }
 
                 graph_data["nodes"].append(node_data)
@@ -3027,26 +3271,29 @@ class IPLDProvenanceStorage:
                     "cross_document": is_cross_doc,
                     "relation": data.get("relation", "unknown"),
                     "source_document": data.get("source_document", "unknown"),
-                    "target_document": data.get("target_document", "unknown")
+                    "target_document": data.get("target_document", "unknown"),
                 }
 
                 graph_data["edges"].append(edge_data)
 
             # Add document connections
             for (source_doc, target_doc), count in doc_connections.items():
-                graph_data["document_connections"].append({
-                    "source": source_doc,
-                    "target": target_doc,
-                    "count": count
-                })
+                graph_data["document_connections"].append(
+                    {"source": source_doc, "target": target_doc, "count": count}
+                )
 
             return graph_data
         else:
             plt.close()
             return None
 
-    def export_to_car(self, output_path: str, include_records: bool = True,
-                     include_graph: bool = True, records: Optional[List[str]] = None) -> str:
+    def export_to_car(
+        self,
+        output_path: str,
+        include_records: bool = True,
+        include_graph: bool = True,
+        records: Optional[List[str]] = None,
+    ) -> str:
         """
         Export provenance data to a CAR file.
 
@@ -3083,15 +3330,16 @@ class IPLDProvenanceStorage:
         export_meta = {
             "type": "provenance_export",
             "timestamp": time.time(),
-            "records": list(self.record_cids.values()) if not records else
-                       [self.record_cids[r] for r in records if r in self.record_cids],
+            "records": list(self.record_cids.values())
+            if not records
+            else [self.record_cids[r] for r in records if r in self.record_cids],
             "graph": self.root_graph_cid,
             "partitions": list(self.partition_cids.values()),
             "record_count": len(self.record_cids),
             "metadata": {
                 "exported_at": datetime.datetime.now().isoformat(),
-                "export_version": "1.0"
-            }
+                "export_version": "1.0",
+            },
         }
 
         # Store export metadata
@@ -3133,7 +3381,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         visualization_engine: str = "matplotlib",  # "matplotlib", "plotly", "dash"
         enable_crypto_verification: bool = False,  # Whether to enable cryptographic verification
         crypto_secret_key: Optional[str] = None,  # Secret key for crypto verification
-        ipfs_api: str = "/ip4/127.0.0.1/tcp/5001"  # IPFS API endpoint for IPLD storage
+        ipfs_api: str = "/ip4/127.0.0.1/tcp/5001",  # IPFS API endpoint for IPLD storage
     ):
         """
         Initialize the enhanced provenance manager.
@@ -3154,7 +3402,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             storage_path=storage_path,
             enable_ipld_storage=enable_ipld_storage,
             default_agent_id=default_agent_id,
-            tracking_level=tracking_level
+            tracking_level=tracking_level,
         )
 
         # Additional attributes for enhanced features
@@ -3178,22 +3426,21 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         if enable_ipld_storage:
             if IPLD_AVAILABLE:
                 # Initialize regular IPLD storage
-                self.ipld_storage = IPLDStorage(
-                    base_dir=storage_path,
-                    ipfs_api=ipfs_api
-                )
+                self.ipld_storage = IPLDStorage(base_dir=storage_path, ipfs_api=ipfs_api)
 
                 # Initialize enhanced IPLD provenance storage
                 self.ipld_provenance_storage = IPLDProvenanceStorage(
                     ipld_storage=self.ipld_storage,
                     enable_dagpb=DAGPB_AVAILABLE,
-                    crypto_verifier=self.crypto_verifier if enable_crypto_verification else None
+                    crypto_verifier=self.crypto_verifier if enable_crypto_verification else None,
                 )
 
                 # Register schemas for provenance records
                 self._register_ipld_schemas()
             else:
-                self.logger.warning("IPLD storage requested but ipfs_datasets_py.data_transformation.ipld.storage not available")
+                self.logger.warning(
+                    "IPLD storage requested but ipfs_datasets_py.data_transformation.ipld.storage not available"
+                )
                 self.enable_ipld_storage = False
 
         # Set up logging
@@ -3202,7 +3449,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Extended record types mapping
         self.extended_record_types = {
             **{t.value: t for t in ProvenanceRecordType},
-            **{t.value: t for t in EnhancedProvenanceRecordType}
+            **{t.value: t for t in EnhancedProvenanceRecordType},
         }
 
         # Additional index for semantic search
@@ -3230,7 +3477,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         fail_count: int = 0,
         error_samples: Optional[List[Dict[str, Any]]] = None,
         description: str = "",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a data verification/validation event.
@@ -3267,18 +3514,20 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             pass_count=pass_count,
             fail_count=fail_count,
             error_samples=error_samples,
-            is_valid=(fail_count == 0)
+            is_valid=(fail_count == 0),
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                           record_type="verification",
-                           description=description,
-                           timestamp=record.timestamp,
-                           is_valid=record.is_valid)
+        self.graph.add_node(
+            record.id,
+            record_type="verification",
+            description=description,
+            timestamp=record.timestamp,
+            is_valid=record.is_valid,
+        )
 
         # Link to data entity
         if data_id in self.entity_latest_record:
@@ -3315,7 +3564,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         author: str = "",
         tags: Optional[List[str]] = None,
         description: str = "",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a manual annotation or note about a data entity.
@@ -3346,19 +3595,21 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             annotation_type=annotation_type,
             content=content,
             author=author or self.default_agent_id,
-            tags=tags
+            tags=tags,
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                           record_type="annotation",
-                           description=description,
-                           timestamp=record.timestamp,
-                           author=record.author,
-                           tags=",".join(tags))
+        self.graph.add_node(
+            record.id,
+            record_type="annotation",
+            description=description,
+            timestamp=record.timestamp,
+            author=record.author,
+            tags=",".join(tags),
+        )
 
         # Link to data entity
         if data_id in self.entity_latest_record:
@@ -3398,7 +3649,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         model_size: Optional[int] = None,
         model_hash: Optional[str] = None,
         description: str = "",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a model training event.
@@ -3438,18 +3689,20 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             hyperparameters=hyperparameters,
             metrics=metrics,
             model_size=model_size,
-            model_hash=model_hash
+            model_hash=model_hash,
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                           record_type="model_training",
-                           description=description,
-                           timestamp=record.timestamp,
-                           model_type=model_type)
+        self.graph.add_node(
+            record.id,
+            record_type="model_training",
+            description=description,
+            timestamp=record.timestamp,
+            model_type=model_type,
+        )
 
         # Link to input data entities
         for input_id in input_ids:
@@ -3495,7 +3748,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         output_type: str = "",
         performance_metrics: Optional[Dict[str, float]] = None,
         description: str = "",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a model inference event.
@@ -3532,18 +3785,20 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             model_version=model_version,
             batch_size=batch_size,
             output_type=output_type,
-            performance_metrics=performance_metrics
+            performance_metrics=performance_metrics,
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                           record_type="model_inference",
-                           description=description,
-                           timestamp=record.timestamp,
-                           model_id=model_id)
+        self.graph.add_node(
+            record.id,
+            record_type="model_inference",
+            description=description,
+            timestamp=record.timestamp,
+            model_id=model_id,
+        )
 
         # Link to model entity
         if model_id in self.entity_latest_record:
@@ -3601,11 +3856,15 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 "record_id": record.id,
                 "record_type": record.record_type.value,
                 "description": record.description,
-                "timestamp": record.timestamp
+                "timestamp": record.timestamp,
             }
 
             # Add cryptographic signature information if available
-            if self.enable_crypto_verification and hasattr(record, 'signature') and record.signature:
+            if (
+                self.enable_crypto_verification
+                and hasattr(record, "signature")
+                and record.signature
+            ):
                 details["signature"] = record.signature
                 details["verification_result"] = self.verification_results.get(record.id, None)
 
@@ -3617,7 +3876,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 subject=f"data:{','.join(record.input_ids)}",
                 object=f"data:{','.join(record.output_ids)}",
                 status="success",
-                details=details
+                details=details,
             )
 
             # Log the event
@@ -3799,8 +4058,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             self.logger.error(f"Error verifying all records: {str(e)}")
             return {}
 
-    def export_to_car(self, output_path: str, include_records: bool = True, include_graph: bool = True,
-                     selective_record_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+    def export_to_car(
+        self,
+        output_path: str,
+        include_records: bool = True,
+        include_graph: bool = True,
+        selective_record_ids: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         Export provenance data to a CAR (Content Addressable aRchive) file.
 
@@ -3817,7 +4081,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         Returns:
             Dict[str, Any]: Export statistics and root CID
         """
-        if not hasattr(self.ipld_storage, 'export_to_car'):
+        if not hasattr(self.ipld_storage, "export_to_car"):
             raise NotImplementedError("IPLD storage does not support CAR export")
 
         # Collect CIDs to include
@@ -3839,7 +4103,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 cids_to_include.update(self.record_cids.values())
 
         # Add partition CIDs if applicable
-        if hasattr(self, 'partition_cids') and self.partition_cids:
+        if hasattr(self, "partition_cids") and self.partition_cids:
             cids_to_include.update(self.partition_cids.values())
 
         # Export to CAR file
@@ -3848,15 +4112,25 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Return export statistics
         return {
             "root_cid": self.root_graph_cid,
-            "record_count": len([cid for record_id, cid in self.record_cids.items()
-                                if selective_record_ids is None or record_id in selective_record_ids]),
+            "record_count": len(
+                [
+                    cid
+                    for record_id, cid in self.record_cids.items()
+                    if selective_record_ids is None or record_id in selective_record_ids
+                ]
+            ),
             "total_blocks": result.get("total_blocks", len(cids_to_include)),
             "total_size": result.get("total_size", 0),
-            "car_path": output_path
+            "car_path": output_path,
         }
 
-    def import_from_car(self, car_path: str, root_cid: Optional[str] = None,
-                       load_records: bool = True, load_graph: bool = True) -> Dict[str, Any]:
+    def import_from_car(
+        self,
+        car_path: str,
+        root_cid: Optional[str] = None,
+        load_records: bool = True,
+        load_graph: bool = True,
+    ) -> Dict[str, Any]:
         """
         Import provenance data from a CAR (Content Addressable aRchive) file.
 
@@ -3872,14 +4146,16 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         Returns:
             Dict[str, Any]: Import statistics and root CID
         """
-        if not hasattr(self.ipld_storage, 'import_from_car'):
+        if not hasattr(self.ipld_storage, "import_from_car"):
             raise NotImplementedError("IPLD storage does not support CAR import")
 
         # Import from CAR file
         import_result = self.ipld_storage.import_from_car(car_path, root_cid)
 
         if not import_result.get("success", False):
-            raise RuntimeError(f"Failed to import CAR file: {import_result.get('error', 'Unknown error')}")
+            raise RuntimeError(
+                f"Failed to import CAR file: {import_result.get('error', 'Unknown error')}"
+            )
 
         # Determine root CID if not provided
         if root_cid is None:
@@ -3907,25 +4183,27 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # Import and process record CIDs if they are part of a graph
         record_count = 0
-        if load_records and hasattr(self, 'record_cids') and self.record_cids:
+        if load_records and hasattr(self, "record_cids") and self.record_cids:
             # Batch load records for efficiency
             batch_size = self.batch_size  # Use configured batch size
 
             # Load in batches
             for i in range(0, len(self.record_cids), batch_size):
-                batch_ids = list(self.record_cids.keys())[i:i+batch_size]
+                batch_ids = list(self.record_cids.keys())[i : i + batch_size]
                 batch_cids = [self.record_cids[rid] for rid in batch_ids]
 
                 try:
                     batch_records = self.load_records_batch({cid: None for cid in batch_cids})
                     for cid, record in batch_records.items():
                         # Find record_id for this CID
-                        rid = next((rid for rid, rcid in self.record_cids.items() if rcid == cid), None)
+                        rid = next(
+                            (rid for rid, rcid in self.record_cids.items() if rcid == cid), None
+                        )
                         if rid and record:
                             self.records[rid] = record
                             record_count += 1
                 except Exception as e:
-                    self.logger.warning(f"Error loading batch {i//batch_size}: {e}")
+                    self.logger.warning(f"Error loading batch {i // batch_size}: {e}")
 
         # Return import statistics
         return {
@@ -3933,7 +4211,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "record_count": record_count,
             "total_blocks": import_result.get("total_blocks", 0),
             "car_path": car_path,
-            "success": True
+            "success": True,
         }
 
     def _process_imported_graph(self, graph_data: Dict) -> None:
@@ -3963,7 +4241,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             self.partition_cids.update(partition_index["partitions"])
 
         # Initialize empty record CIDs map (will be populated on demand)
-        if not hasattr(self, 'record_cids'):
+        if not hasattr(self, "record_cids"):
             self.record_cids = {}
 
         # Store the partition index
@@ -3993,7 +4271,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     results[record_id] = True
 
                     # If using IPLD storage, update the stored record with the signature
-                    if self.enable_ipld_storage and self.ipld_storage and record_id in self.record_cids:
+                    if (
+                        self.enable_ipld_storage
+                        and self.ipld_storage
+                        and record_id in self.record_cids
+                    ):
                         self._store_record_in_ipld(self.records[record_id])
                 else:
                     results[record_id] = False
@@ -4016,30 +4298,23 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # Register base provenance record schema
             self.ipld_storage.register_schema(
-                "provenance_record",
-                ProvenanceIPLDSchema.PROVENANCE_RECORD
+                "provenance_record", ProvenanceIPLDSchema.PROVENANCE_RECORD
             )
 
             # Register specific record type schemas
+            self.ipld_storage.register_schema("source_record", ProvenanceIPLDSchema.SOURCE_RECORD)
+
             self.ipld_storage.register_schema(
-                "source_record",
-                ProvenanceIPLDSchema.SOURCE_RECORD
+                "transformation_record", ProvenanceIPLDSchema.TRANSFORMATION_RECORD
             )
 
             self.ipld_storage.register_schema(
-                "transformation_record",
-                ProvenanceIPLDSchema.TRANSFORMATION_RECORD
-            )
-
-            self.ipld_storage.register_schema(
-                "verification_record",
-                ProvenanceIPLDSchema.VERIFICATION_RECORD
+                "verification_record", ProvenanceIPLDSchema.VERIFICATION_RECORD
             )
 
             # Register provenance graph schema
             self.ipld_storage.register_schema(
-                "provenance_graph",
-                ProvenanceIPLDSchema.PROVENANCE_GRAPH
+                "provenance_graph", ProvenanceIPLDSchema.PROVENANCE_GRAPH
             )
 
             self.logger.info("Registered IPLD schemas for provenance records")
@@ -4103,9 +4378,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # Create a graph representation compatible with IPLD
             graph_dict = {
-                "records": {},                 # Map of record_id -> record CID
-                "links": [],                   # List of source -> target links
-                "root_records": [],            # List of root record IDs
+                "records": {},  # Map of record_id -> record CID
+                "links": [],  # List of source -> target links
+                "root_records": [],  # List of root record IDs
                 "metadata": {
                     "record_count": len(self.records),
                     "link_count": self.graph.number_of_edges(),
@@ -4113,7 +4388,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 },
                 "created_at": time.time(),
                 "updated_at": time.time(),
-                "version": "1.0"
+                "version": "1.0",
             }
 
             # Add record CIDs to the graph
@@ -4122,11 +4397,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
             # Add links (edges) from the graph
             for u, v, data in self.graph.edges(data=True):
-                link = {
-                    "source": u,
-                    "target": v,
-                    "type": data.get("type", "default")
-                }
+                link = {"source": u, "target": v, "type": data.get("type", "default")}
                 graph_dict["links"].append(link)
 
             # Identify root records (no incoming edges)
@@ -4135,17 +4406,16 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     graph_dict["root_records"].append(node)
 
             # Store the graph with schema validation
-            self.ipld_root_cid = self.ipld_storage.store_with_schema(
-                graph_dict,
-                "provenance_graph"
-            )
+            self.ipld_root_cid = self.ipld_storage.store_with_schema(graph_dict, "provenance_graph")
 
             return self.ipld_root_cid
         except Exception as e:
             self.logger.error(f"Error updating IPLD graph: {str(e)}")
             return None
 
-    def create_cross_document_lineage(self, output_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def create_cross_document_lineage(
+        self, output_path: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         Creates detailed lineage tracking with cross-document relationships.
 
@@ -4160,13 +4430,16 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             Optional[Dict[str, Any]]: Detailed lineage data or None if generation failed
         """
         if not self.ipld_provenance_storage:
-            self.logger.warning("IPLD provenance storage not enabled, cannot create cross-document lineage")
+            self.logger.warning(
+                "IPLD provenance storage not enabled, cannot create cross-document lineage"
+            )
             return None
 
         try:
             # Check if cross-document lineage module is available
             try:
                 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
+
                 lineage_available = True
             except ImportError:
                 self.logger.warning("cross_document_lineage module not available")
@@ -4183,7 +4456,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     "record_type": record.record_type,
                     "timestamp": record.timestamp,
                     "agent_id": record.agent_id,
-                    "description": record.description if hasattr(record, "description") else ""
+                    "description": record.description if hasattr(record, "description") else "",
                 }
 
                 # Add record-type specific attributes
@@ -4196,12 +4469,12 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
             # Add edges based on relationships
             for record_id, record in self.records.items():
-                if hasattr(record, 'input_ids') and record.input_ids:
+                if hasattr(record, "input_ids") and record.input_ids:
                     for input_id in record.input_ids:
                         if input_id in self.records:
                             graph.add_edge(input_id, record_id, relation="input_to")
 
-                if hasattr(record, 'output_ids') and record.output_ids:
+                if hasattr(record, "output_ids") and record.output_ids:
                     for output_id in record.output_ids:
                         if output_id in self.records:
                             graph.add_edge(record_id, output_id, relation="output_to")
@@ -4214,25 +4487,32 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     "enable_audit_integration": True,
                     "enable_semantic_detection": True,
                     "enable_temporal_consistency": True,
-                    "enable_ipld_storage": self.enable_ipld_storage
-                }
+                    "enable_ipld_storage": self.enable_ipld_storage,
+                },
             )
 
             # Import the provenance graph into the lineage tracker
             lineage_nodes = {}
             for record_id, record in self.records.items():
                 record_type = record.record_type
-                node_type = "source" if record_type == "source" else \
-                           "transformation" if record_type == "transformation" else \
-                           "merge" if record_type == "merge" else \
-                           "result" if record_type == "result" else "generic"
+                node_type = (
+                    "source"
+                    if record_type == "source"
+                    else "transformation"
+                    if record_type == "transformation"
+                    else "merge"
+                    if record_type == "merge"
+                    else "result"
+                    if record_type == "result"
+                    else "generic"
+                )
 
                 # Create metadata from record attributes
                 metadata = {
                     "agent_id": record.agent_id,
                     "timestamp": record.timestamp,
                     "description": record.description if hasattr(record, "description") else "",
-                    "cid": self.record_cids.get(record_id)
+                    "cid": self.record_cids.get(record_id),
                 }
 
                 if hasattr(record, "source_type"):
@@ -4243,7 +4523,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 if hasattr(record, "transformation_type"):
                     metadata["transformation_type"] = record.transformation_type
                     metadata["tool"] = record.tool if hasattr(record, "tool") else ""
-                    metadata["parameters"] = record.parameters if hasattr(record, "parameters") else {}
+                    metadata["parameters"] = (
+                        record.parameters if hasattr(record, "parameters") else {}
+                    )
 
                 # Add node to lineage tracker
                 lineage_tracker.add_node(
@@ -4251,7 +4533,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     node_type=node_type,
                     entity_id=record_id,
                     record_type=record_type,
-                    metadata=metadata
+                    metadata=metadata,
                 )
 
             # Add links to lineage tracker
@@ -4261,7 +4543,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     target_id=target,
                     relationship_type=attrs.get("relation", "default"),
                     confidence=1.0,
-                    metadata={"provenance": True}
+                    metadata={"provenance": True},
                 )
 
             # Process cross-document links if available
@@ -4276,8 +4558,8 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                         metadata={
                             "cross_document": True,
                             "link_id": link.get("id", ""),
-                            "properties": link.get("properties", {})
-                        }
+                            "properties": link.get("properties", {}),
+                        },
                     )
 
             # Generate detailed lineage analysis
@@ -4289,7 +4571,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     file_path=output_path,
                     show_domains=True,
                     show_transformations=True,
-                    highlight_cross_document=True
+                    highlight_cross_document=True,
                 )
 
             # Return the detailed lineage information
@@ -4300,7 +4582,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 "cross_document_links": len(cross_doc_links),
                 "domains": lineage_tracker.get_domains(),
                 "transformation_details": lineage_tracker.get_transformation_details(),
-                "visualization_path": output_path if output_path else None
+                "visualization_path": output_path if output_path else None,
             }
 
         except Exception as e:
@@ -4333,24 +4615,24 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
                 # Add edges based on relationships
                 for record_id, record in self.records.items():
-                    if hasattr(record, 'input_ids') and record.input_ids:
+                    if hasattr(record, "input_ids") and record.input_ids:
                         for input_id in record.input_ids:
                             if input_id in self.records:
                                 graph.add_edge(input_id, record_id, relation="input_to")
 
-                    if hasattr(record, 'output_ids') and record.output_ids:
+                    if hasattr(record, "output_ids") and record.output_ids:
                         for output_id in record.output_ids:
                             if output_id in self.records:
                                 graph.add_edge(record_id, output_id, relation="output_to")
 
                 # Use enhanced storage to export the graph
                 result_cid = self.ipld_provenance_storage.export_to_car(
-                    output_path=output_path,
-                    include_records=True,
-                    include_graph=True
+                    output_path=output_path, include_records=True, include_graph=True
                 )
 
-                self.logger.info(f"Exported provenance graph to CAR file using enhanced storage: {output_path}")
+                self.logger.info(
+                    f"Exported provenance graph to CAR file using enhanced storage: {output_path}"
+                )
                 return result_cid
             else:
                 # Fall back to basic IPLD storage if enhanced storage is unavailable
@@ -4397,7 +4679,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             if self.ipld_provenance_storage:
                 # Use enhanced provenance storage for import
-                self.logger.info(f"Importing provenance graph from CAR file using enhanced storage: {car_path}")
+                self.logger.info(
+                    f"Importing provenance graph from CAR file using enhanced storage: {car_path}"
+                )
 
                 # Import using the enhanced storage
                 success = self.ipld_provenance_storage.import_from_car(car_path, load_graph=True)
@@ -4409,15 +4693,17 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     # Import records from the graph
                     imported_count = 0
                     for node_id in imported_graph.nodes:
-                        if 'record' in imported_graph.nodes[node_id]:
-                            record = imported_graph.nodes[node_id]['record']
+                        if "record" in imported_graph.nodes[node_id]:
+                            record = imported_graph.nodes[node_id]["record"]
                             self.records[node_id] = record
                             imported_count += 1
 
                     # Rebuild indices
                     self._rebuild_indices()
 
-                    self.logger.info(f"Successfully imported {imported_count} records from CAR file")
+                    self.logger.info(
+                        f"Successfully imported {imported_count} records from CAR file"
+                    )
                     return True
                 else:
                     self.logger.error("Failed to import from CAR file using enhanced storage")
@@ -4517,8 +4803,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             if hasattr(record, "output_ids"):
                 for entity_id in record.output_ids:
                     # For each entity, record is the latest if it's newer than current latest
-                    if entity_id not in self.entity_latest_record or \
-                       record.timestamp > self.records[self.entity_latest_record[entity_id]].timestamp:
+                    if (
+                        entity_id not in self.entity_latest_record
+                        or record.timestamp
+                        > self.records[self.entity_latest_record[entity_id]].timestamp
+                    ):
                         self.entity_latest_record[entity_id] = record_id
 
         # Rebuild semantic index
@@ -4549,24 +4838,24 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                            record_type=record.record_type.value,
-                            timestamp=record.timestamp)
+        self.graph.add_node(
+            record.id, record_type=record.record_type.value, timestamp=record.timestamp
+        )
 
         # Add edges based on inputs and outputs
-        if hasattr(record, 'input_ids'):
+        if hasattr(record, "input_ids"):
             for input_id in record.input_ids:
                 if input_id in self.entity_latest_record:
                     input_record_id = self.entity_latest_record[input_id]
                     self.graph.add_edge(input_record_id, record.id, type="input")
 
-        if hasattr(record, 'output_ids'):
+        if hasattr(record, "output_ids"):
             for output_id in record.output_ids:
                 # Update the entity's latest record
                 self.entity_latest_record[output_id] = record.id
 
         # Add cryptographic signature if enabled
-        if self.enable_crypto_verification and not hasattr(record, 'signature'):
+        if self.enable_crypto_verification and not hasattr(record, "signature"):
             self.sign_record(record)
 
         # Store in IPLD if enabled
@@ -4617,21 +4906,23 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         sorted_results = sorted(
             [(record_id, score) for record_id, score in record_scores.items()],
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )
 
         # Format results
         results = []
         for record_id, score in sorted_results[:limit]:
             record = self.records[record_id]
-            results.append({
-                "record_id": record_id,
-                "record_type": record.record_type.value,
-                "description": record.description,
-                "timestamp": record.timestamp,
-                "score": score,
-                "record": record.to_dict()
-            })
+            results.append(
+                {
+                    "record_id": record_id,
+                    "record_type": record.record_type.value,
+                    "description": record.description,
+                    "timestamp": record.timestamp,
+                    "score": score,
+                    "record": record.to_dict(),
+                }
+            )
 
         return results
 
@@ -4640,7 +4931,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         time_bucket: str = "daily",
-        record_types: Optional[List[str]] = None
+        record_types: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Query records based on time ranges.
@@ -4669,7 +4960,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # If start_time is None, use all indexed buckets
         if start_dt is None:
-            matching_buckets = [b for b in self.time_index.keys() if len(b.split("-")) == len(fmt.split("-"))]
+            matching_buckets = [
+                b for b in self.time_index.keys() if len(b.split("-")) == len(fmt.split("-"))
+            ]
         else:
             # Generate all bucket keys in the date range
             current_dt = start_dt
@@ -4708,8 +5001,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     record_timestamp = self.records[record_id].timestamp
 
                     # Apply start and end time filters
-                    if (start_time is None or record_timestamp >= start_time) and \
-                       (end_time is None or record_timestamp <= end_time):
+                    if (start_time is None or record_timestamp >= start_time) and (
+                        end_time is None or record_timestamp <= end_time
+                    ):
                         timestamp_filtered_ids.add(record_id)
 
             record_ids = timestamp_filtered_ids
@@ -4720,19 +5014,25 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             for record_id in record_ids:
                 if record_id in self.records:
                     record = self.records[record_id]
-                    record_type = record.record_type.value if hasattr(record.record_type, 'value') else str(record.record_type)
+                    record_type = (
+                        record.record_type.value
+                        if hasattr(record.record_type, "value")
+                        else str(record.record_type)
+                    )
 
                     if record_type in record_types:
                         filtered_ids.add(record_id)
                     # Handle enum values
-                    elif hasattr(record, 'record_type') and isinstance(record.record_type, Enum):
+                    elif hasattr(record, "record_type") and isinstance(record.record_type, Enum):
                         if record.record_type.value in record_types:
                             filtered_ids.add(record_id)
             record_ids = filtered_ids
 
         # Convert to list of record dictionaries
         results = []
-        for record_id in sorted(record_ids, key=lambda x: self.records[x].timestamp if x in self.records else 0):
+        for record_id in sorted(
+            record_ids, key=lambda x: self.records[x].timestamp if x in self.records else 0
+        ):
             if record_id in self.records:
                 record = self.records[record_id]
 
@@ -4741,13 +5041,17 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 if isinstance(record_type, Enum):
                     record_type = record_type.value
 
-                results.append({
-                    "record_id": record_id,
-                    "record_type": record_type,
-                    "description": record.description,
-                    "timestamp": record.timestamp,
-                    "record": record.to_dict() if hasattr(record, 'to_dict') else asdict(record)
-                })
+                results.append(
+                    {
+                        "record_id": record_id,
+                        "record_type": record_type,
+                        "description": record.description,
+                        "timestamp": record.timestamp,
+                        "record": record.to_dict()
+                        if hasattr(record, "to_dict")
+                        else asdict(record),
+                    }
+                )
 
         return results
 
@@ -4776,7 +5080,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             latest_record = self.records.get(latest_record_id)
 
             if latest_record:
-                first_timestamp = float('inf')
+                first_timestamp = float("inf")
                 last_timestamp = 0
 
                 # Find first and last timestamps for this entity
@@ -4785,11 +5089,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                         first_timestamp = min(first_timestamp, record.timestamp)
                         last_timestamp = max(last_timestamp, record.timestamp)
 
-                if first_timestamp < float('inf'):
+                if first_timestamp < float("inf"):
                     metrics["first_timestamp"] = first_timestamp
                     metrics["last_timestamp"] = last_timestamp
                     metrics["age_seconds"] = last_timestamp - first_timestamp
-                    metrics["update_frequency"] = complexity["node_count"] / max(1, metrics["age_seconds"] / 86400)  # per day
+                    metrics["update_frequency"] = complexity["node_count"] / max(
+                        1, metrics["age_seconds"] / 86400
+                    )  # per day
 
         # Record type counts
         record_type_counts = {}
@@ -4804,7 +5110,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # Ensure source records are counted (they might have different structure)
         for record_id, record in self.records.items():
-            if isinstance(record, SourceRecord) and hasattr(record, 'data_id') and record.data_id == data_id:
+            if (
+                isinstance(record, SourceRecord)
+                and hasattr(record, "data_id")
+                and record.data_id == data_id
+            ):
                 record_type_counts["source"] = record_type_counts.get("source", 0) + 1
 
         metrics["record_type_counts"] = record_type_counts
@@ -4815,7 +5125,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "passed": 0,
             "failed": 0,
             "last_verification": None,
-            "is_valid": None
+            "is_valid": None,
         }
 
         for record_id, record in self.records.items():
@@ -4827,7 +5137,10 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     verification_metrics["failed"] += 1
 
                 # Track last verification
-                if verification_metrics["last_verification"] is None or record.timestamp > verification_metrics["last_verification"]:
+                if (
+                    verification_metrics["last_verification"] is None
+                    or record.timestamp > verification_metrics["last_verification"]
+                ):
                     verification_metrics["last_verification"] = record.timestamp
                     verification_metrics["is_valid"] = record.is_valid
 
@@ -4856,12 +5169,12 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 # Use the enhanced traversal capabilities
                 if record_id in self.record_cids:
                     return self.ipld_provenance_storage.traverse_graph_from_node(
-                        start_node_id=record_id,
-                        max_depth=depth,
-                        direction="both"
+                        start_node_id=record_id, max_depth=depth, direction="both"
                     )
             except Exception as e:
-                self.logger.warning(f"Error using enhanced traversal, falling back to basic: {str(e)}")
+                self.logger.warning(
+                    f"Error using enhanced traversal, falling back to basic: {str(e)}"
+                )
                 # Fall back to basic traversal if error occurs
 
         # Basic traversal implementation
@@ -4887,7 +5200,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             current_record = self.records[current_id]
 
             # Add upstream connections (inputs)
-            if hasattr(current_record, 'input_ids') and current_record.input_ids:
+            if hasattr(current_record, "input_ids") and current_record.input_ids:
                 for input_id in current_record.input_ids:
                     if input_id in self.records and input_id not in visited:
                         input_record = self.records[input_id]
@@ -4898,7 +5211,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
             # Add downstream connections (where this record is an input)
             for other_id, other_record in self.records.items():
-                if hasattr(other_record, 'input_ids') and other_record.input_ids and current_id in other_record.input_ids:
+                if (
+                    hasattr(other_record, "input_ids")
+                    and other_record.input_ids
+                    and current_id in other_record.input_ids
+                ):
                     if other_id not in visited:
                         graph.add_node(other_id, record=other_record)
                         graph.add_edge(current_id, other_id)
@@ -4907,8 +5224,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         return graph
 
-    def traverse_provenance(self, record_id: str, max_depth: int = 3,
-                           direction: str = "both", relation_filter: Optional[List[str]] = None) -> nx.DiGraph:
+    def traverse_provenance(
+        self,
+        record_id: str,
+        max_depth: int = 3,
+        direction: str = "both",
+        relation_filter: Optional[List[str]] = None,
+    ) -> nx.DiGraph:
         """
         Advanced traversal of the provenance graph from a starting record.
 
@@ -4930,7 +5252,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         """
         if not self.enable_ipld_storage or not self.ipld_provenance_storage:
             # Fall back to regular lineage graph with less control
-            self.logger.warning("Enhanced IPLD storage not available, falling back to basic lineage graph")
+            self.logger.warning(
+                "Enhanced IPLD storage not available, falling back to basic lineage graph"
+            )
             return self.get_lineage_graph(record_id, depth=max_depth)
 
         try:
@@ -4944,7 +5268,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     start_node_id=record_id,
                     max_depth=max_depth,
                     direction=direction,
-                    relation_filter=relation_filter
+                    relation_filter=relation_filter,
                 )
             else:
                 self.logger.warning(f"Record {record_id} not found in IPLD storage")
@@ -4979,8 +5303,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             # Use enhanced incremental loading
             if self.ipld_provenance_storage.root_graph_cid:
                 return self.ipld_provenance_storage.incremental_load(
-                    self.ipld_provenance_storage.root_graph_cid,
-                    criteria=criteria
+                    self.ipld_provenance_storage.root_graph_cid, criteria=criteria
                 )
             else:
                 self.logger.warning("No root graph CID available for incremental loading")
@@ -5017,11 +5340,15 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 continue
 
             # Check data_id
-            if data_ids and hasattr(record, 'data_id') and record.data_id not in data_ids:
+            if data_ids and hasattr(record, "data_id") and record.data_id not in data_ids:
                 continue
 
             # Check record_type
-            record_type = record.record_type.value if isinstance(record.record_type, Enum) else record.record_type
+            record_type = (
+                record.record_type.value
+                if isinstance(record.record_type, Enum)
+                else record.record_type
+            )
             if record_types and record_type not in record_types:
                 continue
 
@@ -5033,7 +5360,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             record = self.records[record_id]
 
             # Add input edges
-            if hasattr(record, 'input_ids') and record.input_ids:
+            if hasattr(record, "input_ids") and record.input_ids:
                 for input_id in record.input_ids:
                     if input_id in graph:
                         graph.add_edge(input_id, record_id, relation="input_to")
@@ -5054,7 +5381,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         return_base64: bool = False,
         width: int = 1200,
         height: int = 800,
-        custom_colors: Optional[Dict[str, str]] = None
+        custom_colors: Optional[Dict[str, str]] = None,
     ) -> Optional[Union[str, Dict[str, Any]]]:
         """
         Enhanced visualization of the provenance graph.
@@ -5085,27 +5412,57 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             return None
 
         # Choose visualization method based on engine and format
-        if self.visualization_engine == "plotly" and PLOTLY_AVAILABLE and format in ["html", "json"]:
+        if (
+            self.visualization_engine == "plotly"
+            and PLOTLY_AVAILABLE
+            and format in ["html", "json"]
+        ):
             return self._visualize_with_plotly(
-                subgraph, include_parameters, show_timestamps, layout,
-                highlight_critical_path, include_metrics, file_path, format,
-                width, height, custom_colors
+                subgraph,
+                include_parameters,
+                show_timestamps,
+                layout,
+                highlight_critical_path,
+                include_metrics,
+                file_path,
+                format,
+                width,
+                height,
+                custom_colors,
             )
         elif self.visualization_engine == "dash" and DASH_AVAILABLE and format == "html":
             return self._visualize_with_dash(
-                subgraph, include_parameters, show_timestamps, layout,
-                highlight_critical_path, include_metrics, file_path,
-                width, height, custom_colors
+                subgraph,
+                include_parameters,
+                show_timestamps,
+                layout,
+                highlight_critical_path,
+                include_metrics,
+                file_path,
+                width,
+                height,
+                custom_colors,
             )
         else:
             # Default to matplotlib
             return self._visualize_with_matplotlib(
-                subgraph, include_parameters, show_timestamps, layout,
-                highlight_critical_path, include_metrics, file_path, format,
-                return_base64, width, height, custom_colors
+                subgraph,
+                include_parameters,
+                show_timestamps,
+                layout,
+                highlight_critical_path,
+                include_metrics,
+                file_path,
+                format,
+                return_base64,
+                width,
+                height,
+                custom_colors,
             )
 
-    def _create_visualization_subgraph(self, data_ids: Optional[List[str]], max_depth: int) -> nx.DiGraph:
+    def _create_visualization_subgraph(
+        self, data_ids: Optional[List[str]], max_depth: int
+    ) -> nx.DiGraph:
         """
         Create a subgraph for visualization based on specified data IDs.
 
@@ -5162,7 +5519,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         return_base64: bool,
         width: int,
         height: int,
-        custom_colors: Optional[Dict[str, str]]
+        custom_colors: Optional[Dict[str, str]],
     ) -> Optional[str]:
         """
         Visualize provenance graph using matplotlib.
@@ -5185,10 +5542,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             Optional[str]: Base64-encoded image if return_base64 is True
         """
         import matplotlib
-        matplotlib.use('Agg')  # Use non-interactive backend
+
+        matplotlib.use("Agg")  # Use non-interactive backend
 
         # Set up figure size
-        plt.figure(figsize=(width/100, height/100), dpi=100)
+        plt.figure(figsize=(width / 100, height / 100), dpi=100)
 
         # Choose layout algorithm
         if layout == "hierarchical":
@@ -5214,7 +5572,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "annotation": "pink",
             "model_training": "lightseagreen",
             "model_inference": "lightskyblue",
-            "data_entity": "gray"
+            "data_entity": "gray",
         }
 
         # Override with custom colors if provided
@@ -5224,7 +5582,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         node_sizes = []
         node_colors = []
         for node in subgraph.nodes():
-            node_type = subgraph.nodes[node].get('record_type', '')
+            node_type = subgraph.nodes[node].get("record_type", "")
 
             # Determine node color
             color = node_color_map.get(node_type, "white")
@@ -5245,8 +5603,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             node_sizes.append(size)
 
         # Draw nodes
-        nx.draw_networkx_nodes(subgraph, pos, node_color=node_colors,
-                               node_size=node_sizes, alpha=0.8)
+        nx.draw_networkx_nodes(
+            subgraph, pos, node_color=node_colors, node_size=node_sizes, alpha=0.8
+        )
 
         # Draw edges with different styles based on type
         edge_styles = {
@@ -5256,7 +5615,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "produces": {"color": "red", "width": 1.5, "arrow": True, "style": "solid"},
             "checkpoint": {"color": "purple", "width": 1.0, "arrow": True, "style": "dotted"},
             "verifies": {"color": "cyan", "width": 1.0, "arrow": True, "style": "dashdot"},
-            "annotates": {"color": "pink", "width": 1.0, "arrow": True, "style": "dashdot"}
+            "annotates": {"color": "pink", "width": 1.0, "arrow": True, "style": "dashdot"},
         }
 
         # Group edges by type
@@ -5269,13 +5628,17 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # Draw edges by type
         for edge_type, edges in edges_by_type.items():
-            style = edge_styles.get(edge_type, {"color": "black", "width": 1.0, "arrow": True, "style": "solid"})
+            style = edge_styles.get(
+                edge_type, {"color": "black", "width": 1.0, "arrow": True, "style": "solid"}
+            )
             nx.draw_networkx_edges(
-                subgraph, pos, edgelist=edges,
+                subgraph,
+                pos,
+                edgelist=edges,
                 width=style["width"],
                 edge_color=style["color"],
                 arrows=style["arrow"],
-                style=style["style"]
+                style=style["style"],
             )
 
         # Highlight critical path if requested
@@ -5302,14 +5665,17 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
                     # Highlight the critical path
                     if longest_path:
-                        critical_edges = [(longest_path[i], longest_path[i+1])
-                                        for i in range(len(longest_path)-1)]
+                        critical_edges = [
+                            (longest_path[i], longest_path[i + 1])
+                            for i in range(len(longest_path) - 1)
+                        ]
                         nx.draw_networkx_edges(
-                            subgraph, pos,
+                            subgraph,
+                            pos,
                             edgelist=critical_edges,
                             width=3.0,
                             edge_color="red",
-                            arrows=True
+                            arrows=True,
                         )
             except Exception as e:
                 self.logger.warning(f"Failed to highlight critical path: {str(e)}")
@@ -5317,11 +5683,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Prepare node labels
         node_labels = {}
         for node in subgraph.nodes():
-            node_type = subgraph.nodes[node].get('record_type', '')
-            description = subgraph.nodes[node].get('description', '')
+            node_type = subgraph.nodes[node].get("record_type", "")
+            description = subgraph.nodes[node].get("description", "")
 
             # For data entities, just use the node ID
-            if node_type == 'data_entity':
+            if node_type == "data_entity":
                 node_labels[node] = node
                 continue
 
@@ -5331,10 +5697,12 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 label_parts = [f"{node_type}:\n{description[:20]}"]
 
                 if show_timestamps:
-                    timestamp_str = datetime.datetime.fromtimestamp(record.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                    timestamp_str = datetime.datetime.fromtimestamp(record.timestamp).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
                     label_parts.append(timestamp_str)
 
-                if include_parameters and hasattr(record, 'parameters') and record.parameters:
+                if include_parameters and hasattr(record, "parameters") and record.parameters:
                     param_str = str(record.parameters)
                     if len(param_str) > 30:
                         param_str = param_str[:27] + "..."
@@ -5345,8 +5713,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 node_labels[node] = f"{node_type}:\n{description[:20]}"
 
         # Draw node labels
-        nx.draw_networkx_labels(subgraph, pos, labels=node_labels,
-                               font_size=8, font_family='sans-serif')
+        nx.draw_networkx_labels(
+            subgraph, pos, labels=node_labels, font_size=8, font_family="sans-serif"
+        )
 
         # Set plot title
         plt.title("Provenance Graph", fontsize=16)
@@ -5354,9 +5723,18 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Add a legend
         legend_elements = []
         for record_type, color in node_color_map.items():
-            legend_elements.append(plt.Line2D([0], [0], marker='o', color='w',
-                                  markerfacecolor=color, markersize=10, label=record_type))
-        plt.legend(handles=legend_elements, loc='upper right')
+            legend_elements.append(
+                plt.Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    markerfacecolor=color,
+                    markersize=10,
+                    label=record_type,
+                )
+            )
+        plt.legend(handles=legend_elements, loc="upper right")
 
         # Add metrics if requested
         if include_metrics:
@@ -5370,28 +5748,33 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 top_centrality = sorted(centrality.items(), key=lambda x: x[1], reverse=True)[:3]
                 metrics_text += "Top central nodes:\n"
                 for node, score in top_centrality:
-                    node_type = subgraph.nodes[node].get('record_type', '')
+                    node_type = subgraph.nodes[node].get("record_type", "")
                     metrics_text += f"- {node_type} ({score:.3f})\n"
             except:
                 pass
 
-            plt.figtext(0.02, 0.02, metrics_text, fontsize=8,
-                      bbox={"facecolor": "white", "alpha": 0.7, "pad": 5})
+            plt.figtext(
+                0.02,
+                0.02,
+                metrics_text,
+                fontsize=8,
+                bbox={"facecolor": "white", "alpha": 0.7, "pad": 5},
+            )
 
         # Set tight layout
         plt.tight_layout()
 
         # Save or return the plot
         if file_path:
-            plt.savefig(file_path, format=format, bbox_inches='tight', dpi=100)
+            plt.savefig(file_path, format=format, bbox_inches="tight", dpi=100)
             plt.close()
             return None
         elif return_base64:
             buf = io.BytesIO()
-            plt.savefig(buf, format=format, bbox_inches='tight', dpi=100)
+            plt.savefig(buf, format=format, bbox_inches="tight", dpi=100)
             plt.close()
             buf.seek(0)
-            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            img_base64 = base64.b64encode(buf.read()).decode("utf-8")
             return img_base64
         else:
             plt.close()
@@ -5409,7 +5792,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         format: str,
         width: int,
         height: int,
-        custom_colors: Optional[Dict[str, str]]
+        custom_colors: Optional[Dict[str, str]],
     ) -> Optional[Union[str, Dict[str, Any]]]:
         """
         Visualize provenance graph using plotly.
@@ -5447,7 +5830,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "annotation": "#FFC0CB",  # pink
             "model_training": "#20B2AA",  # lightseagreen
             "model_inference": "#87CEEB",  # lightskyblue
-            "data_entity": "#D3D3D3"  # gray
+            "data_entity": "#D3D3D3",  # gray
         }
 
         # Override with custom colors if provided
@@ -5476,7 +5859,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             node_y.append(y)
 
             # Color based on record type
-            node_type = subgraph.nodes[node].get('record_type', '')
+            node_type = subgraph.nodes[node].get("record_type", "")
             color = node_color_map.get(node_type, "#FFFFFF")  # white default
             node_colors.append(color)
 
@@ -5492,19 +5875,25 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             # Node text/hover info
             if node in self.records:
                 record = self.records[node]
-                text_parts = [f"Type: {node_type}", f"ID: {node}", f"Description: {record.description}"]
+                text_parts = [
+                    f"Type: {node_type}",
+                    f"ID: {node}",
+                    f"Description: {record.description}",
+                ]
 
                 if show_timestamps:
-                    timestamp_str = datetime.datetime.fromtimestamp(record.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                    timestamp_str = datetime.datetime.fromtimestamp(record.timestamp).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
                     text_parts.append(f"Time: {timestamp_str}")
 
-                if hasattr(record, 'input_ids') and record.input_ids:
+                if hasattr(record, "input_ids") and record.input_ids:
                     text_parts.append(f"Inputs: {', '.join(record.input_ids)}")
 
-                if hasattr(record, 'output_ids') and record.output_ids:
+                if hasattr(record, "output_ids") and record.output_ids:
                     text_parts.append(f"Outputs: {', '.join(record.output_ids)}")
 
-                if include_parameters and hasattr(record, 'parameters') and record.parameters:
+                if include_parameters and hasattr(record, "parameters") and record.parameters:
                     param_str = str(record.parameters)
                     text_parts.append(f"Parameters: {param_str}")
 
@@ -5513,16 +5902,17 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 node_text.append(f"Type: {node_type}<br>ID: {node}")
 
         node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode='markers',
-            hoverinfo='text',
+            x=node_x,
+            y=node_y,
+            mode="markers",
+            hoverinfo="text",
             text=node_text,
             marker=dict(
                 showscale=False,
                 color=node_colors,
                 size=node_sizes,
-                line=dict(width=2, color='#888')
-            )
+                line=dict(width=2, color="#888"),
+            ),
         )
 
         # Create edge traces
@@ -5536,7 +5926,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "produces": {"color": "red", "width": 2, "dash": "solid"},
             "checkpoint": {"color": "purple", "width": 1, "dash": "dot"},
             "verifies": {"color": "cyan", "width": 1, "dash": "dashdot"},
-            "annotates": {"color": "pink", "width": 1, "dash": "dashdot"}
+            "annotates": {"color": "pink", "width": 1, "dash": "dashdot"},
         }
 
         # Group edges by type
@@ -5565,11 +5955,12 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 edge_text.append(f"Type: {edge_type}<br>From: {edge[0]}<br>To: {edge[1]}")
 
             edge_trace = go.Scatter(
-                x=edge_x, y=edge_y,
+                x=edge_x,
+                y=edge_y,
                 line=dict(width=style["width"], color=style["color"], dash=style["dash"]),
-                hoverinfo='text',
+                hoverinfo="text",
                 text=edge_text,
-                mode='lines'
+                mode="lines",
             )
 
             edge_traces.append(edge_trace)
@@ -5587,43 +5978,51 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             # Create arrow annotation
             annotations.append(
                 dict(
-                    ax=x0, ay=y0,
-                    axref='x', ayref='y',
-                    x=x1, y=y1,
-                    xref='x', yref='y',
+                    ax=x0,
+                    ay=y0,
+                    axref="x",
+                    ayref="y",
+                    x=x1,
+                    y=y1,
+                    xref="x",
+                    yref="y",
                     showarrow=True,
                     arrowhead=2,
                     arrowsize=1,
                     arrowwidth=style["width"],
-                    arrowcolor=style["color"]
+                    arrowcolor=style["color"],
                 )
             )
 
         # Create figure
-        fig = go.Figure(data=[*edge_traces, node_trace],
-                      layout=go.Layout(
-                          title='Provenance Graph',
-                          titlefont=dict(size=16),
-                          showlegend=False,
-                          hovermode='closest',
-                          margin=dict(b=20, l=5, r=5, t=40),
-                          annotations=annotations,
-                          xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                          yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                          width=width,
-                          height=height
-                      )
-                  )
+        fig = go.Figure(
+            data=[*edge_traces, node_trace],
+            layout=go.Layout(
+                title="Provenance Graph",
+                titlefont=dict(size=16),
+                showlegend=False,
+                hovermode="closest",
+                margin=dict(b=20, l=5, r=5, t=40),
+                annotations=annotations,
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                width=width,
+                height=height,
+            ),
+        )
 
         # Add legend
         for record_type, color in node_color_map.items():
-            fig.add_trace(go.Scatter(
-                x=[None], y=[None],
-                mode='markers',
-                marker=dict(size=10, color=color),
-                showlegend=True,
-                name=record_type
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=[None],
+                    y=[None],
+                    mode="markers",
+                    marker=dict(size=10, color=color),
+                    showlegend=True,
+                    name=record_type,
+                )
+            )
 
         # Add metrics if requested
         if include_metrics:
@@ -5637,7 +6036,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 top_centrality = sorted(centrality.items(), key=lambda x: x[1], reverse=True)[:3]
                 metrics_text += "Top central nodes:<br>"
                 for node, score in top_centrality:
-                    node_type = subgraph.nodes[node].get('record_type', '')
+                    node_type = subgraph.nodes[node].get("record_type", "")
                     metrics_text += f"- {node_type} ({score:.3f})<br>"
             except:
                 pass
@@ -5653,7 +6052,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 align="left",
                 bgcolor="white",
                 bordercolor="black",
-                borderwidth=1
+                borderwidth=1,
             )
 
         # Save or return the visualization
@@ -5661,7 +6060,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             if format == "html":
                 fig.write_html(file_path)
             else:  # json
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(fig.to_json())
             return None
         else:
@@ -5681,7 +6080,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         file_path: Optional[str],
         width: int,
         height: int,
-        custom_colors: Optional[Dict[str, str]]
+        custom_colors: Optional[Dict[str, str]],
     ) -> Optional[str]:
         """
         Visualize provenance graph using Dash with Cytoscape.
@@ -5723,7 +6122,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "annotation": "#FFC0CB",  # pink
             "model_training": "#20B2AA",  # lightseagreen
             "model_inference": "#87CEEB",  # lightskyblue
-            "data_entity": "#D3D3D3"  # gray
+            "data_entity": "#D3D3D3",  # gray
         }
 
         # Override with custom colors if provided
@@ -5742,35 +6141,39 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Prepare nodes and edges for Cytoscape
         cyto_nodes = []
         for node in subgraph.nodes():
-            node_type = subgraph.nodes[node].get('record_type', '')
-            description = subgraph.nodes[node].get('description', '')
+            node_type = subgraph.nodes[node].get("record_type", "")
+            description = subgraph.nodes[node].get("description", "")
 
             node_data = {
                 "id": str(node),
                 "label": description[:20] if description else str(node),
-                "type": node_type
+                "type": node_type,
             }
 
             # Add timestamp if requested
             if show_timestamps and node in self.records:
                 record = self.records[node]
-                node_data["timestamp"] = datetime.datetime.fromtimestamp(record.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                node_data["timestamp"] = datetime.datetime.fromtimestamp(record.timestamp).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
 
             # Add parameters if requested
             if include_parameters and node in self.records:
                 record = self.records[node]
-                if hasattr(record, 'parameters') and record.parameters:
+                if hasattr(record, "parameters") and record.parameters:
                     node_data["parameters"] = str(record.parameters)
 
-            cyto_nodes.append({
-                "data": node_data,
-                "style": {
-                    "background-color": node_color_map.get(node_type, "#FFFFFF"),
-                    "label": "data(label)",
-                    "width": 30,
-                    "height": 30
+            cyto_nodes.append(
+                {
+                    "data": node_data,
+                    "style": {
+                        "background-color": node_color_map.get(node_type, "#FFFFFF"),
+                        "label": "data(label)",
+                        "width": 30,
+                        "height": 30,
+                    },
                 }
-            })
+            )
 
         # Prepare edges
         cyto_edges = []
@@ -5781,89 +6184,102 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "produces": {"line-color": "red", "width": 2, "line-style": "solid"},
             "checkpoint": {"line-color": "purple", "width": 1, "line-style": "dotted"},
             "verifies": {"line-color": "cyan", "width": 1, "line-style": "dashed"},
-            "annotates": {"line-color": "pink", "width": 1, "line-style": "dashed"}
+            "annotates": {"line-color": "pink", "width": 1, "line-style": "dashed"},
         }
 
         for u, v, data in subgraph.edges(data=True):
             edge_type = data.get("type", "default")
-            style = edge_styles.get(edge_type, {"line-color": "black", "width": 1, "line-style": "solid"})
+            style = edge_styles.get(
+                edge_type, {"line-color": "black", "width": 1, "line-style": "solid"}
+            )
 
-            cyto_edges.append({
-                "data": {
-                    "source": str(u),
-                    "target": str(v),
-                    "type": edge_type
-                },
-                "style": style
-            })
+            cyto_edges.append(
+                {"data": {"source": str(u), "target": str(v), "type": edge_type}, "style": style}
+            )
 
         # Create Dash app
         app = dash.Dash(__name__)
 
         # Define the layout
-        app.layout = html.Div([
-            html.H1("Provenance Graph Visualization", style={"textAlign": "center"}),
-            html.Div([
-                cyto.Cytoscape(
-                    id='provenance-graph',
-                    layout=cyto_layout,
-                    style={'width': width, 'height': height},
-                    elements=cyto_nodes + cyto_edges,
-                    stylesheet=[
-                        # Group selectors
-                        {
-                            'selector': 'node',
-                            'style': {
-                                'content': 'data(label)',
-                                'text-opacity': 0.8,
-                                'text-valign': 'center',
-                                'text-halign': 'center',
-                                'font-size': '12px'
-                            }
-                        },
-                        {
-                            'selector': 'edge',
-                            'style': {
-                                'width': 'data(width)',
-                                'target-arrow-shape': 'triangle',
-                                'curve-style': 'bezier'
-                            }
-                        }
-                    ]
-                )
-            ], style={"display": "flex", "justifyContent": "center"}),
-
-            # Add legend
-            html.Div([
-                html.H3("Legend"),
-                html.Div([
-                    html.Div([
-                        html.Div(style={
-                            "width": "20px",
-                            "height": "20px",
-                            "backgroundColor": color,
-                            "display": "inline-block",
-                            "marginRight": "10px"
-                        }),
-                        html.Span(record_type)
-                    ], style={"marginBottom": "5px"})
-                    for record_type, color in node_color_map.items()
-                ])
-            ], style={"margin": "20px"})
-        ])
+        app.layout = html.Div(
+            [
+                html.H1("Provenance Graph Visualization", style={"textAlign": "center"}),
+                html.Div(
+                    [
+                        cyto.Cytoscape(
+                            id="provenance-graph",
+                            layout=cyto_layout,
+                            style={"width": width, "height": height},
+                            elements=cyto_nodes + cyto_edges,
+                            stylesheet=[
+                                # Group selectors
+                                {
+                                    "selector": "node",
+                                    "style": {
+                                        "content": "data(label)",
+                                        "text-opacity": 0.8,
+                                        "text-valign": "center",
+                                        "text-halign": "center",
+                                        "font-size": "12px",
+                                    },
+                                },
+                                {
+                                    "selector": "edge",
+                                    "style": {
+                                        "width": "data(width)",
+                                        "target-arrow-shape": "triangle",
+                                        "curve-style": "bezier",
+                                    },
+                                },
+                            ],
+                        )
+                    ],
+                    style={"display": "flex", "justifyContent": "center"},
+                ),
+                # Add legend
+                html.Div(
+                    [
+                        html.H3("Legend"),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            style={
+                                                "width": "20px",
+                                                "height": "20px",
+                                                "backgroundColor": color,
+                                                "display": "inline-block",
+                                                "marginRight": "10px",
+                                            }
+                                        ),
+                                        html.Span(record_type),
+                                    ],
+                                    style={"marginBottom": "5px"},
+                                )
+                                for record_type, color in node_color_map.items()
+                            ]
+                        ),
+                    ],
+                    style={"margin": "20px"},
+                ),
+            ]
+        )
 
         # Generate HTML output
         if file_path:
             # Save as a standalone HTML file
             app_html = app.index_string
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(app_html)
             return None
         else:
             # Return the HTML string
             return app.index_string
 
-    def build_cross_document_lineage_graph(self, start_record_id: str, max_depth: int = 5) -> nx.DiGraph:
+    def build_cross_document_lineage_graph(
+        self, start_record_id: str, max_depth: int = 5
+    ) -> nx.DiGraph:
         """
         Build a comprehensive lineage graph by traversing cross-document links.
 
@@ -5900,31 +6316,37 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 # Add node to graph with record data as attributes
                 lineage_graph.add_node(
                     record_id,
-                    **{k: v for k, v in asdict(record_data).items()
-                       if k != 'input_ids' and k != 'output_ids'}
+                    **{
+                        k: v
+                        for k, v in asdict(record_data).items()
+                        if k != "input_ids" and k != "output_ids"
+                    },
                 )
 
                 # Add edges for regular provenance links
-                if hasattr(record_data, 'input_ids'):
+                if hasattr(record_data, "input_ids"):
                     for input_id in record_data.input_ids:
                         if input_id not in lineage_graph:
                             input_record = self.get_record(input_id)
                             if input_record:
                                 lineage_graph.add_node(
                                     input_id,
-                                    **{k: v for k, v in asdict(input_record).items()
-                                       if k != 'input_ids' and k != 'output_ids'}
+                                    **{
+                                        k: v
+                                        for k, v in asdict(input_record).items()
+                                        if k != "input_ids" and k != "output_ids"
+                                    },
                                 )
-                        lineage_graph.add_edge(input_id, record_id, link_type='input')
+                        lineage_graph.add_edge(input_id, record_id, link_type="input")
 
             # Get cross-document links
             cross_doc_links = self.get_cross_document_links(record_id)
 
             for link in cross_doc_links:
-                source_id = link.get('source_id')
-                target_id = link.get('target_id')
-                link_type = link.get('link_type', 'cross_document')
-                properties = link.get('properties', {})
+                source_id = link.get("source_id")
+                target_id = link.get("target_id")
+                link_type = link.get("link_type", "cross_document")
+                properties = link.get("properties", {})
 
                 # Add the link to the graph with properties as edge attributes
                 if source_id and target_id:
@@ -5935,20 +6357,18 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                             if node_record:
                                 lineage_graph.add_node(
                                     node_id,
-                                    **{k: v for k, v in asdict(node_record).items()
-                                       if k != 'input_ids' and k != 'output_ids'}
+                                    **{
+                                        k: v
+                                        for k, v in asdict(node_record).items()
+                                        if k != "input_ids" and k != "output_ids"
+                                    },
                                 )
                             else:
                                 # If we can't get the record, add a minimal node
-                                lineage_graph.add_node(node_id, record_type='unknown')
+                                lineage_graph.add_node(node_id, record_type="unknown")
 
                     # Add the edge with properties
-                    lineage_graph.add_edge(
-                        source_id,
-                        target_id,
-                        link_type=link_type,
-                        **properties
-                    )
+                    lineage_graph.add_edge(source_id, target_id, link_type=link_type, **properties)
 
                     # Continue traversal if within depth limit
                     if current_depth < max_depth:
@@ -5963,8 +6383,9 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         return lineage_graph
 
-    def create_cross_document_lineage(self, output_path: Optional[str] = None,
-                                     include_visualization: bool = True) -> Optional[Dict[str, Any]]:
+    def create_cross_document_lineage(
+        self, output_path: Optional[str] = None, include_visualization: bool = True
+    ) -> Optional[Dict[str, Any]]:
         """
         Creates detailed lineage tracking with cross-document relationships.
 
@@ -5987,10 +6408,16 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # Check if cross-document lineage enhanced module is available
             try:
-                from ipfs_datasets_py.knowledge_graphs.lineage import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+                from ipfs_datasets_py.knowledge_graphs.lineage import (
+                    CrossDocumentLineageEnhancer,
+                    DetailedLineageIntegrator,
+                )
+
                 enhanced_lineage_available = True
             except ImportError:
-                self.logger.warning("Enhanced cross-document lineage module not available, using basic functionality")
+                self.logger.warning(
+                    "Enhanced cross-document lineage module not available, using basic functionality"
+                )
                 enhanced_lineage_available = False
 
             # Get all records to include in lineage
@@ -6009,12 +6436,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
                 # Create a detailed lineage integrator
                 lineage_integrator = DetailedLineageIntegrator(
-                    provenance_manager=self,
-                    lineage_enhancer=lineage_enhancer
+                    provenance_manager=self, lineage_enhancer=lineage_enhancer
                 )
 
                 # Generate the integrated lineage
-                integrated_graph = lineage_integrator.integrate_provenance_with_lineage(provenance_graph)
+                integrated_graph = lineage_integrator.integrate_provenance_with_lineage(
+                    provenance_graph
+                )
 
                 # Add semantic enrichment
                 enriched_graph = lineage_integrator.enrich_lineage_semantics(integrated_graph)
@@ -6023,7 +6451,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 lineage_report = lineage_integrator.create_unified_lineage_report(
                     integrated_graph=enriched_graph,
                     include_visualization=include_visualization,
-                    output_path=output_path
+                    output_path=output_path,
                 )
 
                 # Perform flow pattern analysis for more insights
@@ -6041,18 +6469,22 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 # For each record, build its lineage graph
                 combined_graph = nx.DiGraph()
 
-                for start_id in record_ids[:10]:  # Limit to first 10 records to avoid performance issues
+                for start_id in record_ids[
+                    :10
+                ]:  # Limit to first 10 records to avoid performance issues
                     try:
                         # Build lineage graph for this record
                         record_graph = self.build_cross_document_lineage_graph(
                             start_record_id=start_id,
-                            max_depth=3  # Reasonable depth
+                            max_depth=3,  # Reasonable depth
                         )
 
                         # Merge into combined graph
                         combined_graph = nx.compose(combined_graph, record_graph)
                     except Exception as e:
-                        self.logger.warning(f"Error building lineage for record {start_id}: {str(e)}")
+                        self.logger.warning(
+                            f"Error building lineage for record {start_id}: {str(e)}"
+                        )
 
                 # Basic analysis
                 analysis = {
@@ -6060,8 +6492,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     "included_records": min(10, len(record_ids)),
                     "node_count": combined_graph.number_of_nodes(),
                     "edge_count": combined_graph.number_of_edges(),
-                    "cross_document_edges": sum(1 for _, _, attrs in combined_graph.edges(data=True)
-                                             if attrs.get("cross_document", False)),
+                    "cross_document_edges": sum(
+                        1
+                        for _, _, attrs in combined_graph.edges(data=True)
+                        if attrs.get("cross_document", False)
+                    ),
                 }
 
                 # Generate visualization if requested
@@ -6073,8 +6508,8 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                             max_depth=3,
                             output_file=output_path,
                             show_interactive=False,
-                            layout='dot',
-                            highlight_path=True
+                            layout="dot",
+                            highlight_path=True,
                         )
                         analysis["visualization_path"] = output_path
                     except Exception as e:
@@ -6084,22 +6519,26 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     "analysis": analysis,
                     "lineage_graph": {
                         "nodes": list(combined_graph.nodes()),
-                        "edges": [{"source": u, "target": v, **attrs}
-                                for u, v, attrs in combined_graph.edges(data=True)]
-                    }
+                        "edges": [
+                            {"source": u, "target": v, **attrs}
+                            for u, v, attrs in combined_graph.edges(data=True)
+                        ],
+                    },
                 }
 
         except Exception as e:
             self.logger.error(f"Error creating cross-document lineage: {str(e)}")
             return None
 
-    def visualize_cross_document_lineage(self,
-                                        start_record_id: str,
-                                        max_depth: int = 3,
-                                        output_file: Optional[str] = None,
-                                        show_interactive: bool = False,
-                                        layout: str = 'dot',
-                                        highlight_path: bool = True) -> Optional[nx.DiGraph]:
+    def visualize_cross_document_lineage(
+        self,
+        start_record_id: str,
+        max_depth: int = 3,
+        output_file: Optional[str] = None,
+        show_interactive: bool = False,
+        layout: str = "dot",
+        highlight_path: bool = True,
+    ) -> Optional[nx.DiGraph]:
         """
         Visualize the cross-document lineage for a record.
 
@@ -6120,8 +6559,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # First build the lineage graph
             lineage_graph = self.build_cross_document_lineage_graph(
-                start_record_id=start_record_id,
-                max_depth=max_depth
+                start_record_id=start_record_id, max_depth=max_depth
             )
 
             if not lineage_graph or lineage_graph.number_of_nodes() == 0:
@@ -6131,30 +6569,25 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             # Check if we need to use Plotly for interactive visualization
             if show_interactive and PLOTLY_AVAILABLE:
                 return self._create_interactive_lineage_visualization(
-                    lineage_graph,
-                    start_record_id,
-                    output_file,
-                    highlight_path
+                    lineage_graph, start_record_id, output_file, highlight_path
                 )
             else:
                 # Use matplotlib/networkx for static visualization
                 return self._create_static_lineage_visualization(
-                    lineage_graph,
-                    start_record_id,
-                    output_file,
-                    layout,
-                    highlight_path
+                    lineage_graph, start_record_id, output_file, layout, highlight_path
                 )
         except Exception as e:
             logging.error(f"Error visualizing cross-document lineage: {str(e)}")
             return None
 
-    def _create_static_lineage_visualization(self,
-                                           lineage_graph: nx.DiGraph,
-                                           start_record_id: str,
-                                           output_file: Optional[str] = None,
-                                           layout: str = 'dot',
-                                           highlight_path: bool = True) -> nx.DiGraph:
+    def _create_static_lineage_visualization(
+        self,
+        lineage_graph: nx.DiGraph,
+        start_record_id: str,
+        output_file: Optional[str] = None,
+        layout: str = "dot",
+        highlight_path: bool = True,
+    ) -> nx.DiGraph:
         """
         Create a static visualization of the lineage graph using matplotlib.
 
@@ -6173,12 +6606,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Try to use pygraphviz for better layouts if available
         try:
             import pygraphviz
+
             pos = nx.drawing.nx_agraph.graphviz_layout(lineage_graph, prog=layout)
         except ImportError:
             # Fall back to networkx layouts
-            if layout == 'dot' or layout == 'neato':
+            if layout == "dot" or layout == "neato":
                 pos = nx.spring_layout(lineage_graph, seed=42)
-            elif layout == 'circular':
+            elif layout == "circular":
                 pos = nx.circular_layout(lineage_graph)
             else:
                 pos = nx.spring_layout(lineage_graph, seed=42)
@@ -6192,36 +6626,36 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             node_data = lineage_graph.nodes[node]
 
             # Base size and color on record type
-            record_type = node_data.get('record_type', 'unknown')
-            if record_type == 'source':
-                color = '#4CAF50'  # Green
+            record_type = node_data.get("record_type", "unknown")
+            if record_type == "source":
+                color = "#4CAF50"  # Green
                 size = 800
-            elif record_type == 'transformation':
-                color = '#2196F3'  # Blue
+            elif record_type == "transformation":
+                color = "#2196F3"  # Blue
                 size = 600
-            elif record_type == 'merge':
-                color = '#9C27B0'  # Purple
+            elif record_type == "merge":
+                color = "#9C27B0"  # Purple
                 size = 700
-            elif record_type == 'query':
-                color = '#FF9800'  # Orange
+            elif record_type == "query":
+                color = "#FF9800"  # Orange
                 size = 500
-            elif record_type == 'result':
-                color = '#F44336'  # Red
+            elif record_type == "result":
+                color = "#F44336"  # Red
                 size = 600
-            elif record_type == 'verification':
-                color = '#00BCD4'  # Cyan
+            elif record_type == "verification":
+                color = "#00BCD4"  # Cyan
                 size = 500
-            elif record_type == 'annotation':
-                color = '#607D8B'  # Blue grey
+            elif record_type == "annotation":
+                color = "#607D8B"  # Blue grey
                 size = 400
             else:
-                color = '#9E9E9E'  # Grey
+                color = "#9E9E9E"  # Grey
                 size = 300
 
             # Make the start node larger and highlighted
             if node == start_record_id:
                 size = 1000
-                color = '#FFEB3B'  # Yellow
+                color = "#FFEB3B"  # Yellow
 
             node_colors.append(color)
             node_sizes.append(size)
@@ -6233,35 +6667,38 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             node_color=node_colors,
             node_size=node_sizes,
             alpha=0.8,
-            edgecolors='black',
-            linewidths=1.0
+            edgecolors="black",
+            linewidths=1.0,
         )
 
         # Draw edges with different styles based on link type
-        edge_types = set(nx.get_edge_attributes(lineage_graph, 'link_type').values())
+        edge_types = set(nx.get_edge_attributes(lineage_graph, "link_type").values())
 
         for edge_type in edge_types:
-            edges = [(u, v) for u, v, d in lineage_graph.edges(data=True)
-                     if d.get('link_type') == edge_type]
+            edges = [
+                (u, v)
+                for u, v, d in lineage_graph.edges(data=True)
+                if d.get("link_type") == edge_type
+            ]
 
-            if edge_type == 'cross_document':
-                edge_color = '#FF5722'  # Deep orange
-                style = 'dashed'
+            if edge_type == "cross_document":
+                edge_color = "#FF5722"  # Deep orange
+                style = "dashed"
                 width = 2.0
                 alpha = 1.0
-            elif edge_type == 'derived_from':
-                edge_color = '#8BC34A'  # Light green
-                style = 'solid'
+            elif edge_type == "derived_from":
+                edge_color = "#8BC34A"  # Light green
+                style = "solid"
                 width = 1.5
                 alpha = 0.9
-            elif edge_type == 'input':
-                edge_color = '#3F51B5'  # Indigo
-                style = 'solid'
+            elif edge_type == "input":
+                edge_color = "#3F51B5"  # Indigo
+                style = "solid"
                 width = 1.0
                 alpha = 0.8
             else:
-                edge_color = '#9E9E9E'  # Grey
-                style = 'dotted'
+                edge_color = "#9E9E9E"  # Grey
+                style = "dotted"
                 width = 1.0
                 alpha = 0.7
 
@@ -6275,28 +6712,28 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 alpha=alpha,
                 arrows=True,
                 arrowsize=15,
-                arrowstyle='-|>'
+                arrowstyle="-|>",
             )
 
         # Draw labels with custom format based on node type
         labels = {}
         for node in lineage_graph.nodes():
             node_data = lineage_graph.nodes[node]
-            record_type = node_data.get('record_type', 'unknown')
+            record_type = node_data.get("record_type", "unknown")
 
-            if record_type == 'source':
+            if record_type == "source":
                 label = f"{node_data.get('source_type', '')}\n{node_data.get('format', '')}"
-            elif record_type == 'transformation':
+            elif record_type == "transformation":
                 label = f"{node_data.get('transformation_type', '')}"
-            elif record_type == 'merge':
+            elif record_type == "merge":
                 label = "Merge"
-            elif record_type == 'query':
+            elif record_type == "query":
                 label = "Query"
-            elif record_type == 'result':
+            elif record_type == "result":
                 label = "Result"
-            elif record_type == 'verification':
+            elif record_type == "verification":
                 label = f"Verify: {node_data.get('verification_type', '')}"
-            elif record_type == 'annotation':
+            elif record_type == "annotation":
                 label = f"Note: {node_data.get('annotation_type', '')}"
             else:
                 label = record_type.capitalize()
@@ -6312,8 +6749,8 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             pos,
             labels=labels,
             font_size=8,
-            font_family='sans-serif',
-            font_weight='bold'
+            font_family="sans-serif",
+            font_weight="bold",
         )
 
         # Highlight critical paths if requested
@@ -6331,33 +6768,35 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                         lineage_graph,
                         pos,
                         edgelist=path_edges,
-                        edge_color='#E91E63',  # Pink
-                        style='solid',
+                        edge_color="#E91E63",  # Pink
+                        style="solid",
                         width=3.0,
                         alpha=1.0,
                         arrows=True,
                         arrowsize=20,
-                        arrowstyle='-|>'
+                        arrowstyle="-|>",
                     )
                 except nx.NetworkXNoPath:
                     continue
 
         plt.title(f"Cross-Document Lineage for Record {start_record_id[:8]}...")
-        plt.axis('off')
+        plt.axis("off")
         plt.tight_layout()
 
         if output_file:
-            plt.savefig(output_file, dpi=300, bbox_inches='tight')
+            plt.savefig(output_file, dpi=300, bbox_inches="tight")
             logging.info(f"Saved lineage visualization to {output_file}")
 
         plt.show()
         return lineage_graph
 
-    def _create_interactive_lineage_visualization(self,
-                                                lineage_graph: nx.DiGraph,
-                                                start_record_id: str,
-                                                output_file: Optional[str] = None,
-                                                highlight_path: bool = True) -> nx.DiGraph:
+    def _create_interactive_lineage_visualization(
+        self,
+        lineage_graph: nx.DiGraph,
+        start_record_id: str,
+        output_file: Optional[str] = None,
+        highlight_path: bool = True,
+    ) -> nx.DiGraph:
         """
         Create an interactive visualization of the lineage graph using Plotly.
 
@@ -6378,7 +6817,8 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Create positional layout
         try:
             import pygraphviz
-            pos = nx.drawing.nx_agraph.graphviz_layout(lineage_graph, prog='dot')
+
+            pos = nx.drawing.nx_agraph.graphviz_layout(lineage_graph, prog="dot")
         except ImportError:
             pos = nx.spring_layout(lineage_graph, seed=42)
 
@@ -6397,41 +6837,41 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         for node in lineage_graph.nodes():
             node_data = lineage_graph.nodes[node]
-            record_type = node_data.get('record_type', 'unknown')
+            record_type = node_data.get("record_type", "unknown")
 
             # Create detailed hover text
             hover_info = [f"ID: {node}"]
             hover_info.append(f"Type: {record_type}")
 
             # Add additional information based on record type
-            if record_type == 'source':
+            if record_type == "source":
                 hover_info.append(f"Source Type: {node_data.get('source_type', 'unknown')}")
                 hover_info.append(f"Format: {node_data.get('format', 'unknown')}")
                 hover_info.append(f"Location: {node_data.get('location', 'unknown')}")
-                color = 'green'
+                color = "green"
                 size = 15
-            elif record_type == 'transformation':
+            elif record_type == "transformation":
                 hover_info.append(f"Transform: {node_data.get('transformation_type', 'unknown')}")
                 hover_info.append(f"Tool: {node_data.get('tool', 'unknown')}")
-                color = 'blue'
+                color = "blue"
                 size = 12
-            elif record_type == 'merge':
+            elif record_type == "merge":
                 hover_info.append(f"Strategy: {node_data.get('merge_strategy', 'unknown')}")
-                color = 'purple'
+                color = "purple"
                 size = 14
-            elif record_type == 'verification':
+            elif record_type == "verification":
                 hover_info.append(f"Verification: {node_data.get('verification_type', 'unknown')}")
                 hover_info.append(f"Valid: {node_data.get('is_valid', 'unknown')}")
-                color = 'cyan'
+                color = "cyan"
                 size = 12
             else:
-                color = 'grey'
+                color = "grey"
                 size = 10
 
             # Add timestamp if available
-            if 'timestamp' in node_data:
+            if "timestamp" in node_data:
                 try:
-                    ts = float(node_data['timestamp'])
+                    ts = float(node_data["timestamp"])
                     dt = datetime.datetime.fromtimestamp(ts)
                     hover_info.append(f"Time: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
                 except:
@@ -6440,7 +6880,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             # Make the start node larger and highlighted
             if node == start_record_id:
                 size = 20
-                color = 'yellow'
+                color = "yellow"
 
             node_hover_text.append("<br>".join(hover_info))
             node_colors.append(color)
@@ -6448,21 +6888,22 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # Create node trace
         node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode='markers',
-            hoverinfo='text',
+            x=node_x,
+            y=node_y,
+            mode="markers",
+            hoverinfo="text",
             text=node_hover_text,
             marker=dict(
                 showscale=False,
                 color=node_colors,
                 size=node_sizes,
-                line=dict(width=1, color='black')
-            )
+                line=dict(width=1, color="black"),
+            ),
         )
 
         # Prepare edge traces (different traces for different edge types)
         edge_traces = []
-        edge_types = set(nx.get_edge_attributes(lineage_graph, 'link_type').values())
+        edge_types = set(nx.get_edge_attributes(lineage_graph, "link_type").values())
 
         # Highlight paths if requested
         highlighted_edges = set()
@@ -6485,7 +6926,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             for edge in lineage_graph.edges(data=True):
                 u, v, data = edge
 
-                if data.get('link_type') != edge_type:
+                if data.get("link_type") != edge_type:
                     continue
 
                 x0, y0 = pos[u]
@@ -6496,43 +6937,40 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 edge_y.extend([y0, y1, None])
 
                 # Edge hover text
-                hover_text = [
-                    f"Source: {u[:8]}...",
-                    f"Target: {v[:8]}...",
-                    f"Type: {edge_type}"
-                ]
+                hover_text = [f"Source: {u[:8]}...", f"Target: {v[:8]}...", f"Type: {edge_type}"]
 
                 # Add additional properties
                 for k, val in data.items():
-                    if k != 'link_type':
+                    if k != "link_type":
                         hover_text.append(f"{k}: {val}")
 
                 edge_hover.append("<br>".join(hover_text))
 
             # Set edge style based on type
-            if edge_type == 'cross_document':
-                color = 'red'
+            if edge_type == "cross_document":
+                color = "red"
                 width = 2
-                dash = 'dash'
-            elif edge_type == 'derived_from':
-                color = 'green'
+                dash = "dash"
+            elif edge_type == "derived_from":
+                color = "green"
                 width = 1.5
-                dash = 'solid'
-            elif edge_type == 'input':
-                color = 'blue'
+                dash = "solid"
+            elif edge_type == "input":
+                color = "blue"
                 width = 1
-                dash = 'solid'
+                dash = "solid"
             else:
-                color = 'grey'
+                color = "grey"
                 width = 1
-                dash = 'dot'
+                dash = "dot"
 
             edge_trace = go.Scatter(
-                x=edge_x, y=edge_y,
+                x=edge_x,
+                y=edge_y,
                 line=dict(width=width, color=color, dash=dash),
-                hoverinfo='text',
+                hoverinfo="text",
                 text=edge_hover,
-                mode='lines'
+                mode="lines",
             )
 
             edge_traces.append(edge_trace)
@@ -6549,30 +6987,33 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 highlight_y.extend([y0, y1, None])
 
             highlight_trace = go.Scatter(
-                x=highlight_x, y=highlight_y,
-                line=dict(width=3, color='magenta'),
-                hoverinfo='none',
-                mode='lines'
+                x=highlight_x,
+                y=highlight_y,
+                line=dict(width=3, color="magenta"),
+                hoverinfo="none",
+                mode="lines",
             )
 
             # Add highlight trace first so it's under the other edges
             edge_traces = [highlight_trace] + edge_traces
 
         # Create figure
-        fig = go.Figure(data=edge_traces + [node_trace],
-                      layout=go.Layout(
-                          title=f"Cross-Document Lineage for Record {start_record_id[:8]}...",
-                          showlegend=False,
-                          hovermode='closest',
-                          margin=dict(b=20, l=5, r=5, t=40),
-                          xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                          yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                          plot_bgcolor='white'
-                      ))
+        fig = go.Figure(
+            data=edge_traces + [node_trace],
+            layout=go.Layout(
+                title=f"Cross-Document Lineage for Record {start_record_id[:8]}...",
+                showlegend=False,
+                hovermode="closest",
+                margin=dict(b=20, l=5, r=5, t=40),
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                plot_bgcolor="white",
+            ),
+        )
 
         # Save to file if requested
         if output_file:
-            if output_file.endswith('.html'):
+            if output_file.endswith(".html"):
                 fig.write_html(output_file)
             else:
                 fig.write_image(output_file)
@@ -6581,11 +7022,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         fig.show()
         return lineage_graph
 
-    def analyze_cross_document_lineage(self,
-                                      lineage_graph: Optional[nx.DiGraph] = None,
-                                      record_ids: Optional[Union[str, List[str]]] = None,
-                                      max_depth: int = 3,
-                                      link_types: Optional[List[str]] = None) -> Dict[str, Any]:
+    def analyze_cross_document_lineage(
+        self,
+        lineage_graph: Optional[nx.DiGraph] = None,
+        record_ids: Optional[Union[str, List[str]]] = None,
+        max_depth: int = 3,
+        link_types: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         Analyze cross-document lineage for records and their relationships.
 
@@ -6605,8 +7048,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         """
         # Build the lineage graph
         lineage_graph = self.build_cross_document_lineage_graph(
-            start_record_id=record_id,
-            max_depth=max_depth
+            start_record_id=record_id, max_depth=max_depth
         )
 
         if not lineage_graph or lineage_graph.number_of_nodes() == 0:
@@ -6620,46 +7062,47 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             "node_stats": {},
             "path_analysis": {},
             "centrality": {},
-            "critical_nodes": []
+            "critical_nodes": [],
         }
 
         # Basic graph metrics
         results["graph_metrics"] = {
             "node_count": lineage_graph.number_of_nodes(),
             "edge_count": lineage_graph.number_of_edges(),
-            "cross_doc_edge_count": sum(1 for _, _, d in lineage_graph.edges(data=True)
-                                        if d.get('link_type') == 'cross_document'),
+            "cross_doc_edge_count": sum(
+                1
+                for _, _, d in lineage_graph.edges(data=True)
+                if d.get("link_type") == "cross_document"
+            ),
             "density": nx.density(lineage_graph),
             "is_dag": nx.is_directed_acyclic_graph(lineage_graph),
             "connected_components": nx.number_weakly_connected_components(lineage_graph),
-            "max_depth": self._calculate_max_depth(lineage_graph, record_id)
+            "max_depth": self._calculate_max_depth(lineage_graph, record_id),
         }
 
         # Document statistics
         document_counts = {}
         for node, data in lineage_graph.nodes(data=True):
             # Try to determine the document/dataset the node belongs to
-            doc_id = data.get('document_id', 'unknown')
+            doc_id = data.get("document_id", "unknown")
             if doc_id not in document_counts:
                 document_counts[doc_id] = 0
             document_counts[doc_id] += 1
 
         results["document_stats"] = {
             "document_count": len(document_counts),
-            "document_distribution": document_counts
+            "document_distribution": document_counts,
         }
 
         # Node type statistics
         node_type_counts = {}
         for _, data in lineage_graph.nodes(data=True):
-            record_type = data.get('record_type', 'unknown')
+            record_type = data.get("record_type", "unknown")
             if record_type not in node_type_counts:
                 node_type_counts[record_type] = 0
             node_type_counts[record_type] += 1
 
-        results["node_stats"] = {
-            "node_type_distribution": node_type_counts
-        }
+        results["node_stats"] = {"node_type_distribution": node_type_counts}
 
         # Path analysis
         source_nodes = [n for n, d in lineage_graph.in_degree() if d == 0]
@@ -6668,23 +7111,35 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         for source in source_nodes:
             try:
                 path = nx.shortest_path(lineage_graph, source, record_id)
-                paths_to_record.append({
-                    "source": source,
-                    "path_length": len(path) - 1,
-                    "cross_doc_transitions": sum(1 for i in range(len(path)-1)
-                                               if lineage_graph[path[i]][path[i+1]].get('link_type') == 'cross_document'),
-                    "path": path
-                })
+                paths_to_record.append(
+                    {
+                        "source": source,
+                        "path_length": len(path) - 1,
+                        "cross_doc_transitions": sum(
+                            1
+                            for i in range(len(path) - 1)
+                            if lineage_graph[path[i]][path[i + 1]].get("link_type")
+                            == "cross_document"
+                        ),
+                        "path": path,
+                    }
+                )
             except nx.NetworkXNoPath:
                 continue
 
         results["path_analysis"] = {
             "source_count": len(source_nodes),
             "paths_to_record": len(paths_to_record),
-            "avg_path_length": sum(p["path_length"] for p in paths_to_record) / max(1, len(paths_to_record)),
-            "max_path_length": max([p["path_length"] for p in paths_to_record]) if paths_to_record else 0,
-            "avg_cross_doc_transitions": sum(p["cross_doc_transitions"] for p in paths_to_record) / max(1, len(paths_to_record)),
-            "path_details": paths_to_record[:5]  # Include only up to 5 paths to avoid excessive output
+            "avg_path_length": sum(p["path_length"] for p in paths_to_record)
+            / max(1, len(paths_to_record)),
+            "max_path_length": max([p["path_length"] for p in paths_to_record])
+            if paths_to_record
+            else 0,
+            "avg_cross_doc_transitions": sum(p["cross_doc_transitions"] for p in paths_to_record)
+            / max(1, len(paths_to_record)),
+            "path_details": paths_to_record[
+                :5
+            ],  # Include only up to 5 paths to avoid excessive output
         }
 
         # Centrality measures
@@ -6698,7 +7153,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
             results["centrality"] = {
                 "top_betweenness": [{"node": n, "score": s} for n, s in top_betweenness],
-                "top_closeness": [{"node": n, "score": s} for n, s in top_closeness]
+                "top_closeness": [{"node": n, "score": s} for n, s in top_closeness],
             }
         except:
             results["centrality"] = {"error": "Failed to calculate centrality measures"}
@@ -6726,11 +7181,13 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         return max_depth
 
-    def export_cross_document_lineage(self,
-                                     record_id: str,
-                                     max_depth: int = 3,
-                                     output_format: str = 'json',
-                                     output_file: Optional[str] = None) -> Union[str, Dict, None]:
+    def export_cross_document_lineage(
+        self,
+        record_id: str,
+        max_depth: int = 3,
+        output_format: str = "json",
+        output_file: Optional[str] = None,
+    ) -> Union[str, Dict, None]:
         """
         Export cross-document lineage in various formats.
 
@@ -6745,8 +7202,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         """
         # Build the lineage graph
         lineage_graph = self.build_cross_document_lineage_graph(
-            start_record_id=record_id,
-            max_depth=max_depth
+            start_record_id=record_id, max_depth=max_depth
         )
 
         if not lineage_graph or lineage_graph.number_of_nodes() == 0:
@@ -6755,124 +7211,126 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # Export based on requested format
         try:
-            if output_format == 'json':
+            if output_format == "json":
                 # Convert to network JSON format
                 data = nx.node_link_data(lineage_graph)
 
                 if output_file:
-                    with open(output_file, 'w') as f:
+                    with open(output_file, "w") as f:
                         json.dump(data, f, indent=2)
                     return None
 
                 return data
 
-            elif output_format == 'graphml':
+            elif output_format == "graphml":
                 if output_file:
                     nx.write_graphml(lineage_graph, output_file)
                     return None
 
                 # Without output file, return string representation
                 from io import StringIO
+
                 buffer = StringIO()
                 nx.write_graphml(lineage_graph, buffer)
                 return buffer.getvalue()
 
-            elif output_format == 'gexf':
+            elif output_format == "gexf":
                 if output_file:
                     nx.write_gexf(lineage_graph, output_file)
                     return None
 
                 # Without output file, return string representation
                 from io import StringIO
+
                 buffer = StringIO()
                 nx.write_gexf(lineage_graph, buffer)
                 return buffer.getvalue()
 
-            elif output_format == 'cytoscape':
+            elif output_format == "cytoscape":
                 # Convert to Cytoscape.js format
                 elements = []
 
                 # Add nodes
                 for node, data in lineage_graph.nodes(data=True):
-                    record_type = data.get('record_type', 'unknown')
+                    record_type = data.get("record_type", "unknown")
 
                     # Determine node color based on record type
-                    if record_type == 'source':
-                        color = '#4CAF50'  # Green
-                    elif record_type == 'transformation':
-                        color = '#2196F3'  # Blue
-                    elif record_type == 'merge':
-                        color = '#9C27B0'  # Purple
-                    elif record_type == 'verification':
-                        color = '#00BCD4'  # Cyan
+                    if record_type == "source":
+                        color = "#4CAF50"  # Green
+                    elif record_type == "transformation":
+                        color = "#2196F3"  # Blue
+                    elif record_type == "merge":
+                        color = "#9C27B0"  # Purple
+                    elif record_type == "verification":
+                        color = "#00BCD4"  # Cyan
                     else:
-                        color = '#9E9E9E'  # Grey
+                        color = "#9E9E9E"  # Grey
 
                     node_element = {
-                        'data': {
-                            'id': node,
-                            'label': f"{record_type}\n{node[:8]}...",
-                            'record_type': record_type,
-                            'color': color
+                        "data": {
+                            "id": node,
+                            "label": f"{record_type}\n{node[:8]}...",
+                            "record_type": record_type,
+                            "color": color,
                         }
                     }
 
                     # Add all node attributes
                     for k, v in data.items():
                         if isinstance(v, (str, int, float, bool, type(None))):
-                            node_element['data'][k] = v
+                            node_element["data"][k] = v
 
                     # Highlight the start node
                     if node == record_id:
-                        node_element['data']['color'] = '#FFEB3B'  # Yellow
+                        node_element["data"]["color"] = "#FFEB3B"  # Yellow
 
                     elements.append(node_element)
 
                 # Add edges
                 for source, target, data in lineage_graph.edges(data=True):
-                    link_type = data.get('link_type', 'default')
+                    link_type = data.get("link_type", "default")
 
                     # Determine edge style based on link type
-                    if link_type == 'cross_document':
-                        color = '#FF5722'  # Deep orange
-                        style = 'dashed'
+                    if link_type == "cross_document":
+                        color = "#FF5722"  # Deep orange
+                        style = "dashed"
                         width = 3
-                    elif link_type == 'derived_from':
-                        color = '#8BC34A'  # Light green
-                        style = 'solid'
+                    elif link_type == "derived_from":
+                        color = "#8BC34A"  # Light green
+                        style = "solid"
                         width = 2
-                    elif link_type == 'input':
-                        color = '#3F51B5'  # Indigo
-                        style = 'solid'
+                    elif link_type == "input":
+                        color = "#3F51B5"  # Indigo
+                        style = "solid"
                         width = 1
                     else:
-                        color = '#9E9E9E'  # Grey
-                        style = 'dotted'
+                        color = "#9E9E9E"  # Grey
+                        style = "dotted"
                         width = 1
 
                     edge_element = {
-                        'data': {
-                            'id': f"{source}-{target}",
-                            'source': source,
-                            'target': target,
-                            'link_type': link_type,
-                            'color': color,
-                            'style': style,
-                            'width': width
+                        "data": {
+                            "id": f"{source}-{target}",
+                            "source": source,
+                            "target": target,
+                            "link_type": link_type,
+                            "color": color,
+                            "style": style,
+                            "width": width,
                         }
                     }
 
                     # Add all edge attributes
                     for k, v in data.items():
                         if isinstance(v, (str, int, float, bool, type(None))):
-                            edge_element['data'][k] = v
+                            edge_element["data"][k] = v
 
                     elements.append(edge_element)
 
-                cytoscape_data = {'elements': elements}
+                cytoscape_data = {"elements": elements}
 
                 if output_file:
-                    with open(output_file, 'w') as f:
+                    with open(output_file, "w") as f:
                         json.dump(cytoscape_data, f, indent=2)
                     return None
 
@@ -6904,8 +7362,8 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             if graph.nodes():
                 timestamps = {}
                 for node in graph.nodes():
-                    if 'timestamp' in graph.nodes[node]:
-                        timestamps[node] = graph.nodes[node]['timestamp']
+                    if "timestamp" in graph.nodes[node]:
+                        timestamps[node] = graph.nodes[node]["timestamp"]
                     elif node in self.records:
                         timestamps[node] = self.records[node].timestamp
 
@@ -6918,11 +7376,11 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
 
         # Initialize depths
         for node in graph.nodes():
-            graph.nodes[node]['depth'] = -1
+            graph.nodes[node]["depth"] = -1
 
         # Set depth 0 for source nodes
         for node in source_nodes:
-            graph.nodes[node]['depth'] = 0
+            graph.nodes[node]["depth"] = 0
 
         # Breadth-first traversal to assign depths
         visited = set(source_nodes)
@@ -6932,7 +7390,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             node, depth = queue.pop(0)
 
             # Assign depth to the node
-            graph.nodes[node]['depth'] = depth
+            graph.nodes[node]["depth"] = depth
 
             # Process successors
             for successor in graph.successors(node):
@@ -6943,12 +7401,12 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         # Handle disconnected components
         for component in nx.weakly_connected_components(graph):
             # Skip components that have already been processed
-            if all(graph.nodes[node]['depth'] >= 0 for node in component):
+            if all(graph.nodes[node]["depth"] >= 0 for node in component):
                 continue
 
             # Find a node to start with in this component
             start_node = next(iter(component))
-            graph.nodes[start_node]['depth'] = 0
+            graph.nodes[start_node]["depth"] = 0
 
             # Process this component
             visited = {start_node}
@@ -6962,22 +7420,22 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                     if successor not in visited:
                         visited.add(successor)
                         queue.append((successor, depth + 1))
-                        graph.nodes[successor]['depth'] = depth + 1
+                        graph.nodes[successor]["depth"] = depth + 1
 
                 # Process predecessors (assign negative depths)
                 for predecessor in graph.predecessors(node):
                     if predecessor not in visited:
                         visited.add(predecessor)
                         queue.append((predecessor, depth - 1))
-                        graph.nodes[predecessor]['depth'] = depth - 1
+                        graph.nodes[predecessor]["depth"] = depth - 1
 
         # Normalize depths to ensure they're all non-negative
         if graph.nodes():
-            min_depth = min(graph.nodes[node]['depth'] for node in graph.nodes())
+            min_depth = min(graph.nodes[node]["depth"] for node in graph.nodes())
             if min_depth < 0:
                 # Shift all depths up
                 for node in graph.nodes():
-                    graph.nodes[node]['depth'] += abs(min_depth)
+                    graph.nodes[node]["depth"] += abs(min_depth)
 
 
 def _provenance_ipld_example():
@@ -7002,7 +7460,7 @@ def _provenance_ipld_example():
         storage_path=temp_dir,
         enable_ipld_storage=True,
         enable_crypto_verification=True,
-        default_agent_id="example_agent"
+        default_agent_id="example_agent",
     )
 
     # Record source data provenance
@@ -7011,7 +7469,7 @@ def _provenance_ipld_example():
         source_type="synthetic",
         source_uri="memory://raw_data",
         format="numpy",
-        description="Raw synthetic data for example"
+        description="Raw synthetic data for example",
     )
 
     # Record transformation
@@ -7020,7 +7478,7 @@ def _provenance_ipld_example():
         output_id="processed_data",
         operation="normalization",
         parameters={"method": "min-max", "axis": 0},
-        description="Normalize raw data to [0,1] range"
+        description="Normalize raw data to [0,1] range",
     )
 
     # Record another transformation
@@ -7029,7 +7487,7 @@ def _provenance_ipld_example():
         output_id="model_input",
         operation="split",
         parameters={"test_size": 0.2, "random_state": 42},
-        description="Split data into train/test sets"
+        description="Split data into train/test sets",
     )
 
     # Record model training
@@ -7047,7 +7505,7 @@ def _provenance_ipld_example():
             pass_count=950,
             fail_count=50,
             error_samples=[{"value": 1.2, "reason": "above range"}],
-            is_valid=True
+            is_valid=True,
         )
     )
 
@@ -7059,7 +7517,7 @@ def _provenance_ipld_example():
     upstream = manager.traverse_provenance(
         record_id="model_input",
         max_depth=2,
-        direction="in"  # Only traverse upstream
+        direction="in",  # Only traverse upstream
     )
     print(f"Upstream traversal has {len(upstream.nodes)} nodes and {len(upstream.edges)} edges")
 
@@ -7067,7 +7525,7 @@ def _provenance_ipld_example():
     filtered = manager.traverse_provenance(
         record_id="processed_data",
         max_depth=3,
-        relation_filter=["verification"]  # Only follow verification links
+        relation_filter=["verification"],  # Only follow verification links
     )
     print(f"Relation-filtered traversal has {len(filtered.nodes)} nodes")
 
@@ -7078,17 +7536,18 @@ def _provenance_ipld_example():
 
     # Create a new manager and import from CAR
     new_manager = EnhancedProvenanceManager(
-        storage_path=os.path.join(temp_dir, "import"),
-        enable_ipld_storage=True
+        storage_path=os.path.join(temp_dir, "import"), enable_ipld_storage=True
     )
     success = new_manager.import_from_car(car_path)
     print(f"Imported provenance from CAR file: {success}")
 
     # Incremental loading with time filter
-    recent_records = new_manager.incremental_load_provenance({
-        "time_start": time.time() - 3600,  # Last hour
-        "record_types": ["transformation"]
-    })
+    recent_records = new_manager.incremental_load_provenance(
+        {
+            "time_start": time.time() - 3600,  # Last hour
+            "record_types": ["transformation"],
+        }
+    )
     print(f"Incrementally loaded {len(recent_records.nodes)} recent transformation records")
 
     return manager

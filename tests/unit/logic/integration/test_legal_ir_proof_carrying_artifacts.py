@@ -39,15 +39,19 @@ LEGAL_IR_OUTPUTS = {
 
 
 def _stable_hash(value) -> str:
-    return __import__("hashlib").sha256(
-        json.dumps(
-            value,
-            allow_nan=False,
-            ensure_ascii=True,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    ).hexdigest()
+    return (
+        __import__("hashlib")
+        .sha256(
+            json.dumps(
+                value,
+                allow_nan=False,
+                ensure_ascii=True,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        )
+        .hexdigest()
+    )
 
 
 def _obligation() -> LegalIRProofObligation:
@@ -255,17 +259,20 @@ def test_artifact_packages_all_evidence_and_validates_for_consumers(tmp_path) ->
     assert payload["evidence_bindings"][0]["native_reconstruction_verified"] is True
     assert payload["evidence_bindings"][0]["source_traceable"] is True
     assert validate_legal_ir_proof_carrying_artifact(artifact).valid
-    assert legal_ir_proof_carrying_artifact(
-        legal_ir_outputs=LEGAL_IR_OUTPUTS,
-        proof_obligations=(_obligation(),),
-        hammer_guidance_artifacts=(_guidance(),),
-        translation_records=(_translation(),),
-        reconstruction_receipts=(_receipt(),),
-        route_results=payload["route_results"],
-        source_map=_source_map(),
-        build_manifest=_manifest(_stable_hash(LEGAL_IR_OUTPUTS)),
-        verification_policy=_policy(),
-    )["legal_ir_output_sha256"] == payload["legal_ir_output_sha256"]
+    assert (
+        legal_ir_proof_carrying_artifact(
+            legal_ir_outputs=LEGAL_IR_OUTPUTS,
+            proof_obligations=(_obligation(),),
+            hammer_guidance_artifacts=(_guidance(),),
+            translation_records=(_translation(),),
+            reconstruction_receipts=(_receipt(),),
+            route_results=payload["route_results"],
+            source_map=_source_map(),
+            build_manifest=_manifest(_stable_hash(LEGAL_IR_OUTPUTS)),
+            verification_policy=_policy(),
+        )["legal_ir_output_sha256"]
+        == payload["legal_ir_output_sha256"]
+    )
 
     path = tmp_path / "proof-carrying.json"
     save_legal_ir_proof_carrying_artifact(artifact, path)

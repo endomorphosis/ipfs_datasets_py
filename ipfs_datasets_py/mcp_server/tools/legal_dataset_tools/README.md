@@ -138,7 +138,7 @@ result = await scrape_state_laws(
     output_format="json",
     include_metadata=True,
     rate_limit_delay=2.0,
-    max_statutes=100
+    max_statutes=100,
 )
 ```
 
@@ -234,7 +234,7 @@ result = await scrape_recap_archive(
     filed_before="2024-12-31",
     include_text=True,
     max_documents=100,
-    job_id="my_job"  # For resume capability
+    job_id="my_job",  # For resume capability
 )
 ```
 
@@ -242,7 +242,7 @@ result = await scrape_recap_archive(
 ```python
 result = await scrape_recap_archive(
     job_id="my_job",
-    resume=True  # Continues from where it left off
+    resume=True,  # Continues from where it left off
 )
 ```
 
@@ -250,10 +250,7 @@ result = await scrape_recap_archive(
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_recap_incremental
 
-result = await scrape_recap_incremental(
-    courts=["ca9"],
-    document_types=["opinion"]
-)
+result = await scrape_recap_incremental(courts=["ca9"], document_types=["opinion"])
 # Automatically uses date range from last update
 ```
 
@@ -273,26 +270,17 @@ from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import export_dataset
 
 # Export to JSON
 result = export_dataset(
-    data=scraped_data,
-    output_path="/path/to/output",
-    format="json",
-    pretty=True
+    data=scraped_data, output_path="/path/to/output", format="json", pretty=True
 )
 
 # Export to Parquet
 result = export_dataset(
-    data=scraped_data,
-    output_path="/path/to/output",
-    format="parquet",
-    compression="snappy"
+    data=scraped_data, output_path="/path/to/output", format="parquet", compression="snappy"
 )
 
 # Export to CSV
 result = export_dataset(
-    data=scraped_data,
-    output_path="/path/to/output",
-    format="csv",
-    delimiter=","
+    data=scraped_data, output_path="/path/to/output", format="csv", delimiter=","
 )
 ```
 
@@ -312,6 +300,7 @@ jobs = list_scraping_jobs()
 
 # Delete a job
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import delete_scraping_job
+
 delete_scraping_job("job_id")
 ```
 

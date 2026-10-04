@@ -50,11 +50,7 @@ def _non_negative_int(value: str) -> int:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -96,16 +92,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     corpus_dir = args.corpus_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-corpus"
-        / args.revision
-        / "full"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-corpus" / args.revision / "full"
     )
     bm25_dir = args.bm25_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-bm25"
-        / args.revision
-        / "full-cid"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-bm25" / args.revision / "full-cid"
     )
     output_dir = args.output_dir or (
         data_home
@@ -122,6 +112,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         result: object = graph.summary
     else:
+
         def _progress(payload: dict[str, object]) -> None:
             if args.print_progress:
                 print(
@@ -146,9 +137,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps({"graph_progress": result}, indent=2, sort_keys=True))
         return 0
     if result.skill_nodes != EXPECTED_FULL_RECORDS:
-        raise ValueError(
-            "completed graph does not contain every entry_cid Skill node"
-        )
+        raise ValueError("completed graph does not contain every entry_cid Skill node")
     if graph is None:
         graph = SkillCenterCIDGraphIndex.load(
             output_dir,

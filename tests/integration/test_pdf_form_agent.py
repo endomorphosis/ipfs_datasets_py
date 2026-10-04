@@ -25,6 +25,7 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_minimal_acroform_pdf(output_path: str) -> None:
     """Create a minimal AcroForm PDF with two text fields using PyMuPDF."""
     import fitz  # type: ignore
@@ -67,6 +68,7 @@ def _pytest_skip_if_no_fitz() -> None:
 # ---------------------------------------------------------------------------
 # Phase 1 — Universal PDF Parsing
 # ---------------------------------------------------------------------------
+
 
 class TestPhase1UniversalParsing:
     """Tests for Phase 1: universal PDF parsing improvements."""
@@ -177,10 +179,13 @@ class TestPhase1UniversalParsing:
 # Phase 2 — Form Knowledge Graph & Legal IR
 # ---------------------------------------------------------------------------
 
+
 class TestPhase2KnowledgeGraphIR:
     """Tests for Phase 2: FormKnowledgeGraph and FormToLegalIR."""
 
-    def test_given_form_analysis_when_build_knowledge_graph_then_field_nodes_created(self, tmp_path):
+    def test_given_form_analysis_when_build_knowledge_graph_then_field_nodes_created(
+        self, tmp_path
+    ):
         """
         GIVEN a form analysis result
         WHEN build_form_knowledge_graph() is called
@@ -262,7 +267,10 @@ class TestPhase2KnowledgeGraphIR:
         _pytest_skip_if_no_fitz()
         pytest.importorskip("ipfs_datasets_py.logic.integration")
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
 
         pdf_path = tmp_path / "form.pdf"
         _make_minimal_acroform_pdf(str(pdf_path))
@@ -296,6 +304,7 @@ class TestPhase2KnowledgeGraphIR:
 # ---------------------------------------------------------------------------
 # Phase 3 — AI Agent Form Filler
 # ---------------------------------------------------------------------------
+
 
 class TestPhase3AgentFormFiller:
     """Tests for Phase 3: FormFillingAgent."""
@@ -393,6 +402,7 @@ class TestPhase3AgentFormFiller:
 # Phase 4 — Theorem Prover Verification
 # ---------------------------------------------------------------------------
 
+
 class TestPhase4TheoremVerification:
     """Tests for Phase 4: FormRequirementsVerifier."""
 
@@ -404,7 +414,10 @@ class TestPhase4TheoremVerification:
         """
         _pytest_skip_if_no_fitz()
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
         from ipfs_datasets_py.processors.form_requirements_verifier import FormRequirementsVerifier
 
         pdf_path = tmp_path / "form.pdf"
@@ -435,7 +448,10 @@ class TestPhase4TheoremVerification:
         """
         _pytest_skip_if_no_fitz()
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
         from ipfs_datasets_py.processors.form_requirements_verifier import FormRequirementsVerifier
 
         pdf_path = tmp_path / "form.pdf"
@@ -443,9 +459,7 @@ class TestPhase4TheoremVerification:
 
         analysis = analyze_pdf_form(pdf_path)
         # Mark full_name as required so the verifier can catch an empty value
-        required_fields = [
-            spec for spec in analysis.fields if spec.name == "full_name"
-        ]
+        required_fields = [spec for spec in analysis.fields if spec.name == "full_name"]
         if not required_fields or not required_fields[0].required:
             pytest.skip("full_name not marked required in this environment")
 
@@ -464,7 +478,9 @@ class TestPhase4TheoremVerification:
             source_pdf=str(pdf_path),
         )
 
-        violations = [r for r in report.results if r.status == "violated" and r.field_name == "full_name"]
+        violations = [
+            r for r in report.results if r.status == "violated" and r.field_name == "full_name"
+        ]
         assert len(violations) >= 1
 
     def test_given_report_when_verdicts_hash_then_deterministic(self, tmp_path):
@@ -475,7 +491,10 @@ class TestPhase4TheoremVerification:
         """
         _pytest_skip_if_no_fitz()
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
         from ipfs_datasets_py.processors.form_requirements_verifier import FormRequirementsVerifier
 
         pdf_path = tmp_path / "form.pdf"
@@ -505,7 +524,10 @@ class TestPhase4TheoremVerification:
         """
         _pytest_skip_if_no_fitz()
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
         from ipfs_datasets_py.processors.form_requirements_verifier import FormRequirementsVerifier
 
         pdf_path = tmp_path / "form.pdf"
@@ -532,6 +554,7 @@ class TestPhase4TheoremVerification:
 # Phase 5 — ZKP Certificate
 # ---------------------------------------------------------------------------
 
+
 class TestPhase5ZKPCertificate:
     """Tests for Phase 5: FormCompletionCircuit and FormCompletionCertificate."""
 
@@ -539,7 +562,10 @@ class TestPhase5ZKPCertificate:
         """Helper: return (kg, rule_set, report) for a passing form."""
         import fitz  # noqa: F401 — already checked by outer test
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
         from ipfs_datasets_py.processors.form_requirements_verifier import FormRequirementsVerifier
 
         pdf_path = tmp_path / "form.pdf"
@@ -561,7 +587,9 @@ class TestPhase5ZKPCertificate:
         report.overall_pass = True
         return kg, rule_set, report
 
-    def test_given_passing_report_when_generate_certificate_then_certificate_created(self, tmp_path):
+    def test_given_passing_report_when_generate_certificate_then_certificate_created(
+        self, tmp_path
+    ):
         """
         GIVEN a passing VerificationReport
         WHEN generate_form_certificate() is called
@@ -569,7 +597,9 @@ class TestPhase5ZKPCertificate:
         """
         _pytest_skip_if_no_fitz()
         try:
-            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+                DeonticRuleSet,
+            )
         except ImportError:
             pytest.skip("logic sub-package not available")
 
@@ -594,7 +624,9 @@ class TestPhase5ZKPCertificate:
         """
         _pytest_skip_if_no_fitz()
         try:
-            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+                DeonticRuleSet,
+            )
         except ImportError:
             pytest.skip("logic sub-package not available")
 
@@ -620,7 +652,9 @@ class TestPhase5ZKPCertificate:
         """
         _pytest_skip_if_no_fitz()
         try:
-            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+                DeonticRuleSet,
+            )
         except ImportError:
             pytest.skip("logic sub-package not available")
 
@@ -648,7 +682,9 @@ class TestPhase5ZKPCertificate:
         """
         _pytest_skip_if_no_fitz()
         try:
-            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+                DeonticRuleSet,
+            )
         except ImportError:
             pytest.skip("logic sub-package not available")
 
@@ -672,6 +708,7 @@ class TestPhase5ZKPCertificate:
 # Phase 6 — End-to-End MCP Tools
 # ---------------------------------------------------------------------------
 
+
 class TestPhase6MCPTools:
     """Tests for Phase 6: MCP tool wrappers."""
 
@@ -682,6 +719,7 @@ class TestPhase6MCPTools:
         THEN the import succeeds
         """
         from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_fill_form_agent
+
         assert callable(pdf_fill_form_agent)
 
     def test_pdf_generate_zkp_certificate_imported(self):
@@ -691,6 +729,7 @@ class TestPhase6MCPTools:
         THEN the import succeeds
         """
         from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_generate_zkp_certificate
+
         assert callable(pdf_generate_zkp_certificate)
 
     def test_pdf_verify_zkp_certificate_imported(self):
@@ -700,6 +739,7 @@ class TestPhase6MCPTools:
         THEN the import succeeds
         """
         from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_verify_zkp_certificate
+
         assert callable(pdf_verify_zkp_certificate)
 
     def test_pdf_fill_form_agent_returns_error_for_missing_path(self):
@@ -750,6 +790,7 @@ class TestPhase6MCPTools:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 async def _collect_gaps(agent: Any, pdf_path: Any) -> list:
     gaps = []

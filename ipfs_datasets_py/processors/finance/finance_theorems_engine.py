@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # Domain enumerations
 # ---------------------------------------------------------------------------
 
+
 class FinancialEventType(Enum):
     """Types of financial events."""
 
@@ -46,6 +47,7 @@ class FinancialEventType(Enum):
 # ---------------------------------------------------------------------------
 # Domain data-classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class FinancialTheorem:
@@ -301,6 +303,7 @@ EARNINGS_ANNOUNCEMENT_THEOREM = FinancialTheorem(
 # Theorem library / registry
 # ---------------------------------------------------------------------------
 
+
 class FinancialTheoremLibrary:
     """Library of financial theorems for temporal deontic logic reasoning."""
 
@@ -318,9 +321,7 @@ class FinancialTheoremLibrary:
         """Return a theorem by ID, or ``None`` if not found."""
         return self.theorems.get(theorem_id)
 
-    def get_theorems_by_event_type(
-        self, event_type: FinancialEventType
-    ) -> List[FinancialTheorem]:
+    def get_theorems_by_event_type(self, event_type: FinancialEventType) -> List[FinancialTheorem]:
         """Return all theorems for a specific event type."""
         return [t for t in self.theorems.values() if t.event_type == event_type]
 

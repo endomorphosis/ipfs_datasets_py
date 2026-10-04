@@ -154,15 +154,29 @@ def _coverage_family_for_obligation(obligation: LegalIRProofObligation) -> str:
     view = str(obligation.legal_ir_view or "").lower()
     field = str(metadata.get("required_field") or "").lower()
 
-    if scope == "cross_view_consistency" or kind.startswith("cross_view") or family.startswith("cross_view"):
+    if (
+        scope == "cross_view_consistency"
+        or kind.startswith("cross_view")
+        or family.startswith("cross_view")
+    ):
         return LegalIRHammerCoverageFamily.CROSS_VIEW_CONSISTENCY.value
-    if scope == "required_field" or kind.endswith("_required_fields") or family.endswith("_required_fields"):
+    if (
+        scope == "required_field"
+        or kind.endswith("_required_fields")
+        or family.endswith("_required_fields")
+    ):
         if field.endswith("provenance_ids") or field == "provenance_ids":
             return LegalIRHammerCoverageFamily.PROVENANCE.value
         return LegalIRHammerCoverageFamily.WELL_FORMEDNESS.value
     if "provenance" in kind or "provenance" in family:
         return LegalIRHammerCoverageFamily.PROVENANCE.value
-    if "round_trip" in kind or "decompiler" in kind or "round_trip" in family or "decompiler" in family or "decompiler" in view:
+    if (
+        "round_trip" in kind
+        or "decompiler" in kind
+        or "round_trip" in family
+        or "decompiler" in family
+        or "decompiler" in view
+    ):
         return LegalIRHammerCoverageFamily.ROUND_TRIP.value
     if "exception" in kind or "exception" in family:
         return LegalIRHammerCoverageFamily.EXCEPTION.value
@@ -170,7 +184,12 @@ def _coverage_family_for_obligation(obligation: LegalIRProofObligation) -> str:
         return LegalIRHammerCoverageFamily.TEMPORAL.value
     if "lifecycle" in kind or "event_consistency" in family or "cec" in view:
         return LegalIRHammerCoverageFamily.LIFECYCLE.value
-    if "graph" in kind or "knowledge_graph" in kind or "graph" in family or "knowledge_graph" in view:
+    if (
+        "graph" in kind
+        or "knowledge_graph" in kind
+        or "graph" in family
+        or "knowledge_graph" in view
+    ):
         return LegalIRHammerCoverageFamily.GRAPH.value
     if "modal" in kind or "deontic" in kind or "polarity" in kind or "frame_role" in kind:
         return LegalIRHammerCoverageFamily.MODALITY.value
@@ -183,9 +202,7 @@ def _required_cells_from_contracts(
     cells: list[dict[str, str]] = []
     for contract in contracts:
         required_field_families = tuple(
-            family
-            for family in contract.obligation_families
-            if family.endswith("_required_fields")
+            family for family in contract.obligation_families if family.endswith("_required_fields")
         ) or (f"{contract.view.value}_required_fields",)
         for requirement in contract.required_fields:
             behavior_family = (
@@ -296,8 +313,7 @@ class LegalIRHammerCoverageWaiver:
             approved=bool(
                 value.get(
                     "approved",
-                    str(value.get("status") or "approved").lower()
-                    in {"approved", "active"},
+                    str(value.get("status") or "approved").lower() in {"approved", "active"},
                 )
             ),
             metadata=dict(value.get("metadata") or {}),
@@ -527,9 +543,7 @@ class LegalIRHammerCoverageReport:
             "required_family_count": self.required_family_count,
             "schema_version": self.schema_version,
             "unsupported_translation_count": len(self.unsupported_translations),
-            "unsupported_translations": [
-                item.to_dict() for item in self.unsupported_translations
-            ],
+            "unsupported_translations": [item.to_dict() for item in self.unsupported_translations],
             "waivers": [waiver.to_dict() for waiver in self.waivers],
         }
 
@@ -757,12 +771,9 @@ def coverage_report_from_hammer_report(
     """Convenience wrapper for :class:`LegalIRHammerReport`-like objects."""
 
     hammer_map = _mapping(hammer_report)
-    artifacts = _sequence(
-        getattr(hammer_report, "artifacts", None) or hammer_map.get("artifacts")
-    )
+    artifacts = _sequence(getattr(hammer_report, "artifacts", None) or hammer_map.get("artifacts"))
     translation_records = _sequence(
-        getattr(hammer_report, "translation_records", None)
-        or hammer_map.get("translation_records")
+        getattr(hammer_report, "translation_records", None) or hammer_map.get("translation_records")
     )
     reconstruction_receipts = _sequence(
         getattr(hammer_report, "reconstruction_receipts", None)
@@ -833,10 +844,7 @@ def _obligations_from_report_records(
         metadata = dict(data.get("metadata") or {})
         current = row(obligation_id)
         current["kind"] = str(
-            current["kind"]
-            or metadata.get("obligation_kind")
-            or metadata.get("kind")
-            or ""
+            current["kind"] or metadata.get("obligation_kind") or metadata.get("kind") or ""
         )
         current["legal_ir_view"] = str(
             current["legal_ir_view"]
@@ -862,9 +870,7 @@ def _obligations_from_report_records(
         if not obligation_id:
             continue
         current = row(obligation_id)
-        current["formula_id"] = str(
-            current["formula_id"] or data.get("input_formula_id") or ""
-        )
+        current["formula_id"] = str(current["formula_id"] or data.get("input_formula_id") or "")
 
     for receipt in reconstruction_receipts:
         data = _mapping(receipt)
@@ -872,9 +878,7 @@ def _obligations_from_report_records(
         if not obligation_id:
             continue
         current = row(obligation_id)
-        current["formula_id"] = str(
-            current["formula_id"] or data.get("input_formula_id") or ""
-        )
+        current["formula_id"] = str(current["formula_id"] or data.get("input_formula_id") or "")
 
     for route in route_results:
         data = _mapping(route)
@@ -887,8 +891,7 @@ def _obligations_from_report_records(
         data = rows[obligation_id]
         kind = str(data["kind"] or data["metadata"].get("obligation_family") or "")
         statement = str(
-            data["statement"]
-            or f"persisted_hammer_obligation(obligation:{obligation_id})"
+            data["statement"] or f"persisted_hammer_obligation(obligation:{obligation_id})"
         )
         obligations.append(
             LegalIRProofObligation(
@@ -896,9 +899,7 @@ def _obligations_from_report_records(
                 statement=statement,
                 kind=kind,
                 legal_ir_view=str(
-                    data["legal_ir_view"]
-                    or data["metadata"].get("target_component")
-                    or ""
+                    data["legal_ir_view"] or data["metadata"].get("target_component") or ""
                 ),
                 logic_family=str(data["logic_family"] or ""),
                 sample_id=str(data["sample_id"] or ""),
@@ -958,15 +959,13 @@ def _cell_descriptor(
         if metadata.get(key):
             field_path = str(metadata[key])
             break
-    obligation_family = str(
-        metadata.get("obligation_family")
-        or obligation.kind
-        or behavior_family
-    )
+    obligation_family = str(metadata.get("obligation_family") or obligation.kind or behavior_family)
     return {
         "behavior_family": behavior_family,
         "contract_id": contract.contract_id if contract is not None else contract_id,
-        "contract_view": contract.view.value if contract is not None else str(metadata.get("contract_view") or ""),
+        "contract_view": contract.view.value
+        if contract is not None
+        else str(metadata.get("contract_view") or ""),
         "field_path": field_path,
         "obligation_family": obligation_family,
         "target_component": (
@@ -1109,7 +1108,10 @@ def _unsupported_translation_records(
         )
         for attempt in _mapping(route_result).get("attempts") or []:
             attempt_map = _mapping(attempt)
-            if str(attempt_map.get("status") or "") != ProofRouteStatus.UNSUPPORTED_TRANSLATION.value:
+            if (
+                str(attempt_map.get("status") or "")
+                != ProofRouteStatus.UNSUPPORTED_TRANSLATION.value
+            ):
                 continue
             payload = {
                 "obligation_id": obligation_id,
@@ -1155,7 +1157,9 @@ def _unsupported_translation_records(
                     obligation_id=obligation_id,
                     behavior_family=behavior_family,
                     reason="translation_record_failed",
-                    translation_record_id=str(data.get("translation_id") or data.get("record_id") or ""),
+                    translation_record_id=str(
+                        data.get("translation_id") or data.get("record_id") or ""
+                    ),
                     surface=str(data.get("surface") or ""),
                     target_format=str(data.get("target_format") or ""),
                     errors=errors,
@@ -1211,7 +1215,9 @@ def _counterexample_result(
             return _stable_json(value[key])
     return _stable_json(
         {
-            "counterexample_type": value.get("counterexample_type") or value.get("kind") or "counterexample",
+            "counterexample_type": value.get("counterexample_type")
+            or value.get("kind")
+            or "counterexample",
             "verified": bool(value.get("verified") or value.get("verifier_attested")),
         }
     )

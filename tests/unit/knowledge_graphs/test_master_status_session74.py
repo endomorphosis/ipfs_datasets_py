@@ -12,6 +12,7 @@ Validates:
 8. Doc integrity (DEFERRED_FEATURES, ROADMAP, MASTER_STATUS, CHANGELOG)
 9. Version agreement
 """
+
 import os
 import sys
 import unittest
@@ -30,7 +31,21 @@ sys.path.insert(0, _REPO_ROOT)
 
 
 def _read(relpath: str) -> str:
-    _moved = {'COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md'}
+    _moved = {
+        "COMPREHENSIVE_ANALYSIS_2026_02_18.md",
+        "DOCUMENTATION_GUIDE.md",
+        "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+        "IMPROVEMENT_TODO.md",
+        "INDEX.md",
+        "P3_P4_IMPLEMENTATION_COMPLETE.md",
+        "QUICKSTART.md",
+        "EXECUTIVE_SUMMARY_FINAL_2026_02_18.md",
+        "MASTER_REFACTORING_PLAN_2026.md",
+        "MASTER_STATUS.md",
+        "DEFERRED_FEATURES.md",
+        "ROADMAP.md",
+        "REFACTORING_COMPLETE_2026_02_18.md",
+    }
     base = _DOCS_KG if relpath in _moved else _KG_ROOT
     with open(os.path.join(base, relpath), encoding="utf-8") as fh:
         return fh.read()
@@ -56,6 +71,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 # ---------------------------------------------------------------------------
 # Fixtures helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_two_graphs():
     """Two independent graphs with Alice appearing in both."""
@@ -83,6 +99,7 @@ def _make_fed():
 # ---------------------------------------------------------------------------
 # 1. Graph registration API
 # ---------------------------------------------------------------------------
+
 
 class TestGraphRegistration(unittest.TestCase):
     def test_add_graph_returns_zero_indexed_int(self):
@@ -130,6 +147,7 @@ class TestGraphRegistration(unittest.TestCase):
 # 2. EntityResolutionStrategy enum
 # ---------------------------------------------------------------------------
 
+
 class TestEntityResolutionStrategy(unittest.TestCase):
     def test_all_three_strategies_exist(self):
         strategies = list(EntityResolutionStrategy)
@@ -143,9 +161,7 @@ class TestEntityResolutionStrategy(unittest.TestCase):
     def test_get_fingerprint_exact_name(self):
         kg = KnowledgeGraph()
         e = kg.add_entity("person", "Alice")
-        fp = FederatedKnowledgeGraph.get_entity_fingerprint(
-            e, EntityResolutionStrategy.EXACT_NAME
-        )
+        fp = FederatedKnowledgeGraph.get_entity_fingerprint(e, EntityResolutionStrategy.EXACT_NAME)
         self.assertEqual(fp, "alice")
 
     def test_get_fingerprint_type_and_name(self):
@@ -160,8 +176,12 @@ class TestEntityResolutionStrategy(unittest.TestCase):
         kg = KnowledgeGraph()
         ep = kg.add_entity("person", "Alice")
         ec = kg.add_entity("company", "Alice")
-        fp_p = FederatedKnowledgeGraph.get_entity_fingerprint(ep, EntityResolutionStrategy.TYPE_AND_NAME)
-        fp_c = FederatedKnowledgeGraph.get_entity_fingerprint(ec, EntityResolutionStrategy.TYPE_AND_NAME)
+        fp_p = FederatedKnowledgeGraph.get_entity_fingerprint(
+            ep, EntityResolutionStrategy.TYPE_AND_NAME
+        )
+        fp_c = FederatedKnowledgeGraph.get_entity_fingerprint(
+            ec, EntityResolutionStrategy.TYPE_AND_NAME
+        )
         self.assertNotEqual(fp_p, fp_c)
 
     def test_same_type_and_name_same_fingerprint(self):
@@ -169,14 +189,19 @@ class TestEntityResolutionStrategy(unittest.TestCase):
         kg2 = KnowledgeGraph()
         e1 = kg1.add_entity("person", "Alice")
         e2 = kg2.add_entity("person", "Alice")
-        fp1 = FederatedKnowledgeGraph.get_entity_fingerprint(e1, EntityResolutionStrategy.TYPE_AND_NAME)
-        fp2 = FederatedKnowledgeGraph.get_entity_fingerprint(e2, EntityResolutionStrategy.TYPE_AND_NAME)
+        fp1 = FederatedKnowledgeGraph.get_entity_fingerprint(
+            e1, EntityResolutionStrategy.TYPE_AND_NAME
+        )
+        fp2 = FederatedKnowledgeGraph.get_entity_fingerprint(
+            e2, EntityResolutionStrategy.TYPE_AND_NAME
+        )
         self.assertEqual(fp1, fp2)
 
 
 # ---------------------------------------------------------------------------
 # 3. resolve_entities
 # ---------------------------------------------------------------------------
+
 
 class TestResolveEntities(unittest.TestCase):
     def test_no_graphs_returns_empty(self):
@@ -266,6 +291,7 @@ class TestResolveEntities(unittest.TestCase):
 # 4. get_entity_cluster / query_entity
 # ---------------------------------------------------------------------------
 
+
 class TestEntityLookup(unittest.TestCase):
     def test_get_entity_cluster_finds_all_occurrences(self):
         fed, _, _ = _make_fed()
@@ -311,6 +337,7 @@ class TestEntityLookup(unittest.TestCase):
 # 5. execute_across
 # ---------------------------------------------------------------------------
 
+
 class TestExecuteAcross(unittest.TestCase):
     def test_returns_federation_query_result(self):
         fed, _, _ = _make_fed()
@@ -330,19 +357,23 @@ class TestExecuteAcross(unittest.TestCase):
 
     def test_error_captured_not_raised(self):
         fed, _, _ = _make_fed()
+
         def bad_fn(kg):
             raise ValueError("oops")
+
         result = fed.execute_across(bad_fn)
         self.assertEqual(len(result.query_errors), 2)
 
     def test_partial_error_still_returns_ok_results(self):
         fed, _, _ = _make_fed()
         call_count = [0]
+
         def sometimes_bad(kg):
             call_count[0] += 1
             if call_count[0] == 1:
                 raise RuntimeError("first graph fails")
             return list(kg.entities.values())
+
         result = fed.execute_across(sometimes_bad)
         self.assertEqual(len(result.query_errors), 1)
         self.assertEqual(len(result.per_graph_results), 1)
@@ -351,6 +382,7 @@ class TestExecuteAcross(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 6. to_merged_graph
 # ---------------------------------------------------------------------------
+
 
 class TestToMergedGraph(unittest.TestCase):
     def test_returns_knowledge_graph(self):
@@ -411,6 +443,7 @@ class TestToMergedGraph(unittest.TestCase):
 # 7. Module exports
 # ---------------------------------------------------------------------------
 
+
 class TestFederationModuleExports(unittest.TestCase):
     def test_import_from_query_init(self):
         from ipfs_datasets_py.knowledge_graphs.query import (
@@ -419,6 +452,7 @@ class TestFederationModuleExports(unittest.TestCase):
             EntityMatch as EM,
             FederationQueryResult as FQR,
         )
+
         self.assertIs(FKGL, FederatedKnowledgeGraph)
         self.assertIs(ERS, EntityResolutionStrategy)
         self.assertIs(EM, EntityMatch)
@@ -426,6 +460,7 @@ class TestFederationModuleExports(unittest.TestCase):
 
     def test_symbols_in_all(self):
         import ipfs_datasets_py.knowledge_graphs.query as q_mod
+
         for sym in [
             "FederatedKnowledgeGraph",
             "EntityResolutionStrategy",
@@ -436,12 +471,14 @@ class TestFederationModuleExports(unittest.TestCase):
 
     def test_federation_result_is_dataclass(self):
         from dataclasses import fields
+
         fnames = {f.name for f in fields(FederationQueryResult)}
         self.assertIn("per_graph_results", fnames)
         self.assertIn("query_errors", fnames)
 
     def test_entity_match_is_dataclass(self):
         from dataclasses import fields
+
         fnames = {f.name for f in fields(EntityMatch)}
         self.assertIn("entity_a_id", fnames)
         self.assertIn("entity_b_id", fnames)
@@ -452,6 +489,7 @@ class TestFederationModuleExports(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 8. Doc integrity
 # ---------------------------------------------------------------------------
+
 
 class TestDocIntegritySession74(unittest.TestCase):
     def test_deferred_features_has_federated_section(self):
@@ -484,6 +522,7 @@ class TestDocIntegritySession74(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 9. Version agreement
 # ---------------------------------------------------------------------------
+
 
 class TestVersionAgreement(unittest.TestCase):
     def _extract_top_version(self, path: str) -> str:

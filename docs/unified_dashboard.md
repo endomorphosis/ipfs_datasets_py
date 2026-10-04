@@ -70,7 +70,7 @@ dashboard = create_unified_dashboard(
     dashboard_dir="./monitoring_dashboard",
     dashboard_title="RAG Optimizer Dashboard",
     refresh_interval=300,  # 5 minutes
-    auto_refresh=True
+    auto_refresh=True,
 )
 
 # Register components
@@ -138,10 +138,7 @@ dashboard.register_metrics_collector(metrics_collector)
 You can provide custom dashboard templates by specifying a `template_dir`:
 
 ```python
-dashboard = create_unified_dashboard(
-    dashboard_dir="./dashboard",
-    template_dir="./custom_templates"
-)
+dashboard = create_unified_dashboard(dashboard_dir="./dashboard", template_dir="./custom_templates")
 ```
 
 The system will look for the following template files:
@@ -221,7 +218,7 @@ alert_system = setup_learning_alerts(metrics_collector)
 dashboard = create_unified_dashboard(
     dashboard_dir="./monitoring",
     dashboard_title="Production RAG Optimizer Dashboard",
-    refresh_interval=600  # 10 minutes
+    refresh_interval=600,  # 10 minutes
 )
 
 # Register components

@@ -49,9 +49,7 @@ def _validate_dag_json_value(value: Any, *, path: str = "$") -> None:
         return
     if type(value) is float:
         if not math.isfinite(value):
-            raise ValueError(
-                f"{path} is not JSON compliant: non-finite number"
-            )
+            raise ValueError(f"{path} is not JSON compliant: non-finite number")
         return
     if type(value) is list:
         for index, item in enumerate(value):
@@ -60,18 +58,13 @@ def _validate_dag_json_value(value: Any, *, path: str = "$") -> None:
     if type(value) is dict:
         for key, item in value.items():
             if type(key) is not str:
-                raise TypeError(
-                    f"{path} contains a non-string DAG-JSON map key"
-                )
+                raise TypeError(f"{path} contains a non-string DAG-JSON map key")
             _validate_dag_json_value(
                 item,
                 path=f"{path}.{key}",
             )
         return
-    raise TypeError(
-        f"{path} is not JSON serializable as DAG-JSON: "
-        f"{type(value).__name__}"
-    )
+    raise TypeError(f"{path} is not JSON serializable as DAG-JSON: {type(value).__name__}")
 
 
 def cid_for_bytes(
@@ -155,16 +148,11 @@ def validate_cid(
         parsed.version != version
         or parsed.codec.name not in allowed_codecs
         or parsed.hashfun.name != mh_type
-        or (
-            expected_digest_size is not None
-            and len(parsed.raw_digest) != expected_digest_size
-        )
+        or (expected_digest_size is not None and len(parsed.raw_digest) != expected_digest_size)
         or parsed.base.name != base
         or str(parsed) != value
     ):
-        raise ValueError(
-            "CID must use the requested canonical version/base/codec/multihash"
-        )
+        raise ValueError("CID must use the requested canonical version/base/codec/multihash")
     return value
 
 

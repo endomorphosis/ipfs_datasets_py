@@ -5,6 +5,7 @@ from __future__ import annotations
 #   ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
 # See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
 import warnings
+
 warnings.warn(
     "legacy_mcp_tools.patent_dataset_mcp_tools is deprecated. "
     "Use ipfs_datasets_py.mcp_server.tools.legal_dataset_tools instead.",
@@ -37,13 +38,21 @@ async def scrape_uspto_patents(
     """Scrape patents from USPTO PatentsView API."""
     try:
         from ipfs_datasets_py.processors.legal_scrapers.patent_engine import (
-            USPTOPatentScraper, PatentSearchCriteria, PatentDatasetBuilder,
+            USPTOPatentScraper,
+            PatentSearchCriteria,
+            PatentDatasetBuilder,
         )
+
         criteria = PatentSearchCriteria(
-            keywords=keywords, inventor_name=inventor_name,
-            assignee_name=assignee_name, patent_number=patent_number,
-            date_from=date_from, date_to=date_to,
-            cpc_classification=cpc_classification, limit=limit, offset=offset,
+            keywords=keywords,
+            inventor_name=inventor_name,
+            assignee_name=assignee_name,
+            patent_number=patent_number,
+            date_from=date_from,
+            date_to=date_to,
+            cpc_classification=cpc_classification,
+            limit=limit,
+            offset=offset,
         )
         scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
         builder = PatentDatasetBuilder(scraper)
@@ -64,11 +73,19 @@ async def search_patents_by_keyword(
 ) -> Dict[str, Any]:
     """Search USPTO patents by keywords."""
     try:
-        from ipfs_datasets_py.processors.legal_scrapers.patent_engine import search_patents_by_keyword as _fn
+        from ipfs_datasets_py.processors.legal_scrapers.patent_engine import (
+            search_patents_by_keyword as _fn,
+        )
         from dataclasses import asdict
+
         patents = await anyio.to_thread.run_sync(_fn, keywords, limit, rate_limit_delay)
         patents_data = [asdict(p) for p in patents]
-        return {"status": "success", "patents": patents_data, "count": len(patents_data), "query": {"keywords": keywords, "limit": limit}}
+        return {
+            "status": "success",
+            "patents": patents_data,
+            "count": len(patents_data),
+            "query": {"keywords": keywords, "limit": limit},
+        }
     except Exception as e:
         logger.error(f"Patent keyword search failed: {e}", exc_info=True)
         return {"status": "error", "error": str(e), "patents": [], "count": 0}
@@ -81,11 +98,19 @@ async def search_patents_by_inventor(
 ) -> Dict[str, Any]:
     """Search USPTO patents by inventor name."""
     try:
-        from ipfs_datasets_py.processors.legal_scrapers.patent_engine import search_patents_by_inventor as _fn
+        from ipfs_datasets_py.processors.legal_scrapers.patent_engine import (
+            search_patents_by_inventor as _fn,
+        )
         from dataclasses import asdict
+
         patents = await anyio.to_thread.run_sync(_fn, inventor_name, limit, rate_limit_delay)
         patents_data = [asdict(p) for p in patents]
-        return {"status": "success", "patents": patents_data, "count": len(patents_data), "query": {"inventor_name": inventor_name, "limit": limit}}
+        return {
+            "status": "success",
+            "patents": patents_data,
+            "count": len(patents_data),
+            "query": {"inventor_name": inventor_name, "limit": limit},
+        }
     except Exception as e:
         logger.error(f"Patent inventor search failed: {e}", exc_info=True)
         return {"status": "error", "error": str(e), "patents": [], "count": 0}
@@ -98,11 +123,19 @@ async def search_patents_by_assignee(
 ) -> Dict[str, Any]:
     """Search USPTO patents by assignee/organization name."""
     try:
-        from ipfs_datasets_py.processors.legal_scrapers.patent_engine import search_patents_by_assignee as _fn
+        from ipfs_datasets_py.processors.legal_scrapers.patent_engine import (
+            search_patents_by_assignee as _fn,
+        )
         from dataclasses import asdict
+
         patents = await anyio.to_thread.run_sync(_fn, assignee_name, limit, rate_limit_delay)
         patents_data = [asdict(p) for p in patents]
-        return {"status": "success", "patents": patents_data, "count": len(patents_data), "query": {"assignee_name": assignee_name, "limit": limit}}
+        return {
+            "status": "success",
+            "patents": patents_data,
+            "count": len(patents_data),
+            "query": {"assignee_name": assignee_name, "limit": limit},
+        }
     except Exception as e:
         logger.error(f"Patent assignee search failed: {e}", exc_info=True)
         return {"status": "error", "error": str(e), "patents": [], "count": 0}
@@ -117,15 +150,22 @@ async def build_patent_dataset(
     """Build structured patent datasets for GraphRAG knowledge graph ingestion."""
     try:
         from ipfs_datasets_py.processors.legal_scrapers.patent_engine import (
-            USPTOPatentScraper, PatentSearchCriteria, PatentDatasetBuilder,
+            USPTOPatentScraper,
+            PatentSearchCriteria,
+            PatentDatasetBuilder,
         )
+
         sc = search_criteria or {}
         criteria = PatentSearchCriteria(
-            keywords=sc.get("keywords"), inventor_name=sc.get("inventor_name"),
-            assignee_name=sc.get("assignee_name"), patent_number=sc.get("patent_number"),
-            date_from=sc.get("date_from"), date_to=sc.get("date_to"),
+            keywords=sc.get("keywords"),
+            inventor_name=sc.get("inventor_name"),
+            assignee_name=sc.get("assignee_name"),
+            patent_number=sc.get("patent_number"),
+            date_from=sc.get("date_from"),
+            date_to=sc.get("date_to"),
             cpc_classification=sc.get("cpc_classification"),
-            limit=sc.get("limit", 100), offset=sc.get("offset", 0),
+            limit=sc.get("limit", 100),
+            offset=sc.get("offset", 0),
         )
         scraper = USPTOPatentScraper(rate_limit_delay=1.0)
         builder = PatentDatasetBuilder(scraper)

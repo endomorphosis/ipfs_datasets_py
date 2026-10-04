@@ -23,10 +23,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs import pin_to_ipfs
     from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs
+
     IPFS_TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing IPFS tools: {e}")
     IPFS_TOOLS_AVAILABLE = False
+
 
 # Function to analyze the function signature
 def analyze_function_signature(func):
@@ -40,11 +42,7 @@ def analyze_function_signature(func):
             if "ForwardRef" in param_type:
                 param_type = param_type.split("'")[1]
         default = param.default if param.default != inspect.Parameter.empty else None
-        params.append({
-            'name': name,
-            'type': param_type,
-            'default': default
-        })
+        params.append({"name": name, "type": param_type, "default": default})
     return_type = sig.return_annotation
     if return_type != inspect.Signature.empty:
         return_type = str(return_type).replace("typing.", "").replace("'", "")
@@ -53,6 +51,7 @@ def analyze_function_signature(func):
     else:
         return_type = "Any"
     return params, return_type
+
 
 # Create a test class for pin_to_ipfs
 def generate_pin_to_ipfs_test():
@@ -138,6 +137,7 @@ class TestPinToIPFS:
         print(f"Error generating test for pin_to_ipfs: {e}")
         return None
 
+
 # Create a test class for get_from_ipfs
 def generate_get_from_ipfs_test():
     try:
@@ -207,6 +207,7 @@ class TestGetFromIPFS:
         print(f"Error generating test for get_from_ipfs: {e}")
         return None
 
+
 # Generate the test file
 def generate_test_file():
     pin_to_ipfs_test = generate_pin_to_ipfs_test()
@@ -245,11 +246,13 @@ import pytest
 
     print(f"Generated test file: {test_file_path}")
 
+
 # Main function
 def main():
     print("Generating tests for IPFS tools...")
     generate_test_file()
     print("Done!")
+
 
 if __name__ == "__main__":
     main()

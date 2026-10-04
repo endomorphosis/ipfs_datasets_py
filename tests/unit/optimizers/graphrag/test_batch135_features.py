@@ -6,6 +6,7 @@ Methods under test:
   - OntologyMediator.undo_stack_summary()
   - OntologyMediator.undo_stack_depth()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -14,8 +15,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -27,6 +30,7 @@ def _ont_rels(*pairs):
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     crit = MagicMock()
     return OntologyMediator(gen, crit)
@@ -35,6 +39,7 @@ def _make_mediator():
 # ---------------------------------------------------------------------------
 # LogicValidator.has_cycle
 # ---------------------------------------------------------------------------
+
 
 class TestHasCycle:
     @pytest.mark.parametrize(
@@ -57,6 +62,7 @@ class TestHasCycle:
 # ---------------------------------------------------------------------------
 # LogicValidator.cycle_participant_count
 # ---------------------------------------------------------------------------
+
 
 class TestCycleParticipantCount:
     @pytest.mark.parametrize(
@@ -88,6 +94,7 @@ class TestCycleParticipantCount:
 # OntologyMediator.undo_stack_summary
 # ---------------------------------------------------------------------------
 
+
 class TestUndoStackSummary:
     @pytest.mark.parametrize(
         "stack_state,expected",
@@ -116,6 +123,7 @@ class TestUndoStackSummary:
 # ---------------------------------------------------------------------------
 # OntologyMediator.undo_stack_depth
 # ---------------------------------------------------------------------------
+
 
 class TestUndoStackDepth:
     @pytest.mark.parametrize(

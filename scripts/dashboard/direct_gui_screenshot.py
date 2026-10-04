@@ -5,12 +5,14 @@ Direct GUI Testing and Screenshot Script
 
 Creates static HTML versions of the dashboard and takes screenshots to identify issues.
 """
+
 import sys
 import os
 from pathlib import Path
 from html2image import Html2Image
 import json
 from datetime import datetime
+
 
 def create_dashboard_html():
     """Create a complete dashboard HTML for testing."""
@@ -630,136 +632,159 @@ def create_dashboard_html():
 </html>
 """
 
+
 def take_comprehensive_screenshots():
     """Take comprehensive screenshots of the dashboard."""
     screenshots_dir = Path("gui_screenshots")
     screenshots_dir.mkdir(exist_ok=True)
-    
+
     # Create HTML content
     html_content = create_dashboard_html()
     html_file = screenshots_dir / "dashboard_complete.html"
     html_file.write_text(html_content)
-    
+
     # Initialize html2image
     hti = Html2Image(output_path=str(screenshots_dir))
-    
+
     screenshots_taken = []
-    
+
     try:
         # Take main dashboard screenshot
         hti.screenshot(html_file=str(html_file), save_as="main_dashboard.png", size=(1200, 900))
         screenshots_taken.append("main_dashboard.png")
         print("✓ Main dashboard screenshot taken")
-        
+
         # Create variations for different tabs
         tab_variations = {
             "overview": "Overview Dashboard",
-            "ingest": "News Ingestion Interface", 
+            "ingest": "News Ingestion Interface",
             "timeline": "Timeline Analysis",
             "query": "GraphRAG Query Interface",
             "graph-explorer": "Knowledge Graph Explorer",
             "export": "Data Export Interface",
-            "workflows": "Professional Workflows"
+            "workflows": "Professional Workflows",
         }
-        
+
         for tab_id, tab_name in tab_variations.items():
             # Create HTML with specific tab active
-            tab_html = html_content.replace('id="overview" class="tab-content active"', 'id="overview" class="tab-content"')
-            tab_html = tab_html.replace(f'id="{tab_id}" class="tab-content"', f'id="{tab_id}" class="tab-content active"')
-            tab_html = tab_html.replace('class="nav-tab active" data-tab="overview"', 'class="nav-tab" data-tab="overview"')
-            tab_html = tab_html.replace(f'class="nav-tab" data-tab="{tab_id}"', f'class="nav-tab active" data-tab="{tab_id}"')
-            
+            tab_html = html_content.replace(
+                'id="overview" class="tab-content active"', 'id="overview" class="tab-content"'
+            )
+            tab_html = tab_html.replace(
+                f'id="{tab_id}" class="tab-content"', f'id="{tab_id}" class="tab-content active"'
+            )
+            tab_html = tab_html.replace(
+                'class="nav-tab active" data-tab="overview"', 'class="nav-tab" data-tab="overview"'
+            )
+            tab_html = tab_html.replace(
+                f'class="nav-tab" data-tab="{tab_id}"',
+                f'class="nav-tab active" data-tab="{tab_id}"',
+            )
+
             tab_file = screenshots_dir / f"{tab_id}_tab.html"
             tab_file.write_text(tab_html)
-            
+
             hti.screenshot(html_file=str(tab_file), save_as=f"{tab_id}_tab.png", size=(1200, 900))
             screenshots_taken.append(f"{tab_id}_tab.png")
             print(f"✓ {tab_name} screenshot taken")
-        
+
         # Create theme variations
         themes = {
             "data-scientist": ("theme-data-scientist", "Data Scientist"),
-            "historian": ("theme-historian", "Historian"), 
-            "lawyer": ("theme-lawyer", "Lawyer")
+            "historian": ("theme-historian", "Historian"),
+            "lawyer": ("theme-lawyer", "Lawyer"),
         }
-        
+
         for theme_key, (theme_class, theme_name) in themes.items():
-            theme_html = html_content.replace('class="theme-data-scientist"', f'class="{theme_class}"')
+            theme_html = html_content.replace(
+                'class="theme-data-scientist"', f'class="{theme_class}"'
+            )
             theme_file = screenshots_dir / f"{theme_key}_theme.html"
             theme_file.write_text(theme_html)
-            
-            hti.screenshot(html_file=str(theme_file), save_as=f"{theme_key}_theme.png", size=(1200, 900))
+
+            hti.screenshot(
+                html_file=str(theme_file), save_as=f"{theme_key}_theme.png", size=(1200, 900)
+            )
             screenshots_taken.append(f"{theme_key}_theme.png")
             print(f"✓ {theme_name} theme screenshot taken")
-        
+
         # Mobile responsive test
-        mobile_html = html_content.replace('<meta name="viewport"', '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"')
+        mobile_html = html_content.replace(
+            '<meta name="viewport"',
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"',
+        )
         mobile_file = screenshots_dir / "mobile_dashboard.html"
         mobile_file.write_text(mobile_html)
-        
+
         hti.screenshot(html_file=str(mobile_file), save_as="mobile_dashboard.png", size=(375, 667))
         screenshots_taken.append("mobile_dashboard.png")
         print("✓ Mobile responsive screenshot taken")
-        
+
         return screenshots_dir, screenshots_taken
-        
+
     except Exception as e:
         print(f"Error taking screenshots: {e}")
         return screenshots_dir, screenshots_taken
+
 
 def analyze_gui_from_screenshots(screenshots_dir, screenshots_taken):
     """Analyze GUI issues from screenshots and HTML structure."""
     issues_found = []
     improvements_suggested = []
-    
+
     # Check if screenshots were successful
     successful_screenshots = len(screenshots_taken)
     total_expected = 12  # Expected number of screenshots
-    
+
     if successful_screenshots < total_expected:
-        issues_found.append(f"Only {successful_screenshots}/{total_expected} screenshots were taken successfully")
-    
+        issues_found.append(
+            f"Only {successful_screenshots}/{total_expected} screenshots were taken successfully"
+        )
+
     # Analyze HTML structure for potential issues
     html_file = screenshots_dir / "dashboard_complete.html"
     if html_file.exists():
         html_content = html_file.read_text()
-        
+
         # Check for accessibility issues
-        if 'aria-label' not in html_content:
+        if "aria-label" not in html_content:
             issues_found.append("Missing ARIA labels for accessibility")
             improvements_suggested.append("Add ARIA labels to interactive elements")
-        
-        if 'alt=' not in html_content and '<img' in html_content:
+
+        if "alt=" not in html_content and "<img" in html_content:
             issues_found.append("Images missing alt attributes")
             improvements_suggested.append("Add alt attributes to all images")
-        
+
         # Check for responsive design elements
-        if '@media' not in html_content:
+        if "@media" not in html_content:
             issues_found.append("Limited responsive design implementation")
             improvements_suggested.append("Enhance mobile responsiveness with more breakpoints")
-        
+
         # Check for JavaScript functionality
-        if 'addEventListener' in html_content:
+        if "addEventListener" in html_content:
             print("✓ Interactive JavaScript functionality detected")
         else:
             issues_found.append("Limited JavaScript interactivity")
             improvements_suggested.append("Add more interactive features and animations")
-    
+
     # GUI improvement recommendations based on modern dashboard standards
-    improvements_suggested.extend([
-        "Add loading skeletons for better perceived performance",
-        "Implement smooth transitions between tabs and states",
-        "Add keyboard navigation support (Tab, Enter, Arrow keys)",
-        "Include tooltips for complex functionality",
-        "Add dark mode support",
-        "Implement real-time data updates with WebSocket connections",
-        "Add drag-and-drop functionality for file uploads",
-        "Include search functionality within dashboard components",
-        "Add export progress indicators",
-        "Implement better error states and retry mechanisms"
-    ])
-    
+    improvements_suggested.extend(
+        [
+            "Add loading skeletons for better perceived performance",
+            "Implement smooth transitions between tabs and states",
+            "Add keyboard navigation support (Tab, Enter, Arrow keys)",
+            "Include tooltips for complex functionality",
+            "Add dark mode support",
+            "Implement real-time data updates with WebSocket connections",
+            "Add drag-and-drop functionality for file uploads",
+            "Include search functionality within dashboard components",
+            "Add export progress indicators",
+            "Implement better error states and retry mechanisms",
+        ]
+    )
+
     return issues_found, improvements_suggested
+
 
 def create_gui_improvement_plan(issues_found, improvements_suggested):
     """Create a detailed GUI improvement plan."""
@@ -772,37 +797,40 @@ def create_gui_improvement_plan(issues_found, improvements_suggested):
             "Implement focus management for tab navigation",
             "Add screen reader support with ARIA live regions",
             "Ensure color contrast meets WCAG 2.1 AA standards",
-            "Add keyboard shortcuts documentation"
+            "Add keyboard shortcuts documentation",
         ],
         "performance_optimizations": [
             "Lazy load tab content",
             "Implement virtual scrolling for large data sets",
             "Add service worker for offline capability",
             "Optimize CSS with critical path loading",
-            "Compress and optimize images"
+            "Compress and optimize images",
         ],
         "user_experience_enhancements": [
             "Add onboarding tour for new users",
             "Implement contextual help system",
             "Add customizable dashboard layouts",
             "Include recent actions and favorites",
-            "Add bulk operations support"
-        ]
+            "Add bulk operations support",
+        ],
     }
+
 
 def main():
     """Main function to run GUI analysis and improvement recommendations."""
     print("=== GUI Screenshot Analysis and Improvement Recommendations ===")
-    
+
     # Take comprehensive screenshots
     screenshots_dir, screenshots_taken = take_comprehensive_screenshots()
-    
+
     # Analyze GUI issues
-    issues_found, improvements_suggested = analyze_gui_from_screenshots(screenshots_dir, screenshots_taken)
-    
+    issues_found, improvements_suggested = analyze_gui_from_screenshots(
+        screenshots_dir, screenshots_taken
+    )
+
     # Create improvement plan
     improvement_plan = create_gui_improvement_plan(issues_found, improvements_suggested)
-    
+
     # Generate comprehensive report
     report = {
         "analysis_timestamp": datetime.now().isoformat(),
@@ -817,34 +845,35 @@ def main():
             "All 7 navigation tabs",
             "3 professional themes (Data Scientist, Historian, Lawyer)",
             "Mobile responsive design",
-            "Interactive JavaScript functionality"
-        ]
+            "Interactive JavaScript functionality",
+        ],
     }
-    
+
     # Save report
     report_file = Path("gui_improvement_report.json")
-    with open(report_file, 'w') as f:
+    with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
-    
+
     # Create summary HTML report
     create_html_report(report, screenshots_dir)
-    
+
     print(f"\n=== Analysis Complete ===")
     print(f"✓ Screenshots taken: {len(screenshots_taken)}")
     print(f"✓ Screenshots saved to: {screenshots_dir}")
     print(f"✓ Analysis report saved to: {report_file}")
-    
+
     if issues_found:
         print(f"\n⚠️  Issues identified: {len(issues_found)}")
         for i, issue in enumerate(issues_found[:3], 1):
             print(f"  {i}. {issue}")
-    
+
     print(f"\n💡 Top improvement suggestions:")
     for i, suggestion in enumerate(improvements_suggested[:5], 1):
         print(f"  {i}. {suggestion}")
-    
+
     print(f"\nDetailed analysis available in gui_improvement_report.json")
     print(f"Interactive HTML report created at gui_screenshots/improvement_report.html")
+
 
 def create_html_report(report, screenshots_dir):
     """Create an interactive HTML report."""
@@ -875,19 +904,19 @@ def create_html_report(report, screenshots_dir):
 <body>
     <div class="container">
         <h1>GUI Analysis & Improvement Report</h1>
-        <p><strong>Analysis Date:</strong> {report['analysis_timestamp']}</p>
+        <p><strong>Analysis Date:</strong> {report["analysis_timestamp"]}</p>
         
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number">{report['screenshots_taken']}</div>
+                <div class="stat-number">{report["screenshots_taken"]}</div>
                 <div>Screenshots Taken</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{len(report['issues_identified'])}</div>
+                <div class="stat-number">{len(report["issues_identified"])}</div>
                 <div>Issues Identified</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{len(report['improvement_suggestions'])}</div>
+                <div class="stat-number">{len(report["improvement_suggestions"])}</div>
                 <div>Improvements Suggested</div>
             </div>
         </div>
@@ -895,54 +924,55 @@ def create_html_report(report, screenshots_dir):
         <h2>Screenshots Captured</h2>
         <div class="screenshot-grid">
 """
-    
-    for screenshot in report['screenshot_files']:
-        screenshot_name = screenshot.replace('.png', '').replace('_', ' ').title()
+
+    for screenshot in report["screenshot_files"]:
+        screenshot_name = screenshot.replace(".png", "").replace("_", " ").title()
         html_report += f"""
             <div class="screenshot-item">
                 <img src="{screenshot}" alt="{screenshot_name}">
                 <p>{screenshot_name}</p>
             </div>
         """
-    
+
     html_report += f"""
         </div>
         
         <h2>Issues Identified</h2>
-        {''.join(f'<div class="issue"><strong>Issue:</strong> {issue}</div>' for issue in report['issues_identified'])}
+        {"".join(f'<div class="issue"><strong>Issue:</strong> {issue}</div>' for issue in report["issues_identified"])}
         
         <h2>Improvement Suggestions</h2>
-        {''.join(f'<div class="improvement"><strong>Suggestion:</strong> {improvement}</div>' for improvement in report['improvement_suggestions'][:10])}
+        {"".join(f'<div class="improvement"><strong>Suggestion:</strong> {improvement}</div>' for improvement in report["improvement_suggestions"][:10])}
         
         <h2>Detailed Improvement Plan</h2>
         
         <h3>Accessibility Improvements</h3>
         <ul>
-            {''.join(f'<li>{item}</li>' for item in report['detailed_improvement_plan']['accessibility_improvements'])}
+            {"".join(f"<li>{item}</li>" for item in report["detailed_improvement_plan"]["accessibility_improvements"])}
         </ul>
         
         <h3>Performance Optimizations</h3>
         <ul>
-            {''.join(f'<li>{item}</li>' for item in report['detailed_improvement_plan']['performance_optimizations'])}
+            {"".join(f"<li>{item}</li>" for item in report["detailed_improvement_plan"]["performance_optimizations"])}
         </ul>
         
         <h3>User Experience Enhancements</h3>
         <ul>
-            {''.join(f'<li>{item}</li>' for item in report['detailed_improvement_plan']['user_experience_enhancements'])}
+            {"".join(f"<li>{item}</li>" for item in report["detailed_improvement_plan"]["user_experience_enhancements"])}
         </ul>
         
         <h2>Features Tested</h2>
         <ul>
-            {''.join(f'<li>{feature}</li>' for feature in report['dashboard_features_tested'])}
+            {"".join(f"<li>{feature}</li>" for feature in report["dashboard_features_tested"])}
         </ul>
     </div>
 </body>
 </html>
     """
-    
+
     report_html_file = screenshots_dir / "improvement_report.html"
     report_html_file.write_text(html_report)
     print(f"✓ Interactive HTML report created: {report_html_file}")
+
 
 if __name__ == "__main__":
     main()

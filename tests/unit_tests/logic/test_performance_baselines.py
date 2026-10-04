@@ -24,6 +24,7 @@ import pytest
 # CEC Inference Rules Performance
 # ---------------------------------------------------------------------------
 
+
 class TestCECInferenceRulePerformance:
     """Performance baselines for CEC inference rule operations."""
 
@@ -31,13 +32,22 @@ class TestCECInferenceRulePerformance:
     def _import_rules(self):
         """Import rules once per test class."""
         from ipfs_datasets_py.logic.CEC.native.inference_rules import (
-            ModusPonens, BiconditionalIntroduction, BiconditionalElimination,
-            ResolutionRule, UnitResolutionRule, FactoringRule,
-            NecessityElimination, PossibilityIntroduction,
-            ConstructiveDilemma, ExportationRule,
+            ModusPonens,
+            BiconditionalIntroduction,
+            BiconditionalElimination,
+            ResolutionRule,
+            UnitResolutionRule,
+            FactoringRule,
+            NecessityElimination,
+            PossibilityIntroduction,
+            ConstructiveDilemma,
+            ExportationRule,
         )
         from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-            AtomicFormula, ConnectiveFormula, LogicalConnective, Predicate,
+            AtomicFormula,
+            ConnectiveFormula,
+            LogicalConnective,
+            Predicate,
         )
 
         def make_atom(name):
@@ -134,12 +144,19 @@ class TestCECInferenceRulePerformance:
         THEN all should be < 1ms each.
         """
         from ipfs_datasets_py.logic.CEC.native.inference_rules.modal import (
-            NecessityElimination, PossibilityIntroduction,
-            NecessityDistribution, PossibilityDuality, NecessityConjunction,
+            NecessityElimination,
+            PossibilityIntroduction,
+            NecessityDistribution,
+            PossibilityDuality,
+            NecessityConjunction,
         )
+
         rules = [
-            NecessityElimination, PossibilityIntroduction,
-            NecessityDistribution, PossibilityDuality, NecessityConjunction,
+            NecessityElimination,
+            PossibilityIntroduction,
+            NecessityDistribution,
+            PossibilityDuality,
+            NecessityConjunction,
         ]
         N = 100
         for RuleClass in rules:
@@ -159,12 +176,21 @@ class TestCECInferenceRulePerformance:
         THEN all should be < 1ms each.
         """
         from ipfs_datasets_py.logic.CEC.native.inference_rules.resolution import (
-            ResolutionRule, UnitResolutionRule, FactoringRule,
-            SubsumptionRule, CaseAnalysisRule, ProofByContradictionRule,
+            ResolutionRule,
+            UnitResolutionRule,
+            FactoringRule,
+            SubsumptionRule,
+            CaseAnalysisRule,
+            ProofByContradictionRule,
         )
+
         rules = [
-            ResolutionRule, UnitResolutionRule, FactoringRule,
-            SubsumptionRule, CaseAnalysisRule, ProofByContradictionRule,
+            ResolutionRule,
+            UnitResolutionRule,
+            FactoringRule,
+            SubsumptionRule,
+            CaseAnalysisRule,
+            ProofByContradictionRule,
         ]
         N = 100
         for RuleClass in rules:
@@ -182,6 +208,7 @@ class TestCECInferenceRulePerformance:
 # Input Validation Performance
 # ---------------------------------------------------------------------------
 
+
 class TestValidatorPerformance:
     """Performance baselines for input validation."""
 
@@ -192,6 +219,7 @@ class TestValidatorPerformance:
         THEN average should be < 0.1ms each.
         """
         from ipfs_datasets_py.logic.common.validators import validate_formula_string
+
         formula = "P ∧ Q → R ∨ S ↔ T"
 
         N = 1000
@@ -209,6 +237,7 @@ class TestValidatorPerformance:
         THEN average should be < 1ms.
         """
         from ipfs_datasets_py.logic.common.validators import validate_axiom_list
+
         axioms = ["P → Q", "Q → R", "R → S"] * 3 + ["A", "B"]
 
         N = 100
@@ -240,6 +269,7 @@ class TestValidatorPerformance:
 # Package Import Performance
 # ---------------------------------------------------------------------------
 
+
 class TestImportPerformance:
     """Performance baselines for module imports."""
 
@@ -255,15 +285,13 @@ class TestImportPerformance:
         import sys
 
         # Remove from cache to force re-import
-        modules_to_remove = [
-            k for k in sys.modules
-            if 'inference_rules' in k
-        ]
+        modules_to_remove = [k for k in sys.modules if "inference_rules" in k]
         for mod in modules_to_remove:
             del sys.modules[mod]
 
         start = time.perf_counter()
         import ipfs_datasets_py.logic.CEC.native.inference_rules  # noqa: F401
+
         elapsed = (time.perf_counter() - start) * 1000
         assert elapsed < 2000, f"Package import took {elapsed:.0f}ms (target: <2000ms)"
 
@@ -275,6 +303,7 @@ class TestImportPerformance:
         """
         start = time.perf_counter()
         from ipfs_datasets_py.logic.common.validators import validate_formula_string  # noqa: F401
+
         elapsed = (time.perf_counter() - start) * 1000
         # From cache should be near-instant
         assert elapsed < 500, f"Validator import took {elapsed:.0f}ms (target: <500ms)"
@@ -283,6 +312,7 @@ class TestImportPerformance:
 # ---------------------------------------------------------------------------
 # REST API Performance
 # ---------------------------------------------------------------------------
+
 
 class TestMCPToolPerformance:
     """Performance baselines for MCP logic tool execution."""
@@ -297,6 +327,7 @@ class TestMCPToolPerformance:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
             LogicHealthTool,
         )
+
         tool = LogicHealthTool()
         N = 10
         start = time.perf_counter()
@@ -316,6 +347,7 @@ class TestMCPToolPerformance:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
             LogicCapabilitiesTool,
         )
+
         tool = LogicCapabilitiesTool()
         N = 10
         start = time.perf_counter()

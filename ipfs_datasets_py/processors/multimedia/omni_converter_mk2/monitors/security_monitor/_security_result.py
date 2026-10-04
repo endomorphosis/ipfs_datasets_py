@@ -5,10 +5,14 @@ from typing import Any
 try:
     from pydantic import BaseModel, Field
 except ImportError:
-    raise ImportError("Pydantic is required for this module. Please install it with 'pip install pydantic'.")
+    raise ImportError(
+        "Pydantic is required for this module. Please install it with 'pip install pydantic'."
+    )
+
 
 class RiskLevel(str, Enum):
     """Enumeration for risk levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -31,6 +35,7 @@ class SecurityResult(BaseModel):
         risk_level (str): Risk level assessment ('low', 'medium', 'high'). Default is 'low'. # TODO Maybe this should be high as default?
         metadata (dict[str, Any]): Additional metadata about the security check.
     """
+
     is_safe: bool
     issues: list[str] = Field(default_factory=list)
     risk_level: RiskLevel = Field(default=RiskLevel.LOW)

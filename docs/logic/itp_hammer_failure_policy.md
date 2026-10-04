@@ -259,8 +259,12 @@ policy = HammerPolicy(
     max_decomposition_subgoals=4,
 )
 request = HammerRequest(
-    request_id="req-1", itp=ITPKind.LEAN, theorem_id="my_thm",
-    goal_statement="n = n and m = m", corpus_revision="rev-1", policy=policy,
+    request_id="req-1",
+    itp=ITPKind.LEAN,
+    theorem_id="my_thm",
+    goal_statement="n = n and m = m",
+    corpus_revision="rev-1",
+    policy=policy,
 )
 
 # goal_snapshot/native_source come from the HAMMER-006 Lean frontend.
@@ -280,9 +284,7 @@ else:
     for subgoal in outcome.decomposition_plan.subgoals:
         if subgoal.source is fb.DecompositionSource.LLM_SUGGESTED:
             fb.review_decomposition_subgoal(subgoal, approve=True, reviewer="alice")
-        fb.verify_decomposition_subgoal(
-            subgoal, request=request, goal_snapshot=goal_snapshot
-        )
+        fb.verify_decomposition_subgoal(subgoal, request=request, goal_snapshot=goal_snapshot)
     if outcome.decomposition_plan.is_fully_verified():
         # every subgoal independently passed its own native kernel check.
         ...

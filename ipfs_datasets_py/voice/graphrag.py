@@ -83,17 +83,11 @@ class UnsafeSlotBindingError(ValueError):
 
 def _plain_json_value(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return {
-            str(key): _plain_json_value(item)
-            for key, item in value.items()
-        }
+        return {str(key): _plain_json_value(item) for key, item in value.items()}
     if isinstance(value, list | tuple):
         return [_plain_json_value(item) for item in value]
     if isinstance(value, set | frozenset):
-        return [
-            _plain_json_value(item)
-            for item in sorted(value, key=lambda item: repr(item))
-        ]
+        return [_plain_json_value(item) for item in sorted(value, key=lambda item: repr(item))]
     return value
 
 
@@ -183,7 +177,8 @@ def _token_cosine(left: Sequence[str], right: Sequence[str]) -> float:
     if not left_counts or not right_counts:
         return 0.0
     numerator = sum(
-        left_counts[token] * right_counts[token] for token in left_counts.keys() & right_counts.keys()
+        left_counts[token] * right_counts[token]
+        for token in left_counts.keys() & right_counts.keys()
     )
     left_norm = math.sqrt(sum(count * count for count in left_counts.values()))
     right_norm = math.sqrt(sum(count * count for count in right_counts.values()))
@@ -219,8 +214,7 @@ def _call_supported(function: Callable[..., Any], first_arg: Any, **kwargs: Any)
     try:
         signature = inspect.signature(function)
         accepts_kwargs = any(
-            item.kind == inspect.Parameter.VAR_KEYWORD
-            for item in signature.parameters.values()
+            item.kind == inspect.Parameter.VAR_KEYWORD for item in signature.parameters.values()
         )
         selected = (
             kwargs
@@ -253,9 +247,7 @@ class EvidenceRecord:
                 f"current evidence {source_id!r} must include a source CID"
             )
         if not isinstance(self.facts, Mapping):
-            raise UnsafeSlotBindingError(
-                f"current evidence {source_id!r} facts must be a mapping"
-            )
+            raise UnsafeSlotBindingError(f"current evidence {source_id!r} facts must be a mapping")
         facts: dict[str, Any] = {}
         for raw_name, raw_value in self.facts.items():
             name = str(raw_name or "").strip()
@@ -266,8 +258,7 @@ class EvidenceRecord:
             safe_value = _json_safe(raw_value)
             if safe_value is None or isinstance(safe_value, dict | list):
                 raise UnsafeSlotBindingError(
-                    f"current evidence {source_id!r} fact {name!r} must be a "
-                    "non-null JSON scalar"
+                    f"current evidence {source_id!r} fact {name!r} must be a non-null JSON scalar"
                 )
             facts[name] = safe_value
         metadata = _json_safe(dict(self.metadata or {}))
@@ -385,9 +376,7 @@ class TemplateGraphSnapshot:
     schema_version: str = GRAPHRAG_INDEX_SCHEMA_VERSION
 
     @classmethod
-    def build(
-        cls, nodes: Iterable[GraphNode], edges: Iterable[GraphEdge]
-    ) -> TemplateGraphSnapshot:
+    def build(cls, nodes: Iterable[GraphNode], edges: Iterable[GraphEdge]) -> TemplateGraphSnapshot:
         sorted_nodes = tuple(sorted(nodes, key=lambda item: item.node_id))
         sorted_edges = tuple(sorted(edges, key=lambda item: item.edge_id))
         content = {
@@ -547,14 +536,16 @@ def _merge_rows(
         previous = by_id.get(identity)
         if previous is not None:
             if previous != row:
-                raise GraphRAGIngestionError(
-                    f"conflicting {kind} rows share ID {identity!r}"
-                )
+                raise GraphRAGIngestionError(f"conflicting {kind} rows share ID {identity!r}")
             duplicates += 1
             continue
         by_id[identity] = row
         added += 1
-    return tuple(sorted(by_id.values(), key=lambda row: getattr(row, id_attribute))), added, duplicates
+    return (
+        tuple(sorted(by_id.values(), key=lambda row: getattr(row, id_attribute))),
+        added,
+        duplicates,
+    )
 
 
 def _coerce_bundle(
@@ -593,9 +584,7 @@ def _build_graph(bundle: AbbyVoiceDatasetBundle) -> TemplateGraphSnapshot:
         for row in (*bundle.templates, *bundle.responses, *bundle.audio, *bundle.provenance)
         for cid in row.source_cids
     }
-    source_cids.update(
-        cid for response in bundle.responses for cid in response.slot_source_cids
-    )
+    source_cids.update(cid for response in bundle.responses for cid in response.slot_source_cids)
     for cid in sorted(source_cids):
         add_node(
             GraphNode(
@@ -769,17 +758,11 @@ def _build_graph(bundle: AbbyVoiceDatasetBundle) -> TemplateGraphSnapshot:
             )
         )
         if asset.template_id:
-            add_edge(
-                _edge("HAS_AUDIO", _node_id("template", asset.template_id), audio_id)
-            )
+            add_edge(_edge("HAS_AUDIO", _node_id("template", asset.template_id), audio_id))
         if asset.response_id:
-            add_edge(
-                _edge("HAS_AUDIO", _node_id("response", asset.response_id), audio_id)
-            )
+            add_edge(_edge("HAS_AUDIO", _node_id("response", asset.response_id), audio_id))
         for cid in asset.source_cids:
-            add_edge(
-                _edge("CITES", audio_id, _node_id("evidence", cid), {"asset": True})
-            )
+            add_edge(_edge("CITES", audio_id, _node_id("evidence", cid), {"asset": True}))
 
     known_subjects = {
         row.ID_FIELD + ":" + getattr(row, row.ID_FIELD): _node_id(
@@ -973,9 +956,7 @@ class SlottedResponseIndex:
             raise GraphRAGIngestionError("serialized graph_cid does not match its content")
         serialized_graph = value.get("graph")
         if serialized_graph is not None and serialized_graph != index.graph.to_dict():
-            raise GraphRAGIngestionError(
-                "serialized graph snapshot does not match canonical rows"
-            )
+            raise GraphRAGIngestionError("serialized graph snapshot does not match canonical rows")
         return index
 
     def ingest_records(
@@ -1012,9 +993,7 @@ class SlottedResponseIndex:
             else:
                 target = type(record)
             if target not in grouped:
-                raise GraphRAGIngestionError(
-                    f"unsupported GraphRAG record type {target.__name__}"
-                )
+                raise GraphRAGIngestionError(f"unsupported GraphRAG record type {target.__name__}")
             grouped[target].append(record)
         return self.ingest(
             templates=grouped[AbbyVoiceTemplate],
@@ -1087,9 +1066,7 @@ class SlottedResponseIndex:
         published_vectors = 0
         external_root = None
         if publish:
-            published_nodes, published_edges, external_root = self._publish_graph(
-                staged_graph
-            )
+            published_nodes, published_edges, external_root = self._publish_graph(staged_graph)
             published_vectors = self._publish_vectors(
                 staged_bundle, staged_documents, staged_vectors
             )
@@ -1106,10 +1083,7 @@ class SlottedResponseIndex:
             added_audio=added_audio,
             added_provenance=added_provenance,
             duplicate_rows=(
-                duplicate_templates
-                + duplicate_responses
-                + duplicate_audio
-                + duplicate_provenance
+                duplicate_templates + duplicate_responses + duplicate_audio + duplicate_provenance
             ),
             node_count=len(self.graph.nodes),
             edge_count=len(self.graph.edges),
@@ -1168,9 +1142,7 @@ class SlottedResponseIndex:
             raise ValueError("embedder must return a non-empty finite numeric sequence")
         return vector
 
-    def _publish_graph(
-        self, snapshot: TemplateGraphSnapshot
-    ) -> tuple[int, int, str | None]:
+    def _publish_graph(self, snapshot: TemplateGraphSnapshot) -> tuple[int, int, str | None]:
         if self.knowledge_graph is None:
             return 0, 0, None
         add_entity = getattr(self.knowledge_graph, "add_entity", None)
@@ -1255,9 +1227,7 @@ class SlottedResponseIndex:
                     create_collection = getattr(self.vector_store, "create_collection", None)
                     if callable(collection_exists) and callable(create_collection):
                         if not _sync_result(collection_exists()):
-                            _sync_result(
-                                create_collection(dimension=len(payloads[0].vector))
-                            )
+                            _sync_result(create_collection(dimension=len(payloads[0].vector)))
                 _sync_result(method(payloads))
                 self._published_vector_ids.update(templates)
                 return len(payloads)
@@ -1322,17 +1292,10 @@ class SlottedResponseIndex:
                 max_results=max_results,
             )
             if isinstance(raw, Mapping):
-                raw_results = (
-                    raw.get("results")
-                    or raw.get("items")
-                    or raw.get("matches")
-                    or ()
-                )
+                raw_results = raw.get("results") or raw.get("items") or raw.get("matches") or ()
             else:
                 raw_results = raw or ()
-            if isinstance(raw_results, str | bytes) or not isinstance(
-                raw_results, Sequence
-            ):
+            if isinstance(raw_results, str | bytes) or not isinstance(raw_results, Sequence):
                 return {}, "ValueError"
             scores: dict[str, float] = {}
             for result in raw_results:
@@ -1382,24 +1345,18 @@ class SlottedResponseIndex:
         requested_intent = str(intent).strip() if intent else None
         current_cids = {str(cid).strip() for cid in current_source_cids if str(cid).strip()}
         query_variants = self._query_variants(query)
-        query_vectors = {
-            variant: self._embed(variant) for variant in query_variants
-        }
+        query_vectors = {variant: self._embed(variant) for variant in query_variants}
         external_scores, collaborator_error = self._external_vector_scores(
             query, max_results=max(max_results * 4, 20)
         )
-        self._last_collaborator_errors = (
-            (collaborator_error,) if collaborator_error else ()
-        )
+        self._last_collaborator_errors = (collaborator_error,) if collaborator_error else ()
 
         responses_by_template: dict[str, list[AbbyVoiceResponse]] = {}
         audio_by_template: dict[str, set[str]] = {}
         for response in self._bundle.responses:
             if response.template_id:
                 responses_by_template.setdefault(response.template_id, []).append(response)
-                audio_by_template.setdefault(response.template_id, set()).update(
-                    response.audio_ids
-                )
+                audio_by_template.setdefault(response.template_id, set()).update(response.audio_ids)
         for asset in self._bundle.audio:
             if asset.template_id:
                 audio_by_template.setdefault(asset.template_id, set()).add(asset.audio_id)
@@ -1412,8 +1369,7 @@ class SlottedResponseIndex:
                 continue
             document = self._documents[template.template_id]
             lexical_score = max(
-                _token_cosine(_tokens(variant), _tokens(document))
-                for variant in query_variants
+                _token_cosine(_tokens(variant), _tokens(document)) for variant in query_variants
             )
             local_vector_score = max(
                 _cosine(query_vectors[variant], self._vectors[template.template_id])
@@ -1424,10 +1380,10 @@ class SlottedResponseIndex:
                 external_scores.get(template.template_id, 0.0),
             )
             normalized_intent = _normalized_phrase(template.intent)
-            exact_intent = any(
-                _normalized_phrase(variant) == normalized_intent
-                for variant in query_variants
-            ) or requested_intent == template.intent
+            exact_intent = (
+                any(_normalized_phrase(variant) == normalized_intent for variant in query_variants)
+                or requested_intent == template.intent
+            )
             intent_score = max(
                 _token_cosine(_tokens(variant), _tokens(template.intent))
                 for variant in query_variants
@@ -1441,8 +1397,7 @@ class SlottedResponseIndex:
                     for response in examples
                 )
             evidence_score = (
-                len(set(template.source_cids) & current_cids)
-                / len(template.source_cids)
+                len(set(template.source_cids) & current_cids) / len(template.source_cids)
                 if template.source_cids
                 else 0.0
             )
@@ -1474,9 +1429,7 @@ class SlottedResponseIndex:
                     matched_response_ids=tuple(
                         sorted(response.response_id for response in examples)
                     ),
-                    audio_ids=tuple(
-                        sorted(audio_by_template.get(template.template_id, ()))
-                    ),
+                    audio_ids=tuple(sorted(audio_by_template.get(template.template_id, ()))),
                 )
             )
         matches.sort(key=lambda item: (-item.confidence, item.template.template_id))
@@ -1491,19 +1444,12 @@ def _normalize_current_evidence(
     raw: Any = grounding
     if isinstance(grounding, Mapping):
         wrapper_key = next(
-            (
-                key
-                for key in ("current_evidence", "evidence", "sources")
-                if key in grounding
-            ),
+            (key for key in ("current_evidence", "evidence", "sources") if key in grounding),
             None,
         )
         if wrapper_key is not None:
             raw = grounding[wrapper_key]
-        elif any(
-            key in grounding
-            for key in ("source_id", "id", "cid", "source_cid", "facts")
-        ):
+        elif any(key in grounding for key in ("source_id", "id", "cid", "source_cid", "facts")):
             raw = (grounding,)
         elif grounding:
             raw = grounding
@@ -1513,9 +1459,7 @@ def _normalize_current_evidence(
     if isinstance(raw, Mapping):
         for source_id, value in raw.items():
             if not isinstance(value, Mapping):
-                raise UnsafeSlotBindingError(
-                    f"current evidence {source_id!r} must be a mapping"
-                )
+                raise UnsafeSlotBindingError(f"current evidence {source_id!r} must be a mapping")
             records.append(EvidenceRecord.from_mapping(value, default_id=str(source_id)))
     elif isinstance(raw, Sequence) and not isinstance(raw, str | bytes):
         for value in raw:
@@ -1545,9 +1489,7 @@ def _bind_template(
         used_evidence: tuple[EvidenceRecord, ...] = ()
         slots: list[dict[str, Any]] = []
     else:
-        allowed = [
-            record for record in evidence if record.cid in set(template.source_cids)
-        ]
+        allowed = [record for record in evidence if record.cid in set(template.source_cids)]
         if not allowed:
             return None
         slots = []
@@ -1578,9 +1520,7 @@ def _bind_template(
                     "source_ids": [record.source_id for record in supporting],
                 }
             )
-        used_evidence = tuple(
-            used_by_id[source_id] for source_id in sorted(used_by_id)
-        )
+        used_evidence = tuple(used_by_id[source_id] for source_id in sorted(used_by_id))
 
     return {
         "template_id": template.template_id,
@@ -1624,9 +1564,7 @@ class GraphRAGVoiceTemplateProvider:
         if not isinstance(index, SlottedResponseIndex):
             raise TypeError("index must be a SlottedResponseIndex")
         self.index = index
-        self.minimum_confidence = _validate_probability(
-            "minimum_confidence", minimum_confidence
-        )
+        self.minimum_confidence = _validate_probability("minimum_confidence", minimum_confidence)
 
     @classmethod
     def from_rows(
@@ -1660,11 +1598,7 @@ class GraphRAGVoiceTemplateProvider:
         grounding: Mapping[str, Any] | Sequence[Mapping[str, Any]] | None = None,
         max_results: int = 5,
     ) -> tuple[dict[str, Any], ...]:
-        if (
-            isinstance(max_results, bool)
-            or not isinstance(max_results, int)
-            or max_results <= 0
-        ):
+        if isinstance(max_results, bool) or not isinstance(max_results, int) or max_results <= 0:
             raise ValueError("max_results must be a positive integer")
         current_evidence = _normalize_current_evidence(grounding)
         context_map = _mapping(context)

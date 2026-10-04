@@ -53,9 +53,9 @@ security_manager.record_provenance(
         "source_system": "example_system",
         "source_type": "database",
         "extraction_method": "sql_query",
-        "extraction_time": "2023-05-15T10:15:00"
+        "extraction_time": "2023-05-15T10:15:00",
     },
-    tags=["example", "sample"]
+    tags=["example", "sample"],
 )
 ```
 
@@ -70,7 +70,7 @@ step_id = security_manager.record_transformation_step(
     tool="duckdb",
     parameters={"condition": "value > 50"},
     inputs=["source_dataset_123"],
-    outputs=["filtered_dataset_456"]
+    outputs=["filtered_dataset_456"],
 )
 
 # Complete the transformation step
@@ -79,7 +79,7 @@ security_manager.complete_transformation_step(
     step_id=step_id,
     status="completed",
     outputs=["filtered_dataset_456"],
-    metrics={"execution_time_ms": 150, "filtered_rows": 30}
+    metrics={"execution_time_ms": 150, "filtered_rows": 30},
 )
 ```
 
@@ -90,11 +90,7 @@ security_manager.complete_transformation_step(
 security_manager.record_data_access(
     data_id="dataset_123",
     operation="read",
-    details={
-        "reason": "Example read access",
-        "user_id": "user_456",
-        "system": "example_system"
-    }
+    details={"reason": "Example read access", "user_id": "user_456", "system": "example_system"},
 )
 ```
 
@@ -107,7 +103,7 @@ report = security_manager.generate_provenance_report(
     report_type="detailed",
     format="html",
     include_lineage=True,
-    include_access_history=True
+    include_access_history=True,
 )
 
 # Save the HTML report to a file
@@ -120,11 +116,7 @@ with open("provenance_report.html", "w") as f:
 ```python
 # Generate a lineage visualization in DOT format for GraphViz
 visualization = security_manager.generate_lineage_visualization(
-    data_id="dataset_123",
-    format="dot",
-    max_depth=3,
-    direction="both",
-    include_attributes=True
+    data_id="dataset_123", format="dot", max_depth=3, direction="both", include_attributes=True
 )
 
 # Save the DOT visualization to a file
@@ -249,13 +241,12 @@ You can customize the report format by accessing the raw report data and applyin
 ```python
 # Get raw report data in JSON format
 report_data = security_manager.generate_provenance_report(
-    data_id="dataset_123",
-    report_type="detailed",
-    format="json"
+    data_id="dataset_123", report_type="detailed", format="json"
 )
 
 # Apply custom formatting
 import jinja2
+
 template = jinja2.Template("""
 <html>
   <head><title>{{ report.data_info.data_id }} - Provenance Report</title></head>
@@ -275,16 +266,12 @@ You can control how far the lineage visualization extends and in which direction
 ```python
 # Upstream-only lineage (data sources)
 upstream_visualization = security_manager.generate_lineage_visualization(
-    data_id="dataset_123",
-    direction="upstream",
-    max_depth=2
+    data_id="dataset_123", direction="upstream", max_depth=2
 )
 
 # Downstream-only lineage (derived datasets)
 downstream_visualization = security_manager.generate_lineage_visualization(
-    data_id="dataset_123",
-    direction="downstream",
-    max_depth=2
+    data_id="dataset_123", direction="downstream", max_depth=2
 )
 ```
 
@@ -294,13 +281,11 @@ You can verify the integrity of a dataset's provenance:
 ```python
 # Verify data provenance using checksum
 is_valid = security_manager.verify_data_provenance(
-    data_id="dataset_123",
-    verification_method="checksum"
+    data_id="dataset_123", verification_method="checksum"
 )
 
 # Verify data provenance using parent consistency
 is_valid = security_manager.verify_data_provenance(
-    data_id="dataset_123",
-    verification_method="parent_consistency"
+    data_id="dataset_123", verification_method="parent_consistency"
 )
 ```

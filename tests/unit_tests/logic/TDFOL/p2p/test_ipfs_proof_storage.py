@@ -23,8 +23,10 @@ from ipfs_datasets_py.logic.TDFOL.p2p.ipfs_proof_storage import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class FakeProofResult:
     """Minimal proof result object for serialization tests."""
+
     proved = True
     status = "proved"
     proof_steps = None
@@ -60,18 +62,20 @@ class FakeProofResultWithCountermodel:
 
 
 def _make_storage_json(formula="P", proved=True):
-    return json.dumps({
-        "formula": formula,
-        "proof_result": {
-            "status": "proved" if proved else "disproved",
-            "proved": proved,
-            "proof_steps": [],
-            "time_ms": 0,
-            "countermodel": None,
-        },
-        "metadata": {"info": "test"},
-        "version": "1.0",
-    }).encode()
+    return json.dumps(
+        {
+            "formula": formula,
+            "proof_result": {
+                "status": "proved" if proved else "disproved",
+                "proved": proved,
+                "proof_steps": [],
+                "time_ms": 0,
+                "countermodel": None,
+            },
+            "metadata": {"info": "test"},
+            "version": "1.0",
+        }
+    ).encode()
 
 
 def _make_mock_backend(cid="QmTestCID123", cat_return=None):
@@ -85,6 +89,7 @@ def _make_mock_backend(cid="QmTestCID123", cat_return=None):
 # ---------------------------------------------------------------------------
 # Tests: __init__
 # ---------------------------------------------------------------------------
+
 
 class TestIPFSProofStorageInit:
     """Test IPFSProofStorage initialization."""
@@ -107,16 +112,20 @@ class TestIPFSProofStorageInit:
 
     def test_init_no_backend_resolves_to_none(self):
         """GIVEN IPFS available but get_backend returns None THEN storage.available is False."""
-        with patch.object(mod, "IPFS_AVAILABLE", True), \
-             patch.object(mod, "get_backend", return_value=None):
+        with (
+            patch.object(mod, "IPFS_AVAILABLE", True),
+            patch.object(mod, "get_backend", return_value=None),
+        ):
             storage = IPFSProofStorage()
         assert storage.available is False
 
     def test_init_get_backend_called_when_no_explicit(self):
         """GIVEN no backend arg WHEN IPFS available THEN get_backend is called."""
         fake_backend = _make_mock_backend()
-        with patch.object(mod, "IPFS_AVAILABLE", True), \
-             patch.object(mod, "get_backend", return_value=fake_backend) as mock_gb:
+        with (
+            patch.object(mod, "IPFS_AVAILABLE", True),
+            patch.object(mod, "get_backend", return_value=fake_backend) as mock_gb,
+        ):
             storage = IPFSProofStorage()
         mock_gb.assert_called_once()
         assert storage.available is True
@@ -125,6 +134,7 @@ class TestIPFSProofStorageInit:
 # ---------------------------------------------------------------------------
 # Tests: store_proof
 # ---------------------------------------------------------------------------
+
 
 class TestStoreProof:
     """Test store_proof method."""
@@ -200,6 +210,7 @@ class TestStoreProof:
 # Tests: retrieve_proof
 # ---------------------------------------------------------------------------
 
+
 class TestRetrieveProof:
     """Test retrieve_proof method."""
 
@@ -240,6 +251,7 @@ class TestRetrieveProof:
 # Tests: retrieve_with_metadata
 # ---------------------------------------------------------------------------
 
+
 class TestRetrieveWithMetadata:
     """Test retrieve_with_metadata method."""
 
@@ -274,6 +286,7 @@ class TestRetrieveWithMetadata:
 # Tests: list_cached_proofs
 # ---------------------------------------------------------------------------
 
+
 class TestListCachedProofs:
     """Test list_cached_proofs method."""
 
@@ -297,6 +310,7 @@ class TestListCachedProofs:
 # ---------------------------------------------------------------------------
 # Tests: clear_cache
 # ---------------------------------------------------------------------------
+
 
 class TestClearCache:
     """Test clear_cache method."""
@@ -335,6 +349,7 @@ class TestClearCache:
 # ---------------------------------------------------------------------------
 # Tests: unpin_proof
 # ---------------------------------------------------------------------------
+
 
 class TestUnpinProof:
     """Test unpin_proof method."""
@@ -384,6 +399,7 @@ class TestUnpinProof:
 # Tests: _serialize_proof_result
 # ---------------------------------------------------------------------------
 
+
 class TestSerializeProofResult:
     """Test _serialize_proof_result method."""
 
@@ -416,11 +432,13 @@ class TestSerializeProofResult:
 
     def test_serialization_missing_time_ms(self):
         """GIVEN no time_ms attribute THEN defaults to 0."""
+
         class NoTimeMsResult:
             proved = False
             status = "unknown"
             proof_steps = None
             countermodel = None
+
         storage = self._make_storage()
         result = storage._serialize_proof_result(NoTimeMsResult())
         assert result["time_ms"] == 0
@@ -429,6 +447,7 @@ class TestSerializeProofResult:
 # ---------------------------------------------------------------------------
 # Tests: _deserialize_proof_result
 # ---------------------------------------------------------------------------
+
 
 class TestDeserializeProofResult:
     """Test _deserialize_proof_result method."""
@@ -440,7 +459,13 @@ class TestDeserializeProofResult:
     def test_deserialize_with_tdfol_available(self):
         """GIVEN TDFOL_AVAILABLE and valid proof data THEN returns proxy object."""
         storage = self._make_storage()
-        data = {"status": "unknown", "proved": False, "proof_steps": [], "time_ms": 5, "countermodel": None}
+        data = {
+            "status": "unknown",
+            "proved": False,
+            "proof_steps": [],
+            "time_ms": 5,
+            "countermodel": None,
+        }
         result = storage._deserialize_proof_result(data)
         assert result is not None
         assert result.proved is False
@@ -448,8 +473,7 @@ class TestDeserializeProofResult:
     def test_deserialize_without_tdfol(self):
         """GIVEN TDFOL not available THEN returns ProofResultProxy."""
         storage = self._make_storage()
-        with patch.object(mod, "TDFOL_AVAILABLE", False), \
-             patch.object(mod, "ProofResult", None):
+        with patch.object(mod, "TDFOL_AVAILABLE", False), patch.object(mod, "ProofResult", None):
             data = {"status": "unknown", "proved": True}
             result = storage._deserialize_proof_result(data)
         assert result is not None
@@ -458,7 +482,13 @@ class TestDeserializeProofResult:
     def test_deserialize_invalid_status(self):
         """GIVEN invalid status string THEN falls back gracefully."""
         storage = self._make_storage()
-        data = {"status": "INVALID_STATUS_XYZ", "proved": False, "proof_steps": [], "time_ms": 0, "countermodel": None}
+        data = {
+            "status": "INVALID_STATUS_XYZ",
+            "proved": False,
+            "proof_steps": [],
+            "time_ms": 0,
+            "countermodel": None,
+        }
         result = storage._deserialize_proof_result(data)
         assert result is not None
 
@@ -466,6 +496,7 @@ class TestDeserializeProofResult:
 # ---------------------------------------------------------------------------
 # Tests: get_default_proof_storage
 # ---------------------------------------------------------------------------
+
 
 class TestGetDefaultProofStorage:
     """Test singleton get_default_proof_storage function."""

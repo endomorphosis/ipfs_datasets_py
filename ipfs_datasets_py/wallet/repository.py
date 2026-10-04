@@ -58,7 +58,9 @@ class LocalWalletRepository:
         return path
 
     def save_all(self, service: DataWalletService) -> list[Path]:
-        paths = [self._save_wallet_snapshot(service, wallet_id) for wallet_id in sorted(service.wallets)]
+        paths = [
+            self._save_wallet_snapshot(service, wallet_id) for wallet_id in sorted(service.wallets)
+        ]
         self.save_analytics_ledger(service)
         return paths
 

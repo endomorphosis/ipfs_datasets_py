@@ -54,6 +54,7 @@ try:
 
     ensure_symai_config_for_import()
     from symai import Symbol as _SymaiSymbol  # type: ignore
+
     _SYMAI_AVAILABLE = True
 except (ImportError, SystemExit):
     _SymaiSymbol = None  # type: ignore
@@ -237,9 +238,15 @@ class SemanticNormalizer:
                 f" the canonical form, lowercase, no punctuation.",
                 semantic=True,
             )
-            response = str(prompt.query(
-                "Provide the canonical term. Reply with ONE word or short phrase only."
-            )).strip().lower()
+            response = (
+                str(
+                    prompt.query(
+                        "Provide the canonical term. Reply with ONE word or short phrase only."
+                    )
+                )
+                .strip()
+                .lower()
+            )
 
             # Reject clearly bad responses (too long, empty, contains space-heavy text)
             if not response or len(response) > 50 or "\n" in response:

@@ -5,6 +5,7 @@ Comprehensive test for MCP tools coverage and functionality.
 This script tests all MCP tools to verify that they properly expose the
 features from the ipfs_datasets_py library.
 """
+
 import os
 import sys
 import json
@@ -41,53 +42,30 @@ TOOL_CATEGORIES = [
     "provenance_tools",
     "web_archive_tools",
     "cli",
-    "functions"
+    "functions",
 ]
 
 # Expected tools in each category
 EXPECTED_TOOLS = {
-    "dataset_tools": [
-        "load_dataset",
-        "save_dataset",
-        "process_dataset",
-        "convert_dataset_format"
-    ],
-    "ipfs_tools": [
-        "get_from_ipfs",
-        "pin_to_ipfs"
-    ],
-    "vector_tools": [
-        "create_vector_index",
-        "search_vector_index"
-    ],
-    "graph_tools": [
-        "query_knowledge_graph"
-    ],
-    "audit_tools": [
-        "record_audit_event",
-        "generate_audit_report"
-    ],
-    "security_tools": [
-        "check_access_permission"
-    ],
-    "provenance_tools": [
-        "record_provenance"
-    ],
+    "dataset_tools": ["load_dataset", "save_dataset", "process_dataset", "convert_dataset_format"],
+    "ipfs_tools": ["get_from_ipfs", "pin_to_ipfs"],
+    "vector_tools": ["create_vector_index", "search_vector_index"],
+    "graph_tools": ["query_knowledge_graph"],
+    "audit_tools": ["record_audit_event", "generate_audit_report"],
+    "security_tools": ["check_access_permission"],
+    "provenance_tools": ["record_provenance"],
     "web_archive_tools": [
         "create_warc",
         "index_warc",
         "extract_dataset_from_cdxj",
         "extract_text_from_warc",
         "extract_links_from_warc",
-        "extract_metadata_from_warc"
+        "extract_metadata_from_warc",
     ],
-    "cli": [
-        "execute_command"
-    ],
-    "functions": [
-        "execute_python_snippet"
-    ]
+    "cli": ["execute_command"],
+    "functions": ["execute_python_snippet"],
 }
+
 
 def get_available_tools():
     """Get all available MCP tools."""
@@ -111,6 +89,7 @@ def get_available_tools():
 
     return available_tools
 
+
 def check_tool_availability():
     """Check which expected tools are available."""
     available_tools = get_available_tools()
@@ -120,7 +99,7 @@ def check_tool_availability():
         category_results = {
             "expected": expected,
             "available": available_tools.get(category, []),
-            "missing": []
+            "missing": [],
         }
 
         # Find missing tools
@@ -129,8 +108,7 @@ def check_tool_availability():
                 category_results["missing"].append(tool)
 
         category_results["coverage"] = (
-            len(category_results["available"]) / len(expected) * 100
-            if expected else 0
+            len(category_results["available"]) / len(expected) * 100 if expected else 0
         )
 
         results[category] = category_results
@@ -142,10 +120,11 @@ def check_tool_availability():
     results["overall"] = {
         "expected_count": all_expected,
         "available_count": all_available,
-        "coverage_percentage": all_available / all_expected * 100 if all_expected else 0
+        "coverage_percentage": all_available / all_expected * 100 if all_expected else 0,
     }
 
     return results
+
 
 def print_availability_results(results):
     """Print the results of the availability check."""
@@ -168,14 +147,10 @@ def print_availability_results(results):
     logger.info(f"Total available tools: {results['overall']['available_count']}")
     logger.info(f"Overall coverage: {results['overall']['coverage_percentage']:.1f}%")
 
+
 async def test_tool_functionality(category, tool_name):
     """Test the functionality of a specific tool."""
-    result = {
-        "category": category,
-        "tool": tool_name,
-        "status": "unknown",
-        "message": ""
-    }
+    result = {"category": category, "tool": tool_name, "status": "unknown", "message": ""}
 
     try:
         # Attempt to dynamically import the tool
@@ -186,7 +161,9 @@ async def test_tool_functionality(category, tool_name):
             result["status"] = "imported"
 
             # Check if the module has an async function with the same name as the module
-            if hasattr(tool_module, tool_name) and asyncio.iscoroutinefunction(getattr(tool_module, tool_name)):
+            if hasattr(tool_module, tool_name) and asyncio.iscoroutinefunction(
+                getattr(tool_module, tool_name)
+            ):
                 result["status"] = "available"
                 result["message"] = "Tool is properly implemented"
             else:
@@ -203,6 +180,7 @@ async def test_tool_functionality(category, tool_name):
 
     return result
 
+
 async def test_all_tools(available_tools):
     """Test all available tools."""
     test_results = []
@@ -214,17 +192,13 @@ async def test_all_tools(available_tools):
 
     return test_results
 
+
 def print_functionality_results(results):
     """Print the results of the functionality tests."""
     logger.info("\nMCP Tool Functionality Results")
     logger.info("=" * 50)
 
-    status_counts = {
-        "available": 0,
-        "incomplete": 0,
-        "import_error": 0,
-        "error": 0
-    }
+    status_counts = {"available": 0, "incomplete": 0, "import_error": 0, "error": 0}
 
     for result in results:
         status = result["status"]
@@ -240,18 +214,20 @@ def print_functionality_results(results):
     for status, count in status_counts.items():
         logger.info(f"{status}: {count}")
 
+
 def save_results(availability_results, functionality_results):
     """Save the test results to a JSON file."""
     combined_results = {
         "availability": availability_results,
         "functionality": functionality_results,
-        "timestamp": "__TIMESTAMP__"  # Will be replaced with actual timestamp
+        "timestamp": "__TIMESTAMP__",  # Will be replaced with actual timestamp
     }
 
     with open(TEST_RESULTS_PATH, "w") as f:
         json.dump(combined_results, f, indent=2)
 
     logger.info(f"\nResults saved to {TEST_RESULTS_PATH}")
+
 
 async def main():
     """Main function."""
@@ -272,6 +248,7 @@ async def main():
     save_results(availability_results, functionality_results)
 
     logger.info("MCP Tools Test completed")
+
 
 if __name__ == "__main__":
     anyio.run(main())

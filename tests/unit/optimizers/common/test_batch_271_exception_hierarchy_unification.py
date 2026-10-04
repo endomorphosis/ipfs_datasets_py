@@ -14,7 +14,9 @@ from ipfs_datasets_py.optimizers.agentic import exceptions as agentic_exceptions
 from ipfs_datasets_py.optimizers.graphrag import exceptions as graphrag_exceptions
 from ipfs_datasets_py.optimizers.graphrag.schema_validator import OntologySchemaError
 from ipfs_datasets_py.optimizers.logic import exceptions as logic_exceptions
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import exceptions as logic_theorem_exceptions
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    exceptions as logic_theorem_exceptions,
+)
 
 
 def test_agentic_reexports_common_exception_types() -> None:

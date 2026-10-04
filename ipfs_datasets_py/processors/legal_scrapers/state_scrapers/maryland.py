@@ -21,18 +21,20 @@ class MarylandScraper(BaseStateScraper):
     _MD_ARTICLE_CODE_RE = re.compile(r"\(([A-Za-z0-9]+)\)\s*$")
     _MD_NEXT_TRAIL_RE = re.compile(r"\s+Next\s*$", re.IGNORECASE)
     _MD_SECTION_CITE_RE = re.compile(r"§\s*([0-9A-Za-z\-\u2010-\u2015\.]+)")
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Maryland's legislative website."""
         return "https://mgaleg.maryland.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Maryland."""
-        return [{
-            "name": "Maryland Code",
-            "url": f"{self.get_base_url()}/mgawebsite/Laws/Statutes",
-            "type": "Code"
-        }]
+        return [
+            {
+                "name": "Maryland Code",
+                "url": f"{self.get_base_url()}/mgawebsite/Laws/Statutes",
+                "type": "Code",
+            }
+        ]
 
     def _extract_article_code(self, display_text: str, value: str) -> str:
         match = self._MD_ARTICLE_CODE_RE.search(str(display_text or ""))
@@ -79,14 +81,18 @@ class MarylandScraper(BaseStateScraper):
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.read().decode("utf-8", errors="ignore")
         except Exception:
-            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                url, timeout_seconds=timeout
+            )
             if isinstance(payload, bytes):
                 return payload.decode("utf-8", errors="ignore")
             if payload:
                 return str(payload)
             return ""
 
-    async def _scrape_api_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_api_sections(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
         articles_payload = await self._fetch_json(articles_url)
         if not isinstance(articles_payload, list):
@@ -231,7 +237,9 @@ class MarylandScraper(BaseStateScraper):
                         continue
                     if statute is None:
                         continue
-                    if not self._is_maryland_api_record(statute) and self._is_low_quality_statute_record(statute):
+                    if not self._is_maryland_api_record(
+                        statute
+                    ) and self._is_low_quality_statute_record(statute):
                         continue
 
                     statutes.append(statute)
@@ -350,7 +358,7 @@ class MarylandScraper(BaseStateScraper):
                 "article_code": article_code,
             },
         )
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -358,13 +366,13 @@ class MarylandScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Maryland's legislative website.
-        
+
         Maryland uses JavaScript for statute search, so we use Playwright.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -372,12 +380,16 @@ class MarylandScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
-        api_statutes = await self._scrape_api_sections(code_name, max_statutes=max(10, return_threshold))
+        api_statutes = await self._scrape_api_sections(
+            code_name, max_statutes=max(10, return_threshold)
+        )
         if len(api_statutes) >= return_threshold:
             return api_statutes
 
         if not self._full_corpus_enabled():
-            direct_statutes = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct_statutes = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct_statutes:
                 return direct_statutes
 
@@ -398,7 +410,9 @@ class MarylandScraper(BaseStateScraper):
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
-                if not self._is_maryland_api_record(statute) and self._is_low_quality_statute_record(statute):
+                if not self._is_maryland_api_record(
+                    statute
+                ) and self._is_low_quality_statute_record(statute):
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
@@ -419,7 +433,7 @@ class MarylandScraper(BaseStateScraper):
                     "Md. Code Ann.",
                     wait_for_selector="a[href*='statute'], a[href*='laws'], .article-link",
                     timeout=45000,
-                        wait_until="domcontentloaded",
+                    wait_until="domcontentloaded",
                     max_sections=max(10, return_threshold),
                 )
             except Exception:
@@ -430,7 +444,9 @@ class MarylandScraper(BaseStateScraper):
                 return merged
 
             try:
-                generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=max(10, return_threshold))
+                generic = await self._generic_scrape(
+                    code_name, candidate, "Md. Code Ann.", max_sections=max(10, return_threshold)
+                )
             except Exception:
                 generic = []
 
@@ -440,7 +456,9 @@ class MarylandScraper(BaseStateScraper):
 
         return merged
 
-    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         seeds = [
             ("State Government", "GSG", "1-101"),
             ("Criminal Law", "GCR", "1-101"),

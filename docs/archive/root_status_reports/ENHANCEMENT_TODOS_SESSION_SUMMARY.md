@@ -41,12 +41,12 @@ Created comprehensive FormulaAnalyzer class that:
 
 ```python
 provers = {
-    'z3': {'speed': 'fast', 'good_for': ['FOL', 'arithmetic']},
-    'cvc5': {'speed': 'medium', 'good_for': ['quantified', 'complex']},
-    'lean': {'speed': 'slow', 'good_for': ['modal', 'very_complex']},
-    'coq': {'speed': 'slow', 'good_for': ['modal', 'very_complex']},
-    'symbolicai': {'speed': 'very_slow', 'good_for': ['modal', 'semantic']},
-    'native': {'speed': 'very_fast', 'good_for': ['simple', 'propositional']}
+    "z3": {"speed": "fast", "good_for": ["FOL", "arithmetic"]},
+    "cvc5": {"speed": "medium", "good_for": ["quantified", "complex"]},
+    "lean": {"speed": "slow", "good_for": ["modal", "very_complex"]},
+    "coq": {"speed": "slow", "good_for": ["modal", "very_complex"]},
+    "symbolicai": {"speed": "very_slow", "good_for": ["modal", "semantic"]},
+    "native": {"speed": "very_fast", "good_for": ["simple", "propositional"]},
 }
 ```
 

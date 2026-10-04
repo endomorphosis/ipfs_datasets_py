@@ -14,6 +14,7 @@ ER206 – clear() + export_jsonl() round-trip: cleared log → 0 entries
 
 Grand total (v24): 3,400 + 57 = 3,457 tests
 """
+
 from __future__ import annotations
 
 import sys
@@ -29,14 +30,17 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
 
+
 def _make_manager(path=None):
     from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
     return DelegationManager(path or tempfile.mkdtemp())
 
 
 def _make_token(resource="tools/invoke", ability="*", nonce=None):
     from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
     import uuid
+
     return DelegationToken(
         issuer="did:key:issuer",
         audience="did:key:audience",
@@ -52,6 +56,7 @@ def _add_token(mgr, token):
 
 def _make_checker():
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     return ComplianceChecker()
 
 
@@ -59,17 +64,20 @@ def _make_compiler():
     from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
         NLUCANPolicyCompiler,
     )
+
     return NLUCANPolicyCompiler()
 
 
 def _make_audit_log():
     from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
     return PolicyAuditLog(max_entries=100)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EI197 – active_tokens_by_resource
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestEI197ActiveTokensByResource:
     """EI197: DelegationManager.active_tokens_by_resource(resource)."""
@@ -123,13 +131,15 @@ class TestEI197ActiveTokensByResource:
         mgr = _make_manager()
         token = _make_token(resource="tools/invoke")
         mgr.add(token)
-        assert list(mgr.active_tokens_by_resource("tools/invoke")) == \
-               list(mgr.active_tokens_by_resource("tools/invoke"))
+        assert list(mgr.active_tokens_by_resource("tools/invoke")) == list(
+            mgr.active_tokens_by_resource("tools/invoke")
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EJ198 – compile_batch_with_explain
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestEJ198CompileBatchWithExplain:
     """EJ198: NLUCANPolicyCompiler.compile_batch_with_explain()."""
@@ -181,26 +191,31 @@ class TestEJ198CompileBatchWithExplain:
 # EK199 – ComplianceMergeResult.total
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEK199ComplianceMergeResultTotal:
     """EK199: ComplianceMergeResult.total property."""
 
     def test_total_all_added(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=3, skipped_protected=0, skipped_duplicate=0)
         assert r.total == 3
 
     def test_total_mix(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=2, skipped_protected=1, skipped_duplicate=3)
         assert r.total == 6
 
     def test_total_all_zero(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=0, skipped_protected=0, skipped_duplicate=0)
         assert r.total == 0
 
     def test_total_not_affected_by_int_equality(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceMergeResult
+
         r = ComplianceMergeResult(added=2, skipped_protected=1, skipped_duplicate=4)
         assert r == 2  # int equality uses added only
         assert r.total == 7  # total includes all three
@@ -209,15 +224,19 @@ class TestEK199ComplianceMergeResultTotal:
         c1 = _make_checker()
         c2 = _make_checker()
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceRule, ComplianceResult,
+            ComplianceRule,
+            ComplianceResult,
         )
-        c2.add_rule(ComplianceRule(
-            rule_id="new_rule_v24",
-            description="Test rule v24",
-            check_fn=lambda req: ComplianceResult(
-                rule_id="new_rule_v24", passed=True, message="ok"
-            ),
-        ))
+
+        c2.add_rule(
+            ComplianceRule(
+                rule_id="new_rule_v24",
+                description="Test rule v24",
+                check_fn=lambda req: ComplianceResult(
+                    rule_id="new_rule_v24", passed=True, message="ok"
+                ),
+            )
+        )
         result = c1.merge(c2)
         assert result.total >= result.added
 
@@ -226,16 +245,19 @@ class TestEK199ComplianceMergeResultTotal:
 # EL200 – I18NConflictReport.conflict_density()
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEL200ConflictDensity:
     """EL200: I18NConflictReport.conflict_density()."""
 
     def test_density_zero_for_empty_report(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         assert report.conflict_density() == 0.0
 
     def test_density_with_one_conflict_eight_langs(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport, detect_all_languages
+
         # Construct a minimal report with known structure
         report = detect_all_languages("may not may")
         n = len(report.by_language)
@@ -244,17 +266,20 @@ class TestEL200ConflictDensity:
 
     def test_density_all_empty_langs(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport(by_language={"fr": [], "es": []})
         assert report.conflict_density() == 0.0
 
     def test_density_is_float(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport(by_language={"fr": ["x"], "es": []})
         density = report.conflict_density()
         assert isinstance(density, float)
 
     def test_density_scales_with_conflicts(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report1 = I18NConflictReport(by_language={"fr": ["a"], "es": []})
         report2 = I18NConflictReport(by_language={"fr": ["a", "b"], "es": []})
         assert report2.conflict_density() > report1.conflict_density()
@@ -264,6 +289,7 @@ class TestEL200ConflictDensity:
 # EM201 – Chinese keywords (_ZH_DEONTIC_KEYWORDS)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEM201ChineseKeywords:
     """EM201: _ZH_DEONTIC_KEYWORDS inline Chinese + 9th language in detect_all_languages."""
 
@@ -271,18 +297,21 @@ class TestEM201ChineseKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert isinstance(_ZH_DEONTIC_KEYWORDS, dict)
 
     def test_zh_has_three_types(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert set(_ZH_DEONTIC_KEYWORDS.keys()) >= {"permission", "prohibition", "obligation"}
 
     def test_zh_permission_has_keywords(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         assert len(_ZH_DEONTIC_KEYWORDS["permission"]) >= 3
 
     def test_load_i18n_keywords_zh_returns_inline(self):
@@ -290,16 +319,19 @@ class TestEM201ChineseKeywords:
             _load_i18n_keywords,
             _ZH_DEONTIC_KEYWORDS,
         )
+
         result = _load_i18n_keywords("zh")
         assert result is _ZH_DEONTIC_KEYWORDS
 
     def test_detect_all_languages_has_zh(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert "zh" in report.by_language
 
     def test_detect_all_languages_has_nine_languages(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert len(report.by_language) >= 9
 
@@ -307,6 +339,7 @@ class TestEM201ChineseKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _ZH_DEONTIC_KEYWORDS,
         )
+
         # Just check that "禁止" is in prohibition list
         assert any("禁止" in kw for kw in _ZH_DEONTIC_KEYWORDS["prohibition"])
 
@@ -314,6 +347,7 @@ class TestEM201ChineseKeywords:
 # ═══════════════════════════════════════════════════════════════════════════
 # EN202 – compile_batch(fail_fast=True)
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestEN202CompileBatchFailFast:
     """EN202: compile_batch(fail_fast=True) stops on first error batch."""
@@ -341,6 +375,7 @@ class TestEN202CompileBatchFailFast:
         from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
             NLUCANPolicyCompiler,
         )
+
         sig = inspect.signature(NLUCANPolicyCompiler.compile_batch)
         assert sig.parameters["fail_fast"].default is False
 
@@ -365,6 +400,7 @@ class TestEN202CompileBatchFailFast:
 # ═══════════════════════════════════════════════════════════════════════════
 # EO203 – active_token_count caching across multiple revokes
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestEO203ActiveTokenCountCaching:
     """EO203: active_token_count stays consistent across multiple revoke() calls."""
@@ -421,6 +457,7 @@ class TestEO203ActiveTokenCountCaching:
 # EP204 – Japanese text → detect_i18n_clauses("ja") integration
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEP204JapaneseIntegration:
     """EP204: Japanese text → detect_i18n_clauses("ja") pipeline."""
 
@@ -428,6 +465,7 @@ class TestEP204JapaneseIntegration:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_clauses,
         )
+
         result = detect_i18n_clauses("test text", "ja")
         assert isinstance(result, list)
 
@@ -436,6 +474,7 @@ class TestEP204JapaneseIntegration:
             detect_i18n_clauses,
             _JA_DEONTIC_KEYWORDS,
         )
+
         # Craft text that contains both permission and prohibition keywords
         perm = _JA_DEONTIC_KEYWORDS["permission"][0]
         prohib = _JA_DEONTIC_KEYWORDS["prohibition"][0]
@@ -448,17 +487,20 @@ class TestEP204JapaneseIntegration:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_clauses,
         )
+
         result = detect_i18n_clauses("", "ja")
         assert isinstance(result, list)
 
     def test_detect_all_languages_zh_slot_exists(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("可以 不得")
         assert "zh" in report.by_language
         assert isinstance(report.by_language["zh"], list)
 
     def test_detect_all_languages_ja_slot_exists(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("してもよい")
         assert "ja" in report.by_language
         assert isinstance(report.by_language["ja"], list)
@@ -467,6 +509,7 @@ class TestEP204JapaneseIntegration:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _load_i18n_keywords,
         )
+
         kw = _load_i18n_keywords("zh")
         assert len(kw) >= 3
 
@@ -475,11 +518,13 @@ class TestEP204JapaneseIntegration:
 # EQ205 – get_clauses_by_type + detect_i18n_clauses("pt") combined
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEQ205PortuguesePipelineCombined:
     """EQ205: PortugueseParser.get_clauses_by_type() combined with detect_i18n_clauses("pt")."""
 
     def test_get_clauses_by_type_subset_of_parse(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseParser
+
         parser = PortugueseParser()
         text = "O agente pode ler dados. O agente não pode excluir."
         all_clauses = parser.parse(text)
@@ -490,16 +535,19 @@ class TestEQ205PortuguesePipelineCombined:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_clauses,
         )
+
         result = detect_i18n_clauses("O agente pode ler.", "pt")
         assert isinstance(result, list)
 
     def test_detect_all_languages_includes_pt(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("O agente deve não pode")
         assert "pt" in report.by_language
 
     def test_get_clauses_by_type_permission(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseParser
+
         parser = PortugueseParser()
         text = "O agente pode acessar o banco de dados."
         clauses = parser.get_clauses_by_type(text, "permission")
@@ -507,6 +555,7 @@ class TestEQ205PortuguesePipelineCombined:
 
     def test_get_clauses_by_type_prohibition(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseParser
+
         parser = PortugueseParser()
         text = "O agente não pode excluir registros."
         clauses = parser.get_clauses_by_type(text, "prohibition")
@@ -516,6 +565,7 @@ class TestEQ205PortuguesePipelineCombined:
 # ═══════════════════════════════════════════════════════════════════════════
 # ER206 – clear() + export_jsonl() round-trip: cleared log → 0 entries
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestER206ClearExportRoundTrip:
     """ER206: clear() + export_jsonl(): cleared log exports 0 audit entries."""

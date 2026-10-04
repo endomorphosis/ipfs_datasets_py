@@ -9,12 +9,7 @@ from pathlib import Path
 def _load_email_cli_module():
     import importlib.util
 
-    module_path = (
-        Path(__file__).resolve().parents[2]
-        / "ipfs_datasets_py"
-        / "cli"
-        / "email_cli.py"
-    )
+    module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "email_cli.py"
     spec = importlib.util.spec_from_file_location("email_cli_authority_under_test", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -68,7 +63,9 @@ def test_email_cli_authority_enrichment_passes_catalog_path(tmp_path: Path, monk
     assert payload["catalog_path"] == str(catalog_path)
 
 
-def test_email_cli_authority_enrichment_error_payload_includes_catalog_path(tmp_path: Path, monkeypatch) -> None:
+def test_email_cli_authority_enrichment_error_payload_includes_catalog_path(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_email_cli_module()
 
     timeline_path = tmp_path / "email_timeline_handoff.json"

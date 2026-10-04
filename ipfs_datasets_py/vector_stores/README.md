@@ -30,7 +30,7 @@ store = await create_vector_store(
     "documents",
     dimension=768,
     use_embeddings_router=True,  # Auto-generate embeddings
-    use_ipfs_router=True          # Store to IPFS
+    use_ipfs_router=True,  # Store to IPFS
 )
 
 await store.create_collection()

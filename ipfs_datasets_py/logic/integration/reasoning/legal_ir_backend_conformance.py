@@ -20,9 +20,7 @@ from enum import Enum
 from typing import Any, Final, Optional
 
 
-LEGAL_IR_BACKEND_CONFORMANCE_SCHEMA_VERSION: Final = (
-    "legal-ir-backend-conformance-v1"
-)
+LEGAL_IR_BACKEND_CONFORMANCE_SCHEMA_VERSION: Final = "legal-ir-backend-conformance-v1"
 
 
 class LegalIRBackendTarget(str, Enum):
@@ -287,18 +285,12 @@ class LegalIRBackendUnsupportedDiagnostic:
     message: str = ""
     obligation_ids: tuple[str, ...] = ()
     severity: str = LegalIRBackendDiagnosticSeverity.WARNING.value
-    diagnostic_type: str = (
-        LegalIRBackendConformanceDiagnosticType.UNSUPPORTED_FEATURE.value
-    )
+    diagnostic_type: str = LegalIRBackendConformanceDiagnosticType.UNSUPPORTED_FEATURE.value
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "backend", canonical_legal_ir_backend_target(self.backend)
-        )
-        object.__setattr__(
-            self, "feature", canonical_legal_ir_backend_feature(self.feature)
-        )
+        object.__setattr__(self, "backend", canonical_legal_ir_backend_target(self.backend))
+        object.__setattr__(self, "feature", canonical_legal_ir_backend_feature(self.feature))
         object.__setattr__(
             self,
             "obligation_ids",
@@ -307,8 +299,7 @@ class LegalIRBackendUnsupportedDiagnostic:
         object.__setattr__(
             self,
             "severity",
-            _canonical_token(self.severity)
-            or LegalIRBackendDiagnosticSeverity.WARNING.value,
+            _canonical_token(self.severity) or LegalIRBackendDiagnosticSeverity.WARNING.value,
         )
         object.__setattr__(
             self,
@@ -351,9 +342,7 @@ class LegalIRBackendUnsupportedDiagnostic:
         }
 
     @classmethod
-    def from_dict(
-        cls, data: Mapping[str, Any]
-    ) -> "LegalIRBackendUnsupportedDiagnostic":
+    def from_dict(cls, data: Mapping[str, Any]) -> "LegalIRBackendUnsupportedDiagnostic":
         feature = (
             data.get("feature")
             or data.get("backend_feature")
@@ -376,9 +365,7 @@ class LegalIRBackendUnsupportedDiagnostic:
             reason_code=str(reason),
             message=str(data.get("message") or ""),
             obligation_ids=tuple(str(item) for item in _sequence(obligation_ids)),
-            severity=str(
-                data.get("severity") or LegalIRBackendDiagnosticSeverity.WARNING.value
-            ),
+            severity=str(data.get("severity") or LegalIRBackendDiagnosticSeverity.WARNING.value),
             diagnostic_type=str(
                 data.get("diagnostic_type")
                 or data.get("type")
@@ -451,9 +438,7 @@ class LegalIRBackendProjection:
             )
         object.__setattr__(self, "semantics", dict(sorted(semantics.items())))
 
-        emitted = set(
-            canonical_legal_ir_backend_feature(item) for item in self.emitted_features
-        )
+        emitted = set(canonical_legal_ir_backend_feature(item) for item in self.emitted_features)
         emitted.update(feature for feature, values in semantics.items() if values)
         if self.emitted_obligation_ids:
             emitted.add(LegalIRBackendFeature.OBLIGATION_PRESERVATION.value)
@@ -506,9 +491,7 @@ class LegalIRBackendProjection:
             "emitted_features": list(self.emitted_features),
             "emitted_obligation_ids": list(self.emitted_obligation_ids),
             "metadata": _json_ready(self.metadata),
-            "semantics": {
-                feature: list(values) for feature, values in self.semantics.items()
-            },
+            "semantics": {feature: list(values) for feature, values in self.semantics.items()},
             "supported_features": list(self.supported_features),
             "unsupported_diagnostics": [
                 diagnostic.to_dict() for diagnostic in self.unsupported_diagnostics
@@ -528,9 +511,7 @@ class LegalIRBackendFeatureCoverage:
     silent_drop_backends: tuple[str, ...] = ()
     mismatch_backend_pairs: tuple[tuple[str, str], ...] = ()
     obligation_ids: tuple[str, ...] = ()
-    missing_obligation_ids_by_backend: Mapping[str, tuple[str, ...]] = field(
-        default_factory=dict
-    )
+    missing_obligation_ids_by_backend: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
     @property
     def covered(self) -> bool:
@@ -601,9 +582,7 @@ class LegalIRBackendConformanceReport:
     diagnostics: tuple[LegalIRBackendConformanceDiagnostic, ...]
     block_reasons: tuple[str, ...]
     gate_id: str
-    config: LegalIRBackendConformanceConfig = field(
-        default_factory=LegalIRBackendConformanceConfig
-    )
+    config: LegalIRBackendConformanceConfig = field(default_factory=LegalIRBackendConformanceConfig)
     schema_version: str = LEGAL_IR_BACKEND_CONFORMANCE_SCHEMA_VERSION
 
     @property
@@ -637,8 +616,7 @@ class LegalIRBackendConformanceReport:
             "hard_promotion_gate": True,
             "promotion_allowed": self.promotion_allowed,
             "projections": {
-                backend: projection.to_dict()
-                for backend, projection in self.projections.items()
+                backend: projection.to_dict() for backend, projection in self.projections.items()
             },
             "required_feature_count": self.required_feature_count,
             "schema_version": self.schema_version,
@@ -756,9 +734,7 @@ def validate_legal_ir_backend_conformance(
         all_features.update(projection.supported_features)
         all_features.update(projection.emitted_features)
         all_features.update(projection.semantics)
-        all_features.update(
-            diagnostic.feature for diagnostic in projection.unsupported_diagnostics
-        )
+        all_features.update(diagnostic.feature for diagnostic in projection.unsupported_diagnostics)
 
     coverage: dict[str, LegalIRBackendFeatureCoverage] = {}
     for feature in sorted(all_features):
@@ -1024,12 +1000,11 @@ def _obligations_by_feature(obligations: Sequence[Any]) -> dict[str, tuple[str, 
         feature = _feature_for_obligation(obligation)
         by_feature.setdefault(feature, []).append(obligation_id)
     if all_ids:
-        by_feature.setdefault(
-            LegalIRBackendFeature.OBLIGATION_PRESERVATION.value, []
-        ).extend(all_ids)
+        by_feature.setdefault(LegalIRBackendFeature.OBLIGATION_PRESERVATION.value, []).extend(
+            all_ids
+        )
     return {
-        feature: tuple(sorted(_unique_text(ids)))
-        for feature, ids in sorted(by_feature.items())
+        feature: tuple(sorted(_unique_text(ids))) for feature, ids in sorted(by_feature.items())
     }
 
 
@@ -1115,9 +1090,7 @@ def _extract_semantic_projection(payload: Any) -> dict[str, tuple[str, ...]]:
 
     _extract_structural_semantics(semantics, source)
     return {
-        feature: tuple(sorted(values))
-        for feature, values in sorted(semantics.items())
-        if values
+        feature: tuple(sorted(values)) for feature, values in sorted(semantics.items()) if values
     }
 
 
@@ -1311,8 +1284,7 @@ def _triple_signature(value: Any) -> str:
             return "|".join(_canonical_token(item) for item in seq[:3])
         return _canonical_signature(value)
     return "|".join(
-        _canonical_token(data.get(key, ""))
-        for key in ("subject", "predicate", "object")
+        _canonical_token(data.get(key, "")) for key in ("subject", "predicate", "object")
     )
 
 
@@ -1320,17 +1292,12 @@ def _edge_signature(value: Any) -> str:
     data = _mapping(value)
     if not data:
         return _canonical_signature(value)
-    return "|".join(
-        _canonical_token(data.get(key, ""))
-        for key in ("source", "label", "target")
-    )
+    return "|".join(_canonical_token(data.get(key, "")) for key in ("source", "label", "target"))
 
 
 def _contains_temporal_signal(value: Any) -> bool:
     text = _stable_json(value).lower()
-    return bool(
-        re.search(r"\b(after|before|deadline|during|until|when|within)\b", text)
-    )
+    return bool(re.search(r"\b(after|before|deadline|during|until|when|within)\b", text))
 
 
 __all__ = [

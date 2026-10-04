@@ -14,6 +14,7 @@ try:
     from ipfs_datasets_py.logic.fol.converter import FOLConverter
     from ipfs_datasets_py.logic.deontic.converter import DeonticConverter
     from ipfs_datasets_py.logic.common.proof_cache import ProofCache
+
     LOGIC_AVAILABLE = True
 except ImportError:
     LOGIC_AVAILABLE = False
@@ -32,16 +33,16 @@ class TestEndToEndWorkflows:
         # GIVEN
         statement = "All humans are mortal. Socrates is human."
         converter = FOLConverter()
-        
+
         # WHEN - Complete conversion workflow
         result = converter.to_fol(statement)
-        
+
         # THEN
         assert result is not None
         assert len(result) > 0
         # Should contain quantifier or logical structure
         assert any(token in result.lower() for token in ["forall", "all", "∀", "human", "mortal"])
-        
+
     def test_complete_workflow_deontic_conversion(self):
         """
         GIVEN a legal/deontic statement
@@ -51,15 +52,15 @@ class TestEndToEndWorkflows:
         # GIVEN
         statement = "It is obligatory that citizens pay taxes"
         converter = DeonticConverter()
-        
+
         # WHEN
         result = converter.to_deontic(statement)
-        
+
         # THEN
         assert result is not None
         # Should contain deontic operator
         assert any(op in result for op in ["O(", "obligatory", "Obligation"])
-        
+
     def test_complete_workflow_temporal_logic(self):
         """
         GIVEN a temporal statement
@@ -69,14 +70,14 @@ class TestEndToEndWorkflows:
         # GIVEN
         statement = "Eventually the system will be ready"
         converter = FOLConverter()  # Handles temporal extensions
-        
+
         # WHEN
         result = converter.to_fol(statement)
-        
+
         # THEN
         assert result is not None
         assert len(result) > 0
-        
+
     def test_batch_processing_workflow(self):
         """
         GIVEN multiple statements to convert
@@ -91,7 +92,7 @@ class TestEndToEndWorkflows:
             "Therefore, some birds cannot fly",
         ]
         converter = FOLConverter()
-        
+
         # WHEN
         start_time = time.time()
         results = []
@@ -99,12 +100,12 @@ class TestEndToEndWorkflows:
             result = converter.to_fol(stmt)
             results.append(result)
         duration = time.time() - start_time
-        
+
         # THEN
         assert len(results) == len(statements)
         assert all(r is not None for r in results)
         assert duration < 5.0, f"Batch processing took {duration:.2f}s, expected <5s"
-        
+
     def test_caching_integration_workflow(self):
         """
         GIVEN a formula that will be converted multiple times
@@ -115,24 +116,24 @@ class TestEndToEndWorkflows:
         formula = "All x (P(x) implies Q(x))"
         converter = FOLConverter()
         cache = ProofCache()
-        
+
         # WHEN - First conversion (cache miss)
         start1 = time.time()
         result1 = converter.to_fol(formula)
         duration1 = time.time() - start1
-        
+
         # Second conversion (potential cache hit)
         start2 = time.time()
         result2 = converter.to_fol(formula)
         duration2 = time.time() - start2
-        
+
         # THEN
         assert result1 == result2
         # Second call might be cached (but fallback methods may not cache)
         # Just verify both succeed
         assert result1 is not None
         assert result2 is not None
-        
+
     def test_monitoring_integration_workflow(self):
         """
         GIVEN a conversion operation
@@ -142,12 +143,12 @@ class TestEndToEndWorkflows:
         # GIVEN
         formula = "test formula"
         converter = FOLConverter()
-        
+
         # WHEN
         start_time = time.time()
         result = converter.to_fol(formula)
         duration = time.time() - start_time
-        
+
         # THEN - Operation completed with measurable duration
         assert result is not None
         assert duration >= 0

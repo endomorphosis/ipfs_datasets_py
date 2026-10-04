@@ -109,39 +109,38 @@ Create Python script to validate all workflow files against best practices.
 Workflow Validator - Validates GitHub Actions workflow files.
 Usage: python validate_workflows.py [--fix] [--report-json]
 """
+
 import yaml
 from pathlib import Path
 from typing import List, Dict, Any
 
+
 class WorkflowValidator:
     def __init__(self):
         self.issues = []
-        
+
     def validate_file(self, filepath: Path) -> Dict[str, Any]:
         """Validate a single workflow file."""
         with open(filepath) as f:
             try:
                 workflow = yaml.safe_load(f)
             except yaml.YAMLError as e:
-                return {'file': str(filepath), 'valid': False, 
-                        'error': f'YAML parse error: {e}'}
-        
+                return {"file": str(filepath), "valid": False, "error": f"YAML parse error: {e}"}
+
         issues = []
-        
+
         # Check required fields
-        if not workflow.get('name'):
-            issues.append({'severity': 'error', 'message': 'Missing name field'})
-        
+        if not workflow.get("name"):
+            issues.append({"severity": "error", "message": "Missing name field"})
+
         # Check permissions
-        if 'permissions' not in workflow:
-            issues.append({'severity': 'warning', 
-                          'message': 'Missing explicit permissions'})
-        
+        if "permissions" not in workflow:
+            issues.append({"severity": "warning", "message": "Missing explicit permissions"})
+
         # Check for self-hosted without fallback
         # ... (more validation logic)
-        
-        return {'file': str(filepath), 'valid': len(issues) == 0, 
-                'issues': issues}
+
+        return {"file": str(filepath), "valid": len(issues) == 0, "issues": issues}
 ```
 
 #### Task 4.2: CI Pipeline for Workflow Validation (8 hours)

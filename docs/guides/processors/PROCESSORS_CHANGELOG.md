@@ -140,8 +140,10 @@ from ipfs_datasets_py.processors.core import UniversalProcessor
 
 processor = UniversalProcessor()
 
+
 async def main():
     result = await processor.process("document.pdf")
+
 
 anyio.run(main)
 ```

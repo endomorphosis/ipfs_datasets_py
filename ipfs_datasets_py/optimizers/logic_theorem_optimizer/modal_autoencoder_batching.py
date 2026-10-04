@@ -138,9 +138,7 @@ def _sparse_items(value: Any, *, name: str) -> tuple[tuple[Any, float], ...]:
             raise BatchCollationError(f"combined {name}[{key!r}] weight must be finite")
         merged[order_key] = (key, combined)
     return tuple(
-        (merged[key][0], merged[key][1])
-        for key in sorted(merged)
-        if merged[key][1] != 0.0
+        (merged[key][0], merged[key][1]) for key in sorted(merged) if merged[key][1] != 0.0
     )
 
 
@@ -203,9 +201,8 @@ class PackedSparseMinibatch:
             raise BatchCollationError("packed feature index is outside the vocabulary")
         if len(self.target_row_offsets) != row_count + 1:
             raise BatchCollationError("target_row_offsets must contain one boundary per row")
-        if (
-            self.target_row_offsets[0] != 0
-            or self.target_row_offsets[-1] != len(self.target_indices)
+        if self.target_row_offsets[0] != 0 or self.target_row_offsets[-1] != len(
+            self.target_indices
         ):
             raise BatchCollationError("target row offsets do not bound packed indices")
         if len(self.target_indices) != len(self.target_values):
@@ -717,9 +714,7 @@ class ResourceSafeBatchRunner:
                     raise UnsafeBatchRetryError(
                         "resource-safe retry must own the outer state transaction"
                     )
-                transaction = state.transaction(
-                    label=f"resource-safe-batch:{batch_size}"
-                ).begin()
+                transaction = state.transaction(label=f"resource-safe-batch:{batch_size}").begin()
             try:
                 for start in range(0, len(rows), batch_size):
                     chunk = rows[start : start + batch_size]
@@ -753,12 +748,8 @@ class ResourceSafeBatchRunner:
                 recoverable = isinstance(exc, RecoverableBatchOOM) or is_recoverable_oom(exc)
                 if transaction is not None and transaction.active:
                     transaction.rollback()
-                restored = (
-                    state is None
-                    or (
-                        id(state) == state_object_id
-                        and self._identity(state) == initial_identity
-                    )
+                restored = state is None or (
+                    id(state) == state_object_id and self._identity(state) == initial_identity
                 )
                 attempts.append(
                     BatchExecutionAttempt(

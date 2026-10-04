@@ -13,24 +13,36 @@ import hashlib
 import base64
 from typing import Dict, List, Any, Optional, Union, Callable, Set, Tuple
 
-from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditCategory, AuditLevel
-)
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, DataClassification, AccessDecision,
-    SecurityPolicy, AccessControlEntry, SecuritySession, security_operation
+    EnhancedSecurityManager,
+    DataClassification,
+    AccessDecision,
+    SecurityPolicy,
+    AccessControlEntry,
+    SecuritySession,
+    security_operation,
 )
 from ipfs_datasets_py.audit.integration import (
-    AuditProvenanceIntegrator, IntegratedComplianceReporter
+    AuditProvenanceIntegrator,
+    IntegratedComplianceReporter,
 )
 
 # Try to import provenance module
 try:
     from ipfs_datasets_py.data_provenance_enhanced import (
-        EnhancedProvenanceManager, ProvenanceContext, ProvenanceCryptoVerifier,
-        SourceRecord, TransformationRecord, VerificationRecord, AnnotationRecord,
-        ModelTrainingRecord, ModelInferenceRecord, IPLDProvenanceStorage
+        EnhancedProvenanceManager,
+        ProvenanceContext,
+        ProvenanceCryptoVerifier,
+        SourceRecord,
+        TransformationRecord,
+        VerificationRecord,
+        AnnotationRecord,
+        ModelTrainingRecord,
+        ModelInferenceRecord,
+        IPLDProvenanceStorage,
     )
+
     PROVENANCE_MODULE_AVAILABLE = True
 except ImportError:
     PROVENANCE_MODULE_AVAILABLE = False
@@ -54,8 +66,7 @@ class SecurityProvenanceIntegrator:
        - Verify data transformation chains for sensitive operations
     """
 
-    def __init__(self, security_manager=None, provenance_manager=None,
-                 audit_integrator=None):
+    def __init__(self, security_manager=None, provenance_manager=None, audit_integrator=None):
         """
         Initialize the security-provenance integrator.
 
@@ -71,7 +82,9 @@ class SecurityProvenanceIntegrator:
 
         # Initialize components
         if not PROVENANCE_MODULE_AVAILABLE:
-            self.logger.warning("Data provenance module not available. Some features will be disabled.")
+            self.logger.warning(
+                "Data provenance module not available. Some features will be disabled."
+            )
             return
 
         if not self.provenance_manager:
@@ -85,7 +98,7 @@ class SecurityProvenanceIntegrator:
             try:
                 self.audit_integrator = AuditProvenanceIntegrator(
                     audit_logger=self.security_manager.audit_logger,
-                    provenance_manager=self.provenance_manager
+                    provenance_manager=self.provenance_manager,
                 )
                 self.audit_integrator.setup_audit_event_listener()
             except Exception as e:
@@ -98,8 +111,9 @@ class SecurityProvenanceIntegrator:
             self.logger.error(f"Error initializing crypto verifier: {str(e)}")
             self.crypto_verifier = None
 
-    def add_security_metadata_to_record(self, record_id: str,
-                                      user_id: Optional[str] = None) -> bool:
+    def add_security_metadata_to_record(
+        self, record_id: str, user_id: Optional[str] = None
+    ) -> bool:
         """
         Add security-related metadata to a provenance record.
 
@@ -144,7 +158,7 @@ class SecurityProvenanceIntegrator:
                 "security": {
                     "classification": classification.name if classification else "UNCLASSIFIED",
                     "classified_by": user_id,
-                    "classified_at": datetime.datetime.utcnow().isoformat() + 'Z'
+                    "classified_at": datetime.datetime.utcnow().isoformat() + "Z",
                 }
             }
 
@@ -166,8 +180,7 @@ class SecurityProvenanceIntegrator:
 
             # Update the record with security metadata
             self.provenance_manager.add_metadata_to_record(
-                record_id=record_id,
-                metadata=security_metadata
+                record_id=record_id, metadata=security_metadata
             )
 
             # Log the enhancement
@@ -178,8 +191,8 @@ class SecurityProvenanceIntegrator:
                 user=user_id,
                 details={
                     "data_id": data_id,
-                    "classification": classification.name if classification else "UNCLASSIFIED"
-                }
+                    "classification": classification.name if classification else "UNCLASSIFIED",
+                },
             )
 
             return True
@@ -201,7 +214,7 @@ class SecurityProvenanceIntegrator:
         return {
             "principal_id": ace.principal_id,
             "principal_type": ace.principal_type,
-            "permissions": ace.permissions
+            "permissions": ace.permissions,
         }
 
     def verify_provenance_integrity(self, record_id: str) -> Dict[str, Any]:
@@ -214,7 +227,11 @@ class SecurityProvenanceIntegrator:
         Returns:
             Dict[str, Any]: Verification results
         """
-        if not PROVENANCE_MODULE_AVAILABLE or not self.provenance_manager or not self.crypto_verifier:
+        if (
+            not PROVENANCE_MODULE_AVAILABLE
+            or not self.provenance_manager
+            or not self.crypto_verifier
+        ):
             return {"verified": False, "error": "Required components not available"}
 
         try:
@@ -224,10 +241,12 @@ class SecurityProvenanceIntegrator:
                 return {"verified": False, "error": "Record not found"}
 
             # Check if record has security metadata with signature
-            if (not hasattr(record, "metadata") or
-                not record.metadata or
-                "security" not in record.metadata or
-                "signature" not in record.metadata["security"]):
+            if (
+                not hasattr(record, "metadata")
+                or not record.metadata
+                or "security" not in record.metadata
+                or "signature" not in record.metadata["security"]
+            ):
                 return {"verified": False, "error": "Record has no signature"}
 
             # Get signature
@@ -251,16 +270,17 @@ class SecurityProvenanceIntegrator:
             return {
                 "verified": is_valid,
                 "record_id": record_id,
-                "verification_time": datetime.datetime.utcnow().isoformat() + 'Z',
-                "error": None if is_valid else "Signature verification failed"
+                "verification_time": datetime.datetime.utcnow().isoformat() + "Z",
+                "error": None if is_valid else "Signature verification failed",
             }
 
         except Exception as e:
             self.logger.error(f"Error verifying provenance integrity: {str(e)}")
             return {"verified": False, "error": str(e)}
 
-    def check_access_with_lineage(self, user_id: str, resource_id: str,
-                               operation: str, max_depth: int = 2) -> Tuple[AccessDecision, Dict[str, Any]]:
+    def check_access_with_lineage(
+        self, user_id: str, resource_id: str, operation: str, max_depth: int = 2
+    ) -> Tuple[AccessDecision, Dict[str, Any]]:
         """
         Check access using both direct permissions and data lineage information.
 
@@ -313,12 +333,19 @@ class SecurityProvenanceIntegrator:
                 if source_id:
                     # Check classification
                     classification = self.security_manager.get_data_classification(source_id)
-                    if classification and classification.value >= DataClassification.CONFIDENTIAL.value:
-                        sensitive_sources.append({
-                            "source_id": source_id,
-                            "classification": classification.name,
-                            "record_id": record.record_id if hasattr(record, "record_id") else None
-                        })
+                    if (
+                        classification
+                        and classification.value >= DataClassification.CONFIDENTIAL.value
+                    ):
+                        sensitive_sources.append(
+                            {
+                                "source_id": source_id,
+                                "classification": classification.name,
+                                "record_id": record.record_id
+                                if hasattr(record, "record_id")
+                                else None,
+                            }
+                        )
 
             # Make lineage-aware decision
             lineage_decision = direct_decision
@@ -326,13 +353,16 @@ class SecurityProvenanceIntegrator:
                 "lineage_check": True,
                 "lineage_found": True,
                 "lineage_depth": len(lineage_records),
-                "sensitive_sources": sensitive_sources
+                "sensitive_sources": sensitive_sources,
             }
 
             # Apply lineage-based rules
             if sensitive_sources:
                 # For write operations on data with sensitive sources, require elevated access
-                if operation in ["write", "update", "delete"] and direct_decision == AccessDecision.ALLOW:
+                if (
+                    operation in ["write", "update", "delete"]
+                    and direct_decision == AccessDecision.ALLOW
+                ):
                     lineage_decision = AccessDecision.ELEVATE
                     decision_context["reason"] = "Data derived from sensitive sources"
 
@@ -351,8 +381,8 @@ class SecurityProvenanceIntegrator:
                     "direct_decision": direct_decision.name,
                     "lineage_decision": lineage_decision.name,
                     "sensitive_source_count": len(sensitive_sources),
-                    "lineage_depth": len(lineage_records)
-                }
+                    "lineage_depth": len(lineage_records),
+                },
             )
 
             return lineage_decision, decision_context
@@ -362,10 +392,16 @@ class SecurityProvenanceIntegrator:
             # Fall back to direct decision on error
             return direct_decision, {"lineage_check": False, "error": str(e)}
 
-    def record_secure_transformation(self, input_ids: List[str], output_id: str,
-                                  transformation_type: str, parameters: Dict[str, Any],
-                                  user_id: str, verify_lineage: bool = True,
-                                  classification: Optional[DataClassification] = None) -> Optional[str]:
+    def record_secure_transformation(
+        self,
+        input_ids: List[str],
+        output_id: str,
+        transformation_type: str,
+        parameters: Dict[str, Any],
+        user_id: str,
+        verify_lineage: bool = True,
+        classification: Optional[DataClassification] = None,
+    ) -> Optional[str]:
         """
         Record a secure data transformation with full security context.
 
@@ -409,20 +445,23 @@ class SecurityProvenanceIntegrator:
             if verify_lineage:
                 for input_id in input_ids:
                     input_classification = self.security_manager.get_data_classification(input_id)
-                    if input_classification and input_classification.value >= DataClassification.CONFIDENTIAL.value:
+                    if (
+                        input_classification
+                        and input_classification.value >= DataClassification.CONFIDENTIAL.value
+                    ):
                         # Get and verify the lineage
                         lineage_records = self.provenance_manager.get_upstream_lineage(input_id)
                         lineage_context[input_id] = {
                             "record_count": len(lineage_records),
-                            "verified": self._verify_lineage_chain(lineage_records)
+                            "verified": self._verify_lineage_chain(lineage_records),
                         }
 
             # Add security context to parameters
             secure_parameters = parameters.copy() if parameters else {}
             secure_parameters["security_context"] = {
                 "user_id": user_id,
-                "timestamp": datetime.datetime.utcnow().isoformat() + 'Z',
-                "lineage_verification": lineage_context if verify_lineage else None
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                "lineage_verification": lineage_context if verify_lineage else None,
             }
 
             # Create the transformation record
@@ -431,10 +470,7 @@ class SecurityProvenanceIntegrator:
                 output_id=output_id,
                 transformation_type=transformation_type,
                 parameters=secure_parameters,
-                metadata={
-                    "security_enhanced": True,
-                    "recorded_by": user_id
-                }
+                metadata={"security_enhanced": True, "recorded_by": user_id},
             )
 
             # Add security metadata to the record
@@ -453,8 +489,8 @@ class SecurityProvenanceIntegrator:
                     "input_ids": input_ids,
                     "transformation_type": transformation_type,
                     "provenance_record_id": record_id,
-                    "classification": classification.name if classification else None
-                }
+                    "classification": classification.name if classification else None,
+                },
             )
 
             return record_id
@@ -491,10 +527,14 @@ class SecurityProvenanceIntegrator:
             self.logger.error(f"Error verifying lineage chain: {str(e)}")
             return False
 
-    def create_provenance_based_security_policy(self, policy_id: str, name: str,
-                                             resource_pattern: str,
-                                             lineage_rules: List[Dict[str, Any]],
-                                             user_id: Optional[str] = None) -> bool:
+    def create_provenance_based_security_policy(
+        self,
+        policy_id: str,
+        name: str,
+        resource_pattern: str,
+        lineage_rules: List[Dict[str, Any]],
+        user_id: Optional[str] = None,
+    ) -> bool:
         """
         Create a security policy based on data provenance requirements.
 
@@ -520,33 +560,48 @@ class SecurityProvenanceIntegrator:
 
                 if rule_type == "lineage_verification":
                     # Rule requiring verified lineage
-                    rules.append({
-                        "type": "lineage_verification",
-                        "required_verification": rule.get("required_verification", True),
-                        "min_verified_percentage": rule.get("min_verified_percentage", 50),
-                        "severity": rule.get("severity", "high"),
-                        "description": rule.get("description", "Requires verified data lineage")
-                    })
+                    rules.append(
+                        {
+                            "type": "lineage_verification",
+                            "required_verification": rule.get("required_verification", True),
+                            "min_verified_percentage": rule.get("min_verified_percentage", 50),
+                            "severity": rule.get("severity", "high"),
+                            "description": rule.get(
+                                "description", "Requires verified data lineage"
+                            ),
+                        }
+                    )
 
                 elif rule_type == "source_classification":
                     # Rule limiting access based on source classification
-                    rules.append({
-                        "type": "source_classification",
-                        "max_classification": rule.get("max_classification", "RESTRICTED"),
-                        "severity": rule.get("severity", "high"),
-                        "description": rule.get("description", "Restricts data derived from highly classified sources")
-                    })
+                    rules.append(
+                        {
+                            "type": "source_classification",
+                            "max_classification": rule.get("max_classification", "RESTRICTED"),
+                            "severity": rule.get("severity", "high"),
+                            "description": rule.get(
+                                "description",
+                                "Restricts data derived from highly classified sources",
+                            ),
+                        }
+                    )
 
                 elif rule_type == "transformation_chain":
                     # Rule requiring specific transformation chain properties
-                    rules.append({
-                        "type": "transformation_chain",
-                        "required_transformations": rule.get("required_transformations", []),
-                        "prohibited_transformations": rule.get("prohibited_transformations", []),
-                        "max_chain_length": rule.get("max_chain_length", 10),
-                        "severity": rule.get("severity", "medium"),
-                        "description": rule.get("description", "Enforces transformation chain requirements")
-                    })
+                    rules.append(
+                        {
+                            "type": "transformation_chain",
+                            "required_transformations": rule.get("required_transformations", []),
+                            "prohibited_transformations": rule.get(
+                                "prohibited_transformations", []
+                            ),
+                            "max_chain_length": rule.get("max_chain_length", 10),
+                            "severity": rule.get("severity", "medium"),
+                            "description": rule.get(
+                                "description", "Enforces transformation chain requirements"
+                            ),
+                        }
+                    )
 
             # Create the security policy
             policy = SecurityPolicy(
@@ -558,8 +613,8 @@ class SecurityProvenanceIntegrator:
                 metadata={
                     "resource_pattern": resource_pattern,
                     "provenance_based": True,
-                    "created_at": datetime.datetime.utcnow().isoformat() + 'Z'
-                }
+                    "created_at": datetime.datetime.utcnow().isoformat() + "Z",
+                },
             )
 
             # Add the policy
@@ -574,8 +629,8 @@ class SecurityProvenanceIntegrator:
                         "policy_id": policy_id,
                         "name": name,
                         "resource_pattern": resource_pattern,
-                        "rule_count": len(rules)
-                    }
+                        "rule_count": len(rules),
+                    },
                 )
 
             return success
@@ -584,8 +639,9 @@ class SecurityProvenanceIntegrator:
             self.logger.error(f"Error creating provenance-based security policy: {str(e)}")
             return False
 
-    def verify_cross_document_security(self, document_ids: List[str],
-                                    user_id: str) -> Dict[str, Any]:
+    def verify_cross_document_security(
+        self, document_ids: List[str], user_id: str
+    ) -> Dict[str, Any]:
         """
         Verify security across document boundaries.
 
@@ -608,8 +664,7 @@ class SecurityProvenanceIntegrator:
 
             # Build cross-document lineage graph
             lineage_graph = storage.build_cross_document_lineage_graph(
-                record_ids=document_ids,
-                max_depth=3
+                record_ids=document_ids, max_depth=3
             )
 
             # Analyze cross-document connections
@@ -631,35 +686,41 @@ class SecurityProvenanceIntegrator:
 
                 # Check if data flows from higher to lower classification
                 if from_class and to_class and from_class.value > to_class.value:
-                    security_issues.append({
-                        "type": "classification_violation",
-                        "from_document": from_doc,
-                        "to_document": to_doc,
-                        "from_classification": from_class.name,
-                        "to_classification": to_class.name,
-                        "severity": "high",
-                        "description": f"Data flows from {from_class.name} to {to_class.name} classification"
-                    })
+                    security_issues.append(
+                        {
+                            "type": "classification_violation",
+                            "from_document": from_doc,
+                            "to_document": to_doc,
+                            "from_classification": from_class.name,
+                            "to_classification": to_class.name,
+                            "severity": "high",
+                            "description": f"Data flows from {from_class.name} to {to_class.name} classification",
+                        }
+                    )
 
                 # Check for appropriate access controls at boundaries
                 if not self._verify_boundary_access_controls(from_doc, to_doc):
-                    security_issues.append({
-                        "type": "boundary_access_control",
-                        "from_document": from_doc,
-                        "to_document": to_doc,
-                        "severity": "medium",
-                        "description": "Insufficient access controls at document boundary"
-                    })
+                    security_issues.append(
+                        {
+                            "type": "boundary_access_control",
+                            "from_document": from_doc,
+                            "to_document": to_doc,
+                            "severity": "medium",
+                            "description": "Insufficient access controls at document boundary",
+                        }
+                    )
 
                 # Check for integrity verification across boundaries
                 if not self._verify_boundary_integrity(from_doc, to_doc):
-                    security_issues.append({
-                        "type": "boundary_integrity",
-                        "from_document": from_doc,
-                        "to_document": to_doc,
-                        "severity": "medium",
-                        "description": "Integrity verification missing at document boundary"
-                    })
+                    security_issues.append(
+                        {
+                            "type": "boundary_integrity",
+                            "from_document": from_doc,
+                            "to_document": to_doc,
+                            "severity": "medium",
+                            "description": "Integrity verification missing at document boundary",
+                        }
+                    )
 
             # Log the verification
             self.security_manager.audit_logger.security(
@@ -669,17 +730,17 @@ class SecurityProvenanceIntegrator:
                     "document_count": len(document_ids),
                     "boundary_count": len(document_boundaries),
                     "cross_boundary_flows": cross_boundary_flows,
-                    "issue_count": len(security_issues)
-                }
+                    "issue_count": len(security_issues),
+                },
             )
 
             return {
-                "verification_time": datetime.datetime.utcnow().isoformat() + 'Z',
+                "verification_time": datetime.datetime.utcnow().isoformat() + "Z",
                 "document_count": len(document_ids),
                 "boundary_count": len(document_boundaries),
                 "cross_boundary_flows": cross_boundary_flows,
                 "security_issues": security_issues,
-                "is_secure": len(security_issues) == 0
+                "is_secure": len(security_issues) == 0,
             }
 
         except Exception as e:
@@ -737,8 +798,9 @@ class SecurityProvenanceIntegrator:
         # For now, return a placeholder result
         return True
 
-    def secure_provenance_query(self, query_params: Dict[str, Any], user_id: str,
-                             include_cross_document: bool = False) -> Dict[str, Any]:
+    def secure_provenance_query(
+        self, query_params: Dict[str, Any], user_id: str, include_cross_document: bool = False
+    ) -> Dict[str, Any]:
         """
         Perform a security-aware provenance query.
 
@@ -763,8 +825,8 @@ class SecurityProvenanceIntegrator:
                 user=user_id,
                 details={
                     "query_params": query_params,
-                    "include_cross_document": include_cross_document
-                }
+                    "include_cross_document": include_cross_document,
+                },
             )
 
             # Execute the query
@@ -790,9 +852,11 @@ class SecurityProvenanceIntegrator:
                         # Add security information
                         classification = self.security_manager.get_data_classification(data_id)
                         record_dict["security"] = {
-                            "classification": classification.name if classification else "UNCLASSIFIED",
+                            "classification": classification.name
+                            if classification
+                            else "UNCLASSIFIED",
                             "access_decision": decision.name,
-                            "requires_elevated_access": decision == AccessDecision.ELEVATE
+                            "requires_elevated_access": decision == AccessDecision.ELEVATE,
                         }
 
                         filtered_records.append(record_dict)
@@ -814,11 +878,11 @@ class SecurityProvenanceIntegrator:
                     )
 
             return {
-                "query_time": datetime.datetime.utcnow().isoformat() + 'Z',
+                "query_time": datetime.datetime.utcnow().isoformat() + "Z",
                 "total_records": len(records),
                 "filtered_records": len(filtered_records),
                 "records": filtered_records,
-                "cross_document_analysis": cross_document_results
+                "cross_document_analysis": cross_document_results,
             }
 
         except Exception as e:
@@ -863,8 +927,9 @@ class SecurityProvenanceIntegrator:
 
 
 # Utility decorator for secured provenance operations
-def secure_provenance_operation(user_id_arg: str, data_id_arg: str,
-                              action: str = "provenance_operation"):
+def secure_provenance_operation(
+    user_id_arg: str, data_id_arg: str, action: str = "provenance_operation"
+):
     """
     Decorator for securing provenance operations with access control and auditing.
 
@@ -876,6 +941,7 @@ def secure_provenance_operation(user_id_arg: str, data_id_arg: str,
     Returns:
         Callable: Decorated function
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Extract user ID and data ID from arguments
@@ -890,7 +956,7 @@ def secure_provenance_operation(user_id_arg: str, data_id_arg: str,
             decision, context = integrator.check_access_with_lineage(
                 user_id=user_id,
                 resource_id=data_id,
-                operation="read"  # Use appropriate operation based on function
+                operation="read",  # Use appropriate operation based on function
             )
 
             if decision == AccessDecision.DENY:
@@ -900,10 +966,7 @@ def secure_provenance_operation(user_id_arg: str, data_id_arg: str,
                     level=AuditLevel.WARNING,
                     user=user_id,
                     resource_id=data_id,
-                    details={
-                        "function": func.__name__,
-                        "lineage_context": context
-                    }
+                    details={"function": func.__name__, "lineage_context": context},
                 )
 
                 # Raise permission error
@@ -924,8 +987,9 @@ def secure_provenance_operation(user_id_arg: str, data_id_arg: str,
 
 
 # Get a singleton integrator instance
-def get_security_provenance_integrator(security_manager=None,
-                                     provenance_manager=None) -> SecurityProvenanceIntegrator:
+def get_security_provenance_integrator(
+    security_manager=None, provenance_manager=None
+) -> SecurityProvenanceIntegrator:
     """
     Get a security-provenance integrator instance.
 
@@ -937,6 +1001,5 @@ def get_security_provenance_integrator(security_manager=None,
         SecurityProvenanceIntegrator: The integrator instance
     """
     return SecurityProvenanceIntegrator(
-        security_manager=security_manager,
-        provenance_manager=provenance_manager
+        security_manager=security_manager, provenance_manager=provenance_manager
     )

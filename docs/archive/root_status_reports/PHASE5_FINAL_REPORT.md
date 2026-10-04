@@ -352,15 +352,12 @@ monitor = get_global_monitor()
 with monitor.track_operation("fol_conversion"):
     result = await convert_text_to_fol(
         "All humans are mortal",
-        use_nlp=True  # Use NLP if available
+        use_nlp=True,  # Use NLP if available
     )
 
 # Execute proof with caching
 engine = ProofExecutionEngine(enable_caching=True)
-proof = engine.prove_deontic_formula(
-    result['formula'],
-    prover="vampire"
-)
+proof = engine.prove_deontic_formula(result["formula"], prover="vampire")
 
 # Check metrics
 metrics = monitor.get_metrics()
@@ -378,11 +375,7 @@ monitor = get_global_monitor(enable_prometheus=True)
 ```python
 from ipfs_datasets_py.logic.integration.ipfs_proof_cache import get_global_ipfs_cache
 
-cache = get_global_ipfs_cache(
-    max_size=5000,
-    ttl=7200,
-    enable_ipfs=True
-)
+cache = get_global_ipfs_cache(max_size=5000, ttl=7200, enable_ipfs=True)
 ```
 
 3. **Run Validation**
@@ -393,7 +386,7 @@ python -m ipfs_datasets_py.logic.e2e_validation
 4. **Monitor Health**
 ```python
 health = monitor.health_check()
-if health['status'] != 'healthy':
+if health["status"] != "healthy":
     alert_ops_team(health)
 ```
 

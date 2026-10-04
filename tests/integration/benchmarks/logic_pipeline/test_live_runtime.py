@@ -106,9 +106,9 @@ def test_ast_evidence_and_every_requested_live_stage_is_callable() -> None:
     assert set(live.adapters) == {*(f"A{i}" for i in range(13)), "S1"}
     for variant, route in live.adapters.items():
         assert set(route) == set(
-            __import__(
-                "benchmarks.logic_pipeline.variants", fromlist=["x"]
-            ).get_variant_definition(variant).stages
+            __import__("benchmarks.logic_pipeline.variants", fromlist=["x"])
+            .get_variant_definition(variant)
+            .stages
         )
         assert all(adapter.handler is not None for adapter in route.values())
 
@@ -116,14 +116,10 @@ def test_ast_evidence_and_every_requested_live_stage_is_callable() -> None:
 def test_available_backend_cannot_remain_inert_and_unavailable_is_not_substituted() -> None:
     missing_hammer = _handlers(hammer=None)
     with pytest.raises(runtime.RuntimeBindingError, match="no live hammer handler"):
-        runtime.build_live_runtime(
-            _inventory(), missing_hammer, variant_ids=("A2",)
-        )
+        runtime.build_live_runtime(_inventory(), missing_hammer, variant_ids=("A2",))
 
     unavailable = runtime.build_live_runtime(
-        _inventory(
-            unavailable=frozenset({capabilities.CapabilityKind.HAMMER})
-        ),
+        _inventory(unavailable=frozenset({capabilities.CapabilityKind.HAMMER})),
         missing_hammer,
         variant_ids=("A2",),
     )
@@ -151,9 +147,7 @@ def test_available_backend_cannot_remain_inert_and_unavailable_is_not_substitute
         ),
         variant_ids=("A1",),
     )
-    dishonest_record = dishonest.adapters["A1"][
-        contracts.StageName.KERNEL
-    ].run(
+    dishonest_record = dishonest.adapters["A1"][contracts.StageName.KERNEL].run(
         adapters.StageRequest(
             run_id="live-runtime-test",
             case_id="case-1",
@@ -164,16 +158,9 @@ def test_available_backend_cannot_remain_inert_and_unavailable_is_not_substitute
     )
     assert dishonest_record.status is contracts.StageStatus.FAILED
     assert not dishonest_record.kernel_accepted
-    assert (
-        dishonest_record.failure_code
-        is contracts.FailureCode.SAFETY_CONTROL_FAILURE
-    )
-    assert dishonest_record.data["reason"] == (
-        "invalid_independent_kernel_receipt"
-    )
-    assert contracts.validate_native_kernel_stage_receipt(
-        dishonest_record
-    ) is False
+    assert dishonest_record.failure_code is contracts.FailureCode.SAFETY_CONTROL_FAILURE
+    assert dishonest_record.data["reason"] == ("invalid_independent_kernel_receipt")
+    assert contracts.validate_native_kernel_stage_receipt(dishonest_record) is False
 
 
 def test_default_leanstral_provider_is_bound_to_frozen_identity() -> None:
@@ -277,9 +264,7 @@ print(json.dumps({
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
     assert result == {
-        "canonical_path": [
-            str(repository / "ipfs_accelerate_py" / "ipfs_accelerate_py")
-        ],
+        "canonical_path": [str(repository / "ipfs_accelerate_py" / "ipfs_accelerate_py")],
         "dotted_module_access": True,
         "handler_bound": True,
         "provider_file": str(
@@ -386,14 +371,8 @@ def test_default_symai_route_binds_exact_leanstral_capability_identity() -> None
     assert adapter.config is not None
     assert adapter.config.expected_inner_provider == "leanstral_local"
     assert adapter.config.expected_inner_model == "test-leanstral-model"
-    assert (
-        adapter.config.expected_inner_endpoint
-        == "http://127.0.0.1:8080/v1"
-    )
-    assert (
-        adapter.config.expected_inner_backend
-        == "existing_leanstral_service"
-    )
+    assert adapter.config.expected_inner_endpoint == "http://127.0.0.1:8080/v1"
+    assert adapter.config.expected_inner_backend == "existing_leanstral_service"
 
 
 def test_current_compiler_projects_oversized_derived_indexes(
@@ -424,9 +403,7 @@ def test_current_compiler_projects_oversized_derived_indexes(
         input_data={"text": "A policy applies."},
     )
 
-    record = adapters.CompilerAdapter(
-        runtime._current_compiler_handler
-    ).run(request)
+    record = adapters.CompilerAdapter(runtime._current_compiler_handler).run(request)
 
     assert record.status is contracts.StageStatus.SUCCESS
     durable_data = record.to_dict()["data"]
@@ -440,9 +417,10 @@ def test_current_compiler_projects_oversized_derived_indexes(
             "version",
         )
     }
-    assert durable_data["modal_ir_sha256"] == hashlib.sha256(
-        contracts.canonical_json(full_modal_ir).encode("utf-8")
-    ).hexdigest()
+    assert (
+        durable_data["modal_ir_sha256"]
+        == hashlib.sha256(contracts.canonical_json(full_modal_ir).encode("utf-8")).hexdigest()
+    )
     assert durable_data["modal_ir_canonical_bytes"] > 64 * 1024
     assert len(contracts.canonical_json(durable_data).encode("utf-8")) < 64 * 1024
 
@@ -463,9 +441,10 @@ def test_reviewed_obligation_compilation_is_deterministic_and_target_bound() -> 
     assert first == second
     assert first.digest == second.digest
     assert first.semantic_target == "trained"
-    assert first.obligation_sha256 == hashlib.sha256(
-        contracts.canonical_json(value["proof_obligation"]).encode()
-    ).hexdigest()
+    assert (
+        first.obligation_sha256
+        == hashlib.sha256(contracts.canonical_json(value["proof_obligation"]).encode()).hexdigest()
+    )
     assert first.obligation_sha256[:16] in first.source_template
     assert "{{PROOF}}" in first.source_template
     assert runtime.CompiledObligation.from_dict(first.to_dict()) == first
@@ -524,10 +503,7 @@ def _reviewed_entailment(
 
 def test_reviewed_entailment_translation_is_source_bound_and_label_blind() -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     first = runtime.compile_reviewed_obligation(
@@ -561,10 +537,7 @@ def test_reviewed_entailment_translation_is_source_bound_and_label_blind() -> No
     mismatched = runtime.compile_reviewed_obligation(
         {
             **value,
-            "text": (
-                "Every archivist is trained. Ada is an archivist. "
-                "Therefore Ada is careful."
-            ),
+            "text": ("Every archivist is trained. Ada is an archivist. Therefore Ada is careful."),
         }
     )
     assert mismatched is not None
@@ -576,18 +549,12 @@ def test_compiled_obligation_multiline_tactic_body_compiles_with_native_lean() -
     if lean is None:
         pytest.skip("installed Lean executable is required for layout regression")
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     compiled = runtime.compile_reviewed_obligation(value)
     assert compiled is not None
-    proof = (
-        "have hpremise := fact\n"
-        "exact rule witness hpremise"
-    )
+    proof = "have hpremise := fact\nexact rule witness hpremise"
 
     source = compiled.render(proof)
 
@@ -624,12 +591,8 @@ def test_two_step_entailment_is_available_to_the_deterministic_a1_core() -> None
     )
     assert translation is not None
     assert translation.shape == "two_step_unary_chain"
-    assert translation.native_proof_text == (
-        "exact second_rule witness (first_rule witness fact)"
-    )
-    assert translation.hammer_proof_text == (
-        "exact second_rule witness (first_rule witness fact)"
-    )
+    assert translation.native_proof_text == ("exact second_rule witness (first_rule witness fact)")
+    assert translation.hammer_proof_text == ("exact second_rule witness (first_rule witness fact)")
 
 
 def _strict_compiler_artifact(
@@ -669,12 +632,8 @@ def _strict_compiler_artifact(
         {
             "compiled_obligation": compiled.to_dict(),
             "compiled_obligation_sha256": compiled.digest,
-            "entailment_translation": (
-                None if translation is None else translation.to_dict()
-            ),
-            "entailment_translation_sha256": (
-                None if translation is None else translation.digest
-            ),
+            "entailment_translation": (None if translation is None else translation.to_dict()),
+            "entailment_translation_sha256": (None if translation is None else translation.digest),
             "native_proof_candidate": native_candidate,
         },
         None,
@@ -692,11 +651,9 @@ def _strict_leanstral_artifact(
     boundary_overrides: dict[str, object] | None = None,
     draft_overrides: dict[str, object] | None = None,
 ) -> adapters.StageArtifact:
-    payload, payload_obligation_id, payload_repair_attempt = (
-        adapters._leanstral_input(
-            request,
-            adapters.LeanstralAdapterConfig(),
-        )
+    payload, payload_obligation_id, payload_repair_attempt = adapters._leanstral_input(
+        request,
+        adapters.LeanstralAdapterConfig(),
     )
     assert payload_obligation_id == compiled.obligation_id
     assert payload_repair_attempt == 0
@@ -712,15 +669,11 @@ def _strict_leanstral_artifact(
         capsule,
         theorem,
         allowed_premises=tuple(payload.get("allowed_premises") or ()),
-        trusted_prior_receipts=tuple(
-            payload.get("trusted_prior_receipts") or ()
-        ),
+        trusted_prior_receipts=tuple(payload.get("trusted_prior_receipts") or ()),
         compact_failures=tuple(payload.get("compact_failures") or ()),
         reusable_drafts=tuple(payload.get("reusable_drafts") or ()),
         limits=(
-            payload.get("prompt_limits")
-            if isinstance(payload.get("prompt_limits"), dict)
-            else None
+            payload.get("prompt_limits") if isinstance(payload.get("prompt_limits"), dict) else None
         ),
     )
     provider = "leanstral_local"
@@ -756,9 +709,7 @@ def _strict_leanstral_artifact(
                 theorem_id=compiled.theorem_name,
             )
         ).hexdigest(),
-        "response_envelope_sha256": hashlib.sha256(
-            b"response-envelope"
-        ).hexdigest(),
+        "response_envelope_sha256": hashlib.sha256(b"response-envelope").hexdigest(),
         "raw_model_content_sha256": hashlib.sha256(b"raw-model-output").hexdigest(),
         "raw_model_content_bytes": len(b"raw-model-output"),
         "normalized_proposal_sha256": hashlib.sha256(normalized).hexdigest(),
@@ -781,21 +732,26 @@ def _strict_leanstral_artifact(
         "prompt_sha256": prompt_sha256,
         "output_sha256": proof_sha256,
     }
-    artifact_id = "leanstral-draft-" + hashlib.sha256(
-        json.dumps(
-            identity,
-            ensure_ascii=True,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    ).hexdigest()
+    artifact_id = (
+        "leanstral-draft-"
+        + hashlib.sha256(
+            json.dumps(
+                identity,
+                ensure_ascii=True,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+    )
     repair_attempt = 0
-    request_id = "leanstral-" + hashlib.sha256(
-        (
-            f"{request.run_id}:{request.case_id}:"
-            f"{request.input_sha256}:{repair_attempt}"
-        ).encode("utf-8")
-    ).hexdigest()[:48]
+    request_id = (
+        "leanstral-"
+        + hashlib.sha256(
+            (f"{request.run_id}:{request.case_id}:{request.input_sha256}:{repair_attempt}").encode(
+                "utf-8"
+            )
+        ).hexdigest()[:48]
+    )
     draft = {
         "schema_version": adapters.LEANSTRAL_DRAFT_SCHEMA,
         "artifact_id": artifact_id,
@@ -810,9 +766,7 @@ def _strict_leanstral_artifact(
         "canonical_source_digest": f"sha256:{compiled.source_template_sha256}",
         "prompt_sha256": prompt_sha256,
         "output_sha256": proof_sha256,
-        "timeout_ms": int(
-            adapters.LEANSTRAL_MEASURED_TIMEOUT_SECONDS * 1000
-        ),
+        "timeout_ms": int(adapters.LEANSTRAL_MEASURED_TIMEOUT_SECONDS * 1000),
         "token_budget": adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
         "resource_class": "model",
         "theorem_id": compiled.theorem_name,
@@ -885,10 +839,7 @@ def test_leanstral_candidate_hash_binds_the_projected_semantic_prompt(
     tmp_path: Path,
 ) -> None:
     value = {
-        "text": (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        "text": ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "obligation_id": "semantic-hash-obligation",
         "proof_obligation": {
             "kind": "theorem",
@@ -986,9 +937,7 @@ def _strict_hammer_artifact(
         "solver_command_sha256": hashlib.sha256(
             f"{solver_path}\0--lang=smt2".encode("utf-8")
         ).hexdigest(),
-        "solver_input_sha256": hashlib.sha256(
-            translation.smt2_problem.encode("utf-8")
-        ).hexdigest(),
+        "solver_input_sha256": hashlib.sha256(translation.smt2_problem.encode("utf-8")).hexdigest(),
         "stdout_sha256": hashlib.sha256(b"unsat\n").hexdigest(),
         "stderr_sha256": hashlib.sha256(b"").hexdigest(),
         "returncode": 0,
@@ -1000,9 +949,7 @@ def _strict_hammer_artifact(
         "candidate_created": True,
         "native_reconstruction": {
             "strategy": translation.shape,
-            "certificate_sha256": hashlib.sha256(
-                proof_text.encode("utf-8")
-            ).hexdigest(),
+            "certificate_sha256": hashlib.sha256(proof_text.encode("utf-8")).hexdigest(),
             "authoritative": False,
             "requires_independent_kernel": True,
         },
@@ -1058,10 +1005,7 @@ class _FakeSupervisor:
         attempt_index = len(self.sources)
         source = Path(str(_kwargs["cwd"])) / "Main.lean"
         rendered = source.read_text()
-        assert (
-            f"by\n  {self.expected_proofs[attempt_index]}"
-            in rendered
-        )
+        assert f"by\n  {self.expected_proofs[attempt_index]}" in rendered
         assert tuple(command)[1:3] == ("-j", "1")
         assert _kwargs["limits"].memory_mb == 4096
         self.sources.append(rendered)
@@ -1151,18 +1095,17 @@ def test_independent_kernel_receipt_binds_candidate_and_reaps_owner(
     assert output.data["independent"] is True
     assert output.data["candidate_artifact_sha256"] == leanstral.digest
     assert output.data["candidate_source"] == "leanstral"
-    assert output.data["candidate_attempts_sha256"] == hashlib.sha256(
-        contracts.canonical_json(
-            output.data["candidate_attempts"]
-        ).encode("utf-8")
-    ).hexdigest()
+    assert (
+        output.data["candidate_attempts_sha256"]
+        == hashlib.sha256(
+            contracts.canonical_json(output.data["candidate_attempts"]).encode("utf-8")
+        ).hexdigest()
+    )
     assert output.data["selected_attempt"] == {
         "attempt_index": 0,
         "candidate_source": "leanstral",
         "candidate_artifact_sha256": leanstral.digest,
-        "attempt_sha256": output.data["candidate_attempts"][0][
-            "attempt_sha256"
-        ],
+        "attempt_sha256": output.data["candidate_attempts"][0]["attempt_sha256"],
         "accepted": True,
     }
     assert output.data["active_process_count"] == 0
@@ -1177,9 +1120,7 @@ def test_independent_kernel_receipt_binds_candidate_and_reaps_owner(
         rejected_root / "state",
         expected_leanstral_identity=leanstral_identity,
     )
-    rejected_runner._supervisor = _FakeSupervisor(
-        rejected_root, returncode=1
-    )
+    rejected_runner._supervisor = _FakeSupervisor(rejected_root, returncode=1)
     rejected = rejected_runner(request)
     assert rejected.status is contracts.StageStatus.FAILED
     assert not rejected.kernel_accepted
@@ -1192,10 +1133,7 @@ def test_validated_kernel_handler_preserves_typed_native_timeout(
     tmp_path: Path,
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     _, translation, compiler = _strict_compiler_artifact(value)
@@ -1232,30 +1170,30 @@ def test_validated_kernel_handler_preserves_typed_native_timeout(
     )(request)
 
     assert validated.status is contracts.StageStatus.FAILED
-    assert (
-        validated.failure_code
-        is contracts.FailureCode.RESOURCE_LEASE_CANCELLATION
-    )
+    assert validated.failure_code is contracts.FailureCode.RESOURCE_LEASE_CANCELLATION
     assert validated.data["timed_out"] is True
     assert validated.data["termination_reason"] == "wall_clock_deadline"
     assert "reason" not in validated.data
-    assert contracts.validate_native_kernel_receipt(
-        validated.data,
-        protocol_sha256=request.protocol_sha256,
-        run_id=request.run_id,
-        case_id=request.case_id,
-        case_manifest_sha256=request.case_manifest_sha256,
-        variant_id=request.variant_id,
-        split=request.split,
-        cache_mode=request.cache_mode,
-        input_sha256=request.input_sha256,
-        environment_sha256=request.environment_sha256,
-        stage_status=validated.status,
-        kernel_accepted=False,
-        kernel_receipt_sha256=None,
-        consumed_artifact_sha256s=(compiler.digest,),
-        failure_code=validated.failure_code,
-    ) is False
+    assert (
+        contracts.validate_native_kernel_receipt(
+            validated.data,
+            protocol_sha256=request.protocol_sha256,
+            run_id=request.run_id,
+            case_id=request.case_id,
+            case_manifest_sha256=request.case_manifest_sha256,
+            variant_id=request.variant_id,
+            split=request.split,
+            cache_mode=request.cache_mode,
+            input_sha256=request.input_sha256,
+            environment_sha256=request.environment_sha256,
+            stage_status=validated.status,
+            kernel_accepted=False,
+            kernel_receipt_sha256=None,
+            consumed_artifact_sha256s=(compiler.digest,),
+            failure_code=validated.failure_code,
+        )
+        is False
+    )
     runner.close()
 
 
@@ -1307,10 +1245,7 @@ def test_native_kernel_process_failures_preserve_lifecycle_authority(
     expected_failure_code: contracts.FailureCode,
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     _, translation, compiler = _strict_compiler_artifact(value)
@@ -1326,9 +1261,7 @@ def test_native_kernel_process_failures_preserve_lifecycle_authority(
         result_overrides={
             "returncode": returncode,
             "error": (
-                "FileNotFoundError: missing Lean"
-                if termination_reason == "spawn_error"
-                else None
+                "FileNotFoundError: missing Lean" if termination_reason == "spawn_error" else None
             ),
             "cancelled": cancelled,
             "termination_reason": termination_reason,
@@ -1354,23 +1287,26 @@ def test_native_kernel_process_failures_preserve_lifecycle_authority(
     assert output.data["returncode"] == returncode
     assert output.data["termination_reason"] == termination_reason
     assert output.data["process_group_reaped"] is process_group_reaped
-    assert contracts.validate_native_kernel_receipt(
-        output.data,
-        protocol_sha256=request.protocol_sha256,
-        run_id=request.run_id,
-        case_id=request.case_id,
-        case_manifest_sha256=request.case_manifest_sha256,
-        variant_id=request.variant_id,
-        split=request.split,
-        cache_mode=request.cache_mode,
-        input_sha256=request.input_sha256,
-        environment_sha256=request.environment_sha256,
-        stage_status=output.status,
-        kernel_accepted=False,
-        kernel_receipt_sha256=None,
-        consumed_artifact_sha256s=(compiler.digest,),
-        failure_code=output.failure_code,
-    ) is False
+    assert (
+        contracts.validate_native_kernel_receipt(
+            output.data,
+            protocol_sha256=request.protocol_sha256,
+            run_id=request.run_id,
+            case_id=request.case_id,
+            case_manifest_sha256=request.case_manifest_sha256,
+            variant_id=request.variant_id,
+            split=request.split,
+            cache_mode=request.cache_mode,
+            input_sha256=request.input_sha256,
+            environment_sha256=request.environment_sha256,
+            stage_status=output.status,
+            kernel_accepted=False,
+            kernel_receipt_sha256=None,
+            consumed_artifact_sha256s=(compiler.digest,),
+            failure_code=output.failure_code,
+        )
+        is False
+    )
     runner.close()
 
 
@@ -1378,10 +1314,7 @@ def test_kernel_continues_after_logical_rejection_and_accepts_hammer(
     tmp_path: Path,
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     _, translation, compiler = _strict_compiler_artifact(value)
@@ -1439,8 +1372,9 @@ def test_kernel_continues_after_logical_rejection_and_accepts_hammer(
         for attempt in output.data["candidate_attempts"]
     ] == [("compiler", False), ("hammer", True)]
     assert output.data["selected_attempt"]["attempt_index"] == 1
-    assert output.data["selected_attempt"]["attempt_sha256"] == (
-        output.data["candidate_attempts"][1]["attempt_sha256"]
+    assert (
+        output.data["selected_attempt"]["attempt_sha256"]
+        == (output.data["candidate_attempts"][1]["attempt_sha256"])
     )
     assert output.telemetry.wall_time_ms == pytest.approx(20)
 
@@ -1449,10 +1383,7 @@ def test_compiler_native_candidate_preempts_valid_optional_backends(
     tmp_path: Path,
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     compiled, translation, compiler = _strict_compiler_artifact(value)
@@ -1521,10 +1452,7 @@ def test_live_runtime_reserves_positive_authority_for_owned_kernel_runner(
     tmp_path: Path,
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     _, translation, compiler = _strict_compiler_artifact(value)
@@ -1558,20 +1486,13 @@ def test_live_runtime_reserves_positive_authority_for_owned_kernel_runner(
         _handlers(kernel=injected_runner),
         variant_ids=("A1",),
     )
-    injected = injected_live.adapters["A1"][
-        contracts.StageName.KERNEL
-    ].run(request)
+    injected = injected_live.adapters["A1"][contracts.StageName.KERNEL].run(request)
 
     assert injected.status is contracts.StageStatus.FAILED
     assert injected.kernel_accepted is False
     assert injected.kernel_receipt_sha256 is None
-    assert (
-        injected.failure_code
-        is contracts.FailureCode.SAFETY_CONTROL_FAILURE
-    )
-    assert injected.data["reason"] == (
-        "injected_kernel_positive_authority_forbidden"
-    )
+    assert injected.failure_code is contracts.FailureCode.SAFETY_CONTROL_FAILURE
+    assert injected.data["reason"] == ("injected_kernel_positive_authority_forbidden")
     assert contracts.validate_native_kernel_stage_receipt(injected) is False
     injected_runner.close()
 
@@ -1588,9 +1509,7 @@ def test_live_runtime_reserves_positive_authority_for_owned_kernel_runner(
         trusted_root,
         expected_proof=translation.native_proof_text,
     )
-    trusted = trusted_live.adapters["A1"][
-        contracts.StageName.KERNEL
-    ].run(request)
+    trusted = trusted_live.adapters["A1"][contracts.StageName.KERNEL].run(request)
 
     assert trusted.status is contracts.StageStatus.SUCCESS
     assert trusted.kernel_accepted is True
@@ -1652,24 +1571,16 @@ def test_kernel_rejects_hammer_candidate_copied_from_another_case(
     tmp_path: Path,
 ) -> None:
     copied_value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
         obligation_id="copied-obligation",
     )
     actual_value = _reviewed_entailment(
-        (
-            "Every sailor is ready. Bea is a sailor. "
-            "Therefore Bea is ready."
-        ),
+        ("Every sailor is ready. Bea is a sailor. Therefore Bea is ready."),
         "ready",
         obligation_id="actual-obligation",
     )
-    _, copied_translation, copied_compiler = _strict_compiler_artifact(
-        copied_value
-    )
+    _, copied_translation, copied_compiler = _strict_compiler_artifact(copied_value)
     _, _, actual_compiler = _strict_compiler_artifact(actual_value)
     assert copied_translation is not None
     copied_request = adapters.StageRequest(
@@ -1682,9 +1593,7 @@ def test_kernel_rejects_hammer_candidate_copied_from_another_case(
         upstream_artifacts=(copied_compiler,),
         invocation_index=1,
     )
-    copied_hammer = _strict_hammer_artifact(
-        copied_request, copied_translation
-    )
+    copied_hammer = _strict_hammer_artifact(copied_request, copied_translation)
     runner = runtime.NativeKernelRunner(
         "/test/lean",
         "b" * 64,
@@ -1710,10 +1619,7 @@ def test_kernel_rejects_hammer_candidate_copied_from_another_case(
     )
 
     assert output.status is contracts.StageStatus.FAILED
-    assert (
-        output.failure_code
-        is contracts.FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
-    )
+    assert output.failure_code is contracts.FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
     assert output.data["reason"] == "proof_candidate_binding_invalid"
     assert runner._supervisor is None
 
@@ -1731,10 +1637,7 @@ def test_kernel_rejects_tampered_hammer_receipt_before_lean(
     tampered_value: str,
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     _, translation, compiler = _strict_compiler_artifact(value)
@@ -1804,9 +1707,7 @@ def test_kernel_rejects_leanstral_candidate_copied_from_another_case(
             "target": "actual-target",
         },
     }
-    copied_compiled, _, copied_compiler = _strict_compiler_artifact(
-        copied_value
-    )
+    copied_compiled, _, copied_compiler = _strict_compiler_artifact(copied_value)
     _, _, actual_compiler = _strict_compiler_artifact(actual_value)
     copied_request = adapters.StageRequest(
         run_id="runtime-leanstral-copied",
@@ -1818,9 +1719,7 @@ def test_kernel_rejects_leanstral_candidate_copied_from_another_case(
         upstream_artifacts=(copied_compiler,),
         invocation_index=1,
     )
-    copied_leanstral = _strict_leanstral_artifact(
-        copied_request, copied_compiled
-    )
+    copied_leanstral = _strict_leanstral_artifact(copied_request, copied_compiled)
     runner = runtime.NativeKernelRunner(
         "/test/lean",
         "b" * 64,
@@ -1846,10 +1745,7 @@ def test_kernel_rejects_leanstral_candidate_copied_from_another_case(
     )
 
     assert output.status is contracts.StageStatus.FAILED
-    assert (
-        output.failure_code
-        is contracts.FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
-    )
+    assert output.failure_code is contracts.FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
     assert output.data["reason"] == "proof_candidate_binding_invalid"
     assert runner._supervisor is None
 
@@ -1928,10 +1824,7 @@ def test_kernel_rejects_tampered_leanstral_receipt_before_lean(
     ("text", "target", "shape", "proof_text"),
     [
         (
-            (
-                "Every archivist is trained. Ada is an archivist. "
-                "Therefore Ada is trained."
-            ),
+            ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
             "trained",
             "direct_unary_entailment",
             "exact rule witness fact",
@@ -2039,10 +1932,7 @@ def test_a1_kernel_rejects_tampered_compiler_candidate_before_lean(
     tamper: Callable[[dict[str, object]], dict[str, object]],
 ) -> None:
     value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
     )
     compiled = runtime.compile_reviewed_obligation(value)
@@ -2111,10 +2001,7 @@ def test_a1_kernel_rejects_compiler_artifact_copied_from_another_case(
     tmp_path: Path,
 ) -> None:
     copied_value = _reviewed_entailment(
-        (
-            "Every archivist is trained. Ada is an archivist. "
-            "Therefore Ada is trained."
-        ),
+        ("Every archivist is trained. Ada is an archivist. Therefore Ada is trained."),
         "trained",
         obligation_id="copied-obligation",
     )
@@ -2305,10 +2192,7 @@ def test_a2_hammer_emits_candidate_only_after_unsat(
     monkeypatch.setattr(runtime, "run_bounded_process_group", timed_out)
     timeout_output = runtime._hammer_live_handler(record)(request)
     assert timeout_output.status is contracts.StageStatus.FAILED
-    assert (
-        timeout_output.failure_code
-        is contracts.FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-    )
+    assert timeout_output.failure_code is contracts.FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
     assert timeout_output.data["solver_status"] == "unsat"
     assert timeout_output.data["timed_out"] is True
     assert timeout_output.data["process_group_reaped"] is True
@@ -2360,14 +2244,8 @@ def test_a2_hammer_emits_candidate_only_after_unsat(
     )
     spawn_output = runtime._hammer_live_handler(missing_record)(request)
     assert spawn_output.status is contracts.StageStatus.FAILED
-    assert (
-        spawn_output.failure_code
-        is contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
-    )
-    assert (
-        spawn_output.failure_code
-        not in contracts.RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
-    )
+    assert spawn_output.failure_code is contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+    assert spawn_output.failure_code not in contracts.RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
 
     def signal_exit(
         _arguments: object,
@@ -2386,17 +2264,11 @@ def test_a2_hammer_emits_candidate_only_after_unsat(
     monkeypatch.setattr(runtime, "run_bounded_process_group", signal_exit)
     signal_output = runtime._hammer_live_handler(record)(request)
     assert signal_output.status is contracts.StageStatus.FAILED
-    assert (
-        signal_output.failure_code
-        is contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
-    )
+    assert signal_output.failure_code is contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
     assert signal_output.data["returncode"] == -11
     assert signal_output.data["termination_reason"] == "signal_exit"
     assert signal_output.data["candidate_created"] is False
-    assert (
-        signal_output.failure_code
-        not in contracts.RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
-    )
+    assert signal_output.failure_code not in contracts.RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
 
     def nonzero_exit(
         _arguments: object,
@@ -2415,10 +2287,7 @@ def test_a2_hammer_emits_candidate_only_after_unsat(
     monkeypatch.setattr(runtime, "run_bounded_process_group", nonzero_exit)
     nonzero_output = runtime._hammer_live_handler(record)(request)
     assert nonzero_output.status is contracts.StageStatus.FAILED
-    assert (
-        nonzero_output.failure_code
-        is contracts.FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-    )
+    assert nonzero_output.failure_code is contracts.FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
     assert nonzero_output.data["returncode"] == 2
     assert nonzero_output.data["termination_reason"] == "nonzero_exit"
     assert nonzero_output.data["candidate_created"] is False

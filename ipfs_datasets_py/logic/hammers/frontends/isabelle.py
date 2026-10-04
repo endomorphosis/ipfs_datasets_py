@@ -99,9 +99,7 @@ class IsabelleFrontend:
         available = isabelle_path is not None
         unavailable_reason = None
         if not available:
-            unavailable_reason = (
-                "isabelle_executable_not_found_on_path_or_common_install_dirs"
-            )
+            unavailable_reason = "isabelle_executable_not_found_on_path_or_common_install_dirs"
 
         return CapabilityEvidence(
             itp=ITPKind.ISABELLE,
@@ -179,8 +177,7 @@ class IsabelleFrontend:
         goal_text = _first_enumerated_goal(block_match.group("goals"))
         if goal_text is None:
             raise GoalCaptureError(
-                f"isabelle process goal block had no enumerated subgoal: "
-                f"{block_match.group(0)!r}"
+                f"isabelle process goal block had no enumerated subgoal: {block_match.group(0)!r}"
             )
 
         hypotheses = _parse_isabelle_hypotheses(combined_output, source)

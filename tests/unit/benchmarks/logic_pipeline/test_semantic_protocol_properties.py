@@ -23,9 +23,7 @@ from benchmarks.logic_pipeline.content_addressing import (
 )
 
 
-_FROZEN_V1_PROTOCOL_SHA256 = (
-    "a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3"
-)
+_FROZEN_V1_PROTOCOL_SHA256 = "a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3"
 _SOURCE = "Every licensed agency shall retain each record."
 _MODAL_IR = {
     "formulas": [
@@ -62,14 +60,10 @@ def _request(
         "variant_id": "A0",
         "split": contracts.Split.PILOT,
         "cache_mode": contracts.CacheMode.COLD,
-        "input_data": (
-            {"text": _SOURCE} if input_data is None else input_data
-        ),
+        "input_data": ({"text": _SOURCE} if input_data is None else input_data),
     }
     if semantic_v2:
-        kwargs["semantic_protocol_cid"] = (
-            contracts.SEMANTIC_PROTOCOL_V2_CID
-        )
+        kwargs["semantic_protocol_cid"] = contracts.SEMANTIC_PROTOCOL_V2_CID
     if proof_context is not None:
         kwargs["proof_context"] = proof_context
     return adapters.StageRequest(**kwargs)  # type: ignore[arg-type]
@@ -89,47 +83,28 @@ def _projection(
         semantic_class="proved",
         predicates=("licensed_agency", "retain_record"),
         entities=("agency", "record"),
-        evidence_cid=cid_for_dag_json(
-            {"producer_evidence": evidence_marker or producer_id}
-        ),
+        evidence_cid=cid_for_dag_json({"producer_evidence": evidence_marker or producer_id}),
     )
 
 
 def test_frozen_v1_protocol_digest_remains_byte_for_byte_unchanged() -> None:
     assert contracts.DEFAULT_PROTOCOL_SHA256 == _FROZEN_V1_PROTOCOL_SHA256
-    assert (
-        contracts.SEMANTIC_PROTOCOL_V2.parent_protocol_sha256
-        == _FROZEN_V1_PROTOCOL_SHA256
-    )
+    assert contracts.SEMANTIC_PROTOCOL_V2.parent_protocol_sha256 == _FROZEN_V1_PROTOCOL_SHA256
 
 
 def test_calibration_routes_are_cid_bound_integrated_prefix_measurements() -> None:
     routes = contracts.semantic_calibration_route_manifest_v2()
     metrics = contracts.semantic_calibration_metric_spec_v2()
 
-    assert (
-        cid_for_dag_json(routes)
-        == contracts.SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-    )
-    assert (
-        cid_for_dag_json(metrics)
-        == contracts.SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-    )
+    assert cid_for_dag_json(routes) == contracts.SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
+    assert cid_for_dag_json(metrics) == contracts.SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
     assert routes["measurement_unit"] == "integrated_frontend_stage_prefix"
     assert routes["cost_attribution"] == "complete_selected_stage_prefix"
     assert routes["standalone_producer_claims_permitted"] is False
-    assert (
-        metrics["selection"][
-            "standalone_producer_delegation_claims_permitted"
-        ]
-        is False
-    )
+    assert metrics["selection"]["standalone_producer_delegation_claims_permitted"] is False
     assert metrics["cases_per_producer"] == 20
     assert metrics["primary_quality"]["minimum_successes"] == 15
-    assert (
-        metrics["primary_quality"]["minimum_rate_millionths"]
-        == 750_000
-    )
+    assert metrics["primary_quality"]["minimum_rate_millionths"] == 750_000
     assert metrics["uncertainty"] == {
         "method": "wilson_score_interval",
         "confidence_millionths": 950_000,
@@ -192,9 +167,7 @@ def test_codec_substitution_cannot_cross_raw_and_dag_json_boundaries() -> None:
 
     projection = _projection("compiler")
     substituted = projection.to_dict()
-    substituted["source_cid"] = cid_for_dag_json(
-        {"text": _SOURCE}
-    )
+    substituted["source_cid"] = cid_for_dag_json({"text": _SOURCE})
     with pytest.raises(
         contracts.ProtocolContractError,
         match="source_cid is not a canonical CID",
@@ -206,14 +179,14 @@ def test_cid_multihash_digest_bridges_frozen_sha256_receipts() -> None:
     raw = b"exact candidate artifact bytes"
     structured = {"candidate": "exact structured artifact"}
 
-    assert sha256_digest_for_cid(
-        cid_for_bytes(raw), codecs=("raw",)
-    ) == hashlib.sha256(raw).hexdigest()
-    assert sha256_digest_for_cid(
-        cid_for_dag_json(structured), codecs=("dag-json",)
-    ) == hashlib.sha256(
-        canonical_dag_json_bytes(structured)
-    ).hexdigest()
+    assert (
+        sha256_digest_for_cid(cid_for_bytes(raw), codecs=("raw",))
+        == hashlib.sha256(raw).hexdigest()
+    )
+    assert (
+        sha256_digest_for_cid(cid_for_dag_json(structured), codecs=("dag-json",))
+        == hashlib.sha256(canonical_dag_json_bytes(structured)).hexdigest()
+    )
 
 
 def test_logic_alias_implementation_exactly_matches_frozen_spec() -> None:
@@ -221,10 +194,7 @@ def test_logic_alias_implementation_exactly_matches_frozen_spec() -> None:
 
     assert normalization_spec["logic_aliases"] == _FROZEN_LOGIC_ALIASES
     assert adapters._SEMANTIC_LOGIC_ALIASES_V2 == _FROZEN_LOGIC_ALIASES
-    assert (
-        cid_for_dag_json(normalization_spec)
-        == contracts.SEMANTIC_NORMALIZATION_V2_CID
-    )
+    assert cid_for_dag_json(normalization_spec) == contracts.SEMANTIC_NORMALIZATION_V2_CID
 
     for alias, expected in _FROZEN_LOGIC_ALIASES.items():
         modal_ir = {
@@ -272,9 +242,7 @@ def test_normalization_cid_binds_every_runtime_projection_rule_family() -> None:
     modal_ir = spec["modal_ir"]
     assert modal_ir["document"]["formulas_field"] == "formulas"
     assert modal_ir["formulas"] == {
-        "accepted_container": (
-            "sequence_excluding_string_bytes_bytearray"
-        ),
+        "accepted_container": ("sequence_excluding_string_bytes_bytearray"),
         "accepted_item_shape": "mapping",
         "invalid_container_result": "empty",
         "invalid_items": "ignore",
@@ -294,9 +262,7 @@ def test_normalization_cid_binds_every_runtime_projection_rule_family() -> None:
     ]
     selection = modal_ir["primary_formula_selection"]
     assert selection["preferred_role"]["normalized_value"] == "clause"
-    assert [
-        rule["path"] for rule in selection["ordered_tiebreakers"]
-    ] == [
+    assert [rule["path"] for rule in selection["ordered_tiebreakers"]] == [
         ["provenance", "start_char"],
         ["provenance", "end_char"],
         ["formula_id"],
@@ -310,14 +276,12 @@ def test_normalization_cid_binds_every_runtime_projection_rule_family() -> None:
         "reason": "no_explicit_source_derived_class_evidence",
         "confidence_millionths": 0,
     }
-    assert [
-        rule["class"] for rule in class_rules["ordered_explicit_signals"]
-    ] == ["ambiguous", "disproved"]
+    assert [rule["class"] for rule in class_rules["ordered_explicit_signals"]] == [
+        "ambiguous",
+        "disproved",
+    ]
     assert spec["validation"]["validation_error_class"] == "unsupported"
-    assert (
-        spec["validation"]["validation_error_confidence_millionths"]
-        == 0
-    )
+    assert spec["validation"]["validation_error_confidence_millionths"] == 0
     assert spec["completeness"] == {
         "logic_family": "validation_presence.logic_family",
         "target": "validation_presence.target",
@@ -326,12 +290,7 @@ def test_normalization_cid_binds_every_runtime_projection_rule_family() -> None:
         "entities": "observed_collection_empty_is_complete",
     }
     assert spec["scoreability"]["minimum_confidence_millionths"] is None
-    assert (
-        spec["scoreability"][
-            "unsupported_class_is_a_scoreable_observation"
-        ]
-        is True
-    )
+    assert spec["scoreability"]["unsupported_class_is_a_scoreable_observation"] is True
 
 
 @pytest.mark.parametrize(
@@ -509,9 +468,7 @@ def test_predicate_entities_preserve_unicode_and_expand_final_qualifier() -> Non
         "scope:a:b",
         "b",
     }
-    assert contracts.SemanticProjection.from_dict(
-        projection.to_dict()
-    ) == projection
+    assert contracts.SemanticProjection.from_dict(projection.to_dict()) == projection
 
 
 @pytest.mark.parametrize(
@@ -553,14 +510,9 @@ def test_persisted_terms_must_be_exact_normalization_fixed_points(
 
 
 def test_semantic_content_cid_is_independent_of_every_producer_identity() -> None:
-    projections = [
-        _projection(producer_id)
-        for producer_id in contracts.SEMANTIC_PRODUCER_IDS_V2
-    ]
+    projections = [_projection(producer_id) for producer_id in contracts.SEMANTIC_PRODUCER_IDS_V2]
 
-    assert len(
-        {projection.semantic_content_cid for projection in projections}
-    ) == 1
+    assert len({projection.semantic_content_cid for projection in projections}) == 1
     assert len({projection.projection_cid for projection in projections}) == (
         len(contracts.SEMANTIC_PRODUCER_IDS_V2)
     )
@@ -584,9 +536,7 @@ def test_semantic_v2_source_cid_preserves_every_exact_whitespace_byte(
         input_data={"text": source_text},
         semantic_v2=True,
     )
-    config = adapters.SymaiAdapterConfig(
-        semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID
-    )
+    config = adapters.SymaiAdapterConfig(semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID)
     projection = _projection("compiler", source_text=source_text)
 
     assert request.source_cid == cid_for_bytes(source_text.encode("utf-8"))
@@ -603,13 +553,8 @@ def test_whitespace_variants_never_alias_to_one_source_or_cache_identity() -> No
         "Every  licensed agency shall retain each record.",
         "Every\tlicensed agency shall retain each record.",
     )
-    config = adapters.SymaiAdapterConfig(
-        semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID
-    )
-    requests = tuple(
-        _request(input_data={"text": source}, semantic_v2=True)
-        for source in sources
-    )
+    config = adapters.SymaiAdapterConfig(semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID)
+    requests = tuple(_request(input_data={"text": source}, semantic_v2=True) for source in sources)
 
     assert len({request.source_cid for request in requests}) == len(sources)
     assert len(
@@ -824,13 +769,8 @@ def test_source_only_producer_refuses_reviewed_proof_context_before_handler(
 
     assert calls == []
     assert invocation.output.status is contracts.StageStatus.FAILED
-    assert (
-        invocation.output.failure_code
-        is contracts.FailureCode.SAFETY_CONTROL_FAILURE
-    )
-    assert invocation.output.data["failure_subcode"] == (
-        "semantic_input_leakage"
-    )
+    assert invocation.output.failure_code is contracts.FailureCode.SAFETY_CONTROL_FAILURE
+    assert invocation.output.data["failure_subcode"] == ("semantic_input_leakage")
 
 
 def test_unavailable_symai_has_complete_typed_semantic_failure() -> None:
@@ -884,8 +824,7 @@ def test_v1_and_v2_symai_cache_namespaces_and_keys_cannot_collide() -> None:
     )
 
     assert v2_namespace == (
-        f"{v1_namespace}/semantic-protocol/"
-        f"{contracts.SEMANTIC_PROTOCOL_V2_CID}"
+        f"{v1_namespace}/semantic-protocol/{contracts.SEMANTIC_PROTOCOL_V2_CID}"
     )
     assert v1_namespace != v2_namespace
     assert v1_key != v2_key
@@ -962,9 +901,7 @@ def test_explicit_disproof_is_the_only_deterministic_negative_class_signal() -> 
 def test_conflicting_explicit_class_signals_fail_closed() -> None:
     projection = adapters.build_modal_semantic_projection_v2(
         producer_id="compiler",
-        source_text=(
-            "The clause is ambiguous and the asserted claim is false."
-        ),
+        source_text=("The clause is ambiguous and the asserted claim is false."),
         modal_ir=_MODAL_IR,
     )
 

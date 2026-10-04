@@ -97,7 +97,7 @@ sentences = [
     "The robot must perform the task",
     "The robot believes the task is complete",
     "It is permitted to open the door",
-    "The robot knows the password"
+    "The robot knows the password",
 ]
 
 for sentence in sentences:
@@ -149,7 +149,7 @@ print(f"Proof steps: {len(result.proof_steps)}")
 print("\n=== Example 3: Deontic Logic ===")
 prover.clear()
 prover.add_axiom("O(performTask(robot))")  # Obligation
-prover.add_axiom("O(φ) → P(φ)")            # Obligation implies permission
+prover.add_axiom("O(φ) → P(φ)")  # Obligation implies permission
 result = prover.prove("P(performTask(robot))")
 print(f"Can we prove permission? {result.is_proven}")
 ```
@@ -241,7 +241,7 @@ legal_clauses = [
     "The contractor must complete the project by December 31st",
     "The contractor is permitted to subcontract work",
     "The client must pay within 30 days of invoice",
-    "The contractor knows the project requirements"
+    "The contractor knows the project requirements",
 ]
 
 for clause in legal_clauses:
@@ -446,23 +446,25 @@ print(f"Parse tree: {parse_tree}")
 from ipfs_datasets_py.logic.CEC.native import DCECContainer
 from ipfs_datasets_py.logic.CEC.native.prover_core import TheoremProver
 
+
 class MyApplication:
     def __init__(self):
         self.cec = DCECContainer()
         self.prover = TheoremProver()
-    
+
     def add_rule(self, rule: str):
         """Add logical rule"""
         self.prover.add_axiom(rule)
-    
+
     def check_obligation(self, agent: str, action: str) -> bool:
         """Check if agent has obligation"""
         formula = f"O({action}({agent}))"
         return formula in self.cec.statements
-    
+
     def prove_consequence(self, conclusion: str) -> bool:
         """Prove logical consequence"""
         return self.prover.prove(conclusion).is_proven
+
 
 # Use it
 app = MyApplication()
@@ -497,11 +499,7 @@ result2 = prover.prove("B")
 
 ```python
 # Add multiple axioms at once
-prover.add_axioms([
-    "A → B",
-    "B → C",
-    "C → D"
-])
+prover.add_axioms(["A → B", "B → C", "C → D"])
 
 # Better than adding one by one
 ```
@@ -511,6 +509,7 @@ prover.add_axioms([
 ```python
 from typing import List
 from ipfs_datasets_py.logic.CEC.native import DCECFormula
+
 
 def process_formulas(formulas: List[DCECFormula]) -> None:
     """Type hints enable IDE autocomplete and error checking"""

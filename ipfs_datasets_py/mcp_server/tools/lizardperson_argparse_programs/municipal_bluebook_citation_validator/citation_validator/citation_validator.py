@@ -7,16 +7,26 @@ from threading import RLock
 from typing import Any, Callable, Generator, Optional
 
 
-from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import Configs, DatabaseConnection, Logger
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import (
+    Configs,
+    DatabaseConnection,
+    Logger,
+)
 
 import duckdb
+
 error_db: duckdb.DuckDBPyConnection
+
 
 class _CitationValidatorError(Exception):
     """Base class for all citation validation errors."""
+
     pass
 
+
 from dataclasses import dataclass, InitVar
+
+
 @dataclass
 class CheckResult:
     """
@@ -29,9 +39,14 @@ class CheckResult:
         message (Optional[str]): A descriptive message about the validation result.
             None when the citation is valid.
     """
+
     valid: bool = True
-    error_type: Optional[str] = None # Optional for cases where no error type is needed, e.g., valid checks
-    message: Optional[str] = None # Optional for cases where no message is needed, e.g., valid checks
+    error_type: Optional[str] = (
+        None  # Optional for cases where no error type is needed, e.g., valid checks
+    )
+    message: Optional[str] = (
+        None  # Optional for cases where no message is needed, e.g., valid checks
+    )
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -40,11 +55,8 @@ class CheckResult:
         Returns:
             A dictionary representation of the CheckResult.
         """
-        return {
-            "valid": self.valid,
-            "error_type": self.error_type,
-            "message": self.message
-        }
+        return {"valid": self.valid, "error_type": self.error_type, "message": self.message}
+
 
 @dataclass
 class ErrorDbInsert:
@@ -52,7 +64,7 @@ class ErrorDbInsert:
     Represents an error record to be inserted into the errors database table.
 
     Attributes:
-        cid (str): Primary CID identifier for the error record. 
+        cid (str): Primary CID identifier for the error record.
             Created by hashing all other fields together once they are assigned.
         citation_cid (str): CID Identifier for the related citation
         gnis (int): Geographic Names Information System identifier
@@ -65,61 +77,65 @@ class ErrorDbInsert:
         severity (int): Error severity level (1-5, where 1 is low and 5 is critical)
         created_at (Optional[str]): Timestamp when the error was created (auto-generated in DB)
     """
+
     citation_cid: str
     gnis: int
-    geography_error: str = None 
+    geography_error: str = None
     type_error: str = None
     section_error: str = None
     date_error: str = None
-    format_error: str  = None
+    format_error: str = None
     severity: int = None
     error_message: str = None
     created_at: str = None
-    cid: str = None # Created afterwards by hashing all the other fields together
+    cid: str = None  # Created afterwards by hashing all the other fields together
 
     def __post_init__(self):
         """Validate severity is within acceptable range."""
         if not 1 <= self.severity <= 5:
             raise ValueError("Severity must be between 1 and 5")
-        self.created_at = time.strftime('%Y-%m-%d %H:%M:%S')
+        self.created_at = time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 class CitationValidator:
-
     def __init__(self, resources=None, configs: Configs = None):
         self.resources = resources
         self.configs = configs
 
-        self._max_concurrency = configs['max_concurrency']
-        self._random_seed = configs['random_seed']
-        self._insert_batch_size = configs['insert_batch_size']
-        self._citation_dir = configs['citation_dir']
-        self._citation_dir = configs['html_dir']
-        self._save_validation_errors_sql_path: str = (self.configs.ROOT_DIR / "citation_validator" / "_save_validation_errors.sql").resolve()
+        self._max_concurrency = configs["max_concurrency"]
+        self._random_seed = configs["random_seed"]
+        self._insert_batch_size = configs["insert_batch_size"]
+        self._citation_dir = configs["citation_dir"]
+        self._citation_dir = configs["html_dir"]
+        self._save_validation_errors_sql_path: str = (
+            self.configs.ROOT_DIR / "citation_validator" / "_save_validation_errors.sql"
+        ).resolve()
 
+        self._load_citations_for_place: Callable = resources["load_citations_for_place"]
+        self._load_documents_for_place: Callable = resources["load_documents_for_place"]
+        self.__check_geography: Callable = resources["check_geography"]
+        self.__check_code: Callable = resources["check_code"]
+        self.__check_section: Callable = resources["run_section_checker"]
+        self.__check_dates: Callable = resources["run_date_checker"]
+        self.__check_formats: Callable = resources["run_format_checker"]
+        self.__validate_citation_consistency: Callable = resources[
+            "validate_citation_consistency"
+        ]  # TODO Might just remove this.
+        self.__run_in_thread_pool: Callable = resources["run_in_thread_pool"]
 
-        self._load_citations_for_place: Callable = resources['load_citations_for_place']
-        self._load_documents_for_place: Callable = resources['load_documents_for_place']
-        self.__check_geography: Callable = resources['check_geography']
-        self.__check_code: Callable = resources['check_code']
-        self.__check_section: Callable = resources['run_section_checker']
-        self.__check_dates: Callable = resources['run_date_checker']
-        self.__check_formats: Callable = resources['run_format_checker']
-        self.__validate_citation_consistency: Callable = resources['validate_citation_consistency'] # TODO Might just remove this.
-        self.__run_in_thread_pool: Callable = resources['run_in_thread_pool']
+        self._logger: Logger = resources["logger"]
 
-        self._logger: Logger = resources['logger']
+        self._duckdb = resources["duckdb"]
+        self._tqdm = resources["tqdm"]
+        self._reference_db: DatabaseConnection = (
+            None  # Reference database for validation checks. Set in public method.
+        )
 
-        self._duckdb = resources['duckdb']
-        self._tqdm = resources['tqdm']
-        self._reference_db: DatabaseConnection = None # Reference database for validation checks. Set in public method.
-
-        self._gnis_queue = Queue() # Queue for paths to be processed
-        self._validation_queue = Queue() # Queue for validation results
+        self._gnis_queue = Queue()  # Queue for paths to be processed
+        self._validation_queue = Queue()  # Queue for validation results
         self._lock = RLock()
 
         self._save_validation_errors_string: str = self._load_save_validation_errors_string()
-
 
     def _load_save_validation_errors_string(self) -> None:
         try:
@@ -149,20 +165,25 @@ class CitationValidator:
         # Bluebook citation example: ("1234567890", "City of Example", "Mass.", "Municipal Code", "§ 123-456", "2023",)
         return [
             ErrorDbInsert(
-                citation_cid=citation['cid'],
+                citation_cid=citation["cid"],
                 gnis=gnis,
-                geography_error=self._check_geography(citation, self._reference_db), #  -> dict
-                type_error=self._check_code(citation, self._reference_db), #  -> dict
-                section_error=self._check_section(citation, self._reference_db, place_documents), #  -> dict
-                date_error=self._check_dates(citation, self._reference_db, place_documents), #  -> dict
-                format_error=self._check_formats(citation, self._reference_db), #  -> dict
-            ) for citation in place_citations 
+                geography_error=self._check_geography(citation, self._reference_db),  #  -> dict
+                type_error=self._check_code(citation, self._reference_db),  #  -> dict
+                section_error=self._check_section(
+                    citation, self._reference_db, place_documents
+                ),  #  -> dict
+                date_error=self._check_dates(
+                    citation, self._reference_db, place_documents
+                ),  #  -> dict
+                format_error=self._check_formats(citation, self._reference_db),  #  -> dict
+            )
+            for citation in place_citations
         ]
 
     @staticmethod
     def error_message(name: str, e: Exception) -> str:
-        name = name.split('.')[0].capitalize()
-        f'{name} check failed with {type(e).__name__}: {e}'
+        name = name.split(".")[0].capitalize()
+        f"{name} check failed with {type(e).__name__}: {e}"
 
     @property
     def iterable_validation_queue(self) -> Generator[Any, None, None]:
@@ -179,22 +200,23 @@ class CitationValidator:
     @staticmethod
     def _queue_to_iterable(queue: Queue) -> Generator[Any, None, None]:
         """Convert a Queue to an iterable generator.
-        
+
         Args:
             queue (Queue): The queue to convert.
-        
+
         Yields:
             Any: Items from the queue.
         """
         while not queue.empty():
             yield queue.get()
 
-    def _run_check(self, 
-                   func: Callable = None, 
-                   citation: dict = None, 
-                   error_type: str = None, 
-                   place_documents: Optional[list[dict]] = None
-                   ) -> Optional[dict]:
+    def _run_check(
+        self,
+        func: Callable = None,
+        citation: dict = None,
+        error_type: str = None,
+        place_documents: Optional[list[dict]] = None,
+    ) -> Optional[dict]:
         """
         Run a validation check on a citation.
         Args:
@@ -205,70 +227,68 @@ class CitationValidator:
         if not func or not citation or not error_type:
             raise ValueError("Function, citation, and error_type must be provided")
 
-        result = CheckResult(valid=True) # Prevent UnboundLocalError if exception occurs before assignment
+        result = CheckResult(
+            valid=True
+        )  # Prevent UnboundLocalError if exception occurs before assignment
         try:
             error_message = func(citation, place_documents)
             if error_message is not None:
-                result = CheckResult(
-                    valid=False,
-                    error_type=error_type,
-                    message=error_message
-                )
+                result = CheckResult(valid=False, error_type=error_type, message=error_message)
         except Exception as e:
             self._logger.exception(self.error_message(error_type, e))
             result = CheckResult(
-                valid=False,
-                error_type=error_type,
-                message=self.error_message(error_type, e)
+                valid=False, error_type=error_type, message=self.error_message(error_type, e)
             )
-        return result.to_dict() if not result.valid else None # Should automatically filter out valid results
+        return (
+            result.to_dict() if not result.valid else None
+        )  # Should automatically filter out valid results
 
-    def _check_geography(self, citation: dict=None, place_documents=None) -> dict:
+    def _check_geography(self, citation: dict = None, place_documents=None) -> dict:
         return self._run_check(
             func=self.__check_geography,
             citation=citation,
-            error_type='geography_error',
-            reference_db=self._reference_db
+            error_type="geography_error",
+            reference_db=self._reference_db,
         )
 
-    def _check_code(self, citation: dict=None, place_documents=None) -> dict:
+    def _check_code(self, citation: dict = None, place_documents=None) -> dict:
         return self._run_check(
             func=self.__check_code,
             citation=citation,
-            error_type='code_error',
-            reference_db=self._reference_db
+            error_type="code_error",
+            reference_db=self._reference_db,
         )
 
-    def _check_section(self, citation: dict=None, place_documents=None) -> dict:
+    def _check_section(self, citation: dict = None, place_documents=None) -> dict:
         if not place_documents:
             raise ValueError("place_documents must be provided for date checks")
 
         return self._run_check(
             func=self.__check_section,
             citation=citation,
-            error_type='section_error',
-            place_documents=place_documents
+            error_type="section_error",
+            place_documents=place_documents,
         )
 
-    def _check_dates(self, citation: dict=None,  place_documents=None) -> dict:
+    def _check_dates(self, citation: dict = None, place_documents=None) -> dict:
         if not place_documents:
             raise ValueError("place_documents must be provided for date checks")
 
         return self._run_check(
             func=self.__check_dates,
             citation=citation,
-            error_type='date_error',
-            place_documents=place_documents
+            error_type="date_error",
+            place_documents=place_documents,
         )
 
-    def _check_formats(self, citation: dict=None, place_documents=None) -> dict:
+    def _check_formats(self, citation: dict = None, place_documents=None) -> dict:
         return self._run_check(
-            func=self.__check_formats,
-            citation=citation,
-            error_type='format_error'
+            func=self.__check_formats, citation=citation, error_type="format_error"
         )
 
-    def save_validation_errors(self, result_batch: list[dict[str, Any]], error_db: duckdb.DuckDBPyConnection) -> int:
+    def save_validation_errors(
+        self, result_batch: list[dict[str, Any]], error_db: duckdb.DuckDBPyConnection
+    ) -> int:
         """
         Save validation errors for a citation to the error database.
 
@@ -280,49 +300,66 @@ class CitationValidator:
         ErrorDbInsert
         for result in result_batch:
             try:
-                gnis = result['gnis']
-                citation_cid = result['cid']
+                gnis = result["gnis"]
+                citation_cid = result["cid"]
 
                 # Check each validation type for errors
-                geography_check = result.get('geography', {})
-                type_check = result.get('type', {})
-                section_check = result.get('section', {})
-                date_check = result.get('date', {})
-                format_check = result.get('format', {})
+                geography_check = result.get("geography", {})
+                type_check = result.get("type", {})
+                section_check = result.get("section", {})
+                date_check = result.get("date", {})
+                format_check = result.get("format", {})
 
                 # Determine if there are any errors
-                geography_error = not geography_check.get('valid', True)
-                type_error = not type_check.get('valid', True)
-                section_error = not section_check.get('valid', True)
-                date_error = not date_check.get('valid', True)
-                format_error = not format_check.get('valid', True)
+                geography_error = not geography_check.get("valid", True)
+                type_error = not type_check.get("valid", True)
+                section_error = not section_check.get("valid", True)
+                date_error = not date_check.get("valid", True)
+                format_error = not format_check.get("valid", True)
 
                 # Only save if there are errors
                 if any([geography_error, type_error, section_error, date_error, format_error]):
                     # Collect error messages
                     error_messages = []
                     if geography_error:
-                        error_messages.append(f"Geography: {geography_check.get('message', 'Unknown error')}")
+                        error_messages.append(
+                            f"Geography: {geography_check.get('message', 'Unknown error')}"
+                        )
                     if type_error:
                         error_messages.append(f"Type: {type_check.get('message', 'Unknown error')}")
                     if section_error:
-                        error_messages.append(f"Section: {section_check.get('message', 'Unknown error')}")
+                        error_messages.append(
+                            f"Section: {section_check.get('message', 'Unknown error')}"
+                        )
                     if date_error:
                         error_messages.append(f"Date: {date_check.get('message', 'Unknown error')}")
                     if format_error:
-                        error_messages.append(f"Format: {format_check.get('message', 'Unknown error')}")
+                        error_messages.append(
+                            f"Format: {format_check.get('message', 'Unknown error')}"
+                        )
 
-                    error_message = "; ".join(error_messages) # This or error_messages list should be exported to the error report generator.
+                    error_message = "; ".join(
+                        error_messages
+                    )  # This or error_messages list should be exported to the error report generator.
 
                     # Determine severity based on number and type of errors.
-                    num_errors = sum([geography_error, type_error, section_error, date_error, format_error])
+                    num_errors = sum(
+                        [geography_error, type_error, section_error, date_error, format_error]
+                    )
                     critical_errors = geography_error or type_error
                     severity = 5 if critical_errors else num_errors
 
                     # Prepare the SQL insert statement
                     sql_insert = [
-                        citation_cid, gnis, geography_error, type_error, section_error,
-                        date_error, format_error, severity, time.strftime('%Y-%m-%d %H:%M:%S')
+                        citation_cid,
+                        gnis,
+                        geography_error,
+                        type_error,
+                        section_error,
+                        date_error,
+                        format_error,
+                        severity,
+                        time.strftime("%Y-%m-%d %H:%M:%S"),
                     ]
                     cid = self._make_cid(sql_insert)
                     sql_insert.insert(0, cid)
@@ -332,11 +369,14 @@ class CitationValidator:
                 continue
 
         try:
-            with self._lock.acquire(timeout=10): # Since duckdb does not support concurrent writes, we need to lock it first.
+            with self._lock.acquire(
+                timeout=10
+            ):  # Since duckdb does not support concurrent writes, we need to lock it first.
                 with error_db.cursor() as cursor:
                     cursor.begin()
                     # Insert error record into database
-                    cursor.sql("""
+                    cursor.sql(
+                        """
                         INSERT INTO error_reports (
                             cid, 
                             citation_cid, 
@@ -349,9 +389,9 @@ class CitationValidator:
                             severity,
                             error_message
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, )
+                    """,
+                    )
                     error_count += num_errors
-
 
         except TimeoutError as e:
             self._logger.error(f"Failed to acquire lock for saving validation errors: {e}")
@@ -360,14 +400,14 @@ class CitationValidator:
         finally:
             self._lock.release()
 
-
-    def validate_citations_against_html_and_references(self, 
-                                            # citation_paths: list[Path], 
-                                            # html_paths: list[Path], 
-                                            sampled_gnis, 
-                                            reference_db, 
-                                            error_db
-                                            ) -> tuple[list]:
+    def validate_citations_against_html_and_references(
+        self,
+        # citation_paths: list[Path],
+        # html_paths: list[Path],
+        sampled_gnis,
+        reference_db,
+        error_db,
+    ) -> tuple[list]:
         # Set here so that we don't need to create it in the factory function
         self._reference_db = reference_db
 
@@ -375,8 +415,8 @@ class CitationValidator:
         total_citations: int = 0
         total_errors: int = 0
         result_list: list[dict] = []
- 
-        pbar = None # Avoid UnboundLocalError.
+
+        pbar = None  # Avoid UnboundLocalError.
         try:
             pbar = self._tqdm(total=len(sampled_gnis), desc="Validating citations", unit="place")
 
@@ -388,13 +428,22 @@ class CitationValidator:
             # Validate GNIS identifiers in batches.
             # This should stop the program from loading everything into memory at once.
             while not self._gnis_queue.empty():
-                for gnis_batch in itertools.batched(self.iterable_gnis_queue, self._max_concurrency):
-                    for results, gnis in self.__run_in_thread_pool(self._validate_citations, gnis_batch, max_concurrency=self._max_concurrency, use_tqdm=False):
+                for gnis_batch in itertools.batched(
+                    self.iterable_gnis_queue, self._max_concurrency
+                ):
+                    for results, gnis in self.__run_in_thread_pool(
+                        self._validate_citations,
+                        gnis_batch,
+                        max_concurrency=self._max_concurrency,
+                        use_tqdm=False,
+                    ):
                         total_citations += len(results)
                         self._validation_queue.put(results)
 
-            while not self._validation_queue.empty(): # Save any errors found
-                for result_batch in itertools.batched(self.iterable_validation_queue, self._insert_batch_size): 
+            while not self._validation_queue.empty():  # Save any errors found
+                for result_batch in itertools.batched(
+                    self.iterable_validation_queue, self._insert_batch_size
+                ):
                     error_count: int = self.save_validation_errors(result_batch, error_db)
                 result_list.extend(results)
 
@@ -407,4 +456,3 @@ class CitationValidator:
 
         print(f"Validated {total_citations} citations, found {total_errors} errors")
         return result_list
-

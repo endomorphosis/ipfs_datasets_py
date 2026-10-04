@@ -1260,9 +1260,7 @@ class TestCombinedTemporalDeonticRules:
         # GIVEN
         p = Predicate("P", ())
         eventually_p = create_eventually(p)
-        forbidden_eventually_p = DeonticFormula(
-            DeonticOperator.PROHIBITION, eventually_p
-        )
+        forbidden_eventually_p = DeonticFormula(DeonticOperator.PROHIBITION, eventually_p)
         rule = EventuallyForbiddenRule()
 
         # WHEN

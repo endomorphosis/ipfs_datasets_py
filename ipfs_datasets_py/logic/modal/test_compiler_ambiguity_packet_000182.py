@@ -67,10 +67,7 @@ def _matching_explicit_ambiguity(
             continue
         if metadata.get("target_family") != target_family:
             continue
-        if (
-            abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            > 1e-12
-        ):
+        if abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin) > 1e-12:
             continue
         return ambiguity
     return None
@@ -115,9 +112,7 @@ def test_compiler_emits_packet_000182_explicit_frame_ambiguities() -> None:
     )
     predicted_family = ModalLogicFamily.FRAME.value
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
         ranking = _adaptive_ranking_for_margin(

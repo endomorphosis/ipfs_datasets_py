@@ -56,7 +56,7 @@ Recommended:
 
 Example:
 ```python
-config = ExtractionConfig(allowed_entity_types=["Person", "Organization"]) 
+config = ExtractionConfig(allowed_entity_types=["Person", "Organization"])
 ```
 
 This reduces noise and improves downstream relationship inference.

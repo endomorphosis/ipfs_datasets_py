@@ -93,7 +93,9 @@ def shard_knowledge_graph_deterministic(
         raise ValueError("shard_ids length must equal num_shards")
 
     shard_ids_sorted = sorted(ids)
-    shard_kgs: dict[str, IPLDKnowledgeGraph] = {sid: IPLDKnowledgeGraph(name=f"{kg.name}::{sid}") for sid in shard_ids_sorted}
+    shard_kgs: dict[str, IPLDKnowledgeGraph] = {
+        sid: IPLDKnowledgeGraph(name=f"{kg.name}::{sid}") for sid in shard_ids_sorted
+    }
 
     for ent in kg.entities.values():
         sid = shard_ids_sorted[stable_shard_index(ent.id, num_shards=num_shards)]
@@ -169,7 +171,9 @@ def _build_entity_headers_index(kg: IPLDKnowledgeGraph) -> dict[str, dict]:
             "type": getattr(ent, "type", None),
             "name": getattr(ent, "name", None),
             "cid": getattr(ent, "cid", None),
-            "properties": dict(ent.properties) if getattr(ent, "properties", None) is not None else None,
+            "properties": dict(ent.properties)
+            if getattr(ent, "properties", None) is not None
+            else None,
         }
     return headers
 
@@ -361,10 +365,22 @@ def publish_sharded_graph_to_ipfs(
                 # If sharding provided explicit adjacency maps (e.g. cross-shard
                 # edges), prefer those.
                 if isinstance(outgoing_override, dict) or isinstance(incoming_override, dict):
-                    olist = outgoing_override.get(ent_id, []) if isinstance(outgoing_override, dict) else []
-                    ilist = incoming_override.get(ent_id, []) if isinstance(incoming_override, dict) else []
-                    outgoing = [_rel_dict(r) for r in sorted(olist, key=lambda r: getattr(r, "id", ""))]
-                    incoming = [_rel_dict(r) for r in sorted(ilist, key=lambda r: getattr(r, "id", ""))]
+                    olist = (
+                        outgoing_override.get(ent_id, [])
+                        if isinstance(outgoing_override, dict)
+                        else []
+                    )
+                    ilist = (
+                        incoming_override.get(ent_id, [])
+                        if isinstance(incoming_override, dict)
+                        else []
+                    )
+                    outgoing = [
+                        _rel_dict(r) for r in sorted(olist, key=lambda r: getattr(r, "id", ""))
+                    ]
+                    incoming = [
+                        _rel_dict(r) for r in sorted(ilist, key=lambda r: getattr(r, "id", ""))
+                    ]
                 elif isinstance(src_index, dict) and isinstance(tgt_index, dict):
                     out_ids = src_index.get(ent_id, set())
                     in_ids = tgt_index.get(ent_id, set())
@@ -380,8 +396,18 @@ def publish_sharded_graph_to_ipfs(
                             incoming.append(_rel_dict(rel))
 
                 else:
-                    outgoing = [_rel_dict(r) for r in kg.get_entity_relationships(ent_id, direction="outgoing", relationship_types=None)]
-                    incoming = [_rel_dict(r) for r in kg.get_entity_relationships(ent_id, direction="incoming", relationship_types=None)]
+                    outgoing = [
+                        _rel_dict(r)
+                        for r in kg.get_entity_relationships(
+                            ent_id, direction="outgoing", relationship_types=None
+                        )
+                    ]
+                    incoming = [
+                        _rel_dict(r)
+                        for r in kg.get_entity_relationships(
+                            ent_id, direction="incoming", relationship_types=None
+                        )
+                    ]
 
                 adj_obj = {
                     "v": 1,
@@ -428,7 +454,9 @@ def publish_sharded_graph_to_ipfs(
                 meta = {"v": 2, "prefix_len": prefix_len, "buckets": bucket_cids}
                 neighbors_index_bytes = _maybe_compress(json.dumps(meta).encode("utf-8"))
             else:
-                neighbors_index_bytes = _maybe_compress(json.dumps(entity_to_adj_cid).encode("utf-8"))
+                neighbors_index_bytes = _maybe_compress(
+                    json.dumps(entity_to_adj_cid).encode("utf-8")
+                )
 
             neighbors_index_cid = ipfs_router.add_bytes(
                 neighbors_index_bytes,

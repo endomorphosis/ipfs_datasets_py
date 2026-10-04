@@ -62,9 +62,9 @@ This document provides a comprehensive catalog of all available MCP tools, organ
 result = await load_dataset("squad", options={"split": "train"})
 
 # Process with operations
-result = await process_dataset(dataset_id, [
-    {"type": "filter", "column": "score", "condition": "greater_than", "value": 0.8}
-])
+result = await process_dataset(
+    dataset_id, [{"type": "filter", "column": "score", "condition": "greater_than", "value": 0.8}]
+)
 
 # Save to file
 result = await save_dataset(dataset_id, "/output/data.parquet", format="parquet")
@@ -135,17 +135,10 @@ health = await monitor_cluster_health(detailed_metrics=True)
 **Quick Usage**:
 ```python
 # Create index
-result = await create_vector_index(
-    vectors=[[0.1, 0.2], [0.3, 0.4]], 
-    metric="cosine"
-)
+result = await create_vector_index(vectors=[[0.1, 0.2], [0.3, 0.4]], metric="cosine")
 
 # Search similar vectors
-result = await search_vector_index(
-    index_id="idx_123", 
-    query_vector=[0.15, 0.25], 
-    top_k=5
-)
+result = await search_vector_index(index_id="idx_123", query_vector=[0.15, 0.25], top_k=5)
 ```
 
 ---
@@ -182,17 +175,10 @@ result = await search_vector_index(
 **Quick Usage**:
 ```python
 # Generate embeddings
-result = await create_embeddings(
-    texts=["Hello world", "AI is amazing"],
-    model="thenlper/gte-small"
-)
+result = await create_embeddings(texts=["Hello world", "AI is amazing"], model="thenlper/gte-small")
 
 # Semantic search
-result = await semantic_search(
-    query="machine learning",
-    index_id="embeddings_idx",
-    top_k=10
-)
+result = await semantic_search(query="machine learning", index_id="embeddings_idx", top_k=10)
 ```
 
 ---
@@ -211,17 +197,10 @@ result = await semantic_search(
 **Quick Usage**:
 ```python
 # Cluster embeddings
-result = await cluster_analysis(
-    data=embedding_vectors,
-    algorithm="kmeans",
-    n_clusters=5
-)
+result = await cluster_analysis(data=embedding_vectors, algorithm="kmeans", n_clusters=5)
 
 # Assess data quality
-result = await quality_assessment(
-    data=dataset,
-    metrics=["completeness", "consistency"]
-)
+result = await quality_assessment(data=dataset, metrics=["completeness", "consistency"])
 ```
 
 ---
@@ -254,7 +233,7 @@ result = await quality_assessment(
 workflow = {
     "steps": [
         {"type": "dataset_processing", "parameters": {...}},
-        {"type": "embedding_generation", "parameters": {...}}
+        {"type": "embedding_generation", "parameters": {...}},
     ]
 }
 result = await execute_workflow(workflow)
@@ -275,16 +254,11 @@ result = await execute_workflow(workflow)
 **Quick Usage**:
 ```python
 # Create session
-result = await create_session(
-    session_name="analysis_session",
-    user_id="user123"
-)
+result = await create_session(session_name="analysis_session", user_id="user123")
 
 # Manage state
 result = await manage_session_state(
-    session_id="sess_123",
-    action="update",
-    data={"current_dataset": "data_456"}
+    session_id="sess_123", action="update", data={"current_dataset": "data_456"}
 )
 ```
 
@@ -317,16 +291,10 @@ result = await manage_session_state(
 **Quick Usage**:
 ```python
 # Comprehensive health check
-result = await health_check(
-    components=["system", "services", "embeddings"],
-    include_details=True
-)
+result = await health_check(components=["system", "services", "embeddings"], include_details=True)
 
 # Performance monitoring
-result = await get_performance_metrics(
-    time_range="1h",
-    components=["cpu", "memory"]
-)
+result = await get_performance_metrics(time_range="1h", components=["cpu", "memory"])
 ```
 
 ---
@@ -346,16 +314,11 @@ result = await get_performance_metrics(
 ```python
 # Check permissions
 result = await check_access_permission(
-    resource_id="dataset_123",
-    user_id="user456",
-    permission_type="read"
+    resource_id="dataset_123", user_id="user456", permission_type="read"
 )
 
 # Authenticate user
-result = await authenticate_user(
-    username="john_doe",
-    password="secure_password"
-)
+result = await authenticate_user(username="john_doe", password="secure_password")
 ```
 
 ---
@@ -375,18 +338,11 @@ result = await authenticate_user(
 # Add endpoint
 result = await manage_endpoints(
     action="add",
-    endpoint_config={
-        "name": "tei-server",
-        "url": "http://tei:8080",
-        "type": "embedding"
-    }
+    endpoint_config={"name": "tei-server", "url": "http://tei:8080", "type": "embedding"},
 )
 
 # System maintenance
-result = await system_maintenance(
-    action="cleanup",
-    components=["cache", "temp_files"]
-)
+result = await system_maintenance(action="cleanup", components=["cache", "temp_files"])
 ```
 
 ---
@@ -406,15 +362,11 @@ result = await system_maintenance(
 ```python
 # Cache embeddings
 result = await cache_embeddings(
-    embeddings=embedding_vectors,
-    cache_key="doc_embeddings_v1",
-    ttl=3600
+    embeddings=embedding_vectors, cache_key="doc_embeddings_v1", ttl=3600
 )
 
 # Get cached data
-result = await get_cached_embeddings(
-    cache_key="doc_embeddings_v1"
-)
+result = await get_cached_embeddings(cache_key="doc_embeddings_v1")
 ```
 
 ---
@@ -433,17 +385,10 @@ result = await get_cached_embeddings(
 **Quick Usage**:
 ```python
 # Store data
-result = await store_data(
-    data=dataset,
-    storage_type="object_store",
-    location="datasets/processed"
-)
+result = await store_data(data=dataset, storage_type="object_store", location="datasets/processed")
 
 # Query storage
-result = await query_storage(
-    query={"category": "science"},
-    storage_type="document_store"
-)
+result = await query_storage(query={"category": "science"}, storage_type="document_store")
 ```
 
 ---
@@ -463,11 +408,7 @@ result = await query_storage(
 # Start background task
 result = await manage_background_tasks(
     action="start",
-    task_config={
-        "type": "embedding_generation",
-        "data": large_dataset,
-        "priority": "high"
-    }
+    task_config={"type": "embedding_generation", "data": large_dataset, "priority": "high"},
 )
 
 # Check task status
@@ -490,18 +431,11 @@ result = await check_task_status(task_id="task_123")
 **Quick Usage**:
 ```python
 # Chunk text
-result = await chunk_text(
-    text=long_document,
-    strategy="sentence",
-    chunk_size=512,
-    overlap=50
-)
+result = await chunk_text(text=long_document, strategy="sentence", chunk_size=512, overlap=50)
 
 # Transform data
 result = await transform_data(
-    data=dataset,
-    transformation="normalize",
-    parameters={"method": "z_score"}
+    data=dataset, transformation="normalize", parameters={"method": "z_score"}
 )
 ```
 
@@ -521,18 +455,10 @@ result = await transform_data(
 **Quick Usage**:
 ```python
 # Generate sparse embeddings
-result = await generate_sparse_embedding(
-    text="sample text",
-    model="splade",
-    sparsity_factor=0.1
-)
+result = await generate_sparse_embedding(text="sample text", model="splade", sparsity_factor=0.1)
 
 # Search sparse index
-result = await sparse_search(
-    query="search query",
-    index_id="sparse_idx_123",
-    top_k=10
-)
+result = await sparse_search(query="search query", index_id="sparse_idx_123", top_k=10)
 ```
 
 ---
@@ -551,15 +477,11 @@ result = await sparse_search(
 ```python
 # Configure limits
 result = await configure_rate_limits(
-    limits={"embedding_api": {"requests_per_minute": 100}},
-    scope="user"
+    limits={"embedding_api": {"requests_per_minute": 100}}, scope="user"
 )
 
 # Check limit
-result = await check_rate_limit(
-    user_id="user123",
-    resource="embedding_api"
-)
+result = await check_rate_limit(user_id="user123", resource="embedding_api")
 ```
 
 ---
@@ -576,16 +498,11 @@ result = await check_rate_limit(
 **Quick Usage**:
 ```python
 # Generate audit report
-result = await generate_audit_report(
-    report_type="security",
-    time_range="last_30_days"
-)
+result = await generate_audit_report(report_type="security", time_range="last_30_days")
 
 # Record event
 result = await record_audit_event(
-    action="dataset_access",
-    resource_id="dataset_123",
-    user_id="user456"
+    action="dataset_access", resource_id="dataset_123", user_id="user456"
 )
 ```
 
@@ -602,11 +519,7 @@ result = await record_audit_event(
 **Quick Usage**:
 ```python
 # Execute command
-result = await execute_command(
-    command="ls -la /data",
-    working_dir="/app",
-    timeout=30
-)
+result = await execute_command(command="ls -la /data", working_dir="/app", timeout=30)
 ```
 
 ---
@@ -623,9 +536,7 @@ result = await execute_command(
 ```python
 # Query graph
 result = await query_knowledge_graph(
-    graph_id="kg_123",
-    query="SELECT * WHERE { ?s ?p ?o }",
-    query_type="sparql"
+    graph_id="kg_123", query="SELECT * WHERE { ?s ?p ?o }", query_type="sparql"
 )
 ```
 
@@ -643,9 +554,7 @@ result = await query_knowledge_graph(
 ```python
 # Record provenance
 result = await record_provenance(
-    dataset_id="dataset_123",
-    operation="transformation",
-    inputs=["source_dataset_456"]
+    dataset_id="dataset_123", operation="transformation", inputs=["source_dataset_456"]
 )
 ```
 
@@ -665,16 +574,10 @@ result = await record_provenance(
 **Quick Usage**:
 ```python
 # Load index
-result = await load_index(
-    index_id="idx_123",
-    cache_config={"memory_limit": "2GB"}
-)
+result = await load_index(index_id="idx_123", cache_config={"memory_limit": "2GB"})
 
 # Monitor index
-result = await monitor_index_status(
-    index_id="idx_123",
-    check_type="performance"
-)
+result = await monitor_index_status(index_id="idx_123", check_type="performance")
 ```
 
 ---

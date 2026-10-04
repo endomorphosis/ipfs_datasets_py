@@ -54,10 +54,7 @@ def test_packet_003741_refined_margin_buffers_cover_target_pairs() -> None:
         (ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.DEONTIC.value): 0.24,
     }
     for pair, expected_minimum_buffer in expected_minimum_buffers.items():
-        assert (
-            compiler_refined_modal_family_cue_margin_buffer(*pair)
-            >= expected_minimum_buffer
-        )
+        assert compiler_refined_modal_family_cue_margin_buffer(*pair) >= expected_minimum_buffer
 
 
 def test_packet_003741_deontic_self_pair_has_weak_typed_buffer() -> None:

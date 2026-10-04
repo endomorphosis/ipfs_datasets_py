@@ -5,7 +5,9 @@ import sqlite3
 from pathlib import Path
 
 from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli import main
-from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.operations import reconcile_milestone
+from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.operations import (
+    reconcile_milestone,
+)
 
 
 def test_reconcile_milestone_passes_when_fixture_counts_align(tmp_path: Path) -> None:
@@ -74,14 +76,15 @@ def test_reconcile_milestone_reports_malformed_optional_json_as_mismatch(tmp_pat
 
     assert report["ok"] is False
     malformed_entries = [
-        item
-        for item in report["mismatches"]
-        if item["type"] == "malformed_json_artifact"
+        item for item in report["mismatches"] if item["type"] == "malformed_json_artifact"
     ]
     malformed_paths = {item["path"] for item in malformed_entries}
     assert str(malformed_manifest) in malformed_paths
     assert str(malformed_coverage) in malformed_paths
-    assert {item["name"] for item in malformed_entries} >= {"base package manifest", "coverage report"}
+    assert {item["name"] for item in malformed_entries} >= {
+        "base package manifest",
+        "coverage report",
+    }
     assert not any(
         item["type"] == "missing_optional_artifact" and item["path"] in malformed_paths
         for item in report["warnings"]
@@ -144,7 +147,10 @@ def _write_reconciliation_fixture(tmp_path: Path) -> dict[str, Path]:
         ],
     )
 
-    _write_json(package_dir / "dataset_manifest.json", {"records": {"laws": 2, "articles": 3, "cid_index": 5}})
+    _write_json(
+        package_dir / "dataset_manifest.json",
+        {"records": {"laws": 2, "articles": 3, "cid_index": 5}},
+    )
     _write_jsonl(
         package_dir / "data/laws/ipfs_netherlands_laws.jsonl",
         [
@@ -155,9 +161,21 @@ def _write_reconciliation_fixture(tmp_path: Path) -> dict[str, Path]:
     _write_jsonl(
         package_dir / "data/articles/ipfs_netherlands_laws_articles.jsonl",
         [
-            {"law_identifier": "BWBR0000001", "article_identifier": "BWBR0000001:a1", "cid": "bafyarticle1"},
-            {"law_identifier": "BWBR0000001", "article_identifier": "BWBR0000001:a2", "cid": "bafyarticle2"},
-            {"law_identifier": "BWBR0000002", "article_identifier": "BWBR0000002:a1", "cid": "bafyarticle3"},
+            {
+                "law_identifier": "BWBR0000001",
+                "article_identifier": "BWBR0000001:a1",
+                "cid": "bafyarticle1",
+            },
+            {
+                "law_identifier": "BWBR0000001",
+                "article_identifier": "BWBR0000001:a2",
+                "cid": "bafyarticle2",
+            },
+            {
+                "law_identifier": "BWBR0000002",
+                "article_identifier": "BWBR0000002:a1",
+                "cid": "bafyarticle3",
+            },
         ],
     )
     _write_jsonl(
@@ -171,7 +189,10 @@ def _write_reconciliation_fixture(tmp_path: Path) -> dict[str, Path]:
         ],
     )
 
-    _write_json(unified_dir / "dataset_manifest.json", {"records": {"laws": 2, "articles": 3, "cid_index": 5}})
+    _write_json(
+        unified_dir / "dataset_manifest.json",
+        {"records": {"laws": 2, "articles": 3, "cid_index": 5}},
+    )
     _write_json(
         reports_dir / "coverage_report_latest.json",
         {

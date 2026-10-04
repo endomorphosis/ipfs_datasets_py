@@ -40,8 +40,7 @@ def _adaptive_explicit_ambiguity_from_source(
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
         and ambiguity.metadata.get("predicted_family") == predicted_family
         and ambiguity.metadata.get("target_family") == target_family
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == predicted_family_source
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == predicted_family_source
     ]
     return matches[0] if matches else None
 
@@ -224,9 +223,7 @@ def test_compiler_exposes_packet_000931_explicit_compiler_ambiguity(
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -263,18 +260,9 @@ def test_compiler_exposes_packet_000931_explicit_compiler_ambiguity(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
-    assert (
-        abs(float(ambiguity.metadata.get("priority", 0.0)) - priority)
-        <= 1e-12
-    )
-    assert (
-        abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+    assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= 1e-12
     assert (
         abs(
             float(
@@ -287,7 +275,4 @@ def test_compiler_exposes_packet_000931_explicit_compiler_ambiguity(
         )
         <= 1e-12
     )
-    assert (
-        abs(float(ambiguity.metadata.get("adaptive_pair_margin_buffer", 0.0)) - 0.0015)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_pair_margin_buffer", 0.0)) - 0.0015) <= 1e-12

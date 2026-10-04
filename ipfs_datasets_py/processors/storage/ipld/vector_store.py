@@ -12,7 +12,7 @@ Migration Guide:
     New usage:
         from ipfs_datasets_py.vector_stores import IPLDVectorStore
         from ipfs_datasets_py.vector_stores.config import create_ipld_config
-        
+
         config = create_ipld_config("my_collection", dimension=768)
         store = IPLDVectorStore(config)
 
@@ -57,7 +57,7 @@ warnings.warn(
     "Please use ipfs_datasets_py.vector_stores.ipld_vector_store.IPLDVectorStore instead. "
     "See docs/IPLD_VECTOR_STORE_EXAMPLES.md for migration guide.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 from .storage import IPLDStorage
@@ -67,12 +67,14 @@ from .optimized_codec import OptimizedEncoder, OptimizedDecoder
 # Check if we have optional dependencies
 try:
     import faiss
+
     HAVE_FAISS = True
 except ImportError:
     HAVE_FAISS = False
 
 try:
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
@@ -80,9 +82,11 @@ except ImportError:
 # Type for vector IDs
 VectorID = str
 
+
 @dataclass
 class SearchResult:
     """Represents a search result from a vector store."""
+
     id: VectorID
     score: float
     metadata_index: int = None
@@ -94,8 +98,9 @@ class SearchResult:
             "id": self.id,
             "score": self.score,
             "metadata_index": self.metadata_index,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
+
 
 class IPLDVectorStore:
     """
@@ -108,10 +113,7 @@ class IPLDVectorStore:
     """
 
     def __init__(
-        self,
-        dimension: int = 768,
-        metric: str = "cosine",
-        storage: Optional[IPLDStorage] = None
+        self, dimension: int = 768, metric: str = "cosine", storage: Optional[IPLDStorage] = None
     ):
         """
         Initialize vector store with dimension and similarity metric.
@@ -136,7 +138,7 @@ class IPLDVectorStore:
             "vectors_added": 0,
             "searches_performed": 0,
             "average_search_time": 0.0,
-            "total_search_time": 0.0
+            "total_search_time": 0.0,
         }
 
         # Initialize index if faiss is available
@@ -160,9 +162,7 @@ class IPLDVectorStore:
             raise ValueError(f"Unsupported metric: {self.metric}. Use 'cosine', 'l2', or 'ip'.")
 
     def add_vectors(
-        self,
-        vectors: List[np.ndarray],
-        metadata: Optional[List[Dict[str, Any]]] = None
+        self, vectors: List[np.ndarray], metadata: Optional[List[Dict[str, Any]]] = None
     ) -> List[VectorID]:
         """
         Store vectors in IPLD format.
@@ -212,7 +212,7 @@ class IPLDVectorStore:
                 "dimension": self.dimension,
                 "metric": self.metric,
                 "vector": vector_bytes,
-                "metadata": meta
+                "metadata": meta,
             }
 
             # Store the node
@@ -241,10 +241,7 @@ class IPLDVectorStore:
         return vector_ids
 
     def search(
-        self,
-        query_vector: np.ndarray,
-        top_k: int = 10,
-        filter_fn: Optional[callable] = None
+        self, query_vector: np.ndarray, top_k: int = 10, filter_fn: Optional[callable] = None
     ) -> List[SearchResult]:
         """
         Perform vector similarity search.
@@ -258,6 +255,7 @@ class IPLDVectorStore:
             List[SearchResult] - Ranked search results
         """
         import time
+
         start_time = time.time()
 
         # Check if we have vectors to search
@@ -269,7 +267,9 @@ class IPLDVectorStore:
 
         # Check dimensions
         if query_vector.shape[1] != self.dimension:
-            raise ValueError(f"Query vector has dimension {query_vector.shape[1]}, expected {self.dimension}")
+            raise ValueError(
+                f"Query vector has dimension {query_vector.shape[1]}, expected {self.dimension}"
+            )
 
         # Normalize if using cosine similarity
         if self.metric == "cosine":
@@ -306,12 +306,11 @@ class IPLDVectorStore:
                     continue
 
                 # Add to results
-                results.append(SearchResult(
-                    id=vector_id,
-                    score=float(score),
-                    metadata_index=idx,
-                    metadata=metadata
-                ))
+                results.append(
+                    SearchResult(
+                        id=vector_id, score=float(score), metadata_index=idx, metadata=metadata
+                    )
+                )
 
                 # Stop after reaching top_k valid results
                 if len(results) >= top_k:
@@ -331,10 +330,7 @@ class IPLDVectorStore:
         return results
 
     def _numpy_search(
-        self,
-        query_vector: np.ndarray,
-        top_k: int,
-        filter_fn: Optional[callable]
+        self, query_vector: np.ndarray, top_k: int, filter_fn: Optional[callable]
     ) -> List[SearchResult]:
         """
         Perform search using numpy (fallback when FAISS is not available).
@@ -395,12 +391,14 @@ class IPLDVectorStore:
                 continue
 
             # Create search result
-            results.append(SearchResult(
-                id=self.vector_ids[idx],
-                score=score,
-                metadata_index=idx,
-                metadata=self.metadata[idx]
-            ))
+            results.append(
+                SearchResult(
+                    id=self.vector_ids[idx],
+                    score=score,
+                    metadata_index=idx,
+                    metadata=self.metadata[idx],
+                )
+            )
 
         return results
 
@@ -436,11 +434,7 @@ class IPLDVectorStore:
         except ValueError:
             return None
 
-    def update_metadata(
-        self,
-        vector_id: VectorID,
-        metadata: Dict[str, Any]
-    ) -> bool:
+    def update_metadata(self, vector_id: VectorID, metadata: Dict[str, Any]) -> bool:
         """
         Update metadata for a vector.
 
@@ -537,7 +531,7 @@ class IPLDVectorStore:
             "dimension": self.dimension,
             "metric": self.metric,
             "count": len(self.vectors),
-            "vector_ids": self.vector_ids
+            "vector_ids": self.vector_ids,
         }
 
         # Store the root node
@@ -598,11 +592,7 @@ class IPLDVectorStore:
         return root_cid
 
     @classmethod
-    def from_cid(
-        cls,
-        cid: VectorID,
-        storage: Optional[IPLDStorage] = None
-    ) -> 'IPLDVectorStore':
+    def from_cid(cls, cid: VectorID, storage: Optional[IPLDStorage] = None) -> "IPLDVectorStore":
         """
         Load vector store from IPFS by CID.
 
@@ -631,7 +621,7 @@ class IPLDVectorStore:
         vector_store = cls(
             dimension=root_node.get("dimension", 768),
             metric=root_node.get("metric", "cosine"),
-            storage=storage
+            storage=storage,
         )
 
         # Set the root CID
@@ -658,6 +648,7 @@ class IPLDVectorStore:
             # Decode base64 if necessary
             if isinstance(vector_data, str):
                 import base64
+
                 vector_data = base64.b64decode(vector_data)
 
             # Convert to numpy array
@@ -682,11 +673,7 @@ class IPLDVectorStore:
         return vector_store
 
     @classmethod
-    def from_car(
-        cls,
-        car_path: str,
-        storage: Optional[IPLDStorage] = None
-    ) -> 'IPLDVectorStore':
+    def from_car(cls, car_path: str, storage: Optional[IPLDStorage] = None) -> "IPLDVectorStore":
         """
         Load vector store from CAR file.
 

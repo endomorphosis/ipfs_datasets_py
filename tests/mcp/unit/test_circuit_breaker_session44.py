@@ -34,8 +34,13 @@ from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_cb(failure_threshold: int = 3, recovery_timeout: float = 60.0, name: str = "test") -> CircuitBreaker:
-    return CircuitBreaker(failure_threshold=failure_threshold, recovery_timeout=recovery_timeout, name=name)
+
+def _make_cb(
+    failure_threshold: int = 3, recovery_timeout: float = 60.0, name: str = "test"
+) -> CircuitBreaker:
+    return CircuitBreaker(
+        failure_threshold=failure_threshold, recovery_timeout=recovery_timeout, name=name
+    )
 
 
 async def _failing_async(**kwargs):
@@ -57,6 +62,7 @@ def _ok_sync(**kwargs) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Tests: construction & basic state
 # ---------------------------------------------------------------------------
+
 
 class TestCircuitBreakerInit:
     """Verify that CircuitBreaker initialises correctly (lines 73-85)."""
@@ -152,6 +158,7 @@ class TestCircuitBreakerIsOpen:
 # Tests: call() method
 # ---------------------------------------------------------------------------
 
+
 class TestCircuitBreakerCall:
     """Verify CircuitBreaker.call() for all branches (lines 112-146)."""
 
@@ -189,6 +196,7 @@ class TestCircuitBreakerCall:
         cb._opened_at = time.monotonic()
 
         called = []
+
         async def probe(**kw):
             called.append(1)
             return {"status": "success"}
@@ -227,6 +235,7 @@ class TestCircuitBreakerCall:
         WHEN call() is invoked
         THEN KeyboardInterrupt propagates without wrapping.
         """
+
         def ki_raiser():
             raise KeyboardInterrupt
 
@@ -240,6 +249,7 @@ class TestCircuitBreakerCall:
         WHEN call() is invoked
         THEN SystemExit propagates without wrapping.
         """
+
         def se_raiser():
             raise SystemExit(0)
 
@@ -251,6 +261,7 @@ class TestCircuitBreakerCall:
 # ---------------------------------------------------------------------------
 # Tests: CLOSED → OPEN lifecycle
 # ---------------------------------------------------------------------------
+
 
 class TestCircuitBreakerClosedToOpen:
     """Verify that enough failures open the circuit (lines 179-191)."""
@@ -308,6 +319,7 @@ class TestCircuitBreakerClosedToOpen:
 # Tests: OPEN → HALF_OPEN → CLOSED / OPEN recovery
 # ---------------------------------------------------------------------------
 
+
 class TestCircuitBreakerRecovery:
     """Verify the OPEN → HALF_OPEN → CLOSED / OPEN lifecycle."""
 
@@ -360,6 +372,7 @@ class TestCircuitBreakerRecovery:
 # ---------------------------------------------------------------------------
 # Tests: reset() and info()
 # ---------------------------------------------------------------------------
+
 
 class TestCircuitBreakerResetAndInfo:
     """Verify reset() and info() helpers (lines 148-164)."""
@@ -415,6 +428,7 @@ class TestCircuitBreakerResetAndInfo:
 # ---------------------------------------------------------------------------
 # Tests: full CLOSED → OPEN → HALF_OPEN → CLOSED scenario
 # ---------------------------------------------------------------------------
+
 
 class TestCircuitBreakerFullLifecycle:
     """End-to-end state machine walk-through (all major transitions)."""

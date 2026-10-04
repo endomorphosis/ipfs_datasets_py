@@ -26,10 +26,10 @@ Usage Examples:
     # Create vector store and add vectors
     store = create_vector_store(dimension=768)
     store.add_vector("doc1", embedding_vector, {"title": "Document 1"})
-    
+
     # Search for similar vectors
     results = store.search_similar(query_vector, top_k=5)
-    
+
     # Calculate direct similarity
     similarity = calculate_similarity(vector1, vector2)
 
@@ -46,6 +46,7 @@ import numpy as np
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
 
 class VectorSimilarityCalculator:
     """
@@ -225,7 +226,9 @@ class VectorSimilarityCalculator:
             logger.error(f"Euclidean distance calculation failed: {e}")
             return 0.0
 
-    def batch_similarity(self, vectors: List[List[float]], query_vector: List[float]) -> List[float]:
+    def batch_similarity(
+        self, vectors: List[List[float]], query_vector: List[float]
+    ) -> List[float]:
         """
         Calculate cosine similarities between a query vector and multiple target vectors.
 
@@ -267,7 +270,9 @@ class VectorSimilarityCalculator:
             similarities.append(sim)
         return similarities
 
-    def find_most_similar(self, vectors: Dict[str, List[float]], query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+    def find_most_similar(
+        self, vectors: Dict[str, List[float]], query_vector: List[float], top_k: int = 5
+    ) -> List[Dict[str, Any]]:
         """
         Find the most similar vectors to a query vector with ranking and metadata.
 
@@ -301,7 +306,7 @@ class VectorSimilarityCalculator:
             >>> calculator = VectorSimilarityCalculator()
             >>> vectors = {
             ...     "doc1": [1, 0, 0],
-            ...     "doc2": [0, 1, 0], 
+            ...     "doc2": [0, 1, 0],
             ...     "doc3": [1, 1, 0],
             ...     "doc4": [1, 0, 1]
             ... }
@@ -322,6 +327,7 @@ class VectorSimilarityCalculator:
         # Sort by similarity (descending)
         similarities.sort(key=lambda x: x["similarity"], reverse=True)
         return similarities[:top_k]
+
 
 class VectorStore:
     """
@@ -366,20 +372,20 @@ class VectorStore:
     Usage Example:
         # Create vector store for 768-dimensional embeddings
         store = VectorStore(dimension=768)
-        
+
         # Add vectors with metadata
         result = store.add_vector(
             vector_id="doc_001",
             vector=embedding_vector,
             metadata={"title": "Document 1", "category": "science"}
         )
-        
+
         # Search for similar vectors
         results = store.search_similar(
             query_vector=query_embedding,
             top_k=10
         )
-        
+
         # Access results with metadata
         for result in results:
             print(f"ID: {result['id']}, Score: {result['similarity']}")
@@ -428,7 +434,9 @@ class VectorStore:
         self.vectors = {}
         self.metadata = {}
 
-    def add_vector(self, vector_id: str, vector: List[float], metadata: Optional[Dict] = None) -> Dict[str, Any]:
+    def add_vector(
+        self, vector_id: str, vector: List[float], metadata: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """
         Add a vector to the store with dimension validation and metadata association.
 
@@ -479,7 +487,10 @@ class VectorStore:
         """
         try:
             if len(vector) != self.dimension:
-                return {"status": "error", "message": f"Vector dimension mismatch. Expected {self.dimension}, got {len(vector)}"}
+                return {
+                    "status": "error",
+                    "message": f"Vector dimension mismatch. Expected {self.dimension}, got {len(vector)}",
+                }
 
             self.vectors[vector_id] = np.array(vector)
             self.metadata[vector_id] = metadata or {}
@@ -542,11 +553,13 @@ class VectorStore:
 
             for vector_id, vector in self.vectors.items():
                 similarity = calculator.cosine_similarity(query_vector, vector.tolist())
-                similarities.append({
-                    "id": vector_id,
-                    "similarity": similarity,
-                    "metadata": self.metadata.get(vector_id, {})
-                })
+                similarities.append(
+                    {
+                        "id": vector_id,
+                        "similarity": similarity,
+                        "metadata": self.metadata.get(vector_id, {}),
+                    }
+                )
 
             # Sort by similarity (descending) and return top_k
             similarities.sort(key=lambda x: x["similarity"], reverse=True)
@@ -554,6 +567,7 @@ class VectorStore:
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
             return []
+
 
 # Utility functions
 def create_vector_store(dimension: int = 768) -> VectorStore:
@@ -589,6 +603,7 @@ def create_vector_store(dimension: int = 768) -> VectorStore:
         768
     """
     return VectorStore(dimension)
+
 
 def calculate_similarity(vector1: List[float], vector2: List[float]) -> float:
     """

@@ -30,6 +30,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def _make_delegation(cid: str, tool: str = "test_tool", resource: str = "res://test"):
     from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
     return Delegation(
         cid=cid,
         issuer="did:key:issuer",
@@ -41,12 +42,14 @@ def _make_delegation(cid: str, tool: str = "test_tool", resource: str = "res://t
 
 def _make_manager(path: Optional[str] = None):
     from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
     return DelegationManager(path=path)
 
 
 # ---------------------------------------------------------------------------
 # 1. DelegationManager.merge() conflict detection
 # ---------------------------------------------------------------------------
+
 
 class TestDelegationManagerMergeConflictDetection:
     """Revoked CIDs from other._store are skipped with UserWarning."""
@@ -154,12 +157,14 @@ class TestDelegationManagerMergeConflictDetection:
 # 2. IPFSPolicyStore.reload(max_retries=1)
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSPolicyStoreReloadMaxRetries:
     """max_retries propagated to re-pin phase of reload()."""
 
     def _store_cls(self):
         try:
             from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore
+
             return IPFSPolicyStore
         except ImportError:
             return None
@@ -169,6 +174,7 @@ class TestIPFSPolicyStoreReloadMaxRetries:
         if IPFSPolicyStore is None:
             pytest.skip("IPFSPolicyStore not available")
         import inspect
+
         sig = inspect.signature(IPFSPolicyStore.reload)
         assert "max_retries" in sig.parameters
 
@@ -177,6 +183,7 @@ class TestIPFSPolicyStoreReloadMaxRetries:
         if IPFSPolicyStore is None:
             pytest.skip("IPFSPolicyStore not available")
         import inspect
+
         sig = inspect.signature(IPFSPolicyStore.reload)
         assert sig.parameters["max_retries"].default == 1
 
@@ -190,12 +197,14 @@ class TestIPFSPolicyStoreReloadMaxRetries:
             store = IPFSPolicyStore.__new__(IPFSPolicyStore)
             # Populate minimal state via FilePolicyStore.__init__
             from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore, PolicyRegistry
+
             FilePolicyStore.__init__(store, path=path)
             store._ipfs_client = None
             store._ipfs_cids = {}
 
             # Write a minimal versioned policy file
             import json as _json
+
             payload = {"version": "1", "policies": {}}
             with open(path, "w") as fh:
                 _json.dump(payload, fh)
@@ -220,6 +229,7 @@ class TestIPFSPolicyStoreReloadMaxRetries:
         if IPFSPolicyStore is None:
             pytest.skip("IPFSPolicyStore not available")
         import inspect
+
         # max_retries=0 must be accepted (no exception)
         sig = inspect.signature(IPFSPolicyStore.reload)
         assert sig.parameters["max_retries"].default is not inspect.Parameter.empty
@@ -232,12 +242,14 @@ class TestIPFSPolicyStoreReloadMaxRetries:
             path = os.path.join(td, "store.json")
             store = IPFSPolicyStore.__new__(IPFSPolicyStore)
             from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
             FilePolicyStore.__init__(store, path=path)
             store._ipfs_client = None
             store._ipfs_cids = {}
             store.pin_policy = lambda _name: None
 
             import json as _json
+
             with open(path, "w") as fh:
                 _json.dump({"version": "1", "policies": {}}, fh)
 
@@ -249,11 +261,13 @@ class TestIPFSPolicyStoreReloadMaxRetries:
 # 3. PublishAsyncResult.__int__ and __eq__
 # ---------------------------------------------------------------------------
 
+
 class TestPublishAsyncResultHelpers:
     """PublishAsyncResult backward-compat int/eq helpers."""
 
     def _result(self, notified: int = 3, timed_out: int = 1):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         return PublishAsyncResult(notified=notified, timed_out=timed_out)
 
     def test_int_returns_notified(self):
@@ -270,12 +284,14 @@ class TestPublishAsyncResultHelpers:
 
     def test_eq_publish_async_result_same(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r1 = PublishAsyncResult(notified=3, timed_out=1)
         r2 = PublishAsyncResult(notified=3, timed_out=1)
         assert r1 == r2
 
     def test_eq_publish_async_result_different(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r1 = PublishAsyncResult(notified=3, timed_out=1)
         r2 = PublishAsyncResult(notified=2, timed_out=1)
         assert r1 != r2
@@ -303,11 +319,13 @@ class TestPublishAsyncResultHelpers:
 # 4. ComplianceChecker.restore_from_bak()
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceCheckerRestoreFromBak:
     """ComplianceChecker.restore_from_bak() test suite."""
 
     def _checker(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         return make_default_compliance_checker()
 
     def test_restore_when_bak_exists(self):
@@ -389,6 +407,7 @@ class TestComplianceCheckerRestoreFromBak:
 # 5. E2E regression — sessions 60–67 combined
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESession68:
     """Regression E2E covering session 60–67 features."""
 
@@ -417,6 +436,7 @@ class TestE2ESession68:
 
     def test_publish_async_result_equality_chain(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult, PubSubBus
+
         bus = PubSubBus()
         results = []
         bus.subscribe("test_topic", lambda _t, p: results.append(p))
@@ -427,6 +447,7 @@ class TestE2ESession68:
 
     def test_compliance_restore_from_bak_round_trip(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         c = make_default_compliance_checker()
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "comp.enc")
@@ -449,6 +470,7 @@ class TestE2ESession68:
 
     def test_publish_async_result_int_comparison(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=2, timed_out=0)
         assert r == 2
         assert int(r) == 2
@@ -477,12 +499,14 @@ class TestE2ESession68:
     def test_publish_async_result_hash_works(self):
         """NamedTuple should still be hashable."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=1, timed_out=0)
         s = {r}  # should not raise
         assert len(s) == 1
 
     def test_restore_from_bak_returns_false_no_bak(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         c = make_default_compliance_checker()
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "nonexistent.enc")
@@ -490,6 +514,7 @@ class TestE2ESession68:
 
     def test_int_on_publish_async_result_zero(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=0, timed_out=0)
         assert int(r) == 0
         assert r == 0

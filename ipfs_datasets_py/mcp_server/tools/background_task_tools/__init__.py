@@ -8,14 +8,14 @@ from .background_task_tools import (
     manage_task_queue,
     MockTaskManager,
     TaskStatus,
-    TaskType
+    TaskType,
 )
 
 __all__ = [
     "check_task_status",
     "manage_background_tasks",
-    "manage_task_queue", 
+    "manage_task_queue",
     "MockTaskManager",
     "TaskStatus",
-    "TaskType"
+    "TaskType",
 ]

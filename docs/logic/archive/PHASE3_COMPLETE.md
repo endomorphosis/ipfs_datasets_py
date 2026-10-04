@@ -68,17 +68,10 @@ All 5 Phase 3 goals from README.md successfully completed:
 **API:**
 ```python
 coordinator = NeuralSymbolicCoordinator(
-    use_cec=True,
-    use_modal=True,
-    use_embeddings=True,
-    confidence_threshold=0.7
+    use_cec=True, use_modal=True, use_embeddings=True, confidence_threshold=0.7
 )
 
-result = coordinator.prove(
-    goal="P -> Q",
-    axioms=["P"],
-    strategy=ReasoningStrategy.HYBRID
-)
+result = coordinator.prove(goal="P -> Q", axioms=["P"], strategy=ReasoningStrategy.HYBRID)
 
 print(f"Proved: {result.is_proved}")
 print(f"Confidence: {result.confidence:.2f}")
@@ -105,8 +98,7 @@ print(f"Strategy: {result.strategy_used}")
 **API:**
 ```python
 prover = EmbeddingEnhancedProver(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    cache_enabled=True
+    model_name="sentence-transformers/all-MiniLM-L6-v2", cache_enabled=True
 )
 
 # Compute similarity
@@ -140,16 +132,10 @@ stats = prover.get_cache_stats()
 
 **API:**
 ```python
-scorer = HybridConfidenceScorer(
-    symbolic_weight=0.7,
-    neural_weight=0.3,
-    use_structural=True
-)
+scorer = HybridConfidenceScorer(symbolic_weight=0.7, neural_weight=0.3, use_structural=True)
 
 breakdown = scorer.compute_confidence(
-    symbolic_result=proof_result,
-    neural_similarity=0.85,
-    formula=goal
+    symbolic_result=proof_result, neural_similarity=0.85, formula=goal
 )
 
 print(f"Total: {breakdown.total_confidence:.2f}")
@@ -321,10 +307,7 @@ from ipfs_datasets_py.logic.integration.neurosymbolic import ReasoningStrategy
 coordinator = NeuralSymbolicCoordinator()
 
 # Simple tautology - will use SYMBOLIC_ONLY
-result = coordinator.prove(
-    goal="P -> P",
-    strategy=ReasoningStrategy.AUTO
-)
+result = coordinator.prove(goal="P -> P", strategy=ReasoningStrategy.AUTO)
 
 print(f"Proved: {result.is_proved}")  # True
 print(f"Confidence: {result.confidence}")  # 1.0
@@ -335,11 +318,7 @@ print(f"Strategy: {result.strategy_used}")  # SYMBOLIC_ONLY
 
 ```python
 # Will use HYBRID due to medium complexity
-result = coordinator.prove(
-    goal="Q",
-    axioms=["P", "P -> Q"],
-    strategy=ReasoningStrategy.HYBRID
-)
+result = coordinator.prove(goal="Q", axioms=["P", "P -> Q"], strategy=ReasoningStrategy.HYBRID)
 
 print(f"Proved: {result.is_proved}")  # True
 print(f"Confidence: {result.confidence}")  # ~0.95-1.0
@@ -361,7 +340,7 @@ similar = prover.find_similar_formulas(
         parse_tdfol("exists z. P(z)"),
         parse_tdfol("P -> Q"),
     ],
-    top_k=2
+    top_k=2,
 )
 
 for formula, score in similar:
@@ -376,9 +355,7 @@ from ipfs_datasets_py.logic.integration.neurosymbolic import HybridConfidenceSco
 scorer = HybridConfidenceScorer()
 
 breakdown = scorer.compute_confidence(
-    symbolic_result=proof_result,
-    neural_similarity=0.85,
-    formula=goal
+    symbolic_result=proof_result, neural_similarity=0.85, formula=goal
 )
 
 print(breakdown.explanation)

@@ -11,35 +11,36 @@ import json
 import tempfile
 from pathlib import Path
 
+
 def run_tool_test_subprocess(tool_name, test_code, timeout=30):
     """Run tool test in subprocess to prevent hanging."""
-    
-    script_content = f'''
+
+    script_content = f"""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path.cwd()))
 
 {test_code}
-'''
-    
+"""
+
     try:
         # Write test script to temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(script_content)
             temp_script = f.name
-        
+
         # Run in subprocess with timeout
         result = subprocess.run(
             [sys.executable, temp_script],
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd=str(Path.cwd())
+            cwd=str(Path.cwd()),
         )
-        
+
         # Clean up
         Path(temp_script).unlink()
-        
+
         if result.returncode == 0:
             print(f"✅ {tool_name}: Test completed successfully")
             if result.stdout:
@@ -50,7 +51,7 @@ sys.path.insert(0, str(Path.cwd()))
             if result.stderr:
                 print(f"   Error: {result.stderr.strip()}")
             return False
-            
+
     except subprocess.TimeoutExpired:
         print(f"⏱️ {tool_name}: Test timed out after {timeout}s")
         return False
@@ -58,9 +59,10 @@ sys.path.insert(0, str(Path.cwd()))
         print(f"❌ {tool_name}: Test error - {e}")
         return False
 
+
 def test_codebase_search():
     """Test codebase_search with correct parameters."""
-    test_code = '''
+    test_code = """
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
     
@@ -80,9 +82,10 @@ except Exception as e:
     print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
-'''
-    
+"""
+
     return run_tool_test_subprocess("codebase_search", test_code)
+
 
 def test_documentation_generator():
     """Test documentation_generator with correct parameters."""
@@ -111,12 +114,13 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 '''
-    
+
     return run_tool_test_subprocess("documentation_generator", test_code)
+
 
 def test_linting_tools():
     """Test linting_tools with correct parameters."""
-    test_code = '''
+    test_code = """
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
     
@@ -133,13 +137,14 @@ except Exception as e:
     print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
-'''
-    
+"""
+
     return run_tool_test_subprocess("linting_tools", test_code)
+
 
 def test_test_generator():
     """Test test_generator with correct parameters."""
-    test_code = '''
+    test_code = """
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import test_generator
     
@@ -169,13 +174,14 @@ except Exception as e:
     print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
-'''
-    
+"""
+
     return run_tool_test_subprocess("test_generator", test_code)
+
 
 def test_test_runner():
     """Test test_runner with correct parameters."""
-    test_code = '''
+    test_code = """
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import run_comprehensive_tests
     
@@ -192,50 +198,52 @@ except Exception as e:
     print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
-'''
-    
+"""
+
     return run_tool_test_subprocess("test_runner", test_code)
+
 
 def main():
     """Run all development tool tests."""
     print("=" * 60)
     print("Fixed Individual Development Tools Test")
     print("=" * 60)
-    
+
     tests = [
         ("codebase_search", test_codebase_search),
         ("documentation_generator", test_documentation_generator),
         ("linting_tools", test_linting_tools),
         ("test_generator", test_test_generator),
-        ("test_runner", test_test_runner)
+        ("test_runner", test_test_runner),
     ]
-    
+
     results = {}
-    
+
     for tool_name, test_func in tests:
         print(f"\n🔧 Testing {tool_name}...")
         results[tool_name] = test_func()
-    
+
     # Summary
     print("\n" + "=" * 60)
     print("SUMMARY")
     print("=" * 60)
-    
+
     passed = 0
     for tool_name, success in results.items():
         status = "✅ PASS" if success else "❌ FAIL"
         print(f"{tool_name}: {status}")
         if success:
             passed += 1
-    
+
     print(f"\nOverall: {passed}/{len(results)} tests passed")
-    
+
     if passed == len(results):
         print("🎉 All development tools are working correctly!")
         return True
     else:
         print("⚠️  Some development tools need attention.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

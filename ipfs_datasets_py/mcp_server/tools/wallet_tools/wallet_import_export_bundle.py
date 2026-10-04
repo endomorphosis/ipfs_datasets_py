@@ -9,7 +9,10 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, load_all, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Import encrypted descriptors from a verified export bundle.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Import encrypted descriptors from a verified export bundle.",
+)
 async def wallet_import_export_bundle(
     path: str,
     wallet_dir: Optional[str] = None,

@@ -230,12 +230,8 @@ result = tableaux.prove(parse_tdfol("□P → P"))
 
 # Extract and visualize countermodel
 if not result.is_valid:
-    counter = extract_countermodel(
-        formula, 
-        result.open_branch, 
-        ModalLogicType.K
-    )
-    
+    counter = extract_countermodel(formula, result.open_branch, ModalLogicType.K)
+
     visualizer = create_visualizer(counter.kripke)
     print(visualizer.render_ascii_enhanced())
     visualizer.render_html_interactive("countermodel.html")

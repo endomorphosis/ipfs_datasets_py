@@ -16,11 +16,13 @@ from typing import Any, Callable, Dict, List, Optional, Literal
 # Import monitoring decorator from infrastructure
 try:
     from ..infrastructure.monitoring import monitor
+
     MONITORING_AVAILABLE = True
 except ImportError:
     # Fallback if monitoring not available
     def monitor(func):
         return func
+
     MONITORING_AVAILABLE = False
 
 
@@ -28,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import yt_dlp
+
     YTDLP_AVAILABLE = True
 except ImportError:
     YTDLP_AVAILABLE = False
@@ -37,21 +40,23 @@ except ImportError:
 def make_ytdlp_wrapper(
     default_output_dir: Optional[str] = None,
     enable_logging: bool = True,
-    default_quality: Literal['best', 'worst'] = "best",
+    default_quality: Literal["best", "worst"] = "best",
     logger: logging.Logger = logging.getLogger(__name__),
-    ) -> 'YtDlpWrapper':
+) -> "YtDlpWrapper":
 
     resources = {
         "default_output_dir": default_output_dir,
         "enable_logging": enable_logging,
         "default_quality": default_quality,
-        logger: logger
+        logger: logger,
     }
 
     return YtDlpWrapper(**resources)
 
+
 def type_name(obj: Any) -> str:
     return type(obj).__name__
+
 
 class YtDlpWrapper:
     """
@@ -138,7 +143,7 @@ class YtDlpWrapper:
         # Basic video download
         wrapper = YtDlpWrapper(default_output_dir="/downloads")
         result = await wrapper.download_video("https://youtube.com/watch?v=example")
-        
+
         # Audio-only download with custom quality
         result = await wrapper.download_video(
             url="https://youtube.com/watch?v=example",
@@ -146,25 +151,25 @@ class YtDlpWrapper:
             audio_codec="mp3",
             audio_quality="320"
         )
-        
+
         # Playlist download with limits
         result = await wrapper.download_playlist(
             "https://youtube.com/playlist?list=example",
             max_downloads=10,
             quality="720p"
         )
-        
+
         # Batch download with progress tracking
         def progress_callback(download_id, progress_data):
             print(f"Download {download_id}: {progress_data}")
-        
+
         urls = ["https://youtube.com/watch?v=1", "https://youtube.com/watch?v=2"]
         result = await wrapper.batch_download(
             urls,
             max_concurrent=2,
             progress_callback=progress_callback
         )
-        
+
         # Search and download
         search_results = await wrapper.search_videos("python tutorial", max_results=5)
         for video in search_results['results']:
@@ -187,13 +192,14 @@ class YtDlpWrapper:
         - Concurrent downloads are limited to prevent resource exhaustion
         - Playlist downloads create subdirectories based on playlist names
     """
-    
-    def __init__(self, 
-                 default_output_dir: Optional[str] = None,
-                 enable_logging: bool = True,
-                 default_quality: Literal['best', 'worst'] = "best",
-                 logger: logging.Logger = logging.getLogger(__name__)
-                 ):
+
+    def __init__(
+        self,
+        default_output_dir: Optional[str] = None,
+        enable_logging: bool = True,
+        default_quality: Literal["best", "worst"] = "best",
+        logger: logging.Logger = logging.getLogger(__name__),
+    ):
         """
         Initialize YT-DLP wrapper with configuration options and dependency validation.
 
@@ -213,7 +219,7 @@ class YtDlpWrapper:
             default_quality (str, optional): Default quality setting for video downloads when
                 not explicitly specified. Supported values include:
                 - 'best': Highest available quality
-                - 'worst': Lowest available quality  
+                - 'worst': Lowest available quality
                 Defaults to "best".
 
         Attributes initialized:
@@ -232,14 +238,14 @@ class YtDlpWrapper:
         Examples:
             >>> # Basic initialization with defaults
             >>> wrapper = YtDlpWrapper()
-            
+
             >>> # Custom output directory with quiet logging
             >>> wrapper = YtDlpWrapper(
             ...     default_output_dir=str(Path.home() / "downloads"),
             ...     enable_logging=False,
             ...     default_quality="best"
             ... )
-            
+
             >>> # Production configuration
             >>> wrapper = YtDlpWrapper(
             ...     default_output_dir="/var/media/downloads",
@@ -254,18 +260,22 @@ class YtDlpWrapper:
             - All paths are converted to Path objects for cross-platform compatibility
         """
         if not YTDLP_AVAILABLE:
-            raise ImportError("yt-dlp is required but not installed. Install with: pip install yt-dlp")
-        
+            raise ImportError(
+                "yt-dlp is required but not installed. Install with: pip install yt-dlp"
+            )
+
         if default_output_dir is not None:
             if not isinstance(default_output_dir, (Path, str)):
-                raise TypeError(f"default_output_dir must be a string or Path, got {type_name(default_output_dir)}")
+                raise TypeError(
+                    f"default_output_dir must be a string or Path, got {type_name(default_output_dir)}"
+                )
         else:
             default_output_dir = tempfile.gettempdir()
 
         if not isinstance(default_quality, str):
             raise TypeError(f"default_quality must be a string, got {type_name(default_quality)}")
 
-        if default_quality not in ['best', 'worst']:
+        if default_quality not in ["best", "worst"]:
             raise ValueError(f"default_quality must be 'best' or 'worst', got {default_quality}")
 
         if not isinstance(enable_logging, bool):
@@ -276,20 +286,22 @@ class YtDlpWrapper:
 
         self.default_output_dir: Path = Path(default_output_dir)
         self.enable_logging: bool = enable_logging
-        self.default_quality: Literal['best','worst'] = default_quality
+        self.default_quality: Literal["best", "worst"] = default_quality
         self.logger: logging.Logger = logger
         self.downloads = {}  # Track active downloads
 
     @monitor
-    async def download_video(self, 
-                           url: str,
-                           output_path: Optional[str] = None,
-                           quality: Optional[str] = None,
-                           format_selector: Optional[str] = None,
-                           audio_only: bool = False,
-                           extract_info_only: bool = False,
-                           progress_callback: Optional[Callable] = None,
-                           **kwargs) -> Dict[str, Any]:
+    async def download_video(
+        self,
+        url: str,
+        output_path: Optional[str] = None,
+        quality: Optional[str] = None,
+        format_selector: Optional[str] = None,
+        audio_only: bool = False,
+        extract_info_only: bool = False,
+        progress_callback: Optional[Callable] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Download video from URL with comprehensive configuration options and progress tracking.
 
@@ -363,14 +375,14 @@ class YtDlpWrapper:
             >>> result = await wrapper.download_video("https://youtube.com/watch?v=dQw4w9WgXcQ")
             >>> print(result['status'])  # 'success'
             >>> print(result['output_path'])  # Path to downloaded file
-            
+
             >>> # High-quality download with custom path
             >>> result = await wrapper.download_video(
             ...     url="https://youtube.com/watch?v=example",
             ...     output_path="/downloads/%(title)s-%(upload_date)s.%(ext)s",
             ...     quality="best[height<=1080]"
             ... )
-            
+
             >>> # Audio-only extraction
             >>> result = await wrapper.download_video(
             ...     url="https://youtube.com/watch?v=example",
@@ -378,7 +390,7 @@ class YtDlpWrapper:
             ...     audio_codec="mp3",
             ...     audio_quality="320"
             ... )
-            
+
             >>> # Metadata extraction only
             >>> result = await wrapper.download_video(
             ...     url="https://youtube.com/watch?v=example",
@@ -386,13 +398,13 @@ class YtDlpWrapper:
             ... )
             >>> print(result['title'])  # Video title
             >>> print(result['duration'])  # Duration in seconds
-            
+
             >>> # Progress tracking
             >>> def progress_handler(download_id, progress):
             ...     if progress.get('status') == 'downloading':
             ...         percent = progress.get('_percent_str', 'N/A')
             ...         print(f"Download {download_id}: {percent}")
-            >>> 
+            >>>
             >>> result = await wrapper.download_video(
             ...     url="https://youtube.com/watch?v=example",
             ...     progress_callback=progress_handler
@@ -409,7 +421,7 @@ class YtDlpWrapper:
         """
         try:
             download_id = str(uuid.uuid4())
-            
+
             # Setup output path
             if output_path:
                 output_dir = Path(output_path).parent
@@ -417,92 +429,96 @@ class YtDlpWrapper:
             else:
                 output_dir = self.default_output_dir
                 filename_template = "%(title)s.%(ext)s"
-            
+
             # Create output directory
             output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Build yt-dlp options
             ydl_opts = {
-                'outtmpl': str(output_dir / filename_template),
-                'writeinfojson': True,
-                'writesubtitles': True,
-                'writeautomaticsub': True,
-                'ignoreerrors': False,
-                'no_warnings': not self.enable_logging,
+                "outtmpl": str(output_dir / filename_template),
+                "writeinfojson": True,
+                "writesubtitles": True,
+                "writeautomaticsub": True,
+                "ignoreerrors": False,
+                "no_warnings": not self.enable_logging,
             }
-            
+
             # Format selection
             if audio_only:
-                ydl_opts['format'] = 'bestaudio/best'
-                ydl_opts['postprocessors'] = [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': kwargs.get('audio_codec', 'mp3'),
-                    'preferredquality': kwargs.get('audio_quality', '192'),
-                }]
+                ydl_opts["format"] = "bestaudio/best"
+                ydl_opts["postprocessors"] = [
+                    {
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": kwargs.get("audio_codec", "mp3"),
+                        "preferredquality": kwargs.get("audio_quality", "192"),
+                    }
+                ]
             elif format_selector:
-                ydl_opts['format'] = format_selector
+                ydl_opts["format"] = format_selector
             elif quality:
-                if quality == 'best':
-                    ydl_opts['format'] = 'best'
-                elif quality == 'worst':
-                    ydl_opts['format'] = 'worst'
+                if quality == "best":
+                    ydl_opts["format"] = "best"
+                elif quality == "worst":
+                    ydl_opts["format"] = "worst"
                 else:
                     # Handle specific quality like "720p"
-                    ydl_opts['format'] = f'best[height<={quality.replace("p", "")}]'
+                    ydl_opts["format"] = f"best[height<={quality.replace('p', '')}]"
             else:
-                ydl_opts['format'] = self.default_quality
-            
+                ydl_opts["format"] = self.default_quality
+
             # Add custom options
             ydl_opts.update(kwargs)
-            
+
             # Progress hook
             if progress_callback:
+
                 def progress_hook(d):
                     if progress_callback:
                         progress_callback(download_id, d)
-                ydl_opts['progress_hooks'] = [progress_hook]
-            
+
+                ydl_opts["progress_hooks"] = [progress_hook]
+
             # Track download
             self.downloads[download_id] = {
-                'url': url,
-                'status': 'starting',
-                'start_time': time.time(),
-                'output_dir': str(output_dir)
+                "url": url,
+                "status": "starting",
+                "start_time": time.time(),
+                "output_dir": str(output_dir),
             }
-            
+
             # Execute download in thread pool using anyio
             result = await anyio.to_thread.run_sync(
                 self._download_with_ytdlp, url, ydl_opts, extract_info_only
             )
-            
+
             # Update tracking
-            self.downloads[download_id].update({
-                'status': 'completed' if result['status'] == 'success' else 'failed',
-                'end_time': time.time(),
-                'result': result
-            })
-            
-            result['download_id'] = download_id
+            self.downloads[download_id].update(
+                {
+                    "status": "completed" if result["status"] == "success" else "failed",
+                    "end_time": time.time(),
+                    "result": result,
+                }
+            )
+
+            result["download_id"] = download_id
             return result
-            
+
         except Exception as e:
             error_result = {
-                'status': 'error',
-                'error': str(e),
-                'url': url,
-                'download_id': download_id if 'download_id' in locals() else None
+                "status": "error",
+                "error": str(e),
+                "url": url,
+                "download_id": download_id if "download_id" in locals() else None,
             }
-            
-            if 'download_id' in locals():
-                self.downloads[download_id].update({
-                    'status': 'failed',
-                    'end_time': time.time(),
-                    'error': str(e)
-                })
-            
+
+            if "download_id" in locals():
+                self.downloads[download_id].update(
+                    {"status": "failed", "end_time": time.time(), "error": str(e)}
+                )
+
             logger.error(f"Download failed for {url}: {e}")
             return error_result
-    
+
     def _download_with_ytdlp(self, url: str, ydl_opts: Dict, extract_only: bool) -> Dict[str, Any]:
         """
         Execute yt-dlp download operations in synchronous context for thread pool execution.
@@ -530,14 +546,14 @@ class YtDlpWrapper:
                 - upload_date (str): Upload date string
                 - view_count (int): View count
                 - formats (List[Dict]): Available formats list
-                
+
                 For successful download:
                 - status (str): 'success'
                 - action (str): 'downloaded'
                 - url (str): Original URL
                 - output_path (str): Output template path
                 - info (Any): yt-dlp download result
-                
+
                 For errors:
                 - status (str): 'error'
                 - error (str): Detailed error message
@@ -559,46 +575,40 @@ class YtDlpWrapper:
                 if extract_only:
                     info = ydl.extract_info(url, download=False)
                     return {
-                        'status': 'success',
-                        'action': 'info_extracted',
-                        'info': info,
-                        'title': info.get('title'),
-                        'duration': info.get('duration'),
-                        'uploader': info.get('uploader'),
-                        'upload_date': info.get('upload_date'),
-                        'view_count': info.get('view_count'),
-                        'formats': info.get('formats', [])
+                        "status": "success",
+                        "action": "info_extracted",
+                        "info": info,
+                        "title": info.get("title"),
+                        "duration": info.get("duration"),
+                        "uploader": info.get("uploader"),
+                        "upload_date": info.get("upload_date"),
+                        "view_count": info.get("view_count"),
+                        "formats": info.get("formats", []),
                     }
                 else:
                     info = ydl.download([url])
                     return {
-                        'status': 'success',
-                        'action': 'downloaded',
-                        'url': url,
-                        'output_path': ydl_opts['outtmpl'],
-                        'info': info
+                        "status": "success",
+                        "action": "downloaded",
+                        "url": url,
+                        "output_path": ydl_opts["outtmpl"],
+                        "info": info,
                     }
-                    
+
         except yt_dlp.DownloadError as e:
-            return {
-                'status': 'error',
-                'error': f"Download error: {str(e)}",
-                'url': url
-            }
+            return {"status": "error", "error": f"Download error: {str(e)}", "url": url}
         except Exception as e:
-            return {
-                'status': 'error', 
-                'error': f"Unexpected error: {str(e)}",
-                'url': url
-            }
-    
-    async def download_playlist(self,
-                              playlist_url: str,
-                              output_dir: Optional[str] = None,
-                              max_downloads: Optional[int] = None,
-                              quality: Optional[str] = None,
-                              progress_callback: Optional[Callable] = None,
-                              **kwargs) -> Dict[str, Any]:
+            return {"status": "error", "error": f"Unexpected error: {str(e)}", "url": url}
+
+    async def download_playlist(
+        self,
+        playlist_url: str,
+        output_dir: Optional[str] = None,
+        max_downloads: Optional[int] = None,
+        quality: Optional[str] = None,
+        progress_callback: Optional[Callable] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Download complete playlists with selective item processing and organized output structure.
 
@@ -661,7 +671,7 @@ class YtDlpWrapper:
             ...     "https://youtube.com/playlist?list=PLrAXtmRdnEQy6NumBgx-qF7kYnVQIgaqh"
             ... )
             >>> print(f"Downloaded {result['total_downloaded']} items")
-            
+
             >>> # Limited playlist with custom quality
             >>> result = await wrapper.download_playlist(
             ...     playlist_url="https://youtube.com/playlist?list=example",
@@ -669,20 +679,20 @@ class YtDlpWrapper:
             ...     max_downloads=10,
             ...     quality="720p"
             ... )
-            
+
             >>> # Audio-only playlist extraction
             >>> result = await wrapper.download_playlist(
             ...     playlist_url="https://youtube.com/playlist?list=example",
             ...     extractaudio=True,
             ...     audioformat="mp3"
             ... )
-            
+
             >>> # Progress tracking for large playlists
             >>> def playlist_progress(download_id, progress):
             ...     downloaded = progress.get('downloaded', 0)
             ...     failed = progress.get('failed', 0)
             ...     print(f"Playlist {download_id}: {downloaded} done, {failed} failed")
-            >>> 
+            >>>
             >>> result = await wrapper.download_playlist(
             ...     playlist_url="https://youtube.com/playlist?list=large_playlist",
             ...     progress_callback=playlist_progress,
@@ -701,83 +711,86 @@ class YtDlpWrapper:
             download_id = str(uuid.uuid4())
             output_path = Path(output_dir or self.default_output_dir)
             output_path.mkdir(parents=True, exist_ok=True)
-            
+
             ydl_opts = {
-                'outtmpl': str(output_path / '%(playlist)s/%(title)s.%(ext)s'),
-                'writeinfojson': True,
-                'ignoreerrors': True,
-                'no_warnings': not self.enable_logging,
+                "outtmpl": str(output_path / "%(playlist)s/%(title)s.%(ext)s"),
+                "writeinfojson": True,
+                "ignoreerrors": True,
+                "no_warnings": not self.enable_logging,
             }
-            
+
             if max_downloads:
-                ydl_opts['playlistend'] = max_downloads
-            
+                ydl_opts["playlistend"] = max_downloads
+
             if quality:
-                ydl_opts['format'] = quality
-            
+                ydl_opts["format"] = quality
+
             ydl_opts.update(kwargs)
-            
+
             # Progress tracking
             downloaded_items = []
             failed_items = []
-            
+
             def playlist_progress_hook(d):
-                if d['status'] == 'finished':
-                    downloaded_items.append(d['filename'])
-                elif d['status'] == 'error':
-                    failed_items.append(d.get('filename', 'unknown'))
-                
+                if d["status"] == "finished":
+                    downloaded_items.append(d["filename"])
+                elif d["status"] == "error":
+                    failed_items.append(d.get("filename", "unknown"))
+
                 if progress_callback:
-                    progress_callback(download_id, {
-                        'downloaded': len(downloaded_items),
-                        'failed': len(failed_items),
-                        'current': d
-                    })
-            
-            ydl_opts['progress_hooks'] = [playlist_progress_hook]
-            
+                    progress_callback(
+                        download_id,
+                        {
+                            "downloaded": len(downloaded_items),
+                            "failed": len(failed_items),
+                            "current": d,
+                        },
+                    )
+
+            ydl_opts["progress_hooks"] = [playlist_progress_hook]
+
             # Track download
             self.downloads[download_id] = {
-                'url': playlist_url,
-                'type': 'playlist',
-                'status': 'starting',
-                'start_time': time.time(),
-                'output_dir': str(output_path)
+                "url": playlist_url,
+                "type": "playlist",
+                "status": "starting",
+                "start_time": time.time(),
+                "output_dir": str(output_path),
             }
-            
+
             # Execute download using anyio
             result = await anyio.to_thread.run_sync(
                 self._download_playlist_with_ytdlp, playlist_url, ydl_opts
             )
-            
-            result.update({
-                'download_id': download_id,
-                'downloaded_items': downloaded_items,
-                'failed_items': failed_items,
-                'total_downloaded': len(downloaded_items),
-                'total_failed': len(failed_items)
-            })
-            
+
+            result.update(
+                {
+                    "download_id": download_id,
+                    "downloaded_items": downloaded_items,
+                    "failed_items": failed_items,
+                    "total_downloaded": len(downloaded_items),
+                    "total_failed": len(failed_items),
+                }
+            )
+
             # Update tracking
-            self.downloads[download_id].update({
-                'status': 'completed',
-                'end_time': time.time(),
-                'result': result
-            })
-            
+            self.downloads[download_id].update(
+                {"status": "completed", "end_time": time.time(), "result": result}
+            )
+
             return result
-            
+
         except Exception as e:
             error_result = {
-                'status': 'error',
-                'error': str(e),
-                'playlist_url': playlist_url,
-                'download_id': download_id if 'download_id' in locals() else None
+                "status": "error",
+                "error": str(e),
+                "playlist_url": playlist_url,
+                "download_id": download_id if "download_id" in locals() else None,
             }
-            
+
             logger.error(f"Playlist download failed for {playlist_url}: {e}")
             return error_result
-    
+
     def _download_playlist_with_ytdlp(self, url: str, ydl_opts: Dict) -> Dict[str, Any]:
         """
         Execute playlist download operations in synchronous context for thread pool execution.
@@ -798,7 +811,7 @@ class YtDlpWrapper:
                 - status (str): 'success'
                 - action (str): 'playlist_downloaded'
                 - playlist_url (str): Original playlist URL
-                
+
                 For errors:
                 - status (str): 'error'
                 - error (str): Detailed error message
@@ -820,18 +833,10 @@ class YtDlpWrapper:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
-                return {
-                    'status': 'success',
-                    'action': 'playlist_downloaded',
-                    'playlist_url': url
-                }
+                return {"status": "success", "action": "playlist_downloaded", "playlist_url": url}
         except Exception as e:
-            return {
-                'status': 'error',
-                'error': str(e),
-                'playlist_url': url
-            }
-    
+            return {"status": "error", "error": str(e), "playlist_url": url}
+
     async def extract_info(self, url: str, **kwargs) -> Dict[str, Any]:
         """
         Extract comprehensive video/playlist metadata without downloading content.
@@ -867,7 +872,7 @@ class YtDlpWrapper:
             >>> print(f"Duration: {info['duration']} seconds")
             >>> for fmt in info['formats']:
             ...     print(f"Format: {fmt['format_id']} - {fmt['ext']} - {fmt.get('height', 'audio')}p")
-            
+
             >>> # Extract playlist metadata
             >>> info = await wrapper.extract_info("https://youtube.com/playlist?list=example")
             >>> print(f"Playlist has {len(info['info']['entries'])} items")
@@ -875,17 +880,11 @@ class YtDlpWrapper:
         Notes:
             - Returns same format as download_video(..., extract_info_only=True)
         """
-        return await self.download_video(
-            url, 
-            extract_info_only=True,
-            **kwargs
-        )
-    
-    async def search_videos(self, 
-                          query: str,
-                          platform: str = "youtube",
-                          max_results: int = 10,
-                          **kwargs) -> Dict[str, Any]:
+        return await self.download_video(url, extract_info_only=True, **kwargs)
+
+    async def search_videos(
+        self, query: str, platform: str = "youtube", max_results: int = 10, **kwargs
+    ) -> Dict[str, Any]:
         """
         Search for videos on specified platforms with customizable result filtering.
 
@@ -923,7 +922,7 @@ class YtDlpWrapper:
                   - upload_date (str): Upload date in YYYYMMDD format
                   - description (str): Truncated description (first 200 chars)
                 - total_results (int): Number of results returned
-                
+
                 For errors:
                 - status (str): 'error'
                 - error (str): Detailed error message
@@ -942,24 +941,24 @@ class YtDlpWrapper:
             >>> for video in results['results']:
             ...     print(f"{video['title']} - {video['duration']}s")
             ...     print(f"  URL: {video['url']}")
-            
+
             >>> # SoundCloud music search
             >>> results = await wrapper.search_videos(
             ...     query="ambient electronic music",
             ...     platform="soundcloud",
             ...     max_results=20
             ... )
-            
+
             >>> # Search and download top result
             >>> search_results = await wrapper.search_videos("best python course", max_results=1)
             >>> if search_results['results']:
             ...     top_video = search_results['results'][0]
             ...     download_result = await wrapper.download_video(top_video['url'])
-            
+
             >>> # Search with filtering
             >>> results = await wrapper.search_videos(
             ...     query="machine learning",
-            ...     platform="youtube", 
+            ...     platform="youtube",
             ...     max_results=15
             ... )
             >>> # Filter by duration (videos longer than 30 minutes)
@@ -979,47 +978,46 @@ class YtDlpWrapper:
                 search_url = f"scsearch{max_results}:{query}"
             else:
                 return {
-                    'status': 'error',
-                    'error': f"Platform '{platform}' not supported for search"
+                    "status": "error",
+                    "error": f"Platform '{platform}' not supported for search",
                 }
-            
+
             # Extract info for search results
             result = await self.extract_info(search_url, **kwargs)
-            
-            if result['status'] == 'success' and 'info' in result:
-                entries = result['info'].get('entries', [])
+
+            if result["status"] == "success" and "info" in result:
+                entries = result["info"].get("entries", [])
                 search_results = []
-                
+
                 for entry in entries:
-                    search_results.append({
-                        'title': entry.get('title'),
-                        'url': entry.get('webpage_url'),
-                        'duration': entry.get('duration'),
-                        'uploader': entry.get('uploader'),
-                        'view_count': entry.get('view_count'),
-                        'upload_date': entry.get('upload_date'),
-                        'description': entry.get('description', '')[:200] + '...' if entry.get('description') else ''
-                    })
-                
+                    search_results.append(
+                        {
+                            "title": entry.get("title"),
+                            "url": entry.get("webpage_url"),
+                            "duration": entry.get("duration"),
+                            "uploader": entry.get("uploader"),
+                            "view_count": entry.get("view_count"),
+                            "upload_date": entry.get("upload_date"),
+                            "description": entry.get("description", "")[:200] + "..."
+                            if entry.get("description")
+                            else "",
+                        }
+                    )
+
                 return {
-                    'status': 'success',
-                    'query': query,
-                    'platform': platform,
-                    'results': search_results,
-                    'total_results': len(search_results)
+                    "status": "success",
+                    "query": query,
+                    "platform": platform,
+                    "results": search_results,
+                    "total_results": len(search_results),
                 }
             else:
                 return result
-                
+
         except Exception as e:
             logger.error(f"Search failed for query '{query}': {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'query': query,
-                'platform': platform
-            }
-    
+            return {"status": "error", "error": str(e), "query": query, "platform": platform}
+
     def get_download_status(self, download_id: str) -> Dict[str, Any]:
         """
         Retrieve detailed status and metadata for a specific download operation.
@@ -1047,19 +1045,19 @@ class YtDlpWrapper:
                   - type (str): Download type ('video', 'playlist', etc.)
                   - result (Dict): Final download result (if completed)
                   - error (str): Error message (if failed)
-                
+
                 For missing downloads:
                 - status (str): 'error'
                 - error (str): Error message indicating download not found
 
         Raises:
             TypeError: If download_id is not a string
-            
+
         Examples:
             >>> # Start a download and monitor status
             >>> result = await wrapper.download_video("https://youtube.com/watch?v=example")
             >>> download_id = result['download_id']
-            >>> 
+            >>>
             >>> # Check status later
             >>> status = wrapper.get_download_status(download_id)
             >>> if status['status'] == 'success':
@@ -1067,13 +1065,13 @@ class YtDlpWrapper:
             ...     print(f"Download {info['status']}")
             ...     if 'duration' in info:
             ...         print(f"Took {info['duration']:.2f} seconds")
-            
+
             >>> # Monitor multiple downloads
             >>> download_ids = []
             >>> for url in video_urls:
             ...     result = await wrapper.download_video(url)
             ...     download_ids.append(result['download_id'])
-            >>> 
+            >>>
             >>> # Check all statuses
             >>> for did in download_ids:
             ...     status = wrapper.get_download_status(did)
@@ -1091,22 +1089,15 @@ class YtDlpWrapper:
         """
         if download_id in self.downloads:
             download_info = self.downloads[download_id].copy()
-            
+
             # Calculate duration if completed
-            if 'end_time' in download_info:
-                download_info['duration'] = download_info['end_time'] - download_info['start_time']
-            
-            return {
-                'status': 'success',
-                'download_id': download_id,
-                'download_info': download_info
-            }
+            if "end_time" in download_info:
+                download_info["duration"] = download_info["end_time"] - download_info["start_time"]
+
+            return {"status": "success", "download_id": download_id, "download_info": download_info}
         else:
-            return {
-                'status': 'error',
-                'error': f"Download ID '{download_id}' not found"
-            }
-    
+            return {"status": "error", "error": f"Download ID '{download_id}' not found"}
+
     def list_active_downloads(self) -> Dict[str, Any]:
         """
         Retrieve comprehensive overview of all tracked download operations categorized by status.
@@ -1128,7 +1119,7 @@ class YtDlpWrapper:
                   - type (str): Download type ('video', 'playlist', etc.)
                 - completed_downloads (List[Dict[str, Any]]): Successfully finished downloads:
                   - download_id (str): Unique download identifier
-                  - url (str): Download URL  
+                  - url (str): Download URL
                   - status (str): 'completed'
                   - start_time (float): Unix timestamp when started
                   - end_time (float): Unix timestamp when completed
@@ -1142,7 +1133,7 @@ class YtDlpWrapper:
                   - end_time (float): Unix timestamp when failed
                   - error (str): Error message
                 - total_active (int): Count of currently active downloads
-                - total_completed (int): Count of successfully completed downloads  
+                - total_completed (int): Count of successfully completed downloads
                 - total_failed (int): Count of failed downloads
 
         Examples:
@@ -1151,20 +1142,20 @@ class YtDlpWrapper:
             >>> print(f"Active: {overview['total_active']}")
             >>> print(f"Completed: {overview['total_completed']}")
             >>> print(f"Failed: {overview['total_failed']}")
-            
+
             >>> # Monitor active downloads
             >>> overview = wrapper.list_active_downloads()
             >>> for download in overview['active_downloads']:
             ...     elapsed = time.time() - download['start_time']
             ...     print(f"Download {download['download_id']}: {elapsed:.1f}s elapsed")
-            
+
             >>> # Check for failures
             >>> overview = wrapper.list_active_downloads()
             >>> if overview['failed_downloads']:
             ...     print("Failed downloads:")
             ...     for download in overview['failed_downloads']:
             ...         print(f"  {download['url']}: {download['error']}")
-            
+
             >>> # Cleanup old completed downloads
             >>> overview = wrapper.list_active_downloads()
             >>> if overview['total_completed'] > 100:
@@ -1182,36 +1173,38 @@ class YtDlpWrapper:
         active_downloads = []
         completed_downloads = []
         failed_downloads = []
-        
+
         for download_id, info in self.downloads.items():
             download_info = info.copy()
-            download_info['download_id'] = download_id
-            
-            if info['status'] == 'starting' or info['status'] == 'downloading':
+            download_info["download_id"] = download_id
+
+            if info["status"] == "starting" or info["status"] == "downloading":
                 active_downloads.append(download_info)
-            elif info['status'] == 'completed':
+            elif info["status"] == "completed":
                 completed_downloads.append(download_info)
-            elif info['status'] == 'failed':
+            elif info["status"] == "failed":
                 failed_downloads.append(download_info)
-        
+
         return {
-            'status': 'success',
-            'active_downloads': active_downloads,
-            'completed_downloads': completed_downloads,
-            'failed_downloads': failed_downloads,
-            'total_active': len(active_downloads),
-            'total_completed': len(completed_downloads),
-            'total_failed': len(failed_downloads)
+            "status": "success",
+            "active_downloads": active_downloads,
+            "completed_downloads": completed_downloads,
+            "failed_downloads": failed_downloads,
+            "total_active": len(active_downloads),
+            "total_completed": len(completed_downloads),
+            "total_failed": len(failed_downloads),
         }
-    
+
     @monitor
-    async def batch_download(self,
-                           urls: List[str],
-                           output_dir: Optional[str] = None,
-                           quality: Optional[str] = None,
-                           max_concurrent: int = 3,
-                           progress_callback: Optional[Callable] = None,
-                           **kwargs) -> Dict[str, Any]:
+    async def batch_download(
+        self,
+        urls: List[str],
+        output_dir: Optional[str] = None,
+        quality: Optional[str] = None,
+        max_concurrent: int = 3,
+        progress_callback: Optional[Callable] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Download multiple URLs concurrently with semaphore-based rate limiting and result aggregation.
 
@@ -1253,7 +1246,7 @@ class YtDlpWrapper:
                   - url (str): Original URL that failed
                   - error (str): Error message or exception details
                 - success_count (int): Number of successful downloads
-                - failure_count (int): Number of failed downloads  
+                - failure_count (int): Number of failed downloads
                 - success_rate (float): Ratio of successful to total downloads (0.0-1.0)
 
         Raises:
@@ -1265,13 +1258,13 @@ class YtDlpWrapper:
             >>> # Basic batch download
             >>> urls = [
             ...     "https://youtube.com/watch?v=video1",
-            ...     "https://youtube.com/watch?v=video2", 
+            ...     "https://youtube.com/watch?v=video2",
             ...     "https://youtube.com/watch?v=video3"
             ... ]
             >>> result = await wrapper.batch_download(urls)
             >>> print(f"Success rate: {result['success_rate']:.1%}")
             >>> print(f"Downloaded {result['success_count']}/{result['total_urls']} videos")
-            
+
             >>> # High-quality batch with custom concurrency
             >>> result = await wrapper.batch_download(
             ...     urls=video_urls,
@@ -1279,7 +1272,7 @@ class YtDlpWrapper:
             ...     quality="best[height<=1080]",
             ...     max_concurrent=5
             ... )
-            
+
             >>> # Audio extraction batch
             >>> result = await wrapper.batch_download(
             ...     urls=music_urls,
@@ -1288,27 +1281,27 @@ class YtDlpWrapper:
             ...     audio_quality="320",
             ...     max_concurrent=2
             ... )
-            
+
             >>> # Progress monitoring for large batches
             >>> def batch_progress(download_id, progress):
             ...     if progress.get('status') == 'downloading':
             ...         percent = progress.get('_percent_str', 'N/A')
             ...         speed = progress.get('_speed_str', 'N/A')
             ...         print(f"{download_id}: {percent} at {speed}")
-            >>> 
+            >>>
             >>> result = await wrapper.batch_download(
             ...     urls=large_url_list,
             ...     progress_callback=batch_progress,
             ...     max_concurrent=4
             ... )
-            
+
             >>> # Handle failures in batch results
             >>> result = await wrapper.batch_download(urls)
             >>> if result['failed_downloads']:
             ...     print("Failed downloads:")
             ...     for failure in result['failed_downloads']:
             ...         print(f"  {failure['url']}: {failure['error']}")
-            ...     
+            ...
             ...     # Retry failed downloads
             ...     failed_urls = [f['url'] for f in result['failed_downloads']]
             ...     retry_result = await wrapper.batch_download(failed_urls, max_concurrent=1)
@@ -1322,65 +1315,67 @@ class YtDlpWrapper:
         try:
             batch_id = str(uuid.uuid4())
             semaphore = anyio.Semaphore(max_concurrent)
-            
+
             async def _download_with_semaphore(url):
                 async with semaphore:
                     return await self.download_video(
                         url,
-                        output_path=str(Path(output_dir or self.default_output_dir) / f"{hash(url)}.%(ext)s") if output_dir else None,
+                        output_path=str(
+                            Path(output_dir or self.default_output_dir) / f"{hash(url)}.%(ext)s"
+                        )
+                        if output_dir
+                        else None,
                         quality=quality,
                         progress_callback=progress_callback,
-                        **kwargs
+                        **kwargs,
                     )
-            
+
             # Execute all downloads concurrently using anyio task group
             results = []
             async with anyio.create_task_group() as tg:
+
                 async def collect_result(url):
                     try:
                         result = await _download_with_semaphore(url)
                         results.append(result)
                     except Exception as e:
                         results.append(e)
-                
+
                 for url in urls:
                     tg.start_soon(collect_result, url)
-            
+
             # Process results
             successful_downloads = []
             failed_downloads = []
-            
+
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
-                    failed_downloads.append({
-                        'url': urls[i],
-                        'error': str(result)
-                    })
-                elif result.get('status') == 'success':
+                    failed_downloads.append({"url": urls[i], "error": str(result)})
+                elif result.get("status") == "success":
                     successful_downloads.append(result)
                 else:
                     failed_downloads.append(result)
-            
+
             return {
-                'status': 'success',
-                'batch_id': batch_id,
-                'total_urls': len(urls),
-                'successful_downloads': successful_downloads,
-                'failed_downloads': failed_downloads,
-                'success_count': len(successful_downloads),
-                'failure_count': len(failed_downloads),
-                'success_rate': len(successful_downloads) / len(urls) if urls else 0
+                "status": "success",
+                "batch_id": batch_id,
+                "total_urls": len(urls),
+                "successful_downloads": successful_downloads,
+                "failed_downloads": failed_downloads,
+                "success_count": len(successful_downloads),
+                "failure_count": len(failed_downloads),
+                "success_rate": len(successful_downloads) / len(urls) if urls else 0,
             }
-            
+
         except Exception as e:
             logger.error(f"Batch download failed: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'batch_id': batch_id if 'batch_id' in locals() else None,
-                'total_urls': len(urls)
+                "status": "error",
+                "error": str(e),
+                "batch_id": batch_id if "batch_id" in locals() else None,
+                "total_urls": len(urls),
             }
-    
+
     def cleanup_downloads(self, max_age_hours: int = 24) -> Dict[str, Any]:
         """
         Remove old download tracking data based on configurable age thresholds.
@@ -1413,32 +1408,32 @@ class YtDlpWrapper:
             >>> result = wrapper.cleanup_downloads()
             >>> print(f"Removed {result['removed_downloads']} old downloads")
             >>> print(f"{result['remaining_downloads']} downloads still tracked")
-            
+
             >>> # Aggressive cleanup - remove downloads older than 1 hour
             >>> result = wrapper.cleanup_downloads(max_age_hours=1)
-            
+
             >>> # Remove all completed downloads
             >>> result = wrapper.cleanup_downloads(max_age_hours=0)
-            
+
             >>> # Scheduled cleanup in long-running application
             >>> import anyio
-            >>> 
+            >>>
             >>> async def periodic_cleanup():
             ...     while True:
             ...         await anyio.sleep(3600)  # Every hour
             ...         result = wrapper.cleanup_downloads(max_age_hours=6)
             ...         if result['removed_downloads'] > 0:
             ...             print(f"Cleaned up {result['removed_downloads']} downloads")
-            >>> 
+            >>>
             >>> # Start cleanup task
             >>> asyncio.create_task(periodic_cleanup())
-            
+
             >>> # Conditional cleanup based on memory usage
             >>> overview = wrapper.list_active_downloads()
-            >>> total_tracked = (overview['total_active'] + 
-            ...                 overview['total_completed'] + 
+            >>> total_tracked = (overview['total_active'] +
+            ...                 overview['total_completed'] +
             ...                 overview['total_failed'])
-            >>> 
+            >>>
             >>> if total_tracked > 1000:
             ...     # Remove downloads older than 2 hours
             ...     cleanup_result = wrapper.cleanup_downloads(max_age_hours=2)
@@ -1455,26 +1450,23 @@ class YtDlpWrapper:
         try:
             current_time = time.time()
             max_age_seconds = max_age_hours * 3600
-            
+
             downloads_to_remove = []
             for download_id, info in self.downloads.items():
-                age = current_time - info['start_time']
+                age = current_time - info["start_time"]
                 if age > max_age_seconds:
                     downloads_to_remove.append(download_id)
-            
+
             # Remove old downloads
             for download_id in downloads_to_remove:
                 del self.downloads[download_id]
-            
+
             return {
-                'status': 'success',
-                'removed_downloads': len(downloads_to_remove),
-                'remaining_downloads': len(self.downloads)
+                "status": "success",
+                "removed_downloads": len(downloads_to_remove),
+                "remaining_downloads": len(self.downloads),
             }
-            
+
         except Exception as e:
             logger.error(f"Cleanup failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
+            return {"status": "error", "error": str(e)}

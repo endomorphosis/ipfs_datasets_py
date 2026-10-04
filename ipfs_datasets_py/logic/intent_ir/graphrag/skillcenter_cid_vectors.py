@@ -29,12 +29,8 @@ from .skillcenter_embeddings import (
 )
 
 
-SKILLCENTER_CID_VECTOR_SCHEMA_VERSION: Final = (
-    "skillcenter-cid-vector-index/v1"
-)
-SKILLCENTER_CID_VECTOR_METADATA_SCHEMA_VERSION: Final = (
-    "skillcenter-cid-vector-metadata/v1"
-)
+SKILLCENTER_CID_VECTOR_SCHEMA_VERSION: Final = "skillcenter-cid-vector-index/v1"
+SKILLCENTER_CID_VECTOR_METADATA_SCHEMA_VERSION: Final = "skillcenter-cid-vector-metadata/v1"
 _MAX_MANIFEST_BYTES = 16 * 1024 * 1024
 
 
@@ -101,9 +97,7 @@ class SkillCenterCIDVectorIndex:
         self.manifest = dict(manifest)
         self.faiss_index = faiss_index
         self.metadata_rows = tuple(dict(row) for row in metadata_rows)
-        self.metadata_by_faiss_id = {
-            int(row["faiss_id"]): dict(row) for row in self.metadata_rows
-        }
+        self.metadata_by_faiss_id = {int(row["faiss_id"]): dict(row) for row in self.metadata_rows}
 
     @classmethod
     def load(
@@ -121,21 +115,15 @@ class SkillCenterCIDVectorIndex:
             or not manifest_path.is_file()
             or manifest_path.stat().st_size > _MAX_MANIFEST_BYTES
         ):
-            raise SkillCenterCIDVectorError(
-                "vector index must contain a bounded regular manifest"
-            )
+            raise SkillCenterCIDVectorError("vector index must contain a bounded regular manifest")
         try:
             manifest = json.loads(manifest_path.read_bytes())
         except (UnicodeError, json.JSONDecodeError) as exc:
-            raise SkillCenterCIDVectorError(
-                "vector manifest is malformed"
-            ) from exc
+            raise SkillCenterCIDVectorError("vector manifest is malformed") from exc
         if (
             not isinstance(manifest, Mapping)
-            or manifest.get("schema_version")
-            != SKILLCENTER_CID_VECTOR_SCHEMA_VERSION
-            or manifest.get("primary_key")
-            != SKILLCENTER_CORPUS_PRIMARY_KEY
+            or manifest.get("schema_version") != SKILLCENTER_CID_VECTOR_SCHEMA_VERSION
+            or manifest.get("primary_key") != SKILLCENTER_CORPUS_PRIMARY_KEY
         ):
             raise SkillCenterCIDVectorError("unsupported vector manifest")
         files = manifest.get("files")
@@ -143,27 +131,16 @@ class SkillCenterCIDVectorIndex:
             "faiss",
             "metadata",
         }:
-            raise SkillCenterCIDVectorError(
-                "vector manifest file set is invalid"
-            )
-        paths = {
-            name: _verify_file_descriptor(index_root, files[name])
-            for name in sorted(files)
-        }
+            raise SkillCenterCIDVectorError("vector manifest file set is invalid")
+        paths = {name: _verify_file_descriptor(index_root, files[name]) for name in sorted(files)}
         faiss, np = _faiss_numpy()
         index = faiss.read_index(str(paths["faiss"]))
         _, pq = _pyarrow()
         metadata_rows = pq.read_table(paths["metadata"]).to_pylist()
         expected = int(manifest.get("vector_count", -1))
         dimension = int(manifest.get("dimension", -1))
-        if (
-            index.ntotal != expected
-            or index.d != dimension
-            or len(metadata_rows) != expected
-        ):
-            raise SkillCenterCIDVectorError(
-                "FAISS/vector metadata counts are inconsistent"
-            )
+        if index.ntotal != expected or index.d != dimension or len(metadata_rows) != expected:
+            raise SkillCenterCIDVectorError("FAISS/vector metadata counts are inconsistent")
         entry_cids = [str(row.get("entry_cid", "")) for row in metadata_rows]
         faiss_ids = [int(row.get("faiss_id", -1)) for row in metadata_rows]
         if (
@@ -180,9 +157,7 @@ class SkillCenterCIDVectorIndex:
             )
         stored_ids = faiss.vector_to_array(index.id_map).astype(np.int64)
         if set(int(value) for value in stored_ids) != set(faiss_ids):
-            raise SkillCenterCIDVectorError(
-                "FAISS ID map differs from CID metadata"
-            )
+            raise SkillCenterCIDVectorError("FAISS ID map differs from CID metadata")
         loaded = cls(
             root=index_root,
             manifest=manifest,
@@ -195,13 +170,9 @@ class SkillCenterCIDVectorIndex:
                 verify_rows=False,
             )
             if manifest.get("corpus_input") != _corpus_input(corpus):
-                raise SkillCenterCIDVectorError(
-                    "vector index is not bound to this corpus"
-                )
+                raise SkillCenterCIDVectorError("vector index is not bound to this corpus")
             if set(entry_cids) != corpus.entry_cids:
-                raise SkillCenterCIDVectorError(
-                    "vector entry_cid coverage differs from corpus"
-                )
+                raise SkillCenterCIDVectorError("vector entry_cid coverage differs from corpus")
         return loaded
 
     @property
@@ -214,9 +185,7 @@ class SkillCenterCIDVectorIndex:
             vector_count=int(self.manifest["vector_count"]),
             primary_key=str(self.manifest["primary_key"]),
             faiss_cid=str(self.manifest["files"]["faiss"]["cid"]),
-            manifest_sha256=hashlib.sha256(
-                (self.root / "manifest.json").read_bytes()
-            ).hexdigest(),
+            manifest_sha256=hashlib.sha256((self.root / "manifest.json").read_bytes()).hexdigest(),
         )
 
     def search_vector(
@@ -229,10 +198,7 @@ class SkillCenterCIDVectorIndex:
             raise SkillCenterCIDVectorError("k must be between 1 and 1000")
         _, np = _faiss_numpy()
         query = np.asarray([vector], dtype=np.float32)
-        if (
-            query.shape != (1, int(self.manifest["dimension"]))
-            or not np.isfinite(query).all()
-        ):
+        if query.shape != (1, int(self.manifest["dimension"])) or not np.isfinite(query).all():
             raise SkillCenterCIDVectorError("query vector is malformed")
         norm = float(np.linalg.norm(query))
         if not math.isfinite(norm) or norm == 0:
@@ -272,13 +238,8 @@ def build_skillcenter_cid_vector_index(
         key=str,
     )
     if not prepared_dirs:
-        raise SkillCenterCIDVectorError(
-            "at least one embedding checkpoint is required"
-        )
-    manifests = [
-        load_skillcenter_embedding_corpus(path)
-        for path in prepared_dirs
-    ]
+        raise SkillCenterCIDVectorError("at least one embedding checkpoint is required")
+    manifests = [load_skillcenter_embedding_corpus(path) for path in prepared_dirs]
     dimensions = {int(item["dimension"]) for item in manifests}
     models = {str(item["config"]["model_name"]) for item in manifests}
     if len(dimensions) != 1 or 0 in dimensions or len(models) != 1:
@@ -290,21 +251,15 @@ def build_skillcenter_cid_vector_index(
         if (
             not config.get("internal_retrieval_all_records")
             or int(config.get("max_chunks_per_record") or 0) != 1
-            or int(manifest["embedded_records"]) != int(
-                manifest["source_records_total"]
-            )
-            or int(manifest["vector_count"]) != int(
-                manifest["source_records_total"]
-            )
+            or int(manifest["embedded_records"]) != int(manifest["source_records_total"])
+            or int(manifest["vector_count"]) != int(manifest["source_records_total"])
         ):
             raise SkillCenterCIDVectorError(
                 "full vector checkpoints must contain one vector per entry"
             )
     embedding_inputs = [
         {
-            "manifest_sha256": hashlib.sha256(
-                (path / "manifest.json").read_bytes()
-            ).hexdigest(),
+            "manifest_sha256": hashlib.sha256((path / "manifest.json").read_bytes()).hexdigest(),
             "output_dir": str(path),
             "repository_file": manifest["repository_file"],
             "vector_count": manifest["vector_count"],
@@ -317,9 +272,7 @@ def build_skillcenter_cid_vector_index(
         "primary_key": SKILLCENTER_CORPUS_PRIMARY_KEY,
         "schema_version": SKILLCENTER_CID_VECTOR_SCHEMA_VERSION,
     }
-    build_identity_sha256 = hashlib.sha256(
-        canonical_json_bytes(identity)
-    ).hexdigest()
+    build_identity_sha256 = hashlib.sha256(canonical_json_bytes(identity)).hexdigest()
     output = Path(output_dir).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     with _build_lock(output):
@@ -328,13 +281,8 @@ def build_skillcenter_cid_vector_index(
                 output,
                 corpus_dir=corpus.root,
             )
-            if (
-                loaded.manifest.get("build_identity_sha256")
-                != build_identity_sha256
-            ):
-                raise SkillCenterCIDVectorError(
-                    "existing vector index has different inputs"
-                )
+            if loaded.manifest.get("build_identity_sha256") != build_identity_sha256:
+                raise SkillCenterCIDVectorError("existing vector index has different inputs")
             return loaded.summary
         rows = []
         seen: set[str] = set()
@@ -358,10 +306,7 @@ def build_skillcenter_cid_vector_index(
             [row["embedding"] for row in rows],
             dtype=np.float32,
         )
-        if (
-            vectors.shape != (len(rows), dimension)
-            or not np.isfinite(vectors).all()
-        ):
+        if vectors.shape != (len(rows), dimension) or not np.isfinite(vectors).all():
             raise SkillCenterCIDVectorError("embedding matrix is malformed")
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         if bool((norms == 0).any()):
@@ -382,18 +327,14 @@ def build_skillcenter_cid_vector_index(
                     "model_name": str(row["embedding_model"]),
                     "profile": str(row["profile"]),
                     "repository_file": str(row["repository_file"]),
-                    "schema_version": (
-                        SKILLCENTER_CID_VECTOR_METADATA_SCHEMA_VERSION
-                    ),
+                    "schema_version": (SKILLCENTER_CID_VECTOR_METADATA_SCHEMA_VERSION),
                     "skill_id": str(row["skill_id"]),
                     "source_type": str(row["source_type"]),
                     "title": str(row["title"]),
                 }
             )
         if len(set(identifiers)) != len(identifiers):
-            raise SkillCenterCIDVectorError(
-                "CID-derived FAISS int64 identifiers collided"
-            )
+            raise SkillCenterCIDVectorError("CID-derived FAISS int64 identifiers collided")
         index = faiss.IndexIDMap2(faiss.IndexFlatIP(dimension))
         index.add_with_ids(vectors, np.asarray(identifiers, dtype=np.int64))
         staging = Path(
@@ -407,12 +348,8 @@ def build_skillcenter_cid_vector_index(
             faiss.write_index(index, str(staging / "vectors.faiss"))
             _write_metadata(staging / "metadata.parquet", metadata)
             files = {
-                "faiss": _file_descriptor(
-                    staging / "vectors.faiss", root=staging
-                ),
-                "metadata": _file_descriptor(
-                    staging / "metadata.parquet", root=staging
-                ),
+                "faiss": _file_descriptor(staging / "vectors.faiss", root=staging),
+                "metadata": _file_descriptor(staging / "metadata.parquet", root=staging),
             }
             manifest = {
                 "build_identity_sha256": build_identity_sha256,
@@ -447,9 +384,7 @@ def _faiss_id(entry_cid: str) -> int:
         canonical_cid = validate_cid(entry_cid, path="/entry_cid")
         decoded = CID.decode(canonical_cid)
         if decoded.codec.name != "raw":
-            raise SkillCenterCIDVectorError(
-                "entry_cid must use the raw multicodec"
-            )
+            raise SkillCenterCIDVectorError("entry_cid must use the raw multicodec")
         digest = decoded.raw_digest
     except Exception as exc:
         if isinstance(exc, SkillCenterCIDVectorError):
@@ -461,9 +396,7 @@ def _faiss_id(entry_cid: str) -> int:
 def _corpus_input(corpus: SkillCenterCorpusIndex) -> dict[str, Any]:
     return {
         "corpus_cid": corpus.manifest["files"]["corpus"]["cid"],
-        "manifest_sha256": hashlib.sha256(
-            (corpus.root / "manifest.json").read_bytes()
-        ).hexdigest(),
+        "manifest_sha256": hashlib.sha256((corpus.root / "manifest.json").read_bytes()).hexdigest(),
         "source_records": corpus.manifest["source_records"],
     }
 
@@ -486,9 +419,7 @@ def _write_metadata(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
         ],
         metadata={
             b"primary_key": b"entry_cid",
-            b"schema_version": (
-                SKILLCENTER_CID_VECTOR_METADATA_SCHEMA_VERSION.encode()
-            ),
+            b"schema_version": (SKILLCENTER_CID_VECTOR_METADATA_SCHEMA_VERSION.encode()),
         },
     )
     pq.write_table(
@@ -575,9 +506,7 @@ def _faiss_numpy() -> tuple[Any, Any]:
         import faiss
         import numpy as np
     except ImportError as exc:  # pragma: no cover
-        raise SkillCenterCIDVectorError(
-            "faiss and numpy are required"
-        ) from exc
+        raise SkillCenterCIDVectorError("faiss and numpy are required") from exc
     return faiss, np
 
 

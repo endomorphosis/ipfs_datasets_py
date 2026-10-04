@@ -109,7 +109,9 @@ def build_graph() -> tuple[dict[str, list[str]], list[ImportEdge]]:
             edges.append(edge)
 
     # Keep only edges within the logic namespace.
-    logic_edges = [e for e in edges if e.src.startswith(LOGIC_PREFIX) and e.dst.startswith(LOGIC_PREFIX)]
+    logic_edges = [
+        e for e in edges if e.src.startswith(LOGIC_PREFIX) and e.dst.startswith(LOGIC_PREFIX)
+    ]
 
     adj: dict[str, set[str]] = {}
     for e in logic_edges:
@@ -124,16 +126,18 @@ def to_dot(adj: dict[str, list[str]]) -> str:
     lines = ["digraph logic_imports {"]
     for src, dsts in adj.items():
         if not dsts:
-            lines.append(f"  \"{src}\";")
+            lines.append(f'  "{src}";')
         for dst in dsts:
-            lines.append(f"  \"{src}\" -> \"{dst}\";")
+            lines.append(f'  "{src}" -> "{dst}";')
     lines.append("}")
     return "\n".join(lines) + "\n"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", type=Path, default=None, help="Write JSON adjacency list to this path")
+    parser.add_argument(
+        "--out", type=Path, default=None, help="Write JSON adjacency list to this path"
+    )
     parser.add_argument("--dot", type=Path, default=None, help="Write GraphViz DOT to this path")
     args = parser.parse_args()
 

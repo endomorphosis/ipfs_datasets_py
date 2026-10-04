@@ -70,15 +70,11 @@ def _runtime_matrix(tmp_path) -> g230.G210RuntimeReceiptMatrixV2:
     )
     manifest = CausalRescueManifestV2(
         plan_cid=cid_for_dag_json({"kind": "synthetic-g210-plan"}),
-        source_manifest_cid=cid_for_dag_json(
-            {"kind": "synthetic-g210-source-manifest"}
-        ),
+        source_manifest_cid=cid_for_dag_json({"kind": "synthetic-g210-source-manifest"}),
         case_manifest_sha256=MANIFEST_SHA256,
         cases=(rescue_case,),
     )
-    calibration_cid = cid_for_dag_json(
-        {"kind": "synthetic-source-recomputed-g200-calibration"}
-    )
+    calibration_cid = cid_for_dag_json({"kind": "synthetic-source-recomputed-g200-calibration"})
     profile = CausalExecutionProfileV2(
         plan_cid=manifest.plan_cid,
         source_manifest_cid=manifest.source_manifest_cid,
@@ -93,9 +89,7 @@ def _runtime_matrix(tmp_path) -> g230.G210RuntimeReceiptMatrixV2:
         environment_sha256=ENVIRONMENT_SHA256,
     )
     persisted_evidence = evidence.to_dict()
-    aggregate = aggregate_causal_rescue_receipts(
-        (persisted_evidence["causal_case_receipt"],)
-    )
+    aggregate = aggregate_causal_rescue_receipts((persisted_evidence["causal_case_receipt"],))
     reduced = g230.G210ReceiptMatrix(
         semantic_calibration_artifact_cid=calibration_cid,
         rescue_manifests=(manifest,),
@@ -129,9 +123,7 @@ def _compiler_record(
         split=split,
         cache_mode=cache_mode,
         input_data={"text": source_text},
-        requested_identity=definition.requested_identity(
-            contracts.StageName.COMPILER
-        ),
+        requested_identity=definition.requested_identity(contracts.StageName.COMPILER),
         environment_sha256=ENVIRONMENT_SHA256,
         source=("synthetic-g231-efficacy-test",),
         semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID,
@@ -141,11 +133,7 @@ def _compiler_record(
         handler=lambda _request: adapters.StageOutput(
             data=combined_payload,
             effective_identity={
-                **dict(
-                    definition.requested_identity(
-                        contracts.StageName.COMPILER
-                    )
-                ),
+                **dict(definition.requested_identity(contracts.StageName.COMPILER)),
                 "implementation": "synthetic-g231-compiler",
                 "graph_invoked": True,
             },
@@ -167,9 +155,7 @@ def _semantic_result(
     symai_validation_errors: tuple[str, ...] = (),
 ) -> contracts.CaseResultRecord:
     if variant_id == "A0":
-        return contracts.CaseResultRecord.from_stages(
-            (exposure.compiler_record,)
-        )
+        return contracts.CaseResultRecord.from_stages((exposure.compiler_record,))
     compiler = _compiler_record(
         payload,
         case_id=case_id,
@@ -188,9 +174,7 @@ def _semantic_result(
         split=split,
         cache_mode=cache_mode,
         input_data={"text": source_text},
-        requested_identity=definition.requested_identity(
-            contracts.StageName.SPACY
-        ),
+        requested_identity=definition.requested_identity(contracts.StageName.SPACY),
         environment_sha256=ENVIRONMENT_SHA256,
         upstream_stage_digests=(compiler.digest,),
         source=("synthetic-g231-efficacy-test",),
@@ -208,11 +192,7 @@ def _semantic_result(
                 }[definition.spacy_mode.value],
             )[0],
             effective_identity={
-                **dict(
-                    definition.requested_identity(
-                        contracts.StageName.SPACY
-                    )
-                ),
+                **dict(definition.requested_identity(contracts.StageName.SPACY)),
                 "implementation": "synthetic-g231-spacy",
                 "graph_invoked": True,
             },
@@ -229,13 +209,9 @@ def _semantic_result(
             split=split,
             cache_mode=cache_mode,
             input_data={"text": source_text},
-            requested_identity=definition.requested_identity(
-                contracts.StageName.SYMAI
-            ),
+            requested_identity=definition.requested_identity(contracts.StageName.SYMAI),
             environment_sha256=ENVIRONMENT_SHA256,
-            upstream_stage_digests=tuple(
-                record.digest for record in records
-            ),
+            upstream_stage_digests=tuple(record.digest for record in records),
             source=("synthetic-g231-efficacy-test",),
             semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID,
         )
@@ -248,8 +224,7 @@ def _semantic_result(
             "schema": "synthetic-g231-semantic-context.v2",
             "source_cid": target.source_cid,
             "upstream_stage_cids": [
-                cid_for_dag_json(_plain(record.to_dict()))
-                for record in records
+                cid_for_dag_json(_plain(record.to_dict())) for record in records
             ],
         }
         context_cid = cid_for_dag_json(context_body)
@@ -283,10 +258,7 @@ def _semantic_result(
                 "hit": cache_mode is contracts.CacheMode.WARM,
             },
             "semantic_context": {
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "semantic-context-binding.v2"
-                ),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-context-binding.v2"),
                 "context_cid": context_cid,
                 "source_cid": target.source_cid,
                 "artifact_cids": [],
@@ -297,11 +269,7 @@ def _semantic_result(
             handler=lambda _request: adapters.StageOutput(
                 data=symai_payload,
                 effective_identity={
-                    **dict(
-                        definition.requested_identity(
-                            contracts.StageName.SYMAI
-                        )
-                    ),
+                    **dict(definition.requested_identity(contracts.StageName.SYMAI)),
                     "implementation": "synthetic-g231-symai",
                     "graph_invoked": True,
                     "requested_provider": symai_config.provider,
@@ -333,9 +301,7 @@ def _failed_optional_adapter(
         output = adapters.StageOutput(
             data={"safe_failure_class": "timed_out"},
             status=contracts.StageStatus.FAILED,
-            failure_code=(
-                contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
-            ),
+            failure_code=(contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT),
             failure_detail="synthetic model timeout",
         )
     return adapters.StageAdapter(
@@ -376,13 +342,7 @@ def _coordinate_evidence(
     )
     evidence = []
     for variant_id in variant_ids:
-        coordinate_root = (
-            tmp_path
-            / "complete-g231"
-            / split.value
-            / cache_mode.value
-            / variant_id
-        )
+        coordinate_root = tmp_path / "complete-g231" / split.value / cache_mode.value / variant_id
         coordinate_root.mkdir(parents=True)
         runner = runtime.NativeKernelRunner(
             "/synthetic/lean",
@@ -397,9 +357,7 @@ def _coordinate_evidence(
         runner._supervisor = supervisor
         route = {
             stage: _failed_optional_adapter(stage)
-            for stage in variants.get_causal_proof_variant_profile(
-                variant_id
-            ).optional_order
+            for stage in variants.get_causal_proof_variant_profile(variant_id).optional_order
         }
         route[contracts.StageName.KERNEL] = adapters.StageAdapter(
             contracts.StageName.KERNEL,
@@ -416,8 +374,7 @@ def _coordinate_evidence(
                 variant_id=variant_id,
                 symai_validation_errors=(
                     ("synthetic_contract_error",)
-                    if variant_id
-                    in set(symai_validation_error_variant_ids)
+                    if variant_id in set(symai_validation_error_variant_ids)
                     else ()
                 ),
             ),
@@ -434,17 +391,13 @@ def _coordinate_evidence(
 def _complete_runtime_matrix(
     tmp_path: Path,
     *,
-    symai_validation_error_coordinate: tuple[
-        contracts.Split, contracts.CacheMode, str
-    ]
+    symai_validation_error_coordinate: tuple[contracts.Split, contracts.CacheMode, str]
     | None = None,
     symai_validation_error_coordinates: tuple[
         tuple[contracts.Split, contracts.CacheMode, str], ...
     ] = (),
 ) -> g230.G210RuntimeReceiptMatrixV2:
-    calibration_cid = cid_for_dag_json(
-        {"kind": "synthetic-source-recomputed-g200-calibration"}
-    )
+    calibration_cid = cid_for_dag_json({"kind": "synthetic-source-recomputed-g200-calibration"})
     manifests = []
     profiles = []
     all_evidence = []
@@ -470,11 +423,8 @@ def _complete_runtime_matrix(
                         tuple(
                             coordinate[2]
                             for coordinate in (
-                                (
-                                    symai_validation_error_coordinate,
-                                )
-                                if symai_validation_error_coordinate
-                                is not None
+                                (symai_validation_error_coordinate,)
+                                if symai_validation_error_coordinate is not None
                                 else ()
                             )
                             + symai_validation_error_coordinates
@@ -498,9 +448,7 @@ def _complete_runtime_matrix(
             ),
         )
         manifest = CausalRescueManifestV2(
-            plan_cid=cid_for_dag_json(
-                {"kind": "synthetic-g231-plan", "split": split.value}
-            ),
+            plan_cid=cid_for_dag_json({"kind": "synthetic-g231-plan", "split": split.value}),
             source_manifest_cid=cid_for_dag_json(
                 {
                     "kind": "synthetic-g231-source-manifest",
@@ -522,10 +470,7 @@ def _complete_runtime_matrix(
                         "kind": "synthetic-g231-compiler-population",
                         "split": split.value,
                         "exposure_cids": sorted(
-                            {
-                                item.compiler_exposure.receipt_cid
-                                for item in split_evidence
-                            }
+                            {item.compiler_exposure.receipt_cid for item in split_evidence}
                         ),
                     }
                 ),
@@ -534,19 +479,13 @@ def _complete_runtime_matrix(
         )
         all_evidence.extend(split_evidence)
         aggregates.extend(
-            aggregate_causal_rescue_receipts(
-                (item.to_dict()["causal_case_receipt"],)
-            )
+            aggregate_causal_rescue_receipts((item.to_dict()["causal_case_receipt"],))
             for item in split_evidence
         )
     reduced = g230.G210ReceiptMatrix(
         semantic_calibration_artifact_cid=calibration_cid,
-        rescue_manifests=tuple(
-            sorted(manifests, key=lambda item: item.cases[0].split.value)
-        ),
-        execution_profiles=tuple(
-            sorted(profiles, key=lambda item: item.rescue_manifest_cid)
-        ),
+        rescue_manifests=tuple(sorted(manifests, key=lambda item: item.cases[0].split.value)),
+        execution_profiles=tuple(sorted(profiles, key=lambda item: item.rescue_manifest_cid)),
         causal_aggregates=tuple(
             sorted(
                 aggregates,
@@ -570,9 +509,7 @@ def _complete_runtime_matrix(
 def complete_runtime_matrix(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> g230.G210RuntimeReceiptMatrixV2:
-    return _complete_runtime_matrix(
-        tmp_path_factory.mktemp("complete-g231-efficacy")
-    )
+    return _complete_runtime_matrix(tmp_path_factory.mktemp("complete-g231-efficacy"))
 
 
 def _plain(value: object) -> object:
@@ -592,16 +529,10 @@ def test_runtime_matrix_replays_full_receipt_and_joins_reduced_aggregate(
 
     assert matrix.complete is False
     assert "runtime_receipt_cartesian_incomplete" in matrix.validation_issues
-    assert "runtime_reduced_receipt_join_mismatch" not in (
-        matrix.validation_issues
-    )
-    assert "runtime_rescue_source_binding_mismatch" not in (
-        matrix.validation_issues
-    )
+    assert "runtime_reduced_receipt_join_mismatch" not in (matrix.validation_issues)
+    assert "runtime_rescue_source_binding_mismatch" not in (matrix.validation_issues)
     assert (
-        g230.G210RuntimeReceiptMatrixV2.from_dict(
-            matrix.to_dict()
-        ).runtime_matrix_cid
+        g230.G210RuntimeReceiptMatrixV2.from_dict(matrix.to_dict()).runtime_matrix_cid
         == matrix.runtime_matrix_cid
     )
 
@@ -629,9 +560,7 @@ def test_authoritative_builder_requires_both_persisted_splits(
         g230.RevisedPilotAuthorizationError,
         match="pilot and development",
     ):
-        g230.build_g210_runtime_receipt_matrix_v2(
-            pilot_batch, pilot_batch
-        )
+        g230.build_g210_runtime_receipt_matrix_v2(pilot_batch, pilot_batch)
 
 
 def test_reliability_and_routing_are_recomputed_but_incomplete(
@@ -646,16 +575,11 @@ def test_reliability_and_routing_are_recomputed_but_incomplete(
     assert reliability["evidence"]["source_recomputed"] is True
     assert routing["evidence"]["source_recomputed"] is True
     assert (
-        g230.validate_g234_reliability_gate_v2(
-            reliability, matrix
-        )["receipt_cid"]
+        g230.validate_g234_reliability_gate_v2(reliability, matrix)["receipt_cid"]
         == reliability["receipt_cid"]
     )
     assert (
-        g230.validate_g234_routing_gate_v2(
-            routing, matrix
-        )["receipt_cid"]
-        == routing["receipt_cid"]
+        g230.validate_g234_routing_gate_v2(routing, matrix)["receipt_cid"] == routing["receipt_cid"]
     )
 
     tampered = _plain(reliability)
@@ -671,9 +595,7 @@ def test_g234_reliability_and_routing_pass_complete_runtime_matrix(
     complete_runtime_matrix: g230.G210RuntimeReceiptMatrixV2,
 ) -> None:
     matrix = complete_runtime_matrix
-    reliability = g230.build_g234_reliability_gate_v2(
-        matrix, ("A12",)
-    )
+    reliability = g230.build_g234_reliability_gate_v2(matrix, ("A12",))
     routing = g230.build_g234_routing_gate_v2(matrix, ("A12",))
 
     assert reliability["schema"] == g230.G234_RUNTIME_GATE_RECEIPT_SCHEMA
@@ -687,16 +609,11 @@ def test_g234_reliability_and_routing_pass_complete_runtime_matrix(
     assert routing["evidence"]["compiler_exposure_equal"] is True
     assert routing["evidence"]["fallback_or_substitution_count"] == 0
     assert (
-        g230.validate_g234_reliability_gate_v2(
-            reliability, matrix
-        )["receipt_cid"]
+        g230.validate_g234_reliability_gate_v2(reliability, matrix)["receipt_cid"]
         == reliability["receipt_cid"]
     )
     assert (
-        g230.validate_g234_routing_gate_v2(
-            routing, matrix
-        )["receipt_cid"]
-        == routing["receipt_cid"]
+        g230.validate_g234_routing_gate_v2(routing, matrix)["receipt_cid"] == routing["receipt_cid"]
     )
 
     tampered = _plain(routing)
@@ -712,27 +629,15 @@ def test_receipt_replay_never_claims_detached_execution_replay(
     tmp_path,
 ) -> None:
     matrix = _runtime_matrix(tmp_path)
-    replay = g230.build_g230_receipt_replay_assessment_v2(
-        matrix, ("A1",)
-    )
+    replay = g230.build_g230_receipt_replay_assessment_v2(matrix, ("A1",))
 
     assert replay["status"] == "incomplete"
-    assert (
-        replay["schema"]
-        == g230.G230_RECEIPT_REPLAY_ASSESSMENT_SCHEMA
-    )
+    assert replay["schema"] == g230.G230_RECEIPT_REPLAY_ASSESSMENT_SCHEMA
     assert replay["passed"] is False
+    assert replay["evidence"]["detached_execution_replay_complete"] is False
+    assert "detached_execution_replay_unavailable" in (replay["failure_codes"])
     assert (
-        replay["evidence"]["detached_execution_replay_complete"]
-        is False
-    )
-    assert "detached_execution_replay_unavailable" in (
-        replay["failure_codes"]
-    )
-    assert (
-        g230.validate_g230_receipt_replay_assessment_v2(
-            replay, matrix
-        )["receipt_cid"]
+        g230.validate_g230_receipt_replay_assessment_v2(replay, matrix)["receipt_cid"]
         == replay["receipt_cid"]
     )
 
@@ -741,9 +646,7 @@ def test_efficacy_gate_complete_measured_zero_passes_with_cid_pairs(
     complete_runtime_matrix: g230.G210RuntimeReceiptMatrixV2,
 ) -> None:
     matrix = complete_runtime_matrix
-    gate = g230.build_g234_efficacy_gate_v2(
-        matrix, ("A1", "A12")
-    )
+    gate = g230.build_g234_efficacy_gate_v2(matrix, ("A1", "A12"))
 
     assert matrix.complete is True
     assert gate["schema"] == g230.G234_RUNTIME_GATE_RECEIPT_SCHEMA
@@ -776,15 +679,10 @@ def test_efficacy_gate_complete_measured_zero_passes_with_cid_pairs(
         and comparison["candidate_verified_count"] == 0
         for comparison in comparisons
     )
-    runtime_cids = {
-        item.receipt_cid for item in matrix.runtime_evidence
-    }
+    runtime_cids = {item.receipt_cid for item in matrix.runtime_evidence}
     pair_cids = set()
     for comparison in comparisons:
-        assert (
-            comparison["schema"]
-            == g230.G234_PAIRED_EFFICACY_COMPARISON_SCHEMA
-        )
+        assert comparison["schema"] == g230.G234_PAIRED_EFFICACY_COMPARISON_SCHEMA
         for pair in comparison["pairs"]:
             assert pair["schema"] == g230.G234_PAIRED_EFFICACY_PAIR_SCHEMA
             pair_cids.add(pair["pair_cid"])
@@ -802,12 +700,7 @@ def test_efficacy_gate_complete_measured_zero_passes_with_cid_pairs(
             assert str(pair["baseline_case_result_cid"]).startswith("b")
             assert str(pair["candidate_case_result_cid"]).startswith("b")
     assert len(pair_cids) == 8
-    assert (
-        g230.validate_g234_efficacy_gate_v2(gate, matrix)[
-            "receipt_cid"
-        ]
-        == gate["receipt_cid"]
-    )
+    assert g230.validate_g234_efficacy_gate_v2(gate, matrix)["receipt_cid"] == gate["receipt_cid"]
 
 
 def test_efficacy_gate_partial_pairs_remain_null(tmp_path: Path) -> None:
@@ -832,20 +725,13 @@ def test_efficacy_gate_partial_pairs_remain_null(tmp_path: Path) -> None:
             assert pair["measured"] is False
             assert pair["baseline_value"] is None
             assert pair["candidate_value"] is None
-    assert (
-        g230.validate_g234_efficacy_gate_v2(gate, matrix)[
-            "receipt_cid"
-        ]
-        == gate["receipt_cid"]
-    )
+    assert g230.validate_g234_efficacy_gate_v2(gate, matrix)["receipt_cid"] == gate["receipt_cid"]
 
 
 def test_efficacy_gate_rejects_tampered_pair_and_aggregate(
     complete_runtime_matrix: g230.G210RuntimeReceiptMatrixV2,
 ) -> None:
-    gate = g230.build_g234_efficacy_gate_v2(
-        complete_runtime_matrix, ("A1",)
-    )
+    gate = g230.build_g234_efficacy_gate_v2(complete_runtime_matrix, ("A1",))
     tampered = _plain(gate)
     comparison = tampered["evidence"]["comparisons"][0]  # type: ignore[index]
     comparison["net_verified_delta"] = 1.0
@@ -857,9 +743,7 @@ def test_efficacy_gate_rejects_tampered_pair_and_aggregate(
         g230.RevisedPilotAuthorizationError,
         match="source-recompute",
     ):
-        g230.validate_g234_efficacy_gate_v2(
-            tampered, complete_runtime_matrix
-        )
+        g230.validate_g234_efficacy_gate_v2(tampered, complete_runtime_matrix)
 
 
 def test_efficacy_gate_nulls_unequal_compiler_exposure(
@@ -908,9 +792,7 @@ def test_efficacy_gate_nulls_unequal_compiler_exposure(
     assert mismatched[0]["measured"] is False
     assert mismatched[0]["baseline_value"] is None
     assert mismatched[0]["candidate_value"] is None
-    assert mismatched[0]["missing_reasons"] == (
-        "pair_identity_mismatch",
-    )
+    assert mismatched[0]["missing_reasons"] == ("pair_identity_mismatch",)
 
 
 @pytest.mark.parametrize("candidate_ids", [("A0",), ("S1",), ("unknown",)])
@@ -922,6 +804,4 @@ def test_efficacy_gate_rejects_nonpaired_candidate_identity(
         g230.RevisedPilotAuthorizationError,
         match="candidate_variant_ids",
     ):
-        g230.build_g234_efficacy_gate_v2(
-            _runtime_matrix(tmp_path), candidate_ids
-        )
+        g230.build_g234_efficacy_gate_v2(_runtime_matrix(tmp_path), candidate_ids)

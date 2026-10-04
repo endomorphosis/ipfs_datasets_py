@@ -245,45 +245,40 @@ Outputs:
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor, create_email_processor
 
+
 async def main():
     # Create IMAP processor
     processor = create_email_processor(
-        protocol='imap',
-        server='imap.gmail.com',
-        username='your.email@gmail.com',
-        password='your_app_password'
+        protocol="imap",
+        server="imap.gmail.com",
+        username="your.email@gmail.com",
+        password="your_app_password",
     )
-    
+
     # Connect to server
     await processor.connect()
-    
+
     # List folders
     folders_result = await processor.list_folders()
     print(f"Found {folders_result['folder_count']} folders")
-    
+
     # Fetch emails
-    emails_result = await processor.fetch_emails(
-        folder='INBOX',
-        limit=10,
-        search_criteria='UNSEEN'
-    )
-    
+    emails_result = await processor.fetch_emails(folder="INBOX", limit=10, search_criteria="UNSEEN")
+
     print(f"Fetched {emails_result['email_count']} emails")
-    for email in emails_result['emails']:
+    for email in emails_result["emails"]:
         print(f"  - {email['subject']} from {email['from']}")
-    
+
     # Export to file
     export_result = await processor.export_folder(
-        folder='INBOX',
-        output_path='inbox_export.json',
-        format='json',
-        limit=100
+        folder="INBOX", output_path="inbox_export.json", format="json", limit=100
     )
-    
+
     print(f"Exported {export_result['email_count']} emails to {export_result['output_path']}")
-    
+
     # Disconnect
     await processor.disconnect()
+
 
 # Run
 anyio.run(main)
@@ -295,19 +290,21 @@ anyio.run(main)
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
+
 async def parse_eml():
-    processor = EmailProcessor(protocol='eml')
-    
-    result = await processor.parse_eml_file('message.eml')
-    
-    if result['status'] == 'success':
-        email = result['email']
+    processor = EmailProcessor(protocol="eml")
+
+    result = await processor.parse_eml_file("message.eml")
+
+    if result["status"] == "success":
+        email = result["email"]
         print(f"Subject: {email['subject']}")
         print(f"From: {email['from']}")
         print(f"To: {email['to']}")
         print(f"Date: {email['date']}")
         print(f"Attachments: {len(email['attachments'])}")
         print(f"\nBody:\n{email['body_text']}")
+
 
 anyio.run(parse_eml)
 ```
@@ -320,21 +317,20 @@ import anyio
 from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
 # Set environment variables
-os.environ['EMAIL_USER'] = 'your.email@gmail.com'
-os.environ['EMAIL_PASS'] = 'your_app_password'
+os.environ["EMAIL_USER"] = "your.email@gmail.com"
+os.environ["EMAIL_PASS"] = "your_app_password"
+
 
 async def main():
     # Credentials automatically loaded from environment
-    processor = EmailProcessor(
-        protocol='imap',
-        server='imap.gmail.com'
-    )
-    
+    processor = EmailProcessor(protocol="imap", server="imap.gmail.com")
+
     await processor.connect()
-    result = await processor.fetch_emails(folder='INBOX', limit=5)
+    result = await processor.fetch_emails(folder="INBOX", limit=5)
     await processor.disconnect()
-    
+
     return result
+
 
 result = anyio.run(main)
 print(f"Fetched {result['email_count']} emails")
@@ -353,56 +349,54 @@ from ipfs_datasets_py.mcp_server.tools.email_tools import (
     email_parse_eml,
     email_fetch_emails,
     email_analyze_export,
-    email_search_export
+    email_search_export,
 )
+
 
 async def main():
     # Test connection
     test_result = await email_test_connection(
-        protocol='imap',
-        server='imap.gmail.com',
-        username='your.email@gmail.com',
-        password='your_app_password'
+        protocol="imap",
+        server="imap.gmail.com",
+        username="your.email@gmail.com",
+        password="your_app_password",
     )
     print(f"Connection test: {test_result['status']}")
-    
+
     # List folders
     folders_result = await email_list_folders(
-        server='imap.gmail.com',
-        username='your.email@gmail.com',
-        password='your_app_password'
+        server="imap.gmail.com", username="your.email@gmail.com", password="your_app_password"
     )
     print(f"Folders: {folders_result['folder_count']}")
-    
+
     # Export folder
     export_result = await email_export_folder(
-        folder='INBOX',
-        server='imap.gmail.com',
-        username='your.email@gmail.com',
-        password='your_app_password',
-        output_path='inbox.json',
-        format='json',
-        limit=50
+        folder="INBOX",
+        server="imap.gmail.com",
+        username="your.email@gmail.com",
+        password="your_app_password",
+        output_path="inbox.json",
+        format="json",
+        limit=50,
     )
     print(f"Exported: {export_result['email_count']} emails")
-    
+
     # Parse .eml file
-    parse_result = await email_parse_eml('message.eml')
-    if parse_result['status'] == 'success':
+    parse_result = await email_parse_eml("message.eml")
+    if parse_result["status"] == "success":
         print(f"Parsed: {parse_result['email']['subject']}")
-    
+
     # Analyze export
-    analysis = await email_analyze_export('inbox.json')
+    analysis = await email_analyze_export("inbox.json")
     print(f"Total emails: {analysis['total_emails']}")
     print(f"Top sender: {analysis['top_senders'][0] if analysis['top_senders'] else 'None'}")
-    
+
     # Search export
     search_result = await email_search_export(
-        file_path='inbox.json',
-        query='meeting',
-        field='subject'
+        file_path="inbox.json", query="meeting", field="subject"
     )
     print(f"Search matches: {search_result['match_count']}")
+
 
 anyio.run(main)
 ```
@@ -549,34 +543,33 @@ Plain text format with:
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
+
 async def export_all_folders():
-    processor = EmailProcessor(
-        protocol='imap',
-        server='imap.gmail.com'
-    )
-    
+    processor = EmailProcessor(protocol="imap", server="imap.gmail.com")
+
     await processor.connect()
-    
+
     # Get folder list
     folders_result = await processor.list_folders()
-    
-    for folder_info in folders_result['folders']:
-        folder_name = folder_info['name']
-        
+
+    for folder_info in folders_result["folders"]:
+        folder_name = folder_info["name"]
+
         # Skip system folders
-        if folder_name.startswith('['):
+        if folder_name.startswith("["):
             continue
-        
+
         print(f"Exporting {folder_name}...")
-        
+
         await processor.export_folder(
             folder=folder_name,
-            output_path=f'exports/{folder_name}.json',
-            format='json',
-            limit=None  # Export all
+            output_path=f"exports/{folder_name}.json",
+            format="json",
+            limit=None,  # Export all
         )
-    
+
     await processor.disconnect()
+
 
 anyio.run(export_all_folders)
 ```
@@ -585,29 +578,26 @@ anyio.run(export_all_folders)
 
 ```python
 import anyio
-from ipfs_datasets_py.mcp_server.tools.email_tools import (
-    email_analyze_export,
-    email_search_export
-)
+from ipfs_datasets_py.mcp_server.tools.email_tools import email_analyze_export, email_search_export
+
 
 async def analyze_and_filter():
     # First, analyze
-    analysis = await email_analyze_export('inbox_export.json')
-    
+    analysis = await email_analyze_export("inbox_export.json")
+
     print(f"Total emails: {analysis['total_emails']}")
     print(f"Date range: {analysis['date_range']}")
-    
+
     # Find emails from top sender
-    if analysis['top_senders']:
-        top_sender = analysis['top_senders'][0]['sender']
-        
+    if analysis["top_senders"]:
+        top_sender = analysis["top_senders"][0]["sender"]
+
         search_result = await email_search_export(
-            file_path='inbox_export.json',
-            query=top_sender,
-            field='from'
+            file_path="inbox_export.json", query=top_sender, field="from"
         )
-        
+
         print(f"\nEmails from {top_sender}: {search_result['match_count']}")
+
 
 anyio.run(analyze_and_filter)
 ```

@@ -9,7 +9,7 @@ GraphRAG processing capabilities with advanced analytics and visualization.
 
 Features:
 - MCP tool discovery and execution
-- Real-time monitoring and analytics  
+- Real-time monitoring and analytics
 - GraphRAG website processing and analysis
 - Interactive RAG query interface
 """
@@ -30,6 +30,7 @@ from typing import Any, Dict, List, Optional
 
 try:
     from flask import render_template, jsonify, request, send_from_directory, url_for
+
     FLASK_AVAILABLE = True
 except Exception:  # pragma: no cover
     FLASK_AVAILABLE = False
@@ -47,26 +48,33 @@ MCP_SERVER_AVAILABLE = False
 try:
     from dataclasses import dataclass
 except Exception:  # pragma: no cover
+
     def dataclass(cls):  # type: ignore
         return cls
+
 
 # Lightweight stubs for optional components to satisfy name resolution
 class AdvancedAnalyticsDashboard:  # stub
     pass
 
+
 class MCPInvestigationDashboardConfig:  # stub
     def __init__(self, *args, **kwargs):
         pass
+
 
 class MCPInvestigationDashboard:  # stub
     def __init__(self, *args, **kwargs):
         pass
 
+
 class CompleteGraphRAGSystem:  # stub
     pass
 
+
 class EnhancedGraphRAGSystem:  # stub
     pass
+
 
 class CompleteProcessingConfiguration:  # stub
     def __init__(self, *args, **kwargs):
@@ -77,6 +85,7 @@ class CompleteProcessingConfiguration:  # stub
 @dataclass
 class MCPDashboardConfig(DashboardConfig):
     """Lightweight MCP dashboard configuration with sensible defaults."""
+
     mcp_server_host: str = "127.0.0.1"
     mcp_server_port: int = 8001
     enable_graphrag: bool = True
@@ -91,14 +100,17 @@ class MCPDashboardConfig(DashboardConfig):
     data_dir: str = os.path.expanduser("~/.ipfs_datasets/mcp_dashboard")
     graphrag_output_dir: str = os.path.expanduser("~/.ipfs_datasets/graphrag_output")
 
+
 # Minimal in-process MCP server placeholder (enables status + tool discovery)
 class SimpleInProcessMCPServer:
     def __init__(self) -> None:
         self.name = "SimpleInProcessMCPServer"
+
+
 class MCPDashboard(AdminDashboard):
     """
     Comprehensive MCP Dashboard with GraphRAG integration extending AdminDashboard.
-    
+
     This dashboard provides:
     - MCP tool discovery and listing
     - Real-time MCP server status monitoring
@@ -110,7 +122,7 @@ class MCPDashboard(AdminDashboard):
     - Enhanced visualizations and reporting
     - JavaScript SDK endpoints
     """
-    
+
     def __init__(self):
         """Initialize the comprehensive MCP dashboard."""
         super().__init__()
@@ -118,64 +130,64 @@ class MCPDashboard(AdminDashboard):
         self.mcp_config = None
         self.tool_execution_history = deque(maxlen=1000)
         self.active_tool_executions = {}
-        
+
         # GraphRAG components
         self.graphrag_system = None
         self.enhanced_graphrag = None
         self.analytics_dashboard = None
         self.investigation_dashboard = None
-        
+
         # Processing state
         self.graphrag_processing_sessions = {}
         self.analytics_metrics_history = deque(maxlen=1000)
         self.rag_query_sessions = {}
-        
+
         # Enhanced features
         self.workflow_manager = {}
         self.system_metrics = {
-            'cpu_usage': 0.0,
-            'memory_usage': 0.0,
-            'active_connections': 0,
-            'task_queue_size': 0,
-            'total_datasets_processed': 0,
-            'uptime': 0
+            "cpu_usage": 0.0,
+            "memory_usage": 0.0,
+            "active_connections": 0,
+            "task_queue_size": 0,
+            "total_datasets_processed": 0,
+            "uptime": 0,
         }
         self.health_status = {
-            'mcp_server': 'running',
-            'ipfs_node': 'running', 
-            'vector_store': 'running',
-            'cache_system': 'running'
+            "mcp_server": "running",
+            "ipfs_node": "running",
+            "vector_store": "running",
+            "cache_system": "running",
         }
         self.dataset_registry = {}
         self.performance_metrics = {}
         self.test_results = {}
-        
+
         # Bug prevention
         self._initialize_safe_defaults()
-        
+
     def _initialize_safe_defaults(self):
         """Initialize safe defaults to prevent bugs."""
         # Ensure all collections are properly initialized
-        if not hasattr(self, 'tool_execution_history'):
+        if not hasattr(self, "tool_execution_history"):
             self.tool_execution_history = deque(maxlen=1000)
-        if not hasattr(self, 'active_tool_executions'):
+        if not hasattr(self, "active_tool_executions"):
             self.active_tool_executions = {}
-        if not hasattr(self, 'workflow_manager'):
+        if not hasattr(self, "workflow_manager"):
             self.workflow_manager = {}
-        
+
         # Set up error handling
         self._error_log = deque(maxlen=100)
-        self._debug_mode = os.environ.get('MCP_DEBUG', '0') == '1'
-        
+        self._debug_mode = os.environ.get("MCP_DEBUG", "0") == "1"
+
         # Real-time monitoring
         self.real_time_clients = set()
         self.monitoring_thread = None
         self.last_metrics_update = time.time()
         self.start_time = time.time()
-        
+
     def configure(self, config: MCPDashboardConfig) -> None:
         """Configure the comprehensive MCP dashboard.
-        
+
         Args:
             config: MCP dashboard configuration
         """
@@ -184,29 +196,29 @@ class MCPDashboard(AdminDashboard):
             self.logger.warning("Flask not available - creating standalone HTML dashboard")
             self._create_standalone_dashboard(config)
             return
-            
+
         super().configure(config)
         self.mcp_config = config
-        
+
         # Initialize simple in-process placeholder MCP server for status and discovery
         self.mcp_server = SimpleInProcessMCPServer()
         self._discover_mcp_tools()
         self.logger.info("Using SimpleInProcessMCPServer (placeholder)")
-        
+
         # Initialize GraphRAG components if enabled and available
         if config.enable_graphrag and GRAPHRAG_AVAILABLE:
             try:
                 self._initialize_graphrag_components()
             except Exception as e:
                 self.logger.error(f"Failed to initialize GraphRAG components: {e}")
-        
+
         # Initialize analytics if enabled
         if config.enable_analytics and GRAPHRAG_AVAILABLE:
             try:
                 self.analytics_dashboard = AdvancedAnalyticsDashboard()
             except Exception as e:
                 self.logger.error(f"Failed to initialize analytics dashboard: {e}")
-        
+
         # Initialize investigation dashboard if enabled
         if config.enable_investigation and INVESTIGATION_AVAILABLE:
             try:
@@ -216,57 +228,60 @@ class MCPDashboard(AdminDashboard):
                 self.investigation_dashboard = MCPInvestigationDashboard(inv_config)
             except Exception as e:
                 self.logger.error(f"Failed to initialize investigation dashboard: {e}")
-                
+
         # Create output directory for GraphRAG
         if config.enable_graphrag:
             os.makedirs(config.graphrag_output_dir, exist_ok=True)
-                
+
     def _create_standalone_dashboard(self, config: MCPDashboardConfig) -> None:
         """Create a standalone HTML dashboard when Flask is not available."""
         self.mcp_config = config
         self.mcp_server = SimpleInProcessMCPServer()
-        
+
         # Create standalone dashboard directory
         dashboard_dir = Path(config.data_dir)
         dashboard_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Generate tools info
         tools_info = self._discover_mcp_tools()
-        
+
         # Create comprehensive standalone dashboard
         standalone_html = self._create_standalone_html_dashboard(tools_info, config)
-        
+
         # Write standalone dashboard
         dashboard_file = dashboard_dir / "mcp_dashboard.html"
-        with open(dashboard_file, 'w', encoding='utf-8') as f:
+        with open(dashboard_file, "w", encoding="utf-8") as f:
             f.write(standalone_html)
-        
+
         self.logger.info(f"Standalone MCP Dashboard created at: {dashboard_file}")
         self.logger.info(f"Open this file in your browser to access the dashboard")
-        
+
         # Try to open in browser if configured
         if config.open_browser:
             try:
                 import webbrowser
+
                 webbrowser.open(f"file://{dashboard_file.absolute()}")
                 self.logger.info("Dashboard opened in browser")
             except Exception as e:
                 self.logger.warning(f"Failed to open browser: {e}")
-    
-    def _create_standalone_html_dashboard(self, tools_info: Dict[str, Any], config: MCPDashboardConfig) -> str:
+
+    def _create_standalone_html_dashboard(
+        self, tools_info: Dict[str, Any], config: MCPDashboardConfig
+    ) -> str:
         """Create a standalone HTML dashboard with professional desktop design."""
         # First try the comprehensive final template
         comprehensive_path = Path(__file__).parent.parent / "comprehensive_mcp_dashboard_final.html"
         if comprehensive_path.exists():
             with open(comprehensive_path, "r", encoding="utf-8") as f:
                 return f.read()
-        
+
         # Try the professional template
         template_path = Path(__file__).parent / "templates" / "mcp_dashboard.html"
         if template_path.exists():
             with open(template_path, "r", encoding="utf-8") as f:
                 return f.read()
-        
+
         # Fallback to comprehensive inline template
         return """<!DOCTYPE html>
 <html lang="en">
@@ -296,38 +311,38 @@ class MCPDashboard(AdminDashboard):
     </div>
 </body>
 </html>"""
-    
+
     def _initialize_graphrag_components(self) -> None:
         """Initialize GraphRAG processing components."""
         if not GRAPHRAG_AVAILABLE:
             return
-            
+
         try:
             # Initialize complete GraphRAG system
             self.graphrag_system = CompleteGraphRAGSystem()
-            
+
             self.logger.info("GraphRAG components initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to initialize GraphRAG components: {e}")
-                
+
     def _discover_mcp_tools(self) -> Dict[str, Any]:
         """Discover available MCP tools."""
         if not self.mcp_server:
             return {}
-            
+
         tools_info = {}
         tools_dir = Path(__file__).parent / "mcp_server" / "tools"
-        
+
         if tools_dir.exists():
             for tool_category in tools_dir.iterdir():
-                if tool_category.is_dir() and not tool_category.name.startswith('_'):
+                if tool_category.is_dir() and not tool_category.name.startswith("_"):
                     category_tools = self._scan_tool_category(tool_category)
                     if category_tools:
                         tools_info[tool_category.name] = category_tools
-        
+
         self.logger.info(f"Discovered {len(tools_info)} tool categories")
         return tools_info
-        
+
     def _scan_tool_category(self, category_path: Path) -> List[Dict[str, Any]]:
         """Scan a tool category directory for available tools."""
         tools = []
@@ -335,44 +350,54 @@ class MCPDashboard(AdminDashboard):
             for tool_file in category_path.glob("*.py"):
                 if not tool_file.name.startswith("_"):
                     tool_name = tool_file.stem
-                    tools.append({
-                        "name": tool_name,
-                        "file": str(tool_file),
-                        "description": f"Tool: {tool_name}"
-                    })
+                    tools.append(
+                        {
+                            "name": tool_name,
+                            "file": str(tool_file),
+                            "description": f"Tool: {tool_name}",
+                        }
+                    )
         except Exception as e:
             self.logger.error(f"Error scanning tool category {category_path}: {e}")
-        
+
         return tools
-        
+
     def _setup_routes(self) -> None:
         """Set up MCP dashboard routes."""
         # Call parent to set up base admin dashboard routes
         super()._setup_routes()
-        
+
         # Set up main MCP dashboard route
-        @self.app.route('/mcp')
+        @self.app.route("/mcp")
         def mcp_dashboard():
             """Render the main MCP dashboard."""
             # Get server status safely
             server_status = {}
             if self.mcp_server:
-                if hasattr(self.mcp_server, 'get_status'):
+                if hasattr(self.mcp_server, "get_status"):
                     try:
                         server_status = self.mcp_server.get_status()
                     except Exception:
-                        server_status = {"name": getattr(self.mcp_server, 'name', 'MCP Server'), "status": "running"}
+                        server_status = {
+                            "name": getattr(self.mcp_server, "name", "MCP Server"),
+                            "status": "running",
+                        }
                 else:
-                    server_status = {"name": getattr(self.mcp_server, 'name', 'MCP Server'), "status": "running"}
-            
-            return render_template('mcp_dashboard.html',
-                                 tools=self._discover_mcp_tools(),
-                                 server_status=server_status,
-                                 last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        
+                    server_status = {
+                        "name": getattr(self.mcp_server, "name", "MCP Server"),
+                        "status": "running",
+                    }
+
+            return render_template(
+                "mcp_dashboard.html",
+                tools=self._discover_mcp_tools(),
+                server_status=server_status,
+                last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+
         # Set up MCP tool routes (status, tools, executions)
         self._setup_mcp_tool_routes()
-        
+
         # Set up feature-specific routes if enabled
         if self.mcp_config and self.mcp_config.enable_graphrag:
             self._setup_graphrag_routes()
@@ -382,40 +407,40 @@ class MCPDashboard(AdminDashboard):
             self._setup_rag_query_routes()
         if self.mcp_config and self.mcp_config.enable_investigation:
             self._setup_investigation_routes()
-        
+
         # Set up caselaw/legal text to deontic logic routes (always enabled)
         self._setup_caselaw_routes()
-        
+
         # Set up finance dashboard routes (based on caselaw template)
         self._setup_finance_routes()
-        
+
         # Set up medicine dashboard routes (based on caselaw template)
         self._setup_medicine_routes()
-        
+
         # Set up software engineering dashboard routes
         self._setup_software_routes()
-        
+
         # Set up legal dataset scraping routes
         self._setup_legal_dataset_routes()
-    
+
     def _setup_graphrag_routes(self) -> None:
         """Set up GraphRAG processing routes."""
-        
-        @self.app.route('/api/mcp/graphrag/process', methods=['POST'])
+
+        @self.app.route("/api/mcp/graphrag/process", methods=["POST"])
         def api_start_graphrag_processing():
             """Start GraphRAG website processing."""
             try:
                 data = request.json or {}
-                url = data.get('url')
+                url = data.get("url")
                 if not url:
                     return jsonify({"error": "URL is required"}), 400
-                
+
                 session_id = str(uuid.uuid4())
                 processing_config = CompleteProcessingConfiguration(
-                    processing_mode=data.get('mode', 'balanced'),
-                    output_directory=self.mcp_config.graphrag_output_dir
+                    processing_mode=data.get("mode", "balanced"),
+                    output_directory=self.mcp_config.graphrag_output_dir,
                 )
-                
+
                 # Start processing session
                 self.graphrag_processing_sessions[session_id] = {
                     "id": session_id,
@@ -424,9 +449,9 @@ class MCPDashboard(AdminDashboard):
                     "status": "starting",
                     "start_time": datetime.now().isoformat(),
                     "progress": 0.0,
-                    "result": None
+                    "result": None,
                 }
-                
+
                 # Start async processing
                 # Run the async worker in a background thread so we don't depend on asyncio.
                 threading.Thread(
@@ -434,67 +459,71 @@ class MCPDashboard(AdminDashboard):
                     args=(self._process_website_graphrag, session_id, url, processing_config),
                     daemon=True,
                 ).start()
-                
+
                 return jsonify({"session_id": session_id, "status": "started"})
-                
+
             except Exception as e:
                 self.logger.error(f"GraphRAG processing failed: {e}")
                 return jsonify({"error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/graphrag/sessions/<session_id>')
+
+        @self.app.route("/api/mcp/graphrag/sessions/<session_id>")
         def api_get_graphrag_session(session_id):
             """Get GraphRAG processing session status."""
             if session_id in self.graphrag_processing_sessions:
                 return jsonify(self.graphrag_processing_sessions[session_id])
             return jsonify({"error": "Session not found"}), 404
-        
-        @self.app.route('/api/mcp/graphrag/sessions')
+
+        @self.app.route("/api/mcp/graphrag/sessions")
         def api_list_graphrag_sessions():
             """List all GraphRAG processing sessions."""
             sessions = list(self.graphrag_processing_sessions.values())
             return jsonify({"sessions": sessions, "total": len(sessions)})
-    
+
     def _setup_analytics_routes(self) -> None:
         """Set up analytics dashboard routes."""
-        
-        @self.app.route('/mcp/analytics')
+
+        @self.app.route("/mcp/analytics")
         def analytics_dashboard():
             """Render the analytics dashboard."""
             current_metrics = self._get_current_analytics_metrics()
-            return render_template('analytics_dashboard.html',
-                                 metrics=current_metrics,
-                                 last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        
-        @self.app.route('/api/mcp/analytics/metrics')
+            return render_template(
+                "analytics_dashboard.html",
+                metrics=current_metrics,
+                last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+
+        @self.app.route("/api/mcp/analytics/metrics")
         def api_get_analytics_metrics():
             """Get current analytics metrics."""
             return jsonify(self._get_current_analytics_metrics())
-        
-        @self.app.route('/api/mcp/analytics/history')
+
+        @self.app.route("/api/mcp/analytics/history")
         def api_get_analytics_history():
             """Get analytics metrics history."""
-            limit = request.args.get('limit', 100, type=int)
+            limit = request.args.get("limit", 100, type=int)
             history = list(self.analytics_metrics_history)[-limit:]
             return jsonify({"history": history, "total": len(self.analytics_metrics_history)})
-    
+
     def _setup_rag_query_routes(self) -> None:
         """Set up RAG query interface routes."""
-        
-        @self.app.route('/mcp/rag')
+
+        @self.app.route("/mcp/rag")
         def rag_query_dashboard():
             """Render the RAG query dashboard."""
-            return render_template('rag_query_dashboard.html',
-                                 last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        
-        @self.app.route('/api/mcp/rag/query', methods=['POST'])
+            return render_template(
+                "rag_query_dashboard.html",
+                last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+
+        @self.app.route("/api/mcp/rag/query", methods=["POST"])
         def api_execute_rag_query():
             """Execute a RAG query."""
             try:
                 data = request.json or {}
-                query = data.get('query')
+                query = data.get("query")
                 if not query:
                     return jsonify({"error": "Query is required"}), 400
-                
+
                 # Create query session
                 session_id = str(uuid.uuid4())
                 query_session = {
@@ -502,148 +531,160 @@ class MCPDashboard(AdminDashboard):
                     "query": query,
                     "status": "processing",
                     "start_time": datetime.now().isoformat(),
-                    "result": None
+                    "result": None,
                 }
-                
+
                 self.rag_query_sessions[session_id] = query_session
-                
+
                 # Execute query through MCP tool
-                result = self._execute_rag_query_via_mcp(query, data.get('context', {}))
-                
-                query_session.update({
-                    "status": "completed",
-                    "result": result,
-                    "end_time": datetime.now().isoformat()
-                })
-                
+                result = self._execute_rag_query_via_mcp(query, data.get("context", {}))
+
+                query_session.update(
+                    {
+                        "status": "completed",
+                        "result": result,
+                        "end_time": datetime.now().isoformat(),
+                    }
+                )
+
                 return jsonify(query_session)
-                
+
             except Exception as e:
                 self.logger.error(f"RAG query failed: {e}")
                 return jsonify({"error": str(e)}), 500
-    
+
     def _setup_investigation_routes(self) -> None:
         """Set up investigation dashboard routes."""
-        
-        @self.app.route('/mcp/investigation')
+
+        @self.app.route("/mcp/investigation")
         def investigation_dashboard():
             """Render the investigation dashboard."""
-            return render_template('investigation_dashboard.html',
-                                 last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        
-        @self.app.route('/api/mcp/investigation/analyze', methods=['POST'])
+            return render_template(
+                "investigation_dashboard.html",
+                last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+
+        @self.app.route("/api/mcp/investigation/analyze", methods=["POST"])
         def api_start_investigation():
             """Start content investigation analysis."""
             try:
                 data = request.json or {}
-                content_url = data.get('url')
-                analysis_type = data.get('analysis_type', 'comprehensive')
-                
+                content_url = data.get("url")
+                analysis_type = data.get("analysis_type", "comprehensive")
+
                 if not content_url:
                     return jsonify({"error": "Content URL is required"}), 400
-                
+
                 # Execute investigation through MCP tool
-                result = self._execute_investigation_via_mcp(content_url, analysis_type, data.get('metadata', {}))
-                
+                result = self._execute_investigation_via_mcp(
+                    content_url, analysis_type, data.get("metadata", {})
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Investigation analysis failed: {e}")
                 return jsonify({"error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/investigation/geospatial', methods=['POST'])
+
+        @self.app.route("/api/mcp/investigation/geospatial", methods=["POST"])
         def api_geospatial_analysis():
             """Perform geospatial analysis via MCP tools."""
             try:
                 data = request.json or {}
-                query = data.get('query', '')
-                center_location = data.get('center_location', '')
-                search_radius = data.get('search_radius_km', 50.0)
-                entity_types = data.get('entity_types', [])
-                clustering_distance = data.get('clustering_distance', 50.0)
-                
+                query = data.get("query", "")
+                center_location = data.get("center_location", "")
+                search_radius = data.get("search_radius_km", 50.0)
+                entity_types = data.get("entity_types", [])
+                clustering_distance = data.get("clustering_distance", 50.0)
+
                 # Execute geospatial analysis through MCP tools
                 result = self._execute_geospatial_via_mcp(
                     query, center_location, search_radius, entity_types, clustering_distance
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Geospatial analysis failed: {e}")
                 return jsonify({"error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/investigation/extract_entities', methods=['POST'])
+
+        @self.app.route("/api/mcp/investigation/extract_entities", methods=["POST"])
         def api_extract_geographic_entities():
             """Extract geographic entities via MCP tools."""
             try:
                 data = request.json or {}
-                corpus_data = data.get('corpus_data', '{}')
-                confidence_threshold = data.get('confidence_threshold', 0.8)
-                entity_types = data.get('entity_types', None)
-                
+                corpus_data = data.get("corpus_data", "{}")
+                confidence_threshold = data.get("confidence_threshold", 0.8)
+                entity_types = data.get("entity_types", None)
+
                 # Execute entity extraction through MCP tools
                 result = self._execute_entity_extraction_via_mcp(
                     corpus_data, confidence_threshold, entity_types
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Entity extraction failed: {e}")
                 return jsonify({"error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/investigation/spatiotemporal', methods=['POST'])
+
+        @self.app.route("/api/mcp/investigation/spatiotemporal", methods=["POST"])
         def api_spatiotemporal_mapping():
             """Map spatiotemporal events via MCP tools."""
             try:
                 data = request.json or {}
-                corpus_data = data.get('corpus_data', '{}')
-                time_range = data.get('time_range', None)
-                geographic_bounds = data.get('geographic_bounds', None)
-                event_types = data.get('event_types', None)
-                clustering_distance = data.get('clustering_distance', 50.0)
-                
+                corpus_data = data.get("corpus_data", "{}")
+                time_range = data.get("time_range", None)
+                geographic_bounds = data.get("geographic_bounds", None)
+                event_types = data.get("event_types", None)
+                clustering_distance = data.get("clustering_distance", 50.0)
+
                 # Execute spatiotemporal mapping through MCP tools
                 result = self._execute_spatiotemporal_via_mcp(
                     corpus_data, time_range, geographic_bounds, event_types, clustering_distance
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Spatiotemporal mapping failed: {e}")
                 return jsonify({"error": str(e)}), 500
-    
+
     def _setup_caselaw_routes(self) -> None:
         """Set up caselaw dashboard routes for temporal deontic logic RAG system."""
-        
-        @self.app.route('/mcp/caselaw')
+
+        @self.app.route("/mcp/caselaw")
         def caselaw_dashboard():
             """Render the caselaw analysis dashboard for temporal deontic logic RAG system."""
             # Import temporal deontic logic components
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from .logic.integration.deontic_logic_core import DeonticOperator
-                
+
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 dashboard_data = {
                     "system_status": {
                         "theorem_count": len(rag_store.theorems),
-                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
-                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
-                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys())
+                        if hasattr(rag_store, "jurisdiction_index")
+                        else [],
+                        "legal_domains": list(rag_store.domain_index.keys())
+                        if hasattr(rag_store, "domain_index")
+                        else [],
+                        "temporal_periods": len(getattr(rag_store, "temporal_index", {})),
                         "available_operators": [op.name for op in DeonticOperator],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "system_ready": True
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "system_ready": True,
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to initialize caselaw dashboard: {e}")
                 dashboard_data = {
@@ -653,38 +694,40 @@ class MCPDashboard(AdminDashboard):
                         "legal_domains": [],
                         "temporal_periods": 0,
                         "available_operators": [],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "system_ready": False,
-                        "error_message": str(e)
+                        "error_message": str(e),
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-            
-            return render_template('caselaw_dashboard_mcp.html', **dashboard_data)
-        
-        @self.app.route('/mcp/caselaw/rest')
+
+            return render_template("caselaw_dashboard_mcp.html", **dashboard_data)
+
+        @self.app.route("/mcp/caselaw/rest")
         def caselaw_dashboard_rest():
             """Render the REST-based caselaw analysis dashboard (legacy)."""
             # Import temporal deontic logic components
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from .logic.integration.deontic_logic_core import DeonticOperator
-                
+
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 dashboard_data = {
                     "theorem_count": len(rag_store.theorems),
-                    "jurisdictions": len(getattr(rag_store, 'jurisdiction_index', {})),
-                    "legal_domains": len(getattr(rag_store, 'domain_index', {})),
-                    "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                    "jurisdictions": len(getattr(rag_store, "jurisdiction_index", {})),
+                    "legal_domains": len(getattr(rag_store, "domain_index", {})),
+                    "temporal_periods": len(getattr(rag_store, "temporal_index", {})),
                     "available_operators": [op.name for op in DeonticOperator],
-                    "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    "system_ready": True
+                    "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "system_ready": True,
                 }
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to initialize caselaw dashboard: {e}")
                 dashboard_data = {
@@ -693,130 +736,144 @@ class MCPDashboard(AdminDashboard):
                     "legal_domains": 0,
                     "temporal_periods": 0,
                     "available_operators": [],
-                    "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "system_ready": False,
-                    "error_message": str(e)
+                    "error_message": str(e),
                 }
-            
-            return render_template('caselaw_dashboard.html', **dashboard_data)
-        
-        @self.app.route('/api/mcp/caselaw/add_theorem', methods=['POST'])
+
+            return render_template("caselaw_dashboard.html", **dashboard_data)
+
+        @self.app.route("/api/mcp/caselaw/add_theorem", methods=["POST"])
         def api_add_theorem():
             """Add a new temporal deontic logic theorem from caselaw."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import (
+                    DeonticFormula,
+                    DeonticOperator,
+                    LegalAgent,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                
+
                 # Extract theorem data from request
-                operator_str = data.get('operator', 'OBLIGATION')
-                proposition = data.get('proposition', '')
-                agent_name = data.get('agent_name', 'Unspecified Party')
-                jurisdiction = data.get('jurisdiction', 'Federal')
-                legal_domain = data.get('legal_domain', 'general')
-                source_case = data.get('source_case', 'Unknown Case')
-                precedent_strength = float(data.get('precedent_strength', 0.8))
-                
+                operator_str = data.get("operator", "OBLIGATION")
+                proposition = data.get("proposition", "")
+                agent_name = data.get("agent_name", "Unspecified Party")
+                jurisdiction = data.get("jurisdiction", "Federal")
+                legal_domain = data.get("legal_domain", "general")
+                source_case = data.get("source_case", "Unknown Case")
+                precedent_strength = float(data.get("precedent_strength", 0.8))
+
                 if not proposition:
                     return jsonify({"error": "Proposition is required"}), 400
-                
+
                 # Create deontic formula
                 operator = DeonticOperator[operator_str]
-                agent = LegalAgent(agent_name.lower().replace(' ', '_'), agent_name, "person")
-                
+                agent = LegalAgent(agent_name.lower().replace(" ", "_"), agent_name, "person")
+
                 formula = DeonticFormula(
                     operator=operator,
                     proposition=proposition,
                     agent=agent,
                     confidence=0.9,
-                    source_text=f"{agent_name} {operator_str.lower()} {proposition}"
+                    source_text=f"{agent_name} {operator_str.lower()} {proposition}",
                 )
-                
+
                 # Add to RAG store
                 rag_store = TemporalDeonticRAGStore()
-                
+
                 # Parse temporal scope
-                start_date = data.get('start_date')
-                end_date = data.get('end_date')
-                
+                start_date = data.get("start_date")
+                end_date = data.get("end_date")
+
                 temporal_scope = (
                     datetime.fromisoformat(start_date) if start_date else datetime(2000, 1, 1),
-                    datetime.fromisoformat(end_date) if end_date else None
+                    datetime.fromisoformat(end_date) if end_date else None,
                 )
-                
+
                 theorem_id = rag_store.add_theorem(
                     formula=formula,
                     temporal_scope=temporal_scope,
                     jurisdiction=jurisdiction,
                     legal_domain=legal_domain,
                     source_case=source_case,
-                    precedent_strength=precedent_strength
+                    precedent_strength=precedent_strength,
                 )
-                
+
                 self.logger.info(f"Added theorem {theorem_id} from {source_case}")
-                
-                return jsonify({
-                    "success": True,
-                    "theorem_id": theorem_id,
-                    "message": f"Theorem added successfully from {source_case}"
-                })
-                
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "theorem_id": theorem_id,
+                        "message": f"Theorem added successfully from {source_case}",
+                    }
+                )
+
             except Exception as e:
                 self.logger.error(f"Failed to add theorem: {e}")
                 return jsonify({"error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/caselaw/check_document', methods=['POST'])
+
+        @self.app.route("/api/mcp/caselaw/check_document", methods=["POST"])
         def api_check_document_consistency():
             """Check document consistency against temporal deontic logic theorems."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                document_text = data.get('document_text', '')
-                document_id = data.get('document_id', f'doc_{int(time.time())}')
-                jurisdiction = data.get('jurisdiction', 'Federal')
-                legal_domain = data.get('legal_domain', 'general')
-                
+                document_text = data.get("document_text", "")
+                document_id = data.get("document_id", f"doc_{int(time.time())}")
+                jurisdiction = data.get("jurisdiction", "Federal")
+                legal_domain = data.get("legal_domain", "general")
+
                 if not document_text:
                     return jsonify({"success": False, "error": "Document text is required"}), 400
-                
+
                 # Initialize checker
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 # Parse temporal context
                 temporal_context = datetime.now()
-                if data.get('temporal_context'):
-                    temporal_context = datetime.fromisoformat(data['temporal_context'])
-                
+                if data.get("temporal_context"):
+                    temporal_context = datetime.fromisoformat(data["temporal_context"])
+
                 # Check document consistency
                 analysis = checker.check_document(
                     document_text=document_text,
                     document_id=document_id,
                     temporal_context=temporal_context,
                     jurisdiction=jurisdiction,
-                    legal_domain=legal_domain
+                    legal_domain=legal_domain,
                 )
-                
+
                 # Generate debug report
                 debug_report = checker.generate_debug_report(analysis)
-                
+
                 # Format response to match frontend expectations
                 result = {
                     "success": True,
                     "document_id": analysis.document_id,
                     "consistency_analysis": {
-                        "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                        "is_consistent": analysis.consistency_result.is_consistent
+                        if analysis.consistency_result
+                        else False,
                         "confidence_score": analysis.confidence_score,
                         "formulas_extracted": len(analysis.extracted_formulas),
                         "issues_found": len(analysis.issues_found),
-                        "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
-                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
-                        "processing_time": analysis.processing_time
+                        "conflicts": len(analysis.consistency_result.conflicts)
+                        if analysis.consistency_result
+                        else 0,
+                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts)
+                        if analysis.consistency_result
+                        else 0,
+                        "processing_time": analysis.processing_time,
                     },
                     "debug_report": {
                         "total_issues": debug_report.total_issues,
@@ -825,43 +882,46 @@ class MCPDashboard(AdminDashboard):
                         "suggestions": debug_report.suggestions,
                         "issues": debug_report.issues[:10],  # Limit to first 10 issues
                         "summary": debug_report.summary,
-                        "fix_suggestions": debug_report.fix_suggestions
+                        "fix_suggestions": debug_report.fix_suggestions,
                     },
                     "extracted_formulas": [
                         {
                             "operator": f.operator.name,
                             "proposition": f.proposition,
                             "agent": f.agent.name if f.agent else "Unspecified",
-                            "confidence": f.confidence
-                        } for f in analysis.extracted_formulas[:10]  # Limit to first 10
-                    ]
+                            "confidence": f.confidence,
+                        }
+                        for f in analysis.extracted_formulas[:10]  # Limit to first 10
+                    ],
                 }
-                
+
                 self.logger.info(f"Document consistency check completed: {document_id}")
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Document consistency check failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/caselaw/bulk_process', methods=['POST'])
+
+        @self.app.route("/api/mcp/caselaw/bulk_process", methods=["POST"])
         def api_bulk_process_caselaw():
             """Start bulk processing of caselaw corpus to build unified deontic logic system."""
             try:
                 from .logic.integration.caselaw_bulk_processor import (
-                    CaselawBulkProcessor, BulkProcessingConfig
+                    CaselawBulkProcessor,
+                    BulkProcessingConfig,
                 )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                
+
                 # Extract configuration from request
-                caselaw_directories = data.get('caselaw_directories', [])
+                caselaw_directories = data.get("caselaw_directories", [])
                 if not caselaw_directories:
                     return jsonify({"error": "At least one caselaw directory is required"}), 400
-                
+
                 # Validate directories exist
                 import os
+
                 valid_directories = []
                 for directory in caselaw_directories:
                     directory = directory.strip()
@@ -869,48 +929,49 @@ class MCPDashboard(AdminDashboard):
                         valid_directories.append(directory)
                     elif directory:
                         self.logger.warning(f"Directory not found: {directory}")
-                
+
                 if not valid_directories:
                     return jsonify({"error": "No valid caselaw directories found"}), 400
-                
+
                 # Create processing configuration
                 config = BulkProcessingConfig(
                     caselaw_directories=valid_directories,
-                    output_directory=data.get('output_directory', 'unified_deontic_logic_system'),
-                    max_concurrent_documents=data.get('max_concurrent_documents', 5),
-                    enable_parallel_processing=data.get('enable_parallel_processing', True),
-                    min_precedent_strength=data.get('min_precedent_strength', 0.5),
-                    enable_consistency_validation=data.get('enable_consistency_validation', True),
-                    jurisdictions_filter=data.get('jurisdictions_filter') or None,
-                    legal_domains_filter=data.get('legal_domains_filter') or None
+                    output_directory=data.get("output_directory", "unified_deontic_logic_system"),
+                    max_concurrent_documents=data.get("max_concurrent_documents", 5),
+                    enable_parallel_processing=data.get("enable_parallel_processing", True),
+                    min_precedent_strength=data.get("min_precedent_strength", 0.5),
+                    enable_consistency_validation=data.get("enable_consistency_validation", True),
+                    jurisdictions_filter=data.get("jurisdictions_filter") or None,
+                    legal_domains_filter=data.get("legal_domains_filter") or None,
                 )
-                
+
                 # Handle date filtering
-                if data.get('start_date'):
+                if data.get("start_date"):
                     try:
-                        start_date = datetime.fromisoformat(data['start_date'])
+                        start_date = datetime.fromisoformat(data["start_date"])
                         config.date_range = (start_date, config.date_range[1])
                     except ValueError:
                         pass
-                
-                if data.get('end_date'):
+
+                if data.get("end_date"):
                     try:
-                        end_date = datetime.fromisoformat(data['end_date'])
+                        end_date = datetime.fromisoformat(data["end_date"])
                         config.date_range = (config.date_range[0], end_date)
                     except ValueError:
                         pass
-                
+
                 # Create session ID for tracking
                 import uuid
+
                 session_id = str(uuid.uuid4())
-                
+
                 # Initialize processor
                 processor = CaselawBulkProcessor(config)
-                
+
                 # Store session for tracking
-                if not hasattr(self, 'bulk_processing_sessions'):
+                if not hasattr(self, "bulk_processing_sessions"):
                     self.bulk_processing_sessions = {}
-                
+
                 self.bulk_processing_sessions[session_id] = {
                     "id": session_id,
                     "processor": processor,
@@ -919,173 +980,187 @@ class MCPDashboard(AdminDashboard):
                     "start_time": datetime.now().isoformat(),
                     "progress": 0.0,
                     "stats": processor.stats.__dict__,
-                    "output_directory": config.output_directory
+                    "output_directory": config.output_directory,
                 }
-                
+
                 # Start async processing
                 threading.Thread(
                     target=anyio.run,
                     args=(self._process_caselaw_bulk, session_id, processor),
                     daemon=True,
                 ).start()
-                
+
                 self.logger.info(f"Started bulk caselaw processing session: {session_id}")
-                
-                return jsonify({
-                    "success": True,
-                    "session_id": session_id,
-                    "status": "started",
-                    "directories": valid_directories,
-                    "output_directory": config.output_directory
-                })
-                
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "session_id": session_id,
+                        "status": "started",
+                        "directories": valid_directories,
+                        "output_directory": config.output_directory,
+                    }
+                )
+
             except Exception as e:
                 self.logger.error(f"Bulk caselaw processing failed to start: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>')
+
+        @self.app.route("/api/mcp/caselaw/bulk_process/<session_id>")
         def api_get_bulk_processing_status(session_id):
             """Get bulk processing session status."""
-            if not hasattr(self, 'bulk_processing_sessions'):
+            if not hasattr(self, "bulk_processing_sessions"):
                 return jsonify({"error": "Session not found"}), 404
-            
+
             if session_id in self.bulk_processing_sessions:
                 session = self.bulk_processing_sessions[session_id]
-                
+
                 # Update stats if processor is available
-                if 'processor' in session and session['processor']:
-                    session['stats'] = {
-                        k: v for k, v in session['processor'].stats.__dict__.items()
-                        if not k.startswith('_') and not callable(v)
+                if "processor" in session and session["processor"]:
+                    session["stats"] = {
+                        k: v
+                        for k, v in session["processor"].stats.__dict__.items()
+                        if not k.startswith("_") and not callable(v)
                     }
-                    
+
                     # Convert sets to lists for JSON serialization
-                    if 'jurisdictions_processed' in session['stats']:
-                        session['stats']['jurisdictions_processed'] = list(session['stats']['jurisdictions_processed'])
-                    if 'legal_domains_processed' in session['stats']:
-                        session['stats']['legal_domains_processed'] = list(session['stats']['legal_domains_processed'])
-                    
+                    if "jurisdictions_processed" in session["stats"]:
+                        session["stats"]["jurisdictions_processed"] = list(
+                            session["stats"]["jurisdictions_processed"]
+                        )
+                    if "legal_domains_processed" in session["stats"]:
+                        session["stats"]["legal_domains_processed"] = list(
+                            session["stats"]["legal_domains_processed"]
+                        )
+
                     # Calculate progress
-                    total = session['stats'].get('total_documents', 0)
-                    processed = session['stats'].get('processed_documents', 0)
+                    total = session["stats"].get("total_documents", 0)
+                    processed = session["stats"].get("processed_documents", 0)
                     if total > 0:
-                        session['progress'] = (processed / total) * 100
-                
+                        session["progress"] = (processed / total) * 100
+
                 return jsonify(session)
-            
+
             return jsonify({"error": "Session not found"}), 404
-        
-        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/stop', methods=['POST'])
+
+        @self.app.route("/api/mcp/caselaw/bulk_process/<session_id>/stop", methods=["POST"])
         def api_stop_bulk_processing(session_id):
             """Stop bulk processing session."""
-            if not hasattr(self, 'bulk_processing_sessions'):
+            if not hasattr(self, "bulk_processing_sessions"):
                 return jsonify({"error": "Session not found"}), 404
-            
+
             if session_id in self.bulk_processing_sessions:
                 session = self.bulk_processing_sessions[session_id]
-                session['status'] = 'stopped'
-                
+                session["status"] = "stopped"
+
                 # Note: In a production environment, you would need to implement
                 # proper async task cancellation here
-                
+
                 return jsonify({"success": True, "status": "stopped"})
-            
+
             return jsonify({"error": "Session not found"}), 404
-        
-        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/download')
+
+        @self.app.route("/api/mcp/caselaw/bulk_process/<session_id>/download")
         def api_download_bulk_processing_results(session_id):
             """Download bulk processing results."""
-            if not hasattr(self, 'bulk_processing_sessions'):
+            if not hasattr(self, "bulk_processing_sessions"):
                 return jsonify({"error": "Session not found"}), 404
-            
+
             if session_id in self.bulk_processing_sessions:
                 session = self.bulk_processing_sessions[session_id]
-                output_dir = session.get('output_directory', 'unified_deontic_logic_system')
-                
+                output_dir = session.get("output_directory", "unified_deontic_logic_system")
+
                 # In a production environment, you would create a ZIP file
                 # of the output directory and return it as a download
                 import os
+
                 if os.path.exists(output_dir):
-                    return jsonify({
-                        "success": True,
-                        "message": f"Results available in {output_dir}",
-                        "files": os.listdir(output_dir) if os.path.exists(output_dir) else []
-                    })
+                    return jsonify(
+                        {
+                            "success": True,
+                            "message": f"Results available in {output_dir}",
+                            "files": os.listdir(output_dir) if os.path.exists(output_dir) else [],
+                        }
+                    )
                 else:
                     return jsonify({"error": "Results not found"}), 404
-            
+
             return jsonify({"error": "Session not found"}), 404
-        
-        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/log')
+
+        @self.app.route("/api/mcp/caselaw/bulk_process/<session_id>/log")
         def api_get_bulk_processing_log(session_id):
             """Get bulk processing log."""
-            if not hasattr(self, 'bulk_processing_sessions'):
+            if not hasattr(self, "bulk_processing_sessions"):
                 return jsonify({"error": "Session not found"}), 404
-            
+
             if session_id in self.bulk_processing_sessions:
                 session = self.bulk_processing_sessions[session_id]
-                
+
                 # Return processing log
                 log_data = {
                     "session_id": session_id,
-                    "start_time": session.get('start_time'),
-                    "status": session.get('status'),
-                    "stats": session.get('stats', {}),
+                    "start_time": session.get("start_time"),
+                    "status": session.get("status"),
+                    "stats": session.get("stats", {}),
                     "config": {
-                        "caselaw_directories": session['config'].caselaw_directories,
-                        "output_directory": session['config'].output_directory,
-                        "max_concurrent_documents": session['config'].max_concurrent_documents,
-                        "enable_parallel_processing": session['config'].enable_parallel_processing
-                    } if 'config' in session else {}
+                        "caselaw_directories": session["config"].caselaw_directories,
+                        "output_directory": session["config"].output_directory,
+                        "max_concurrent_documents": session["config"].max_concurrent_documents,
+                        "enable_parallel_processing": session["config"].enable_parallel_processing,
+                    }
+                    if "config" in session
+                    else {},
                 }
-                
+
                 return jsonify(log_data)
-            
+
             return jsonify({"error": "Session not found"}), 404
 
-        @self.app.route('/api/mcp/caselaw/query_theorems', methods=['POST'])
+        @self.app.route("/api/mcp/caselaw/query_theorems", methods=["POST"])
         def api_query_theorems():
             """Query relevant theorems using RAG retrieval."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import (
+                    DeonticFormula,
+                    DeonticOperator,
+                    LegalAgent,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                query_text = data.get('query_text', '')
-                operator_str = data.get('operator', 'OBLIGATION')
-                jurisdiction = data.get('jurisdiction')
-                legal_domain = data.get('legal_domain')
-                top_k = min(int(data.get('top_k', 10)), 50)  # Limit to 50
-                
+                query_text = data.get("query_text", "")
+                operator_str = data.get("operator", "OBLIGATION")
+                jurisdiction = data.get("jurisdiction")
+                legal_domain = data.get("legal_domain")
+                top_k = min(int(data.get("top_k", 10)), 50)  # Limit to 50
+
                 if not query_text:
                     return jsonify({"success": False, "error": "Query text is required"}), 400
-                
+
                 # Create query formula
                 operator = DeonticOperator[operator_str]
                 agent = LegalAgent("query_agent", "Query Agent", "person")
-                
+
                 query_formula = DeonticFormula(
-                    operator=operator,
-                    proposition=query_text,
-                    agent=agent
+                    operator=operator, proposition=query_text, agent=agent
                 )
-                
+
                 # Query RAG store
                 rag_store = TemporalDeonticRAGStore()
-                
+
                 temporal_context = datetime.now()
-                if data.get('temporal_context'):
-                    temporal_context = datetime.fromisoformat(data['temporal_context'])
-                
+                if data.get("temporal_context"):
+                    temporal_context = datetime.fromisoformat(data["temporal_context"])
+
                 relevant_theorems = rag_store.retrieve_relevant_theorems(
                     query_formula=query_formula,
                     temporal_context=temporal_context,
                     jurisdiction=jurisdiction,
                     legal_domain=legal_domain,
-                    top_k=top_k
+                    top_k=top_k,
                 )
-                
+
                 # Format response to match frontend expectations
                 result = {
                     "success": True,
@@ -1097,25 +1172,30 @@ class MCPDashboard(AdminDashboard):
                             "formula": {
                                 "operator": t.formula.operator.name,
                                 "proposition": t.formula.proposition,
-                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified"
+                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified",
                             },
                             "metadata": {
                                 "jurisdiction": t.jurisdiction,
                                 "legal_domain": t.legal_domain,
                                 "source_case": t.source_case,
-                                "precedent_strength": t.precedent_strength
+                                "precedent_strength": t.precedent_strength,
                             },
                             "relevance_score": t.confidence,
                             "temporal_scope": {
-                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
-                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
-                            }
-                        } for t in relevant_theorems
-                    ]
+                                "start": t.temporal_scope[0].isoformat()
+                                if t.temporal_scope[0]
+                                else None,
+                                "end": t.temporal_scope[1].isoformat()
+                                if t.temporal_scope[1]
+                                else None,
+                            },
+                        }
+                        for t in relevant_theorems
+                    ],
                 }
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Theorem query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
@@ -1124,152 +1204,163 @@ class MCPDashboard(AdminDashboard):
         """Async method to process caselaw bulk."""
         try:
             session = self.bulk_processing_sessions[session_id]
-            session['status'] = 'processing'
-            
+            session["status"] = "processing"
+
             # Run the bulk processing
             stats = await processor.process_caselaw_corpus()
-            
+
             # Update session with results
-            session['status'] = 'completed'
-            session['end_time'] = datetime.now().isoformat()
-            session['final_stats'] = {
-                k: v for k, v in stats.__dict__.items()
-                if not k.startswith('_') and not callable(v)
+            session["status"] = "completed"
+            session["end_time"] = datetime.now().isoformat()
+            session["final_stats"] = {
+                k: v for k, v in stats.__dict__.items() if not k.startswith("_") and not callable(v)
             }
-            
+
             # Convert sets to lists for JSON serialization
-            if 'jurisdictions_processed' in session['final_stats']:
-                session['final_stats']['jurisdictions_processed'] = list(session['final_stats']['jurisdictions_processed'])
-            if 'legal_domains_processed' in session['final_stats']:
-                session['final_stats']['legal_domains_processed'] = list(session['final_stats']['legal_domains_processed'])
-            
-            session['progress'] = 100.0
-            session['processing_time'] = str(stats.processing_time)
-            
-            self.logger.info(f"Bulk processing completed for session {session_id}: {stats.extracted_theorems} theorems")
-            
+            if "jurisdictions_processed" in session["final_stats"]:
+                session["final_stats"]["jurisdictions_processed"] = list(
+                    session["final_stats"]["jurisdictions_processed"]
+                )
+            if "legal_domains_processed" in session["final_stats"]:
+                session["final_stats"]["legal_domains_processed"] = list(
+                    session["final_stats"]["legal_domains_processed"]
+                )
+
+            session["progress"] = 100.0
+            session["processing_time"] = str(stats.processing_time)
+
+            self.logger.info(
+                f"Bulk processing completed for session {session_id}: {stats.extracted_theorems} theorems"
+            )
+
         except Exception as e:
             self.logger.error(f"Bulk processing failed for session {session_id}: {e}")
             session = self.bulk_processing_sessions.get(session_id, {})
-            session['status'] = 'failed'
-            session['error'] = str(e)
-            session['end_time'] = datetime.now().isoformat()
-        
+            session["status"] = "failed"
+            session["error"] = str(e)
+            session["end_time"] = datetime.now().isoformat()
+
         # Add MCP JSON-RPC endpoints for temporal deontic logic tools
-        @self.app.route('/api/mcp/caselaw/jsonrpc', methods=['POST'])
+        @self.app.route("/api/mcp/caselaw/jsonrpc", methods=["POST"])
         def mcp_caselaw_jsonrpc():
             """MCP JSON-RPC endpoint for temporal deontic logic tools."""
             try:
                 from .mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
-                
+
                 request_data = request.json or {}
-                
+
                 # Basic JSON-RPC validation
-                if 'method' not in request_data:
-                    return jsonify({
-                        "jsonrpc": "2.0",
-                        "error": {"code": -32600, "message": "Invalid Request - missing method"},
-                        "id": request_data.get('id')
-                    }), 400
-                
-                method = request_data['method']
-                params = request_data.get('params', {})
-                request_id = request_data.get('id', 1)
-                
+                if "method" not in request_data:
+                    return jsonify(
+                        {
+                            "jsonrpc": "2.0",
+                            "error": {
+                                "code": -32600,
+                                "message": "Invalid Request - missing method",
+                            },
+                            "id": request_data.get("id"),
+                        }
+                    ), 400
+
+                method = request_data["method"]
+                params = request_data.get("params", {})
+                request_id = request_data.get("id", 1)
+
                 # Map JSON-RPC methods to MCP tools
                 tool_mapping = {
-                    'check_document_consistency': 'check_document_consistency',
-                    'query_theorems': 'query_theorems',
-                    'bulk_process_caselaw': 'bulk_process_caselaw',
-                    'add_theorem': 'add_theorem'
+                    "check_document_consistency": "check_document_consistency",
+                    "query_theorems": "query_theorems",
+                    "bulk_process_caselaw": "bulk_process_caselaw",
+                    "add_theorem": "add_theorem",
                 }
-                
+
                 if method not in tool_mapping:
-                    return jsonify({
-                        "jsonrpc": "2.0",
-                        "error": {"code": -32601, "message": f"Method not found: {method}"},
-                        "id": request_id
-                    }), 404
-                
+                    return jsonify(
+                        {
+                            "jsonrpc": "2.0",
+                            "error": {"code": -32601, "message": f"Method not found: {method}"},
+                            "id": request_id,
+                        }
+                    ), 404
+
                 from ipfs_datasets_py.utils.anyio_compat import run as anyio_run
 
                 result = anyio_run(
                     temporal_deontic_mcp_server.call_tool_direct(tool_mapping[method], params)
                 )
-                
-                return jsonify({
-                    "jsonrpc": "2.0",
-                    "result": result,
-                    "id": request_id
-                })
-                
+
+                return jsonify({"jsonrpc": "2.0", "result": result, "id": request_id})
+
             except Exception as e:
                 self.logger.error(f"MCP JSON-RPC call failed: {e}")
-                return jsonify({
-                    "jsonrpc": "2.0",
-                    "error": {
-                        "code": -32603,
-                        "message": "Internal error",
-                        "data": str(e)
-                    },
-                    "id": request_data.get('id')
-                }), 500
-        
-        @self.app.route('/api/mcp/caselaw/tools')
+                return jsonify(
+                    {
+                        "jsonrpc": "2.0",
+                        "error": {"code": -32603, "message": "Internal error", "data": str(e)},
+                        "id": request_data.get("id"),
+                    }
+                ), 500
+
+        @self.app.route("/api/mcp/caselaw/tools")
         def mcp_caselaw_tools():
             """Get available temporal deontic logic MCP tools."""
             try:
                 from .mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
-                
+
                 tool_schemas = temporal_deontic_mcp_server.get_tool_schemas()
-                
-                return jsonify({
-                    "success": True,
-                    "tools": tool_schemas,
-                    "tool_count": len(tool_schemas),
-                    "server_info": {
-                        "name": "Temporal Deontic Logic MCP Server",
-                        "version": "1.0.0",
-                        "description": "MCP tools for legal document consistency checking"
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "tools": tool_schemas,
+                        "tool_count": len(tool_schemas),
+                        "server_info": {
+                            "name": "Temporal Deontic Logic MCP Server",
+                            "version": "1.0.0",
+                            "description": "MCP tools for legal document consistency checking",
+                        },
                     }
-                })
-                
+                )
+
             except Exception as e:
                 self.logger.error(f"Failed to get MCP tools: {e}")
-                return jsonify({
-                    "success": False,
-                    "error": str(e)
-                }), 500
+                return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_finance_routes(self) -> None:
         """Set up finance dashboard routes (based on caselaw template)."""
-        
-        @self.app.route('/mcp/finance')
+
+        @self.app.route("/mcp/finance")
         def finance_dashboard():
             """Render the finance analysis dashboard using temporal deontic logic."""
             # Import temporal deontic logic components (same backend as caselaw)
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from .logic.integration.deontic_logic_core import DeonticOperator
-                
+
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 dashboard_data = {
                     "system_status": {
                         "theorem_count": len(rag_store.theorems),
-                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
-                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
-                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys())
+                        if hasattr(rag_store, "jurisdiction_index")
+                        else [],
+                        "legal_domains": list(rag_store.domain_index.keys())
+                        if hasattr(rag_store, "domain_index")
+                        else [],
+                        "temporal_periods": len(getattr(rag_store, "temporal_index", {})),
                         "available_operators": [op.name for op in DeonticOperator],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "system_ready": True
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "system_ready": True,
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to initialize finance dashboard: {e}")
                 dashboard_data = {
@@ -1279,78 +1370,90 @@ class MCPDashboard(AdminDashboard):
                         "legal_domains": [],
                         "temporal_periods": 0,
                         "available_operators": [],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "system_ready": False,
-                        "error_message": str(e)
+                        "error_message": str(e),
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-            
-            return render_template('finance_dashboard_mcp.html', **dashboard_data)
-        
-        @self.app.route('/mcp/finance/workflow')
+
+            return render_template("finance_dashboard_mcp.html", **dashboard_data)
+
+        @self.app.route("/mcp/finance/workflow")
         def finance_workflow_dashboard():
             """Render the finance workflow pipeline dashboard."""
             dashboard_data = {
                 "mcp_enabled": True,
-                "mcp_server_host": self.config.mcp_server_host if hasattr(self.config, 'mcp_server_host') else "127.0.0.1",
-                "mcp_server_port": self.config.mcp_server_port if hasattr(self.config, 'mcp_server_port') else 8001,
+                "mcp_server_host": self.config.mcp_server_host
+                if hasattr(self.config, "mcp_server_host")
+                else "127.0.0.1",
+                "mcp_server_port": self.config.mcp_server_port
+                if hasattr(self.config, "mcp_server_port")
+                else 8001,
                 "dashboard_title": "Finance Workflow Pipeline Dashboard",
-                "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
-            return render_template('admin/finance_workflow_dashboard.html', **dashboard_data)
-        
+            return render_template("admin/finance_workflow_dashboard.html", **dashboard_data)
+
         # Finance API endpoints (reuse caselaw backend with finance prefix)
-        @self.app.route('/api/mcp/finance/check_document', methods=['POST'])
+        @self.app.route("/api/mcp/finance/check_document", methods=["POST"])
         def api_check_finance_document():
             """Check financial document consistency."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                document_text = data.get('document_text', '')
-                document_id = data.get('document_id', f'doc_{int(time.time())}')
-                jurisdiction = data.get('jurisdiction', 'Federal')
-                legal_domain = data.get('legal_domain', 'finance')
-                
+                document_text = data.get("document_text", "")
+                document_id = data.get("document_id", f"doc_{int(time.time())}")
+                jurisdiction = data.get("jurisdiction", "Federal")
+                legal_domain = data.get("legal_domain", "finance")
+
                 if not document_text:
                     return jsonify({"success": False, "error": "Document text is required"}), 400
-                
+
                 # Initialize checker (reuses same logic engine)
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 # Parse temporal context
                 temporal_context = datetime.now()
-                if data.get('temporal_context'):
-                    temporal_context = datetime.fromisoformat(data['temporal_context'])
-                
+                if data.get("temporal_context"):
+                    temporal_context = datetime.fromisoformat(data["temporal_context"])
+
                 # Check document consistency
                 analysis = checker.check_document(
                     document_text=document_text,
                     document_id=document_id,
                     temporal_context=temporal_context,
                     jurisdiction=jurisdiction,
-                    legal_domain=legal_domain
+                    legal_domain=legal_domain,
                 )
-                
+
                 # Generate debug report
                 debug_report = checker.generate_debug_report(analysis)
-                
+
                 # Format response
                 result = {
                     "success": True,
                     "document_id": analysis.document_id,
                     "consistency_analysis": {
-                        "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                        "is_consistent": analysis.consistency_result.is_consistent
+                        if analysis.consistency_result
+                        else False,
                         "confidence_score": analysis.confidence_score,
                         "formulas_extracted": len(analysis.extracted_formulas),
                         "issues_found": len(analysis.issues_found),
-                        "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
-                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
-                        "processing_time": analysis.processing_time
+                        "conflicts": len(analysis.consistency_result.conflicts)
+                        if analysis.consistency_result
+                        else 0,
+                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts)
+                        if analysis.consistency_result
+                        else 0,
+                        "processing_time": analysis.processing_time,
                     },
                     "debug_report": {
                         "total_issues": debug_report.total_issues,
@@ -1359,67 +1462,70 @@ class MCPDashboard(AdminDashboard):
                         "suggestions": debug_report.suggestions,
                         "issues": debug_report.issues[:10],
                         "summary": debug_report.summary,
-                        "fix_suggestions": debug_report.fix_suggestions
+                        "fix_suggestions": debug_report.fix_suggestions,
                     },
                     "extracted_formulas": [
                         {
                             "operator": f.operator.name,
                             "proposition": f.proposition,
                             "agent": f.agent.name if f.agent else "Unspecified",
-                            "confidence": f.confidence
-                        } for f in analysis.extracted_formulas[:10]
-                    ]
+                            "confidence": f.confidence,
+                        }
+                        for f in analysis.extracted_formulas[:10]
+                    ],
                 }
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Finance document consistency check failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/finance/query_theorems', methods=['POST'])
+
+        @self.app.route("/api/mcp/finance/query_theorems", methods=["POST"])
         def api_query_finance_rules():
             """Query relevant financial rules using RAG retrieval."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import (
+                    DeonticFormula,
+                    DeonticOperator,
+                    LegalAgent,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                query_text = data.get('query_text', '')
-                operator_str = data.get('operator', 'OBLIGATION')
-                jurisdiction = data.get('jurisdiction')
-                legal_domain = data.get('legal_domain', 'finance')
-                top_k = min(int(data.get('top_k', 10)), 50)
-                
+                query_text = data.get("query_text", "")
+                operator_str = data.get("operator", "OBLIGATION")
+                jurisdiction = data.get("jurisdiction")
+                legal_domain = data.get("legal_domain", "finance")
+                top_k = min(int(data.get("top_k", 10)), 50)
+
                 if not query_text:
                     return jsonify({"success": False, "error": "Query text is required"}), 400
-                
+
                 # Create query formula
                 operator = DeonticOperator[operator_str]
                 agent = LegalAgent("query_agent", "Query Agent", "person")
-                
+
                 query_formula = DeonticFormula(
-                    operator=operator,
-                    proposition=query_text,
-                    agent=agent
+                    operator=operator, proposition=query_text, agent=agent
                 )
-                
+
                 # Query RAG store
                 rag_store = TemporalDeonticRAGStore()
-                
+
                 temporal_context = datetime.now()
-                if data.get('temporal_context'):
-                    temporal_context = datetime.fromisoformat(data['temporal_context'])
-                
+                if data.get("temporal_context"):
+                    temporal_context = datetime.fromisoformat(data["temporal_context"])
+
                 relevant_theorems = rag_store.retrieve_relevant_theorems(
                     query_formula=query_formula,
                     temporal_context=temporal_context,
                     jurisdiction=jurisdiction,
                     legal_domain=legal_domain,
-                    top_k=top_k
+                    top_k=top_k,
                 )
-                
+
                 # Format response
                 result = {
                     "success": True,
@@ -1431,58 +1537,69 @@ class MCPDashboard(AdminDashboard):
                             "formula": {
                                 "operator": t.formula.operator.name,
                                 "proposition": t.formula.proposition,
-                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified"
+                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified",
                             },
                             "metadata": {
                                 "jurisdiction": t.jurisdiction,
                                 "legal_domain": t.legal_domain,
                                 "source_case": t.source_case,
-                                "precedent_strength": t.precedent_strength
+                                "precedent_strength": t.precedent_strength,
                             },
                             "relevance_score": t.confidence,
                             "temporal_scope": {
-                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
-                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
-                            }
-                        } for t in relevant_theorems
-                    ]
+                                "start": t.temporal_scope[0].isoformat()
+                                if t.temporal_scope[0]
+                                else None,
+                                "end": t.temporal_scope[1].isoformat()
+                                if t.temporal_scope[1]
+                                else None,
+                            },
+                        }
+                        for t in relevant_theorems
+                    ],
                 }
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Finance rules query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_medicine_routes(self) -> None:
         """Set up medicine dashboard routes (based on caselaw template)."""
-        
-        @self.app.route('/mcp/medicine')
+
+        @self.app.route("/mcp/medicine")
         def medicine_dashboard():
             """Render the medicine analysis dashboard using temporal deontic logic."""
             # Import temporal deontic logic components (same backend as caselaw)
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from .logic.integration.deontic_logic_core import DeonticOperator
-                
+
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 dashboard_data = {
                     "system_status": {
                         "theorem_count": len(rag_store.theorems),
-                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
-                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
-                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys())
+                        if hasattr(rag_store, "jurisdiction_index")
+                        else [],
+                        "legal_domains": list(rag_store.domain_index.keys())
+                        if hasattr(rag_store, "domain_index")
+                        else [],
+                        "temporal_periods": len(getattr(rag_store, "temporal_index", {})),
                         "available_operators": [op.name for op in DeonticOperator],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "system_ready": True
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "system_ready": True,
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to initialize medicine dashboard: {e}")
                 dashboard_data = {
@@ -1492,66 +1609,74 @@ class MCPDashboard(AdminDashboard):
                         "legal_domains": [],
                         "temporal_periods": 0,
                         "available_operators": [],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "system_ready": False,
-                        "error_message": str(e)
+                        "error_message": str(e),
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-            
-            return render_template('medicine_dashboard_mcp.html', **dashboard_data)
-        
+
+            return render_template("medicine_dashboard_mcp.html", **dashboard_data)
+
         # Medicine API endpoints (reuse caselaw backend with medicine prefix)
-        @self.app.route('/api/mcp/medicine/check_document', methods=['POST'])
+        @self.app.route("/api/mcp/medicine/check_document", methods=["POST"])
         def api_check_medicine_document():
             """Check medical document consistency."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.document_consistency_checker import (
+                    DocumentConsistencyChecker,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                document_text = data.get('document_text', '')
-                document_id = data.get('document_id', f'doc_{int(time.time())}')
-                jurisdiction = data.get('jurisdiction', 'Federal')
-                legal_domain = data.get('legal_domain', 'medicine')
-                
+                document_text = data.get("document_text", "")
+                document_id = data.get("document_id", f"doc_{int(time.time())}")
+                jurisdiction = data.get("jurisdiction", "Federal")
+                legal_domain = data.get("legal_domain", "medicine")
+
                 if not document_text:
                     return jsonify({"success": False, "error": "Document text is required"}), 400
-                
+
                 # Initialize checker (reuses same logic engine)
                 rag_store = TemporalDeonticRAGStore()
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
-                
+
                 # Parse temporal context
                 temporal_context = datetime.now()
-                if data.get('temporal_context'):
-                    temporal_context = datetime.fromisoformat(data['temporal_context'])
-                
+                if data.get("temporal_context"):
+                    temporal_context = datetime.fromisoformat(data["temporal_context"])
+
                 # Check document consistency
                 analysis = checker.check_document(
                     document_text=document_text,
                     document_id=document_id,
                     temporal_context=temporal_context,
                     jurisdiction=jurisdiction,
-                    legal_domain=legal_domain
+                    legal_domain=legal_domain,
                 )
-                
+
                 # Generate debug report
                 debug_report = checker.generate_debug_report(analysis)
-                
+
                 # Format response
                 result = {
                     "success": True,
                     "document_id": analysis.document_id,
                     "consistency_analysis": {
-                        "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                        "is_consistent": analysis.consistency_result.is_consistent
+                        if analysis.consistency_result
+                        else False,
                         "confidence_score": analysis.confidence_score,
                         "formulas_extracted": len(analysis.extracted_formulas),
                         "issues_found": len(analysis.issues_found),
-                        "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
-                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
-                        "processing_time": analysis.processing_time
+                        "conflicts": len(analysis.consistency_result.conflicts)
+                        if analysis.consistency_result
+                        else 0,
+                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts)
+                        if analysis.consistency_result
+                        else 0,
+                        "processing_time": analysis.processing_time,
                     },
                     "debug_report": {
                         "total_issues": debug_report.total_issues,
@@ -1560,67 +1685,70 @@ class MCPDashboard(AdminDashboard):
                         "suggestions": debug_report.suggestions,
                         "issues": debug_report.issues[:10],
                         "summary": debug_report.summary,
-                        "fix_suggestions": debug_report.fix_suggestions
+                        "fix_suggestions": debug_report.fix_suggestions,
                     },
                     "extracted_formulas": [
                         {
                             "operator": f.operator.name,
                             "proposition": f.proposition,
                             "agent": f.agent.name if f.agent else "Unspecified",
-                            "confidence": f.confidence
-                        } for f in analysis.extracted_formulas[:10]
-                    ]
+                            "confidence": f.confidence,
+                        }
+                        for f in analysis.extracted_formulas[:10]
+                    ],
                 }
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Medicine document consistency check failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/query_theorems', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/query_theorems", methods=["POST"])
         def api_query_medicine_guidelines():
             """Query relevant medical guidelines using RAG retrieval."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import (
+                    DeonticFormula,
+                    DeonticOperator,
+                    LegalAgent,
+                )
                 from datetime import datetime
-                
+
                 data = request.json or {}
-                query_text = data.get('query_text', '')
-                operator_str = data.get('operator', 'OBLIGATION')
-                jurisdiction = data.get('jurisdiction')
-                legal_domain = data.get('legal_domain', 'medicine')
-                top_k = min(int(data.get('top_k', 10)), 50)
-                
+                query_text = data.get("query_text", "")
+                operator_str = data.get("operator", "OBLIGATION")
+                jurisdiction = data.get("jurisdiction")
+                legal_domain = data.get("legal_domain", "medicine")
+                top_k = min(int(data.get("top_k", 10)), 50)
+
                 if not query_text:
                     return jsonify({"success": False, "error": "Query text is required"}), 400
-                
+
                 # Create query formula
                 operator = DeonticOperator[operator_str]
                 agent = LegalAgent("query_agent", "Query Agent", "person")
-                
+
                 query_formula = DeonticFormula(
-                    operator=operator,
-                    proposition=query_text,
-                    agent=agent
+                    operator=operator, proposition=query_text, agent=agent
                 )
-                
+
                 # Query RAG store
                 rag_store = TemporalDeonticRAGStore()
-                
+
                 temporal_context = datetime.now()
-                if data.get('temporal_context'):
-                    temporal_context = datetime.fromisoformat(data['temporal_context'])
-                
+                if data.get("temporal_context"):
+                    temporal_context = datetime.fromisoformat(data["temporal_context"])
+
                 relevant_theorems = rag_store.retrieve_relevant_theorems(
                     query_formula=query_formula,
                     temporal_context=temporal_context,
                     jurisdiction=jurisdiction,
                     legal_domain=legal_domain,
-                    top_k=top_k
+                    top_k=top_k,
                 )
-                
+
                 # Format response
                 result = {
                     "success": True,
@@ -1632,35 +1760,40 @@ class MCPDashboard(AdminDashboard):
                             "formula": {
                                 "operator": t.formula.operator.name,
                                 "proposition": t.formula.proposition,
-                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified"
+                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified",
                             },
                             "metadata": {
                                 "jurisdiction": t.jurisdiction,
                                 "legal_domain": t.legal_domain,
                                 "source_case": t.source_case,
-                                "precedent_strength": t.precedent_strength
+                                "precedent_strength": t.precedent_strength,
                             },
                             "relevance_score": t.confidence,
                             "temporal_scope": {
-                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
-                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
-                            }
-                        } for t in relevant_theorems
-                    ]
+                                "start": t.temporal_scope[0].isoformat()
+                                if t.temporal_scope[0]
+                                else None,
+                                "end": t.temporal_scope[1].isoformat()
+                                if t.temporal_scope[1]
+                                else None,
+                            },
+                        }
+                        for t in relevant_theorems
+                    ],
                 }
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Medicine guidelines query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
+
         # Generic MCP Tool Router - ensures all tools go through same code path
-        @self.app.route('/api/mcp/<category>/<tool_name>', methods=['POST'])
+        @self.app.route("/api/mcp/<category>/<tool_name>", methods=["POST"])
         def api_call_mcp_tool(category, tool_name):
             """
             Generic MCP tool router - ensures consistent code path for all tool calls.
-            
+
             This route provides a unified interface for calling any MCP tool, ensuring that
             CLI, dashboard, and Python API all use the same underlying tool functions.
             """
@@ -1677,409 +1810,445 @@ class MCPDashboard(AdminDashboard):
                         module = __import__(module_path, fromlist=[tool_name], level=1)
                         tool_function = getattr(module, tool_name)
                     except:
-                        return jsonify({
-                            "success": False,
-                            "error": f"Tool '{tool_name}' not found in category '{category}'"
-                        }), 404
-                
+                        return jsonify(
+                            {
+                                "success": False,
+                                "error": f"Tool '{tool_name}' not found in category '{category}'",
+                            }
+                        ), 404
+
                 # Get parameters from request
                 data = request.json or {}
-                params = data.get('params', data)  # Support both formats
-                
+                params = data.get("params", data)  # Support both formats
+
                 # Call the tool function (same code path as CLI and Python API)
                 result = tool_function(**params)
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"MCP tool call failed ({category}/{tool_name}): {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
+
         # Medical Research Scraping Routes (specific endpoints for convenience)
         # Note: These all call the same MCP tool functions as the generic router above
-        @self.app.route('/api/mcp/medicine/scrape/pubmed', methods=['POST'])
+        @self.app.route("/api/mcp/medicine/scrape/pubmed", methods=["POST"])
         def api_scrape_pubmed():
             """Scrape medical research from PubMed (calls MCP tool function)."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_pubmed_medical_research
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    scrape_pubmed_medical_research,
+                )
+
                 data = request.json or {}
-                query = data.get('query', '')
-                max_results = min(int(data.get('max_results', 100)), 200)
-                email = data.get('email')
-                research_type = data.get('research_type')
-                
+                query = data.get("query", "")
+                max_results = min(int(data.get("max_results", 100)), 200)
+                email = data.get("email")
+                research_type = data.get("research_type")
+
                 if not query:
                     return jsonify({"success": False, "error": "Query is required"}), 400
-                
+
                 # Call MCP tool function (same code path as CLI and generic router)
                 result = scrape_pubmed_medical_research(
-                    query=query,
-                    max_results=max_results,
-                    email=email,
-                    research_type=research_type
+                    query=query, max_results=max_results, email=email, research_type=research_type
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"PubMed scraping failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/scrape/clinical_trials', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/scrape/clinical_trials", methods=["POST"])
         def api_scrape_clinical_trials():
             """Scrape clinical trial data from ClinicalTrials.gov."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_clinical_trials
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    scrape_clinical_trials,
+                )
+
                 data = request.json or {}
-                query = data.get('query', '')
-                condition = data.get('condition')
-                intervention = data.get('intervention')
-                max_results = min(int(data.get('max_results', 50)), 100)
-                
+                query = data.get("query", "")
+                condition = data.get("condition")
+                intervention = data.get("intervention")
+                max_results = min(int(data.get("max_results", 50)), 100)
+
                 result = scrape_clinical_trials(
                     query=query,
                     condition=condition,
                     intervention=intervention,
-                    max_results=max_results
+                    max_results=max_results,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Clinical trials scraping failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/scrape/biochemical', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/scrape/biochemical", methods=["POST"])
         def api_scrape_biochemical():
             """Scrape biochemical research data."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_biochemical_research
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    scrape_biochemical_research,
+                )
+
                 data = request.json or {}
-                topic = data.get('topic', '')
-                max_results = min(int(data.get('max_results', 50)), 100)
-                time_range_days = data.get('time_range_days')
-                
+                topic = data.get("topic", "")
+                max_results = min(int(data.get("max_results", 50)), 100)
+                time_range_days = data.get("time_range_days")
+
                 if not topic:
                     return jsonify({"success": False, "error": "Topic is required"}), 400
-                
+
                 result = scrape_biochemical_research(
-                    topic=topic,
-                    max_results=max_results,
-                    time_range_days=time_range_days
+                    topic=topic, max_results=max_results, time_range_days=time_range_days
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Biochemical research scraping failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/theorems/generate', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/theorems/generate", methods=["POST"])
         def api_generate_medical_theorems():
             """Generate medical theorems from clinical trial data."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import generate_medical_theorems_from_trials
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    generate_medical_theorems_from_trials,
+                )
+
                 data = request.json or {}
-                trial_data = data.get('trial_data', {})
-                outcomes_data = data.get('outcomes_data', {})
-                
+                trial_data = data.get("trial_data", {})
+                outcomes_data = data.get("outcomes_data", {})
+
                 if not trial_data or not outcomes_data:
-                    return jsonify({"success": False, "error": "Both trial_data and outcomes_data are required"}), 400
-                
+                    return jsonify(
+                        {
+                            "success": False,
+                            "error": "Both trial_data and outcomes_data are required",
+                        }
+                    ), 400
+
                 result = generate_medical_theorems_from_trials(trial_data, outcomes_data)
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Theorem generation failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/theorems/validate', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/theorems/validate", methods=["POST"])
         def api_validate_medical_theorem():
             """Validate a medical theorem using fuzzy logic."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import validate_medical_theorem_fuzzy
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    validate_medical_theorem_fuzzy,
+                )
+
                 data = request.json or {}
-                theorem_data = data.get('theorem_data', {})
-                empirical_data = data.get('empirical_data', {})
-                
+                theorem_data = data.get("theorem_data", {})
+                empirical_data = data.get("empirical_data", {})
+
                 if not theorem_data:
                     return jsonify({"success": False, "error": "Theorem data is required"}), 400
-                
+
                 result = validate_medical_theorem_fuzzy(theorem_data, empirical_data)
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Theorem validation failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/scrape/population', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/scrape/population", methods=["POST"])
         def api_scrape_population_data():
             """Scrape population health data for theorem validation."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_population_health_data
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    scrape_population_health_data,
+                )
+
                 data = request.json or {}
-                condition = data.get('condition', '')
-                intervention = data.get('intervention')
-                
+                condition = data.get("condition", "")
+                intervention = data.get("intervention")
+
                 if not condition:
                     return jsonify({"success": False, "error": "Condition is required"}), 400
-                
+
                 result = scrape_population_health_data(
-                    condition=condition,
-                    intervention=intervention
+                    condition=condition, intervention=intervention
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Population data scraping failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
+
         # Biomolecule Discovery Routes
-        @self.app.route('/api/mcp/medicine/discover/protein_binders', methods=['POST'])
+        @self.app.route("/api/mcp/medicine/discover/protein_binders", methods=["POST"])
         def api_discover_protein_binders():
             """Discover protein binders using RAG."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_protein_binders
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    discover_protein_binders,
+                )
+
                 data = request.json or {}
-                target_protein = data.get('target_protein', '')
-                interaction_type = data.get('interaction_type')
-                min_confidence = float(data.get('min_confidence', 0.5))
-                max_results = min(int(data.get('max_results', 50)), 100)
-                
+                target_protein = data.get("target_protein", "")
+                interaction_type = data.get("interaction_type")
+                min_confidence = float(data.get("min_confidence", 0.5))
+                max_results = min(int(data.get("max_results", 50)), 100)
+
                 if not target_protein:
                     return jsonify({"success": False, "error": "Target protein is required"}), 400
-                
+
                 result = discover_protein_binders(
                     target_protein=target_protein,
                     interaction_type=interaction_type,
                     min_confidence=min_confidence,
-                    max_results=max_results
+                    max_results=max_results,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Protein binder discovery failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/discover/enzyme_inhibitors', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/discover/enzyme_inhibitors", methods=["POST"])
         def api_discover_enzyme_inhibitors():
             """Discover enzyme inhibitors using RAG."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_enzyme_inhibitors
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    discover_enzyme_inhibitors,
+                )
+
                 data = request.json or {}
-                target_enzyme = data.get('target_enzyme', '')
-                enzyme_class = data.get('enzyme_class')
-                min_confidence = float(data.get('min_confidence', 0.5))
-                max_results = min(int(data.get('max_results', 50)), 100)
-                
+                target_enzyme = data.get("target_enzyme", "")
+                enzyme_class = data.get("enzyme_class")
+                min_confidence = float(data.get("min_confidence", 0.5))
+                max_results = min(int(data.get("max_results", 50)), 100)
+
                 if not target_enzyme:
                     return jsonify({"success": False, "error": "Target enzyme is required"}), 400
-                
+
                 result = discover_enzyme_inhibitors(
                     target_enzyme=target_enzyme,
                     enzyme_class=enzyme_class,
                     min_confidence=min_confidence,
-                    max_results=max_results
+                    max_results=max_results,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Enzyme inhibitor discovery failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/discover/pathway_biomolecules', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/discover/pathway_biomolecules", methods=["POST"])
         def api_discover_pathway_biomolecules():
             """Discover pathway biomolecules using RAG."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_pathway_biomolecules
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    discover_pathway_biomolecules,
+                )
+
                 data = request.json or {}
-                pathway_name = data.get('pathway_name', '')
-                biomolecule_types = data.get('biomolecule_types')
-                min_confidence = float(data.get('min_confidence', 0.5))
-                max_results = min(int(data.get('max_results', 100)), 200)
-                
+                pathway_name = data.get("pathway_name", "")
+                biomolecule_types = data.get("biomolecule_types")
+                min_confidence = float(data.get("min_confidence", 0.5))
+                max_results = min(int(data.get("max_results", 100)), 200)
+
                 if not pathway_name:
                     return jsonify({"success": False, "error": "Pathway name is required"}), 400
-                
+
                 result = discover_pathway_biomolecules(
                     pathway_name=pathway_name,
                     biomolecule_types=biomolecule_types,
                     min_confidence=min_confidence,
-                    max_results=max_results
+                    max_results=max_results,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Pathway biomolecule discovery failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/discover/biomolecules_rag', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/discover/biomolecules_rag", methods=["POST"])
         def api_discover_biomolecules_rag():
             """High-level RAG-based biomolecule discovery."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_biomolecules_rag
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    discover_biomolecules_rag,
+                )
+
                 data = request.json or {}
-                target = data.get('target', '')
-                discovery_type = data.get('discovery_type', 'binders')
-                min_confidence = float(data.get('min_confidence', 0.5))
-                max_results = min(int(data.get('max_results', 50)), 100)
-                
+                target = data.get("target", "")
+                discovery_type = data.get("discovery_type", "binders")
+                min_confidence = float(data.get("min_confidence", 0.5))
+                max_results = min(int(data.get("max_results", 50)), 100)
+
                 if not target:
                     return jsonify({"success": False, "error": "Target is required"}), 400
-                
+
                 result = discover_biomolecules_rag(
                     target=target,
                     discovery_type=discovery_type,
                     max_results=max_results,
-                    min_confidence=min_confidence
+                    min_confidence=min_confidence,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"RAG biomolecule discovery failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
+
         # AI-Powered Dataset Builder Routes
-        @self.app.route('/api/mcp/medicine/dataset/build', methods=['POST'])
+        @self.app.route("/api/mcp/medicine/dataset/build", methods=["POST"])
         def api_build_medical_dataset():
             """Build structured dataset from scraped data using AI."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import build_dataset_from_scraped_data
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    build_dataset_from_scraped_data,
+                )
+
                 data = request.json or {}
-                scraped_data = data.get('scraped_data', [])
-                filter_criteria = data.get('filter_criteria')
-                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
-                
+                scraped_data = data.get("scraped_data", [])
+                filter_criteria = data.get("filter_criteria")
+                model_name = data.get("model_name", "meta-llama/Llama-2-7b-hf")
+
                 if not scraped_data:
                     return jsonify({"success": False, "error": "Scraped data is required"}), 400
-                
+
                 result = build_dataset_from_scraped_data(
                     scraped_data=scraped_data,
                     filter_criteria=filter_criteria,
-                    model_name=model_name
+                    model_name=model_name,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Dataset building failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/dataset/analyze', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/dataset/analyze", methods=["POST"])
         def api_analyze_medical_dataset():
             """Analyze medical dataset using AI models."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import analyze_dataset_with_ai
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    analyze_dataset_with_ai,
+                )
+
                 data = request.json or {}
-                dataset = data.get('dataset', [])
-                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
-                
+                dataset = data.get("dataset", [])
+                model_name = data.get("model_name", "meta-llama/Llama-2-7b-hf")
+
                 if not dataset:
                     return jsonify({"success": False, "error": "Dataset is required"}), 400
-                
-                result = analyze_dataset_with_ai(
-                    dataset=dataset,
-                    model_name=model_name
-                )
-                
+
+                result = analyze_dataset_with_ai(dataset=dataset, model_name=model_name)
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Dataset analysis failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/dataset/transform', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/dataset/transform", methods=["POST"])
         def api_transform_medical_dataset():
             """Transform medical dataset using AI (summarize, extract entities, normalize)."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import transform_dataset_with_ai
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    transform_dataset_with_ai,
+                )
+
                 data = request.json or {}
-                dataset = data.get('dataset', [])
-                transformation_type = data.get('transformation_type', 'normalize')
-                parameters = data.get('parameters')
-                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
-                
+                dataset = data.get("dataset", [])
+                transformation_type = data.get("transformation_type", "normalize")
+                parameters = data.get("parameters")
+                model_name = data.get("model_name", "meta-llama/Llama-2-7b-hf")
+
                 if not dataset:
                     return jsonify({"success": False, "error": "Dataset is required"}), 400
-                
-                if transformation_type not in ['summarize', 'extract_entities', 'normalize', 'extrapolate']:
-                    return jsonify({"success": False, "error": f"Invalid transformation type: {transformation_type}"}), 400
-                
+
+                if transformation_type not in [
+                    "summarize",
+                    "extract_entities",
+                    "normalize",
+                    "extrapolate",
+                ]:
+                    return jsonify(
+                        {
+                            "success": False,
+                            "error": f"Invalid transformation type: {transformation_type}",
+                        }
+                    ), 400
+
                 result = transform_dataset_with_ai(
                     dataset=dataset,
                     transformation_type=transformation_type,
                     parameters=parameters,
-                    model_name=model_name
+                    model_name=model_name,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Dataset transformation failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/medicine/dataset/generate_synthetic', methods=['POST'])
+
+        @self.app.route("/api/mcp/medicine/dataset/generate_synthetic", methods=["POST"])
         def api_generate_synthetic_data():
             """Generate synthetic medical research data for testing and evaluation."""
             try:
-                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import generate_synthetic_dataset
-                
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+                    generate_synthetic_dataset,
+                )
+
                 data = request.json or {}
-                template_data = data.get('template_data', [])
-                num_samples = min(int(data.get('num_samples', 10)), 50)  # Limit to 50 for performance
-                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
-                temperature = float(data.get('temperature', 0.7))
-                
+                template_data = data.get("template_data", [])
+                num_samples = min(
+                    int(data.get("num_samples", 10)), 50
+                )  # Limit to 50 for performance
+                model_name = data.get("model_name", "meta-llama/Llama-2-7b-hf")
+                temperature = float(data.get("temperature", 0.7))
+
                 if not template_data:
                     return jsonify({"success": False, "error": "Template data is required"}), 400
-                
+
                 result = generate_synthetic_dataset(
                     template_data=template_data,
                     num_samples=num_samples,
                     model_name=model_name,
-                    temperature=temperature
+                    temperature=temperature,
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Synthetic data generation failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_software_routes(self) -> None:
         """Set up software engineering dashboard routes."""
-        
-        @self.app.route('/mcp/software')
+
+        @self.app.route("/mcp/software")
         def software_dashboard():
             """Render the software engineering dashboard."""
             try:
                 # Get software engineering theorems via MCP tool system
                 theorems_result = self._execute_tool_sync(
-                    'software_engineering_tools',
-                    'list_software_theorems',
-                    {}
+                    "software_engineering_tools", "list_software_theorems", {}
                 )
-                
+
                 dashboard_data = {
                     "system_status": {
                         "theorem_count": theorems_result.get("total_count", 0),
@@ -2092,14 +2261,14 @@ class MCPDashboard(AdminDashboard):
                             "DAG Workflow Planner",
                             "GPU Provisioning Predictor",
                             "Error Pattern Detector",
-                            "Auto-Healing Coordinator"
+                            "Auto-Healing Coordinator",
                         ],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "system_ready": True
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "system_ready": True,
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to initialize software dashboard: {e}")
                 dashboard_data = {
@@ -2107,670 +2276,670 @@ class MCPDashboard(AdminDashboard):
                         "theorem_count": 0,
                         "domains": [],
                         "available_tools": [],
-                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "system_ready": False,
-                        "error_message": str(e)
+                        "error_message": str(e),
                     },
-                    "mcp_enabled": True
+                    "mcp_enabled": True,
                 }
-            
-            return render_template('software_dashboard_mcp.html', **dashboard_data)
-        
+
+            return render_template("software_dashboard_mcp.html", **dashboard_data)
+
         # API Endpoints
-        
-        @self.app.route('/api/mcp/software/ingest_repository', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/ingest_repository", methods=["POST"])
         def api_ingest_repository():
             """Ingest a GitHub/GitLab repository."""
             try:
                 data = request.json or {}
-                repository_url = data.get('repository_url', '')
-                include_prs = data.get('include_prs', True)
-                include_issues = data.get('include_issues', True)
-                include_workflows = data.get('include_workflows', True)
-                github_token = data.get('github_token')
-                
+                repository_url = data.get("repository_url", "")
+                include_prs = data.get("include_prs", True)
+                include_issues = data.get("include_issues", True)
+                include_workflows = data.get("include_workflows", True)
+                github_token = data.get("github_token")
+
                 if not repository_url:
                     return jsonify({"success": False, "error": "Repository URL is required"}), 400
-                
+
                 # Execute via MCP tool system
                 result = self._execute_tool_sync(
-                    'software_engineering_tools',
-                    'scrape_github_repository',
+                    "software_engineering_tools",
+                    "scrape_github_repository",
                     {
-                        'repository_url': repository_url,
-                        'include_prs': include_prs,
-                        'include_issues': include_issues,
-                        'include_workflows': include_workflows,
-                        'github_token': github_token
-                    }
+                        "repository_url": repository_url,
+                        "include_prs": include_prs,
+                        "include_issues": include_issues,
+                        "include_workflows": include_workflows,
+                        "github_token": github_token,
+                    },
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Repository ingestion failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/software/analyze_logs', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/analyze_logs", methods=["POST"])
         def api_analyze_logs():
             """Analyze systemd or Kubernetes logs."""
             try:
                 data = request.json or {}
-                log_content = data.get('log_content', '')
-                log_type = data.get('log_type', 'systemd')  # 'systemd' or 'kubernetes'
-                
+                log_content = data.get("log_content", "")
+                log_type = data.get("log_type", "systemd")  # 'systemd' or 'kubernetes'
+
                 if not log_content:
                     return jsonify({"success": False, "error": "Log content is required"}), 400
-                
-                if log_type == 'systemd':
+
+                if log_type == "systemd":
                     result = self._execute_tool_sync(
-                        'software_engineering_tools',
-                        'parse_systemd_logs',
+                        "software_engineering_tools",
+                        "parse_systemd_logs",
                         {
-                            'log_content': log_content,
-                            'service_filter': data.get('service_filter'),
-                            'priority_filter': data.get('priority_filter')
-                        }
+                            "log_content": log_content,
+                            "service_filter": data.get("service_filter"),
+                            "priority_filter": data.get("priority_filter"),
+                        },
                     )
-                elif log_type == 'kubernetes':
+                elif log_type == "kubernetes":
                     result = self._execute_tool_sync(
-                        'software_engineering_tools',
-                        'parse_kubernetes_logs',
+                        "software_engineering_tools",
+                        "parse_kubernetes_logs",
                         {
-                            'log_content': log_content,
-                            'namespace_filter': data.get('namespace_filter'),
-                            'pod_filter': data.get('pod_filter')
-                        }
+                            "log_content": log_content,
+                            "namespace_filter": data.get("namespace_filter"),
+                            "pod_filter": data.get("pod_filter"),
+                        },
                     )
                 else:
-                    return jsonify({"success": False, "error": f"Unknown log type: {log_type}"}), 400
-                
+                    return jsonify(
+                        {"success": False, "error": f"Unknown log type: {log_type}"}
+                    ), 400
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Log analysis failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/software/workflow_actions', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/workflow_actions", methods=["POST"])
         def api_workflow_actions():
             """Analyze GitHub Actions workflows."""
             try:
                 data = request.json or {}
-                repository_url = data.get('repository_url', '')
-                workflow_id = data.get('workflow_id')
-                github_token = data.get('github_token')
-                
+                repository_url = data.get("repository_url", "")
+                workflow_id = data.get("workflow_id")
+                github_token = data.get("github_token")
+
                 if not repository_url:
                     return jsonify({"success": False, "error": "Repository URL is required"}), 400
-                
+
                 result = self._execute_tool_sync(
-                    'software_engineering_tools',
-                    'analyze_github_actions',
+                    "software_engineering_tools",
+                    "analyze_github_actions",
                     {
-                        'repository_url': repository_url,
-                        'workflow_id': workflow_id,
-                        'github_token': github_token
-                    }
+                        "repository_url": repository_url,
+                        "workflow_id": workflow_id,
+                        "github_token": github_token,
+                    },
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"GitHub Actions analysis failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/software/dependency_graph', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/dependency_graph", methods=["POST"])
         def api_dependency_graph():
             """Analyze dependency chains."""
             try:
                 data = request.json or {}
-                dependencies = data.get('dependencies', {})
-                
+                dependencies = data.get("dependencies", {})
+
                 if not dependencies:
                     return jsonify({"success": False, "error": "Dependencies are required"}), 400
-                
+
                 result = self._execute_tool_sync(
-                    'software_engineering_tools',
-                    'analyze_dependency_chain',
+                    "software_engineering_tools",
+                    "analyze_dependency_chain",
                     {
-                        'dependencies': dependencies,
-                        'detect_cycles': data.get('detect_cycles', True),
-                        'calculate_depth': data.get('calculate_depth', True)
-                    }
+                        "dependencies": dependencies,
+                        "detect_cycles": data.get("detect_cycles", True),
+                        "calculate_depth": data.get("calculate_depth", True),
+                    },
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Dependency analysis failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/software/predict_resources', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/predict_resources", methods=["POST"])
         def api_predict_resources():
             """Predict GPU and resource needs."""
             try:
                 data = request.json or {}
-                workflow_history = data.get('workflow_history', [])
-                current_call_stack = data.get('current_call_stack', [])
-                
+                workflow_history = data.get("workflow_history", [])
+                current_call_stack = data.get("current_call_stack", [])
+
                 result = self._execute_tool_sync(
-                    'software_engineering_tools',
-                    'predict_gpu_needs',
+                    "software_engineering_tools",
+                    "predict_gpu_needs",
                     {
-                        'workflow_history': workflow_history,
-                        'current_call_stack': current_call_stack,
-                        'look_ahead_steps': data.get('look_ahead_steps', 5)
-                    }
+                        "workflow_history": workflow_history,
+                        "current_call_stack": current_call_stack,
+                        "look_ahead_steps": data.get("look_ahead_steps", 5),
+                    },
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Resource prediction failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/software/auto_heal', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/auto_heal", methods=["POST"])
         def api_auto_heal():
             """Coordinate auto-healing workflows."""
             try:
                 data = request.json or {}
-                error_report = data.get('error_report', {})
-                
+                error_report = data.get("error_report", {})
+
                 if not error_report:
                     return jsonify({"success": False, "error": "Error report is required"}), 400
-                
+
                 result = self._execute_tool_sync(
-                    'software_engineering_tools',
-                    'coordinate_auto_healing',
-                    {
-                        'error_report': error_report,
-                        'dry_run': data.get('dry_run', True)
-                    }
+                    "software_engineering_tools",
+                    "coordinate_auto_healing",
+                    {"error_report": error_report, "dry_run": data.get("dry_run", True)},
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Auto-healing coordination failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/software/query_theorems', methods=['POST'])
+
+        @self.app.route("/api/mcp/software/query_theorems", methods=["POST"])
         def api_query_software_theorems():
             """Query software engineering theorems."""
             try:
                 data = request.json or {}
-                action = data.get('action', 'list')  # 'list' or 'validate'
-                
-                if action == 'list':
+                action = data.get("action", "list")  # 'list' or 'validate'
+
+                if action == "list":
                     result = self._execute_tool_sync(
-                        'software_engineering_tools',
-                        'list_software_theorems',
+                        "software_engineering_tools",
+                        "list_software_theorems",
                         {
-                            'domain_filter': data.get('domain_filter'),
-                            'severity_filter': data.get('severity_filter')
-                        }
+                            "domain_filter": data.get("domain_filter"),
+                            "severity_filter": data.get("severity_filter"),
+                        },
                     )
-                elif action == 'validate':
-                    theorem_id = data.get('theorem_id')
-                    context = data.get('context', {})
-                    
+                elif action == "validate":
+                    theorem_id = data.get("theorem_id")
+                    context = data.get("context", {})
+
                     if not theorem_id:
-                        return jsonify({"success": False, "error": "Theorem ID is required for validation"}), 400
-                    
+                        return jsonify(
+                            {"success": False, "error": "Theorem ID is required for validation"}
+                        ), 400
+
                     result = self._execute_tool_sync(
-                        'software_engineering_tools',
-                        'validate_against_theorem',
-                        {
-                            'theorem_id': theorem_id,
-                            'context': context
-                        }
+                        "software_engineering_tools",
+                        "validate_against_theorem",
+                        {"theorem_id": theorem_id, "context": context},
                     )
                 else:
                     return jsonify({"success": False, "error": f"Unknown action: {action}"}), 400
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Theorem query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_legal_dataset_routes(self) -> None:
         """Set up legal dataset scraping routes."""
-        
-        @self.app.route('/api/mcp/dataset/uscode/scrape', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/uscode/scrape", methods=["POST"])
         def api_scrape_us_code():
             """API endpoint to scrape US Code."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_us_code
-                
+
                 data = request.json or {}
-                titles = data.get('titles', None)
-                output_format = data.get('output_format', 'json')
-                include_metadata = data.get('include_metadata', True)
-                rate_limit_delay = data.get('rate_limit_delay', 1.0)
-                max_sections = data.get('max_sections', None)
-                
+                titles = data.get("titles", None)
+                output_format = data.get("output_format", "json")
+                include_metadata = data.get("include_metadata", True)
+                rate_limit_delay = data.get("rate_limit_delay", 1.0)
+                max_sections = data.get("max_sections", None)
+
                 # Run async scraper
-                result = anyio.run(scrape_us_code(
-                    titles=titles,
-                    output_format=output_format,
-                    include_metadata=include_metadata,
-                    rate_limit_delay=rate_limit_delay,
-                    max_sections=max_sections
-                ))
-                
+                result = anyio.run(
+                    scrape_us_code(
+                        titles=titles,
+                        output_format=output_format,
+                        include_metadata=include_metadata,
+                        rate_limit_delay=rate_limit_delay,
+                        max_sections=max_sections,
+                    )
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"US Code scraping failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/federal_register/scrape', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/federal_register/scrape", methods=["POST"])
         def api_scrape_federal_register():
             """API endpoint to scrape Federal Register."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_federal_register
-                
+
                 data = request.json or {}
-                agencies = data.get('agencies', None)
-                start_date = data.get('start_date', None)
-                end_date = data.get('end_date', None)
-                document_types = data.get('document_types', None)
-                output_format = data.get('output_format', 'json')
-                include_full_text = data.get('include_full_text', False)
-                rate_limit_delay = data.get('rate_limit_delay', 1.0)
-                max_documents = data.get('max_documents', None)
-                
-                result = anyio.run(scrape_federal_register(
-                    agencies=agencies,
-                    start_date=start_date,
-                    end_date=end_date,
-                    document_types=document_types,
-                    output_format=output_format,
-                    include_full_text=include_full_text,
-                    rate_limit_delay=rate_limit_delay,
-                    max_documents=max_documents
-                ))
-                
+                agencies = data.get("agencies", None)
+                start_date = data.get("start_date", None)
+                end_date = data.get("end_date", None)
+                document_types = data.get("document_types", None)
+                output_format = data.get("output_format", "json")
+                include_full_text = data.get("include_full_text", False)
+                rate_limit_delay = data.get("rate_limit_delay", 1.0)
+                max_documents = data.get("max_documents", None)
+
+                result = anyio.run(
+                    scrape_federal_register(
+                        agencies=agencies,
+                        start_date=start_date,
+                        end_date=end_date,
+                        document_types=document_types,
+                        output_format=output_format,
+                        include_full_text=include_full_text,
+                        rate_limit_delay=rate_limit_delay,
+                        max_documents=max_documents,
+                    )
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Federal Register scraping failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/state_laws/scrape', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/state_laws/scrape", methods=["POST"])
         def api_scrape_state_laws():
             """API endpoint to scrape state laws."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_state_laws
-                
+
                 data = request.json or {}
-                states = data.get('states', None)
-                legal_areas = data.get('legal_areas', None)
-                output_format = data.get('output_format', 'json')
-                include_metadata = data.get('include_metadata', True)
-                rate_limit_delay = data.get('rate_limit_delay', 2.0)
-                max_statutes = data.get('max_statutes', None)
-                
-                result = anyio.run(scrape_state_laws(
-                    states=states,
-                    legal_areas=legal_areas,
-                    output_format=output_format,
-                    include_metadata=include_metadata,
-                    rate_limit_delay=rate_limit_delay,
-                    max_statutes=max_statutes
-                ))
-                
+                states = data.get("states", None)
+                legal_areas = data.get("legal_areas", None)
+                output_format = data.get("output_format", "json")
+                include_metadata = data.get("include_metadata", True)
+                rate_limit_delay = data.get("rate_limit_delay", 2.0)
+                max_statutes = data.get("max_statutes", None)
+
+                result = anyio.run(
+                    scrape_state_laws(
+                        states=states,
+                        legal_areas=legal_areas,
+                        output_format=output_format,
+                        include_metadata=include_metadata,
+                        rate_limit_delay=rate_limit_delay,
+                        max_statutes=max_statutes,
+                    )
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"State laws scraping failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/municipal_laws/scrape', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/municipal_laws/scrape", methods=["POST"])
         def api_scrape_municipal_laws():
             """API endpoint to scrape municipal laws."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_municipal_laws
-                
+
                 data = request.json or {}
-                cities = data.get('cities', None)
-                output_format = data.get('output_format', 'json')
-                include_metadata = data.get('include_metadata', True)
-                rate_limit_delay = data.get('rate_limit_delay', 2.0)
-                max_ordinances = data.get('max_ordinances', None)
-                
-                result = anyio.run(scrape_municipal_laws(
-                    cities=cities,
-                    output_format=output_format,
-                    include_metadata=include_metadata,
-                    rate_limit_delay=rate_limit_delay,
-                    max_ordinances=max_ordinances
-                ))
-                
+                cities = data.get("cities", None)
+                output_format = data.get("output_format", "json")
+                include_metadata = data.get("include_metadata", True)
+                rate_limit_delay = data.get("rate_limit_delay", 2.0)
+                max_ordinances = data.get("max_ordinances", None)
+
+                result = anyio.run(
+                    scrape_municipal_laws(
+                        cities=cities,
+                        output_format=output_format,
+                        include_metadata=include_metadata,
+                        rate_limit_delay=rate_limit_delay,
+                        max_ordinances=max_ordinances,
+                    )
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Municipal laws scraping failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/recap/scrape', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/recap/scrape", methods=["POST"])
         def api_scrape_recap_archive():
             """API endpoint to scrape RECAP Archive."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_recap_archive
-                
+
                 data = request.json or {}
-                courts = data.get('courts', None)
-                document_types = data.get('document_types', None)
-                filed_after = data.get('filed_after', None)
-                filed_before = data.get('filed_before', None)
-                case_name_pattern = data.get('case_name_pattern', None)
-                output_format = data.get('output_format', 'json')
-                include_text = data.get('include_text', True)
-                include_metadata = data.get('include_metadata', True)
-                rate_limit_delay = data.get('rate_limit_delay', 1.0)
-                max_documents = data.get('max_documents', None)
-                
-                result = anyio.run(scrape_recap_archive(
-                    courts=courts,
-                    document_types=document_types,
-                    filed_after=filed_after,
-                    filed_before=filed_before,
-                    case_name_pattern=case_name_pattern,
-                    output_format=output_format,
-                    include_text=include_text,
-                    include_metadata=include_metadata,
-                    rate_limit_delay=rate_limit_delay,
-                    max_documents=max_documents
-                ))
-                
+                courts = data.get("courts", None)
+                document_types = data.get("document_types", None)
+                filed_after = data.get("filed_after", None)
+                filed_before = data.get("filed_before", None)
+                case_name_pattern = data.get("case_name_pattern", None)
+                output_format = data.get("output_format", "json")
+                include_text = data.get("include_text", True)
+                include_metadata = data.get("include_metadata", True)
+                rate_limit_delay = data.get("rate_limit_delay", 1.0)
+                max_documents = data.get("max_documents", None)
+
+                result = anyio.run(
+                    scrape_recap_archive(
+                        courts=courts,
+                        document_types=document_types,
+                        filed_after=filed_after,
+                        filed_before=filed_before,
+                        case_name_pattern=case_name_pattern,
+                        output_format=output_format,
+                        include_text=include_text,
+                        include_metadata=include_metadata,
+                        rate_limit_delay=rate_limit_delay,
+                        max_documents=max_documents,
+                    )
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"RECAP Archive scraping failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/recap/search', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/recap/search", methods=["POST"])
         def api_search_recap():
             """API endpoint to search RECAP Archive."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import search_recap_documents
-                
+
                 data = request.json or {}
-                query = data.get('query', None)
-                court = data.get('court', None)
-                case_name = data.get('case_name', None)
-                filed_after = data.get('filed_after', None)
-                filed_before = data.get('filed_before', None)
-                document_type = data.get('document_type', None)
-                limit = data.get('limit', 100)
-                
-                result = anyio.run(search_recap_documents(
-                    query=query,
-                    court=court,
-                    case_name=case_name,
-                    filed_after=filed_after,
-                    filed_before=filed_before,
-                    document_type=document_type,
-                    limit=limit
-                ))
-                
+                query = data.get("query", None)
+                court = data.get("court", None)
+                case_name = data.get("case_name", None)
+                filed_after = data.get("filed_after", None)
+                filed_before = data.get("filed_before", None)
+                document_type = data.get("document_type", None)
+                limit = data.get("limit", 100)
+
+                result = anyio.run(
+                    search_recap_documents(
+                        query=query,
+                        court=court,
+                        case_name=case_name,
+                        filed_after=filed_after,
+                        filed_before=filed_before,
+                        document_type=document_type,
+                        limit=limit,
+                    )
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"RECAP search failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/export', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/export", methods=["POST"])
         def api_export_dataset():
             """API endpoint to export dataset in various formats."""
             try:
                 from .mcp_server.tools.legal_dataset_tools import export_dataset
-                
+
                 data = request.json or {}
-                dataset_data = data.get('data', [])
-                output_path = data.get('output_path', '/tmp/dataset_export')
-                format = data.get('format', 'json')
-                
+                dataset_data = data.get("data", [])
+                output_path = data.get("output_path", "/tmp/dataset_export")
+                format = data.get("format", "json")
+
                 # Export options
                 export_options = {}
-                if format == 'json':
-                    export_options['pretty'] = data.get('pretty', True)
-                elif format == 'parquet':
-                    export_options['compression'] = data.get('compression', 'snappy')
-                elif format == 'csv':
-                    export_options['delimiter'] = data.get('delimiter', ',')
-                
+                if format == "json":
+                    export_options["pretty"] = data.get("pretty", True)
+                elif format == "parquet":
+                    export_options["compression"] = data.get("compression", "snappy")
+                elif format == "csv":
+                    export_options["delimiter"] = data.get("delimiter", ",")
+
                 result = export_dataset(
-                    data=dataset_data,
-                    output_path=output_path,
-                    format=format,
-                    **export_options
+                    data=dataset_data, output_path=output_path, format=format, **export_options
                 )
-                
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Dataset export failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/jobs', methods=['GET'])
+
+        @self.app.route("/api/mcp/dataset/jobs", methods=["GET"])
         def api_list_scraping_jobs():
             """API endpoint to list all saved scraping jobs."""
             try:
                 from .mcp_server.tools.legal_dataset_tools import list_scraping_jobs
-                
+
                 jobs = list_scraping_jobs()
-                return jsonify({
-                    "status": "success",
-                    "jobs": jobs,
-                    "count": len(jobs)
-                })
-                
+                return jsonify({"status": "success", "jobs": jobs, "count": len(jobs)})
+
             except Exception as e:
                 self.logger.error(f"List scraping jobs failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
+
         # State Laws Scheduler Endpoints
-        @self.app.route('/api/mcp/dataset/state_laws/schedules', methods=['GET'])
+        @self.app.route("/api/mcp/dataset/state_laws/schedules", methods=["GET"])
         def api_list_state_law_schedules():
             """API endpoint to list all state law update schedules."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import list_schedules
-                
+
                 result = anyio.run(list_schedules())
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"List schedules failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/state_laws/schedules', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/state_laws/schedules", methods=["POST"])
         def api_create_state_law_schedule():
             """API endpoint to create a new state law update schedule."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import create_schedule
-                
+
                 data = request.json or {}
-                schedule_id = data.get('schedule_id')
-                states = data.get('states')
-                legal_areas = data.get('legal_areas')
-                interval_hours = data.get('interval_hours', 24)
-                enabled = data.get('enabled', True)
-                
+                schedule_id = data.get("schedule_id")
+                states = data.get("states")
+                legal_areas = data.get("legal_areas")
+                interval_hours = data.get("interval_hours", 24)
+                enabled = data.get("enabled", True)
+
                 if not schedule_id:
-                    return jsonify({
-                        "status": "error",
-                        "error": "schedule_id is required"
-                    }), 400
-                
-                result = anyio.run(create_schedule(
-                    schedule_id=schedule_id,
-                    states=states,
-                    legal_areas=legal_areas,
-                    interval_hours=interval_hours,
-                    enabled=enabled
-                ))
-                
-                return jsonify({
-                    "status": "success",
-                    "schedule": result
-                })
-                
+                    return jsonify({"status": "error", "error": "schedule_id is required"}), 400
+
+                result = anyio.run(
+                    create_schedule(
+                        schedule_id=schedule_id,
+                        states=states,
+                        legal_areas=legal_areas,
+                        interval_hours=interval_hours,
+                        enabled=enabled,
+                    )
+                )
+
+                return jsonify({"status": "success", "schedule": result})
+
             except Exception as e:
                 self.logger.error(f"Create schedule failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/state_laws/schedules/<schedule_id>', methods=['DELETE'])
+
+        @self.app.route("/api/mcp/dataset/state_laws/schedules/<schedule_id>", methods=["DELETE"])
         def api_delete_state_law_schedule(schedule_id: str):
             """API endpoint to delete a state law update schedule."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import remove_schedule
-                
+
                 result = anyio.run(remove_schedule(schedule_id))
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Delete schedule failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/state_laws/schedules/<schedule_id>/run', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/state_laws/schedules/<schedule_id>/run", methods=["POST"])
         def api_run_state_law_schedule(schedule_id: str):
             """API endpoint to run a schedule immediately."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import run_schedule_now
-                
+
                 result = anyio.run(run_schedule_now(schedule_id))
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Run schedule failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/state_laws/schedules/<schedule_id>/toggle', methods=['POST'])
+
+        @self.app.route(
+            "/api/mcp/dataset/state_laws/schedules/<schedule_id>/toggle", methods=["POST"]
+        )
         def api_toggle_state_law_schedule(schedule_id: str):
             """API endpoint to enable/disable a schedule."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import enable_disable_schedule
-                
+
                 data = request.json or {}
-                enabled = data.get('enabled', True)
-                
+                enabled = data.get("enabled", True)
+
                 result = anyio.run(enable_disable_schedule(schedule_id, enabled))
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Toggle schedule failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to list scraping jobs: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/jobs/<job_id>', methods=['DELETE'])
+
+        @self.app.route("/api/mcp/dataset/jobs/<job_id>", methods=["DELETE"])
         def api_delete_scraping_job(job_id):
             """API endpoint to delete a saved scraping job."""
             try:
                 from .mcp_server.tools.legal_dataset_tools import delete_scraping_job
-                
+
                 success = delete_scraping_job(job_id)
                 if success:
-                    return jsonify({
-                        "status": "success",
-                        "job_id": job_id,
-                        "message": "Job deleted successfully"
-                    })
+                    return jsonify(
+                        {
+                            "status": "success",
+                            "job_id": job_id,
+                            "message": "Job deleted successfully",
+                        }
+                    )
                 else:
-                    return jsonify({
-                        "status": "error",
-                        "error": "Failed to delete job"
-                    }), 500
-                
+                    return jsonify({"status": "error", "error": "Failed to delete job"}), 500
+
             except Exception as e:
                 self.logger.error(f"Failed to delete scraping job: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/dataset/recap/incremental', methods=['POST'])
+
+        @self.app.route("/api/mcp/dataset/recap/incremental", methods=["POST"])
         def api_scrape_recap_incremental():
             """API endpoint for incremental RECAP Archive scraping."""
             try:
                 import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_recap_incremental
-                
+
                 data = request.json or {}
-                courts = data.get('courts', None)
-                document_types = data.get('document_types', None)
-                
+                courts = data.get("courts", None)
+                document_types = data.get("document_types", None)
+
                 # Other optional parameters
                 kwargs = {
-                    'output_format': data.get('output_format', 'json'),
-                    'include_text': data.get('include_text', True),
-                    'include_metadata': data.get('include_metadata', True),
-                    'rate_limit_delay': data.get('rate_limit_delay', 1.0),
-                    'max_documents': data.get('max_documents', None),
-                    'job_id': data.get('job_id', None),
-                    'resume': data.get('resume', False)
+                    "output_format": data.get("output_format", "json"),
+                    "include_text": data.get("include_text", True),
+                    "include_metadata": data.get("include_metadata", True),
+                    "rate_limit_delay": data.get("rate_limit_delay", 1.0),
+                    "max_documents": data.get("max_documents", None),
+                    "job_id": data.get("job_id", None),
+                    "resume": data.get("resume", False),
                 }
-                
-                result = anyio.run(scrape_recap_incremental(
-                    courts=courts,
-                    document_types=document_types,
-                    **kwargs
-                ))
-                
+
+                result = anyio.run(
+                    scrape_recap_incremental(courts=courts, document_types=document_types, **kwargs)
+                )
+
                 return jsonify(result)
-                
+
             except Exception as e:
                 self.logger.error(f"Incremental RECAP scraping failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
-            
-        @self.app.route('/api/mcp/tools')
+
+        @self.app.route("/api/mcp/tools")
         def api_mcp_tools():
             """API endpoint to get available MCP tools."""
             return jsonify(self._discover_mcp_tools())
-            
-        @self.app.route('/api/mcp/tools/<category>/<tool_name>')
+
+        @self.app.route("/api/mcp/tools/<category>/<tool_name>")
         def api_mcp_tool_info(category, tool_name):
             """Get detailed information about a specific tool."""
             tools_info = self._discover_mcp_tools()
-            
+
             if category not in tools_info:
                 return jsonify({"error": f"Category '{category}' not found"}), 404
-                
-            tool = next((t for t in tools_info[category] if t['name'] == tool_name), None)
+
+            tool = next((t for t in tools_info[category] if t["name"] == tool_name), None)
             if not tool:
-                return jsonify({"error": f"Tool '{tool_name}' not found in category '{category}'"}), 404
-                
+                return jsonify(
+                    {"error": f"Tool '{tool_name}' not found in category '{category}'"}
+                ), 404
+
             return jsonify(tool)
-            
-        @self.app.route('/api/mcp/tools/<category>/<tool_name>/execute', methods=['POST'])
+
+        @self.app.route("/api/mcp/tools/<category>/<tool_name>/execute", methods=["POST"])
         def api_execute_mcp_tool(category, tool_name):
             """Execute an MCP tool with given parameters."""
             if not self.mcp_config or not self.mcp_config.enable_tool_execution:
                 return jsonify({"error": "Tool execution is disabled"}), 403
-                
+
             if len(self.active_tool_executions) >= self.mcp_config.max_concurrent_tools:
                 return jsonify({"error": "Maximum concurrent tool executions reached"}), 429
-                
+
             # Get parameters from request
             params = request.json or {}
             execution_id = f"{category}_{tool_name}_{int(time.time() * 1000)}"
-            
+
             # Start tool execution
             execution_record = {
                 "id": execution_id,
@@ -2780,115 +2949,119 @@ class MCPDashboard(AdminDashboard):
                 "start_time": datetime.now().isoformat(),
                 "status": "running",
                 "result": None,
-                "error": None
+                "error": None,
             }
-            
+
             self.active_tool_executions[execution_id] = execution_record
-            
+
             try:
                 # In a real implementation, this would be async
                 result = self._execute_tool_sync(category, tool_name, params)
-                
-                execution_record.update({
-                    "status": "completed",
-                    "result": result,
-                    "end_time": datetime.now().isoformat()
-                })
-                
+
+                execution_record.update(
+                    {
+                        "status": "completed",
+                        "result": result,
+                        "end_time": datetime.now().isoformat(),
+                    }
+                )
+
             except Exception as e:
-                execution_record.update({
-                    "status": "failed",
-                    "error": str(e),
-                    "end_time": datetime.now().isoformat()
-                })
-                
+                execution_record.update(
+                    {"status": "failed", "error": str(e), "end_time": datetime.now().isoformat()}
+                )
+
             # Move to history
             self.tool_execution_history.append(execution_record.copy())
             del self.active_tool_executions[execution_id]
-            
+
             return jsonify(execution_record)
-            
-        @self.app.route('/api/mcp/executions/<execution_id>')
+
+        @self.app.route("/api/mcp/executions/<execution_id>")
         def api_get_execution_status(execution_id):
             """Get the status of a tool execution."""
             # Check active executions
             if execution_id in self.active_tool_executions:
                 return jsonify(self.active_tool_executions[execution_id])
-                
+
             # Check history
             for execution in self.tool_execution_history:
-                if execution['id'] == execution_id:
+                if execution["id"] == execution_id:
                     return jsonify(execution)
-                    
+
             return jsonify({"error": "Execution not found"}), 404
-            
-        @self.app.route('/api/mcp/status')
+
+        @self.app.route("/api/mcp/status")
         def api_mcp_status():
             """Get comprehensive MCP server status."""
             return jsonify(self._get_comprehensive_status())
-            
-        @self.app.route('/api/mcp/history')
+
+        @self.app.route("/api/mcp/history")
         def api_execution_history():
             """Get tool execution history."""
-            limit = request.args.get('limit', 50, type=int)
-            return jsonify({
-                "executions": self.tool_execution_history[-limit:],
-                "total": len(self.tool_execution_history)
-            })
-            
+            limit = request.args.get("limit", 50, type=int)
+            return jsonify(
+                {
+                    "executions": self.tool_execution_history[-limit:],
+                    "total": len(self.tool_execution_history),
+                }
+            )
+
         # Test Suite API endpoint
-        @self.app.route('/api/mcp/run-tests', methods=['POST'])
+        @self.app.route("/api/mcp/run-tests", methods=["POST"])
         def api_run_tests():
             """Run test suite based on test type."""
             if not self.mcp_config or not self.mcp_config.enable_tool_execution:
                 return jsonify({"error": "Tool execution is disabled"}), 403
-            
+
             data = request.json or {}
-            test_type = data.get('test_type', 'unit')
-            
+            test_type = data.get("test_type", "unit")
+
             try:
-                if test_type == 'unit':
+                if test_type == "unit":
                     result = self._run_unit_tests()
-                elif test_type == 'integration':
+                elif test_type == "integration":
                     result = self._run_integration_tests()
-                elif test_type == 'full':
+                elif test_type == "full":
                     result = self._run_full_test_suite()
                 else:
                     return jsonify({"error": f"Unknown test type: {test_type}"}), 400
-                
-                return jsonify({
-                    "status": "success",
-                    "test_type": test_type,
-                    "result": result,
-                    "timestamp": datetime.now().isoformat()
-                })
-                
+
+                return jsonify(
+                    {
+                        "status": "success",
+                        "test_type": test_type,
+                        "result": result,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+
             except Exception as e:
                 # Log the full error but return sanitized error message
                 self.logger.error(f"Test execution failed: {e}")
-                return jsonify({
-                    "status": "error", 
-                    "test_type": test_type,
-                    "error": "Test execution failed. Check server logs for details.",
-                    "timestamp": datetime.now().isoformat()
-                }), 500
-            
+                return jsonify(
+                    {
+                        "status": "error",
+                        "test_type": test_type,
+                        "error": "Test execution failed. Check server logs for details.",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ), 500
+
         # JavaScript SDK endpoint
-        @self.app.route('/static/js/mcp-sdk.js')
+        @self.app.route("/static/js/mcp-sdk.js")
         def mcp_sdk():
             """Serve the enhanced MCP JavaScript SDK."""
             return send_from_directory(
-                self.app.static_folder,
-                'js/mcp-sdk.js',
-                mimetype='application/javascript'
+                self.app.static_folder, "js/mcp-sdk.js", mimetype="application/javascript"
             )
-            
+
         # Removed duplicated early registration of MCP tool routes to avoid endpoint conflicts
-            
+
         # Duplicate status/history/SDK routes removed (comprehensive versions already registered above)
-        
+
         # System Management API endpoints
-        @self.app.route('/api/mcp/system/workflows', methods=['GET'])
+        @self.app.route("/api/mcp/system/workflows", methods=["GET"])
         def api_manage_workflows():
             """Get workflow management status and active workflows."""
             try:
@@ -2896,34 +3069,36 @@ class MCPDashboard(AdminDashboard):
                     "active_workflows": list(self.workflow_manager.keys()),
                     "workflow_count": len(self.workflow_manager),
                     "workflows": self.workflow_manager,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
                 return jsonify(workflows)
             except Exception as e:
                 self.logger.error(f"Failed to get workflows: {e}")
                 return jsonify({"error": str(e)}), 500
-        
-        @self.app.route('/api/mcp/system/optimize', methods=['POST'])
+
+        @self.app.route("/api/mcp/system/optimize", methods=["POST"])
         def api_optimize_system():
             """Optimize system performance."""
             try:
                 # Update performance metrics
                 import psutil
-                
+
                 # Get current metrics
                 cpu_percent = psutil.cpu_percent(interval=1)
                 memory = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
-                
+                disk = psutil.disk_usage("/")
+
                 # Update system metrics
-                self.system_metrics.update({
-                    'cpu_usage': cpu_percent,
-                    'memory_usage': memory.percent,
-                    'disk_usage': disk.percent,
-                    'memory_available_mb': memory.available / (1024 * 1024),
-                    'disk_available_gb': disk.free / (1024 * 1024 * 1024)
-                })
-                
+                self.system_metrics.update(
+                    {
+                        "cpu_usage": cpu_percent,
+                        "memory_usage": memory.percent,
+                        "disk_usage": disk.percent,
+                        "memory_available_mb": memory.available / (1024 * 1024),
+                        "disk_available_gb": disk.free / (1024 * 1024 * 1024),
+                    }
+                )
+
                 # Perform basic optimization
                 optimization_results = {
                     "status": "completed",
@@ -2931,51 +3106,61 @@ class MCPDashboard(AdminDashboard):
                     "metrics_before": {
                         "cpu_usage": cpu_percent,
                         "memory_usage": memory.percent,
-                        "disk_usage": disk.percent
+                        "disk_usage": disk.percent,
                     },
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
-                
+
                 # Clear old execution history if too large
                 if len(self.tool_execution_history) > 800:
                     removed = len(self.tool_execution_history) - 500
-                    self.tool_execution_history = deque(list(self.tool_execution_history)[-500:], maxlen=1000)
-                    optimization_results["optimizations_applied"].append(f"Cleared {removed} old execution records")
-                
+                    self.tool_execution_history = deque(
+                        list(self.tool_execution_history)[-500:], maxlen=1000
+                    )
+                    optimization_results["optimizations_applied"].append(
+                        f"Cleared {removed} old execution records"
+                    )
+
                 # Clear old analytics history if too large
                 if len(self.analytics_metrics_history) > 800:
                     removed = len(self.analytics_metrics_history) - 500
-                    self.analytics_metrics_history = deque(list(self.analytics_metrics_history)[-500:], maxlen=1000)
-                    optimization_results["optimizations_applied"].append(f"Cleared {removed} old analytics records")
-                
+                    self.analytics_metrics_history = deque(
+                        list(self.analytics_metrics_history)[-500:], maxlen=1000
+                    )
+                    optimization_results["optimizations_applied"].append(
+                        f"Cleared {removed} old analytics records"
+                    )
+
                 if not optimization_results["optimizations_applied"]:
                     optimization_results["optimizations_applied"].append("System already optimized")
-                
+
                 return jsonify(optimization_results)
             except Exception as e:
                 self.logger.error(f"Failed to optimize system: {e}")
                 return jsonify({"error": str(e), "status": "failed"}), 500
-        
-        @self.app.route('/api/mcp/system/health', methods=['GET'])
+
+        @self.app.route("/api/mcp/system/health", methods=["GET"])
         def api_monitor_health():
             """Get system health status."""
             try:
                 import psutil
-                
+
                 # Get system metrics
                 cpu_percent = psutil.cpu_percent(interval=0.5)
                 memory = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
-                
+                disk = psutil.disk_usage("/")
+
                 # Update metrics
-                self.system_metrics.update({
-                    'cpu_usage': cpu_percent,
-                    'memory_usage': memory.percent,
-                    'disk_usage': disk.percent,
-                    'active_connections': len(self.active_tool_executions),
-                    'uptime': time.time() - getattr(self, 'start_time', time.time())
-                })
-                
+                self.system_metrics.update(
+                    {
+                        "cpu_usage": cpu_percent,
+                        "memory_usage": memory.percent,
+                        "disk_usage": disk.percent,
+                        "active_connections": len(self.active_tool_executions),
+                        "uptime": time.time() - getattr(self, "start_time", time.time()),
+                    }
+                )
+
                 # Determine health status
                 health_issues = []
                 if cpu_percent > 90:
@@ -2984,115 +3169,125 @@ class MCPDashboard(AdminDashboard):
                     health_issues.append("High memory usage")
                 if disk.percent > 90:
                     health_issues.append("High disk usage")
-                
+
                 overall_status = "healthy" if not health_issues else "warning"
-                
+
                 health_data = {
                     "status": overall_status,
                     "health_status": self.health_status,
                     "system_metrics": self.system_metrics,
                     "issues": health_issues,
                     "components": {
-                        "mcp_server": self.health_status.get('mcp_server', 'unknown'),
-                        "ipfs_node": self.health_status.get('ipfs_node', 'unknown'),
-                        "vector_store": self.health_status.get('vector_store', 'unknown'),
-                        "cache_system": self.health_status.get('cache_system', 'unknown')
+                        "mcp_server": self.health_status.get("mcp_server", "unknown"),
+                        "ipfs_node": self.health_status.get("ipfs_node", "unknown"),
+                        "vector_store": self.health_status.get("vector_store", "unknown"),
+                        "cache_system": self.health_status.get("cache_system", "unknown"),
                     },
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
-                
+
                 return jsonify(health_data)
             except Exception as e:
                 self.logger.error(f"Failed to get health status: {e}")
-                return jsonify({
-                    "status": "error",
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }), 500
-        
-        @self.app.route('/api/mcp/system/logs', methods=['GET'])
+                return jsonify(
+                    {"status": "error", "error": str(e), "timestamp": datetime.now().isoformat()}
+                ), 500
+
+        @self.app.route("/api/mcp/system/logs", methods=["GET"])
         def api_get_system_logs():
             """Get system logs."""
             try:
-                limit = request.args.get('limit', 100, type=int)
-                level = request.args.get('level', 'all')
-                
+                limit = request.args.get("limit", 100, type=int)
+                level = request.args.get("level", "all")
+
                 # Get recent error logs
-                logs = list(self._error_log) if hasattr(self, '_error_log') else []
-                
+                logs = list(self._error_log) if hasattr(self, "_error_log") else []
+
                 # Filter by level if specified
-                if level != 'all':
-                    logs = [log for log in logs if log.get('level') == level]
-                
+                if level != "all":
+                    logs = [log for log in logs if log.get("level") == level]
+
                 # Limit results
                 logs = logs[-limit:]
-                
-                return jsonify({
-                    "logs": logs,
-                    "total": len(logs),
-                    "level": level,
-                    "timestamp": datetime.now().isoformat()
-                })
+
+                return jsonify(
+                    {
+                        "logs": logs,
+                        "total": len(logs),
+                        "level": level,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
             except Exception as e:
                 self.logger.error(f"Failed to get logs: {e}")
                 return jsonify({"error": str(e)}), 500
-            
+
     # GraphRAG processing methods
-    async def _process_website_graphrag(self, session_id: str, url: str, config: 'CompleteProcessingConfiguration') -> None:
+    async def _process_website_graphrag(
+        self, session_id: str, url: str, config: "CompleteProcessingConfiguration"
+    ) -> None:
         """Process a website using GraphRAG system."""
         if not self.graphrag_system:
             return
-            
+
         session = self.graphrag_processing_sessions.get(session_id)
         if not session:
             return
-            
+
         try:
             session["status"] = "processing"
             session["progress"] = 0.1
-            
+
             # Process the website
             result = await self.graphrag_system.process_complete_website(url, config)
-            
-            session.update({
-                "status": "completed",
-                "progress": 1.0,
-                "result": result.__dict__ if hasattr(result, '__dict__') else str(result),
-                "end_time": datetime.now().isoformat()
-            })
-            
+
+            session.update(
+                {
+                    "status": "completed",
+                    "progress": 1.0,
+                    "result": result.__dict__ if hasattr(result, "__dict__") else str(result),
+                    "end_time": datetime.now().isoformat(),
+                }
+            )
+
         except Exception as e:
-            session.update({
-                "status": "failed",
-                "error": str(e),
-                "end_time": datetime.now().isoformat()
-            })
-    
+            session.update(
+                {"status": "failed", "error": str(e), "end_time": datetime.now().isoformat()}
+            )
+
     def _get_graphrag_processing_stats(self) -> Dict[str, Any]:
         """Get GraphRAG processing statistics."""
         sessions = list(self.graphrag_processing_sessions.values())
-        
+
         total_sessions = len(sessions)
         completed_sessions = len([s for s in sessions if s.get("status") == "completed"])
         failed_sessions = len([s for s in sessions if s.get("status") == "failed"])
-        active_sessions = len([s for s in sessions if s.get("status") in ["starting", "processing"]])
-        
+        active_sessions = len(
+            [s for s in sessions if s.get("status") in ["starting", "processing"]]
+        )
+
         return {
             "total_sessions": total_sessions,
             "completed_sessions": completed_sessions,
             "failed_sessions": failed_sessions,
             "active_sessions": active_sessions,
-            "success_rate": (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0,
-            "average_processing_time": self._calculate_average_processing_time(sessions)
+            "success_rate": (completed_sessions / total_sessions * 100)
+            if total_sessions > 0
+            else 0,
+            "average_processing_time": self._calculate_average_processing_time(sessions),
         }
-    
+
     def _calculate_average_processing_time(self, sessions: List[Dict[str, Any]]) -> float:
         """Calculate average processing time for completed sessions."""
-        completed_sessions = [s for s in sessions if s.get("status") == "completed" and "start_time" in s and "end_time" in s]
-        
+        completed_sessions = [
+            s
+            for s in sessions
+            if s.get("status") == "completed" and "start_time" in s and "end_time" in s
+        ]
+
         if not completed_sessions:
             return 0.0
-            
+
         total_time = 0.0
         for session in completed_sessions:
             try:
@@ -3101,52 +3296,68 @@ class MCPDashboard(AdminDashboard):
                 total_time += (end_time - start_time).total_seconds()
             except (ValueError, KeyError):
                 continue
-                
+
         return total_time / len(completed_sessions) if completed_sessions else 0.0
-    
+
     def _get_current_analytics_metrics(self) -> Dict[str, Any]:
         """Get current analytics metrics."""
         if not GRAPHRAG_AVAILABLE or not self.analytics_dashboard:
             return {}
-            
+
         # Simulate analytics metrics - in real implementation this would come from analytics_dashboard
         metrics = {
-            "total_websites_processed": len([s for s in self.graphrag_processing_sessions.values() if s.get("status") == "completed"]),
-            "total_processing_time": sum([self._get_session_duration(s) for s in self.graphrag_processing_sessions.values()]),
+            "total_websites_processed": len(
+                [
+                    s
+                    for s in self.graphrag_processing_sessions.values()
+                    if s.get("status") == "completed"
+                ]
+            ),
+            "total_processing_time": sum(
+                [self._get_session_duration(s) for s in self.graphrag_processing_sessions.values()]
+            ),
             "success_rate": self._get_graphrag_processing_stats().get("success_rate", 0),
-            "active_processing_sessions": len([s for s in self.graphrag_processing_sessions.values() if s.get("status") in ["starting", "processing"]]),
+            "active_processing_sessions": len(
+                [
+                    s
+                    for s in self.graphrag_processing_sessions.values()
+                    if s.get("status") in ["starting", "processing"]
+                ]
+            ),
             "total_rag_queries": len(self.rag_query_sessions),
             "average_query_time": self._calculate_average_query_time(),
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
-        
+
         # Store in history for trends
         self.analytics_metrics_history.append(metrics)
         return metrics
-    
+
     def _get_session_duration(self, session: Dict[str, Any]) -> float:
         """Get session duration in seconds."""
         if "start_time" not in session:
             return 0.0
-            
+
         start_time = datetime.fromisoformat(session["start_time"])
-        
+
         if "end_time" in session:
             end_time = datetime.fromisoformat(session["end_time"])
             return (end_time - start_time).total_seconds()
         else:
             return (datetime.now() - start_time).total_seconds()
-    
+
     def _calculate_average_query_time(self) -> float:
         """Calculate average RAG query time."""
-        completed_queries = [s for s in self.rag_query_sessions.values() if s.get("status") == "completed"]
-        
+        completed_queries = [
+            s for s in self.rag_query_sessions.values() if s.get("status") == "completed"
+        ]
+
         if not completed_queries:
             return 0.0
-            
+
         total_time = sum([self._get_session_duration(q) for q in completed_queries])
         return total_time / len(completed_queries)
-    
+
     def _execute_rag_query_via_mcp(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a RAG query through MCP tools."""
         # This would route through MCP tools in real implementation
@@ -3156,10 +3367,12 @@ class MCPDashboard(AdminDashboard):
             "result": f"Mock RAG result for query: {query}",
             "confidence": 0.85,
             "sources": [],
-            "execution_time": 0.5
+            "execution_time": 0.5,
         }
-    
-    def _execute_investigation_via_mcp(self, content_url: str, analysis_type: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _execute_investigation_via_mcp(
+        self, content_url: str, analysis_type: str, metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute investigation analysis through MCP tools."""
         # This would route through MCP investigation tools in real implementation
         return {
@@ -3172,12 +3385,19 @@ class MCPDashboard(AdminDashboard):
                 "key_entities": [],
                 "main_topics": [],
                 "sentiment": "neutral",
-                "credibility_score": 0.7
+                "credibility_score": 0.7,
             },
-            "execution_time": 2.0
+            "execution_time": 2.0,
         }
-    
-    def _execute_geospatial_via_mcp(self, query: str, center_location: str, search_radius: float, entity_types: List[str], clustering_distance: float) -> Dict[str, Any]:
+
+    def _execute_geospatial_via_mcp(
+        self,
+        query: str,
+        center_location: str,
+        search_radius: float,
+        entity_types: List[str],
+        clustering_distance: float,
+    ) -> Dict[str, Any]:
         """Execute geospatial analysis through MCP tools."""
         # Sample response simulating MCP geospatial tool execution
         sample_entities = [
@@ -3188,7 +3408,7 @@ class MCPDashboard(AdminDashboard):
                 "context_snippet": "Major financial events in Lower Manhattan",
                 "entity_type": "LOCATION",
                 "relevance_score": 2.8,
-                "distance_from_center": 0.5
+                "distance_from_center": 0.5,
             },
             {
                 "entity": "Wall Street",
@@ -3197,7 +3417,7 @@ class MCPDashboard(AdminDashboard):
                 "context_snippet": "Stock market and financial activities",
                 "entity_type": "LOCATION",
                 "relevance_score": 3.2,
-                "distance_from_center": 0.3
+                "distance_from_center": 0.3,
             },
             {
                 "entity": "Times Square",
@@ -3206,27 +3426,27 @@ class MCPDashboard(AdminDashboard):
                 "context_snippet": "Major public events and announcements",
                 "entity_type": "LOCATION",
                 "relevance_score": 2.1,
-                "distance_from_center": 4.8
-            }
+                "distance_from_center": 4.8,
+            },
         ]
-        
+
         sample_events = [
             {
                 "event": "Financial Summit 2024",
                 "coordinates": [40.7074, -74.0113],
                 "timestamp": "2024-01-15T10:00:00Z",
                 "event_type": "CONFERENCE",
-                "relevance_score": 2.5
+                "relevance_score": 2.5,
             },
             {
                 "event": "Market Announcement",
                 "coordinates": [40.7074, -74.0113],
                 "timestamp": "2024-01-20T14:30:00Z",
                 "event_type": "ANNOUNCEMENT",
-                "relevance_score": 2.2
-            }
+                "relevance_score": 2.2,
+            },
         ]
-        
+
         return {
             "query": query,
             "center_location": center_location,
@@ -3239,13 +3459,15 @@ class MCPDashboard(AdminDashboard):
                 "total_locations": len(sample_entities),
                 "average_relevance": 2.7,
                 "top_locations": [e["entity"] for e in sample_entities[:3]],
-                "common_terms": {"financial": 2, "manhattan": 1, "events": 2}
+                "common_terms": {"financial": 2, "manhattan": 1, "events": 2},
             },
             "timestamp": datetime.now().isoformat(),
-            "execution_time": 1.5
+            "execution_time": 1.5,
         }
-    
-    def _execute_entity_extraction_via_mcp(self, corpus_data: str, confidence_threshold: float, entity_types: Optional[List[str]]) -> Dict[str, Any]:
+
+    def _execute_entity_extraction_via_mcp(
+        self, corpus_data: str, confidence_threshold: float, entity_types: Optional[List[str]]
+    ) -> Dict[str, Any]:
         """Execute geographic entity extraction through MCP tools."""
         return {
             "total_entities": 15,
@@ -3257,7 +3479,7 @@ class MCPDashboard(AdminDashboard):
                     "confidence": 0.98,
                     "entity_type": "CITY",
                     "context_snippet": "Events in New York financial district",
-                    "documents": ["doc_1", "doc_3"]
+                    "documents": ["doc_1", "doc_3"],
                 },
                 {
                     "entity": "Wall Street",
@@ -3265,18 +3487,25 @@ class MCPDashboard(AdminDashboard):
                     "confidence": 0.95,
                     "entity_type": "LOCATION",
                     "context_snippet": "Wall Street trading activities",
-                    "documents": ["doc_1", "doc_2"]
-                }
+                    "documents": ["doc_1", "doc_2"],
+                },
             ],
             "extraction_stats": {
                 "confidence_threshold": confidence_threshold,
                 "entity_types": entity_types,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             },
-            "execution_time": 2.1
+            "execution_time": 2.1,
         }
-    
-    def _execute_spatiotemporal_via_mcp(self, corpus_data: str, time_range: Optional[Dict], geographic_bounds: Optional[Dict], event_types: Optional[List[str]], clustering_distance: float) -> Dict[str, Any]:
+
+    def _execute_spatiotemporal_via_mcp(
+        self,
+        corpus_data: str,
+        time_range: Optional[Dict],
+        geographic_bounds: Optional[Dict],
+        event_types: Optional[List[str]],
+        clustering_distance: float,
+    ) -> Dict[str, Any]:
         """Execute spatiotemporal event mapping through MCP tools."""
         return {
             "total_events": 8,
@@ -3290,32 +3519,34 @@ class MCPDashboard(AdminDashboard):
                     "event_type": "CONFERENCE",
                     "confidence": 0.92,
                     "spatial_cluster": 1,
-                    "temporal_cluster": 1
+                    "temporal_cluster": 1,
                 },
                 {
-                    "event_id": "event_2", 
+                    "event_id": "event_2",
                     "event_text": "Market announcement from Wall Street",
                     "coordinates": [40.7074, -74.0113],
                     "timestamp": "2024-01-20T14:30:00Z",
                     "event_type": "ANNOUNCEMENT",
                     "confidence": 0.89,
                     "spatial_cluster": 1,
-                    "temporal_cluster": 1
-                }
+                    "temporal_cluster": 1,
+                },
             ],
             "clustering_analysis": {
                 "spatial_clusters": 2,
                 "temporal_clusters": 3,
                 "clustering_distance_km": clustering_distance,
-                "temporal_resolution": "day"
+                "temporal_resolution": "day",
             },
             "time_range": time_range,
             "geographic_bounds": geographic_bounds,
             "timestamp": datetime.now().isoformat(),
-            "execution_time": 3.2
+            "execution_time": 3.2,
         }
 
-    def _execute_tool_sync(self, category: str, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_tool_sync(
+        self, category: str, tool_name: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Dynamically import and execute an MCP tool.
 
         Looks up module path `ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}`
@@ -3336,6 +3567,7 @@ class MCPDashboard(AdminDashboard):
             # Execute, awaiting if coroutine
             if inspect.iscoroutinefunction(fn):
                 from ipfs_datasets_py.utils.anyio_compat import run as anyio_run
+
                 result = anyio_run(fn(**params))
             else:
                 result = fn(**params)
@@ -3353,29 +3585,42 @@ class MCPDashboard(AdminDashboard):
                 "status": "error",
                 "error": str(e),
                 "tool": f"{category}/{tool_name}",
-                "duration_s": round(time.time() - start, 3)
+                "duration_s": round(time.time() - start, 3),
             }
-        
+
     def _run_unit_tests(self) -> Dict[str, Any]:
         """Run unit tests and return results."""
         import subprocess
         import sys
-        
+
         try:
             # Run pytest on the tests directory focusing on unit tests
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest', 
-                'tests/', '-v', '--tb=short',
-                '-k', 'not integration',
-                '--maxfail=10'
-            ], capture_output=True, text=True, timeout=300, cwd=Path(__file__).parent.parent)
-            
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/",
+                    "-v",
+                    "--tb=short",
+                    "-k",
+                    "not integration",
+                    "--maxfail=10",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=Path(__file__).parent.parent,
+            )
+
             return {
                 "exit_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "success": result.returncode == 0,
-                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+                "test_count": result.stdout.count("PASSED")
+                + result.stdout.count("FAILED")
+                + result.stdout.count("SKIPPED"),
             }
         except subprocess.TimeoutExpired:
             return {
@@ -3383,36 +3628,48 @@ class MCPDashboard(AdminDashboard):
                 "stdout": "",
                 "stderr": "Test execution timed out after 5 minutes",
                 "success": False,
-                "test_count": 0
+                "test_count": 0,
             }
         except Exception as e:
             return {
-                "exit_code": -1, 
+                "exit_code": -1,
                 "stdout": "",
                 "stderr": f"Test execution failed: {str(e)}",
                 "success": False,
-                "test_count": 0
+                "test_count": 0,
             }
-    
+
     def _run_integration_tests(self) -> Dict[str, Any]:
         """Run integration tests and return results."""
         import subprocess
         import sys
-        
+
         try:
             # Run pytest focusing on integration tests
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest',
-                'tests/integration/', '-v', '--tb=short',
-                '--maxfail=5'
-            ], capture_output=True, text=True, timeout=600, cwd=Path(__file__).parent.parent)
-            
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/integration/",
+                    "-v",
+                    "--tb=short",
+                    "--maxfail=5",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=600,
+                cwd=Path(__file__).parent.parent,
+            )
+
             return {
                 "exit_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "success": result.returncode == 0,
-                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+                "test_count": result.stdout.count("PASSED")
+                + result.stdout.count("FAILED")
+                + result.stdout.count("SKIPPED"),
             }
         except subprocess.TimeoutExpired:
             return {
@@ -3420,7 +3677,7 @@ class MCPDashboard(AdminDashboard):
                 "stdout": "",
                 "stderr": "Integration test execution timed out after 10 minutes",
                 "success": False,
-                "test_count": 0
+                "test_count": 0,
             }
         except Exception as e:
             return {
@@ -3428,29 +3685,41 @@ class MCPDashboard(AdminDashboard):
                 "stdout": "",
                 "stderr": f"Integration test execution failed: {str(e)}",
                 "success": False,
-                "test_count": 0
+                "test_count": 0,
             }
-    
+
     def _run_full_test_suite(self) -> Dict[str, Any]:
         """Run the full test suite and return results."""
         import subprocess
         import sys
-        
+
         try:
             # Run all tests with more comprehensive reporting
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest',
-                'tests/', '-v', '--tb=short', 
-                '--maxfail=20',
-                '--durations=10'
-            ], capture_output=True, text=True, timeout=900, cwd=Path(__file__).parent.parent)
-            
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/",
+                    "-v",
+                    "--tb=short",
+                    "--maxfail=20",
+                    "--durations=10",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=900,
+                cwd=Path(__file__).parent.parent,
+            )
+
             return {
                 "exit_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "success": result.returncode == 0,
-                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+                "test_count": result.stdout.count("PASSED")
+                + result.stdout.count("FAILED")
+                + result.stdout.count("SKIPPED"),
             }
         except subprocess.TimeoutExpired:
             return {
@@ -3458,7 +3727,7 @@ class MCPDashboard(AdminDashboard):
                 "stdout": "",
                 "stderr": "Full test suite execution timed out after 15 minutes",
                 "success": False,
-                "test_count": 0
+                "test_count": 0,
             }
         except Exception as e:
             return {
@@ -3466,47 +3735,55 @@ class MCPDashboard(AdminDashboard):
                 "stdout": "",
                 "stderr": f"Full test suite execution failed: {str(e)}",
                 "success": False,
-                "test_count": 0
+                "test_count": 0,
             }
-        
+
     def _get_comprehensive_status(self) -> Dict[str, Any]:
         """Get comprehensive status including all dashboard components."""
         base_status = self._get_mcp_server_status()
-        
+
         # Add GraphRAG status
         if self.mcp_config and self.mcp_config.enable_graphrag:
             base_status["graphrag"] = {
                 "enabled": True,
                 "system_initialized": self.graphrag_system is not None,
                 "enhanced_system_initialized": self.enhanced_graphrag is not None,
-                "active_processing_sessions": len([s for s in self.graphrag_processing_sessions.values() if s.get("status") in ["starting", "processing"]]),
-                "total_processing_sessions": len(self.graphrag_processing_sessions)
+                "active_processing_sessions": len(
+                    [
+                        s
+                        for s in self.graphrag_processing_sessions.values()
+                        if s.get("status") in ["starting", "processing"]
+                    ]
+                ),
+                "total_processing_sessions": len(self.graphrag_processing_sessions),
             }
-        
+
         # Add analytics status
         if self.mcp_config and self.mcp_config.enable_analytics:
             base_status["analytics"] = {
                 "enabled": True,
                 "dashboard_initialized": self.analytics_dashboard is not None,
                 "metrics_history_size": len(self.analytics_metrics_history),
-                "last_metrics_update": self.last_metrics_update
+                "last_metrics_update": self.last_metrics_update,
             }
-        
+
         # Add RAG query status
         if self.mcp_config and self.mcp_config.enable_rag_query:
             base_status["rag_query"] = {
                 "enabled": True,
                 "total_query_sessions": len(self.rag_query_sessions),
-                "active_query_sessions": len([s for s in self.rag_query_sessions.values() if s.get("status") == "processing"])
+                "active_query_sessions": len(
+                    [s for s in self.rag_query_sessions.values() if s.get("status") == "processing"]
+                ),
             }
-        
+
         # Add investigation status
         if self.mcp_config and self.mcp_config.enable_investigation:
             base_status["investigation"] = {
                 "enabled": True,
-                "dashboard_initialized": self.investigation_dashboard is not None
+                "dashboard_initialized": self.investigation_dashboard is not None,
             }
-        
+
         return base_status
 
     def _get_mcp_server_status(self) -> Dict[str, Any]:
@@ -3521,8 +3798,9 @@ class MCPDashboard(AdminDashboard):
             total_tools = sum(len(v) for v in tools_info.values())
 
             from flask import request
+
             try:
-                base_url = request.host_url.rstrip('/')
+                base_url = request.host_url.rstrip("/")
                 external_url = f"{base_url}/mcp"
             except Exception:
                 external_url = None
@@ -3537,13 +3815,17 @@ class MCPDashboard(AdminDashboard):
                 "config": {
                     "host": self.mcp_config.mcp_server_host if self.mcp_config else "localhost",
                     "port": self.mcp_config.mcp_server_port if self.mcp_config else 8001,
-                    "tool_execution_enabled": getattr(self.mcp_config, "enable_tool_execution", False) if self.mcp_config else False,
+                    "tool_execution_enabled": getattr(
+                        self.mcp_config, "enable_tool_execution", False
+                    )
+                    if self.mcp_config
+                    else False,
                 },
                 "external_url": external_url,
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}
-        
+
     def create_mcp_dashboard_template(self) -> str:
         """Create the professional desktop-focused MCP dashboard HTML template."""
         # Return the complete professional desktop template
@@ -5395,35 +5677,35 @@ class MCPDashboard(AdminDashboard):
 
         # Create main MCP dashboard template (always update to ensure latest features)
         mcp_template_path = templates_dir / "mcp_dashboard.html"
-        with open(mcp_template_path, 'w') as f:
+        with open(mcp_template_path, "w") as f:
             f.write(self.create_mcp_dashboard_template())
 
         # Create GraphRAG dashboard template
         if self.mcp_config and self.mcp_config.enable_graphrag:
             graphrag_template_path = templates_dir / "graphrag_dashboard.html"
             if not graphrag_template_path.exists():
-                with open(graphrag_template_path, 'w') as f:
+                with open(graphrag_template_path, "w") as f:
                     f.write(self.create_graphrag_template())
 
         # Create Analytics dashboard template
         if self.mcp_config and self.mcp_config.enable_analytics:
             analytics_template_path = templates_dir / "analytics_dashboard.html"
             if not analytics_template_path.exists():
-                with open(analytics_template_path, 'w') as f:
+                with open(analytics_template_path, "w") as f:
                     f.write(self.create_analytics_template())
 
         # Create RAG query dashboard template
         if self.mcp_config and self.mcp_config.enable_rag_query:
             rag_template_path = templates_dir / "rag_query_dashboard.html"
             if not rag_template_path.exists():
-                with open(rag_template_path, 'w') as f:
+                with open(rag_template_path, "w") as f:
                     f.write(self.create_rag_query_template())
 
         # Create Investigation dashboard template
         if self.mcp_config and self.mcp_config.enable_investigation:
             investigation_template_path = templates_dir / "investigation_dashboard.html"
             if not investigation_template_path.exists():
-                with open(investigation_template_path, 'w') as f:
+                with open(investigation_template_path, "w") as f:
                     f.write(self.create_investigation_template())
 
         # Ensure enhanced MCP JavaScript SDK exists
@@ -5432,7 +5714,7 @@ class MCPDashboard(AdminDashboard):
         mcp_sdk_path = js_dir / "mcp-sdk.js"
         if not mcp_sdk_path.exists():
             mcp_sdk_path.write_text(self.create_enhanced_mcp_sdk())
-    
+
     def create_graphrag_template(self) -> str:
         """Create GraphRAG processing dashboard template."""
         return """<!DOCTYPE html>
@@ -5653,7 +5935,7 @@ class MCPDashboard(AdminDashboard):
     </script>
 </body>
 </html>"""
-    
+
     def create_analytics_template(self) -> str:
         """Create analytics dashboard template."""
         return """<!DOCTYPE html>
@@ -5794,7 +6076,7 @@ class MCPDashboard(AdminDashboard):
     </script>
 </body>
 </html>"""
-    
+
     def create_rag_query_template(self) -> str:
         """Create RAG query dashboard template."""
         return """<!DOCTYPE html>
@@ -5929,7 +6211,7 @@ class MCPDashboard(AdminDashboard):
     </script>
 </body>
 </html>"""
-    
+
     def create_investigation_template(self) -> str:
         """Create investigation dashboard template with Maps tab integration."""
         return """<!DOCTYPE html>
@@ -6508,7 +6790,7 @@ class MCPDashboard(AdminDashboard):
     </script>
 </body>
 </html>"""
-    
+
     def create_enhanced_mcp_sdk(self) -> str:
         """Create enhanced MCP JavaScript SDK with GraphRAG support."""
         return r"""
@@ -6741,10 +7023,10 @@ if (typeof window !== 'undefined') {
 def start_mcp_dashboard(config: Optional[MCPDashboardConfig] = None) -> MCPDashboard:
     """
     Start the comprehensive MCP dashboard with GraphRAG integration.
-    
+
     Args:
         config: MCP dashboard configuration
-        
+
     Returns:
         MCPDashboard: The dashboard instance
     """
@@ -6765,29 +7047,33 @@ if __name__ == "__main__":
 
     # Configure with all features enabled
     config = MCPDashboardConfig(
-        host=host, 
-        port=port, 
+        host=host,
+        port=port,
         mcp_server_port=8001,
         enable_graphrag=True,
         enable_analytics=True,
         enable_rag_query=True,
         enable_investigation=True,
         enable_real_time_monitoring=True,
-        enable_tool_execution=True
+        enable_tool_execution=True,
     )
-    
+
     if os.environ.get("MCP_DASHBOARD_BLOCKING", "0") in ("1", "true", "True"):
         dash = MCPDashboard()
         dash.configure(config)
         dash._create_mcp_templates()
-        print(f"Starting Comprehensive MCP Dashboard (blocking) on http://{config.host}:{config.port}/mcp")
+        print(
+            f"Starting Comprehensive MCP Dashboard (blocking) on http://{config.host}:{config.port}/mcp"
+        )
         print("Features enabled:")
         print(f"  - GraphRAG Processing: {config.enable_graphrag}")
         print(f"  - Analytics Dashboard: {config.enable_analytics}")
         print(f"  - RAG Query Interface: {config.enable_rag_query}")
         print(f"  - Investigation Tools: {config.enable_investigation}")
         print(f"  - Real-time Monitoring: {config.enable_real_time_monitoring}")
-        dash.app.run(host=config.host, port=config.port, debug=False, use_reloader=False, threaded=True)
+        dash.app.run(
+            host=config.host, port=config.port, debug=False, use_reloader=False, threaded=True
+        )
     else:
         dashboard = start_mcp_dashboard(config)
         # Best-effort readiness probe
@@ -6795,13 +7081,16 @@ if __name__ == "__main__":
         for _ in range(20):
             try:
                 import urllib.request
-                with urllib.request.urlopen(f"http://{config.host}:{config.port}/api/mcp/status", timeout=0.5) as r:
+
+                with urllib.request.urlopen(
+                    f"http://{config.host}:{config.port}/api/mcp/status", timeout=0.5
+                ) as r:
                     if r.status == 200:
                         ready = True
                         break
             except Exception:
                 time.sleep(0.2)
-        
+
         if ready:
             print(f"Comprehensive MCP Dashboard running at http://{config.host}:{config.port}/mcp")
             print("Available features:")
@@ -6813,7 +7102,9 @@ if __name__ == "__main__":
             if config.enable_rag_query:
                 print(f"  - RAG Query Interface: http://{config.host}:{config.port}/mcp/rag")
             if config.enable_investigation:
-                print(f"  - Investigation Tools: http://{config.host}:{config.port}/mcp/investigation")
+                print(
+                    f"  - Investigation Tools: http://{config.host}:{config.port}/mcp/investigation"
+                )
             print(f"  - API Endpoints: http://{config.host}:{config.port}/api/mcp/")
         else:
             print(

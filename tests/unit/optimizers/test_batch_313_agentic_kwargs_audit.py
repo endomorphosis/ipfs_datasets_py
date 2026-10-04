@@ -39,30 +39,21 @@ class TestAgenticKwargsAudit:
     def test_optimization_task_no_kwargs_in_init(self) -> None:
         """OptimizationTask.__init__ should not have **kwargs."""
         sig = inspect.signature(OptimizationTask.__init__)
-        has_varkw = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in sig.parameters.values()
-        )
+        has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
         # Since OptimizationTask is a dataclass, should not have **kwargs
         assert not has_varkw, "OptimizationTask should not have **kwargs"
 
     def test_optimization_result_no_kwargs_in_init(self) -> None:
         """OptimizationResult.__init__ should not have **kwargs."""
         sig = inspect.signature(OptimizationResult.__init__)
-        has_varkw = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in sig.parameters.values()
-        )
+        has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
         # Since OptimizationResult is a dataclass, should not have **kwargs
         assert not has_varkw, "OptimizationResult should not have **kwargs"
 
     def test_agentic_extraction_config_no_kwargs_in_init(self) -> None:
         """AgenticExtractionConfig.__init__ should not have **kwargs."""
         sig = inspect.signature(AgenticExtractionConfig.__init__)
-        has_varkw = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in sig.parameters.values()
-        )
+        has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
         # Since it's a dataclass, should not have **kwargs
         assert not has_varkw, "AgenticExtractionConfig should not have **kwargs"
 
@@ -153,7 +144,7 @@ class TestRoundTripSerialization:
 
         # Manual dict conversion
         task_dict = {
-           "task_id": original.task_id,
+            "task_id": original.task_id,
             "description": original.description,
             "priority": original.priority,
         }
@@ -234,7 +225,7 @@ class TestBatch313Summary:
 
     def test_batch_313_audit_passed(self) -> None:
         """Batch 313 audit validation passed.
-        
+
         Findings:
         ✓ OptimizationTask: Properly typed dataclass, no **kwargs
         ✓ OptimizationResult: Properly typed dataclass, no **kwargs
@@ -243,7 +234,7 @@ class TestBatch313Summary:
         ✓ Full serialization/deserialization support
         ✓ Round-trip dict conversion works correctly
         ✓ Type annotations complete for all required fields
-        
+
         Status: AUDIT COMPLETE - BEST PRACTICES CONFIRMED
         The agentic module already follows P2 best practices.
         No additional **kwargs replacement work needed.

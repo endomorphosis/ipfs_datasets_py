@@ -129,9 +129,7 @@ def test_packet_000346_evidence_margins_emit_explicit_adaptive_ambiguities() -> 
 
     threshold = 0.15
     for sample_id, predicted_family, target_family, family_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -165,7 +163,4 @@ def test_packet_000346_evidence_margins_emit_explicit_adaptive_ambiguities() -> 
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("adaptive_margin_direction") == "outvoted"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

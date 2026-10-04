@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterable, Literal, Mapping, Protocol, Sequence, runtime_checkable
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Iterable,
+    Literal,
+    Mapping,
+    Protocol,
+    Sequence,
+    runtime_checkable,
+)
 
 
 LawStatus = Literal["current", "historical", "repealed", "superseded", "unknown"]
@@ -164,132 +174,124 @@ class PublicationResult:
 class DiscoveryProvider(Protocol):
     """Official-source discovery and durable catalog import/queue operations."""
 
-    def discover(self, **kwargs: Any) -> Mapping[str, Any] | Iterable[DiscoveryRecord]:
-        ...
+    def discover(self, **kwargs: Any) -> Mapping[str, Any] | Iterable[DiscoveryRecord]: ...
 
-    def import_catalog(self, **kwargs: Any) -> Mapping[str, Any]:
-        ...
+    def import_catalog(self, **kwargs: Any) -> Mapping[str, Any]: ...
 
-    def queue(self, **kwargs: Any) -> Mapping[str, Any]:
-        ...
+    def queue(self, **kwargs: Any) -> Mapping[str, Any]: ...
 
-    def coverage_report(self, **kwargs: Any) -> Mapping[str, Any]:
-        ...
+    def coverage_report(self, **kwargs: Any) -> Mapping[str, Any]: ...
 
 
 @runtime_checkable
 class FetchProvider(Protocol):
     """Fetching and resumable scrape execution for official source records."""
 
-    def fetch(self, record: DiscoveryRecord | Mapping[str, Any], **kwargs: Any) -> FetchedDocument | Awaitable[Any]:
-        ...
+    def fetch(
+        self, record: DiscoveryRecord | Mapping[str, Any], **kwargs: Any
+    ) -> FetchedDocument | Awaitable[Any]: ...
 
-    def scrape_batch(self, **kwargs: Any) -> Awaitable[Mapping[str, Any]] | Mapping[str, Any]:
-        ...
+    def scrape_batch(self, **kwargs: Any) -> Awaitable[Mapping[str, Any]] | Mapping[str, Any]: ...
 
-    def resume(self, **kwargs: Any) -> Awaitable[Mapping[str, Any]] | Mapping[str, Any]:
-        ...
+    def resume(self, **kwargs: Any) -> Awaitable[Mapping[str, Any]] | Mapping[str, Any]: ...
 
 
 @runtime_checkable
 class Parser(Protocol):
     """Jurisdiction-specific source parsing into normalized law/article rows."""
 
-    def parse_document(self, document: FetchedDocument | Mapping[str, Any] | str, **kwargs: Any) -> ParsedLawRecord | Mapping[str, Any]:
-        ...
+    def parse_document(
+        self, document: FetchedDocument | Mapping[str, Any] | str, **kwargs: Any
+    ) -> ParsedLawRecord | Mapping[str, Any]: ...
 
-    def sync_parsed_rows(self, **kwargs: Any) -> Mapping[str, Any]:
-        ...
+    def sync_parsed_rows(self, **kwargs: Any) -> Mapping[str, Any]: ...
 
 
 @runtime_checkable
 class HierarchyExtractor(Protocol):
     """Legal hierarchy extraction and validation."""
 
-    def extract_hierarchy(self, parsed_law: ParsedLawRecord | Mapping[str, Any], **kwargs: Any) -> Sequence[HierarchyNode]:
-        ...
+    def extract_hierarchy(
+        self, parsed_law: ParsedLawRecord | Mapping[str, Any], **kwargs: Any
+    ) -> Sequence[HierarchyNode]: ...
 
-    def validate_hierarchy(self, rows: Iterable[Mapping[str, Any]], **kwargs: Any) -> Mapping[str, Any]:
-        ...
+    def validate_hierarchy(
+        self, rows: Iterable[Mapping[str, Any]], **kwargs: Any
+    ) -> Mapping[str, Any]: ...
 
 
 @runtime_checkable
 class StatusClassifier(Protocol):
     """Official metadata based status/version classification."""
 
-    def classify_law(self, law: Mapping[str, Any] | str, **kwargs: Any) -> StatusMetadata:
-        ...
+    def classify_law(self, law: Mapping[str, Any] | str, **kwargs: Any) -> StatusMetadata: ...
 
-    def inherit_article_status(self, law: Mapping[str, Any], article: Mapping[str, Any]) -> dict[str, Any]:
-        ...
+    def inherit_article_status(
+        self, law: Mapping[str, Any], article: Mapping[str, Any]
+    ) -> dict[str, Any]: ...
 
 
 @runtime_checkable
 class CIDGenerator(Protocol):
     """Deterministic content-address generation for law/article records."""
 
-    def assign_record_cids(self, rows: Iterable[Mapping[str, Any]], **kwargs: Any) -> Iterable[dict[str, Any]]:
-        ...
+    def assign_record_cids(
+        self, rows: Iterable[Mapping[str, Any]], **kwargs: Any
+    ) -> Iterable[dict[str, Any]]: ...
 
-    def build_cid_package(self, **kwargs: Any) -> Path:
-        ...
+    def build_cid_package(self, **kwargs: Any) -> Path: ...
 
 
 @runtime_checkable
 class PackageBuilder(Protocol):
     """Normalized and CID-addressed package building."""
 
-    def build_normalized(self, **kwargs: Any) -> Path:
-        ...
+    def build_normalized(self, **kwargs: Any) -> Path: ...
 
-    def build_cid_package(self, **kwargs: Any) -> Path:
-        ...
+    def build_cid_package(self, **kwargs: Any) -> Path: ...
 
-    def build_all(self, **kwargs: Any) -> Mapping[str, Path]:
-        ...
+    def build_all(self, **kwargs: Any) -> Mapping[str, Path]: ...
 
 
 @runtime_checkable
 class VectorIndexBuilder(Protocol):
     """Dense vector retrieval index builder."""
 
-    def build(self, **kwargs: Any) -> Path:
-        ...
+    def build(self, **kwargs: Any) -> Path: ...
 
 
 @runtime_checkable
 class BM25IndexBuilder(Protocol):
     """Sparse BM25 retrieval index builder."""
 
-    def build(self, **kwargs: Any) -> Path:
-        ...
+    def build(self, **kwargs: Any) -> Path: ...
 
 
 @runtime_checkable
 class JsonLdGraphBuilder(Protocol):
     """JSON-LD knowledge graph builder."""
 
-    def build(self, **kwargs: Any) -> Path:
-        ...
+    def build(self, **kwargs: Any) -> Path: ...
 
 
 @runtime_checkable
 class HuggingFacePublisher(Protocol):
     """Hugging Face publication and remote verification."""
 
-    def upload(self, targets: Iterable[str] | None = None, **kwargs: Any) -> Sequence[Mapping[str, Any]]:
-        ...
+    def upload(
+        self, targets: Iterable[str] | None = None, **kwargs: Any
+    ) -> Sequence[Mapping[str, Any]]: ...
 
-    def verify(self, targets: Iterable[str] | None = None, **kwargs: Any) -> Sequence[Mapping[str, Any]]:
-        ...
+    def verify(
+        self, targets: Iterable[str] | None = None, **kwargs: Any
+    ) -> Sequence[Mapping[str, Any]]: ...
 
 
 @runtime_checkable
 class IntegrityValidator(Protocol):
     """Cross-artifact integrity validation."""
 
-    def validate(self, **kwargs: Any) -> Mapping[str, Any]:
-        ...
+    def validate(self, **kwargs: Any) -> Mapping[str, Any]: ...
 
 
 @runtime_checkable
@@ -310,11 +312,9 @@ class LegalCorpusJurisdiction(Protocol):
     publisher: HuggingFacePublisher
     integrity: IntegrityValidator
 
-    def command_groups(self) -> Mapping[str, Any]:
-        ...
+    def command_groups(self) -> Mapping[str, Any]: ...
 
-    def run_cli(self, argv: list[str] | None = None) -> int:
-        ...
+    def run_cli(self, argv: list[str] | None = None) -> int: ...
 
 
 JurisdictionFactory = Callable[[], LegalCorpusJurisdiction]

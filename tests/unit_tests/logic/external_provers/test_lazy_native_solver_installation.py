@@ -98,11 +98,14 @@ def test_execution_request_respects_global_opt_out(monkeypatch) -> None:
     )
     monkeypatch.setattr(lazy_installer, "find_executable", lambda _name: None)
 
-    assert lazy_installer.ensure_prover_executable(
-        "tamarin",
-        reason="Xaman protocol execution",
-        progress=events.append,
-    ) is None
+    assert (
+        lazy_installer.ensure_prover_executable(
+            "tamarin",
+            reason="Xaman protocol execution",
+            progress=events.append,
+        )
+        is None
+    )
     assert calls == []
     assert events[-1].phase == "disabled"
 
@@ -121,7 +124,9 @@ def test_ergoai_explicit_binary_is_resolved_without_install(monkeypatch, tmp_pat
     ) == str(executable)
 
 
-def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch, tmp_path: Path) -> None:
+def test_cvc5_cli_installer_uses_user_local_launcher_without_network(
+    monkeypatch, tmp_path: Path
+) -> None:
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     root = tmp_path / "provers"
@@ -160,8 +165,7 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     assert "exec" in launcher.read_text(encoding="utf-8")
     assert downloaded == {
         "url": (
-            "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
-            "cvc5-Linux-arm64-static.zip"
+            "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/cvc5-Linux-arm64-static.zip"
         ),
         "sha256": "2572d01b142a6bfebdcb259f5a395f6228d2db5609f7dcc9a60851a5f1a58655",
     }
@@ -195,9 +199,7 @@ def test_cvc5_resolution_skips_broken_path_binary_for_managed_launcher(
     assert lazy_installer.find_executable("cvc5") == str(managed)
 
 
-def test_cvc5_resolution_accepts_explicit_portable_launcher(
-    monkeypatch, tmp_path: Path
-) -> None:
+def test_cvc5_resolution_accepts_explicit_portable_launcher(monkeypatch, tmp_path: Path) -> None:
     from ipfs_datasets_py.logic.external_provers import lazy_installer
 
     launcher = tmp_path / "cvc5-wasm"
@@ -249,9 +251,7 @@ def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path
     assert downloaded["sha256"] == prover_installer.APALACHE_PORTABLE_SHA256
 
 
-def test_opam_bootstrap_uses_official_user_local_arm_binary(
-    monkeypatch, tmp_path: Path
-) -> None:
+def test_opam_bootstrap_uses_official_user_local_arm_binary(monkeypatch, tmp_path: Path) -> None:
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     root = tmp_path / "provers"
@@ -285,13 +285,8 @@ def test_opam_bootstrap_uses_official_user_local_arm_binary(
 
     assert executable == str(root / "bin" / "opam")
     assert downloaded == {
-        "url": (
-            "https://github.com/ocaml/opam/releases/download/2.5.2/"
-            "opam-2.5.2-arm64-linux"
-        ),
-        "sha256": (
-            "c4106ece84bcb60c68342573d2d6b4f0d6770ee088015c2216adc83d8854dcf9"
-        ),
+        "url": ("https://github.com/ocaml/opam/releases/download/2.5.2/opam-2.5.2-arm64-linux"),
+        "sha256": ("c4106ece84bcb60c68342573d2d6b4f0d6770ee088015c2216adc83d8854dcf9"),
     }
 
 
@@ -300,21 +295,15 @@ def test_generation_portfolio_includes_flogic_authority() -> None:
 
     assert "ergoai" in prover_installer.PROVER_PORTFOLIOS["legal_ir_generation"]
     assert "isabelle" not in prover_installer.PROVER_PORTFOLIOS["legal_ir_generation"]
-    assert {"coq", "isabelle"}.issubset(
-        prover_installer.PROVER_PORTFOLIOS["reconstruction"]
-    )
+    assert {"coq", "isabelle"}.issubset(prover_installer.PROVER_PORTFOLIOS["reconstruction"])
     managed_install_keys = set(prover_installer.MANAGED_SOLVER_VERSIONS)
     managed_install_keys.discard("rocq")
     managed_install_keys.add("coq")
-    assert "symbolicai" not in prover_installer.PROVER_PORTFOLIOS[
-        "legal_ir_training"
-    ]
+    assert "symbolicai" not in prover_installer.PROVER_PORTFOLIOS["legal_ir_training"]
     assert managed_install_keys - {"symbolicai"} <= set(
         prover_installer.PROVER_PORTFOLIOS["legal_ir_training"]
     )
-    assert managed_install_keys.issubset(
-        prover_installer.PROVER_PORTFOLIOS["legal_ir_full"]
-    )
+    assert managed_install_keys.issubset(prover_installer.PROVER_PORTFOLIOS["legal_ir_full"])
 
 
 def test_portfolio_exclusion_omits_inherited_solver(monkeypatch) -> None:
@@ -379,7 +368,9 @@ def test_coq_opam_fallback_uses_isolated_user_local_root(monkeypatch, tmp_path: 
 
     monkeypatch.setattr(prover_installer, "_which", fake_which)
     monkeypatch.setattr(prover_installer, "_run", fake_run)
-    monkeypatch.setattr(prover_installer, "_run_custom_solver_installer", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(
+        prover_installer, "_run_custom_solver_installer", lambda *_args, **_kwargs: False
+    )
     monkeypatch.setattr(prover_installer, "_package_names_for", lambda *_args: [])
 
     assert prover_installer.ensure_coq(yes=True, strict=True)
@@ -427,8 +418,8 @@ def test_coq_opam_supports_unified_rocq_cli(monkeypatch, tmp_path: Path) -> None
     assert prover_installer.ensure_coq(yes=True, strict=True)
     coqc_launcher = (root / "bin" / "coqc").read_text(encoding="utf-8")
     coqtop_launcher = (root / "bin" / "coqtop").read_text(encoding="utf-8")
-    assert "rocq compile \"$@\"" in coqc_launcher
-    assert "rocq repl \"$@\"" in coqtop_launcher
+    assert 'rocq compile "$@"' in coqc_launcher
+    assert 'rocq repl "$@"' in coqtop_launcher
 
 
 def test_existing_tamarin_requires_its_maude_runtime_validation(monkeypatch) -> None:
@@ -438,7 +429,13 @@ def test_existing_tamarin_requires_its_maude_runtime_validation(monkeypatch) -> 
     monkeypatch.setattr(
         prover_installer,
         "_which",
-        lambda name: "/fixture/tamarin-prover" if name == "tamarin-prover" else "/fixture/maude" if name == "maude" else None,
+        lambda name: (
+            "/fixture/tamarin-prover"
+            if name == "tamarin-prover"
+            else "/fixture/maude"
+            if name == "maude"
+            else None
+        ),
     )
     monkeypatch.setattr(prover_installer, "ensure_maude", lambda **_kwargs: True)
     monkeypatch.setattr(prover_installer, "_tamarin_accepts_maude", lambda *_args: False)
@@ -595,9 +592,9 @@ def test_optional_packaging_and_installation_documentation_are_present() -> None
     setup = (root / "setup.py").read_text(encoding="utf-8")
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     requirements = (root / "requirements-theorem-provers.txt").read_text(encoding="utf-8")
-    documentation = (root / "docs/security_verification/lazy_theorem_prover_installation.md").read_text(
-        encoding="utf-8"
-    )
+    documentation = (
+        root / "docs/security_verification/lazy_theorem_prover_installation.md"
+    ).read_text(encoding="utf-8")
 
     assert "theorem-provers" in setup
     assert "theorem-provers" in pyproject

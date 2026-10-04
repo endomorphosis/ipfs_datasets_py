@@ -72,9 +72,7 @@ def test_deontic_profile_has_expected_operators_and_serial_semantics() -> None:
     assert profile.semantics.serial is True
     assert {"O", "P", "F"}.issubset(symbols)
     assert {"shall", "must", "may", "prohibited"}.issubset(cue_terms)
-    assert {"has a duty to", "under an obligation to", "shall issue"}.issubset(
-        cue_terms
-    )
+    assert {"has a duty to", "under an obligation to", "shall issue"}.issubset(cue_terms)
     assert {"is entitled to", "shall be entitled to"}.issubset(cue_terms)
     assert "shall state" in cue_terms
 
@@ -192,20 +190,26 @@ def test_refined_modal_family_cue_margin_buffer_is_pair_specific_and_normalized(
         )
         >= 0.076
     )
-    assert abs(
-        compiler_refined_modal_family_cue_margin_buffer(
-            "temporal",
-            "temporal->deontic",
+    assert (
+        abs(
+            compiler_refined_modal_family_cue_margin_buffer(
+                "temporal",
+                "temporal->deontic",
+            )
+            - 0.0015
         )
-        - 0.0015
-    ) <= 1e-12
-    assert abs(
-        compiler_refined_modal_family_cue_margin_buffer(
-            "temporal",
-            "temporal",
+        <= 1e-12
+    )
+    assert (
+        abs(
+            compiler_refined_modal_family_cue_margin_buffer(
+                "temporal",
+                "temporal",
+            )
+            - 0.0015
         )
-        - 0.0015
-    ) <= 1e-12
+        <= 1e-12
+    )
     assert (
         compiler_refined_modal_family_cue_margin_buffer(
             "frame",
@@ -385,9 +389,8 @@ def test_packet_000116_refined_cue_pairs_cover_compiler_registry_evidence() -> N
         )
 
     observed_frame_temporal_margin = -0.995435587685
-    effective_frame_temporal_threshold = (
-        0.15
-        + compiler_refined_modal_family_cue_margin_buffer("frame", "temporal")
+    effective_frame_temporal_threshold = 0.15 + compiler_refined_modal_family_cue_margin_buffer(
+        "frame", "temporal"
     )
     assert observed_frame_temporal_margin <= effective_frame_temporal_threshold
 
@@ -453,9 +456,7 @@ def test_packet_000518_refined_frame_cue_pairs_cover_weak_typed_targets() -> Non
             predicted_family,
             target_family,
         )
-        assert observed_family_margins[(predicted_family, target_family)] <= (
-            effective_threshold
-        )
+        assert observed_family_margins[(predicted_family, target_family)] <= (effective_threshold)
 
 
 def test_packet_000179_refined_family_cue_pairs_cover_target_margins() -> None:
@@ -486,9 +487,7 @@ def test_packet_000179_refined_family_cue_pairs_cover_target_margins() -> None:
                 predicted_family,
                 target_family,
             )
-        assert observed_family_margins[(predicted_family, target_family)] <= (
-            effective_threshold
-        )
+        assert observed_family_margins[(predicted_family, target_family)] <= (effective_threshold)
 
 
 def test_packet_001444_family_pairs_are_explicit_signal_free_registry_policy() -> None:
@@ -734,9 +733,7 @@ def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies
         ("epistemic", "epistemic"),
         ("frame", "dynamic"),
     }
-    for predicted_family, target_family in (
-        COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
-    ):
+    for predicted_family, target_family in COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS:
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -749,9 +746,7 @@ def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies
             predicted_family,
             target_family,
         )
-        if predicted_family == target_family and not (
-            is_priority_pair or is_compiler_pair
-        ):
+        if predicted_family == target_family and not (is_priority_pair or is_compiler_pair):
             continue
         if (
             predicted_family,
@@ -785,10 +780,13 @@ def test_signal_free_support_falls_back_to_compiler_required_policy_pairs(
         trimmed_signal_free_pairs,
     )
 
-    assert supports_signal_free_adaptive_ambiguity_pair(
-        "frame",
-        "alethic",
-    ) is True
+    assert (
+        supports_signal_free_adaptive_ambiguity_pair(
+            "frame",
+            "alethic",
+        )
+        is True
+    )
 
 
 def test_signal_free_support_falls_back_to_compiler_ambiguity_bundle_pairs(
@@ -815,10 +813,13 @@ def test_signal_free_support_falls_back_to_compiler_ambiguity_bundle_pairs(
         trimmed_required_pairs,
     )
 
-    assert supports_signal_free_adaptive_ambiguity_pair(
-        "frame",
-        "dynamic",
-    ) is True
+    assert (
+        supports_signal_free_adaptive_ambiguity_pair(
+            "frame",
+            "dynamic",
+        )
+        is True
+    )
 
 
 def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pairs() -> None:
@@ -978,6 +979,8 @@ def test_compiler_ambiguity_packet_002605_pairs_surface_adaptive_ambiguity() -> 
     )
 
     assert COMPILER_REFINED_PACKET_002605_FAMILY_PAIRS == expected_pairs
+
+
 def test_compiler_ambiguity_packet_002717_pairs_surface_adaptive_ambiguity() -> None:
     expected_pairs = (
         ("deontic", "temporal"),
@@ -1020,15 +1023,9 @@ def test_compiler_ambiguity_packet_003732_pairs_surface_explicit_ambiguity() -> 
     assert COMPILER_AMBIGUITY_PACKET_003732_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1101,10 +1098,13 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("temporal", "dynamic"),
         ("temporal", "temporal"),
     }
-    assert is_compiler_ambiguity_policy_pair(
-        "alethic",
-        "conditional_normative",
-    ) is True
+    assert (
+        is_compiler_ambiguity_policy_pair(
+            "alethic",
+            "conditional_normative",
+        )
+        is True
+    )
     assert is_compiler_ambiguity_policy_pair("alethic", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("alethic", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("alethic", "frame") is True
@@ -1116,10 +1116,13 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         is True
     )
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "deontic") is True
-    assert is_compiler_ambiguity_policy_pair(
-        "conditional_normative",
-        "epistemic",
-    ) is True
+    assert (
+        is_compiler_ambiguity_policy_pair(
+            "conditional_normative",
+            "epistemic",
+        )
+        is True
+    )
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "frame") is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "alethic") is True
@@ -1132,14 +1135,20 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("deontic", "frame") is True
     assert is_compiler_ambiguity_policy_pair("doxastic", "doxastic") is True
     assert is_compiler_ambiguity_policy_pair("dynamic", "temporal") is True
-    assert is_compiler_ambiguity_policy_pair(
-        "epistemic",
-        "conditional_normative",
-    ) is True
-    assert is_compiler_ambiguity_policy_pair(
-        "epistemic",
-        "deontic",
-    ) is True
+    assert (
+        is_compiler_ambiguity_policy_pair(
+            "epistemic",
+            "conditional_normative",
+        )
+        is True
+    )
+    assert (
+        is_compiler_ambiguity_policy_pair(
+            "epistemic",
+            "deontic",
+        )
+        is True
+    )
     assert is_compiler_ambiguity_policy_pair("frame", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("frame", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "frame") is True
@@ -1159,23 +1168,32 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("temporal", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("frame", "hybrid") is False
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "frame",
-        "conditional_normative",
-    ) is True
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "frame",
+            "conditional_normative",
+        )
+        is True
+    )
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "deontic") is True
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "alethic") is True
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "epistemic") is True
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "doxastic") is True
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "conditional_normative",
-        "deontic",
-    ) is True
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "conditional_normative",
-        "conditional_normative",
-    ) is True
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "conditional_normative",
+            "deontic",
+        )
+        is True
+    )
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "conditional_normative",
+            "conditional_normative",
+        )
+        is True
+    )
     assert is_compiler_required_adaptive_ambiguity_pair("deontic", "dynamic") is True
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "deontic") is True
     assert (
@@ -1185,28 +1203,43 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         )
         is True
     )
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "alethic",
-        "epistemic",
-    ) is True
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "alethic",
+            "epistemic",
+        )
+        is True
+    )
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "epistemic") is True
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "temporal",
-        "conditional_normative",
-    ) is True
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "deontic",
-        "epistemic",
-    ) is True
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "epistemic",
-        "conditional_normative",
-    ) is True
-    assert is_compiler_required_adaptive_ambiguity_pair(
-        "epistemic",
-        "temporal",
-    ) is True
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "temporal",
+            "conditional_normative",
+        )
+        is True
+    )
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "deontic",
+            "epistemic",
+        )
+        is True
+    )
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "epistemic",
+            "conditional_normative",
+        )
+        is True
+    )
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "epistemic",
+            "temporal",
+        )
+        is True
+    )
     assert is_compiler_required_adaptive_ambiguity_pair("dynamic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair("deontic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair("temporal", "temporal") is True
@@ -1681,23 +1714,17 @@ def test_packet_000495_adaptive_family_pairs_are_explicit_ambiguity_policy() -> 
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1725,23 +1752,17 @@ def test_packet_000228_family_pairs_are_explicit_ambiguity_policy() -> None:
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1779,23 +1800,17 @@ def test_packet_000394_frame_family_pairs_are_explicit_ambiguity_policy() -> Non
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1818,23 +1833,17 @@ def test_packet_005849_family_pairs_are_explicit_ambiguity_policy() -> None:
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1851,9 +1860,7 @@ def test_packet_000194_refined_family_cue_pairs_are_policy_covered() -> None:
 
     assert COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
-        assert (predicted_family, target_family) in (
-            COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS
-        )
+        assert (predicted_family, target_family) in (COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
@@ -1890,9 +1897,7 @@ def test_packet_000194_compiler_ambiguity_pairs_are_required_policy() -> None:
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1927,23 +1932,17 @@ def test_packet_001807_adaptive_family_pairs_are_explicit_ambiguity_policy() -> 
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -1968,23 +1967,17 @@ def test_packet_000102_adaptive_family_pairs_are_explicit_ambiguity_policy() -> 
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -2051,16 +2044,12 @@ def test_failed_validation_rescue_packet_family_pairs_are_registered() -> None:
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -2072,19 +2061,11 @@ def test_packet_002839_refines_frame_temporal_deadline_policy() -> None:
 
     assert COMPILER_REFINED_PACKET_002839_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
-        assert (predicted_family, target_family) in (
-            COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS
-        )
+        assert (predicted_family, target_family) in (COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -2120,11 +2101,7 @@ def test_packet_002864_compiler_ambiguity_pairs_are_explicit_policy() -> None:
         ("frame", "temporal"),
     }
 
-
-    assert (
-        set(COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS)
-        == expected_pairs
-    )
+    assert set(COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
@@ -2132,23 +2109,17 @@ def test_packet_002864_compiler_ambiguity_pairs_are_explicit_policy() -> None:
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -2169,23 +2140,17 @@ def test_packet_002042_compiler_ambiguity_pairs_are_explicit_policy() -> None:
             predicted_family,
             target_family,
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,

@@ -526,12 +526,8 @@ def test_autoencoder_loop_runs_leanstral_as_a_non_mutating_shadow_lane(tmp_path)
     assert result.metadata["leanstral_shadow_error"] == ""
     assert requests[0]["provider"] == "leanstral_local"
     exported = json.loads(
-        (tmp_path / "introspection" / "loop-doc.introspection.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "introspection" / "loop-doc.introspection.json").read_text(encoding="utf-8")
     )
     assert exported["leanstral_guidance"]["trusted"] is True
-    assert exported["leanstral_guidance"]["drafted_logic_candidates"][0][
-        "guidance_only"
-    ] is True
+    assert exported["leanstral_guidance"]["drafted_logic_candidates"][0]["guidance_only"] is True
     assert exported["leanstral_guidance"]["proof_obligation_ids"]

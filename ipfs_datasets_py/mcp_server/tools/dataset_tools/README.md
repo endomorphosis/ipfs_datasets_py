@@ -23,10 +23,10 @@ wrappers around `ipfs_datasets_py.core_operations.*` — all business logic live
 from ipfs_datasets_py.mcp_server.tools.dataset_tools import load_dataset
 
 result = await load_dataset(
-    source="squad",            # HuggingFace Hub name, local path, or IPFS CID
-    split="train",             # Optional: "train", "test", "validation"
-    max_rows=1000,             # Optional: limit rows for testing
-    output_format="dict"       # "dict" | "json" | "arrow"
+    source="squad",  # HuggingFace Hub name, local path, or IPFS CID
+    split="train",  # Optional: "train", "test", "validation"
+    max_rows=1000,  # Optional: limit rows for testing
+    output_format="dict",  # "dict" | "json" | "arrow"
 )
 # Returns: {"status": "success", "dataset": {...}, "metadata": {...}}
 ```
@@ -39,8 +39,8 @@ from ipfs_datasets_py.mcp_server.tools.dataset_tools import save_dataset
 result = await save_dataset(
     dataset=my_dataset,
     output_path="/path/to/output",
-    format="parquet",          # "parquet" | "json" | "csv" | "arrow"
-    pin_to_ipfs=True           # Optional: also pin to IPFS
+    format="parquet",  # "parquet" | "json" | "csv" | "arrow"
+    pin_to_ipfs=True,  # Optional: also pin to IPFS
 )
 ```
 
@@ -54,7 +54,7 @@ result = await convert_dataset_format(
     output_path="/data/output.parquet",
     input_format="json",
     output_format="parquet",
-    compression="snappy"
+    compression="snappy",
 )
 ```
 
@@ -65,7 +65,7 @@ from ipfs_datasets_py.mcp_server.tools.dataset_tools import text_to_fol
 
 result = await text_to_fol(
     text="All mammals are warm-blooded. Dogs are mammals.",
-    output_format="prolog"     # "prolog" | "tptp" | "smtlib"
+    output_format="prolog",  # "prolog" | "tptp" | "smtlib"
 )
 # Returns: {"formulas": ["∀x(mammal(x) → warm_blooded(x))", "mammal(dog)"], ...}
 ```

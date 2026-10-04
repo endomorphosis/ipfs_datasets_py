@@ -5,7 +5,9 @@ import argparse
 import json
 from pathlib import Path
 
-from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import build_optimizer_acceptance_decision
+from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import (
+    build_optimizer_acceptance_decision,
+)
 
 
 def _load_json(path: str) -> dict:
@@ -19,7 +21,9 @@ def _write_json(path: str, payload: dict) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Assess optimizer acceptance policy from baseline/candidate reports")
+    ap = argparse.ArgumentParser(
+        description="Assess optimizer acceptance policy from baseline/candidate reports"
+    )
     ap.add_argument("--baseline", required=True, help="Baseline report JSON path")
     ap.add_argument("--candidate", required=True, help="Candidate report JSON path")
     ap.add_argument("--min-gain-threshold", type=float, default=0.0)

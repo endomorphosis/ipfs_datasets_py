@@ -35,6 +35,7 @@ from uuid import uuid4
 
 class SpanStatus(str, Enum):
     """OpenTelemetry span status codes."""
+
     UNSET = "unset"
     OK = "ok"
     ERROR = "error"
@@ -42,6 +43,7 @@ class SpanStatus(str, Enum):
 
 class EventType(str, Enum):
     """Event types for span events."""
+
     CIRCUIT_BREAKER_STATE_CHANGE = "circuit_breaker.state_change"
     CIRCUIT_BREAKER_CALL = "circuit_breaker.call"
     CIRCUIT_BREAKER_ERROR = "circuit_breaker.error"
@@ -52,6 +54,7 @@ class EventType(str, Enum):
 @dataclass
 class SpanEvent:
     """A single event within a span."""
+
     name: str
     timestamp: float
     attributes: Dict[str, Any] = field(default_factory=dict)
@@ -60,6 +63,7 @@ class SpanEvent:
 @dataclass
 class Span:
     """Represents an OpenTelemetry span."""
+
     name: str
     span_id: str
     trace_id: str
@@ -83,6 +87,7 @@ class Span:
 @dataclass
 class Trace:
     """Represents a complete trace (collection of related spans)."""
+
     trace_id: str
     spans: List[Span] = field(default_factory=list)
     start_time: float = field(default_factory=time.time)
@@ -150,7 +155,7 @@ class OTelTracer:
         self,
         name: str,
         attributes: Optional[Dict[str, Any]] = None,
-        parent_span_id: Optional[str] = None
+        parent_span_id: Optional[str] = None,
     ) -> Span:
         """
         Start a new span.
@@ -174,7 +179,7 @@ class OTelTracer:
                 trace_id=trace_id,
                 parent_span_id=parent,
                 start_time=time.time(),
-                attributes=attributes or {}
+                attributes=attributes or {},
             )
 
             # Get or create trace
@@ -207,10 +212,7 @@ class OTelTracer:
                     self._completed_traces.pop(0)
 
     def record_event(
-        self,
-        span: Span,
-        event_type: EventType,
-        attributes: Optional[Dict[str, Any]] = None
+        self, span: Span, event_type: EventType, attributes: Optional[Dict[str, Any]] = None
     ) -> SpanEvent:
         """
         Record an event within a span.
@@ -225,9 +227,7 @@ class OTelTracer:
         """
         with self._lock:
             event = SpanEvent(
-                name=event_type.value,
-                timestamp=time.time(),
-                attributes=attributes or {}
+                name=event_type.value, timestamp=time.time(), attributes=attributes or {}
             )
             span.events.append(event)
             return event
@@ -237,7 +237,7 @@ class OTelTracer:
         span: Span,
         error_message: str,
         error_type: Optional[str] = None,
-        attributes: Optional[Dict[str, Any]] = None
+        attributes: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Record an error event in a span.
@@ -250,19 +250,17 @@ class OTelTracer:
         """
         with self._lock:
             error_attrs = attributes or {}
-            error_attrs.update({
-                "error.type": error_type or "UnknownError",
-                "error.message": error_message,
-            })
+            error_attrs.update(
+                {
+                    "error.type": error_type or "UnknownError",
+                    "error.message": error_message,
+                }
+            )
             self.record_event(span, EventType.ERROR, error_attrs)
             span.status = SpanStatus.ERROR
 
     @contextmanager
-    def span_context(
-        self,
-        name: str,
-        attributes: Optional[Dict[str, Any]] = None
-    ):
+    def span_context(self, name: str, attributes: Optional[Dict[str, Any]] = None):
         """
         Context manager for span creation and lifecycle.
 
@@ -362,19 +360,16 @@ class OTelTracer:
                             "duration": int(span.duration_ms() * 1000),
                             "references": (
                                 [{"refType": "CHILD_OF", "traceID": span.parent_span_id}]
-                                if span.parent_span_id else []
+                                if span.parent_span_id
+                                else []
                             ),
-                            "tags": [
-                                {"key": k, "value": v}
-                                for k, v in span.attributes.items()
-                            ],
+                            "tags": [{"key": k, "value": v} for k, v in span.attributes.items()],
                             "logs": [
                                 {
                                     "timestamp": int(event.timestamp * 1e6),
                                     "fields": [
-                                        {"key": k, "value": v}
-                                        for k, v in event.attributes.items()
-                                    ]
+                                        {"key": k, "value": v} for k, v in event.attributes.items()
+                                    ],
                                 }
                                 for event in span.events
                             ],

@@ -85,26 +85,16 @@ Path C implements comprehensive semantic web support for the knowledge graphs mo
 shape = {
     "severity": "Violation",
     "and": [
-        {
-            "property": {
-                "path": "name",
-                "minCount": 1,
-                "datatype": "xsd:string"
-            }
-        },
+        {"property": {"path": "name", "minCount": 1, "datatype": "xsd:string"}},
         {
             "property": {
                 "path": "email",
                 "pattern": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-                "minCount": 1
+                "minCount": 1,
             }
-        }
+        },
     ],
-    "property": {
-        "path": "age",
-        "minInclusive": 0,
-        "maxInclusive": 120
-    }
+    "property": {"path": "age", "minInclusive": 0, "maxInclusive": 120},
 }
 ```
 
@@ -184,18 +174,10 @@ print(f"Parsed {len(triples)} triples")
 **High-level conversion functions:**
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.jsonld import (
-    jsonld_to_turtle,
-    turtle_to_jsonld
-)
+from ipfs_datasets_py.knowledge_graphs.jsonld import jsonld_to_turtle, turtle_to_jsonld
 
 # JSON-LD to Turtle
-jsonld = {
-    "@context": "https://schema.org/",
-    "@type": "Person",
-    "name": "Alice",
-    "age": 30
-}
+jsonld = {"@context": "https://schema.org/", "@type": "Person", "name": "Alice", "age": 30}
 turtle = jsonld_to_turtle(jsonld)
 
 # Turtle to JSON-LD
@@ -272,8 +254,8 @@ from ipfs_datasets_py.knowledge_graphs.jsonld import VocabularyType
 
 # Access vocabulary URIs
 VocabularyType.SCHEMA_ORG.value  # "https://schema.org/"
-VocabularyType.RDF.value         # "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-VocabularyType.PROV.value        # "http://www.w3.org/ns/prov#"
+VocabularyType.RDF.value  # "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+VocabularyType.PROV.value  # "http://www.w3.org/ns/prov#"
 ```
 
 ### SHACL Validation
@@ -287,11 +269,7 @@ validator = SHACLValidator()
 shape = {
     "targetClass": "Person",
     "severity": "Warning",
-    "property": {
-        "path": "age",
-        "minInclusive": 0,
-        "maxInclusive": 120
-    }
+    "property": {"path": "age", "minInclusive": 0, "maxInclusive": 120},
 }
 validator.register_shape("PersonAgeShape", shape)
 
@@ -309,7 +287,7 @@ from ipfs_datasets_py.knowledge_graphs.jsonld import (
     TurtleSerializer,
     TurtleParser,
     jsonld_to_turtle,
-    turtle_to_jsonld
+    turtle_to_jsonld,
 )
 
 # Serialize triples
@@ -358,7 +336,7 @@ from ipfs_datasets_py.knowledge_graphs.jsonld import (
     ContextExpander,
     SHACLValidator,
     TurtleSerializer,
-    VocabularyType
+    VocabularyType,
 )
 
 # 1. Create context with multiple vocabularies
@@ -367,26 +345,19 @@ context = JSONLDContext(
     prefixes={
         "rdf": VocabularyType.RDF.value,
         "prov": VocabularyType.PROV.value,
-        "geo": VocabularyType.GEO.value
-    }
+        "geo": VocabularyType.GEO.value,
+    },
 )
 
 # 2. Expand terms
 expander = ContextExpander()
-data = {
-    "@type": "Person",
-    "name": "Alice",
-    "geo:lat": 40.7128
-}
+data = {"@type": "Person", "name": "Alice", "geo:lat": 40.7128}
 expanded = expander.expand(data, context)
 
 # 3. Validate with SHACL
 validator = SHACLValidator()
 shape = {
-    "property": [
-        {"path": "name", "minCount": 1},
-        {"path": "geo:lat", "datatype": "xsd:decimal"}
-    ]
+    "property": [{"path": "name", "minCount": 1}, {"path": "geo:lat", "datatype": "xsd:decimal"}]
 }
 result = validator.validate(expanded, shape)
 
@@ -394,7 +365,7 @@ result = validator.validate(expanded, shape)
 triples = [
     ("_:alice", "rdf:type", "schema:Person"),
     ("_:alice", "schema:name", "Alice"),
-    ("_:alice", "geo:lat", 40.7128)
+    ("_:alice", "geo:lat", 40.7128),
 ]
 serializer = TurtleSerializer()
 turtle = serializer.serialize(triples, prefixes=context.prefixes)
@@ -410,26 +381,19 @@ from ipfs_datasets_py.knowledge_graphs.jsonld import SHACLValidator
 person_shape = {
     "severity": "Violation",
     "and": [
-        {
-            "property": {
-                "path": "name",
-                "minCount": 1,
-                "minLength": 2,
-                "maxLength": 100
-            }
-        },
+        {"property": {"path": "name", "minCount": 1, "minLength": 2, "maxLength": 100}},
         {
             "property": {
                 "path": "email",
                 "pattern": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-                "minCount": 1
+                "minCount": 1,
             }
-        }
+        },
     ],
     "or": [
         {"property": {"path": "phone", "minCount": 1}},
-        {"property": {"path": "address", "minCount": 1}}
-    ]
+        {"property": {"path": "address", "minCount": 1}},
+    ],
 }
 
 validator = SHACLValidator()
@@ -438,12 +402,12 @@ validator = SHACLValidator()
 data_batch = [
     {"@type": "Person", "name": "Alice", "email": "alice@example.com", "phone": "+1234567890"},
     {"@type": "Person", "name": "Bob", "email": "invalid-email"},  # Invalid
-    {"@type": "Person", "name": "Charlie", "email": "charlie@example.com"}  # Missing phone/address
+    {"@type": "Person", "name": "Charlie", "email": "charlie@example.com"},  # Missing phone/address
 ]
 
 for i, data in enumerate(data_batch):
     result = validator.validate(data, person_shape)
-    print(f"Record {i+1}: {'✓ Valid' if result.valid else '✗ Invalid'}")
+    print(f"Record {i + 1}: {'✓ Valid' if result.valid else '✗ Invalid'}")
     if not result.valid:
         for error in result.errors:
             print(f"  - {error}")
@@ -473,8 +437,8 @@ context = JSONLDContext(
     prefixes={
         "prov": VocabularyType.PROV.value,
         "geo": VocabularyType.GEO.value,
-        "time": VocabularyType.TIME.value
-    }
+        "time": VocabularyType.TIME.value,
+    },
 )
 ```
 
@@ -482,12 +446,7 @@ context = JSONLDContext(
 
 **Before (basic constraints):**
 ```python
-shape = {
-    "property": {
-        "path": "name",
-        "minCount": 1
-    }
-}
+shape = {"property": {"path": "name", "minCount": 1}}
 ```
 
 **After (advanced constraints):**
@@ -495,21 +454,9 @@ shape = {
 shape = {
     "severity": "Warning",
     "and": [
-        {
-            "property": {
-                "path": "name",
-                "minCount": 1,
-                "minLength": 2,
-                "pattern": r"^[A-Z][a-z]+"
-            }
-        },
-        {
-            "property": {
-                "path": "status",
-                "in": ["active", "inactive", "pending"]
-            }
-        }
-    ]
+        {"property": {"path": "name", "minCount": 1, "minLength": 2, "pattern": r"^[A-Z][a-z]+"}},
+        {"property": {"path": "status", "in": ["active", "inactive", "pending"]}},
+    ],
 }
 ```
 

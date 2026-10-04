@@ -40,9 +40,7 @@ from .modal_autoencoder_feature_capacity import (
 )
 
 
-MODAL_AUTOENCODER_FEATURE_TRANSFER_SCHEMA_VERSION = (
-    "modal-autoencoder-feature-transfer-v2"
-)
+MODAL_AUTOENCODER_FEATURE_TRANSFER_SCHEMA_VERSION = "modal-autoencoder-feature-transfer-v2"
 MODAL_AUTOENCODER_EVIDENCE_AWARE_FEATURE_TRANSFER_SCHEMA_VERSION = (
     "modal-autoencoder-feature-transfer-v3"
 )
@@ -69,17 +67,10 @@ class LegacyFeatureTransferConfig:
             raise ValueError("max_entries_per_group must be positive")
         coverage = float(self.minimum_source_signal_coverage)
         if not math.isfinite(coverage) or not 0.0 <= coverage <= 1.0:
-            raise ValueError(
-                "minimum_source_signal_coverage must be finite and between 0 and 1"
-            )
-        unknown_fields = set(self.source_field_allowlist) - (
-            LEGACY_FEATURE_TRANSFER_FIELDS
-        )
+            raise ValueError("minimum_source_signal_coverage must be finite and between 0 and 1")
+        unknown_fields = set(self.source_field_allowlist) - (LEGACY_FEATURE_TRANSFER_FIELDS)
         if unknown_fields:
-            raise ValueError(
-                "unknown source transfer fields: "
-                + ", ".join(sorted(unknown_fields))
-            )
+            raise ValueError("unknown source transfer fields: " + ", ".join(sorted(unknown_fields)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,9 +92,7 @@ def _signal(value: Any) -> float:
         number = float(value)
         return abs(number) if math.isfinite(number) else 0.0
     if isinstance(value, Mapping):
-        return math.fsum(
-            _signal(value[key]) for key in sorted(value, key=str)
-        )
+        return math.fsum(_signal(value[key]) for key in sorted(value, key=str))
     if isinstance(value, Sequence) and not isinstance(
         value,
         (str, bytes, bytearray),
@@ -114,10 +103,7 @@ def _signal(value: Any) -> float:
 
 def _copy_value(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return {
-            key: _copy_value(item)
-            for key, item in value.items()
-        }
+        return {key: _copy_value(item) for key, item in value.items()}
     if isinstance(value, Sequence) and not isinstance(
         value,
         (str, bytes, bytearray),
@@ -129,9 +115,7 @@ def _copy_value(value: Any) -> Any:
 def _protected_key(value: Any) -> bool:
     text = str(value).strip().lower()
     return (
-        text in {"__global__", "global", "bias"}
-        or text.endswith(":bias")
-        or text.endswith("|bias")
+        text in {"__global__", "global", "bias"} or text.endswith(":bias") or text.endswith("|bias")
     )
 
 
@@ -158,13 +142,9 @@ def _row_shape(value: Any) -> tuple[str, int]:
 
 
 def _source_architecture(value: str | None) -> str:
-    architecture = str(
-        value or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
-    ).strip()
+    architecture = str(value or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION).strip()
     if architecture not in MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS:
-        raise ValueError(
-            f"unsupported source autoencoder architecture: {architecture!r}"
-        )
+        raise ValueError(f"unsupported source autoencoder architecture: {architecture!r}")
     return architecture
 
 
@@ -172,10 +152,7 @@ def _source_field_is_transferable(
     field_name: str,
     policy: LegacyFeatureTransferConfig,
 ) -> bool:
-    if (
-        policy.source_field_allowlist
-        and field_name not in policy.source_field_allowlist
-    ):
+    if policy.source_field_allowlist and field_name not in policy.source_field_allowlist:
         return False
     if field_name.endswith("_embedding_weights"):
         return policy.transfer_source_embedding_weights
@@ -192,11 +169,13 @@ def transfer_legacy_autoencoder_features(
     capacity_evidence: Mapping[
         str,
         Mapping[Any, FeatureCapacityEvidence | Mapping[str, Any]],
-    ] | None = None,
+    ]
+    | None = None,
     evidence_by_group: Mapping[
         str,
         Mapping[Any, FeatureCapacityEvidence | Mapping[str, Any]],
-    ] | None = None,
+    ]
+    | None = None,
 ) -> LegacyFeatureTransferResult:
     """Port compatible legacy rows into a proof-aware target state.
 
@@ -211,14 +190,9 @@ def transfer_legacy_autoencoder_features(
     policy = config or LegacyFeatureTransferConfig()
     legacy_capacity = int(policy.max_entries_per_group)
     if capacity_evidence is not None and evidence_by_group is not None:
-        raise ValueError(
-            "provide only one of capacity_evidence and evidence_by_group"
-        )
+        raise ValueError("provide only one of capacity_evidence and evidence_by_group")
     effective_evidence = dict(
-        capacity_evidence
-        if capacity_evidence is not None
-        else evidence_by_group
-        or {}
+        capacity_evidence if capacity_evidence is not None else evidence_by_group or {}
     )
     unknown_evidence_groups = set(effective_evidence) - set(
         MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS
@@ -242,12 +216,9 @@ def transfer_legacy_autoencoder_features(
     declared_source_architecture = _source_architecture(
         source_architecture_version or source.architecture_version
     )
-    if target.architecture_version not in (
-        MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS
-    ):
+    if target.architecture_version not in (MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS):
         raise ValueError(
-            "unsupported target autoencoder architecture: "
-            f"{target.architecture_version!r}"
+            f"unsupported target autoencoder architecture: {target.architecture_version!r}"
         )
 
     source_generalizable = source.generalizable_copy()
@@ -266,17 +237,14 @@ def transfer_legacy_autoencoder_features(
     incompatible_shared_rows = 0
     capacity_decisions: Dict[str, Mapping[str, Any]] = {}
 
-    for group_name, fields in sorted(
-        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
-    ):
+    for group_name, fields in sorted(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()):
         capacity = (
             effective_capacity_policy.budget_for(group_name)
             if effective_capacity_policy is not None
             else legacy_capacity
         )
         all_source_maps = {
-            field_name: getattr(source_generalizable, field_name)
-            for field_name in fields
+            field_name: getattr(source_generalizable, field_name) for field_name in fields
         }
         source_maps = {
             field_name: mapping
@@ -284,8 +252,7 @@ def transfer_legacy_autoencoder_features(
             if _source_field_is_transferable(field_name, policy)
         }
         target_maps = {
-            field_name: getattr(target_generalizable, field_name)
-            for field_name in fields
+            field_name: getattr(target_generalizable, field_name) for field_name in fields
         }
         source_keys: set[Any] = set()
         all_source_keys: set[Any] = set()
@@ -312,29 +279,21 @@ def transfer_legacy_autoencoder_features(
 
         source_scores = {
             key: math.fsum(
-                _signal(mapping[key])
-                for mapping in source_maps.values()
-                if key in mapping
+                _signal(mapping[key]) for mapping in source_maps.values() if key in mapping
             )
             for key in sorted(source_keys, key=str)
         }
         target_scores = {
             key: math.fsum(
-                _signal(mapping[key])
-                for mapping in target_maps.values()
-                if key in mapping
+                _signal(mapping[key]) for mapping in target_maps.values() if key in mapping
             )
             for key in sorted(target_keys, key=str)
         }
         if effective_capacity_policy is None:
-            retained_target = set(
-                _ordered_keys(target_keys, target_scores)[:capacity]
-            )
+            retained_target = set(_ordered_keys(target_keys, target_scores)[:capacity])
             available = max(0, capacity - len(retained_target))
             source_only = source_keys - retained_target
-            retained_source_only = set(
-                _ordered_keys(source_only, source_scores)[:available]
-            )
+            retained_source_only = set(_ordered_keys(source_only, source_scores)[:available])
             retained = retained_target | retained_source_only
         else:
             decision = select_sparse_tail(
@@ -359,14 +318,11 @@ def transfer_legacy_autoencoder_features(
                     output[key] = _copy_value(target_map[key])
                     if key in source_map:
                         group_shared_entries += 1
-                        if _row_shape(target_map[key])[0] != _row_shape(
-                            source_map[key]
-                        )[0]:
+                        if _row_shape(target_map[key])[0] != _row_shape(source_map[key])[0]:
                             group_incompatible_rows += 1
                         elif (
                             _row_shape(target_map[key])[0] == "sequence"
-                            and _row_shape(target_map[key])[1]
-                            != _row_shape(source_map[key])[1]
+                            and _row_shape(target_map[key])[1] != _row_shape(source_map[key])[1]
                         ):
                             group_incompatible_rows += 1
                     continue
@@ -375,19 +331,13 @@ def transfer_legacy_autoencoder_features(
                     group_imported_entries += 1
             setattr(candidate, field_name, output)
 
-        source_signal = math.fsum(
-            source_scores[key] for key in sorted(source_scores, key=str)
-        )
+        source_signal = math.fsum(source_scores[key] for key in sorted(source_scores, key=str))
         source_signal_retained = math.fsum(
-            source_scores[key]
-            for key in sorted(source_keys & retained, key=str)
+            source_scores[key] for key in sorted(source_keys & retained, key=str)
         )
-        target_signal = math.fsum(
-            target_scores[key] for key in sorted(target_scores, key=str)
-        )
+        target_signal = math.fsum(target_scores[key] for key in sorted(target_scores, key=str))
         target_signal_retained = math.fsum(
-            target_scores[key]
-            for key in sorted(target_keys & retained, key=str)
+            target_scores[key] for key in sorted(target_keys & retained, key=str)
         )
         group_source_keys_retained = len(source_keys & retained)
         total_source_signal += source_signal
@@ -407,34 +357,24 @@ def transfer_legacy_autoencoder_features(
             "shared_field_entries_preserved_from_target": group_shared_entries,
             "source_signal": source_signal,
             "source_signal_coverage": (
-                source_signal_retained / source_signal
-                if source_signal > 0.0
-                else 1.0
+                source_signal_retained / source_signal if source_signal > 0.0 else 1.0
             ),
             "source_signal_retained": source_signal_retained,
             "source_unique_keys": len(source_keys),
             "source_unique_keys_retained": group_source_keys_retained,
-            "source_unique_keys_total_including_deferred_embeddings": len(
-                all_source_keys
-            ),
+            "source_unique_keys_total_including_deferred_embeddings": len(all_source_keys),
             "target_signal": target_signal,
             "target_signal_coverage": (
-                target_signal_retained / target_signal
-                if target_signal > 0.0
-                else 1.0
+                target_signal_retained / target_signal if target_signal > 0.0 else 1.0
             ),
             "target_unique_keys": len(target_keys),
             "target_unique_keys_retained": len(target_keys & retained),
         }
         if effective_capacity_policy is not None:
-            group_reports[group_name]["capacity_selection"] = dict(
-                capacity_decisions[group_name]
-            )
+            group_reports[group_name]["capacity_selection"] = dict(capacity_decisions[group_name])
 
     target_preservation_failures: list[str] = []
-    for _group_name, fields in sorted(
-        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
-    ):
+    for _group_name, fields in sorted(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()):
         for field_name in fields:
             target_map = getattr(target_generalizable, field_name)
             candidate_map = getattr(candidate, field_name)
@@ -455,9 +395,7 @@ def transfer_legacy_autoencoder_features(
             target_preservation_failures.append(field_name)
 
     source_signal_coverage = (
-        retained_source_signal / total_source_signal
-        if total_source_signal > 0.0
-        else 1.0
+        retained_source_signal / total_source_signal if total_source_signal > 0.0 else 1.0
     )
     target_preserved = not target_preservation_failures
     zero_risk_baseline = (
@@ -465,16 +403,8 @@ def transfer_legacy_autoencoder_features(
         and effective_capacity_policy.mode == ACCEPTED_STATE_V2
     )
     accepted = (
-        (
-            zero_risk_baseline
-            or source_signal_coverage
-            >= policy.minimum_source_signal_coverage
-        )
-        and (
-            target_preserved
-            or not policy.require_target_preservation
-        )
-    )
+        zero_risk_baseline or source_signal_coverage >= policy.minimum_source_signal_coverage
+    ) and (target_preserved or not policy.require_target_preservation)
     report: Dict[str, Any] = {
         "accepted": accepted,
         "architecture": {
@@ -492,9 +422,7 @@ def transfer_legacy_autoencoder_features(
             "decoded_embeddings": (
                 "sample-specific memory is excluded to prevent validation leakage"
             ),
-            "family_logits": (
-                "sample-specific memory is excluded to prevent validation leakage"
-            ),
+            "family_logits": ("sample-specific memory is excluded to prevent validation leakage"),
             "legacy_only_embedding_weights": (
                 "kept in the teacher checkpoint for behavior distillation; "
                 "direct activation is disabled because it can regress held-out cosine"
@@ -508,12 +436,8 @@ def transfer_legacy_autoencoder_features(
         },
         "group_reports": group_reports,
         "imported_source_field_entries": imported_field_entries,
-        "incompatible_shared_rows_preserved_from_target": (
-            incompatible_shared_rows
-        ),
-        "minimum_source_signal_coverage": (
-            policy.minimum_source_signal_coverage
-        ),
+        "incompatible_shared_rows_preserved_from_target": (incompatible_shared_rows),
+        "minimum_source_signal_coverage": (policy.minimum_source_signal_coverage),
         "output_generalizable_entry_count": candidate.generalizable_entry_count(),
         "policy": (
             "target_exact_source_fill_v2"
@@ -521,29 +445,21 @@ def transfer_legacy_autoencoder_features(
             else effective_capacity_policy.mode
         ),
         "source_field_allowlist": list(policy.source_field_allowlist),
-        "source_embedding_transfer_enabled": (
-            policy.transfer_source_embedding_weights
-        ),
+        "source_embedding_transfer_enabled": (policy.transfer_source_embedding_weights),
         "schema_version": (
             MODAL_AUTOENCODER_FEATURE_TRANSFER_SCHEMA_VERSION
             if effective_capacity_policy is None
             else MODAL_AUTOENCODER_EVIDENCE_AWARE_FEATURE_TRANSFER_SCHEMA_VERSION
         ),
         "shared_field_entries_preserved_from_target": shared_field_entries,
-        "source_generalizable_entry_count": (
-            source_generalizable.generalizable_entry_count()
-        ),
+        "source_generalizable_entry_count": (source_generalizable.generalizable_entry_count()),
         "source_signal": total_source_signal,
         "source_signal_coverage": source_signal_coverage,
         "source_signal_retained": retained_source_signal,
         "source_unique_keys": total_source_keys,
         "source_unique_keys_retained": retained_source_keys,
-        "target_generalizable_entry_count": (
-            target_generalizable.generalizable_entry_count()
-        ),
-        "target_preservation_failure_count": len(
-            target_preservation_failures
-        ),
+        "target_generalizable_entry_count": (target_generalizable.generalizable_entry_count()),
+        "target_preservation_failure_count": len(target_preservation_failures),
         "target_preservation_failures": target_preservation_failures[:64],
         "target_preserved": target_preserved,
         "target_unique_keys": total_target_keys,

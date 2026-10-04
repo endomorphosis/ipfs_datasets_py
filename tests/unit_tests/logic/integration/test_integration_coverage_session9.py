@@ -29,11 +29,13 @@ import pytest
 # Section 1: bridges/external_provers.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestProverStatus:
     """GIVEN ProverStatus enum WHEN inspected THEN all values present."""
 
     def test_enum_members(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverStatus
+
         assert ProverStatus.THEOREM.value == "theorem"
         assert ProverStatus.SATISFIABLE.value == "satisfiable"
         assert ProverStatus.UNSATISFIABLE.value == "unsatisfiable"
@@ -46,7 +48,11 @@ class TestProverResult:
     """GIVEN ProverResult dataclass WHEN instantiated THEN fields accessible."""
 
     def test_default_fields(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         r = ProverResult(status=ProverStatus.UNKNOWN)
         assert r.status == ProverStatus.UNKNOWN
         assert r.proof is None
@@ -56,7 +62,11 @@ class TestProverResult:
         assert r.statistics is None
 
     def test_full_fields(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         r = ProverResult(
             status=ProverStatus.THEOREM,
             proof="step1\nstep2",
@@ -75,6 +85,7 @@ class TestVampireProver:
 
     def _make_vampire(self) -> "VampireProver":
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             return VampireProver()
 
@@ -88,6 +99,7 @@ class TestVampireProver:
 
     def test_init_custom_params(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver(timeout=30, vampire_path="/usr/bin/vampire", strategy="portfolio")
         assert v.timeout == 30
@@ -96,6 +108,7 @@ class TestVampireProver:
 
     def test_check_availability_found(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         mock_result = MagicMock(returncode=0)
         with patch("subprocess.run", return_value=mock_result):
             v = VampireProver()
@@ -113,7 +126,11 @@ class TestVampireProver:
 
     def test_prove_theorem(self):
         import subprocess
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
         mock_run = MagicMock()
@@ -126,7 +143,11 @@ class TestVampireProver:
         assert result.prover == "Vampire"
 
     def test_prove_satisfiable(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
         mock_run = MagicMock(returncode=0, stdout="Satisfiable\n", stderr="")
@@ -135,7 +156,11 @@ class TestVampireProver:
         assert result.status == ProverStatus.SATISFIABLE
 
     def test_prove_timeout_from_output(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
         mock_run = MagicMock(returncode=0, stdout="Time limit expired\n", stderr="")
@@ -144,7 +169,11 @@ class TestVampireProver:
         assert result.status == ProverStatus.TIMEOUT
 
     def test_prove_unknown(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
         mock_run = MagicMock(returncode=0, stdout="no useful output\n", stderr="")
@@ -154,15 +183,25 @@ class TestVampireProver:
 
     def test_prove_timeout_exception(self):
         import subprocess
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver(timeout=1)
-        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="vampire", timeout=1)):
+        with patch(
+            "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="vampire", timeout=1)
+        ):
             result = v.prove("p(a)")
         assert result.status == ProverStatus.TIMEOUT
 
     def test_prove_error_exception(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
         with patch("subprocess.run", side_effect=RuntimeError("unexpected")):
@@ -171,7 +210,11 @@ class TestVampireProver:
         assert "unexpected" in result.error
 
     def test_prove_with_axioms(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
         mock_run = MagicMock(returncode=0, stdout="Theorem\n", stderr="")
@@ -213,6 +256,7 @@ class TestEProver:
 
     def _make_eprover(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             return EProver()
 
@@ -224,6 +268,7 @@ class TestEProver:
 
     def test_init_custom(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             e = EProver(timeout=10, eprover_path="/usr/local/bin/eprover", auto_mode=False)
         assert e.timeout == 10
@@ -231,6 +276,7 @@ class TestEProver:
 
     def test_check_availability_found(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver
+
         mock_result = MagicMock(returncode=0, stdout="E 2.6")
         with patch("subprocess.run", return_value=mock_result):
             e = EProver()
@@ -241,16 +287,28 @@ class TestEProver:
         assert "conjecture" in e._formula_to_tptp("p(X)")
 
     def test_prove_theorem(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
-        mock_run = MagicMock(returncode=0, stdout="# Proof found!\n# Proof object starts\nstep\n# Proof object ends\n", stderr="")
+        mock_run = MagicMock(
+            returncode=0,
+            stdout="# Proof found!\n# Proof object starts\nstep\n# Proof object ends\n",
+            stderr="",
+        )
         with patch("subprocess.run", return_value=mock_run):
             result = e.prove("p(a)")
         assert result.status == ProverStatus.THEOREM
         assert result.prover == "E"
 
     def test_prove_satisfiable(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
         mock_run = MagicMock(returncode=0, stdout="Satisfiable\n", stderr="")
         with patch("subprocess.run", return_value=mock_run):
@@ -258,7 +316,11 @@ class TestEProver:
         assert result.status == ProverStatus.SATISFIABLE
 
     def test_prove_resource_out(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
         mock_run = MagicMock(returncode=0, stdout="ResourceOut\n", stderr="")
         with patch("subprocess.run", return_value=mock_run):
@@ -266,7 +328,11 @@ class TestEProver:
         assert result.status == ProverStatus.TIMEOUT
 
     def test_prove_unknown(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
         mock_run = MagicMock(returncode=0, stdout="nothing\n", stderr="")
         with patch("subprocess.run", return_value=mock_run):
@@ -275,21 +341,35 @@ class TestEProver:
 
     def test_prove_timeout_exception(self):
         import subprocess
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
-        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="eprover", timeout=1)):
+        with patch(
+            "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="eprover", timeout=1)
+        ):
             result = e.prove("p(a)")
         assert result.status == ProverStatus.TIMEOUT
 
     def test_prove_error_exception(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
         with patch("subprocess.run", side_effect=OSError("crash")):
             result = e.prove("p(a)")
         assert result.status == ProverStatus.ERROR
 
     def test_prove_no_auto_mode(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         with patch("subprocess.run", side_effect=FileNotFoundError):
             e = EProver(auto_mode=False)
         mock_run = MagicMock(returncode=0, stdout="Theorem\n", stderr="")
@@ -298,7 +378,11 @@ class TestEProver:
         assert result.status == ProverStatus.THEOREM
 
     def test_prove_with_axioms(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = self._make_eprover()
         mock_run = MagicMock(returncode=0, stdout="Theorem\n", stderr="")
         with patch("subprocess.run", return_value=mock_run):
@@ -327,12 +411,15 @@ class TestProverRegistry:
 
     def _make_registry(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverRegistry
+
         return ProverRegistry()
 
     def test_register_and_list(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import (
-            ProverRegistry, VampireProver,
+            ProverRegistry,
+            VampireProver,
         )
+
         reg = self._make_registry()
         with patch("subprocess.run", side_effect=FileNotFoundError):
             v = VampireProver()
@@ -357,12 +444,17 @@ class TestProverRegistry:
 
     def test_prove_auto_no_provers(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverStatus
+
         reg = self._make_registry()
         result = reg.prove_auto("p(a)")
         assert result.status == ProverStatus.ERROR
 
     def test_prove_auto_preferred_proves(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         reg = self._make_registry()
         good_result = ProverResult(status=ProverStatus.THEOREM, time=0.5, prover="X")
         mock_a = MagicMock()
@@ -372,28 +464,43 @@ class TestProverRegistry:
         assert result.status == ProverStatus.THEOREM
 
     def test_prove_auto_preferred_fails_falls_through(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         reg = self._make_registry()
         fail = ProverResult(status=ProverStatus.UNKNOWN, time=1.0, prover="A")
         success = ProverResult(status=ProverStatus.THEOREM, time=0.5, prover="B")
-        mock_a = MagicMock(); mock_a.prove.return_value = fail
-        mock_b = MagicMock(); mock_b.prove.return_value = success
+        mock_a = MagicMock()
+        mock_a.prove.return_value = fail
+        mock_b = MagicMock()
+        mock_b.prove.return_value = success
         reg.register(mock_a, name="A")
         reg.register(mock_b, name="B")
         result = reg.prove_auto("p(a)", prefer="A")
         assert result.status == ProverStatus.THEOREM
 
     def test_prove_auto_all_fail(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         reg = self._make_registry()
         fail = ProverResult(status=ProverStatus.UNKNOWN, time=1.0, prover="X")
-        mock_a = MagicMock(); mock_a.prove.return_value = fail
+        mock_a = MagicMock()
+        mock_a.prove.return_value = fail
         reg.register(mock_a, name="A")
         result = reg.prove_auto("p(a)")
         assert result.status in (ProverStatus.UNKNOWN, ProverStatus.ERROR)
 
     def test_is_better_result_theorem_wins(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         reg = self._make_registry()
         theorem = ProverResult(status=ProverStatus.THEOREM, time=2.0, prover="X")
         unknown = ProverResult(status=ProverStatus.UNKNOWN, time=0.5, prover="Y")
@@ -401,7 +508,11 @@ class TestProverRegistry:
         assert reg._is_better_result(unknown, theorem) is False
 
     def test_is_better_result_faster_same_status(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         reg = self._make_registry()
         fast = ProverResult(status=ProverStatus.UNKNOWN, time=0.5, prover="X")
         slow = ProverResult(status=ProverStatus.UNKNOWN, time=2.0, prover="Y")
@@ -409,6 +520,7 @@ class TestProverRegistry:
 
     def test_get_prover_registry_singleton(self):
         from ipfs_datasets_py.logic.integration.bridges import external_provers as ep
+
         ep._global_registry = None  # reset
         with patch("subprocess.run", side_effect=FileNotFoundError):
             reg1 = ep.get_prover_registry()
@@ -421,11 +533,13 @@ class TestProverRegistry:
 # Section 2: bridges/prover_installer.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestProverInstallerHelpers:
     """GIVEN installer helpers WHEN called THEN behave correctly."""
 
     def test_truthy(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _truthy
+
         assert _truthy("1") is True
         assert _truthy("true") is True
         assert _truthy("yes") is True
@@ -436,30 +550,35 @@ class TestProverInstallerHelpers:
 
     def test_which_found(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _which
+
         with patch("shutil.which", return_value="/usr/bin/lean"):
             result = _which("lean")
         assert result == "/usr/bin/lean"
 
     def test_which_not_found(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _which
+
         with patch("shutil.which", return_value=None):
             result = _which("lean")
         assert result is None
 
     def test_run_success(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _run
+
         with patch("subprocess.run", return_value=MagicMock(returncode=0)):
             rc = _run(["echo", "hello"], check=False)
         assert rc == 0
 
     def test_run_fail_no_check(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _run
+
         with patch("subprocess.run", return_value=MagicMock(returncode=1)):
             rc = _run(["false"], check=False)
         assert rc == 1
 
     def test_run_fail_with_check_raises(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _run
+
         with patch("subprocess.run", return_value=MagicMock(returncode=1)):
             with pytest.raises(RuntimeError):
                 _run(["false"], check=True)
@@ -470,25 +589,30 @@ class TestEnsureLean:
 
     def test_lean_already_on_path(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         with patch("shutil.which", return_value="/usr/bin/lean"):
             result = ensure_lean(yes=False, strict=False)
         assert result is True
 
     def test_lean_not_found_no_yes(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         with patch("shutil.which", return_value=None):
             result = ensure_lean(yes=False, strict=False)
         assert result is False
 
     def test_lean_install_via_elan_success(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         mock_lean_path = Path.home() / ".elan" / "bin" / "lean"
-        with patch("shutil.which", return_value=None), \
-             patch("urllib.request.urlopen") as mock_open, \
-             patch("subprocess.run", return_value=MagicMock(returncode=0)), \
-             patch("pathlib.Path.exists", return_value=True), \
-             patch("pathlib.Path.write_bytes"), \
-             patch("pathlib.Path.chmod"):
+        with (
+            patch("shutil.which", return_value=None),
+            patch("urllib.request.urlopen") as mock_open,
+            patch("subprocess.run", return_value=MagicMock(returncode=0)),
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.write_bytes"),
+            patch("pathlib.Path.chmod"),
+        ):
             mock_cm = MagicMock()
             mock_cm.__enter__ = lambda s: MagicMock(read=lambda: b"#!/bin/sh\necho installed")
             mock_cm.__exit__ = MagicMock(return_value=False)
@@ -499,15 +623,21 @@ class TestEnsureLean:
 
     def test_lean_install_download_fails(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
-        with patch("shutil.which", return_value=None), \
-             patch("urllib.request.urlopen", side_effect=OSError("network error")):
+
+        with (
+            patch("shutil.which", return_value=None),
+            patch("urllib.request.urlopen", side_effect=OSError("network error")),
+        ):
             result = ensure_lean(yes=True, strict=False)
         assert result is False
 
     def test_lean_install_strict_raises(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
-        with patch("shutil.which", return_value=None), \
-             patch("urllib.request.urlopen", side_effect=OSError("network error")):
+
+        with (
+            patch("shutil.which", return_value=None),
+            patch("urllib.request.urlopen", side_effect=OSError("network error")),
+        ):
             with pytest.raises(OSError):
                 ensure_lean(yes=True, strict=True)
 
@@ -517,35 +647,47 @@ class TestEnsureCoq:
 
     def test_coq_already_on_path(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
+
         with patch("shutil.which", return_value="/usr/bin/coqc"):
             result = ensure_coq(yes=False, strict=False)
         assert result is True
 
     def test_coq_not_found_no_yes(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
+
         with patch("shutil.which", return_value=None):
             result = ensure_coq(yes=False, strict=False)
         assert result is False
 
     def test_coq_apt_install_as_root_success(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
+
         # Simulate: not on PATH → try apt as root → succeeds
         which_calls = {"coqc": None, "apt-get": "/usr/bin/apt-get", "sudo": "/usr/bin/sudo"}
+
         def _which_side(cmd):
             return which_calls.get(cmd)
 
-        with patch("shutil.which", side_effect=_which_side), \
-             patch("subprocess.run", return_value=MagicMock(returncode=0)), \
-             patch("os.geteuid", return_value=0):
+        with (
+            patch("shutil.which", side_effect=_which_side),
+            patch("subprocess.run", return_value=MagicMock(returncode=0)),
+            patch("os.geteuid", return_value=0),
+        ):
             # After apt install, coqc "appears"
-            with patch("shutil.which", side_effect=lambda c: "/usr/bin/coqc" if c == "coqc" else _which_side(c)):
+            with patch(
+                "shutil.which",
+                side_effect=lambda c: "/usr/bin/coqc" if c == "coqc" else _which_side(c),
+            ):
                 result = ensure_coq(yes=True, strict=False)
         assert isinstance(result, bool)
 
     def test_coq_install_exception_no_strict(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
-        with patch("shutil.which", return_value=None), \
-             patch("subprocess.run", side_effect=RuntimeError("fail")):
+
+        with (
+            patch("shutil.which", return_value=None),
+            patch("subprocess.run", side_effect=RuntimeError("fail")),
+        ):
             result = ensure_coq(yes=True, strict=False)
         assert result is False
 
@@ -555,18 +697,21 @@ class TestProverInstallerMain:
 
     def test_main_default_returns_0_when_both_available(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         with patch("shutil.which", return_value="/usr/bin/lean"):
             rc = main([])
         assert isinstance(rc, int)
 
     def test_main_lean_only(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         with patch("shutil.which", return_value="/usr/bin/lean"):
             rc = main(["--lean"])
         assert rc == 0
 
     def test_main_coq_not_found_no_strict(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         with patch("shutil.which", return_value=None):
             rc = main(["--coq"])
         assert rc == 0  # not strict → always 0
@@ -576,11 +721,13 @@ class TestProverInstallerMain:
 # Section 3: domain/caselaw_bulk_processor.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestProcessingStats:
     """GIVEN ProcessingStats WHEN queried THEN derived properties correct."""
 
     def _make_stats(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import ProcessingStats
+
         return ProcessingStats()
 
     def test_initial_values(self):
@@ -592,11 +739,13 @@ class TestProcessingStats:
 
     def test_processing_time_no_start(self):
         from datetime import timedelta
+
         s = self._make_stats()
         assert s.processing_time == timedelta(0)
 
     def test_processing_time_with_range(self):
         from datetime import timedelta
+
         s = self._make_stats()
         s.start_time = datetime(2024, 1, 1, 0, 0, 0)
         s.end_time = datetime(2024, 1, 1, 0, 1, 0)
@@ -625,7 +774,10 @@ class TestBulkProcessingConfig:
     """GIVEN BulkProcessingConfig WHEN created THEN defaults correct."""
 
     def test_defaults(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import BulkProcessingConfig
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            BulkProcessingConfig,
+        )
+
         cfg = BulkProcessingConfig()
         assert cfg.max_concurrent_documents == 5
         assert cfg.chunk_size == 100
@@ -640,8 +792,10 @@ class TestCaselawBulkProcessorHelpers:
 
     def _make_processor(self, output_dir=None):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig,
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             cfg = BulkProcessingConfig(
                 output_directory=output_dir or tmpdir,
@@ -658,68 +812,110 @@ class TestCaselawBulkProcessorHelpers:
     def test_passes_filters_short_text(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="d1", title="T", text="short",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d1",
+            title="T",
+            text="short",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         assert proc._passes_filters(doc) is False
 
     def test_passes_filters_sufficient_text(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="d2", title="T", text="x" * 200,
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d2",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         assert proc._passes_filters(doc) is True
 
     def test_passes_filters_date_before_range(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         proc.config.date_range = (datetime(2021, 1, 1), None)
         doc = CaselawDocument(
-            document_id="d3", title="T", text="x" * 200,
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d3",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         assert proc._passes_filters(doc) is False
 
     def test_passes_filters_date_after_range(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         proc.config.date_range = (None, datetime(2019, 12, 31))
         doc = CaselawDocument(
-            document_id="d4", title="T", text="x" * 200,
-            date=datetime(2020, 6, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d4",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 6, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         assert proc._passes_filters(doc) is False
 
     def test_passes_filters_jurisdiction_filter_match(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         proc.config.jurisdictions_filter = ["US", "UK"]
         doc = CaselawDocument(
-            document_id="d5", title="T", text="x" * 200,
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d5",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         assert proc._passes_filters(doc) is True
 
     def test_passes_filters_jurisdiction_filter_no_match(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         proc.config.jurisdictions_filter = ["UK"]
         doc = CaselawDocument(
-            document_id="d6", title="T", text="x" * 200,
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d6",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         assert proc._passes_filters(doc) is False
 
     def test_passes_filters_legal_domain_match(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         proc.config.legal_domains_filter = ["contract"]
         doc = CaselawDocument(
-            document_id="d7", title="T", text="x" * 200,
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d7",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
             legal_domains=["contract"],
         )
         assert proc._passes_filters(doc) is True
@@ -727,9 +923,15 @@ class TestCaselawBulkProcessorHelpers:
     def test_passes_filters_precedent_strength_too_low(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="d8", title="T", text="x" * 200,
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="d8",
+            title="T",
+            text="x" * 200,
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
             precedent_strength=0.1,
         )
         assert proc._passes_filters(doc) is False
@@ -745,9 +947,15 @@ class TestCaselawBulkProcessorHelpers:
     def test_extract_agent_defendant(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="da", title="T", text="",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="da",
+            title="T",
+            text="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         agent = proc._extract_agent_from_context("the defendant must comply", doc)
         assert agent.identifier == "defendant"
@@ -755,9 +963,15 @@ class TestCaselawBulkProcessorHelpers:
     def test_extract_agent_plaintiff(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="db", title="T", text="",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="db",
+            title="T",
+            text="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         agent = proc._extract_agent_from_context("the plaintiff must file", doc)
         assert agent.identifier == "plaintiff"
@@ -765,9 +979,15 @@ class TestCaselawBulkProcessorHelpers:
     def test_extract_agent_court(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="dc", title="T", text="",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="dc",
+            title="T",
+            text="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         agent = proc._extract_agent_from_context("the court orders", doc)
         assert agent.identifier == "court"
@@ -775,9 +995,15 @@ class TestCaselawBulkProcessorHelpers:
     def test_extract_agent_default(self):
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
-            document_id="dd", title="T", text="",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            document_id="dd",
+            title="T",
+            text="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         agent = proc._extract_agent_from_context("some random text here", doc)
         assert agent.identifier == "party"
@@ -786,10 +1012,15 @@ class TestCaselawBulkProcessorHelpers:
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         doc = CaselawDocument(
-            document_id="de", title="T",
+            document_id="de",
+            title="T",
             text="The defendant must pay all outstanding fees within thirty days of this order.",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         formulas = proc._extract_formulas_pattern_matching(doc)
         oblig = [f for f in formulas if f.operator == DeonticOperator.OBLIGATION]
@@ -799,10 +1030,15 @@ class TestCaselawBulkProcessorHelpers:
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         doc = CaselawDocument(
-            document_id="df", title="T",
+            document_id="df",
+            title="T",
             text="The plaintiff may appeal the decision within fourteen days of judgment.",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         formulas = proc._extract_formulas_pattern_matching(doc)
         perms = [f for f in formulas if f.operator == DeonticOperator.PERMISSION]
@@ -812,10 +1048,15 @@ class TestCaselawBulkProcessorHelpers:
         proc, _ = self._make_processor()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         doc = CaselawDocument(
-            document_id="dg", title="T",
+            document_id="dg",
+            title="T",
             text="The respondent must not contact the protected person under any circumstances.",
-            date=datetime(2020, 1, 1), jurisdiction="US", court="SC", citation="",
+            date=datetime(2020, 1, 1),
+            jurisdiction="US",
+            court="SC",
+            citation="",
         )
         formulas = proc._extract_formulas_pattern_matching(doc)
         prohb = [f for f in formulas if f.operator == DeonticOperator.PROHIBITION]
@@ -844,10 +1085,16 @@ class TestCaselawBulkProcessorHelpers:
         assert isinstance(j, str)
 
     def test_create_bulk_processor_factory(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import create_bulk_processor
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            create_bulk_processor,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             proc = create_bulk_processor([tmpdir], output_directory=tmpdir, max_concurrent=3)
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawBulkProcessor
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            CaselawBulkProcessor,
+        )
+
         assert isinstance(proc, CaselawBulkProcessor)
         assert proc.config.max_concurrent_documents == 3
 
@@ -856,17 +1103,24 @@ class TestCaselawBulkProcessorHelpers:
 # Section 4: domain/temporal_deontic_rag_store.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTemporalDeonticRAGStore:
     """GIVEN TemporalDeonticRAGStore WHEN theorems added THEN retrieval works."""
 
     def _make_store(self):
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
+
         return TemporalDeonticRAGStore()
 
     def _make_formula(self, op="OBLIGATION", prop="pay fees", agent_id="party"):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         op_enum = DeonticOperator[op]
         agent = LegalAgent(identifier=agent_id, name=agent_id.capitalize(), agent_type="person")
         return DeonticFormula(
@@ -982,12 +1236,14 @@ class TestTemporalDeonticRAGStore:
 
     def test_cosine_similarity_identical(self):
         import numpy as np
+
         store = self._make_store()
         v = np.array([1.0, 0.0, 0.0])
         assert store._cosine_similarity(v, v) == pytest.approx(1.0)
 
     def test_cosine_similarity_orthogonal(self):
         import numpy as np
+
         store = self._make_store()
         v1 = np.array([1.0, 0.0])
         v2 = np.array([0.0, 1.0])
@@ -995,6 +1251,7 @@ class TestTemporalDeonticRAGStore:
 
     def test_cosine_similarity_zero_vector(self):
         import numpy as np
+
         store = self._make_store()
         v1 = np.array([0.0, 0.0])
         v2 = np.array([1.0, 0.0])
@@ -1111,11 +1368,15 @@ class TestTemporalDeonticRAGStore:
 # Section 5: symbolic/symbolic_logic_primitives.py (fallback paths)
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestSymbolicLogicPrimitivesModule:
     """GIVEN symbolic_logic_primitives WHEN SymbolicAI absent THEN fallbacks run."""
 
     def _make_symbol(self, text: str):
-        from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import create_logic_symbol
+        from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
+            create_logic_symbol,
+        )
+
         return create_logic_symbol(text, semantic=False)
 
     def test_create_logic_symbol(self):
@@ -1135,7 +1396,12 @@ class TestSymbolicLogicPrimitivesModule:
     def test_to_fol_conditional(self):
         sym = self._make_symbol("if it rains then the road is wet")
         result = sym.to_fol()
-        assert "→" in result.value or ":-" in result.value or "Rain" in result.value or "condition" in result.value.lower()
+        assert (
+            "→" in result.value
+            or ":-" in result.value
+            or "Rain" in result.value
+            or "condition" in result.value.lower()
+        )
 
     def test_to_fol_disjunction(self):
         sym = self._make_symbol("cats or dogs are pets")
@@ -1208,7 +1474,10 @@ class TestSymbolicLogicPrimitivesModule:
         assert isinstance(result.value, str)
 
     def test_get_available_primitives(self):
-        from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import get_available_primitives
+        from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
+            get_available_primitives,
+        )
+
         prims = get_available_primitives()
         assert "to_fol" in prims
         assert "negate" in prims
@@ -1216,10 +1485,17 @@ class TestSymbolicLogicPrimitivesModule:
         assert len(prims) == 9
 
     def test_logical_structure_dataclass(self):
-        from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import LogicalStructure
+        from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
+            LogicalStructure,
+        )
+
         ls = LogicalStructure(
-            quantifiers=["∀"], variables=["x"], predicates=["Cat"],
-            connectives=["∧"], operators=["→"], confidence=0.9,
+            quantifiers=["∀"],
+            variables=["x"],
+            predicates=["Cat"],
+            connectives=["∧"],
+            operators=["→"],
+            confidence=0.9,
         )
         assert ls.confidence == 0.9
         assert "∀" in ls.quantifiers
@@ -1229,11 +1505,15 @@ class TestSymbolicLogicPrimitivesModule:
 # Section 6: converters/modal_logic_extension.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestModalLogicSymbol:
     """GIVEN ModalLogicSymbol WHEN modal operators applied THEN formulas correct."""
 
     def _make(self, text: str):
-        from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import ModalLogicSymbol
+        from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
+            ModalLogicSymbol,
+        )
+
         return ModalLogicSymbol(text, semantic=False)
 
     def test_necessarily(self):
@@ -1285,7 +1565,10 @@ class TestModalLogicSymbol:
         assert "done" in result.value
 
     def test_static_context_kwarg_ignored_gracefully(self):
-        from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import ModalLogicSymbol
+        from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
+            ModalLogicSymbol,
+        )
+
         s = ModalLogicSymbol("P", semantic=False, static_context="ctx")
         assert s.value == "P"
 
@@ -1294,7 +1577,10 @@ class TestAdvancedLogicConverter:
     """GIVEN AdvancedLogicConverter WHEN text classified/converted THEN correct logic."""
 
     def _make_converter(self):
-        from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
+            AdvancedLogicConverter,
+        )
+
         return AdvancedLogicConverter()
 
     # -- detect_logic_type ---------------------------------------------------
@@ -1302,12 +1588,16 @@ class TestAdvancedLogicConverter:
     def test_detect_deontic(self):
         conv = self._make_converter()
         # Use multiple deontic indicators so score exceeds temporal/modal
-        result = conv.detect_logic_type("The party is obliged and required to comply with all permitted obligations.")
+        result = conv.detect_logic_type(
+            "The party is obliged and required to comply with all permitted obligations."
+        )
         assert result.logic_type == "deontic"
 
     def test_detect_temporal(self):
         conv = self._make_converter()
-        result = conv.detect_logic_type("This condition will always hold until the contract expires.")
+        result = conv.detect_logic_type(
+            "This condition will always hold until the contract expires."
+        )
         assert result.logic_type == "temporal"
 
     def test_detect_epistemic(self):
@@ -1335,7 +1625,13 @@ class TestAdvancedLogicConverter:
     def test_convert_modal_necessity(self):
         conv = self._make_converter()
         result = conv.convert_to_modal_logic("It is necessarily required.")
-        assert result.modal_type == "alethic" or result.modal_type in ("modal", "deontic", "temporal", "epistemic", "fol")
+        assert result.modal_type == "alethic" or result.modal_type in (
+            "modal",
+            "deontic",
+            "temporal",
+            "epistemic",
+            "fol",
+        )
         assert isinstance(result.formula, str)
 
     def test_convert_modal_possibility(self):
@@ -1355,20 +1651,26 @@ class TestAdvancedLogicConverter:
 
     def test_convert_deontic_obligation(self):
         conv = self._make_converter()
-        result = conv.convert_to_modal_logic("The agent is obliged and required to report the findings.")
+        result = conv.convert_to_modal_logic(
+            "The agent is obliged and required to report the findings."
+        )
         assert result.modal_type == "deontic"
         assert "O(" in result.formula
 
     def test_convert_deontic_permission(self):
         conv = self._make_converter()
-        result = conv.convert_to_modal_logic("The party is permitted and allowed to proceed with the appeal.")
+        result = conv.convert_to_modal_logic(
+            "The party is permitted and allowed to proceed with the appeal."
+        )
         assert result.modal_type == "deontic"
         assert "P(" in result.formula
 
     def test_convert_deontic_prohibition(self):
         conv = self._make_converter()
         # "forbidden" + "shall" hit deontic detection; fallback operator check hits "forbidden"
-        result = conv.convert_to_modal_logic("The activity is forbidden and shall not be performed here.")
+        result = conv.convert_to_modal_logic(
+            "The activity is forbidden and shall not be performed here."
+        )
         assert result.modal_type == "deontic"
         assert "F(" in result.formula
 
@@ -1409,13 +1711,16 @@ class TestAdvancedLogicConverter:
 # Section 7: converters/logic_translation_core.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTranslationResult:
     """GIVEN TranslationResult WHEN to_dict called THEN all fields present."""
 
     def test_to_dict(self):
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         r = TranslationResult(
             target=LogicTranslationTarget.LEAN,
             translated_formula="Obligatory pay_fees",
@@ -1441,6 +1746,7 @@ class TestAbstractLogicFormula:
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
             AbstractLogicFormula,
         )
+
         f = AbstractLogicFormula(
             formula_type="deontic",
             operators=["O"],
@@ -1461,8 +1767,11 @@ class TestLeanTranslator:
 
     def _make_formula(self, op="OBLIGATION", prop="pay_fees"):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent(identifier="party", name="Party", agent_type="person")
         return DeonticFormula(
             operator=DeonticOperator[op],
@@ -1473,7 +1782,10 @@ class TestLeanTranslator:
         )
 
     def _make_translator(self):
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         return LeanTranslator()
 
     def test_translate_obligation(self):
@@ -1539,6 +1851,7 @@ class TestLeanTranslator:
 
     def test_translate_rule_set(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         t = self._make_translator()
         f = self._make_formula()
         rs = DeonticRuleSet(
@@ -1570,8 +1883,11 @@ class TestCoqTranslator:
 
     def _make_formula(self, op="OBLIGATION", prop="report findings"):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent(identifier="agent", name="Agent", agent_type="person")
         return DeonticFormula(
             operator=DeonticOperator[op],
@@ -1582,7 +1898,10 @@ class TestCoqTranslator:
         )
 
     def _make_translator(self):
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import CoqTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            CoqTranslator,
+        )
+
         return CoqTranslator()
 
     def test_translate_obligation(self):
@@ -1595,8 +1914,11 @@ class TestCoqTranslator:
     def test_translate_with_conditions(self):
         t = self._make_translator()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
@@ -1643,6 +1965,7 @@ class TestCoqTranslator:
 
     def test_translate_rule_set(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         t = self._make_translator()
         f = self._make_formula()
         rs = DeonticRuleSet(
@@ -1666,8 +1989,11 @@ class TestSMTTranslator:
 
     def _make_formula(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         return DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
@@ -1678,7 +2004,10 @@ class TestSMTTranslator:
         )
 
     def test_translate_obligation(self):
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import SMTTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            SMTTranslator,
+        )
+
         t = SMTTranslator()
         f = self._make_formula()
         result = t.translate_deontic_formula(f)
@@ -1686,7 +2015,10 @@ class TestSMTTranslator:
         assert "obligatory" in result.translated_formula.lower()
 
     def test_generate_theory_file(self):
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import SMTTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            SMTTranslator,
+        )
+
         t = SMTTranslator()
         f = self._make_formula()
         content = t.generate_theory_file([f], "SMTLegal")

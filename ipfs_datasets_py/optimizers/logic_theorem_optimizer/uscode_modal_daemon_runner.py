@@ -208,15 +208,10 @@ DEFAULT_BRIDGE_LOSS_ADAPTERS = ",".join(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
 BRIDGE_EVALUATE_PROVERS_ENV = "IPFS_DATASETS_BRIDGE_EVALUATE_PROVERS"
 _TRUE_ENV_VALUES = {"1", "true", "yes", "y", "on"}
 DEFAULT_BRIDGE_EVALUATE_PROVERS = (
-    str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
-    in _TRUE_ENV_VALUES
+    str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower() in _TRUE_ENV_VALUES
 )
-AUTOENCODER_METRIC_BRIDGE_ADAPTERS_ENV = (
-    "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS"
-)
-AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS_ENV = (
-    "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS"
-)
+AUTOENCODER_METRIC_BRIDGE_ADAPTERS_ENV = "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS"
+AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS_ENV = "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS"
 DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS = (
     "modal_frame_logic",
     "deontic_norms",
@@ -251,16 +246,13 @@ DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES = 128
 DEFAULT_DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS = 1.0
 DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS = 2
 AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
-AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
-    "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
-)
+AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
 AUTOENCODER_CANONICAL_WARM_START_MODES = frozenset({"auto", "off", "require"})
 
 
 def _default_bridge_evaluate_provers() -> bool:
     return (
-        str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
-        in _TRUE_ENV_VALUES
+        str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower() in _TRUE_ENV_VALUES
     )
 
 
@@ -274,6 +266,7 @@ def _default_canonical_warm_start_mode() -> str:
         return "require"
     return "auto"
 
+
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
         scope
@@ -283,11 +276,7 @@ CODEX_AST_SCOPES = tuple(
             "compiler_ambiguity",
             "ir_decompiler",
             "frame_logic",
-            *(
-                spec.ast_scope
-                for spec in logic_submodule_specs()
-                if spec.ast_scope
-            ),
+            *(spec.ast_scope for spec in logic_submodule_specs() if spec.ast_scope),
         )
         if scope
     )
@@ -295,110 +284,111 @@ CODEX_AST_SCOPES = tuple(
 
 
 CODEX_TARGET_FILE_HINTS = {
-    key: list(value)
-    for key, value in logic_optimizer_target_file_hints().items()
+    key: list(value) for key, value in logic_optimizer_target_file_hints().items()
 }
-CODEX_TARGET_FILE_HINTS.update({
-    "logic.optimizer.autoencoder": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.backlog": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.codex_bundler": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.residual_clusterer": [
-        "ipfs_datasets_py/logic/modal/synthesis.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.residual_router": [
-        "ipfs_datasets_py/logic/modal/synthesis.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.supervisor": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.validation_gate": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "CEC.native": [
-        "ipfs_datasets_py/logic/bridge/cec_dcec.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/CEC/cec_framework.py",
-        "ipfs_datasets_py/logic/CEC/dcec_wrapper.py",
-        "ipfs_datasets_py/logic/CEC/native",
-    ],
-    "TDFOL.prover": [
-        "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
-        "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
-        "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
-    ],
-    "deontic.ir": [
-        "ipfs_datasets_py/logic/bridge/deontic_norms.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/deontic/converter.py",
-        "ipfs_datasets_py/logic/deontic/ir.py",
-        "ipfs_datasets_py/logic/deontic/formula_builder.py",
-        "ipfs_datasets_py/logic/deontic/prover_syntax.py",
-        "ipfs_datasets_py/logic/deontic/metrics.py",
-    ],
-    "modal.compiler": [
-        "ipfs_datasets_py/logic/modal/compiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
-    ],
-    "modal.compiler.ambiguity": [
-        "ipfs_datasets_py/logic/modal/compiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
-    ],
-    "modal.compiler.registry": [
-        "ipfs_datasets_py/logic/modal/compiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
-    ],
-    "modal.frame_logic": [
-        "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/modal/codec.py",
-        "ipfs_datasets_py/logic/modal/kg_bridge.py",
-        "ipfs_datasets_py/logic/flogic_optimizer.py",
-        "ipfs_datasets_py/optimizers/logic/flogic_optimizer.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
-    ],
-    "modal.ir_decompiler": [
-        "ipfs_datasets_py/logic/modal/codec.py",
-        "ipfs_datasets_py/logic/modal/decompiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
-    ],
-    "external_provers.router": [
-        "ipfs_datasets_py/logic/bridge/external_prover_router.py",
-        "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
-        "ipfs_datasets_py/logic/external_provers/prover_router.py",
-        "ipfs_datasets_py/logic/external_provers/lazy_installer.py",
-    ],
-})
+CODEX_TARGET_FILE_HINTS.update(
+    {
+        "logic.optimizer.autoencoder": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.backlog": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.codex_bundler": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.residual_clusterer": [
+            "ipfs_datasets_py/logic/modal/synthesis.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.residual_router": [
+            "ipfs_datasets_py/logic/modal/synthesis.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.supervisor": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.validation_gate": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "CEC.native": [
+            "ipfs_datasets_py/logic/bridge/cec_dcec.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/CEC/cec_framework.py",
+            "ipfs_datasets_py/logic/CEC/dcec_wrapper.py",
+            "ipfs_datasets_py/logic/CEC/native",
+        ],
+        "TDFOL.prover": [
+            "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+        ],
+        "deontic.ir": [
+            "ipfs_datasets_py/logic/bridge/deontic_norms.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/deontic/converter.py",
+            "ipfs_datasets_py/logic/deontic/ir.py",
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+            "ipfs_datasets_py/logic/deontic/metrics.py",
+        ],
+        "modal.compiler": [
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ],
+        "modal.compiler.ambiguity": [
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ],
+        "modal.compiler.registry": [
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ],
+        "modal.frame_logic": [
+            "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/modal/codec.py",
+            "ipfs_datasets_py/logic/modal/kg_bridge.py",
+            "ipfs_datasets_py/logic/flogic_optimizer.py",
+            "ipfs_datasets_py/optimizers/logic/flogic_optimizer.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+        ],
+        "modal.ir_decompiler": [
+            "ipfs_datasets_py/logic/modal/codec.py",
+            "ipfs_datasets_py/logic/modal/decompiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+        ],
+        "external_provers.router": [
+            "ipfs_datasets_py/logic/bridge/external_prover_router.py",
+            "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+            "ipfs_datasets_py/logic/external_provers/prover_router.py",
+            "ipfs_datasets_py/logic/external_provers/lazy_installer.py",
+        ],
+    }
+)
 
 CODEX_ACTION_FILE_HINTS = {
     "add_deterministic_parser_rule": [
@@ -458,9 +448,7 @@ DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
 DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
 COMPILER_IR_METRIC_PROFILE_VERSION = "compiler-ir-metric-profile-v3-compact-cache"
 LEANSTRAL_REPORT_WAIT_SUMMARY_INTERVAL_SECONDS = 5.0
-CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = (
-    "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
-)
+CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
 DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 300.0
 CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION = "target-metric-tradeoff-v2-hard-hammer-guardrails"
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
@@ -472,15 +460,15 @@ _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
 
 
 def _default_compiler_ir_metric_max_sample_text_chars() -> int:
-    raw = str(
-        os.environ.get(COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV) or ""
-    ).strip()
+    raw = str(os.environ.get(COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV) or "").strip()
     if not raw:
         return DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS
     try:
         return max(0, int(raw))
     except ValueError:
         return DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS
+
+
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
@@ -507,9 +495,7 @@ COMPILER_IR_METRIC_ALIASES = {
     "hammer_premise_selection_hit_rate": "compiler_ir_hammer_premise_selection_hit_rate",
     "hammer_proof_failure_ratio": "compiler_ir_hammer_proof_failure_ratio",
     "hammer_proof_success_rate": "compiler_ir_hammer_proof_success_rate",
-    "hammer_reconstruction_success_rate": (
-        "compiler_ir_hammer_reconstruction_success_rate"
-    ),
+    "hammer_reconstruction_success_rate": ("compiler_ir_hammer_reconstruction_success_rate"),
     "hammer_source_copy_penalty": "compiler_ir_hammer_source_copy_penalty",
     "modal_span_coverage_loss": "compiler_ir_modal_span_coverage_loss",
     "reconstruction_loss": "compiler_ir_reconstruction_loss",
@@ -519,9 +505,7 @@ COMPILER_IR_METRIC_ALIASES = {
         "compiler_ir_source_decompiled_text_embedding_cosine_loss"
     ),
     "source_decompiled_text_token_loss": "compiler_ir_source_decompiled_text_token_loss",
-    "structural_text_reconstruction_loss": (
-        "compiler_ir_structural_text_reconstruction_loss"
-    ),
+    "structural_text_reconstruction_loss": ("compiler_ir_structural_text_reconstruction_loss"),
     "symbolic_validity_penalty": "compiler_ir_symbolic_validity_penalty",
     "symbolic_validity_success_rate": "compiler_ir_symbolic_validity_success_rate",
     "text_reconstruction_loss": "compiler_ir_text_reconstruction_loss",
@@ -539,10 +523,7 @@ def _runtime_queue_depth(queue: Any) -> int:
         counts = dict(queue.status_counts())
     except (AttributeError, TypeError, ValueError):
         return 0
-    return sum(
-        max(0, int(counts.get(status, 0) or 0))
-        for status in ("pending", "claimed")
-    )
+    return sum(max(0, int(counts.get(status, 0) or 0)) for status in ("pending", "claimed"))
 
 
 def _stable_metric_json(value: Any) -> str:
@@ -603,9 +584,7 @@ def _compiler_ir_metric_lineage(
         "max_sample_metric_records": int(max_sample_metric_records),
         "max_sample_text_chars": int(max_sample_text_chars),
         "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
-        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(
-            metric_text_policy
-        ),
+        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(metric_text_policy),
         "sample_timeout_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
         "successful_result_timeout_policy": "timeout_agnostic",
         "use_autoencoder_guidance": bool(use_autoencoder_guidance),
@@ -695,10 +674,7 @@ def _metric_code_fingerprint() -> str:
             package_root / "optimizers" / "logic_theorem_optimizer" / "spacy_modal_codec.py",
         ]
         signature, fingerprint = _code_fingerprint_from_candidates(package_root, candidates)
-        if (
-            _METRIC_CODE_FINGERPRINT_SIGNATURE == signature
-            and _METRIC_CODE_FINGERPRINT_VALUE
-        ):
+        if _METRIC_CODE_FINGERPRINT_SIGNATURE == signature and _METRIC_CODE_FINGERPRINT_VALUE:
             return _METRIC_CODE_FINGERPRINT_VALUE
         _METRIC_CODE_FINGERPRINT_SIGNATURE = signature
         _METRIC_CODE_FINGERPRINT_VALUE = fingerprint
@@ -757,10 +733,7 @@ def _metric_cache_object_payload(value: Any) -> Any:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, Mapping):
-        return {
-            str(key): _metric_cache_object_payload(item)
-            for key, item in value.items()
-        }
+        return {str(key): _metric_cache_object_payload(item) for key, item in value.items()}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_metric_cache_object_payload(item) for item in value]
     if hasattr(value, "__dict__"):
@@ -818,8 +791,7 @@ def _compiler_ir_metric_guidance_cache_payload(
 
 def _sample_metric_cache_payload(sample: Any) -> Dict[str, Any]:
     embedding = [
-        round(float(value), 12)
-        for value in list(getattr(sample, "embedding_vector", []) or [])
+        round(float(value), 12) for value in list(getattr(sample, "embedding_vector", []) or [])
     ]
     embedding_hash = hashlib.sha256(
         json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
@@ -854,9 +826,10 @@ def _metric_disk_cache_path(kind: str, key: str) -> Optional[Path]:
     if root is None:
         return None
     safe_kind = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(kind)).strip("._") or "metric"
-    key_text = re.sub(r"[^a-fA-F0-9]+", "", str(key)) or hashlib.sha256(
-        str(key).encode("utf-8")
-    ).hexdigest()
+    key_text = (
+        re.sub(r"[^a-fA-F0-9]+", "", str(key))
+        or hashlib.sha256(str(key).encode("utf-8")).hexdigest()
+    )
     return root / safe_kind / key_text[:2] / f"{key_text}.json"
 
 
@@ -1283,9 +1256,7 @@ def _sample_one_row(
             continue
         selected_indices.add(index)
         return index, sample, attempts
-    raise RuntimeError(
-        "Unable to sample a U.S. Code row matching daemon sampling constraints"
-    )
+    raise RuntimeError("Unable to sample a U.S. Code row matching daemon sampling constraints")
 
 
 def sample_train_validation_rows(
@@ -1356,12 +1327,9 @@ def metric_block(evaluation) -> Dict[str, Any]:
     legal_ir_losses = dict(getattr(evaluation, "legal_ir_losses", {}) or {})
     if legal_ir_losses:
         block["legal_ir_losses"] = {
-            name: round(float(value), 9)
-            for name, value in sorted(legal_ir_losses.items())
+            name: round(float(value), 9) for name, value in sorted(legal_ir_losses.items())
         }
-        block["legal_ir_target_count"] = int(
-            getattr(evaluation, "legal_ir_target_count", 0) or 0
-        )
+        block["legal_ir_target_count"] = int(getattr(evaluation, "legal_ir_target_count", 0) or 0)
         block["legal_ir_target_hashes"] = dict(
             sorted(dict(getattr(evaluation, "legal_ir_target_hashes", {}) or {}).items())
         )
@@ -1384,15 +1352,11 @@ def metric_block(evaluation) -> Dict[str, Any]:
                 ).items()
             )
         }
-        family_block = legal_ir_view_family_metric_block(
-            autoencoder_metrics=evaluation
-        )
+        family_block = legal_ir_view_family_metric_block(autoencoder_metrics=evaluation)
         block["legal_ir_view_family_metric_schema_version"] = (
             LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
         )
-        block["legal_ir_view_family_metrics"] = family_block[
-            "view_family_metrics"
-        ]
+        block["legal_ir_view_family_metrics"] = family_block["view_family_metrics"]
         block["legal_ir_view_family_macro_score"] = family_block["macro_score"]
         block.update(family_block["flat_metrics"])
     return block
@@ -1407,12 +1371,12 @@ def autoencoder_memory_gap_block(
 ) -> Dict[str, Any]:
     """Compare generalizable evaluation against sample-memory evaluation."""
 
-    cosine_gain = float(
-        getattr(sample_memory, "embedding_cosine_similarity", 0.0) or 0.0
-    ) - float(getattr(generalized, "embedding_cosine_similarity", 0.0) or 0.0)
-    reconstruction_gain = float(
-        getattr(generalized, "reconstruction_loss", 0.0) or 0.0
-    ) - float(getattr(sample_memory, "reconstruction_loss", 0.0) or 0.0)
+    cosine_gain = float(getattr(sample_memory, "embedding_cosine_similarity", 0.0) or 0.0) - float(
+        getattr(generalized, "embedding_cosine_similarity", 0.0) or 0.0
+    )
+    reconstruction_gain = float(getattr(generalized, "reconstruction_loss", 0.0) or 0.0) - float(
+        getattr(sample_memory, "reconstruction_loss", 0.0) or 0.0
+    )
     advantage = cosine_gain > 1e-9 or reconstruction_gain > 1e-9
     return {
         "cosine_gain_from_sample_memory": round(cosine_gain, 9),
@@ -1888,9 +1852,7 @@ def _snapshot_proof_metric(
         "attempted_count": attempted,
         "error_count": errors,
         "failed_count": failed,
-        "failure_ratio": (
-            round((failed + errors) / attempted, 9) if attempted > 0 else 0.0
-        ),
+        "failure_ratio": (round((failed + errors) / attempted, 9) if attempted > 0 else 0.0),
         "sample_count": len(rows),
         "signals": details,
         "unavailable_count": unavailable,
@@ -2018,9 +1980,7 @@ def evaluate_production_snapshot_bundle(
         "train": compiler_train,
         "validation": compiler_validation,
     }
-    shards.append(
-        _snapshot_shard(snapshot, role="compiler", family="all", metrics=compiler_metric)
-    )
+    shards.append(_snapshot_shard(snapshot, role="compiler", family="all", metrics=compiler_metric))
     for family, family_rows in _family_sharded_rows([*train, *validation]).items():
         shards.append(
             _snapshot_shard(
@@ -2030,10 +1990,7 @@ def evaluate_production_snapshot_bundle(
                 metrics={
                     "family": family,
                     "sample_count": len(family_rows),
-                    "sample_ids": [
-                        str(getattr(row, "sample_id", "") or "")
-                        for row in family_rows
-                    ],
+                    "sample_ids": [str(getattr(row, "sample_id", "") or "") for row in family_rows],
                 },
             )
         )
@@ -2092,9 +2049,7 @@ def evaluate_production_snapshot_bundle(
     )
     promotion_metric["snapshot_complete"] = aggregate.complete
     shards = [
-        shard
-        for shard in shards
-        if not (shard.role == "promotion" and shard.family == "all")
+        shard for shard in shards if not (shard.role == "promotion" and shard.family == "all")
     ]
     shards.append(
         _snapshot_shard(snapshot, role="promotion", family="all", metrics=promotion_metric)
@@ -2141,9 +2096,7 @@ def _compiler_commit(root: Path) -> str:
 
 
 def introspection_disagreement_export_path(summary_path: Path) -> Path:
-    return summary_path.with_name(
-        f"{summary_path.stem}.canonical-disagreements.jsonl"
-    )
+    return summary_path.with_name(f"{summary_path.stem}.canonical-disagreements.jsonl")
 
 
 def introspection_reference_example_export_path(summary_path: Path) -> Path:
@@ -2235,8 +2188,7 @@ def _canary_set_hash(
 ) -> str:
     payload = {
         "sample_ids": [
-            str(getattr(sample, "sample_id", "") or "")
-            for sample in validation_samples
+            str(getattr(sample, "sample_id", "") or "") for sample in validation_samples
         ],
         "validation_indices": [int(index) for index in validation_indices],
         "validation_mode": str(validation_mode or ""),
@@ -2328,9 +2280,7 @@ def export_canonical_state_disagreement_packets(
             sample_id = str(getattr(sample, "sample_id", "") or "")
             try:
                 if sample_position in sample_analysis_cache:
-                    introspection, guidance, prover_signal = sample_analysis_cache[
-                        sample_position
-                    ]
+                    introspection, guidance, prover_signal = sample_analysis_cache[sample_position]
                     sample_analysis_cache_hits += 1
                 else:
                     introspection = autoencoder.introspect_sample(
@@ -2347,9 +2297,7 @@ def export_canonical_state_disagreement_packets(
                         introspection=introspection,
                     )
                     prover_signal = (
-                        evaluate_modal_prover_compilation(sample)
-                        if evaluate_provers
-                        else None
+                        evaluate_modal_prover_compilation(sample) if evaluate_provers else None
                     )
                     sample_analysis_cache[sample_position] = (
                         introspection,
@@ -2475,13 +2423,9 @@ def export_canonical_state_disagreement_packets(
         "export_failures": export_failures[:16],
         "export_mode": str(export_mode or ""),
         "paths": [str(path)] if append_report.get("packet_count", 0) else [],
-        "reference_example_count": int(
-            reference_export.get("reference_example_count", 0) or 0
-        ),
+        "reference_example_count": int(reference_export.get("reference_example_count", 0) or 0),
         "reference_example_path": str(reference_export.get("path") or ""),
-        "reference_example_source_policy": str(
-            reference_export.get("source_policy") or ""
-        ),
+        "reference_example_source_policy": str(reference_export.get("source_policy") or ""),
         "requested_packet_count": len(packets),
         "shared_sample_analysis_count": len(sample_analysis_cache),
         "shared_sample_analysis_cache_hit_count": sample_analysis_cache_hits,
@@ -2497,9 +2441,10 @@ def autoencoder_low_rank_load_report(
 ) -> Dict[str, Any]:
     """Optionally hydrate dense state from a low-rank shadow sidecar."""
 
-    enabled = str(
-        os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD") or ""
-    ).strip().lower() in _TRUE_ENV_VALUES
+    enabled = (
+        str(os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD") or "").strip().lower()
+        in _TRUE_ENV_VALUES
+    )
     sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(state_path)
     if not enabled:
         return {
@@ -2604,9 +2549,7 @@ def learned_ir_metric_block(
         and name != "legal_ir_view_family_cross_entropy_excess_loss"
     }
     family_cosine_gaps = {
-        name.removeprefix("legal_ir_view_family_").removesuffix("_cosine_gap_loss"): float(
-            value
-        )
+        name.removeprefix("legal_ir_view_family_").removesuffix("_cosine_gap_loss"): float(value)
         for name, value in losses.items()
         if name.startswith("legal_ir_view_family_")
         and name.endswith("_cosine_gap_loss")
@@ -2630,8 +2573,7 @@ def learned_ir_metric_block(
         ),
         "predicted_family_distribution": _family_distribution(predicted_distribution),
         "predicted_view_distribution": {
-            name: round(float(value), 9)
-            for name, value in sorted(predicted_distribution.items())
+            name: round(float(value), 9) for name, value in sorted(predicted_distribution.items())
         },
         "target_count": int(getattr(evaluation, "legal_ir_target_count", 0) or 0),
         "target_family_distribution": _family_distribution(target_distribution),
@@ -2654,12 +2596,8 @@ def learned_ir_metric_block(
         ),
         "worst_family_cross_entropy_excess_name": worst_family,
     }
-    family_block = legal_ir_view_family_metric_block(
-        autoencoder_metrics=evaluation
-    )
-    block["legal_ir_view_family_metric_schema_version"] = (
-        LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
-    )
+    family_block = legal_ir_view_family_metric_block(autoencoder_metrics=evaluation)
+    block["legal_ir_view_family_metric_schema_version"] = LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
     block["view_family_metrics"] = family_block["view_family_metrics"]
     block["view_family_macro_score"] = family_block["macro_score"]
     block.update(family_block["flat_metrics"])
@@ -2725,11 +2663,7 @@ def _compiler_ir_validation_with_bridge_family_metrics(
             )
         except (TypeError, ValueError):
             row["sample_count"] = evaluated_count
-        observed = {
-            str(name)
-            for name in list(row.get("observed_metrics") or ())
-            if str(name)
-        }
+        observed = {str(name) for name in list(row.get("observed_metrics") or ()) if str(name)}
 
         def observe_bridge_metric(name: str, value: Any) -> None:
             try:
@@ -2752,7 +2686,8 @@ def _compiler_ir_validation_with_bridge_family_metrics(
         if "reconstruction_loss" in adapter_metrics:
             observe_bridge_metric(
                 "reconstruction_success_rate",
-                1.0 - min(
+                1.0
+                - min(
                     1.0,
                     max(0.0, _float_or_zero(adapter_metrics["reconstruction_loss"])),
                 ),
@@ -2765,7 +2700,8 @@ def _compiler_ir_validation_with_bridge_family_metrics(
         if "symbolic_validity_penalty" in adapter_metrics:
             observe_bridge_metric(
                 "symbolic_validity_success_rate",
-                1.0 - min(
+                1.0
+                - min(
                     1.0,
                     max(0.0, _float_or_zero(adapter_metrics["symbolic_validity_penalty"])),
                 ),
@@ -2797,9 +2733,7 @@ def legal_ir_validation_view_family_metric_block(
     )
     lineages: Dict[str, Any] = {}
     compiler_lineage = (
-        compiler_payload.get("metric_lineage")
-        if isinstance(compiler_payload, Mapping)
-        else None
+        compiler_payload.get("metric_lineage") if isinstance(compiler_payload, Mapping) else None
     )
     if isinstance(compiler_lineage, Mapping):
         lineages["deterministic_compiler_ir"] = dict(compiler_lineage)
@@ -3044,9 +2978,7 @@ def _compiler_ir_metric_sample_timeout(timeout_seconds: float) -> Iterator[bool]
     previous_timer = signal.getitimer(signal.ITIMER_REAL)
 
     def handle_timeout(_signum: int, _frame: Any) -> None:
-        raise CompilerIRMetricSampleTimeout(
-            f"compiler IR metric sample exceeded {timeout:.3f}s"
-        )
+        raise CompilerIRMetricSampleTimeout(f"compiler IR metric sample exceeded {timeout:.3f}s")
 
     signal.signal(signal.SIGALRM, handle_timeout)
     signal.setitimer(signal.ITIMER_REAL, timeout)
@@ -3459,9 +3391,7 @@ def compiler_ir_metric_block(
     max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
     metric_text_policy = _normalise_compiler_ir_metric_text_policy(metric_text_policy)
     sample_timeout_seconds = max(0.0, float(sample_timeout_seconds or 0.0))
-    sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(
-        sample_timeout_seconds
-    )
+    sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(sample_timeout_seconds)
 
     def emit_progress(stage: str, **payload: Any) -> None:
         if progress_callback is None:
@@ -3516,9 +3446,7 @@ def compiler_ir_metric_block(
             guidance_cache_records.append(
                 {
                     "error": guidance_error,
-                    "guidance": _compiler_ir_metric_guidance_cache_payload(
-                        compiler_guidance
-                    ),
+                    "guidance": _compiler_ir_metric_guidance_cache_payload(compiler_guidance),
                     "sample": _sample_metric_cache_payload(sample),
                     "sample_index": sample_index,
                 }
@@ -3532,16 +3460,9 @@ def compiler_ir_metric_block(
         )
 
     persistent_cache_key: Optional[str] = None
-    metric_block_cacheable = (
-        evaluation_cache is None
-        and (
-            (not use_autoencoder_guidance and autoencoder is None)
-            or (
-                use_autoencoder_guidance
-                and autoencoder is not None
-                and not guidance_failures
-            )
-        )
+    metric_block_cacheable = evaluation_cache is None and (
+        (not use_autoencoder_guidance and autoencoder is None)
+        or (use_autoencoder_guidance and autoencoder is not None and not guidance_failures)
     )
     if metric_block_cacheable:
         persistent_cache_key = _compiler_ir_metric_block_cache_key(
@@ -3590,12 +3511,8 @@ def compiler_ir_metric_block(
             cached["persistent_cache_key"] = persistent_cache_key
             cached["persistent_cache_kind"] = "compiler_ir_metric_block"
             cached["metric_profile_version"] = COMPILER_IR_METRIC_PROFILE_VERSION
-            cached["compiler_ir_guidance_cache_policy"] = (
-                _COMPILER_IR_GUIDANCE_CACHE_POLICY
-            )
-            cached["sample_timeout_cache_policy"] = (
-                _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
-            )
+            cached["compiler_ir_guidance_cache_policy"] = _COMPILER_IR_GUIDANCE_CACHE_POLICY
+            cached["sample_timeout_cache_policy"] = _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
             cached["sample_timeout_seconds"] = sample_timeout_seconds
             cached["sample_cache_not_consulted_due_block_hit"] = True
             cached["persistent_sample_cache_hits"] = 0
@@ -3865,9 +3782,8 @@ def compiler_ir_metric_block(
                 sample_index=sample_index,
             )
             try:
-                with _compiler_ir_metric_sample_timeout(
-                    sample_timeout_seconds
-                ) as timeout_guarded:
+                with _compiler_ir_metric_sample_timeout(sample_timeout_seconds) as timeout_guarded:
+
                     def encode_result() -> Any:
                         try:
                             return codec.encode(
@@ -3888,6 +3804,7 @@ def compiler_ir_metric_block(
                             )
 
                     if evaluation_cache is not None and evaluation_key is not None:
+
                         def compute_evaluation_artifact() -> LegalIREvaluationArtifact:
                             compilation_started = time.monotonic()
                             computed_result = encode_result()
@@ -3896,9 +3813,7 @@ def compiler_ir_metric_block(
                                 computed_result,
                                 metric_sample,
                                 compiler_guidance=compiler_guidance,
-                                compilation_seconds=(
-                                    time.monotonic() - compilation_started
-                                ),
+                                compilation_seconds=(time.monotonic() - compilation_started),
                             )
 
                         evaluation_artifact = evaluation_cache.get_or_compute(
@@ -3941,8 +3856,7 @@ def compiler_ir_metric_block(
                 sample_record = {
                     "compiler_ir_metric_timeout_fallback": True,
                     "compiler_ir_metric_timeout_fallback_kind": str(
-                        result.metadata.get("compiler_ir_metric_timeout_fallback_kind")
-                        or ""
+                        result.metadata.get("compiler_ir_metric_timeout_fallback_kind") or ""
                     ),
                     "citation": citation,
                     "metric_sample_id": metric_sample_id,
@@ -3964,9 +3878,7 @@ def compiler_ir_metric_block(
                     }
                 if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
                     sample_metric_records.append(sample_record)
-                timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(
-                    sample_record
-                )
+                timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(sample_record)
                 _write_metric_disk_cache(
                     "compiler_ir_metric_sample",
                     sample_cache_key,
@@ -4001,11 +3913,7 @@ def compiler_ir_metric_block(
                     sample_seconds=round(time.time() - sample_started_at, 3),
                 )
                 continue
-            if not bool(
-                getattr(result, "metadata", {}).get(
-                    "compiler_ir_metric_timeout_fallback"
-                )
-            ):
+            if not bool(getattr(result, "metadata", {}).get("compiler_ir_metric_timeout_fallback")):
                 _write_metric_disk_cache(
                     "compiler_ir_metric_sample",
                     sample_cache_key,
@@ -4029,9 +3937,12 @@ def compiler_ir_metric_block(
                     ),
                     role=evaluation_role,
                 )
-                result = _compiler_ir_metric_result_from_cache_payload(
-                    evaluation_artifact.compiler_artifact
-                ) or legacy_result
+                result = (
+                    _compiler_ir_metric_result_from_cache_payload(
+                        evaluation_artifact.compiler_artifact
+                    )
+                    or legacy_result
+                )
             persistent_sample_cache_hits += 1
             emit_progress(
                 "sample_persistent_cache_hit",
@@ -4079,9 +3990,7 @@ def compiler_ir_metric_block(
                 result_losses.get("source_copy_penalty"),
             )
             if copy_penalty is not None:
-                family_values["source_copy_penalty"].append(
-                    max(0.0, float(copy_penalty))
-                )
+                family_values["source_copy_penalty"].append(max(0.0, float(copy_penalty)))
 
         sample_record: Dict[str, Any] = {
             "citation": citation,
@@ -4113,9 +4022,7 @@ def compiler_ir_metric_block(
                 metadata.get("sample_timeout_seconds", sample_timeout_seconds) or 0.0
             )
             sample_record["skip_reason"] = "sample_timeout"
-            family_distribution = metadata.get(
-                "compiler_ir_metric_timeout_family_distribution"
-            )
+            family_distribution = metadata.get("compiler_ir_metric_timeout_family_distribution")
             if isinstance(family_distribution, Mapping):
                 sample_record["compiler_ir_metric_timeout_family_distribution"] = {
                     str(key): float(value)
@@ -4149,9 +4056,8 @@ def compiler_ir_metric_block(
                 sample_record["compiler_guidance_semantic_overlay_terms"] = [
                     str(value) for value in overlay_terms if str(value)
                 ]
-            if (
-                metadata.get("compiler_guidance_selected_frame_before")
-                != metadata.get("compiler_guidance_selected_frame_after")
+            if metadata.get("compiler_guidance_selected_frame_before") != metadata.get(
+                "compiler_guidance_selected_frame_after"
             ):
                 guidance_frame_changed_count += 1
             slot_texts = compiler_guidance_slot_texts_from_result(result)
@@ -4171,8 +4077,7 @@ def compiler_ir_metric_block(
                 dict.fromkeys(sample_view_gaps)
             )
             sample_family_gaps = [
-                _compiler_guidance_legal_ir_family_gap(value)
-                for value in sample_view_gaps
+                _compiler_guidance_legal_ir_family_gap(value) for value in sample_view_gaps
             ]
             sample_record["compiler_guidance_legal_ir_view_family_gaps"] = list(
                 dict.fromkeys(sample_family_gaps)
@@ -4191,9 +4096,7 @@ def compiler_ir_metric_block(
                 for value in slot_texts.get("compiler_guidance_todo_route", [])
                 if str(value)
             ]
-            sample_record["compiler_guidance_todo_routes"] = list(
-                dict.fromkeys(sample_todo_routes)
-            )
+            sample_record["compiler_guidance_todo_routes"] = list(dict.fromkeys(sample_todo_routes))
             for value in sample_todo_routes:
                 guidance_todo_routes[value] += 1
             for route in dict.fromkeys(sample_todo_routes):
@@ -4205,12 +4108,10 @@ def compiler_ir_metric_block(
                         "citation": citation,
                         "sample_id": sample_id,
                         "selected_frame_after": str(
-                            metadata.get("compiler_guidance_selected_frame_after", "")
-                            or ""
+                            metadata.get("compiler_guidance_selected_frame_after", "") or ""
                         ),
                         "selected_frame_before": str(
-                            metadata.get("compiler_guidance_selected_frame_before", "")
-                            or ""
+                            metadata.get("compiler_guidance_selected_frame_before", "") or ""
                         ),
                         "text_preview": re.sub(r"\s+", " ", metric_text).strip()[:240],
                     }
@@ -4263,9 +4164,7 @@ def compiler_ir_metric_block(
         "timeout_fallback_count": timeout_fallback_count,
     }
     if use_autoencoder_guidance:
-        block["compiler_guidance_diagnostics_version"] = (
-            _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
-        )
+        block["compiler_guidance_diagnostics_version"] = _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
     for name, values in losses.items():
         if values:
             block[name] = round(sum(values) / len(values), 9)
@@ -4284,8 +4183,7 @@ def compiler_ir_metric_block(
         block["compiler_guidance_frame_changed_count"] = guidance_frame_changed_count
     if guidance_semantic_overlay_counts:
         block["compiler_guidance_semantic_overlay_count"] = round(
-            sum(guidance_semantic_overlay_counts)
-            / len(guidance_semantic_overlay_counts),
+            sum(guidance_semantic_overlay_counts) / len(guidance_semantic_overlay_counts),
             9,
         )
     if use_autoencoder_guidance or guidance_semantic_overlay_terms:
@@ -4293,9 +4191,7 @@ def compiler_ir_metric_block(
             guidance_semantic_overlay_terms.most_common(12)
         )
     if use_autoencoder_guidance or guidance_feature_groups:
-        block["compiler_guidance_feature_groups"] = dict(
-            guidance_feature_groups.most_common(12)
-        )
+        block["compiler_guidance_feature_groups"] = dict(guidance_feature_groups.most_common(12))
     if use_autoencoder_guidance or guidance_legal_ir_view_gaps:
         block["compiler_guidance_legal_ir_view_gaps"] = dict(
             guidance_legal_ir_view_gaps.most_common(12)
@@ -4309,9 +4205,7 @@ def compiler_ir_metric_block(
             guidance_surface_features.most_common(12)
         )
     if use_autoencoder_guidance or guidance_todo_routes:
-        block["compiler_guidance_todo_routes"] = dict(
-            guidance_todo_routes.most_common(12)
-        )
+        block["compiler_guidance_todo_routes"] = dict(guidance_todo_routes.most_common(12))
     if guidance_todo_routes:
         block["compiler_guidance_todo_route_examples"] = {
             route: guidance_todo_route_examples.get(route, [])[:3]
@@ -4334,9 +4228,7 @@ def compiler_ir_metric_block(
     }
     hammer_metrics = hammer_guidance_metric_block(precomputed_guidance)
     if int(hammer_metrics.get("hammer_artifact_count", 0) or 0) > 0:
-        block["hammer_guidance_metric_schema_version"] = (
-            HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION
-        )
+        block["hammer_guidance_metric_schema_version"] = HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION
         block["hammer_guidance_metrics"] = hammer_metrics
         for name, value in hammer_metrics.items():
             if isinstance(value, (int, float)):
@@ -4345,16 +4237,14 @@ def compiler_ir_metric_block(
         ir_metrics=block,
         hammer_guidance=hammer_metrics,
     )
-    block["legal_ir_view_family_metric_schema_version"] = (
-        LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
-    )
+    block["legal_ir_view_family_metric_schema_version"] = LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
     block["view_family_metrics"] = family_metric_block["view_family_metrics"]
     block["view_family_macro_score"] = family_metric_block["macro_score"]
     block.update(family_metric_block["flat_metrics"])
     if sample_metric_records:
         block["sample_metric_records"] = sample_metric_records
-        block["worst_source_decompiled_text_records"] = (
-            _worst_source_decompiled_text_records(sample_metric_records)
+        block["worst_source_decompiled_text_records"] = _worst_source_decompiled_text_records(
+            sample_metric_records
         )
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
@@ -4490,9 +4380,7 @@ def _worst_source_decompiled_text_records(
                 score,
                 {
                     "citation": str(record.get("citation") or ""),
-                    "decompiled_text_preview": str(
-                        record.get("decompiled_text_preview") or ""
-                    ),
+                    "decompiled_text_preview": str(record.get("decompiled_text_preview") or ""),
                     "source_text_preview": str(record.get("source_text_preview") or ""),
                     "sample_id": str(record.get("sample_id") or ""),
                     "source_decompiled_text_embedding_cosine_loss": round(
@@ -4532,16 +4420,12 @@ def _compiler_ir_metric_block_cache_key(
             "config": _metric_cache_object_payload(getattr(codec, "config", None)),
             "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
         },
-        "guidance_cache_records": _metric_cache_object_payload(
-            list(guidance_cache_records)
-        ),
+        "guidance_cache_records": _metric_cache_object_payload(list(guidance_cache_records)),
         "guidance_diagnostics_version": _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION,
         "guidance_top_k": int(guidance_top_k),
         "max_sample_metric_records": int(max_sample_metric_records),
         "max_sample_text_chars": int(max_sample_text_chars),
-        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(
-            metric_text_policy
-        ),
+        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(metric_text_policy),
         "samples": [_sample_metric_cache_payload(sample) for sample in samples],
         "successful_result_timeout_policy": "timeout_agnostic",
     }
@@ -4560,9 +4444,7 @@ def _compiler_ir_metric_sample_cache_key(
             "config": _metric_cache_object_payload(getattr(codec, "config", None)),
             "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
         },
-        "compiler_guidance": _compiler_ir_metric_guidance_cache_payload(
-            compiler_guidance
-        ),
+        "compiler_guidance": _compiler_ir_metric_guidance_cache_payload(compiler_guidance),
         "guidance_top_k": int(guidance_top_k),
         "sample": _sample_metric_cache_payload(sample),
     }
@@ -4627,9 +4509,7 @@ def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
         for slot, values in sorted(
             slot_texts.items(),
             key=lambda item: (
-                0
-                if str(item[0]).startswith("compiler_guidance_")
-                else 1,
+                0 if str(item[0]).startswith("compiler_guidance_") else 1,
                 str(item[0]),
             ),
         ):
@@ -4651,9 +4531,7 @@ def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
                 retained_value_count += 1
             if retained_values:
                 compact_slot_texts[str(slot)] = retained_values
-        payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(
-            compact_slot_texts
-        )
+        payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(compact_slot_texts)
         payload["compiler_guidance_slot_texts_compaction"] = {
             "original_slot_count": len(slot_texts),
             "original_value_count": original_value_count,
@@ -4682,9 +4560,7 @@ def _compiler_ir_metric_sample_timeout_cache_payload(
         "cache_entry_type": "sample_timeout",
         "record": _metric_cache_object_payload(sample_record),
         "sample_timeout_cache_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
-        "sample_timeout_seconds": _float_or_zero(
-            sample_record.get("sample_timeout_seconds")
-        ),
+        "sample_timeout_seconds": _float_or_zero(sample_record.get("sample_timeout_seconds")),
     }
 
 
@@ -4697,10 +4573,7 @@ def _compiler_ir_metric_sample_timeout_record_from_cache_payload(
         return None
     if payload.get("cache_entry_type") != "sample_timeout":
         return None
-    if (
-        payload.get("sample_timeout_cache_policy")
-        != _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
-    ):
+    if payload.get("sample_timeout_cache_policy") != _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY:
         return None
     requested_timeout = max(0.0, float(requested_timeout_seconds or 0.0))
     cached_timeout = _float_or_zero(payload.get("sample_timeout_seconds"))
@@ -4973,9 +4846,7 @@ def bridge_ir_metric_block(
                     bridge_names=tuple(adapter_names),
                     document=getattr(report, "document", None),
                     losses=dict(getattr(target, "losses", {}) or {}),
-                    view_distribution=dict(
-                        getattr(target, "view_distribution", {}) or {}
-                    ),
+                    view_distribution=dict(getattr(target, "view_distribution", {}) or {}),
                 )
             _write_legal_ir_target_disk_cache(target_cache_key, target)
         except Exception:
@@ -5082,9 +4953,7 @@ def bridge_ir_metric_block(
         "proof_failure_ratio": _mean(canonical_values["proof_failure_ratio"]),
         "total_loss": _mean(canonical_values["total_loss"]),
         "losses": {
-            name: _mean(values)
-            for name, values in sorted(canonical_loss_values.items())
-            if values
+            name: _mean(values) for name, values in sorted(canonical_loss_values.items()) if values
         },
         "view_coverage_loss": _mean(canonical_values["view_coverage_loss"]),
         "view_count": _mean(canonical_values["view_count"]),
@@ -5183,14 +5052,20 @@ def _adapter_metrics_from_reports(
             float(getattr(proof_gate, "unavailable_count", 0) or 0)
         )
         metric_values["proof_error_count"].append(float(getattr(proof_gate, "error_count", 0) or 0))
-        metric_values["proof_failed_count"].append(float(getattr(proof_gate, "failed_count", 0) or 0))
-        metric_values["proof_failure_ratio"].append(float(getattr(proof_gate, "failure_ratio", 0.0) or 0.0))
+        metric_values["proof_failed_count"].append(
+            float(getattr(proof_gate, "failed_count", 0) or 0)
+        )
+        metric_values["proof_failure_ratio"].append(
+            float(getattr(proof_gate, "failure_ratio", 0.0) or 0.0)
+        )
 
         graph_projection = getattr(report, "graph_projection", None)
         metric_values["graph_failure_penalty"].append(
             float(getattr(graph_projection, "graph_failure_penalty", 0.0) or 0.0)
         )
-        metric_values["graph_node_count"].append(float(getattr(graph_projection, "node_count", 0) or 0))
+        metric_values["graph_node_count"].append(
+            float(getattr(graph_projection, "node_count", 0) or 0)
+        )
         metric_values["graph_relationship_count"].append(
             float(getattr(graph_projection, "relationship_count", 0) or 0)
         )
@@ -5231,9 +5106,7 @@ def _adapter_metrics_from_reports(
         adapter_block["views"] = {
             view_name: {
                 "metadata": {
-                    key: _mean(values)
-                    for key, values in sorted(metadata.items())
-                    if values
+                    key: _mean(values) for key, values in sorted(metadata.items()) if values
                 },
                 "present_count": count,
                 "present_rate": round(count / evaluated_count, 9),
@@ -5276,8 +5149,7 @@ def _bridge_ir_report_cache_key(
 ) -> str:
     """Return a stable key for cached bridge/prover/KG diagnostics."""
     embedding = [
-        round(float(value), 12)
-        for value in list(getattr(sample, "embedding_vector", []) or [])
+        round(float(value), 12) for value in list(getattr(sample, "embedding_vector", []) or [])
     ]
     embedding_hash = hashlib.sha256(
         json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
@@ -5415,13 +5287,9 @@ def build_leanstral_cycle_guidance_request(
     lineage = LeanstralCycleLineage(
         schema_version=str(schema_version or ""),
         model=str(model or ""),
-        source_revision=str(
-            source_revision or leanstral_cycle_input_revision(input_payload)
-        ),
+        source_revision=str(source_revision or leanstral_cycle_input_revision(input_payload)),
         state_revision=autoencoder_canonical_state_hash(state),
-        proof_lineage=str(
-            proof_lineage or leanstral_cycle_proof_lineage(input_payload)
-        ),
+        proof_lineage=str(proof_lineage or leanstral_cycle_proof_lineage(input_payload)),
     )
     return LeanstralCycleGuidanceRequest.from_payload(
         input_payload,
@@ -5613,9 +5481,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
     )
     result: Dict[str, Any] = {
         "artifact_count": 0,
-        "enabled": bool(
-            getattr(args, "leanstral_direct_guidance_projection_enabled", True)
-        ),
+        "enabled": bool(getattr(args, "leanstral_direct_guidance_projection_enabled", True)),
         "guidance_count": 0,
         "guidance_ids": [],
         "invalid_artifact_count": 0,
@@ -5630,9 +5496,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
         "report_only_count": 0,
         "seeded_todo_ids": [],
         "autoencoder_training": {
-            "enabled": bool(
-                getattr(args, "leanstral_direct_guidance_train_autoencoder", True)
-            ),
+            "enabled": bool(getattr(args, "leanstral_direct_guidance_train_autoencoder", True)),
             "status": "not_run",
         },
         "uncertainty_routing": {
@@ -5652,9 +5516,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
             "artifact_count": int(load_report.get("artifact_count", 0) or 0),
             "guidance_count": int(load_report.get("guidance_count", 0) or 0),
             "guidance_ids": list(load_report.get("guidance_ids", []) or []),
-            "invalid_artifact_count": int(
-                load_report.get("invalid_artifact_count", 0) or 0
-            ),
+            "invalid_artifact_count": int(load_report.get("invalid_artifact_count", 0) or 0),
             "invalid_artifacts": list(load_report.get("invalid_artifacts", []) or []),
             "loaded_paths": list(load_report.get("paths", []) or []),
         }
@@ -5663,9 +5525,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
         result["status"] = "missing_artifacts"
         return result
     guidance_items = [
-        dict(item)
-        for item in load_report.get("guidance_items", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in load_report.get("guidance_items", []) if isinstance(item, Mapping)
     ]
     if not guidance_items:
         result["status"] = "no_guidance"
@@ -5755,9 +5615,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
             "status": "not_run",
         }
         if projection.seed_block_reasons:
-            hammer_failure_projection["seed_block_reasons"] = list(
-                projection.seed_block_reasons
-            )
+            hammer_failure_projection["seed_block_reasons"] = list(projection.seed_block_reasons)
             hammer_failure_projection["status"] = "seed_gate_blocked"
         else:
             hammer_failure_todos = hammer_failure_projection_todos(
@@ -5794,9 +5652,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
                     "generated_count": len(hammer_failure_todos),
                     "seeded_count": added_count,
                     "seeded_todo_ids": seeded_todo_ids,
-                    "status": "projected"
-                    if hammer_failure_todos
-                    else "no_recurring_failures",
+                    "status": "projected" if hammer_failure_todos else "no_recurring_failures",
                 }
             )
         supervisor.queue.save_jsonl(queue_path)
@@ -5828,8 +5684,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
                 guidance_items,
                 samples_by_id=samples_by_id or {},
                 learning_rate=float(
-                    getattr(args, "leanstral_direct_guidance_learning_rate", 0.05)
-                    or 0.0
+                    getattr(args, "leanstral_direct_guidance_learning_rate", 0.05) or 0.0
                 ),
                 allow_global_updates=bool(
                     getattr(
@@ -5878,9 +5733,7 @@ def combine_leanstral_projection_results(
             "seeded_count",
             "stale_count",
         ):
-            combined[key] = int(combined.get(key, 0) or 0) + int(
-                item.get(key, 0) or 0
-            )
+            combined[key] = int(combined.get(key, 0) or 0) + int(item.get(key, 0) or 0)
         for todo_id in item.get("seeded_todo_ids", []) or []:
             text = str(todo_id).strip()
             if text and text not in todo_ids:
@@ -6085,7 +5938,9 @@ def daemon_hammer_guidance_artifact_path(
     """Return the per-cycle hammer guidance artifact path used by the daemon."""
 
     explicit = str(getattr(args, "daemon_hammer_guidance_output_dir", "") or "").strip()
-    output_dir = Path(explicit).expanduser() if explicit else root / "workspace" / "legal-ir-hammer-guidance"
+    output_dir = (
+        Path(explicit).expanduser() if explicit else root / "workspace" / "legal-ir-hammer-guidance"
+    )
     if not output_dir.is_absolute():
         output_dir = root / output_dir
     run_id = str(getattr(args, "run_id", "default") or "default")
@@ -6250,8 +6105,7 @@ def _daemon_hammer_cache_payload_compatible(
     sample_ids: Sequence[str],
 ) -> bool:
     return (
-        str(payload.get("schema_version") or "")
-        == DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION
+        str(payload.get("schema_version") or "") == DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION
         and list(payload.get("sample_ids", []) or []) == list(sample_ids)
         and dict(payload.get("hammer_config") or {}) == dict(config_payload)
     )
@@ -6279,9 +6133,7 @@ def _daemon_hammer_loaded_guidance(
         }
     loaded = load_leanstral_direct_guidance_artifacts(paths)
     items = [
-        dict(item)
-        for item in loaded.get("guidance_items", []) or []
-        if isinstance(item, Mapping)
+        dict(item) for item in loaded.get("guidance_items", []) or [] if isinstance(item, Mapping)
     ]
     candidate_count = _leanstral_hammer_candidate_count(items)
     status = "drafts_loaded" if candidate_count else "skipped_no_drafted_candidates"
@@ -6366,9 +6218,7 @@ def _daemon_hammer_contract_sample(
     return projected, {
         "adapter_count": len(metric_adapters),
         "bridge_failures": dict(report.failures),
-        "contract_view_counts": {
-            name: len(payloads) for name, payloads in contract_views.items()
-        },
+        "contract_view_counts": {name: len(payloads) for name, payloads in contract_views.items()},
         "document_hash": report.document.canonical_hash(),
     }
 
@@ -6554,9 +6404,7 @@ def run_daemon_hammer_guidance_cycle(
     contract_telemetry_by_sample = {
         record.sample_id: record for record in contract_telemetry_records
     }
-    contract_telemetry_summary = summarize_legal_ir_contract_telemetry(
-        contract_telemetry_records
-    )
+    contract_telemetry_summary = summarize_legal_ir_contract_telemetry(contract_telemetry_records)
     output_path = daemon_hammer_guidance_artifact_path(args, root=root, cycle=cycle)
     result: Dict[str, Any] = {
         "artifact_paths": [],
@@ -6578,9 +6426,7 @@ def run_daemon_hammer_guidance_cycle(
         "schema_version": DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION,
         "status": "not_run",
         "trusted_hammer_guidance_count": 0,
-        "legal_ir_contract_telemetry": [
-            record.to_dict() for record in contract_telemetry_records
-        ],
+        "legal_ir_contract_telemetry": [record.to_dict() for record in contract_telemetry_records],
         **contract_telemetry_summary,
     }
     if runtime_telemetry is None:
@@ -6609,9 +6455,7 @@ def run_daemon_hammer_guidance_cycle(
         "paths": list(loaded_guidance.get("paths", []) or []),
         "status": str(loaded_guidance.get("status") or "not_run"),
     }
-    result["leanstral_hammer_candidate_count"] = int(
-        loaded_guidance.get("candidate_count", 0) or 0
-    )
+    result["leanstral_hammer_candidate_count"] = int(loaded_guidance.get("candidate_count", 0) or 0)
     if not enabled:
         result["status"] = "disabled"
         result["hammer_metrics"] = hammer_guidance_metric_block(
@@ -6676,13 +6520,9 @@ def run_daemon_hammer_guidance_cycle(
     hammer_artifacts: List[Dict[str, Any]] = []
     for cached_artifact in cached_artifacts:
         cached_metadata = dict(cached_artifact.get("metadata") or {})
-        embedded_telemetry = dict(
-            cached_artifact.get("legal_ir_contract_telemetry") or {}
-        )
+        embedded_telemetry = dict(cached_artifact.get("legal_ir_contract_telemetry") or {})
         cached_sample_id = str(
-            embedded_telemetry.get("sample_id")
-            or cached_metadata.get("sample_id")
-            or ""
+            embedded_telemetry.get("sample_id") or cached_metadata.get("sample_id") or ""
         )
         telemetry = contract_telemetry_by_sample.get(cached_sample_id)
         if telemetry is None and len(contract_telemetry_records) == 1:
@@ -6693,11 +6533,11 @@ def run_daemon_hammer_guidance_cycle(
             hammer_artifacts.extend(
                 attach_legal_ir_contract_telemetry([cached_artifact], telemetry)
             )
-    hammer_reports: List[Dict[str, Any]] = [
-        dict(item)
-        for item in result.get("hammer_reports", []) or []
-        if isinstance(item, Mapping)
-    ] if result.get("cache_hit") else []
+    hammer_reports: List[Dict[str, Any]] = (
+        [dict(item) for item in result.get("hammer_reports", []) or [] if isinstance(item, Mapping)]
+        if result.get("cache_hit")
+        else []
+    )
     obligation_failures: List[Dict[str, Any]] = []
     hammer_failures: List[Dict[str, Any]] = []
     if not result.get("cache_hit"):
@@ -6736,7 +6576,9 @@ def run_daemon_hammer_guidance_cycle(
                     }
                 )
                 obligations = []
-            result["obligation_count"] = int(result.get("obligation_count", 0) or 0) + len(obligations)
+            result["obligation_count"] = int(result.get("obligation_count", 0) or 0) + len(
+                obligations
+            )
             if not obligations:
                 continue
             try:
@@ -6776,14 +6618,10 @@ def run_daemon_hammer_guidance_cycle(
             sample_artifacts = _daemon_hammer_report_artifacts(report)
             telemetry = contract_telemetry_by_sample.get(sample_id)
             if telemetry is not None:
-                sample_artifacts = attach_legal_ir_contract_telemetry(
-                    sample_artifacts, telemetry
-                )
+                sample_artifacts = attach_legal_ir_contract_telemetry(sample_artifacts, telemetry)
             report_dict["artifacts"] = sample_artifacts
             if telemetry is not None:
-                report_dict["legal_ir_contract_telemetry"] = (
-                    telemetry.guidance_projection()
-                )
+                report_dict["legal_ir_contract_telemetry"] = telemetry.guidance_projection()
             hammer_reports.append(report_dict)
             hammer_artifacts.extend(sample_artifacts)
             if runtime_telemetry is not None:
@@ -6791,9 +6629,7 @@ def run_daemon_hammer_guidance_cycle(
                     "lean_reconstruction",
                     cycle=cycle,
                     sample_id=sample_id,
-                    unit_count=len(
-                        report_dict.get("reconstruction_receipts", []) or []
-                    ),
+                    unit_count=len(report_dict.get("reconstruction_receipts", []) or []),
                     attributes={"status": "observed"},
                 )
 
@@ -6862,8 +6698,7 @@ def run_daemon_hammer_guidance_cycle(
                 combined_guidance,
                 samples_by_id=sample_lookup,
                 learning_rate=float(
-                    getattr(args, "daemon_hammer_guidance_learning_rate", 0.03)
-                    or 0.0
+                    getattr(args, "daemon_hammer_guidance_learning_rate", 0.03) or 0.0
                 ),
                 allow_global_updates=bool(
                     getattr(args, "daemon_hammer_guidance_train_missing_samples", False)
@@ -6927,9 +6762,7 @@ def compact_daemon_hammer_guidance_report(
         if key in report
     }
     hammer_reports = [
-        dict(item)
-        for item in report.get("hammer_reports", []) or []
-        if isinstance(item, Mapping)
+        dict(item) for item in report.get("hammer_reports", []) or [] if isinstance(item, Mapping)
     ]
     compact["hammer_report_count"] = len(hammer_reports)
     compact["hammer_reconstruction_receipt_count"] = sum(
@@ -6991,9 +6824,10 @@ def daemon_hammer_reconstruction_receipts(
                 or ""
             ).strip()
             if not receipt_id:
-                receipt_id = "hammer-receipt-" + hashlib.sha256(
-                    _stable_metric_json(payload).encode("utf-8")
-                ).hexdigest()[:20]
+                receipt_id = (
+                    "hammer-receipt-"
+                    + hashlib.sha256(_stable_metric_json(payload).encode("utf-8")).hexdigest()[:20]
+                )
                 payload["receipt_id"] = receipt_id
             receipts[receipt_id] = payload
     bounded = max(0, int(limit))
@@ -7054,8 +6888,7 @@ def update_daemon_hammer_guidance_summary(
     )
     summary["hammer_projected_todo_count"] = int(hammer_projected_todo_count)
     summary["hammer_guidance_artifact_count"] = int(
-        hammer_metrics.get("hammer_artifact_count", report.get("hammer_artifact_count", 0))
-        or 0
+        hammer_metrics.get("hammer_artifact_count", report.get("hammer_artifact_count", 0)) or 0
     )
     summary["contract_telemetry_schema_version"] = str(
         report.get("contract_telemetry_schema_version")
@@ -7080,9 +6913,7 @@ def update_daemon_hammer_guidance_summary(
         "trusted_hammer_guidance_count",
     ):
         total_key = f"{key}_total"
-        summary[total_key] = int(summary.get(total_key, 0) or 0) + int(
-            summary.get(key, 0) or 0
-        )
+        summary[total_key] = int(summary.get(total_key, 0) or 0) + int(summary.get(key, 0) or 0)
     return summary
 
 
@@ -7142,17 +6973,12 @@ def project_verified_leanstral_rule_gaps_into_queue(
             getattr(args, "leanstral_rule_gap_require_executor_available", True)
         ),
         expected_compiler_commit=str(
-            getattr(args, "leanstral_rule_gap_expected_compiler_commit", "")
-            or ""
+            getattr(args, "leanstral_rule_gap_expected_compiler_commit", "") or ""
         ),
-        expected_state_hash=str(
-            getattr(args, "leanstral_rule_gap_expected_state_hash", "")
-            or ""
-        ),
+        expected_state_hash=str(getattr(args, "leanstral_rule_gap_expected_state_hash", "") or ""),
         max_report_age_seconds=(
             float(getattr(args, "leanstral_rule_gap_max_report_age_seconds"))
-            if getattr(args, "leanstral_rule_gap_max_report_age_seconds", None)
-            is not None
+            if getattr(args, "leanstral_rule_gap_max_report_age_seconds", None) is not None
             else None
         ),
         target_scope_filters=autoencoder_target_scope_filters(args),
@@ -7208,9 +7034,7 @@ def update_leanstral_projection_summary(
     ]
     if training_reports:
         latest_training = training_reports[-1]
-        summary["latest_leanstral_direct_guidance_autoencoder_training"] = (
-            latest_training
-        )
+        summary["latest_leanstral_direct_guidance_autoencoder_training"] = latest_training
         for key in (
             "applied",
             "duplicate",
@@ -7255,9 +7079,7 @@ def _configured_validation_canary_indices(
         try:
             value = int(token)
         except ValueError as exc:
-            raise ValueError(
-                f"validation canary index is not an integer: {token!r}"
-            ) from exc
+            raise ValueError(f"validation canary index is not an integer: {token!r}") from exc
         if value < 0:
             raise ValueError("validation canary indices must be non-negative")
         values.append(value)
@@ -7303,9 +7125,7 @@ def autoencoder_evaluation_lineage(
             ),
             "legal_ir_evaluate_provers": bool(legal_ir_evaluate_provers),
             "legal_ir_parallel_workers": max(1, int(legal_ir_parallel_workers or 1)),
-            "max_bridge_sample_text_chars": max(
-                0, int(max_bridge_sample_text_chars or 0)
-            ),
+            "max_bridge_sample_text_chars": max(0, int(max_bridge_sample_text_chars or 0)),
             "use_sample_memory": bool(use_sample_memory),
         },
     )
@@ -7589,9 +7409,7 @@ def paired_program_synthesis_health(
     queue_exists = queue_path.exists()
     queue = ModalTodoQueue.load_jsonl(queue_path) if queue_exists else ModalTodoQueue()
     status = queue.role_status_counts().get("program_synthesis", {})
-    transient_counts = queue.transient_failure_counts(
-        optimizer_role="program_synthesis"
-    )
+    transient_counts = queue.transient_failure_counts(optimizer_role="program_synthesis")
     active_transient_counts = queue.transient_failure_counts(
         optimizer_role="program_synthesis",
         statuses=("pending", "claimed"),
@@ -7666,12 +7484,8 @@ def paired_program_synthesis_health(
         int(transient_requeue_total),
     )
     transient_todo_count = int(transient_counts.get("transient_todo_count", 0))
-    active_transient_attempt_count = int(
-        active_transient_counts.get("transient_attempt_count", 0)
-    )
-    active_transient_todo_count = int(
-        active_transient_counts.get("transient_todo_count", 0)
-    )
+    active_transient_attempt_count = int(active_transient_counts.get("transient_attempt_count", 0))
+    active_transient_todo_count = int(active_transient_counts.get("transient_todo_count", 0))
     transient_failure_rate = (
         float(transient_attempt_count) / float(execution_count)
         if execution_count > 0
@@ -7708,12 +7522,8 @@ def paired_program_synthesis_health(
         "program_synthesis_transient_failure_count": transient_todo_count,
         "program_synthesis_transient_failure_attempts": transient_attempt_count,
         "program_synthesis_transient_failure_rate": round(transient_failure_rate, 6),
-        "program_synthesis_active_transient_failure_attempts": (
-            active_transient_attempt_count
-        ),
-        "program_synthesis_active_transient_failure_count": (
-            active_transient_todo_count
-        ),
+        "program_synthesis_active_transient_failure_attempts": (active_transient_attempt_count),
+        "program_synthesis_active_transient_failure_count": (active_transient_todo_count),
         "queue_exists": queue_exists,
         "stale_claimed_codex_worker_ids": stale_claimed_worker_ids,
         "stale_idle_codex_worker_ids": stale_idle_worker_ids,
@@ -7824,9 +7634,7 @@ def persist_supervisor_queue_for_external_workers(
         )
         semantic_deduped_count = latest_queue.deduplicate_semantic(
             optimizer_role=supervisor.policy.program_synthesis_role,
-            near_duplicate_jaccard=(
-                supervisor.policy.program_synthesis_near_duplicate_jaccard
-            ),
+            near_duplicate_jaccard=(supervisor.policy.program_synthesis_near_duplicate_jaccard),
         )
         latest_queue.save_jsonl(queue_path)
         supervisor.queue = latest_queue
@@ -7925,9 +7733,7 @@ def rollout_baseline_snapshot(
         logic_bridge_validation=bridge_payload,
     )
     resolved_failed_validation_count = int(
-        failed_validation_count
-        or dict(queue_counts or {}).get("failed_validation", 0)
-        or 0
+        failed_validation_count or dict(queue_counts or {}).get("failed_validation", 0) or 0
     )
     return {
         "backend": dict(backend_metadata or {}),
@@ -7979,8 +7785,7 @@ def _sample_payloads_for_codex_metrics(
                 "citation": str(getattr(sample, "citation", "") or ""),
                 "embedding_model": str(getattr(sample, "embedding_model", "") or ""),
                 "embedding_vector": [
-                    float(value)
-                    for value in list(getattr(sample, "embedding_vector", []) or [])
+                    float(value) for value in list(getattr(sample, "embedding_vector", []) or [])
                 ],
                 "sample_id": str(getattr(sample, "sample_id", "") or ""),
                 "section": str(getattr(sample, "section", "") or ""),
@@ -8198,13 +8003,17 @@ def _hammer_projection_high_impact_payload(value: Mapping[str, Any]) -> bool:
             )
         ):
             return True
-        label = str(
-            payload.get("impact")
-            or payload.get("impact_level")
-            or payload.get("priority")
-            or payload.get("severity")
-            or ""
-        ).strip().lower()
+        label = (
+            str(
+                payload.get("impact")
+                or payload.get("impact_level")
+                or payload.get("priority")
+                or payload.get("severity")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
         if label in {"blocker", "critical", "high", "p0"}:
             return True
         score = _hammer_projection_numeric(
@@ -8228,12 +8037,8 @@ def _hammer_projection_high_impact_payload(value: Mapping[str, Any]) -> bool:
 
     baseline = value.get("baseline")
     candidate = value.get("candidate")
-    baseline_metrics = (
-        baseline.get("metrics") if isinstance(baseline, Mapping) else None
-    )
-    candidate_metrics = (
-        candidate.get("metrics") if isinstance(candidate, Mapping) else None
-    )
+    baseline_metrics = baseline.get("metrics") if isinstance(baseline, Mapping) else None
+    candidate_metrics = candidate.get("metrics") if isinstance(candidate, Mapping) else None
     if isinstance(baseline_metrics, Mapping) and isinstance(candidate_metrics, Mapping):
         for metric in (
             "hammer_proof_success_rate",
@@ -8264,11 +8069,13 @@ def _hammer_projection_replay_context(
     schema_version = str(value.get("schema_version") or "").strip()
     source = str(value.get("source") or metadata.get("source") or "").strip()
     replay = bool(context.get("replay_failure")) or "replay" in schema_version.lower()
-    replay = replay or "replay" in source.lower() or any(
-        _hammer_projection_truthy(
-            value.get(field) if field in value else metadata.get(field)
+    replay = (
+        replay
+        or "replay" in source.lower()
+        or any(
+            _hammer_projection_truthy(value.get(field) if field in value else metadata.get(field))
+            for field in ("is_replay", "replay", "replay_failure")
         )
-        for field in ("is_replay", "replay", "replay_failure")
     )
     replay_case_id = str(
         value.get("replay_case_id")
@@ -8278,11 +8085,13 @@ def _hammer_projection_replay_context(
         or context.get("replay_case_id")
         or ""
     ).strip()
-    replay = replay or bool(replay_case_id) or any(
-        _hammer_projection_truthy(
-            value.get(field) if field in value else metadata.get(field)
+    replay = (
+        replay
+        or bool(replay_case_id)
+        or any(
+            _hammer_projection_truthy(value.get(field) if field in value else metadata.get(field))
+            for field in ("high_impact_replay", "high_impact_replay_failure")
         )
-        for field in ("high_impact_replay", "high_impact_replay_failure")
     )
     high_impact = bool(context.get("high_impact_replay_failure"))
     if replay and _hammer_projection_high_impact_payload(value):
@@ -8373,9 +8182,7 @@ def _hammer_projection_items(
     if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
         items: List[Mapping[str, Any]] = []
         for item in value:
-            items.extend(
-                _hammer_projection_items(item, _replay_context=_replay_context)
-            )
+            items.extend(_hammer_projection_items(item, _replay_context=_replay_context))
         return items
     return []
 
@@ -8408,9 +8215,7 @@ def _hammer_projection_truthy(value: Any) -> bool:
 
 def _hammer_projection_failure_reason(item: Mapping[str, Any]) -> str:
     metadata = _hammer_projection_metadata(item)
-    failure_reason = str(
-        item.get("failure_reason") or metadata.get("failure_reason") or ""
-    ).strip()
+    failure_reason = str(item.get("failure_reason") or metadata.get("failure_reason") or "").strip()
     if failure_reason:
         return re.sub(r"[^a-z0-9_]+", "_", failure_reason.lower()).strip("_")
     rejection_reasons = _hammer_projection_unique_strings(
@@ -8422,19 +8227,16 @@ def _hammer_projection_failure_reason(item: Mapping[str, Any]) -> str:
     if any("copy" in reason.lower() for reason in rejection_reasons):
         return "source_copy_rejected"
     if rejection_reasons:
-        return re.sub(
-            r"[^a-z0-9_]+", "_", rejection_reasons[0].lower()
-        ).strip("_")
-    reconstruction_status = str(
-        item.get("reconstruction_status")
-        or metadata.get("reconstruction_status")
-        or ""
-    ).strip().lower()
+        return re.sub(r"[^a-z0-9_]+", "_", rejection_reasons[0].lower()).strip("_")
+    reconstruction_status = (
+        str(item.get("reconstruction_status") or metadata.get("reconstruction_status") or "")
+        .strip()
+        .lower()
+    )
     if (
         _hammer_projection_truthy(item.get("proved"))
         and reconstruction_status
-        and reconstruction_status
-        not in _HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES
+        and reconstruction_status not in _HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES
     ):
         return "reconstruction_failed"
     backend_statuses = item.get("backend_statuses")
@@ -8466,16 +8268,11 @@ def _hammer_projection_is_verified_failure(
     status = str(item.get("status") or "").strip().lower()
     if status in {"accepted", "passed", "proved", "success", "trusted"}:
         return False
-    if _hammer_projection_truthy(item.get("trusted")) and not item.get(
-        "rejection_reasons"
-    ):
-        reconstruction_status = str(
-            item.get("reconstruction_status") or ""
-        ).strip().lower()
+    if _hammer_projection_truthy(item.get("trusted")) and not item.get("rejection_reasons"):
+        reconstruction_status = str(item.get("reconstruction_status") or "").strip().lower()
         if (
             not reconstruction_status
-            or reconstruction_status
-            in _HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES
+            or reconstruction_status in _HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES
         ):
             return False
     if failure_reason == "backend_unavailable" and not _hammer_projection_truthy(
@@ -8486,9 +8283,7 @@ def _hammer_projection_is_verified_failure(
     backend_statuses = item.get("backend_statuses")
     if isinstance(backend_statuses, Mapping):
         statuses = {
-            str(value).strip().lower()
-            for value in backend_statuses.values()
-            if str(value).strip()
+            str(value).strip().lower() for value in backend_statuses.values() if str(value).strip()
         }
         if statuses and statuses <= {"pending", "queued", "running", "unavailable"}:
             return False
@@ -8512,13 +8307,16 @@ def _hammer_projection_string_field(
 
 def _hammer_projection_target_view(item: Mapping[str, Any]) -> str:
     metadata = _hammer_projection_metadata(item)
-    return _hammer_projection_string_field(
-        item,
-        metadata,
-        "target_view",
-        "legal_ir_view",
-        "target_component",
-    ) or "modal.frame_logic"
+    return (
+        _hammer_projection_string_field(
+            item,
+            metadata,
+            "target_view",
+            "legal_ir_view",
+            "target_component",
+        )
+        or "modal.frame_logic"
+    )
 
 
 def _hammer_projection_contract_profile(
@@ -8556,15 +8354,18 @@ def _hammer_projection_contract_profile(
 
 def _hammer_projection_obligation_family(item: Mapping[str, Any]) -> str:
     metadata = _hammer_projection_metadata(item)
-    return _hammer_projection_string_field(
-        item,
-        metadata,
-        "obligation_family",
-        "obligation_families",
-        "obligation_kind",
-        "subgoal_kind",
-        "logic_family",
-    ) or "legal_ir_obligation"
+    return (
+        _hammer_projection_string_field(
+            item,
+            metadata,
+            "obligation_family",
+            "obligation_families",
+            "obligation_kind",
+            "subgoal_kind",
+            "logic_family",
+        )
+        or "legal_ir_obligation"
+    )
 
 
 def _hammer_projection_safe_paths(values: Any, *, max_paths: int = 8) -> List[str]:
@@ -8593,9 +8394,7 @@ def _hammer_projection_item_allowed_paths(
     metadata = _hammer_projection_metadata(item)
     validation_set = metadata.get("validation_set")
     validation_set = dict(validation_set) if isinstance(validation_set, Mapping) else {}
-    change_spec = item.get("compiler_change_spec") or metadata.get(
-        "compiler_change_spec"
-    )
+    change_spec = item.get("compiler_change_spec") or metadata.get("compiler_change_spec")
     change_spec = dict(change_spec) if isinstance(change_spec, Mapping) else {}
     explicit_paths = _hammer_projection_safe_paths(
         [
@@ -8634,9 +8433,7 @@ def _hammer_projection_command_strings(values: Any) -> List[str]:
     for value in values:
         if isinstance(value, str) and value.strip():
             commands.append(value.strip())
-        elif isinstance(value, Sequence) and not isinstance(
-            value, (bytes, bytearray, str)
-        ):
+        elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
             tokens = [str(token) for token in value if str(token)]
             if tokens:
                 commands.append(shlex.join(tokens))
@@ -8653,13 +8450,9 @@ def _hammer_projection_validation_commands(
     for item in items:
         metadata = _hammer_projection_metadata(item)
         validation_set = metadata.get("validation_set")
-        validation_set = (
-            dict(validation_set) if isinstance(validation_set, Mapping) else {}
-        )
+        validation_set = dict(validation_set) if isinstance(validation_set, Mapping) else {}
         for payload in (item, metadata, validation_set):
-            commands.extend(
-                _hammer_projection_command_strings(payload.get("validation_commands"))
-            )
+            commands.extend(_hammer_projection_command_strings(payload.get("validation_commands")))
             command = str(payload.get("validation_command") or "").strip()
             if command:
                 commands.append(command)
@@ -8705,13 +8498,10 @@ def _hammer_projection_occurrence_key(item: Mapping[str, Any]) -> str:
     payload = {
         str(key): value
         for key, value in item.items()
-        if str(key).lower()
-        not in {"created_at", "observed_at", "timestamp", "updated_at"}
+        if str(key).lower() not in {"created_at", "observed_at", "timestamp", "updated_at"}
     }
     return hashlib.sha256(
-        json.dumps(payload, default=str, ensure_ascii=True, sort_keys=True).encode(
-            "utf-8"
-        )
+        json.dumps(payload, default=str, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
 
 
@@ -8831,9 +8621,7 @@ def hammer_failure_projection_todos(
             continue
         target_view = _hammer_projection_target_view(item)
         contract_id, contract = _hammer_projection_contract_profile(item, target_view)
-        route_view = str(
-            getattr(contract, "target_component", "") or target_view
-        )
+        route_view = str(getattr(contract, "target_component", "") or target_view)
         action, target_component = _hammer_projection_route_for_view(route_view)
         if contract is not None:
             target_component = str(contract.target_component)
@@ -8957,9 +8745,7 @@ def hammer_failure_projection_todos(
                 ),
                 "obligation_family": obligation_family,
                 "obligation_id": str(item.get("obligation_id") or ""),
-                "replay_case_id": str(
-                    item.get("_hammer_projection_replay_case_id") or ""
-                ),
+                "replay_case_id": str(item.get("_hammer_projection_replay_case_id") or ""),
                 "reconstruction_status": str(item.get("reconstruction_status") or ""),
                 "sample_id": str(
                     item.get("sample_id")
@@ -8977,11 +8763,12 @@ def hammer_failure_projection_todos(
             "obligation_family": obligation_family,
             "target_view": target_view,
         }
-        dedupe_signature = "hammer-failure:" + hashlib.sha256(
-            json.dumps(cluster_key, ensure_ascii=True, sort_keys=True).encode(
-                "utf-8"
-            )
-        ).hexdigest()[:20]
+        dedupe_signature = (
+            "hammer-failure:"
+            + hashlib.sha256(
+                json.dumps(cluster_key, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:20]
+        )
         target_metrics = _hammer_projection_target_metrics(
             action=action,
             failure_reason=reason,
@@ -9065,8 +8852,7 @@ def hammer_failure_projection_todos(
                 loss_name="hammer_verified_failure",
                 loss_value=round(float(support_count), 12),
                 priority=round(
-                    (110.0 if high_impact_replay else 80.0)
-                    + float(support_count),
+                    (110.0 if high_impact_replay else 80.0) + float(support_count),
                     6,
                 ),
                 metadata=metadata,
@@ -9126,12 +8912,8 @@ def _compiler_guidance_mean_delta_block(
             "quality_gate": "inactive",
         }
     ce_delta = _mean([float(delta.get("ce_delta", 0.0)) for delta in deltas])
-    copy_hack_delta = _mean(
-        [float(delta.get("copy_hack_delta", 0.0)) for delta in deltas]
-    )
-    cosine_delta = _mean(
-        [float(delta.get("cosine_delta", 0.0)) for delta in deltas]
-    )
+    copy_hack_delta = _mean([float(delta.get("copy_hack_delta", 0.0)) for delta in deltas])
+    cosine_delta = _mean([float(delta.get("cosine_delta", 0.0)) for delta in deltas])
     return {
         "ce_delta": ce_delta,
         "copy_hack_delta": copy_hack_delta,
@@ -9277,11 +9059,11 @@ def compiler_guidance_canary_block(
         "source_copy_delta": plain_source_copy - guided_source_copy,
     }
     core_names = ("ce_delta", "copy_hack_delta", "cosine_delta")
-    improved = enabled and applied_count > 0 and any(
-        deltas[name] > threshold for name in core_names
+    improved = (
+        enabled and applied_count > 0 and any(deltas[name] > threshold for name in core_names)
     )
-    regressed = enabled and applied_count > 0 and any(
-        deltas[name] < -threshold for name in core_names
+    regressed = (
+        enabled and applied_count > 0 and any(deltas[name] < -threshold for name in core_names)
     )
     if not enabled or applied_count <= 0:
         quality_gate = "inactive"
@@ -9453,9 +9235,7 @@ def _compiler_guidance_todo_routes_from_legal_ir_view_gaps(
 ) -> Dict[str, float]:
     route_counts: Counter[str] = Counter()
     for gap_name, count in _top_numeric_items(view_gaps, limit=32).items():
-        route_counts[_compiler_guidance_legal_ir_view_gap_route(gap_name)] += float(
-            count
-        )
+        route_counts[_compiler_guidance_legal_ir_view_gap_route(gap_name)] += float(count)
     return _top_numeric_items(route_counts, limit=limit)
 
 
@@ -9466,9 +9246,8 @@ def compiler_guidance_route_scope(route: str) -> Dict[str, Any]:
         _normalized_guidance_route(action): target
         for action, target in PROGRAM_SYNTHESIS_ACTION_TARGETS.items()
     }
-    target_component = (
-        normalized_targets.get(normalized)
-        or GUIDANCE_ROUTE_TARGET_OVERRIDES.get(normalized)
+    target_component = normalized_targets.get(normalized) or GUIDANCE_ROUTE_TARGET_OVERRIDES.get(
+        normalized
     )
     matched_by = "action_target" if normalized in normalized_targets else "override"
     if not target_component:
@@ -9501,9 +9280,7 @@ def compiler_guidance_scope_hints(
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
     if not isinstance(todo_routes, Mapping) or not todo_routes:
         legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
-        legal_ir_view_family_gaps = guided_block.get(
-            "compiler_guidance_legal_ir_view_family_gaps"
-        )
+        legal_ir_view_family_gaps = guided_block.get("compiler_guidance_legal_ir_view_family_gaps")
         route_view_gaps: Mapping[str, Any] = {}
         if isinstance(legal_ir_view_gaps, Mapping) and legal_ir_view_gaps:
             route_view_gaps = legal_ir_view_gaps
@@ -9551,9 +9328,7 @@ def compiler_guidance_scope_hints(
         },
         "scope_weights": scope_weights,
         "target_component_counts": {
-            component: (
-                int(value) if float(value).is_integer() else round(float(value), 9)
-            )
+            component: (int(value) if float(value).is_integer() else round(float(value), 9))
             for component, value in target_component_counts.most_common(max(0, int(max_scopes)))
         },
     }
@@ -9585,9 +9360,7 @@ def compiler_guidance_promotion_gate(
         "promotion_allowed": promotion_allowed,
         "promotion_block_reason": "" if promotion_allowed else reason,
         "quality_gate": quality_gate,
-        "recommended_mode": (
-            "promote_deterministic_rules" if promotion_allowed else "canary_only"
-        ),
+        "recommended_mode": ("promote_deterministic_rules" if promotion_allowed else "canary_only"),
     }
 
 
@@ -9611,8 +9384,7 @@ def _compiler_guidance_attribution_summary(
             keys = [
                 str(key)
                 for key, block in sorted(group.items())
-                if isinstance(block, Mapping)
-                and str(block.get("quality_gate") or "") == gate
+                if isinstance(block, Mapping) and str(block.get("quality_gate") or "") == gate
             ]
             if keys:
                 summary[f"{gate}_{group_name}"] = keys
@@ -9629,12 +9401,8 @@ def compiler_guidance_distillation_candidates(
     feature_groups = guided_block.get("compiler_guidance_feature_groups")
     surface_features = guided_block.get("compiler_guidance_surface_features")
     legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
-    legal_ir_view_family_gaps = guided_block.get(
-        "compiler_guidance_legal_ir_view_family_gaps"
-    )
-    semantic_overlay_terms = guided_block.get(
-        "compiler_guidance_semantic_overlay_terms"
-    )
+    legal_ir_view_family_gaps = guided_block.get("compiler_guidance_legal_ir_view_family_gaps")
+    semantic_overlay_terms = guided_block.get("compiler_guidance_semantic_overlay_terms")
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
     todo_route_examples = guided_block.get("compiler_guidance_todo_route_examples")
     top_feature_groups = _top_numeric_items(
@@ -9650,9 +9418,7 @@ def compiler_guidance_distillation_candidates(
         limit=max_items,
     )
     top_legal_ir_view_family_gaps = _top_numeric_items(
-        legal_ir_view_family_gaps
-        if isinstance(legal_ir_view_family_gaps, Mapping)
-        else {},
+        legal_ir_view_family_gaps if isinstance(legal_ir_view_family_gaps, Mapping) else {},
         limit=max_items,
     )
     top_todo_routes = _top_numeric_items(
@@ -9745,9 +9511,7 @@ def compiler_guidance_distillation_candidates(
 
 
 def compiler_guidance_distillation_path(summary_path: Path) -> Path:
-    return summary_path.with_name(
-        f"{summary_path.stem}.compiler-guidance-distillation.json"
-    )
+    return summary_path.with_name(f"{summary_path.stem}.compiler-guidance-distillation.json")
 
 
 def save_compiler_guidance_distillation(
@@ -9891,9 +9655,7 @@ def _compiler_guidance_validation_commands(scope: str) -> List[str]:
     tests = list(
         GUIDANCE_SCOPE_VALIDATION_TESTS.get(
             str(scope),
-            (
-                "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-            ),
+            ("tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",),
         )
     )
     tests = list(dict.fromkeys(str(test) for test in tests if str(test)))
@@ -10016,8 +9778,8 @@ def compiler_guidance_distillation_todos(
         target_component = str(route_scope.get("target_component") or "")
         scope = str(route_scope.get("scope") or "")
         examples = route_examples.get(route)
-        sample_ids, citations, evidence, metric_payloads = (
-            _compiler_guidance_example_payloads(examples, route=action)
+        sample_ids, citations, evidence, metric_payloads = _compiler_guidance_example_payloads(
+            examples, route=action
         )
         if not sample_ids:
             sample_ids = [f"compiler-guidance:{action}"]
@@ -10183,11 +9945,9 @@ def compiler_guidance_activation_todos(
         action = _normalized_guidance_route(route)
         target_component = str(route_scope.get("target_component") or "")
         scope = str(route_scope.get("scope") or "")
-        sample_ids, citations, evidence, metric_payloads = (
-            _compiler_guidance_example_payloads(
-                route_examples.get(route),
-                route=action,
-            )
+        sample_ids, citations, evidence, metric_payloads = _compiler_guidance_example_payloads(
+            route_examples.get(route),
+            route=action,
         )
         if not sample_ids:
             sample_ids = [f"compiler-guidance-activation:{action}"]
@@ -10198,9 +9958,7 @@ def compiler_guidance_activation_todos(
                 loss_name="compiler_guidance_activation",
             ),
             "compiler_guidance_activation_count": count,
-            "compiler_guidance_activation_reason": (
-                "guidance_applied_without_metric_movement"
-            ),
+            "compiler_guidance_activation_reason": ("guidance_applied_without_metric_movement"),
             "compiler_guidance_attribution": dict(
                 candidates.get("guidance_attribution")
                 if isinstance(candidates.get("guidance_attribution"), Mapping)
@@ -10481,6 +10239,7 @@ def compiler_guidance_guardrail_todos(
         )
     ]
 
+
 def cleanup_program_synthesis_terminal_queue(
     *,
     queue_path: str | Path,
@@ -10508,9 +10267,7 @@ def cleanup_program_synthesis_terminal_queue(
         )
         archived_status_counts: Dict[str, int] = {}
         for todo in archived:
-            archived_status_counts[todo.status] = (
-                archived_status_counts.get(todo.status, 0) + 1
-            )
+            archived_status_counts[todo.status] = archived_status_counts.get(todo.status, 0) + 1
 
         backup_path: Optional[Path] = None
         archive_path: Optional[Path] = None
@@ -10553,9 +10310,7 @@ def cleanup_program_synthesis_terminal_queue(
 def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
     """Return bridge adapters that should feed optimizer loss TODOs."""
 
-    raw = str(
-        getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS) or ""
-    ).strip()
+    raw = str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS) or "").strip()
     if raw.lower() in {"", "none", "off", "false"}:
         return []
     return [
@@ -10697,15 +10452,11 @@ def evaluate_autoencoder_with_bounded_metric_bridges(
         legal_ir_predicted_view_distribution=dict(
             getattr(bridge, "legal_ir_predicted_view_distribution", {}) or {}
         ),
-        legal_ir_target_hashes=dict(
-            getattr(bridge, "legal_ir_target_hashes", {}) or {}
-        ),
+        legal_ir_target_hashes=dict(getattr(bridge, "legal_ir_target_hashes", {}) or {}),
         legal_ir_grammar_rejection_reasons=dict(
             getattr(bridge, "legal_ir_grammar_rejection_reasons", {}) or {}
         ),
-        legal_ir_view_distribution=dict(
-            getattr(bridge, "legal_ir_view_distribution", {}) or {}
-        ),
+        legal_ir_view_distribution=dict(getattr(bridge, "legal_ir_view_distribution", {}) or {}),
         legal_ir_view_family_metrics={
             str(family): dict(metrics)
             for family, metrics in dict(
@@ -10733,10 +10484,7 @@ def _todo_supervisor_precomputed_evaluations(
     ) -> bool:
         if evaluation is None or evaluation.sample_count != len(samples):
             return False
-        expected_ids = {
-            str(getattr(sample, "sample_id", "") or "")
-            for sample in samples
-        }
+        expected_ids = {str(getattr(sample, "sample_id", "") or "") for sample in samples}
         evaluated_ids = set(evaluation.decoded_embeddings)
         return not evaluated_ids or evaluated_ids == expected_ids
 
@@ -10745,15 +10493,10 @@ def _todo_supervisor_precomputed_evaluations(
         return (
             (
                 before_train
-                if before_train_full_family
-                and matches_samples(before_train, train_samples)
+                if before_train_full_family and matches_samples(before_train, train_samples)
                 else None
             ),
-            (
-                before_validation
-                if matches_samples(before_validation, validation_samples)
-                else None
-            ),
+            (before_validation if matches_samples(before_validation, validation_samples) else None),
         )
 
     projection_validation: Optional[AutoencoderEvaluation] = None
@@ -10855,10 +10598,14 @@ def parse_positive_int(value: Any) -> int:
 def autoencoder_introspection_mode(args: argparse.Namespace) -> str:
     """Return the normalized reversible introspection rollout mode."""
 
-    mode = str(
-        getattr(args, "autoencoder_introspection_mode", DEFAULT_AUTOENCODER_INTROSPECTION_MODE)
-        or DEFAULT_AUTOENCODER_INTROSPECTION_MODE
-    ).strip().lower()
+    mode = (
+        str(
+            getattr(args, "autoencoder_introspection_mode", DEFAULT_AUTOENCODER_INTROSPECTION_MODE)
+            or DEFAULT_AUTOENCODER_INTROSPECTION_MODE
+        )
+        .strip()
+        .lower()
+    )
     if mode in {"0", "false", "no", "none", "disabled"}:
         return "off"
     if mode not in MODAL_INTROSPECTION_MODES:
@@ -10977,9 +10724,7 @@ def skipped_introspection_export_report(
         "requested_packet_count": 0,
         "schema_failure_count": 0,
         "schema_failures": [],
-        "skip_reason": (
-            "cadence" if introspection_export_mode_enabled(mode) else "mode_off"
-        ),
+        "skip_reason": ("cadence" if introspection_export_mode_enabled(mode) else "mode_off"),
         "skipped": True,
     }
 
@@ -10991,7 +10736,10 @@ def autoencoder_enforce_fail_closed_reason(
 ) -> str:
     if str(rollout_control.get("introspection_mode") or "off") != "enforce":
         return ""
-    if bool(rollout_control.get("require_prover_confirmation", True)) and not bridge_evaluate_provers:
+    if (
+        bool(rollout_control.get("require_prover_confirmation", True))
+        and not bridge_evaluate_provers
+    ):
         return "enforce_requires_prover_confirmation"
     if int(rollout_control.get("max_audits_per_cycle", 0) or 0) <= 0:
         return "enforce_requires_positive_audit_budget"
@@ -11027,15 +10775,9 @@ def _budgeted_audit_samples(
     if mode == "off":
         return list(samples)
     scope_filters = [
-        str(value)
-        for value in rollout_control.get("target_scope_filters", []) or []
-        if str(value)
+        str(value) for value in rollout_control.get("target_scope_filters", []) or [] if str(value)
     ]
-    filtered = [
-        sample
-        for sample in samples
-        if _sample_matches_target_scope(sample, scope_filters)
-    ]
+    filtered = [sample for sample in samples if _sample_matches_target_scope(sample, scope_filters)]
     max_audits = int(rollout_control.get("max_audits_per_cycle", 0) or 0)
     if max_audits <= 0:
         return []
@@ -11070,9 +10812,7 @@ def _introspection_export_samples_with_indices(
     if mode == "off":
         return list(samples), [int(index) for index in indices]
     scope_filters = [
-        str(value)
-        for value in rollout_control.get("target_scope_filters", []) or []
-        if str(value)
+        str(value) for value in rollout_control.get("target_scope_filters", []) or [] if str(value)
     ]
     max_audits = max(0, int(rollout_control.get("max_audits_per_cycle", 0) or 0))
     min_export_samples = max(
@@ -11140,13 +10880,13 @@ def _codex_scope_filter(scope: Optional[str]) -> Optional[Dict[str, str]]:
 def _metadata_matches(todo: ModalTodo, metadata_filter: Optional[Mapping[str, str]]) -> bool:
     if not metadata_filter:
         return True
-    return all(str(todo.metadata.get(key) or "") == str(value) for key, value in metadata_filter.items())
+    return all(
+        str(todo.metadata.get(key) or "") == str(value) for key, value in metadata_filter.items()
+    )
 
 
 def _codex_task_fingerprint(todo: ModalTodo) -> str:
-    return hashlib.sha256(
-        program_synthesis_todo_embedding_text(todo).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(program_synthesis_todo_embedding_text(todo).encode("utf-8")).hexdigest()
 
 
 def _coerce_embedding_vector(value: Any) -> List[float]:
@@ -11280,7 +11020,9 @@ def _update_codex_task_vector_index(
 
     with queue_file_lock(index_path):
         latest_payload = _load_codex_task_vector_index(index_path)
-        latest_items = latest_payload.get("items") if isinstance(latest_payload.get("items"), dict) else {}
+        latest_items = (
+            latest_payload.get("items") if isinstance(latest_payload.get("items"), dict) else {}
+        )
         items: Dict[str, Dict[str, Any]] = {}
         for todo_id, todo in sorted(todos_by_id.items()):
             fingerprint = _codex_task_fingerprint(todo)
@@ -11508,10 +11250,7 @@ def _claim_vector_program_synthesis_batch(
             skipped_fresh_undersized_anchor_ids.append(alternate_anchor_id)
 
     selected_ids = [str(item["todo"].todo_id) for item in selected]
-    similarity_by_id = {
-        str(item["todo"].todo_id): float(item["similarity"])
-        for item in selected
-    }
+    similarity_by_id = {str(item["todo"].todo_id): float(item["similarity"]) for item in selected}
     fill_reason_by_id = {
         str(item["todo"].todo_id): str(item.get("fill_reason") or "")
         for item in selected
@@ -11519,9 +11258,7 @@ def _claim_vector_program_synthesis_batch(
     }
     anchor_id = selected_ids[0] if selected_ids else ""
     if skipped_fresh_undersized_anchor_ids:
-        vector_report["skipped_fresh_undersized_anchor_ids"] = (
-            skipped_fresh_undersized_anchor_ids
-        )
+        vector_report["skipped_fresh_undersized_anchor_ids"] = skipped_fresh_undersized_anchor_ids
     undersized_stale_bundle = (
         bool(selected)
         and len(selected) < min_bundle_size
@@ -11869,9 +11606,7 @@ def _paired_codex_runtime_budget(args: argparse.Namespace) -> Dict[str, float]:
     )
     shutdown_drain_window_seconds = _codex_shutdown_drain_window_seconds(args)
     claim_window_seconds = (
-        producer_lifetime_seconds
-        + cycle_completion_grace_seconds
-        + queue_grace_seconds
+        producer_lifetime_seconds + cycle_completion_grace_seconds + queue_grace_seconds
     )
     return {
         "producer_lifetime_seconds": producer_lifetime_seconds,
@@ -11879,9 +11614,7 @@ def _paired_codex_runtime_budget(args: argparse.Namespace) -> Dict[str, float]:
         "queue_grace_seconds": queue_grace_seconds,
         "claim_window_seconds": claim_window_seconds,
         "shutdown_drain_window_seconds": shutdown_drain_window_seconds,
-        "child_duration_seconds": (
-            claim_window_seconds + shutdown_drain_window_seconds
-        ),
+        "child_duration_seconds": (claim_window_seconds + shutdown_drain_window_seconds),
     }
 
 
@@ -11899,22 +11632,16 @@ def _paired_parent_runtime_budget(
         0.0,
         float(getattr(args, "paired_grace_seconds", 0.0)),
     )
-    autoencoder_deadline_seconds = (
-        producer_lifetime_seconds + cycle_completion_grace_seconds
-    )
+    autoencoder_deadline_seconds = producer_lifetime_seconds + cycle_completion_grace_seconds
     leanstral_deadline_seconds = 0.0
     if leanstral_enabled:
-        leanstral_deadline_seconds = (
-            autoencoder_deadline_seconds
-            + max(
-                0.0,
-                float(getattr(args, "paired_leanstral_grace_seconds", 0.0)),
-            )
+        leanstral_deadline_seconds = autoencoder_deadline_seconds + max(
+            0.0,
+            float(getattr(args, "paired_leanstral_grace_seconds", 0.0)),
         )
-    codex_deadline_seconds = (
-        max(0.0, float(getattr(args, "paired_launch_delay_seconds", 0.0)))
-        + max(0.0, float(paired.get("codex_duration_seconds", 0.0)))
-    )
+    codex_deadline_seconds = max(
+        0.0, float(getattr(args, "paired_launch_delay_seconds", 0.0))
+    ) + max(0.0, float(paired.get("codex_duration_seconds", 0.0)))
     child_deadline_seconds = max(
         autoencoder_deadline_seconds,
         leanstral_deadline_seconds,
@@ -11993,7 +11720,9 @@ def build_paired_daemon_commands(
             )
         ),
         "--compiler-ir-metric-text-policy",
-        str(getattr(args, "compiler_ir_metric_text_policy", DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY)),
+        str(
+            getattr(args, "compiler_ir_metric_text_policy", DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY)
+        ),
         "--compiler-ir-metric-max-sample-text-chars",
         str(
             getattr(
@@ -12139,7 +11868,11 @@ def build_paired_daemon_commands(
         "--autoencoder-family-semantic-slot-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_semantic_slot_embedding_weight_scale", 0.5)),
         "--autoencoder-family-semantic-slot-legal-ir-view-embedding-weight-scale",
-        str(getattr(args, "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)),
+        str(
+            getattr(
+                args, "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5
+            )
+        ),
         "--autoencoder-family-legal-ir-view-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_legal_ir_view_embedding_weight_scale", 0.5)),
         "--autoencoder-semantic-slot-family-logit-scale",
@@ -12229,15 +11962,31 @@ def build_paired_daemon_commands(
         "--compiler-ir-guided-train-every-n-cycles",
         str(getattr(args, "compiler_ir_guided_train_every_n_cycles", 4)),
         "--autoencoder-before-train-eval-mode",
-        str(getattr(args, "autoencoder_before_train_eval_mode", DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE)),
+        str(
+            getattr(
+                args,
+                "autoencoder_before_train_eval_mode",
+                DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+            )
+        ),
         "--autoencoder-before-train-eval-every-n-cycles",
         str(getattr(args, "autoencoder_before_train_eval_every_n_cycles", 4)),
         "--autoencoder-sample-memory-probe-mode",
-        str(getattr(args, "autoencoder_sample_memory_probe_mode", DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE)),
+        str(
+            getattr(
+                args,
+                "autoencoder_sample_memory_probe_mode",
+                DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+            )
+        ),
         "--autoencoder-sample-memory-probe-every-n-cycles",
         str(getattr(args, "autoencoder_sample_memory_probe_every_n_cycles", 4)),
         "--autoencoder-todo-supervisor-mode",
-        str(getattr(args, "autoencoder_todo_supervisor_mode", DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE)),
+        str(
+            getattr(
+                args, "autoencoder_todo_supervisor_mode", DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+            )
+        ),
         "--autoencoder-todo-supervisor-min-open",
         str(getattr(args, "autoencoder_todo_supervisor_min_open", 12)),
         "--autoencoder-introspection-mode",
@@ -12323,17 +12072,13 @@ def build_paired_daemon_commands(
         "--leanstral-rule-gap-max-todos-per-scope",
         str(getattr(args, "leanstral_rule_gap_max_todos_per_scope", 2)),
         "--leanstral-rule-gap-require-executor-available",
-        str(
-            getattr(args, "leanstral_rule_gap_require_executor_available", True)
-        ).lower(),
+        str(getattr(args, "leanstral_rule_gap_require_executor_available", True)).lower(),
         "--leanstral-rule-gap-expected-compiler-commit",
         str(getattr(args, "leanstral_rule_gap_expected_compiler_commit", "")),
         "--leanstral-rule-gap-expected-state-hash",
         str(getattr(args, "leanstral_rule_gap_expected_state_hash", "")),
         "--leanstral-direct-guidance-projection-enabled",
-        str(
-            getattr(args, "leanstral_direct_guidance_projection_enabled", True)
-        ).lower(),
+        str(getattr(args, "leanstral_direct_guidance_projection_enabled", True)).lower(),
         "--leanstral-direct-guidance-path",
         str(getattr(args, "leanstral_direct_guidance_path", "")),
         "--leanstral-direct-guidance-max-todos-per-scope",
@@ -12347,15 +12092,11 @@ def build_paired_daemon_commands(
             )
         ).lower(),
         "--leanstral-direct-guidance-train-autoencoder",
-        str(
-            getattr(args, "leanstral_direct_guidance_train_autoencoder", True)
-        ).lower(),
+        str(getattr(args, "leanstral_direct_guidance_train_autoencoder", True)).lower(),
         "--leanstral-direct-guidance-learning-rate",
         str(getattr(args, "leanstral_direct_guidance_learning_rate", 0.05)),
         "--leanstral-direct-guidance-train-missing-samples",
-        str(
-            getattr(args, "leanstral_direct_guidance_train_missing_samples", False)
-        ).lower(),
+        str(getattr(args, "leanstral_direct_guidance_train_missing_samples", False)).lower(),
         "--leanstral-direct-guidance-max-training-items",
         str(getattr(args, "leanstral_direct_guidance_max_training_items", 64)),
         "--daemon-hammer-guidance-enabled",
@@ -12405,9 +12146,7 @@ def build_paired_daemon_commands(
             )
         ),
         "--daemon-hammer-guidance-verify-reconstruction",
-        str(
-            getattr(args, "daemon_hammer_guidance_verify_reconstruction", False)
-        ).lower(),
+        str(getattr(args, "daemon_hammer_guidance_verify_reconstruction", False)).lower(),
         "--daemon-hammer-guidance-trusted-requires-reconstruction",
         str(
             getattr(
@@ -12421,9 +12160,7 @@ def build_paired_daemon_commands(
         "--daemon-hammer-guidance-learning-rate",
         str(getattr(args, "daemon_hammer_guidance_learning_rate", 0.03)),
         "--daemon-hammer-guidance-train-missing-samples",
-        str(
-            getattr(args, "daemon_hammer_guidance_train_missing_samples", False)
-        ).lower(),
+        str(getattr(args, "daemon_hammer_guidance_train_missing_samples", False)).lower(),
         "--daemon-hammer-guidance-max-training-items",
         str(getattr(args, "daemon_hammer_guidance_max_training_items", 64)),
         "--autoencoder-target-scope-filters",
@@ -12449,13 +12186,9 @@ def build_paired_daemon_commands(
             )
         ),
     ]
-    configured_canary_indices = str(
-        getattr(args, "validation_canary_indices", "") or ""
-    ).strip()
+    configured_canary_indices = str(getattr(args, "validation_canary_indices", "") or "").strip()
     if configured_canary_indices:
-        autoencoder_command.extend(
-            ["--validation-canary-indices", configured_canary_indices]
-        )
+        autoencoder_command.extend(["--validation-canary-indices", configured_canary_indices])
     max_cycles = max(0, int(getattr(args, "max_cycles", 0) or 0))
     if max_cycles > 0:
         autoencoder_command.extend(["--max-cycles", str(max_cycles)])
@@ -12491,9 +12224,7 @@ def build_paired_daemon_commands(
             if scope_worker_count < 1:
                 continue
             for worker_index in range(1, scope_worker_count + 1):
-                worker_suffix = (
-                    scope if scope_worker_count == 1 else f"{scope}-{worker_index:02d}"
-                )
+                worker_suffix = scope if scope_worker_count == 1 else f"{scope}-{worker_index:02d}"
                 child_run_id = f"{codex_run_id}-{worker_suffix}"
                 child_worker_id = (
                     f"{args.worker_id}-{worker_suffix}"
@@ -12595,9 +12326,7 @@ def _paired_codex_children_succeeded(
     """Return whether Codex children finished cleanly for paired-run accounting."""
 
     auto_ok = (
-        bool(autoencoder_success)
-        if autoencoder_success is not None
-        else autoencoder_exit_code == 0
+        bool(autoencoder_success) if autoencoder_success is not None else autoencoder_exit_code == 0
     )
     if not codex_exit_codes or not auto_ok:
         return False
@@ -12632,10 +12361,10 @@ def _paired_autoencoder_succeeded(
             return True
         health = dict(autoencoder_child_health or {})
         return bool(health.get("autoencoder_summary_final", False))
-    runner_stopped_by_signal = (
-        runner_stopped_child
-        and autoencoder_exit_code in {-signal.SIGTERM, -signal.SIGKILL}
-    )
+    runner_stopped_by_signal = runner_stopped_child and autoencoder_exit_code in {
+        -signal.SIGTERM,
+        -signal.SIGKILL,
+    }
     if not runner_stopped_by_signal:
         return False
     health = dict(autoencoder_child_health or {})
@@ -12768,7 +12497,9 @@ def _adaptive_pipeline_profile_from_args(
         lean_reconstruction_workers=max(1, min(2, hammer_workers)),
         leanstral_workers=1 if bool(getattr(args, "paired_leanstral_worker_enabled", False)) else 1,
         legal_ir_family_workers=validation_workers,
-        incremental_validation_workers=max(1, min(validation_workers, int(getattr(args, "validation_count", 1) or 1))),
+        incremental_validation_workers=max(
+            1, min(validation_workers, int(getattr(args, "validation_count", 1) or 1))
+        ),
         snapshot_evaluator_workers=snapshot_workers,
         codex_workers=codex_workers,
         orchestration_workers=1,
@@ -12809,11 +12540,7 @@ def paired_adaptive_pipeline_worker_plan(
     )
     swap_free = float(health.get("swap_free_gb", 0.0) or 0.0)
     swap_total = float(health.get("swap_total_gb", 0.0) or 0.0)
-    swap_pressure = (
-        max(0.0, min(1.0, 1.0 - swap_free / swap_total))
-        if swap_total
-        else 0.0
-    )
+    swap_pressure = max(0.0, min(1.0, 1.0 - swap_free / swap_total)) if swap_total else 0.0
     inferred_hammer_depth = max(
         0,
         int(getattr(args, "daemon_hammer_guidance_max_samples_per_cycle", 0) or 0)
@@ -12828,9 +12555,15 @@ def paired_adaptive_pipeline_worker_plan(
         min(512, int(getattr(args, "max_program_synthesis_pending", requested_codex_workers) or 0)),
     )
     ready_queue_depth = {
-        "codex": int(_arg_or_default(args, "adaptive_codex_ready_depth", inferred_codex_depth) or 0),
-        "evaluator": int(_arg_or_default(args, "adaptive_evaluator_ready_depth", inferred_validation_depth) or 0),
-        "hammer": int(_arg_or_default(args, "adaptive_hammer_ready_depth", inferred_hammer_depth) or 0),
+        "codex": int(
+            _arg_or_default(args, "adaptive_codex_ready_depth", inferred_codex_depth) or 0
+        ),
+        "evaluator": int(
+            _arg_or_default(args, "adaptive_evaluator_ready_depth", inferred_validation_depth) or 0
+        ),
+        "hammer": int(
+            _arg_or_default(args, "adaptive_hammer_ready_depth", inferred_hammer_depth) or 0
+        ),
         "snapshot": int(
             _arg_or_default(
                 args,
@@ -12839,7 +12572,9 @@ def paired_adaptive_pipeline_worker_plan(
             )
             or 0
         ),
-        "validation": int(_arg_or_default(args, "adaptive_validation_ready_depth", inferred_validation_depth) or 0),
+        "validation": int(
+            _arg_or_default(args, "adaptive_validation_ready_depth", inferred_validation_depth) or 0
+        ),
     }
     service_time_seconds = {
         "codex": float(getattr(args, "adaptive_codex_service_seconds", 60.0) or 60.0),
@@ -12858,7 +12593,9 @@ def paired_adaptive_pipeline_worker_plan(
         gpu_utilization=float(
             health.get("gpu_utilization_percent", health.get("gpu_utilization", 0.0)) or 0.0
         ),
-        gpu_telemetry_known=bool(health.get("gpu_telemetry_known", health.get("gpu_telemetry_available", True))),
+        gpu_telemetry_known=bool(
+            health.get("gpu_telemetry_known", health.get("gpu_telemetry_available", True))
+        ),
         child_process_count=int(health.get("child_process_count", 0) or 0),
         child_process_limit=max(
             1,
@@ -12882,10 +12619,15 @@ def paired_adaptive_pipeline_worker_plan(
                 else min(requested_codex_workers, MAX_INITIAL_CODEX_WORKERS)
             ),
         ),
-        nested_child_count=int(health.get("nested_child_count", health.get("child_process_count", 0)) or 0),
+        nested_child_count=int(
+            health.get("nested_child_count", health.get("child_process_count", 0)) or 0
+        ),
         validation_capacity=max(
             1,
-            int(_arg_or_default(args, "adaptive_validation_capacity", profile.validation_cpu_slots) or 1),
+            int(
+                _arg_or_default(args, "adaptive_validation_capacity", profile.validation_cpu_slots)
+                or 1
+            ),
         ),
         merge_conflict_rate=float(getattr(args, "codex_apply_conflict_rate", 0.0) or 0.0),
         resource_pressure=pressure,
@@ -12914,7 +12656,9 @@ def paired_codex_worker_resource_plan(
     available_gb = float(health.get("memory_available_gb", 0.0) or 0.0)
     reserved_gb = max(0.0, float(getattr(args, "paired_reserved_memory_gb", 0.0) or 0.0))
     worker_gb = max(0.001, float(getattr(args, "paired_codex_worker_memory_gb", 1.0) or 1.0))
-    memory_cap = max(1, int((available_gb - reserved_gb) // worker_gb)) if available_gb else requested
+    memory_cap = (
+        max(1, int((available_gb - reserved_gb) // worker_gb)) if available_gb else requested
+    )
     min_swap_free_gb = max(0.0, float(getattr(args, "paired_min_swap_free_gb", 0.0) or 0.0))
     swap_free_gb = float(health.get("swap_free_gb", min_swap_free_gb) or 0.0)
     swap_pressure = bool(min_swap_free_gb > 0.0 and swap_free_gb < min_swap_free_gb)
@@ -12993,9 +12737,7 @@ def _codex_packet_adaptive_worker_plan(
     available_gb = float(health.get("memory_available_gb", 0.0) or 0.0)
     total_gb = float(health.get("memory_total_gb", 0.0) or 0.0)
     memory_pressure = (
-        max(0.0, min(1.0, 1.0 - (available_gb / total_gb)))
-        if available_gb and total_gb
-        else 0.0
+        max(0.0, min(1.0, 1.0 - (available_gb / total_gb))) if available_gb and total_gb else 0.0
     )
     return codex_adaptive_worker_plan(
         requested_workers=requested_workers,
@@ -13088,15 +12830,11 @@ def paired_autoencoder_child_health(
         health["autoencoder_active_cycle"] = int(data.get("active_cycle", 0) or 0)
     except (TypeError, ValueError):
         health["autoencoder_active_cycle"] = 0
-    health["autoencoder_active_cycle_phase"] = str(
-        data.get("active_cycle_phase", "") or ""
-    )
+    health["autoencoder_active_cycle_phase"] = str(data.get("active_cycle_phase", "") or "")
     health["autoencoder_active_cycle_projection_stage"] = str(
         data.get("active_cycle_projection_stage", "") or ""
     )
-    health["autoencoder_latest_stop_reason"] = str(
-        data.get("latest_stop_reason", "") or ""
-    )
+    health["autoencoder_latest_stop_reason"] = str(data.get("latest_stop_reason", "") or "")
     health["autoencoder_summary_final"] = bool(data.get("final", False))
     supervisor_health = (
         data.get("supervisor_health")
@@ -13115,9 +12853,7 @@ def paired_autoencoder_child_health(
     heartbeat_age = age_seconds(data.get("active_cycle_last_heartbeat_at"))
     health["autoencoder_summary_age_seconds"] = summary_age
     health["autoencoder_active_cycle_heartbeat_age_seconds"] = heartbeat_age
-    effective_ages = [
-        age for age in (summary_age, heartbeat_age) if age is not None
-    ]
+    effective_ages = [age for age in (summary_age, heartbeat_age) if age is not None]
     health["autoencoder_effective_heartbeat_age_seconds"] = (
         max(effective_ages) if effective_ages else None
     )
@@ -13457,9 +13193,7 @@ def _codex_worktree_diff(worktree_path: Path) -> Dict[str, Any]:
     )
     names.check_returncode()
     target_files = [
-        path
-        for path in names.stdout.split("\0")
-        if path and not _is_codex_worktree_artifact(path)
+        path for path in names.stdout.split("\0") if path and not _is_codex_worktree_artifact(path)
     ]
     if target_files:
         diff = subprocess.run(
@@ -13822,9 +13556,7 @@ def _resolve_unmerged_targets_with_union(
         text=True,
         timeout=30.0,
     )
-    remaining_paths = [
-        path for path in (remaining.stdout or "").splitlines() if path.strip()
-    ]
+    remaining_paths = [path for path in (remaining.stdout or "").splitlines() if path.strip()]
     return {
         "paths": resolved_paths,
         "remaining_unmerged_paths": remaining_paths,
@@ -14080,9 +13812,7 @@ def _repair_codex_worktree_diff_against_main(
         "status": "failed",
     }
     target_files = [
-        str(path)
-        for path in packet.get("main_apply_target_files", [])
-        if str(path).strip()
+        str(path) for path in packet.get("main_apply_target_files", []) if str(path).strip()
     ]
     try:
         manager = WorktreeManager(repo_path=source_repo_root, worktrees_base=repair_base)
@@ -14166,9 +13896,9 @@ def _default_codex_apply_validation_commands(repo_root: Path) -> List[List[str]]
 def _codex_apply_validation_env() -> Dict[str, str]:
     """Run apply validation without contending with the autoencoder GPU loop."""
     env = dict(os.environ)
-    allow_cuda = str(
-        env.get("IPFS_DATASETS_CODEX_APPLY_VALIDATION_ALLOW_CUDA") or ""
-    ).strip().lower()
+    allow_cuda = (
+        str(env.get("IPFS_DATASETS_CODEX_APPLY_VALIDATION_ALLOW_CUDA") or "").strip().lower()
+    )
     if allow_cuda not in {"1", "true", "yes", "on"}:
         env["CUDA_VISIBLE_DEVICES"] = ""
     return env
@@ -14339,9 +14069,12 @@ def _codex_packet_metric_sample_payloads(
                 if not isinstance(payload, Mapping):
                     continue
                 sample_id = str(payload.get("sample_id") or "")
-                key = sample_id or hashlib.sha256(
-                    json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
-                ).hexdigest()
+                key = (
+                    sample_id
+                    or hashlib.sha256(
+                        json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
+                    ).hexdigest()
+                )
                 if key in seen:
                     continue
                 seen.add(key)
@@ -14431,7 +14164,7 @@ def _codex_packet_target_metric_snapshot(
             "status": "skipped",
             "target_metrics": target_metrics,
         }
-    script = r'''
+    script = r"""
 import json
 import sys
 
@@ -14548,7 +14281,7 @@ print(json.dumps({
     "status": "measured",
     "target_metrics": target_metrics,
 }, sort_keys=True))
-'''
+"""
     payload = {
         "bridge_names": bridge_names,
         "samples": sample_payload_list,
@@ -14607,9 +14340,7 @@ print(json.dumps({
         }
     snapshot["stderr_tail"] = str(result.get("stderr") or "")[-500:]
     snapshot["sample_role"] = sample_role
-    snapshot["target_bridge_names"] = list(
-        snapshot.get("target_bridge_names") or bridge_names
-    )
+    snapshot["target_bridge_names"] = list(snapshot.get("target_bridge_names") or bridge_names)
     snapshot["timeout_seconds"] = float(timeout_seconds)
     return snapshot
 
@@ -14643,9 +14374,7 @@ def _call_codex_packet_target_metric_snapshot(
             for parameter in signature.parameters.values()
         )
         unsupported = [
-            name
-            for name in kwargs
-            if name not in signature.parameters and not accepts_var_kwargs
+            name for name in kwargs if name not in signature.parameters and not accepts_var_kwargs
         ]
         if unsupported:
             return _codex_packet_target_metric_snapshot(packet, repo_root)
@@ -14897,9 +14626,7 @@ def _target_metric_improvement_delta_map(
             continue
         before_value = before_metrics[metric_name]
         after_value = after_metrics[metric_name]
-        if not isinstance(before_value, (int, float)) or not isinstance(
-            after_value, (int, float)
-        ):
+        if not isinstance(before_value, (int, float)) or not isinstance(after_value, (int, float)):
             continue
         deltas[metric_name] = round(
             _target_metric_improvement_delta(
@@ -14943,9 +14670,7 @@ def _codex_validation_comparison(
         "packet_only_failure_tokens": [
             token for token in packet_tokens if token not in baseline_set
         ],
-        "shared_failure_tokens": [
-            token for token in packet_tokens if token in baseline_set
-        ],
+        "shared_failure_tokens": [token for token in packet_tokens if token in baseline_set],
     }
 
 
@@ -15190,9 +14915,7 @@ def apply_codex_worktree_changes_to_main(
                 _save_packet_if_possible(updated, packet_path)
                 return updated
             reason = (
-                "apply-check-failed"
-                if not repair_status
-                else f"apply-check-failed-{repair_status}"
+                "apply-check-failed" if not repair_status else f"apply-check-failed-{repair_status}"
             )
             patch_path = _save_codex_packet_diff_patch(
                 updated,
@@ -15215,9 +14938,7 @@ def apply_codex_worktree_changes_to_main(
         target_files=target_files,
     )
     validation_metric_payloads = _codex_packet_validation_metric_sample_payloads(updated)
-    target_metric_timeout_seconds = _codex_target_metric_timeout_seconds(
-        validation_timeout_seconds
-    )
+    target_metric_timeout_seconds = _codex_target_metric_timeout_seconds(validation_timeout_seconds)
     target_metric_before = (
         _call_codex_packet_target_metric_snapshot(
             updated,
@@ -15640,9 +15361,7 @@ def validate_codex_work_packet_isolated(
             updated["isolated_validation_comparison"] = comparison
             if not comparison["packet_only_failure_tokens"]:
                 updated["isolated_baseline_failure_accepted"] = True
-                updated["isolated_validation_gate"] = (
-                    "inconclusive_baseline_failed"
-                )
+                updated["isolated_validation_gate"] = "inconclusive_baseline_failed"
                 _save_packet_if_possible(updated, packet_path)
                 return updated
         refreshed = refresh_codex_work_packet_patch(updated)
@@ -15679,11 +15398,10 @@ def _validate_and_apply_codex_work_packet(
         validation_commands=validation_commands,
         validation_timeout_seconds=validation_timeout_seconds,
     )
-    if (
-        dict(isolated.get("isolated_validation", {})).get("status")
-        not in {"passed", "skipped"}
-        and not bool(isolated.get("isolated_baseline_failure_accepted"))
-    ):
+    if dict(isolated.get("isolated_validation", {})).get("status") not in {
+        "passed",
+        "skipped",
+    } and not bool(isolated.get("isolated_baseline_failure_accepted")):
         return isolated
     try:
         with codex_main_apply_lock(
@@ -16056,9 +15774,7 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
         main_validation = isolated_validation
     baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
     if not baseline_validation:
-        baseline_validation = dict(
-            packet.get("isolated_baseline_validation", {}) or {}
-        )
+        baseline_validation = dict(packet.get("isolated_baseline_validation", {}) or {})
     target_metric_validation = dict(packet.get("target_metric_validation", {}) or {})
     holdout_target_metric_validation = dict(
         packet.get("holdout_target_metric_validation", {}) or {}
@@ -16104,12 +15820,8 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
         ),
         "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
         "main_apply_validation_failed_command": failed_command,
-        "main_apply_validation_failed_tests": list(
-            main_validation.get("failed_tests", []) or []
-        ),
-        "main_apply_validation_failure_tokens": _codex_validation_failure_tokens(
-            main_validation
-        ),
+        "main_apply_validation_failed_tests": list(main_validation.get("failed_tests", []) or []),
+        "main_apply_validation_failure_tokens": _codex_validation_failure_tokens(main_validation),
         "main_apply_validation_syntax_locations": list(
             main_validation.get("syntax_locations", []) or []
         ),
@@ -16159,9 +15871,7 @@ def _codex_packet_metric_event_fields(packet: Mapping[str, Any]) -> Dict[str, An
         "holdout_target_metric_regressed_metrics": list(
             holdout_report.get("regressed_metrics", []) or []
         ),
-        "holdout_target_metric_sample_count": _target_metric_report_sample_count(
-            holdout_report
-        ),
+        "holdout_target_metric_sample_count": _target_metric_report_sample_count(holdout_report),
         "holdout_target_metric_status": holdout_report.get("status"),
         "main_apply_target_metric_gate": packet.get("main_apply_target_metric_gate"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
@@ -16169,17 +15879,11 @@ def _codex_packet_metric_event_fields(packet: Mapping[str, Any]) -> Dict[str, An
             target_report.get("hard_regressed_metrics", []) or []
         ),
         "target_metric_objective_delta": target_report.get("objective_delta"),
-        "target_metric_regressed_metrics": list(
-            target_report.get("regressed_metrics", []) or []
-        ),
+        "target_metric_regressed_metrics": list(target_report.get("regressed_metrics", []) or []),
         "target_metric_sample_count": _target_metric_report_sample_count(target_report),
         "target_metric_status": target_report.get("status"),
     }
-    return {
-        key: value
-        for key, value in fields.items()
-        if value not in ({}, [], None, "")
-    }
+    return {key: value for key, value in fields.items() if value not in ({}, [], None, "")}
 
 
 def _program_synthesis_metric_feedback_report(
@@ -16189,9 +15893,7 @@ def _program_synthesis_metric_feedback_report(
 ) -> Dict[str, Any]:
     """Summarize whether program-synthesis work is visible to compiler-IR canaries."""
     canary_ids = {
-        str(sample_id)
-        for sample_id in compiler_ir_validation_sample_ids
-        if str(sample_id).strip()
+        str(sample_id) for sample_id in compiler_ir_validation_sample_ids if str(sample_id).strip()
     }
     status_counts: Counter[str] = Counter()
     status_unique_samples: Dict[str, set[str]] = {}
@@ -16209,9 +15911,7 @@ def _program_synthesis_metric_feedback_report(
         status = str(todo.status or "unknown")
         status_counts[status] += 1
         sample_ids = {
-            str(sample_id)
-            for sample_id in list(todo.sample_ids or [])
-            if str(sample_id).strip()
+            str(sample_id) for sample_id in list(todo.sample_ids or []) if str(sample_id).strip()
         }
         status_unique_samples.setdefault(status, set()).update(sample_ids)
         overlap = sample_ids & canary_ids
@@ -16222,9 +15922,7 @@ def _program_synthesis_metric_feedback_report(
         if status == "completed":
             completed_report = todo.metadata.get("completed_validation_report")
             if isinstance(completed_report, Mapping):
-                target_status = str(
-                    completed_report.get("target_metric_status") or ""
-                ).strip()
+                target_status = str(completed_report.get("target_metric_status") or "").strip()
                 holdout_status = str(
                     completed_report.get("holdout_target_metric_status") or ""
                 ).strip()
@@ -16232,9 +15930,7 @@ def _program_synthesis_metric_feedback_report(
                     completed_target_status[target_status] += 1
                 if holdout_status:
                     completed_holdout_status[holdout_status] += 1
-                for metric, value in dict(
-                    completed_report.get("metric_deltas", {}) or {}
-                ).items():
+                for metric, value in dict(completed_report.get("metric_deltas", {}) or {}).items():
                     if isinstance(value, (int, float)) and math.isfinite(float(value)):
                         completed_metric_delta_sums[str(metric)] += float(value)
                 for metric, value in dict(
@@ -16251,10 +15947,7 @@ def _program_synthesis_metric_feedback_report(
             failed_reasons[reason or "unknown"] += 1
 
     def rounded_counter(counter: Counter[str]) -> Dict[str, float]:
-        return {
-            str(key): round(float(value), 9)
-            for key, value in sorted(counter.items())
-        }
+        return {str(key): round(float(value), 9) for key, value in sorted(counter.items())}
 
     report: Dict[str, Any] = {
         "canary_sample_count": len(canary_ids),
@@ -16266,12 +15959,8 @@ def _program_synthesis_metric_feedback_report(
         "completed_holdout_target_metric_status_counts": dict(
             sorted(completed_holdout_status.items())
         ),
-        "completed_metric_delta_sums": rounded_counter(
-            completed_metric_delta_sums
-        ),
-        "completed_target_metric_status_counts": dict(
-            sorted(completed_target_status.items())
-        ),
+        "completed_metric_delta_sums": rounded_counter(completed_metric_delta_sums),
+        "completed_target_metric_status_counts": dict(sorted(completed_target_status.items())),
         "failed_validation_reason_counts": dict(sorted(failed_reasons.items())),
         "status_counts": dict(sorted(status_counts.items())),
     }
@@ -16553,7 +16242,9 @@ def _save_packet_if_possible(packet: Mapping[str, Any], packet_path: Optional[Pa
 
 
 def _safe_artifact_name(value: str) -> str:
-    safe = "".join(character if character.isalnum() or character in "-_" else "-" for character in value)
+    safe = "".join(
+        character if character.isalnum() or character in "-_" else "-" for character in value
+    )
     return safe.strip("-")[:96] or "codex-worker"
 
 
@@ -16568,10 +16259,7 @@ def resolve_codex_worktree_repo_root(repo_root: Path) -> Path:
 
     root = Path(repo_root).resolve()
     nested = root / "ipfs_datasets_py"
-    if (
-        (nested / "ipfs_datasets_py" / "logic" / "modal").exists()
-        and _path_is_git_worktree(nested)
-    ):
+    if (nested / "ipfs_datasets_py" / "logic" / "modal").exists() and _path_is_git_worktree(nested):
         return nested
     return root
 
@@ -16658,7 +16346,9 @@ def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = F
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path) -> Dict[str, Any]:
+def initial_summary(
+    args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path
+) -> Dict[str, Any]:
     seed, seed_source = _sampling_seed_for_args(args)
     return {
         "best_validation_ce": 1.0e12,
@@ -16693,9 +16383,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "max_cycles": max(0, int(getattr(args, "max_cycles", 0) or 0)),
         "metric_schema_version": AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
         "runtime_telemetry_schema_version": RUNTIME_TELEMETRY_SCHEMA_VERSION,
-        "runtime_resource_telemetry_schema_version": (
-            RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION
-        ),
+        "runtime_resource_telemetry_schema_version": (RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION),
         "runtime_phase_catalog": list(RUNTIME_PHASES),
         "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
         "autoencoder_generalizable_capacity_schema_version": (
@@ -16737,7 +16425,9 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
     }
 
 
-def _cycle_learning_rate(args: argparse.Namespace, summary: Mapping[str, Any]) -> tuple[float, Dict[str, Any]]:
+def _cycle_learning_rate(
+    args: argparse.Namespace, summary: Mapping[str, Any]
+) -> tuple[float, Dict[str, Any]]:
     """Return per-cycle learning rate using simple plateau/regression feedback."""
     base = max(1e-6, float(getattr(args, "learning_rate", 0.35)))
     floor_ratio = max(0.05, float(getattr(args, "learning_rate_floor_ratio", 0.25)))
@@ -16957,8 +16647,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--generalizable-projection-max-update-families",
         type=int,
         default=int(
-            os.environ.get("IPFS_DATASETS_GENERALIZABLE_PROJECTION_MAX_UPDATE_FAMILIES", "0")
-            or 0
+            os.environ.get("IPFS_DATASETS_GENERALIZABLE_PROJECTION_MAX_UPDATE_FAMILIES", "0") or 0
         ),
         help=(
             "Limit the number of projection update families evaluated per epoch. "
@@ -17967,8 +17656,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=parse_positive_int,
         default=DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP,
         help=(
-            "Maximum globally retained sparse semantic keys per coupled "
-            "autoencoder state group."
+            "Maximum globally retained sparse semantic keys per coupled autoencoder state group."
         ),
     )
     parser.add_argument(
@@ -18020,10 +17708,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--autoencoder-feature-activity-reference",
         type=int,
         default=64,
-        help=(
-            "Feature-count reference before adaptive feature contribution "
-            "down-scaling starts."
-        ),
+        help=("Feature-count reference before adaptive feature contribution down-scaling starts."),
     )
     parser.add_argument(
         "--autoencoder-feature-logit-clip",
@@ -18071,8 +17756,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.0,
         help=(
-            "Minimum post-SGD residual survival score required when the survival "
-            "gate is active."
+            "Minimum post-SGD residual survival score required when the survival gate is active."
         ),
     )
     parser.add_argument("--worker-id", default=None)
@@ -18302,8 +17986,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--codex-main-apply-lock-timeout-seconds",
         type=float,
         default=float(
-            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS", "300")
-            or 300
+            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS", "300") or 300
         ),
         help=(
             "Maximum seconds a Codex packet waits for the serialized main apply "
@@ -18314,8 +17997,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--codex-main-apply-max-inflight-packets",
         type=int,
         default=int(
-            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS", "1")
-            or 1
+            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS", "1") or 1
         ),
         help=(
             "Maximum active apply_to_main Codex packets before new claims are "
@@ -18369,7 +18051,9 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--paired-codex-queue-grace-seconds",
         type=float,
-        default=float(os.environ.get("IPFS_DATASETS_PAIRED_CODEX_QUEUE_GRACE_SECONDS", "900") or 900),
+        default=float(
+            os.environ.get("IPFS_DATASETS_PAIRED_CODEX_QUEUE_GRACE_SECONDS", "900") or 900
+        ),
         help=(
             "Extra queue-claim time after the paired autoencoder producer and "
             "cycle-completion grace so late TODO flushes can still be claimed."
@@ -18442,19 +18126,21 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
         seen.add(key)
         paths.append(resolved)
 
-    canonical_mode = str(
-        getattr(args, "autoencoder_canonical_warm_start", _default_canonical_warm_start_mode())
-        or "auto"
-    ).strip().lower()
+    canonical_mode = (
+        str(
+            getattr(args, "autoencoder_canonical_warm_start", _default_canonical_warm_start_mode())
+            or "auto"
+        )
+        .strip()
+        .lower()
+    )
     if canonical_mode not in AUTOENCODER_CANONICAL_WARM_START_MODES:
         canonical_mode = "auto"
     explicit_warm_start = bool(
-        getattr(args, "warm_start_state", [])
-        or getattr(args, "warm_start_run_id", [])
+        getattr(args, "warm_start_state", []) or getattr(args, "warm_start_run_id", [])
     )
-    include_canonical = (
-        canonical_mode == "require"
-        or (canonical_mode == "auto" and not explicit_warm_start)
+    include_canonical = canonical_mode == "require" or (
+        canonical_mode == "auto" and not explicit_warm_start
     )
     if include_canonical:
         canonical_path = Path(
@@ -18464,7 +18150,9 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
                 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME,
             )
         )
-        canonical_path = canonical_path if canonical_path.is_absolute() else queue_dir / canonical_path
+        canonical_path = (
+            canonical_path if canonical_path.is_absolute() else queue_dir / canonical_path
+        )
         if canonical_path.exists() or canonical_mode == "require":
             append_once(canonical_path)
         if canonical_mode == "require" and not canonical_path.exists():
@@ -18482,9 +18170,7 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
 def load_warm_start_state(
     paths: Sequence[Path],
     *,
-    max_entries_per_group: int = (
-        DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
-    ),
+    max_entries_per_group: int = (DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP),
 ) -> tuple[ModalAutoencoderTrainingState, Dict[str, Any]]:
     """Load, capacity-bound, and average reusable state from previous runs."""
     loaded_states: List[ModalAutoencoderTrainingState] = []
@@ -18506,10 +18192,7 @@ def load_warm_start_state(
             or 0
         )
         if required_capacity < 0:
-            raise ValueError(
-                "warm-start checkpoint declares a negative required capacity: "
-                f"{path}"
-            )
+            raise ValueError(f"warm-start checkpoint declares a negative required capacity: {path}")
         if required_capacity > int(max_entries_per_group):
             raise ValueError(
                 f"warm-start checkpoint {path} requires at least "
@@ -18517,70 +18200,48 @@ def load_warm_start_state(
                 "--autoencoder-max-generalizable-entries-per-group to "
                 f"{required_capacity} or greater"
             )
-        source_capacity_report = loaded.compact_generalizable_capacity(
-            max_entries_per_group
-        )
+        source_capacity_report = loaded.compact_generalizable_capacity(max_entries_per_group)
         source_capacity_report["checkpoint_metadata"] = checkpoint_metadata
         source_capacity_report["path"] = str(path)
-        source_capacity_report["required_max_entries_per_group"] = (
-            required_capacity
-        )
+        source_capacity_report["required_max_entries_per_group"] = required_capacity
         source_capacity_reports.append(source_capacity_report)
         loaded_states.append(loaded.generalizable_copy())
         loaded_paths.append(str(path))
 
     averaged = ModalAutoencoderTrainingState.average_generalizable(loaded_states)
-    averaged_capacity_report = averaged.compact_generalizable_capacity(
-        max_entries_per_group
-    )
+    averaged_capacity_report = averaged.compact_generalizable_capacity(max_entries_per_group)
     return averaged, {
         "capacity": {
             "averaged": averaged_capacity_report,
             "max_entries_per_group": int(max_entries_per_group),
-            "schema_version": (
-                MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
-            ),
+            "schema_version": (MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION),
             "sources": source_capacity_reports,
         },
         "compiler_quality_embedding_weight_entries": len(
             averaged.compiler_quality_embedding_weights
         ),
-        "compiler_quality_family_logit_entries": len(
-            averaged.compiler_quality_family_logits
-        ),
-        "logic_signature_embedding_weight_entries": len(
-            averaged.logic_signature_embedding_weights
-        ),
-        "logic_signature_family_logit_entries": len(
-            averaged.logic_signature_family_logits
-        ),
+        "compiler_quality_family_logit_entries": len(averaged.compiler_quality_family_logits),
+        "logic_signature_embedding_weight_entries": len(averaged.logic_signature_embedding_weights),
+        "logic_signature_family_logit_entries": len(averaged.logic_signature_family_logits),
         "logic_signature_legal_ir_view_logit_entries": len(
             averaged.logic_signature_legal_ir_view_logits
         ),
         "round_trip_signal_embedding_weight_entries": len(
             averaged.round_trip_signal_embedding_weights
         ),
-        "round_trip_signal_family_logit_entries": len(
-            averaged.round_trip_signal_family_logits
-        ),
+        "round_trip_signal_family_logit_entries": len(averaged.round_trip_signal_family_logits),
         "round_trip_signal_legal_ir_view_logit_entries": len(
             averaged.round_trip_signal_legal_ir_view_logits
         ),
-        "decompiler_plan_embedding_weight_entries": len(
-            averaged.decompiler_plan_embedding_weights
-        ),
-        "decompiler_plan_family_logit_entries": len(
-            averaged.decompiler_plan_family_logits
-        ),
+        "decompiler_plan_embedding_weight_entries": len(averaged.decompiler_plan_embedding_weights),
+        "decompiler_plan_family_logit_entries": len(averaged.decompiler_plan_family_logits),
         "decompiler_plan_legal_ir_view_logit_entries": len(
             averaged.decompiler_plan_legal_ir_view_logits
         ),
         "predicate_argument_embedding_weight_entries": len(
             averaged.predicate_argument_embedding_weights
         ),
-        "predicate_argument_family_logit_entries": len(
-            averaged.predicate_argument_family_logits
-        ),
+        "predicate_argument_family_logit_entries": len(averaged.predicate_argument_family_logits),
         "predicate_argument_legal_ir_view_logit_entries": len(
             averaged.predicate_argument_legal_ir_view_logits
         ),
@@ -18597,19 +18258,11 @@ def load_warm_start_state(
         "feature_embedding_weight_entries": len(averaged.feature_embedding_weights),
         "feature_family_logit_entries": len(averaged.feature_family_logits),
         "loaded_paths": loaded_paths,
-        "legal_ir_view_embedding_weight_entries": len(
-            averaged.legal_ir_view_embedding_weights
-        ),
-        "legal_ir_view_family_logit_entries": len(
-            averaged.legal_ir_view_family_logits
-        ),
+        "legal_ir_view_embedding_weight_entries": len(averaged.legal_ir_view_embedding_weights),
+        "legal_ir_view_family_logit_entries": len(averaged.legal_ir_view_family_logits),
         "missing_paths": missing_paths,
-        "semantic_slot_embedding_weight_entries": len(
-            averaged.semantic_slot_embedding_weights
-        ),
-        "semantic_slot_family_logit_entries": len(
-            averaged.semantic_slot_family_logits
-        ),
+        "semantic_slot_embedding_weight_entries": len(averaged.semantic_slot_embedding_weights),
+        "semantic_slot_family_logit_entries": len(averaged.semantic_slot_family_logits),
         "family_semantic_slot_legal_ir_view_logit_entries": len(
             averaged.family_semantic_slot_legal_ir_view_logits
         ),
@@ -18700,9 +18353,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "autoencoder_run_id": paired["autoencoder_run_id"],
         "autoencoder_stderr_path": str(auto_stderr_path),
         "autoencoder_stdout_path": str(auto_stdout_path),
-        "adaptive_pipeline_parallelism": dict(
-            paired.get("adaptive_pipeline_parallelism") or {}
-        ),
+        "adaptive_pipeline_parallelism": dict(paired.get("adaptive_pipeline_parallelism") or {}),
         "leanstral_worker_enabled": leanstral_enabled,
         "leanstral_command": leanstral_command if leanstral_enabled else [],
         "leanstral_run_id": leanstral_run_id if leanstral_enabled else None,
@@ -18723,17 +18374,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "log_path": str(log_path),
         "loop_role": "paired",
         "paired_grace_seconds": float(args.paired_grace_seconds),
-        "paired_leanstral_grace_seconds": float(
-            args.paired_leanstral_grace_seconds
-        ),
-        "paired_codex_queue_grace_seconds": float(
-            args.paired_codex_queue_grace_seconds
-        ),
+        "paired_leanstral_grace_seconds": float(args.paired_leanstral_grace_seconds),
+        "paired_codex_queue_grace_seconds": float(args.paired_codex_queue_grace_seconds),
         "paired_poll_seconds": float(args.paired_poll_seconds),
         "paired_parent_runtime_budget": paired_parent_runtime_budget,
-        "paired_shutdown_poll_cushion_seconds": (
-            paired_shutdown_poll_cushion_seconds
-        ),
+        "paired_shutdown_poll_cushion_seconds": (paired_shutdown_poll_cushion_seconds),
         "queue_run_id": paired["queue_run_id"],
         "run_id": args.run_id,
         "started_at": utc_now(),
@@ -18876,8 +18521,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     leanstral_process.poll() if leanstral_process is not None else None
                 )
                 codex_exit_codes = {
-                    run_id: process.poll()
-                    for run_id, process in codex_processes.items()
+                    run_id: process.poll() for run_id, process in codex_processes.items()
                 }
                 summary["elapsed_seconds"] = round(time.time() - started, 3)
                 summary["autoencoder_pid"] = auto_process.pid
@@ -18897,7 +18541,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     "leanstral": (
                         "disabled"
                         if not leanstral_enabled
-                        else "running" if leanstral_exit_code is None else "exited"
+                        else "running"
+                        if leanstral_exit_code is None
+                        else "exited"
                     ),
                     "codex": {
                         run_id: "running" if exit_code is None else "exited"
@@ -18907,8 +18553,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 program_health = paired_program_synthesis_health(
                     queue_path=paired_queue_path,
                     codex_summary_paths=[
-                        log_dir / f"{child['run_id']}.summary"
-                        for child in codex_child_summaries
+                        log_dir / f"{child['run_id']}.summary" for child in codex_child_summaries
                     ],
                     codex_worker_stale_seconds=float(
                         getattr(args, "codex_worker_stale_seconds", 300.0)
@@ -18922,9 +18567,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 )
                 save_summary(summary_path, summary)
 
-                if auto_exit_code is not None and all(
-                    exit_code is not None for exit_code in codex_exit_codes.values()
-                ) and (not leanstral_enabled or leanstral_report_path.is_file()):
+                if (
+                    auto_exit_code is not None
+                    and all(exit_code is not None for exit_code in codex_exit_codes.values())
+                    and (not leanstral_enabled or leanstral_report_path.is_file())
+                ):
                     break
                 child_failure_reason = _paired_finite_child_failure_reason(
                     autoencoder_exit_code=auto_exit_code,
@@ -18970,10 +18617,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             auto_exit_code = auto_process.poll()
         if leanstral_process is not None:
             leanstral_exit_code = leanstral_process.poll()
-        codex_exit_codes = {
-            run_id: process.poll()
-            for run_id, process in codex_processes.items()
-        }
+        codex_exit_codes = {run_id: process.poll() for run_id, process in codex_processes.items()}
 
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
@@ -18989,7 +18633,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             "leanstral": (
                 "disabled"
                 if not leanstral_enabled
-                else "running" if leanstral_exit_code is None else "exited"
+                else "running"
+                if leanstral_exit_code is None
+                else "exited"
             ),
             "codex": {
                 run_id: "running" if exit_code is None else "exited"
@@ -18999,12 +18645,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         program_health = paired_program_synthesis_health(
             queue_path=paired_queue_path,
             codex_summary_paths=[
-                log_dir / f"{child['run_id']}.summary"
-                for child in codex_child_summaries
+                log_dir / f"{child['run_id']}.summary" for child in codex_child_summaries
             ],
-            codex_worker_stale_seconds=float(
-                getattr(args, "codex_worker_stale_seconds", 300.0)
-            ),
+            codex_worker_stale_seconds=float(getattr(args, "codex_worker_stale_seconds", 300.0)),
         )
         summary["program_synthesis_health"] = program_health
         summary["program_synthesis_executor_health"] = program_health
@@ -19049,18 +18692,15 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             runner_terminated_children=runner_terminated_children,
             stop_requested=stop_requested,
         )
-        leanstral_success = (
-            not leanstral_enabled
-            or (
-                (
-                    leanstral_exit_code == 0
-                    or f"{leanstral_run_id}:leanstral" in runner_terminated_children
-                )
-                and leanstral_report_path.is_file()
-                and (
-                    not bool(getattr(args, "paired_leanstral_require_cuda", False))
-                    or leanstral_cuda_confirmed
-                )
+        leanstral_success = not leanstral_enabled or (
+            (
+                leanstral_exit_code == 0
+                or f"{leanstral_run_id}:leanstral" in runner_terminated_children
+            )
+            and leanstral_report_path.is_file()
+            and (
+                not bool(getattr(args, "paired_leanstral_require_cuda", False))
+                or leanstral_cuda_confirmed
             )
         )
         summary["leanstral_success"] = leanstral_success
@@ -19074,12 +18714,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             latest_stop_reason=str(summary.get("latest_stop_reason") or ""),
         )
         summary["paired_timeout_exceeded"] = (
-            str(summary.get("latest_stop_reason") or "")
-            == "paired_timeout_grace_exceeded"
+            str(summary.get("latest_stop_reason") or "") == "paired_timeout_grace_exceeded"
         )
-        summary["status"] = (
-            "succeeded" if paired_success else "failed"
-        )
+        summary["status"] = "succeeded" if paired_success else "failed"
         save_summary(summary_path, summary, final=True)
         append_event(
             log_path,
@@ -19113,10 +18750,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         runner_terminated_children=runner_terminated_children,
         stop_requested=stop_requested,
     )
-    leanstral_success = (
-        not leanstral_enabled
-        or bool(summary.get("leanstral_success"))
-    )
+    leanstral_success = not leanstral_enabled or bool(summary.get("leanstral_success"))
     paired_success = _paired_completion_succeeded(
         autoencoder_success=autoencoder_success,
         codex_success=codex_success,
@@ -19179,9 +18813,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         fsync_policy=ArtifactFsyncPolicy(
             data=bool(getattr(args, "async_artifact_writer_fsync_data", True)),
-            directory=bool(
-                getattr(args, "async_artifact_writer_fsync_directory", True)
-            ),
+            directory=bool(getattr(args, "async_artifact_writer_fsync_directory", True)),
             manifest=bool(getattr(args, "async_artifact_writer_fsync_manifest", True)),
         ),
         backpressure_timeout_seconds=max(
@@ -19226,19 +18858,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         save_summary(summary_path, summary)
     runtime_telemetry = RuntimeTelemetry(args.run_id)
     attach_runtime_telemetry(summary, runtime_telemetry)
-    summary["async_artifact_writer_schema_version"] = (
-        ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION
-    )
+    summary["async_artifact_writer_schema_version"] = ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION
     summary["async_artifact_writer"] = artifact_writer.summary()
     summary["async_artifact_writer_replayed_receipts"] = [
         receipt.to_dict() for receipt in replayed_artifact_receipts[:16]
     ]
-    summary["async_artifact_writer_replayed_count"] = len(
-        replayed_artifact_receipts
-    )
-    evaluation_cache = LegalIREvaluationCache(
-        log_dir / "legal-ir-evaluation-cache"
-    )
+    summary["async_artifact_writer_replayed_count"] = len(replayed_artifact_receipts)
+    evaluation_cache = LegalIREvaluationCache(log_dir / "legal-ir-evaluation-cache")
     evaluation_result_cache = LegalIREvaluationResultCache(max_entries=16)
     evaluation_compiler_commit = _compiler_commit(root)
     summary["legal_ir_evaluation_cache"] = evaluation_cache.summary()
@@ -19273,15 +18899,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
     )
     if generalizable_capacity_limit < 1:
-        raise ValueError(
-            "autoencoder_max_generalizable_entries_per_group must be positive"
-        )
+        raise ValueError("autoencoder_max_generalizable_entries_per_group must be positive")
     summary["autoencoder_generalizable_capacity_schema_version"] = (
         MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
     )
-    summary["autoencoder_max_generalizable_entries_per_group"] = (
-        generalizable_capacity_limit
-    )
+    summary["autoencoder_max_generalizable_entries_per_group"] = generalizable_capacity_limit
     summary.setdefault("autoencoder_generalizable_capacity_compactions_total", 0)
     summary["autoencoder_state_schema_version"] = MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
     summary["bridge_loss_adapters"] = bridge_adapters
@@ -19289,24 +18911,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_diagnostic_bridge_adapters"] = diagnostic_bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
     summary["autoencoder_introspection"] = dict(rollout_control)
-    summary["autoencoder_introspection_mode"] = str(
-        rollout_control["introspection_mode"]
-    )
+    summary["autoencoder_introspection_mode"] = str(rollout_control["introspection_mode"])
     summary["autoencoder_introspection_every_n_cycles"] = int(
         rollout_control["export_every_n_cycles"]
     )
     summary["autoencoder_introspection_min_export_samples"] = int(
         rollout_control["min_export_samples"]
     )
-    summary["autoencoder_max_audits_per_cycle"] = int(
-        rollout_control["max_audits_per_cycle"]
-    )
-    summary["autoencoder_max_todos_per_cycle"] = int(
-        rollout_control["max_todos_per_cycle"]
-    )
-    summary["autoencoder_target_scope_filters"] = list(
-        rollout_control["target_scope_filters"]
-    )
+    summary["autoencoder_max_audits_per_cycle"] = int(rollout_control["max_audits_per_cycle"])
+    summary["autoencoder_max_todos_per_cycle"] = int(rollout_control["max_todos_per_cycle"])
+    summary["autoencoder_target_scope_filters"] = list(rollout_control["target_scope_filters"])
     summary["autoencoder_require_prover_confirmation"] = bool(
         rollout_control["require_prover_confirmation"]
     )
@@ -19333,9 +18947,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     if enforce_block_reason:
         summary["autoencoder_introspection_enforce_allowed"] = False
         summary["autoencoder_introspection_enforce_block_reason"] = enforce_block_reason
-        summary["supervisor_health"] = build_modal_supervisor_health_report(
-            summary
-        ).to_dict()
+        summary["supervisor_health"] = build_modal_supervisor_health_report(summary).to_dict()
         save_summary(summary_path, summary, final=True)
         append_event(
             log_path,
@@ -19361,22 +18973,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ).state
     else:
         state = ModalAutoencoderTrainingState()
-    startup_capacity_report = state.compact_generalizable_capacity(
-        generalizable_capacity_limit
-    )
+    startup_capacity_report = state.compact_generalizable_capacity(generalizable_capacity_limit)
     startup_capacity_report["reason"] = "loaded_run_state"
     startup_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
-    summary["startup_autoencoder_generalizable_capacity"] = (
-        startup_capacity_report
-    )
-    summary["latest_autoencoder_generalizable_capacity"] = (
-        startup_capacity_report
-    )
+    summary["startup_autoencoder_generalizable_capacity"] = startup_capacity_report
+    summary["latest_autoencoder_generalizable_capacity"] = startup_capacity_report
     checkpoint_required = bool(startup_capacity_report["compacted"])
     if checkpoint_required:
-        summary["autoencoder_generalizable_capacity_compactions_total"] = int(
-            summary["autoencoder_generalizable_capacity_compactions_total"]
-        ) + 1
+        summary["autoencoder_generalizable_capacity_compactions_total"] = (
+            int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
+        )
     warm_start_paths = resolve_warm_start_state_paths(args, queue_dir)
     if warm_start_paths:
         existing_warm_start = dict(summary.get("warm_start", {}))
@@ -19400,23 +19006,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 generalizable_capacity_limit
             )
             warm_start_capacity_report["reason"] = "warm_start_merge"
-            warm_start_capacity_report["cycle"] = int(
-                summary.get("cycles", 0) or 0
-            )
+            warm_start_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
             warm_start["destination_capacity"] = warm_start_capacity_report
             warm_start["applied"] = True
             summary["warm_start"] = warm_start
-            summary["latest_autoencoder_generalizable_capacity"] = (
-                warm_start_capacity_report
-            )
+            summary["latest_autoencoder_generalizable_capacity"] = warm_start_capacity_report
             if warm_start_capacity_report["compacted"]:
-                summary[
-                    "autoencoder_generalizable_capacity_compactions_total"
-                ] = int(
-                    summary[
-                        "autoencoder_generalizable_capacity_compactions_total"
-                    ]
-                ) + 1
+                summary["autoencoder_generalizable_capacity_compactions_total"] = (
+                    int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
+                )
             checkpoint_required = True
             append_event(
                 log_path,
@@ -19441,9 +19039,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             log_path,
             args.run_id,
             {
-                "capacity": summary[
-                    "latest_autoencoder_generalizable_capacity"
-                ],
+                "capacity": summary["latest_autoencoder_generalizable_capacity"],
                 "event": "autoencoder_generalizable_capacity_checkpointed",
             },
         )
@@ -19572,16 +19168,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         cosine_reconstruction_weight=float(
             getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
         ),
-        max_codec_feature_keys=int(
-            getattr(args, "autoencoder_max_codec_feature_keys", 64)
-        ),
+        max_codec_feature_keys=int(getattr(args, "autoencoder_max_codec_feature_keys", 64)),
         max_token_features=int(getattr(args, "autoencoder_max_token_features", 48)),
-        max_token_bigram_features=int(
-            getattr(args, "autoencoder_max_token_bigram_features", 24)
-        ),
-        max_token_trigram_features=int(
-            getattr(args, "autoencoder_max_token_trigram_features", 12)
-        ),
+        max_token_bigram_features=int(getattr(args, "autoencoder_max_token_bigram_features", 24)),
+        max_token_trigram_features=int(getattr(args, "autoencoder_max_token_trigram_features", 12)),
         max_legal_ir_token_features=int(
             getattr(args, "autoencoder_max_legal_ir_token_features", 24)
         ),
@@ -19624,9 +19214,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_contrastive_ir_boundary_features=int(
             getattr(args, "autoencoder_max_contrastive_ir_boundary_features", 64)
         ),
-        max_repair_plan_features=int(
-            getattr(args, "autoencoder_max_repair_plan_features", 64)
-        ),
+        max_repair_plan_features=int(getattr(args, "autoencoder_max_repair_plan_features", 64)),
         max_logic_view_contract_features=int(
             getattr(args, "autoencoder_max_logic_view_contract_features", 64)
         ),
@@ -19672,16 +19260,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_temporal_validity_features=int(
             getattr(args, "autoencoder_max_temporal_validity_features", 64)
         ),
-        feature_activity_reference=int(
-            getattr(args, "autoencoder_feature_activity_reference", 64)
-        ),
-        feature_logit_clip=float(
-            getattr(args, "autoencoder_feature_logit_clip", 24.0)
-        ),
+        feature_activity_reference=int(getattr(args, "autoencoder_feature_activity_reference", 64)),
+        feature_logit_clip=float(getattr(args, "autoencoder_feature_logit_clip", 24.0)),
     )
-    snapshot_evaluation_enabled = bool(
-        getattr(args, "snapshot_evaluation_enabled", True)
-    )
+    snapshot_evaluation_enabled = bool(getattr(args, "snapshot_evaluation_enabled", True))
     snapshot_evaluation_jobs: Dict[str, Mapping[str, Any]] = {}
     snapshot_evaluation_jobs_lock = threading.Lock()
 
@@ -19693,9 +19275,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         train_rows = list(job.get("train_rows", ()) or ())
         validation_rows = list(job.get("validation_rows", ()) or ())
         if not validation_rows:
-            raise ValueError(
-                f"holdout rows unavailable for snapshot {snapshot.snapshot_id}"
-            )
+            raise ValueError(f"holdout rows unavailable for snapshot {snapshot.snapshot_id}")
         compiler_metric_kwargs = {
             "compiler_commit": snapshot.versions.compiler_version,
             "evaluation_cache": evaluation_cache,
@@ -19743,9 +19323,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )
                 or 0
             ),
-            plateau_threshold=float(
-                getattr(args, "learning_rate_plateau_delta", 1.0e-5)
-            ),
+            plateau_threshold=float(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
         )
 
     snapshot_evaluator: Optional[SnapshotEvaluator] = None
@@ -19788,9 +19366,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             name=f"{args.run_id}-snapshot-evaluator",
         )
     summary["snapshot_evaluation_enabled"] = snapshot_evaluation_enabled
-    summary["snapshot_evaluation_schema_version"] = (
-        SNAPSHOT_EVALUATION_SCHEMA_VERSION
-    )
+    summary["snapshot_evaluation_schema_version"] = SNAPSHOT_EVALUATION_SCHEMA_VERSION
     summary["snapshot_evaluator"] = (
         snapshot_evaluator.summary()
         if snapshot_evaluator is not None
@@ -20106,14 +19682,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     continue
                 if 0 <= index < laws_table.num_rows:
                     stored_canary_indices.append(index)
-            validation_canary_source = (
-                "summary_restored" if stored_canary_indices else "sampled"
-            )
+            validation_canary_source = "summary_restored" if stored_canary_indices else "sampled"
         for index in stored_canary_indices[:validation_canary_count]:
             if index < 0 or index >= laws_table.num_rows:
-                raise ValueError(
-                    f"configured validation canary index is out of range: {index}"
-                )
+                raise ValueError(f"configured validation canary index is out of range: {index}")
             row = laws_table.take([index]).to_pylist()[0]
             if not _row_text_within_limit(
                 row,
@@ -20121,17 +19693,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             ):
                 if configured_canary_indices:
                     raise ValueError(
-                        "configured validation canary row exceeds "
-                        f"--max-sample-text-chars: {index}"
+                        f"configured validation canary row exceeds --max-sample-text-chars: {index}"
                     )
                 continue
             validation_canary_indices.append(index)
             validation_canary_samples.append(row_to_sample(row))
         if len(validation_canary_samples) < validation_canary_count:
             if configured_canary_indices:
-                raise ValueError(
-                    "configured validation canary indices could not be loaded exactly"
-                )
+                raise ValueError("configured validation canary indices could not be loaded exactly")
             (
                 _unused_train_indices,
                 _unused_train_samples,
@@ -20144,13 +19713,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_count=0,
                 validation_count=validation_canary_count,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
-                max_sample_text_chars=int(
-                    getattr(args, "max_sample_text_chars", 0) or 0
-                ),
+                max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
             )
-        validation_canary_sample_ids = {
-            sample.sample_id for sample in validation_canary_samples
-        }
+        validation_canary_sample_ids = {sample.sample_id for sample in validation_canary_samples}
         blocked_validation_sample_ids.update(validation_canary_sample_ids)
         summary["validation_canary_count"] = len(validation_canary_samples)
         summary["validation_canary_indices"] = list(validation_canary_indices)
@@ -20189,21 +19754,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             cycle = int(summary.get("cycles", 0)) + 1
             if snapshot_evaluator is not None:
                 try:
-                    snapshot_backpressure_wait = (
-                        snapshot_evaluator.before_training_step(
-                            next_sequence=cycle,
-                            timeout=max(
-                                0.0,
-                                float(
-                                    getattr(
-                                        args,
-                                        "snapshot_evaluation_backpressure_timeout_seconds",
-                                        DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
-                                    )
-                                    or 0.0
-                                ),
+                    snapshot_backpressure_wait = snapshot_evaluator.before_training_step(
+                        next_sequence=cycle,
+                        timeout=max(
+                            0.0,
+                            float(
+                                getattr(
+                                    args,
+                                    "snapshot_evaluation_backpressure_timeout_seconds",
+                                    DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
+                                )
+                                or 0.0
                             ),
-                        )
+                        ),
                     )
                 except SnapshotBackpressureTimeout as exc:
                     summary["latest_stop_reason"] = "snapshot_evaluation_backpressure_timeout"
@@ -20242,9 +19805,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 now = time.time()
                 previous = str(active_phase.get("name") or "")
                 if previous:
-                    cycle_phase_timings[previous] = (
-                        cycle_phase_timings.get(previous, 0.0)
-                        + max(0.0, now - float(active_phase["started_at"]))
+                    cycle_phase_timings[previous] = cycle_phase_timings.get(previous, 0.0) + max(
+                        0.0, now - float(active_phase["started_at"])
                     )
                 active_phase["name"] = str(phase)
                 active_phase["started_at"] = now
@@ -20257,9 +19819,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = str(phase)
                 summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
-                summary["active_cycle_metric_bridge_adapters"] = list(
-                    metric_bridge_adapters
-                )
+                summary["active_cycle_metric_bridge_adapters"] = list(metric_bridge_adapters)
                 summary["active_cycle_diagnostic_bridge_adapters"] = list(
                     diagnostic_bridge_adapters
                 )
@@ -20274,8 +19834,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary["active_cycle_last_heartbeat_at"] = utc_now()
                 summary["active_cycle_phase_payload"] = dict(payload)
                 summary["active_cycle_phase_timings"] = {
-                    name: round(seconds, 3)
-                    for name, seconds in sorted(cycle_phase_timings.items())
+                    name: round(seconds, 3) for name, seconds in sorted(cycle_phase_timings.items())
                 }
                 save_summary(summary_path, summary)
                 append_event(
@@ -20293,13 +19852,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 now = time.time()
                 previous = str(active_phase.get("name") or "")
                 if previous:
-                    cycle_phase_timings[previous] = (
-                        cycle_phase_timings.get(previous, 0.0)
-                        + max(0.0, now - float(active_phase["started_at"]))
+                    cycle_phase_timings[previous] = cycle_phase_timings.get(previous, 0.0) + max(
+                        0.0, now - float(active_phase["started_at"])
                     )
                 summary["active_cycle_phase_timings"] = {
-                    name: round(seconds, 3)
-                    for name, seconds in sorted(cycle_phase_timings.items())
+                    name: round(seconds, 3) for name, seconds in sorted(cycle_phase_timings.items())
                 }
                 runtime_telemetry.end_cycle(
                     queue_depth=_runtime_queue_depth(supervisor.queue),
@@ -20314,9 +19871,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 payload = dict(progress)
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = "projection_training"
-                summary["active_cycle_projection_stage"] = str(
-                    payload.get("stage") or ""
-                )
+                summary["active_cycle_projection_stage"] = str(payload.get("stage") or "")
                 summary["active_cycle_projection_progress"] = payload
                 summary["active_cycle_last_heartbeat_at"] = utc_now()
                 save_summary(summary_path, summary)
@@ -20377,18 +19932,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     if isinstance(program_synthesis_counts, Mapping)
                     else 0
                 )
-                if (
-                    program_synthesis_pending > 0
-                    and not todo_supervisor_program_synthesis_flushed
-                ):
+                if program_synthesis_pending > 0 and not todo_supervisor_program_synthesis_flushed:
                     todo_supervisor_program_synthesis_flushed = True
                     with queue_file_lock(queue_path):
                         latest_queue = ModalTodoQueue.load_jsonl(queue_path)
                         latest_queue.merge_from(
                             supervisor.queue,
-                            preserve_claimed_role=(
-                                supervisor.policy.program_synthesis_role
-                            ),
+                            preserve_claimed_role=(supervisor.policy.program_synthesis_role),
                         )
                         latest_queue.save_jsonl(queue_path)
                         supervisor.queue = latest_queue
@@ -20439,11 +19989,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
             acceptance_validation_samples = validation_canary_samples or validation_samples
             acceptance_validation_indices = validation_canary_indices or validation_indices
-            validation_mode = (
-                "fixed_canary"
-                if validation_canary_samples
-                else "rotating_holdout"
-            )
+            validation_mode = "fixed_canary" if validation_canary_samples else "rotating_holdout"
             if snapshot_evaluator is not None:
                 snapshot_boundary = _matching_published_snapshot_boundary(
                     autoencoder.state,
@@ -20460,9 +20006,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         )
                     )
                     promotion = (
-                        snapshot_evaluator.promote_at_boundary(
-                            snapshot_boundary
-                        )
+                        snapshot_evaluator.promote_at_boundary(snapshot_boundary)
                         if accepted and snapshot_boundary is not None
                         else None
                     )
@@ -20470,17 +20014,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         "accepted": accepted,
                         "cycle": cycle,
                         "event": "snapshot_evaluation_result",
-                        "promotion": (
-                            promotion.to_dict() if promotion is not None else None
-                        ),
+                        "promotion": (promotion.to_dict() if promotion is not None else None),
                         "result": snapshot_result.to_dict(),
                     }
                     append_event(log_path, args.run_id, event)
                     if promotion is not None and promotion.promoted:
                         summary["latest_promoted_snapshot_evaluation"] = (
-                            compact_snapshot_evaluation_summary(
-                                snapshot_result.to_dict()
-                            )
+                            compact_snapshot_evaluation_summary(snapshot_result.to_dict())
                         )
                         summary["latest_promoted_snapshot_complete"] = bool(
                             (
@@ -20526,10 +20066,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             todo_supervisor_min_open = max(
                 0,
-                int(
-                    getattr(args, "autoencoder_todo_supervisor_min_open", 12)
-                    or 0
-                ),
+                int(getattr(args, "autoencoder_todo_supervisor_min_open", 12) or 0),
             )
             program_synthesis_status = supervisor.queue.role_status_counts().get(
                 supervisor.policy.program_synthesis_role,
@@ -20545,9 +20082,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             todo_supervisor_control.update(
                 {
                     "effective_max_items": effective_max_items,
-                    "minimum_open_program_synthesis_count": (
-                        todo_supervisor_min_open
-                    ),
+                    "minimum_open_program_synthesis_count": (todo_supervisor_min_open),
                     "mode": todo_supervisor_mode,
                     "requested_max_items": requested_max_items,
                 }
@@ -20560,9 +20095,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["active_cycle_introspection"] = {
                 **dict(rollout_control),
                 "eligible_audit_sample_count": len(audited_train_samples),
-                "eligible_validation_audit_sample_count": len(
-                    audited_validation_samples
-                ),
+                "eligible_validation_audit_sample_count": len(audited_validation_samples),
                 "eligible_validation_export_sample_count": len(
                     introspection_export_validation_samples
                 ),
@@ -20592,6 +20125,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     max_bridge_sample_text_chars=metric_bridge_text_cap,
                     use_sample_memory=use_sample_memory,
                 )
+
             baseline_evaluation_state_hash = autoencoder_canonical_state_hash(state)
             before_train_mode = str(
                 getattr(
@@ -20602,8 +20136,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 or DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE
             )
             before_train_every_n_cycles = int(
-                getattr(args, "autoencoder_before_train_eval_every_n_cycles", 4)
-                or 0
+                getattr(args, "autoencoder_before_train_eval_every_n_cycles", 4) or 0
             )
             before_train_lineage = autoencoder_evaluation_lineage(
                 train_samples,
@@ -20673,9 +20206,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "lineage_digest": before_validation_lineage.digest,
                 "required_for_holdout_promotion": True,
                 "reuse_source": (
-                    "lineage_matched_prior_after_evaluation"
-                    if before_validation_reused
-                    else ""
+                    "lineage_matched_prior_after_evaluation" if before_validation_reused else ""
                 ),
                 "reused": before_validation_reused,
             }
@@ -20803,10 +20334,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             compiler_ir_validation_comparable = (
                 bool(previous_compiler_ir_validation_metrics)
-                and previous_compiler_ir_validation_profile
-                == compiler_ir_validation_profile
-                and previous_compiler_ir_validation_sample_ids
-                == compiler_ir_validation_sample_ids
+                and previous_compiler_ir_validation_profile == compiler_ir_validation_profile
+                and previous_compiler_ir_validation_sample_ids == compiler_ir_validation_sample_ids
             )
             compiler_ir_validation_delta = (
                 _target_metric_improvement_delta_map(
@@ -20845,9 +20374,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     compiler_ir_validation=compiler_ir_validation,
                     compiler_ir_guided_validation={},
                     cycle=cycle,
-                    export_mode=str(
-                        rollout_control.get("introspection_mode") or "off"
-                    ),
+                    export_mode=str(rollout_control.get("introspection_mode") or "off"),
                     root=root,
                     run_id=args.run_id,
                     samples=introspection_export_validation_samples,
@@ -20863,8 +20390,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     rollout_control=rollout_control,
                     summary_path=summary_path,
                 )
-            summary["latest_pre_todo_introspection_disagreement_export"] = (
-                dict(pre_todo_introspection_export)
+            summary["latest_pre_todo_introspection_disagreement_export"] = dict(
+                pre_todo_introspection_export
             )
             save_summary(summary_path, summary)
             mark_cycle_phase("bridge_ir_train", sample_count=len(train_samples))
@@ -20877,9 +20404,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 max_sample_text_chars=metric_bridge_text_cap,
             )
             bridge_ir_train["bridge_loss_adapters"] = list(bridge_adapters)
-            bridge_ir_train["diagnostic_bridge_adapters"] = list(
-                diagnostic_bridge_adapters
-            )
+            bridge_ir_train["diagnostic_bridge_adapters"] = list(diagnostic_bridge_adapters)
             bridge_ir_train["metric_bridge_adapters"] = list(metric_bridge_adapters)
             mark_cycle_phase(
                 "bridge_ir_validation",
@@ -20894,9 +20419,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 max_sample_text_chars=metric_bridge_text_cap,
             )
             bridge_ir_validation["bridge_loss_adapters"] = list(bridge_adapters)
-            bridge_ir_validation["diagnostic_bridge_adapters"] = list(
-                diagnostic_bridge_adapters
-            )
+            bridge_ir_validation["diagnostic_bridge_adapters"] = list(diagnostic_bridge_adapters)
             bridge_ir_validation["metric_bridge_adapters"] = list(metric_bridge_adapters)
             feature_projection_report: Dict[str, Any] = {}
             generalizable_projection_epochs = max(
@@ -21052,9 +20575,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     projection_cycle=cycle,
                     precomputed_holdout_evaluation=before_validation,
                     precomputed_training_evaluation=(
-                        before_train
-                        if before_train_evaluation_control["full_family"]
-                        else None
+                        before_train if before_train_evaluation_control["full_family"] else None
                     ),
                     progress_callback=projection_progress_callback,
                 )
@@ -21073,9 +20594,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_samples=acceptance_validation_samples,
                 before_train=before_train,
                 before_validation=before_validation,
-                before_train_full_family=bool(
-                    before_train_evaluation_control["full_family"]
-                ),
+                before_train_full_family=bool(before_train_evaluation_control["full_family"]),
             )
             if effective_max_items <= 0 or not audited_train_samples:
                 run = ModalOptimizationRun(
@@ -21101,16 +20620,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     progress_callback=todo_progress_callback,
                 )
             mark_cycle_phase("todo_supervisor_queue_flush")
-            todo_supervisor_queue_persist = (
-                persist_supervisor_queue_for_external_workers(
-                    queue_path=queue_path,
-                    supervisor=supervisor,
-                )
+            todo_supervisor_queue_persist = persist_supervisor_queue_for_external_workers(
+                queue_path=queue_path,
+                supervisor=supervisor,
             )
             queue = supervisor.queue
-            summary["active_cycle_todo_supervisor_queue_flush"] = (
-                todo_supervisor_queue_persist
-            )
+            summary["active_cycle_todo_supervisor_queue_flush"] = todo_supervisor_queue_persist
             save_summary(summary_path, summary)
             append_event(
                 log_path,
@@ -21121,27 +20636,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "queue_persist": todo_supervisor_queue_persist,
                 },
             )
-            if autoencoder.state.generalizable_capacity_exceeded(
-                generalizable_capacity_limit
-            ):
+            if autoencoder.state.generalizable_capacity_exceeded(generalizable_capacity_limit):
                 mark_cycle_phase(
                     "state_capacity_compaction",
                     max_entries_per_group=generalizable_capacity_limit,
                 )
-                cycle_capacity_report = (
-                    autoencoder.state.compact_generalizable_capacity(
-                        generalizable_capacity_limit
-                    )
+                cycle_capacity_report = autoencoder.state.compact_generalizable_capacity(
+                    generalizable_capacity_limit
                 )
                 cycle_capacity_report["cycle"] = cycle
                 cycle_capacity_report["reason"] = "post_training_pre_evaluation"
-                summary[
-                    "autoencoder_generalizable_capacity_compactions_total"
-                ] = int(
-                    summary[
-                        "autoencoder_generalizable_capacity_compactions_total"
-                    ]
-                ) + 1
+                summary["autoencoder_generalizable_capacity_compactions_total"] = (
+                    int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
+                )
                 append_event(
                     log_path,
                     args.run_id,
@@ -21152,9 +20659,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     },
                 )
             else:
-                current_entry_count = (
-                    autoencoder.state.generalizable_entry_count()
-                )
+                current_entry_count = autoencoder.state.generalizable_entry_count()
                 cycle_capacity_report = {
                     "after_entry_count": current_entry_count,
                     "before_entry_count": current_entry_count,
@@ -21163,13 +20668,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "dropped_entry_count": 0,
                     "max_entries_per_group": generalizable_capacity_limit,
                     "reason": "post_training_pre_evaluation",
-                    "schema_version": (
-                        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
-                    ),
+                    "schema_version": (MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION),
                 }
-            summary["latest_autoencoder_generalizable_capacity"] = (
-                cycle_capacity_report
-            )
+            summary["latest_autoencoder_generalizable_capacity"] = cycle_capacity_report
             mark_cycle_phase("after_train_eval", sample_count=len(train_samples))
             after_train = evaluate_cycle_samples(
                 train_samples,
@@ -21286,9 +20787,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     autoencoder=autoencoder,
                     use_autoencoder_guidance=True,
                     evaluation_role="guided_train",
-                    progress_callback=metric_progress_callback(
-                        "compiler_ir_guided_train"
-                    ),
+                    progress_callback=metric_progress_callback("compiler_ir_guided_train"),
                     state_hash=guided_evaluation_state_hash,
                     **compiler_ir_metric_kwargs,
                 )
@@ -21323,14 +20822,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             guidance_canary = compiler_guidance_canary_block(
                 compiler_ir_validation,
                 compiler_ir_guided_validation,
-                plateau_threshold=float(
-                    getattr(args, "learning_rate_plateau_delta", 1.0e-5)
-                ),
+                plateau_threshold=float(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
             )
             guidance_promotion_gate = compiler_guidance_promotion_gate(guidance_canary)
-            guidance_scope_hints = compiler_guidance_scope_hints(
-                compiler_ir_guided_validation
-            )
+            guidance_scope_hints = compiler_guidance_scope_hints(compiler_ir_guided_validation)
             guidance_distillation = compiler_guidance_distillation_candidates(
                 compiler_ir_guided_validation,
                 guidance_canary,
@@ -21352,15 +20847,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     queue_depth=_runtime_queue_depth(supervisor.queue),
                     attributes={"status": "eligible"},
                 )
-            if (
-                pre_todo_introspection_export.get("enabled")
-                and not pre_todo_introspection_export.get("skipped")
-            ):
+            if pre_todo_introspection_export.get(
+                "enabled"
+            ) and not pre_todo_introspection_export.get("skipped"):
                 introspection_export = dict(pre_todo_introspection_export)
                 introspection_export["reused_pre_todo_export"] = True
-                introspection_export["reuse_reason"] = (
-                    "pre_todo_export_already_written"
-                )
+                introspection_export["reuse_reason"] = "pre_todo_export_already_written"
             elif autoencoder_introspection_export_due(rollout_control, cycle=cycle):
                 introspection_export = export_canonical_state_disagreement_packets(
                     artifact_writer=artifact_writer,
@@ -21368,9 +20860,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     compiler_ir_validation=compiler_ir_validation,
                     compiler_ir_guided_validation=compiler_ir_guided_validation,
                     cycle=cycle,
-                    export_mode=str(
-                        rollout_control.get("introspection_mode") or "off"
-                    ),
+                    export_mode=str(rollout_control.get("introspection_mode") or "off"),
                     root=root,
                     run_id=args.run_id,
                     samples=introspection_export_validation_samples,
@@ -21379,9 +20869,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     validation_indices=introspection_export_validation_indices,
                     validation_mode=validation_mode,
                     evaluate_provers=bridge_evaluate_provers,
-                    wait_for_durable=bool(
-                        guidance_promotion_gate.get("promotion_allowed", False)
-                    ),
+                    wait_for_durable=bool(guidance_promotion_gate.get("promotion_allowed", False)),
                 )
             else:
                 introspection_export = skipped_introspection_export_report(
@@ -21404,16 +20892,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     for sample in [*train_samples, *acceptance_validation_samples]
                 },
                 artifact_paths=[
-                    str(path)
-                    for path in introspection_export.get("paths", []) or []
-                    if str(path)
+                    str(path) for path in introspection_export.get("paths", []) or [] if str(path)
                 ],
                 runtime_telemetry=runtime_telemetry,
             )
-            summary["active_cycle_hammer_guidance"] = (
-                compact_daemon_hammer_guidance_report(
-                    daemon_hammer_guidance_cycle
-                )
+            summary["active_cycle_hammer_guidance"] = compact_daemon_hammer_guidance_report(
+                daemon_hammer_guidance_cycle
             )
             save_summary(summary_path, summary)
             guidance_todo_candidates_by_kind = {
@@ -21449,8 +20933,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "guardrail": [],
             }
             semantic_deduped_count = int(
-                todo_supervisor_queue_persist.get("semantic_deduped_count", 0)
-                or 0
+                todo_supervisor_queue_persist.get("semantic_deduped_count", 0) or 0
             )
             leanstral_projection: Dict[str, Any] = {}
             leanstral_rule_gap_projection: Dict[str, Any] = {}
@@ -21470,30 +20953,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 latest_queue.save_jsonl(queue_path)
                 supervisor.queue = latest_queue
                 queue = latest_queue
-            for guidance_kind, guidance_todo_candidates in (
-                guidance_todo_candidates_by_kind.items()
-            ):
+            for guidance_kind, guidance_todo_candidates in guidance_todo_candidates_by_kind.items():
                 if not guidance_todo_candidates:
                     continue
                 with queue_file_lock(queue_path):
                     latest_queue = ModalTodoQueue.load_jsonl(queue_path)
                     latest_queue.merge_from(
                         supervisor.queue,
-                        preserve_claimed_role=(
-                            supervisor.policy.program_synthesis_role
-                        ),
+                        preserve_claimed_role=(supervisor.policy.program_synthesis_role),
                     )
                     supervisor.queue = latest_queue
                     selected_guidance_todos = supervisor._bounded_new_todos(
                         guidance_todo_candidates,
                         track_program_deduped=True,
                     )
-                    deduped_count = int(
-                        supervisor.last_program_synthesis_deduped_count
-                    )
-                    before_guidance_todo_ids = {
-                        todo.todo_id for todo in supervisor.queue.all()
-                    }
+                    deduped_count = int(supervisor.last_program_synthesis_deduped_count)
+                    before_guidance_todo_ids = {todo.todo_id for todo in supervisor.queue.all()}
                     seeded_count = supervisor.queue.add_many(selected_guidance_todos)
                     guidance_todo_ids[guidance_kind] = [
                         todo.todo_id
@@ -21501,28 +20976,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         if todo.todo_id not in before_guidance_todo_ids
                         and supervisor.queue.get(todo.todo_id) is not None
                     ]
-                    guidance_semantic_deduped_count = (
-                        supervisor.queue.deduplicate_semantic(
-                            optimizer_role=(
-                                supervisor.policy.program_synthesis_role
-                            ),
-                            near_duplicate_jaccard=(
-                                supervisor
-                                .policy
-                                .program_synthesis_near_duplicate_jaccard
-                            ),
-                        )
+                    guidance_semantic_deduped_count = supervisor.queue.deduplicate_semantic(
+                        optimizer_role=(supervisor.policy.program_synthesis_role),
+                        near_duplicate_jaccard=(
+                            supervisor.policy.program_synthesis_near_duplicate_jaccard
+                        ),
                     )
                     semantic_deduped_count += int(guidance_semantic_deduped_count)
-                    guidance_todo_counts[
-                        f"{guidance_kind}_deduped_count"
-                    ] = deduped_count
-                    guidance_todo_counts[
-                        f"{guidance_kind}_seeded_count"
-                    ] = int(seeded_count)
-                    guidance_todo_counts[
-                        f"{guidance_kind}_semantic_deduped_count"
-                    ] = int(guidance_semantic_deduped_count)
+                    guidance_todo_counts[f"{guidance_kind}_deduped_count"] = deduped_count
+                    guidance_todo_counts[f"{guidance_kind}_seeded_count"] = int(seeded_count)
+                    guidance_todo_counts[f"{guidance_kind}_semantic_deduped_count"] = int(
+                        guidance_semantic_deduped_count
+                    )
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
             mark_cycle_phase("leanstral_rule_gap_projection")
@@ -21536,8 +21001,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             while (
                 leanstral_report_wait_seconds > 0.0
                 and not leanstral_report.is_file()
-                and (time.monotonic() - leanstral_wait_started)
-                < leanstral_report_wait_seconds
+                and (time.monotonic() - leanstral_wait_started) < leanstral_report_wait_seconds
             ):
                 waited_seconds = time.monotonic() - leanstral_wait_started
                 summary["active_cycle_leanstral_report_wait"] = {
@@ -21592,9 +21056,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         ],
                     ],
                     autoencoder=autoencoder,
-                    samples_by_id={
-                        sample.sample_id: sample for sample in train_samples
-                    },
+                    samples_by_id={sample.sample_id: sample for sample in train_samples},
                     worker_health={},
                 )
             )
@@ -21603,33 +21065,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 leanstral_rule_gap_projection,
                 leanstral_direct_guidance_projection,
             )
-            if autoencoder.state.generalizable_capacity_exceeded(
-                generalizable_capacity_limit
-            ):
+            if autoencoder.state.generalizable_capacity_exceeded(generalizable_capacity_limit):
                 mark_cycle_phase(
                     "state_capacity_compaction",
                     max_entries_per_group=generalizable_capacity_limit,
                     source="post_guidance",
                 )
-                guidance_capacity_report = (
-                    autoencoder.state.compact_generalizable_capacity(
-                        generalizable_capacity_limit
-                    )
+                guidance_capacity_report = autoencoder.state.compact_generalizable_capacity(
+                    generalizable_capacity_limit
                 )
                 guidance_capacity_report["cycle"] = cycle
-                guidance_capacity_report["reason"] = (
-                    "post_guidance_pre_persistence"
+                guidance_capacity_report["reason"] = "post_guidance_pre_persistence"
+                summary["latest_autoencoder_generalizable_capacity"] = guidance_capacity_report
+                summary["autoencoder_generalizable_capacity_compactions_total"] = (
+                    int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
                 )
-                summary["latest_autoencoder_generalizable_capacity"] = (
-                    guidance_capacity_report
-                )
-                summary[
-                    "autoencoder_generalizable_capacity_compactions_total"
-                ] = int(
-                    summary[
-                        "autoencoder_generalizable_capacity_compactions_total"
-                    ]
-                ) + 1
                 append_event(
                     log_path,
                     args.run_id,
@@ -21640,9 +21090,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     },
                 )
             else:
-                guidance_entry_count = (
-                    autoencoder.state.generalizable_entry_count()
-                )
+                guidance_entry_count = autoencoder.state.generalizable_entry_count()
                 summary["latest_autoencoder_generalizable_capacity"] = {
                     "after_entry_count": guidance_entry_count,
                     "before_entry_count": guidance_entry_count,
@@ -21651,9 +21099,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "dropped_entry_count": 0,
                     "max_entries_per_group": generalizable_capacity_limit,
                     "reason": "post_guidance_pre_persistence",
-                    "schema_version": (
-                        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
-                    ),
+                    "schema_version": (MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION),
                 }
             if snapshot_evaluator is not None:
                 evaluation_snapshot = build_autoencoder_evaluation_snapshot(
@@ -21692,9 +21138,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     log_path,
                     args.run_id,
                     {
-                        "coalesced_drops": [
-                            drop.to_dict() for drop in coalesced_drops
-                        ],
+                        "coalesced_drops": [drop.to_dict() for drop in coalesced_drops],
                         "cycle": cycle,
                         "event": "snapshot_evaluation_published",
                         "snapshot": evaluation_snapshot.to_dict(),
@@ -21766,9 +21210,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_async_state_persistence"] = {
                 "checkpoint_enqueued": state_checkpoint_future is not None,
                 "checkpoint_future_id": (
-                    state_checkpoint_future.job_id
-                    if state_checkpoint_future is not None
-                    else ""
+                    state_checkpoint_future.job_id if state_checkpoint_future is not None else ""
                 ),
                 "delta_enqueued": state_delta_future is not None,
                 "delta_future_id": (
@@ -21786,8 +21228,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             finish_cycle_phase()
 
             train_ce_delta = before_train.cross_entropy_loss - after_train.cross_entropy_loss
-            validation_ce_delta = before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
-            train_cos_delta = after_train.embedding_cosine_similarity - before_train.embedding_cosine_similarity
+            validation_ce_delta = (
+                before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
+            )
+            train_cos_delta = (
+                after_train.embedding_cosine_similarity - before_train.embedding_cosine_similarity
+            )
             validation_cos_delta = (
                 after_validation.embedding_cosine_similarity
                 - before_validation.embedding_cosine_similarity
@@ -21860,25 +21306,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 samples=acceptance_validation_samples,
                 state_hash=learned_after_state_hash,
             )
-            legal_ir_view_family_before_validation = (
-                legal_ir_validation_view_family_metric_block(
-                    compiler_ir_validation=compiler_ir_validation,
-                    autoencoder_validation=learned_ir_before_validation,
-                    hammer_validation=dict(
-                        daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
-                    ),
-                    logic_bridge_validation=bridge_ir_validation,
-                )
+            legal_ir_view_family_before_validation = legal_ir_validation_view_family_metric_block(
+                compiler_ir_validation=compiler_ir_validation,
+                autoencoder_validation=learned_ir_before_validation,
+                hammer_validation=dict(daemon_hammer_guidance_cycle.get("hammer_metrics") or {}),
+                logic_bridge_validation=bridge_ir_validation,
             )
-            legal_ir_view_family_validation = (
-                legal_ir_validation_view_family_metric_block(
-                    compiler_ir_validation=compiler_ir_validation,
-                    autoencoder_validation=learned_ir_validation,
-                    hammer_validation=dict(
-                        daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
-                    ),
-                    logic_bridge_validation=bridge_ir_validation,
-                )
+            legal_ir_view_family_validation = legal_ir_validation_view_family_metric_block(
+                compiler_ir_validation=compiler_ir_validation,
+                autoencoder_validation=learned_ir_validation,
+                hammer_validation=dict(daemon_hammer_guidance_cycle.get("hammer_metrics") or {}),
+                logic_bridge_validation=bridge_ir_validation,
             )
             validation_holdout_version = canonical_holdout_version(
                 [
@@ -21894,43 +21332,32 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if isinstance(latest_published_snapshot, Mapping)
                 else ""
             )
-            learned_representation_promotion = (
-                learned_representation_promotion_report(
-                    autoencoder,
-                    acceptance_validation_samples,
-                    baseline_view_family_validation=(
-                        legal_ir_view_family_before_validation
-                    ),
-                    candidate_view_family_validation=(
-                        legal_ir_view_family_validation
-                    ),
-                    feature_projection_report=feature_projection_report,
-                    compiler_commit=evaluation_compiler_commit,
-                    fixed_canary_id=fixed_canary_id,
-                    proof_receipts=daemon_hammer_reconstruction_receipts(
-                        daemon_hammer_guidance_cycle
-                    ),
-                    eligible_snapshot_id=eligible_snapshot_id,
-                    baseline_state_hash=baseline_evaluation_state_hash,
-                    candidate_state_hash=learned_after_state_hash,
-                    validated_update_count=(
-                        int(feature_projection_report.get("accepted_epochs", 0) or 0)
-                        + int(
-                            (
-                                daemon_hammer_guidance_cycle.get(
-                                    "autoencoder_training"
-                                )
-                                or {}
-                            ).get("applied_count", 0)
-                            or 0
+            learned_representation_promotion = learned_representation_promotion_report(
+                autoencoder,
+                acceptance_validation_samples,
+                baseline_view_family_validation=(legal_ir_view_family_before_validation),
+                candidate_view_family_validation=(legal_ir_view_family_validation),
+                feature_projection_report=feature_projection_report,
+                compiler_commit=evaluation_compiler_commit,
+                fixed_canary_id=fixed_canary_id,
+                proof_receipts=daemon_hammer_reconstruction_receipts(daemon_hammer_guidance_cycle),
+                eligible_snapshot_id=eligible_snapshot_id,
+                baseline_state_hash=baseline_evaluation_state_hash,
+                candidate_state_hash=learned_after_state_hash,
+                validated_update_count=(
+                    int(feature_projection_report.get("accepted_epochs", 0) or 0)
+                    + int(
+                        (daemon_hammer_guidance_cycle.get("autoencoder_training") or {}).get(
+                            "applied_count", 0
                         )
-                        + sum(
-                            int(step.applied_count)
-                            for step in run.steps
-                            if step.improved and step.failed_validation_count <= 0
-                        )
-                    ),
-                )
+                        or 0
+                    )
+                    + sum(
+                        int(step.applied_count)
+                        for step in run.steps
+                        if step.improved and step.failed_validation_count <= 0
+                    )
+                ),
             )
             latest_compiler_ir_ce = _metric_value(
                 compiler_ir_validation,
@@ -21993,12 +21420,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 1.0e12,
             )
             latest_compiler_ir_guidance_ce_delta = float(guidance_canary["ce_delta"])
-            latest_compiler_ir_guidance_cosine_delta = float(
-                guidance_canary["cosine_delta"]
-            )
-            latest_compiler_ir_guidance_copy_hack_delta = float(
-                guidance_canary["copy_hack_delta"]
-            )
+            latest_compiler_ir_guidance_cosine_delta = float(guidance_canary["cosine_delta"])
+            latest_compiler_ir_guidance_copy_hack_delta = float(guidance_canary["copy_hack_delta"])
             latest_learned_ir_view_ce = _metric_value(
                 learned_ir_validation,
                 "view_cross_entropy_loss",
@@ -22026,8 +21449,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_feature_projection_report"] = feature_projection_report
             summary["latest_cycle_seconds"] = latest_cycle_seconds
             summary["latest_cycle_phase_timings"] = {
-                name: round(seconds, 3)
-                for name, seconds in sorted(cycle_phase_timings.items())
+                name: round(seconds, 3) for name, seconds in sorted(cycle_phase_timings.items())
             }
             summary["latest_autoencoder_state_telemetry"] = latest_state_telemetry
             summary["latest_autoencoder_train"] = after_train_metrics
@@ -22045,12 +21467,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_train_cosine"] = after_train.embedding_cosine_similarity
             summary["latest_train_reconstruction"] = after_train.reconstruction_loss
             summary["latest_validation_ce"] = after_validation.cross_entropy_loss
-            summary["latest_validation_cosine"] = (
-                after_validation.embedding_cosine_similarity
-            )
-            summary["latest_validation_reconstruction"] = (
-                after_validation.reconstruction_loss
-            )
+            summary["latest_validation_cosine"] = after_validation.embedding_cosine_similarity
+            summary["latest_validation_reconstruction"] = after_validation.reconstruction_loss
             summary["latest_train_ce_delta"] = train_ce_delta
             summary["latest_train_cosine_delta"] = train_cos_delta
             summary["latest_validation_ce_delta"] = validation_ce_delta
@@ -22058,23 +21476,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_train"] = compiler_ir_train
             summary["latest_compiler_ir_validation"] = compiler_ir_validation
             summary["latest_compiler_ir_guided_train"] = compiler_ir_guided_train
-            summary["latest_compiler_ir_guided_validation"] = (
-                compiler_ir_guided_validation
-            )
+            summary["latest_compiler_ir_guided_validation"] = compiler_ir_guided_validation
             evaluation_cache_summary = evaluation_cache.summary()
             summary["legal_ir_evaluation_cache"] = evaluation_cache_summary
-            summary["legal_ir_evaluation_result_cache"] = (
-                evaluation_result_cache.summary()
-            )
+            summary["legal_ir_evaluation_result_cache"] = evaluation_result_cache.summary()
             summary["latest_before_train_evaluation_control"] = dict(
                 before_train_evaluation_control
             )
             summary["latest_before_validation_evaluation_control"] = dict(
                 before_validation_evaluation_control
             )
-            summary["latest_compiler_ir_train_cadence_enabled"] = bool(
-                compiler_ir_train_enabled
-            )
+            summary["latest_compiler_ir_train_cadence_enabled"] = bool(compiler_ir_train_enabled)
             summary["latest_compiler_ir_guided_train_cadence_enabled"] = bool(
                 compiler_ir_guided_train_enabled
             )
@@ -22084,9 +21496,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["evaluation_cache_saved_wall_time_seconds"] = float(
                 evaluation_cache_summary.get("saved_wall_time_seconds", 0.0) or 0.0
             )
-            summary["saved_wall_time_seconds"] = summary[
-                "evaluation_cache_saved_wall_time_seconds"
-            ]
+            summary["saved_wall_time_seconds"] = summary["evaluation_cache_saved_wall_time_seconds"]
             summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
             summary["latest_compiler_ir_ce_excess"] = latest_compiler_ir_ce_excess
             summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
@@ -22098,8 +21508,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "deterministic compiler/decompiler structural IR round-trip"
                 ),
                 "compiler_ir_minus_autoencoder_embedding_cosine": round(
-                    latest_compiler_ir_cosine
-                    - after_validation.embedding_cosine_similarity,
+                    latest_compiler_ir_cosine - after_validation.embedding_cosine_similarity,
                     9,
                 ),
                 "compiler_raw_source_embedding_cosine_metric": (
@@ -22110,9 +21519,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     - after_validation.embedding_cosine_similarity,
                     9,
                 ),
-                "validation_cosine_metric": (
-                    "autoencoder decoded embedding vs source embedding"
-                ),
+                "validation_cosine_metric": ("autoencoder decoded embedding vs source embedding"),
             }
             summary["latest_validation_cosine_bottleneck"] = {
                 "autoencoder_embedding_cosine": round(
@@ -22139,13 +21546,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     after_validation.embedding_cosine_similarity < 0.25
                 ),
                 "worst_samples": list(
-                    after_validation_metrics.get("worst_sample_embedding_metrics", [])
-                    or []
+                    after_validation_metrics.get("worst_sample_embedding_metrics", []) or []
                 ),
             }
-            summary["latest_compiler_ir_source_copy_loss"] = (
-                latest_compiler_ir_source_copy_loss
-            )
+            summary["latest_compiler_ir_source_copy_loss"] = latest_compiler_ir_source_copy_loss
             summary["latest_compiler_ir_source_copy_reward_hack_penalty"] = (
                 latest_compiler_ir_source_copy_reward_hack_penalty
             )
@@ -22183,42 +21587,26 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )[:8],
             }
             summary["latest_compiler_ir_guided_ce"] = latest_guided_compiler_ir_ce
-            summary["latest_compiler_ir_guided_ce_excess"] = (
-                latest_guided_compiler_ir_ce_excess
+            summary["latest_compiler_ir_guided_ce_excess"] = latest_guided_compiler_ir_ce_excess
+            summary["latest_compiler_ir_guided_cosine"] = latest_guided_compiler_ir_cosine
+            summary["latest_compiler_ir_guided_source_copy_reward_hack_penalty"] = (
+                latest_guided_compiler_ir_source_copy_reward_hack_penalty
             )
-            summary["latest_compiler_ir_guided_cosine"] = (
-                latest_guided_compiler_ir_cosine
-            )
-            summary[
-                "latest_compiler_ir_guided_source_copy_reward_hack_penalty"
-            ] = latest_guided_compiler_ir_source_copy_reward_hack_penalty
             summary["latest_compiler_ir_guidance_canary"] = guidance_canary
-            summary["latest_compiler_ir_guidance_quality_gate"] = guidance_canary[
-                "quality_gate"
-            ]
-            summary["latest_compiler_ir_guidance_promotion"] = (
-                guidance_promotion_gate
-            )
+            summary["latest_compiler_ir_guidance_quality_gate"] = guidance_canary["quality_gate"]
+            summary["latest_compiler_ir_guidance_promotion"] = guidance_promotion_gate
             summary["latest_compiler_ir_guidance_promotion_allowed"] = bool(
                 guidance_promotion_gate["promotion_allowed"]
             )
-            summary["latest_compiler_ir_guidance_promotion_block_reason"] = (
-                guidance_promotion_gate["promotion_block_reason"]
-            )
-            summary["latest_compiler_ir_guidance_scope_hints"] = (
-                guidance_scope_hints
-            )
-            summary["latest_compiler_ir_guidance_distillation"] = (
-                guidance_distillation
-            )
+            summary["latest_compiler_ir_guidance_promotion_block_reason"] = guidance_promotion_gate[
+                "promotion_block_reason"
+            ]
+            summary["latest_compiler_ir_guidance_scope_hints"] = guidance_scope_hints
+            summary["latest_compiler_ir_guidance_distillation"] = guidance_distillation
             summary["latest_compiler_ir_guidance_distillation_path"] = (
-                str(guidance_distillation_path)
-                if guidance_distillation_path is not None
-                else ""
+                str(guidance_distillation_path) if guidance_distillation_path is not None else ""
             )
-            summary["latest_introspection_disagreement_export"] = (
-                introspection_export
-            )
+            summary["latest_introspection_disagreement_export"] = introspection_export
             summary["introspection_disagreement_export_packet_count"] = int(
                 summary.get("introspection_disagreement_export_packet_count", 0)
             ) + int(introspection_export.get("packet_count", 0) or 0)
@@ -22244,9 +21632,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if str(export_path) and str(export_path) not in export_paths:
                     export_paths.append(str(export_path))
             summary["introspection_disagreement_export_paths"] = export_paths
-            summary["latest_compiler_ir_guidance_ce_delta"] = (
-                latest_compiler_ir_guidance_ce_delta
-            )
+            summary["latest_compiler_ir_guidance_ce_delta"] = latest_compiler_ir_guidance_ce_delta
             summary["latest_compiler_ir_guidance_cosine_delta"] = (
                 latest_compiler_ir_guidance_cosine_delta
             )
@@ -22254,9 +21640,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 latest_compiler_ir_guidance_copy_hack_delta
             )
             summary["latest_learned_ir_before_train"] = learned_ir_before_train
-            summary["latest_learned_ir_before_validation"] = (
-                learned_ir_before_validation
-            )
+            summary["latest_learned_ir_before_validation"] = learned_ir_before_validation
             summary["latest_learned_ir_train"] = learned_ir_train
             summary["latest_learned_ir_validation"] = learned_ir_validation
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
@@ -22264,15 +21648,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_before_legal_ir_view_family_validation"] = (
                 legal_ir_view_family_before_validation
             )
-            summary["latest_legal_ir_view_family_validation"] = (
-                legal_ir_view_family_validation
-            )
+            summary["latest_legal_ir_view_family_validation"] = legal_ir_view_family_validation
             summary["latest_legal_ir_view_family_macro_score"] = float(
                 legal_ir_view_family_validation.get("macro_score", 0.0) or 0.0
             )
-            summary["latest_legal_ir_learned_guidance_promotion"] = (
-                learned_representation_promotion
-            )
+            summary["latest_legal_ir_learned_guidance_promotion"] = learned_representation_promotion
             summary["source_export_id"] = str(
                 learned_representation_promotion.get("source_export_id")
                 or learned_representation_promotion.get("learned_export_id")
@@ -22291,9 +21671,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 compiler_ir_validation=compiler_ir_validation,
                 compiler_ir_guided_validation=compiler_ir_guided_validation,
                 learned_ir_validation=learned_ir_validation,
-                hammer_validation=dict(
-                    daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
-                ),
+                hammer_validation=dict(daemon_hammer_guidance_cycle.get("hammer_metrics") or {}),
                 logic_bridge_validation=bridge_ir_validation,
                 queue_counts=summary["latest_queue_counts"],
                 role_queue_counts=summary["latest_role_queue_counts"],
@@ -22303,12 +21681,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 metric_bridge_adapters=metric_bridge_adapters,
                 diagnostic_bridge_adapters=diagnostic_bridge_adapters,
             )
-            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(
-                summary
-            )
-            summary["supervisor_health"] = build_modal_supervisor_health_report(
-                summary
-            ).to_dict()
+            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
+            summary["supervisor_health"] = build_modal_supervisor_health_report(summary).to_dict()
             summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
@@ -22325,11 +21699,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     optimizer_role=supervisor.policy.program_synthesis_role
                 )
             )
-            summary["program_synthesis_queue_pressure"] = (
-                _program_synthesis_queue_pressure(
-                    program_synthesis_status,
-                    pending_cap=int(supervisor.policy.max_program_synthesis_pending),
-                )
+            summary["program_synthesis_queue_pressure"] = _program_synthesis_queue_pressure(
+                program_synthesis_status,
+                pending_cap=int(supervisor.policy.max_program_synthesis_pending),
             )
             summary["program_synthesis_metric_feedback"] = (
                 _program_synthesis_metric_feedback_report(
@@ -22337,82 +21709,70 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     compiler_ir_validation_sample_ids=compiler_ir_validation_sample_ids,
                 )
             )
-            summary["program_synthesis_seeded"] = int(
-                summary.get("program_synthesis_seeded", 0)
-            ) + sum(step.program_synthesis_seeded_count for step in run.steps) + sum(
-                value
-                for key, value in guidance_todo_counts.items()
-                if key.endswith("_seeded_count")
-            ) + int(leanstral_projection.get("seeded_count", 0) or 0)
-            preinsert_deduped_count = sum(
-                step.program_synthesis_deduped_count for step in run.steps
-            ) + sum(
-                value
-                for key, value in guidance_todo_counts.items()
-                if key.endswith("_deduped_count")
-                and not key.endswith("_semantic_deduped_count")
-            ) + int(leanstral_projection.get("deduped_count", 0) or 0)
-            summary["latest_program_synthesis_seeded_count"] = sum(
-                step.program_synthesis_seeded_count for step in run.steps
-            ) + sum(
-                value
-                for key, value in guidance_todo_counts.items()
-                if key.endswith("_seeded_count")
-            ) + int(leanstral_projection.get("seeded_count", 0) or 0)
+            summary["program_synthesis_seeded"] = (
+                int(summary.get("program_synthesis_seeded", 0))
+                + sum(step.program_synthesis_seeded_count for step in run.steps)
+                + sum(
+                    value
+                    for key, value in guidance_todo_counts.items()
+                    if key.endswith("_seeded_count")
+                )
+                + int(leanstral_projection.get("seeded_count", 0) or 0)
+            )
+            preinsert_deduped_count = (
+                sum(step.program_synthesis_deduped_count for step in run.steps)
+                + sum(
+                    value
+                    for key, value in guidance_todo_counts.items()
+                    if key.endswith("_deduped_count")
+                    and not key.endswith("_semantic_deduped_count")
+                )
+                + int(leanstral_projection.get("deduped_count", 0) or 0)
+            )
+            summary["latest_program_synthesis_seeded_count"] = (
+                sum(step.program_synthesis_seeded_count for step in run.steps)
+                + sum(
+                    value
+                    for key, value in guidance_todo_counts.items()
+                    if key.endswith("_seeded_count")
+                )
+                + int(leanstral_projection.get("seeded_count", 0) or 0)
+            )
             summary["latest_program_synthesis_preinsert_deduped_count"] = int(
                 preinsert_deduped_count
             )
-            summary["latest_program_synthesis_semantic_deduped_count"] = int(
-                semantic_deduped_count
-            )
+            summary["latest_program_synthesis_semantic_deduped_count"] = int(semantic_deduped_count)
             for guidance_kind in ("activation", "distillation", "guardrail"):
-                summary[
-                    f"latest_compiler_ir_guidance_{guidance_kind}_deduped_count"
-                ] = int(guidance_todo_counts[f"{guidance_kind}_deduped_count"])
-                summary[
-                    f"latest_compiler_ir_guidance_{guidance_kind}_seeded_count"
-                ] = int(guidance_todo_counts[f"{guidance_kind}_seeded_count"])
-                summary[
-                    "latest_compiler_ir_guidance_"
-                    f"{guidance_kind}_semantic_deduped_count"
-                ] = int(
-                    guidance_todo_counts[
-                        f"{guidance_kind}_semantic_deduped_count"
-                    ]
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_deduped_count"] = int(
+                    guidance_todo_counts[f"{guidance_kind}_deduped_count"]
                 )
-                summary[
-                    f"latest_compiler_ir_guidance_{guidance_kind}_todo_ids"
-                ] = list(guidance_todo_ids[guidance_kind])
-                summary[
-                    f"compiler_ir_guidance_{guidance_kind}_seeded_total"
-                ] = int(
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_seeded_count"] = int(
+                    guidance_todo_counts[f"{guidance_kind}_seeded_count"]
+                )
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_semantic_deduped_count"] = (
+                    int(guidance_todo_counts[f"{guidance_kind}_semantic_deduped_count"])
+                )
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_todo_ids"] = list(
+                    guidance_todo_ids[guidance_kind]
+                )
+                summary[f"compiler_ir_guidance_{guidance_kind}_seeded_total"] = int(
                     summary.get(
                         f"compiler_ir_guidance_{guidance_kind}_seeded_total",
                         0,
                     )
                 ) + int(guidance_todo_counts[f"{guidance_kind}_seeded_count"])
-                summary[
-                    f"compiler_ir_guidance_{guidance_kind}_deduped_total"
-                ] = int(
+                summary[f"compiler_ir_guidance_{guidance_kind}_deduped_total"] = int(
                     summary.get(
                         f"compiler_ir_guidance_{guidance_kind}_deduped_total",
                         0,
                     )
                 ) + int(guidance_todo_counts[f"{guidance_kind}_deduped_count"])
-                summary[
-                    "compiler_ir_guidance_"
-                    f"{guidance_kind}_semantic_deduped_total"
-                ] = int(
+                summary[f"compiler_ir_guidance_{guidance_kind}_semantic_deduped_total"] = int(
                     summary.get(
-                        "compiler_ir_guidance_"
-                        f"{guidance_kind}_semantic_deduped_total",
+                        f"compiler_ir_guidance_{guidance_kind}_semantic_deduped_total",
                         0,
                     )
-                ) + int(
-                    guidance_todo_counts[
-                        f"{guidance_kind}_semantic_deduped_count"
-                    ]
-                )
+                ) + int(guidance_todo_counts[f"{guidance_kind}_semantic_deduped_count"])
             summary["program_synthesis_preinsert_deduped"] = int(
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(preinsert_deduped_count)
@@ -22431,35 +21791,27 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             bridge_loss_failures = sum(step.bridge_loss_failure_count for step in run.steps)
             bridge_loss_samples = sum(step.bridge_loss_sample_count for step in run.steps)
             bridge_loss_signals = sum(step.bridge_loss_signal_count for step in run.steps)
-            summary["bridge_loss_failures"] = int(
-                summary.get("bridge_loss_failures", 0)
-            ) + int(bridge_loss_failures)
-            summary["bridge_loss_samples"] = int(
-                summary.get("bridge_loss_samples", 0)
-            ) + int(bridge_loss_samples)
-            summary["bridge_loss_signals"] = int(
-                summary.get("bridge_loss_signals", 0)
-            ) + int(bridge_loss_signals)
-            summary["bridge_metric_failures"] = int(
-                summary.get("bridge_metric_failures", 0)
-            ) + int(
+            summary["bridge_loss_failures"] = int(summary.get("bridge_loss_failures", 0)) + int(
+                bridge_loss_failures
+            )
+            summary["bridge_loss_samples"] = int(summary.get("bridge_loss_samples", 0)) + int(
+                bridge_loss_samples
+            )
+            summary["bridge_loss_signals"] = int(summary.get("bridge_loss_signals", 0)) + int(
+                bridge_loss_signals
+            )
+            summary["bridge_metric_failures"] = int(summary.get("bridge_metric_failures", 0)) + int(
                 bridge_ir_train.get("metric_failures", 0)
                 + bridge_ir_validation.get("metric_failures", 0)
             )
             summary["latest_logic_bridge_train"] = bridge_ir_train
             summary["latest_logic_bridge_validation"] = bridge_ir_validation
-            summary["latest_compiler_ir_validation_metrics"] = (
-                compiler_ir_validation_metrics
-            )
-            summary["latest_compiler_ir_validation_profile"] = (
-                compiler_ir_validation_profile
-            )
+            summary["latest_compiler_ir_validation_metrics"] = compiler_ir_validation_metrics
+            summary["latest_compiler_ir_validation_profile"] = compiler_ir_validation_profile
             summary["latest_compiler_ir_validation_sample_count"] = len(
                 compiler_ir_validation_sample_ids
             )
-            summary["latest_compiler_ir_validation_sample_ids"] = (
-                compiler_ir_validation_sample_ids
-            )
+            summary["latest_compiler_ir_validation_sample_ids"] = compiler_ir_validation_sample_ids
             summary["compiler_ir_validation_comparable_to_previous_cycle"] = bool(
                 compiler_ir_validation_comparable
             )
@@ -22482,9 +21834,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             for sample_id in compiler_ir_validation_sample_ids:
                 if sample_id and sample_id not in seen_compiler_ir_sample_ids:
                     seen_compiler_ir_sample_ids.append(sample_id)
-            summary["compiler_ir_validation_sample_ids_seen"] = (
-                seen_compiler_ir_sample_ids[-512:]
-            )
+            summary["compiler_ir_validation_sample_ids_seen"] = seen_compiler_ir_sample_ids[-512:]
             summary["compiler_ir_validation_unique_sample_count_seen"] = len(
                 set(seen_compiler_ir_sample_ids)
             )
@@ -22493,8 +21843,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["compiler_ir_validation_low_sample_warning"] = (
                 validation_mode == "fixed_canary"
-                and len(compiler_ir_validation_sample_ids)
-                < DEFAULT_VALIDATION_CANARY_COUNT
+                and len(compiler_ir_validation_sample_ids) < DEFAULT_VALIDATION_CANARY_COUNT
             )
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
@@ -22504,24 +21853,32 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 + bridge_ir_train.get("metric_failures", 0)
                 + bridge_ir_validation.get("metric_failures", 0)
             )
-            summary["train_ce_improved_cycles"] = int(summary.get("train_ce_improved_cycles", 0)) + int(train_ce_delta > 0.0)
-            summary["validation_ce_improved_cycles"] = int(summary.get("validation_ce_improved_cycles", 0)) + int(validation_ce_delta > 0.0)
-            summary["train_cosine_improved_cycles"] = int(summary.get("train_cosine_improved_cycles", 0)) + int(train_cos_delta > 0.0)
-            summary["validation_cosine_improved_cycles"] = int(summary.get("validation_cosine_improved_cycles", 0)) + int(validation_cos_delta > 0.0)
+            summary["train_ce_improved_cycles"] = int(
+                summary.get("train_ce_improved_cycles", 0)
+            ) + int(train_ce_delta > 0.0)
+            summary["validation_ce_improved_cycles"] = int(
+                summary.get("validation_ce_improved_cycles", 0)
+            ) + int(validation_ce_delta > 0.0)
+            summary["train_cosine_improved_cycles"] = int(
+                summary.get("train_cosine_improved_cycles", 0)
+            ) + int(train_cos_delta > 0.0)
+            summary["validation_cosine_improved_cycles"] = int(
+                summary.get("validation_cosine_improved_cycles", 0)
+            ) + int(validation_cos_delta > 0.0)
             plateau_threshold = max(
                 1e-9,
                 float(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
             )
             if validation_ce_delta <= plateau_threshold:
-                summary["learning_rate_plateau_streak"] = int(
-                    summary.get("learning_rate_plateau_streak", 0)
-                ) + 1
+                summary["learning_rate_plateau_streak"] = (
+                    int(summary.get("learning_rate_plateau_streak", 0)) + 1
+                )
             else:
                 summary["learning_rate_plateau_streak"] = 0
             if validation_cos_delta < 0.0:
-                summary["learning_rate_cosine_regression_streak"] = int(
-                    summary.get("learning_rate_cosine_regression_streak", 0)
-                ) + 1
+                summary["learning_rate_cosine_regression_streak"] = (
+                    int(summary.get("learning_rate_cosine_regression_streak", 0)) + 1
+                )
             else:
                 summary["learning_rate_cosine_regression_streak"] = 0
             guidance_improved = bool(guidance_canary.get("improved"))
@@ -22530,14 +21887,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             ) + int(guidance_improved)
             guidance_regressed = bool(guidance_canary.get("regressed"))
             if guidance_regressed:
-                summary["compiler_guidance_regression_streak"] = int(
-                    summary.get("compiler_guidance_regression_streak", 0)
-                ) + 1
+                summary["compiler_guidance_regression_streak"] = (
+                    int(summary.get("compiler_guidance_regression_streak", 0)) + 1
+                )
             else:
                 summary["compiler_guidance_regression_streak"] = 0
             summary["learning_rate_applied"] = float(cycle_learning_rate)
             summary["learning_rate_policy"] = cycle_lr_policy
-            summary["best_validation_ce"] = min(summary.get("best_validation_ce"), after_validation.cross_entropy_loss)
+            summary["best_validation_ce"] = min(
+                summary.get("best_validation_ce"), after_validation.cross_entropy_loss
+            )
             summary["best_validation_ir_ce"] = min(
                 summary.get("best_validation_ir_ce", 1.0e12),
                 latest_compiler_ir_ce,
@@ -22554,9 +21913,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("best_validation_ir_guided_cosine", -1.0),
                 latest_guided_compiler_ir_cosine,
             )
-            summary[
-                "best_validation_ir_guided_source_copy_reward_hack_penalty"
-            ] = min(
+            summary["best_validation_ir_guided_source_copy_reward_hack_penalty"] = min(
                 summary.get(
                     "best_validation_ir_guided_source_copy_reward_hack_penalty",
                     1.0e12,
@@ -22619,12 +21976,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("best_validation_learned_ir_view_cosine", -1.0),
                 latest_learned_ir_view_cosine,
             )
-            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(
-                summary
-            )
-            summary["supervisor_health"] = build_modal_supervisor_health_report(
-                summary
-            ).to_dict()
+            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
+            summary["supervisor_health"] = build_modal_supervisor_health_report(summary).to_dict()
             append_event(
                 log_path,
                 args.run_id,
@@ -22636,20 +21989,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "autoencoder_after_validation": after_validation_metrics,
                     "autoencoder_before_train": before_train_metrics,
                     "autoencoder_before_validation": before_validation_metrics,
-                    "autoencoder_train_generalized_probe": (
-                        after_train_generalized_probe_metrics
-                    ),
+                    "autoencoder_train_generalized_probe": (after_train_generalized_probe_metrics),
                     "autoencoder_validation_sample_memory_probe": (
                         after_validation_sample_memory_probe_metrics
                     ),
                     "before_train": before_train_metrics,
                     "before_validation": before_validation_metrics,
-                    "before_train_evaluation_control": (
-                        before_train_evaluation_control
-                    ),
-                    "before_validation_evaluation_control": (
-                        before_validation_evaluation_control
-                    ),
+                    "before_train_evaluation_control": (before_train_evaluation_control),
+                    "before_validation_evaluation_control": (before_validation_evaluation_control),
                     "completed_count": sum(step.completed_count for step in run.steps),
                     "compiler_ir_guided_train": compiler_ir_guided_train,
                     "compiler_ir_guided_validation": compiler_ir_guided_validation,
@@ -22663,15 +22010,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         guidance_todo_ids["activation"]
                     ),
                     "compiler_ir_guidance_canary": guidance_canary,
-                    "compiler_ir_guidance_ce_delta": (
-                        latest_compiler_ir_guidance_ce_delta
-                    ),
+                    "compiler_ir_guidance_ce_delta": (latest_compiler_ir_guidance_ce_delta),
                     "compiler_ir_guidance_copy_hack_delta": (
                         latest_compiler_ir_guidance_copy_hack_delta
                     ),
-                    "compiler_ir_guidance_cosine_delta": (
-                        latest_compiler_ir_guidance_cosine_delta
-                    ),
+                    "compiler_ir_guidance_cosine_delta": (latest_compiler_ir_guidance_cosine_delta),
                     "compiler_ir_guidance_distillation": guidance_distillation,
                     "introspection_disagreement_export": introspection_export,
                     "compiler_ir_guidance_distillation_deduped_count": int(
@@ -22689,13 +22032,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_guidance_guardrail_seeded_count": int(
                         guidance_todo_counts["guardrail_seeded_count"]
                     ),
-                    "compiler_ir_guidance_guardrail_todo_ids": list(
-                        guidance_todo_ids["guardrail"]
-                    ),
+                    "compiler_ir_guidance_guardrail_todo_ids": list(guidance_todo_ids["guardrail"]),
                     "leanstral_projection": leanstral_projection,
-                    "leanstral_direct_guidance_projection": (
-                        leanstral_direct_guidance_projection
-                    ),
+                    "leanstral_direct_guidance_projection": (leanstral_direct_guidance_projection),
                     "leanstral_rule_gap_projection": leanstral_rule_gap_projection,
                     "leanstral_projection_budget_blocked_count": int(
                         leanstral_projection.get("budget_blocked_count", 0) or 0
@@ -22717,35 +22056,29 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
                     "daemon_hammer_guidance": (
-                        compact_daemon_hammer_guidance_report(
-                            daemon_hammer_guidance_cycle
-                        )
+                        compact_daemon_hammer_guidance_report(daemon_hammer_guidance_cycle)
                     ),
                     "compiler_ir_validation_comparable_to_previous_cycle": bool(
                         compiler_ir_validation_comparable
                     ),
                     "compiler_ir_validation_delta": compiler_ir_validation_delta,
-                    "compiler_ir_validation_sample_count": len(
-                        compiler_ir_validation_sample_ids
-                    ),
-                    "compiler_ir_validation_sample_ids": (
-                        compiler_ir_validation_sample_ids[:32]
-                    ),
+                    "compiler_ir_validation_sample_count": len(compiler_ir_validation_sample_ids),
+                    "compiler_ir_validation_sample_ids": (compiler_ir_validation_sample_ids[:32]),
                     "logic_bridge_train": bridge_ir_train,
                     "logic_bridge_validation": bridge_ir_validation,
                     "learned_ir_before_train": learned_ir_before_train,
                     "learned_ir_before_validation": learned_ir_before_validation,
                     "learned_ir_train": learned_ir_train,
                     "learned_ir_validation": learned_ir_validation,
-                    "legal_ir_view_family_validation": (
-                        legal_ir_view_family_validation
-                    ),
+                    "legal_ir_view_family_validation": (legal_ir_view_family_validation),
                     "train_sample_memory_gap": train_sample_memory_gap,
                     "validation_sample_memory_gap": validation_sample_memory_gap,
                     "cycle": cycle,
                     "duration_seconds": latest_cycle_seconds,
                     "event": "cycle",
-                    "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
+                    "failed_validation_count": sum(
+                        step.failed_validation_count for step in run.steps
+                    ),
                     "feature_projection_report": feature_projection_report,
                     "state_to_compiler_patch_lag": summary.get(
                         "state_to_compiler_patch_lag",
@@ -22794,7 +22127,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
             if _should_run_cycle_tests(cycle, args.test_every_cycles):
                 test_result = run_tests(root, report_dir, cycle)
-                summary["test_failures"] = int(summary.get("test_failures", 0)) + int(test_result["exit_code"] != 0)
+                summary["test_failures"] = int(summary.get("test_failures", 0)) + int(
+                    test_result["exit_code"] != 0
+                )
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
     finally:
@@ -22815,9 +22150,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     or 0.0
                 ),
             )
-            snapshot_drained = snapshot_evaluator.wait_until_idle(
-                timeout=shutdown_timeout
-            )
+            snapshot_drained = snapshot_evaluator.wait_until_idle(timeout=shutdown_timeout)
             snapshot_evaluator.close(
                 wait=snapshot_drained,
                 cancel_pending=not snapshot_drained,
@@ -22842,17 +22175,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if not accepted:
                     unmatched_result_ids.append(snapshot_result.snapshot_id)
                 promotion = (
-                    snapshot_evaluator.promote_at_boundary(
-                        shutdown_boundary
-                    )
+                    snapshot_evaluator.promote_at_boundary(shutdown_boundary)
                     if accepted and shutdown_boundary is not None
                     else None
                 )
                 if promotion is not None and promotion.promoted:
                     summary["latest_promoted_snapshot_evaluation"] = (
-                        compact_snapshot_evaluation_summary(
-                            snapshot_result.to_dict()
-                        )
+                        compact_snapshot_evaluation_summary(snapshot_result.to_dict())
                     )
                     summary["latest_promoted_snapshot_complete"] = bool(
                         (
@@ -22927,9 +22256,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)
-        summary["family_embedding_weight_entries"] = len(
-            autoencoder.state.family_embedding_weights
-        )
+        summary["family_embedding_weight_entries"] = len(autoencoder.state.family_embedding_weights)
         summary["family_semantic_slot_embedding_weight_entries"] = len(
             autoencoder.state.family_semantic_slot_embedding_weights
         )
@@ -22940,7 +22267,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             autoencoder.state.family_legal_ir_view_embedding_weights
         )
         summary["family_logit_entries"] = len(autoencoder.state.family_logits)
-        summary["feature_embedding_weight_entries"] = len(autoencoder.state.feature_embedding_weights)
+        summary["feature_embedding_weight_entries"] = len(
+            autoencoder.state.feature_embedding_weights
+        )
         summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
         summary["feature_legal_ir_view_logit_entries"] = len(
             autoencoder.state.feature_legal_ir_view_logits
@@ -22970,9 +22299,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             autoencoder.state.semantic_slot_legal_ir_view_logits
         )
         summary["finished_at"] = utc_now()
-        summary["legal_ir_view_logit_entries"] = len(
-            autoencoder.state.legal_ir_view_logits
-        )
+        summary["legal_ir_view_logit_entries"] = len(autoencoder.state.legal_ir_view_logits)
         summary["latest_queue_counts"] = supervisor.queue.status_counts()
         summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
         update_program_synthesis_summary(
@@ -22980,10 +22307,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             supervisor.queue,
             supervisor.policy,
         )
-        summary["program_synthesis_transient_failure"] = (
-            supervisor.queue.transient_failure_counts(
-                optimizer_role=supervisor.policy.program_synthesis_role
-            )
+        summary["program_synthesis_transient_failure"] = supervisor.queue.transient_failure_counts(
+            optimizer_role=supervisor.policy.program_synthesis_role
         )
         summary["program_synthesis_transient_failure_rate"] = (
             supervisor.queue.transient_failure_rate(
@@ -22995,31 +22320,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             pending_cap=int(supervisor.policy.max_program_synthesis_pending),
         )
         summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
-        summary["supervisor_health"] = build_modal_supervisor_health_report(
-            summary
-        ).to_dict()
-        if autoencoder.state.generalizable_capacity_exceeded(
-            generalizable_capacity_limit
-        ):
-            shutdown_capacity_report = (
-                autoencoder.state.compact_generalizable_capacity(
-                    generalizable_capacity_limit
-                )
+        summary["supervisor_health"] = build_modal_supervisor_health_report(summary).to_dict()
+        if autoencoder.state.generalizable_capacity_exceeded(generalizable_capacity_limit):
+            shutdown_capacity_report = autoencoder.state.compact_generalizable_capacity(
+                generalizable_capacity_limit
             )
-            shutdown_capacity_report["cycle"] = int(
-                summary.get("cycles", 0) or 0
-            )
+            shutdown_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
             shutdown_capacity_report["reason"] = "clean_shutdown"
-            summary["latest_autoencoder_generalizable_capacity"] = (
-                shutdown_capacity_report
+            summary["latest_autoencoder_generalizable_capacity"] = shutdown_capacity_report
+            summary["autoencoder_generalizable_capacity_compactions_total"] = (
+                int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
             )
-            summary[
-                "autoencoder_generalizable_capacity_compactions_total"
-            ] = int(
-                summary[
-                    "autoencoder_generalizable_capacity_compactions_total"
-                ]
-            ) + 1
             append_event(
                 log_path,
                 args.run_id,
@@ -23074,9 +22385,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 or 0.0
             ),
         )
-        artifact_writer_drained = artifact_writer.wait_until_idle(
-            timeout=artifact_drain_timeout
-        )
+        artifact_writer_drained = artifact_writer.wait_until_idle(timeout=artifact_drain_timeout)
         if artifact_writer_drained and final_checkpoint_future is not None:
             final_checkpoint_receipt = final_checkpoint_future.result(timeout=0.0)
             summary["final_state_persistence"].update(
@@ -23109,9 +22418,9 @@ def _codex_shutdown_drain_attempt_count(args: argparse.Namespace) -> int:
     """Return the maximum CLI attempts possible for one claimed packet."""
 
     execution_mode = str(getattr(args, "codex_exec_mode", "codex_cli")).strip().lower()
-    requested_sandbox = str(
-        getattr(args, "codex_sandbox", "workspace-write") or "workspace-write"
-    ).strip().lower()
+    requested_sandbox = (
+        str(getattr(args, "codex_sandbox", "workspace-write") or "workspace-write").strip().lower()
+    )
     if execution_mode != "codex_cli":
         return 0
     return 1 if requested_sandbox == CODEX_SANDBOX_FALLBACK else 2
@@ -23129,9 +22438,10 @@ def _codex_shutdown_drain_window_seconds(args: argparse.Namespace) -> float:
         0.0,
         float(getattr(args, "codex_validation_timeout_seconds", 300.0) or 0.0),
     )
-    if exec_attempt_count and str(
-        getattr(args, "codex_apply_mode", "patch_only")
-    ) == "apply_to_main":
+    if (
+        exec_attempt_count
+        and str(getattr(args, "codex_apply_mode", "patch_only")) == "apply_to_main"
+    ):
         lock_budget = max(
             0.0,
             float(getattr(args, "codex_main_apply_lock_timeout_seconds", 0.0) or 0.0),
@@ -23193,10 +22503,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     queue_path = queue_dir / f"{queue_run_id}.jsonl"
     log_path = log_dir / f"{args.run_id}.jsonl"
     summary_path = log_dir / f"{args.run_id}.summary"
-    worker_id = (
-        getattr(args, "worker_id", None)
-        or f"codex-program-synthesis-{args.run_id}"
-    )
+    worker_id = getattr(args, "worker_id", None) or f"codex-program-synthesis-{args.run_id}"
     log_dir.mkdir(parents=True, exist_ok=True)
     queue_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -23244,9 +22551,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_validation_timeout_seconds": args.codex_validation_timeout_seconds,
             "codex_main_apply_count": 0,
             "codex_main_apply_failure_count": 0,
-            "codex_main_apply_lock_timeout_seconds": (
-                args.codex_main_apply_lock_timeout_seconds
-            ),
+            "codex_main_apply_lock_timeout_seconds": (args.codex_main_apply_lock_timeout_seconds),
             "codex_main_apply_repair_count": 0,
             "codex_packet_count": 0,
             "codex_patch_count": 0,
@@ -23280,7 +22585,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_task_embeddings_provider", args.codex_task_embeddings_provider)
     summary.setdefault("codex_vector_index_path", str(_codex_vector_index_path(args, queue_path)))
-    summary.setdefault("codex_vector_max_bundle_wait_seconds", args.codex_vector_max_bundle_wait_seconds)
+    summary.setdefault(
+        "codex_vector_max_bundle_wait_seconds", args.codex_vector_max_bundle_wait_seconds
+    )
     summary.setdefault("codex_vector_min_bundle_size", args.codex_vector_min_bundle_size)
     summary.setdefault("codex_vector_min_similarity", args.codex_vector_min_similarity)
     summary.setdefault("codex_main_apply_count", 0)
@@ -23296,9 +22603,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     end_at = started_at + args.duration_seconds
     shutdown_drain_window_seconds = _codex_shutdown_drain_window_seconds(args)
     summary["codex_shutdown_drain_window_seconds"] = shutdown_drain_window_seconds
-    summary["codex_shutdown_drain_attempt_count"] = (
-        _codex_shutdown_drain_attempt_count(args)
-    )
+    summary["codex_shutdown_drain_attempt_count"] = _codex_shutdown_drain_attempt_count(args)
     policy = ModalOptimizerPolicy()
     append_event(
         log_path,
@@ -23311,9 +22616,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_lane_lock_mode": args.codex_lane_lock_mode,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
-            "codex_main_apply_lock_timeout_seconds": (
-                args.codex_main_apply_lock_timeout_seconds
-            ),
+            "codex_main_apply_lock_timeout_seconds": (args.codex_main_apply_lock_timeout_seconds),
             "codex_validation_timeout_seconds": args.codex_validation_timeout_seconds,
             "codex_scope": args.codex_scope,
             "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
@@ -23347,9 +22650,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 attributes={"worker_id": worker_id},
             )
             bundle_mode = str(getattr(args, "codex_bundle_mode", "semantic")).strip().lower()
-            claim_window_open = (
-                end_at - time.time()
-            ) > shutdown_drain_window_seconds
+            claim_window_open = (end_at - time.time()) > shutdown_drain_window_seconds
             summary["codex_shutdown_drain_active"] = not claim_window_open
             if not claim_window_open:
                 with queue_file_lock(queue_path):
@@ -23396,8 +22697,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 attributes={"sample_count": len(claimed), "mode": execution_mode},
             )
             queue_producer_final = bool(
-                not claim_window_open
-                and _codex_queue_producer_is_final(log_dir, queue_run_id)
+                not claim_window_open and _codex_queue_producer_is_final(log_dir, queue_run_id)
             )
             shutdown_drain_complete = _codex_shutdown_drain_complete(
                 claim_window_open=claim_window_open,
@@ -23441,13 +22741,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         validation_commands=_codex_validation_commands_for_todos(claimed),
                         validation_timeout_seconds=args.codex_validation_timeout_seconds,
                     )
-                    exec_status = str(
-                        dict(packet.get("codex_exec", {})).get("status", "unknown")
-                    )
+                    exec_status = str(dict(packet.get("codex_exec", {})).get("status", "unknown"))
                     transient_requeue = _codex_packet_should_requeue_transient(packet)
-                    finalize_exec_status = (
-                        "transient_failure" if transient_requeue else exec_status
-                    )
+                    finalize_exec_status = "transient_failure" if transient_requeue else exec_status
                     with queue_file_lock(queue_path):
                         queue = ModalTodoQueue.load_jsonl(queue_path)
                         supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
@@ -23500,60 +22796,52 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
 
             summary["cycles"] = cycle
             summary["heartbeat_at"] = utc_now()
-            summary["codex_claimed_total"] = int(
-                summary.get("codex_claimed_total", 0)
-            ) + len(claimed)
+            summary["codex_claimed_total"] = int(summary.get("codex_claimed_total", 0)) + len(
+                claimed
+            )
             if packet.get("codex_exec"):
-                summary["codex_execution_count"] = int(
-                    summary.get("codex_execution_count", 0)
-                ) + 1
-                exec_status = str(
-                    packet.get("codex_exec", {}).get("status", "")
-                ).strip().lower()
+                summary["codex_execution_count"] = int(summary.get("codex_execution_count", 0)) + 1
+                exec_status = str(packet.get("codex_exec", {}).get("status", "")).strip().lower()
                 patch_status = str(packet.get("patch_status", "")).strip().lower()
                 if (
                     exec_status != "succeeded"
                     and patch_status not in CODEX_COMPLETED_WORK_STATUSES
                     and not packet.get("transient_requeue")
                 ):
-                    summary["codex_execution_failure_count"] = int(
-                        summary.get("codex_execution_failure_count", 0)
-                    ) + 1
+                    summary["codex_execution_failure_count"] = (
+                        int(summary.get("codex_execution_failure_count", 0)) + 1
+                    )
             if packet.get("transient_requeue"):
                 summary["codex_transient_requeue_count"] = int(
                     summary.get("codex_transient_requeue_count", 0)
-                ) + int(
-                    dict(packet.get("transient_requeue", {})).get("requeued_count", 0)
-                )
-            summary["codex_transient_failure_rate"] = (
-                round(
-                    float(summary.get("codex_transient_requeue_count", 0) or 0)
-                    / float(max(1, int(summary.get("codex_execution_count", 0) or 0))),
-                    6,
-                )
+                ) + int(dict(packet.get("transient_requeue", {})).get("requeued_count", 0))
+            summary["codex_transient_failure_rate"] = round(
+                float(summary.get("codex_transient_requeue_count", 0) or 0)
+                / float(max(1, int(summary.get("codex_execution_count", 0) or 0))),
+                6,
             )
             main_apply_status = str(packet.get("main_apply_status", "")).strip().lower()
             if main_apply_status == "applied":
-                summary["codex_main_apply_count"] = int(
-                    summary.get("codex_main_apply_count", 0)
-                ) + 1
+                summary["codex_main_apply_count"] = (
+                    int(summary.get("codex_main_apply_count", 0)) + 1
+                )
                 if str(packet.get("main_apply_repair_status", "")).strip().lower() == "repaired":
-                    summary["codex_main_apply_repair_count"] = int(
-                        summary.get("codex_main_apply_repair_count", 0)
-                    ) + 1
+                    summary["codex_main_apply_repair_count"] = (
+                        int(summary.get("codex_main_apply_repair_count", 0)) + 1
+                    )
             elif main_apply_status and main_apply_status not in {"no_changes", "skipped"}:
-                summary["codex_main_apply_failure_count"] = int(
-                    summary.get("codex_main_apply_failure_count", 0)
-                ) + 1
-            summary["codex_packet_count"] = int(
-                summary.get("codex_packet_count", 0)
-            ) + int(bool(packet.get("packet_path")))
-            summary["codex_patch_count"] = int(
-                summary.get("codex_patch_count", 0)
-            ) + int(bool(packet.get("patch_path")))
-            summary["codex_worktree_count"] = int(
-                summary.get("codex_worktree_count", 0)
-            ) + int(bool(packet.get("worktree_path")))
+                summary["codex_main_apply_failure_count"] = (
+                    int(summary.get("codex_main_apply_failure_count", 0)) + 1
+                )
+            summary["codex_packet_count"] = int(summary.get("codex_packet_count", 0)) + int(
+                bool(packet.get("packet_path"))
+            )
+            summary["codex_patch_count"] = int(summary.get("codex_patch_count", 0)) + int(
+                bool(packet.get("patch_path"))
+            )
+            summary["codex_worktree_count"] = int(summary.get("codex_worktree_count", 0)) + int(
+                bool(packet.get("worktree_path"))
+            )
             worktree_cleanup = (
                 cleanup_codex_packet_worktree(packet)
                 if packet.get("worktree_path")
@@ -23571,10 +22859,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["program_synthesis_transient_failure"] = queue.transient_failure_counts(
                 optimizer_role=policy.program_synthesis_role
             )
-            summary["program_synthesis_transient_failure_rate"] = (
-                queue.transient_failure_rate(
-                    optimizer_role=policy.program_synthesis_role
-                )
+            summary["program_synthesis_transient_failure_rate"] = queue.transient_failure_rate(
+                optimizer_role=policy.program_synthesis_role
             )
             summary["codex_adaptive_worker_plan"] = _codex_packet_adaptive_worker_plan(
                 packet,
@@ -23603,40 +22889,40 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             if metric_event_fields:
                 summary["latest_codex_target_metric_event"] = dict(metric_event_fields)
             event_payload = {
-                    "claimed_count": len(claimed),
-                    "cycle": cycle,
-                    "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
-                    "codex_scope": getattr(args, "codex_scope", None),
-                    "codex_bundle_mode": getattr(args, "codex_bundle_mode", None),
-                    "codex_vector_claim_report": vector_claim_report,
-                    "duration_seconds": round(time.time() - cycle_started, 3),
-                    "event": "codex_program_synthesis_cycle",
-                    "main_apply_status": packet.get("main_apply_status"),
-                    "main_apply_repair_status": packet.get("main_apply_repair_status"),
-                    "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
-                    "main_apply_validation_status": dict(
-                        packet.get("main_apply_validation", {})
-                    ).get("status"),
-                    "isolated_validation_status": dict(
-                        packet.get("isolated_validation", {})
-                    ).get("status"),
-                    "isolated_baseline_failure_accepted": bool(
-                        packet.get("isolated_baseline_failure_accepted")
-                    ),
-                    "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
-                    "packet_path": packet.get("packet_path"),
-                    "patch_path": packet.get("patch_path"),
-                    "patch_status": packet.get("patch_status"),
-                    "program_synthesis_claimed_count": status["claimed"],
-                    "program_synthesis_completed_count": status["completed"],
-                    "program_synthesis_execution_mode": status["execution_mode"],
-                    "program_synthesis_pending_count": status["pending"],
-                    "queue_run_id": queue_run_id,
-                    "transient_requeue": packet.get("transient_requeue"),
-                    "todo_list_path": packet.get("todo_list_path"),
-                    "todo_markdown_path": packet.get("todo_markdown_path"),
-                    "worktree_path": packet.get("worktree_path"),
-                    "worktree_cleanup": worktree_cleanup,
+                "claimed_count": len(claimed),
+                "cycle": cycle,
+                "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
+                "codex_scope": getattr(args, "codex_scope", None),
+                "codex_bundle_mode": getattr(args, "codex_bundle_mode", None),
+                "codex_vector_claim_report": vector_claim_report,
+                "duration_seconds": round(time.time() - cycle_started, 3),
+                "event": "codex_program_synthesis_cycle",
+                "main_apply_status": packet.get("main_apply_status"),
+                "main_apply_repair_status": packet.get("main_apply_repair_status"),
+                "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
+                "main_apply_validation_status": dict(packet.get("main_apply_validation", {})).get(
+                    "status"
+                ),
+                "isolated_validation_status": dict(packet.get("isolated_validation", {})).get(
+                    "status"
+                ),
+                "isolated_baseline_failure_accepted": bool(
+                    packet.get("isolated_baseline_failure_accepted")
+                ),
+                "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
+                "packet_path": packet.get("packet_path"),
+                "patch_path": packet.get("patch_path"),
+                "patch_status": packet.get("patch_status"),
+                "program_synthesis_claimed_count": status["claimed"],
+                "program_synthesis_completed_count": status["completed"],
+                "program_synthesis_execution_mode": status["execution_mode"],
+                "program_synthesis_pending_count": status["pending"],
+                "queue_run_id": queue_run_id,
+                "transient_requeue": packet.get("transient_requeue"),
+                "todo_list_path": packet.get("todo_list_path"),
+                "todo_markdown_path": packet.get("todo_markdown_path"),
+                "worktree_path": packet.get("worktree_path"),
+                "worktree_cleanup": worktree_cleanup,
             }
             event_payload.update(metric_event_fields)
             append_event(
@@ -23698,10 +22984,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["program_synthesis_transient_failure"] = queue.transient_failure_counts(
                 optimizer_role=policy.program_synthesis_role
             )
-            summary["program_synthesis_transient_failure_rate"] = (
-                queue.transient_failure_rate(
-                    optimizer_role=policy.program_synthesis_role
-                )
+            summary["program_synthesis_transient_failure_rate"] = queue.transient_failure_rate(
+                optimizer_role=policy.program_synthesis_role
             )
         summary["finished_at"] = utc_now()
         save_summary(summary_path, summary, final=True)

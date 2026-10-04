@@ -10,6 +10,7 @@ that imports from here continues to work without modification.
     Import from ``ipfs_datasets_py.knowledge_graphs.extraction.advanced``
     instead of this module.
 """
+
 import warnings
 
 warnings.warn(

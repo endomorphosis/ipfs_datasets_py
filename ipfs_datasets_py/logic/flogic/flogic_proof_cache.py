@@ -50,6 +50,7 @@ from .flogic_types import FLogicClass, FLogicFrame, FLogicOntology, FLogicQuery,
 # Import the unified proof cache (optional dep)
 try:
     from ..common.proof_cache import ProofCache, get_global_cache
+
     _HAVE_CACHE = True
 except ImportError:
     ProofCache = None  # type: ignore
@@ -59,6 +60,7 @@ except ImportError:
 # Import IPFS CID utilities (optional dep — falls back to SHA-256)
 try:
     from ipfs_datasets_py.utils.cid_utils import cid_for_obj as _cid_for_obj_impl
+
     # Verify multiformats is actually callable (lazy import inside cid_for_bytes)
     try:
         _cid_for_obj_impl({"_test": True})
@@ -76,6 +78,7 @@ except ImportError:
         """SHA-256 fallback when multiformats is not installed."""
         data = _json.dumps(obj, sort_keys=True, separators=(",", ":"), default=repr)
         return _hashlib.sha256(data.encode()).hexdigest()
+
 
 logger = logging.getLogger(__name__)
 
@@ -215,9 +218,7 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
         else:
             self._cache = None
             if not _HAVE_CACHE:
-                logger.warning(
-                    "F-logic proof cache unavailable — install cachetools"
-                )
+                logger.warning("F-logic proof cache unavailable — install cachetools")
 
         self._hits = 0
         self._misses = 0
@@ -233,6 +234,7 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
         if self._normalizer is None:
             try:
                 from .semantic_normalizer import SemanticNormalizer
+
                 self._normalizer = SemanticNormalizer()
             except Exception:
                 self._normalizer = _NoopNormalizer()
@@ -303,10 +305,7 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
         timeout_seconds: float = 30.0,
     ) -> List[FLogicCachedQueryResult]:  # type: ignore[override]
         """Execute multiple goals with per-goal caching."""
-        return [
-            self.query(g, timeout_seconds=timeout_seconds)
-            for g in goals
-        ]
+        return [self.query(g, timeout_seconds=timeout_seconds) for g in goals]
 
     # ------------------------------------------------------------------
     # Cache helpers
@@ -337,6 +336,7 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
             prog_cid = cid_for_obj({"data": prog_bytes.decode()})
         except Exception:
             import hashlib
+
             prog_cid = hashlib.sha256(prog_bytes).hexdigest()
 
         obj = {

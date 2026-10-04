@@ -27,7 +27,9 @@ def calls():
 def facilitator(calls):
     def verify(_payload, _requirement):
         calls["verify"] += 1
-        return VerificationResult(True, "H_PAYMENT_VERIFIED", verifier_did="did:web:facilitator.test")
+        return VerificationResult(
+            True, "H_PAYMENT_VERIFIED", verifier_did="did:web:facilitator.test"
+        )
 
     def settle(_payload, requirement):
         calls["settle"] += 1
@@ -46,17 +48,30 @@ def config():
         catalog_version="2026-07-12",
         datasets={
             "medical-v3": DatasetPolicy(
-                dataset_id="medical-records", version="3", amount="75",
-                license_id="research-only-v2", tenants=("clinic-a",),
-                allowed_fields=("diagnosis", "age_band"), denied_fields=("patient_name",),
-                row_constraints={"region": ("us-west",)}, privacy_modes=("aggregate", "dp"),
-                max_rows=100, max_epsilon=1.0, minimum_k=5,
+                dataset_id="medical-records",
+                version="3",
+                amount="75",
+                license_id="research-only-v2",
+                tenants=("clinic-a",),
+                allowed_fields=("diagnosis", "age_band"),
+                denied_fields=("patient_name",),
+                row_constraints={"region": ("us-west",)},
+                privacy_modes=("aggregate", "dp"),
+                max_rows=100,
+                max_epsilon=1.0,
+                minimum_k=5,
             ),
             "medical-v4": DatasetPolicy(
-                dataset_id="medical-records", version="4", amount="90",
-                license_id="research-only-v2", tenants=("clinic-a",),
-                allowed_fields=("diagnosis",), row_constraints={"region": ("us-west",)},
-                privacy_modes=("aggregate",), max_rows=50, minimum_k=5,
+                dataset_id="medical-records",
+                version="4",
+                amount="90",
+                license_id="research-only-v2",
+                tenants=("clinic-a",),
+                allowed_fields=("diagnosis",),
+                row_constraints={"region": ("us-west",)},
+                privacy_modes=("aggregate",),
+                max_rows=50,
+                minimum_k=5,
             ),
         },
     )
@@ -72,7 +87,11 @@ def request_context():
     from mcplusplus_profile_h import RequestContext
 
     return RequestContext(
-        cid_for({"request": "dataset-1"}), "dataset-1",
-        attributes={"subject": "researcher-1", "tenant": "clinic-a", "licenses": ("research-only-v2",)},
+        cid_for({"request": "dataset-1"}),
+        "dataset-1",
+        attributes={
+            "subject": "researcher-1",
+            "tenant": "clinic-a",
+            "licenses": ("research-only-v2",),
+        },
     )
-

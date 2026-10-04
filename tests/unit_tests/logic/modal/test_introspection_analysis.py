@@ -223,11 +223,14 @@ def test_analysis_output_is_stable_versioned_json():
     assert payload["config"]["config_version"] == INTROSPECTION_ANALYSIS_CONFIG_VERSION
     assert payload["required_gap_families"] == list(REQUIRED_LEGAL_IR_GAP_FAMILIES)
     assert payload["clusters"][0]["cluster_id"].startswith("lir-cluster-")
-    assert LegalIRGapAnalysis(
-        clusters=analysis.clusters,
-        gaps=analysis.gaps,
-        config=config,
-    ).to_json() == encoded
+    assert (
+        LegalIRGapAnalysis(
+            clusters=analysis.clusters,
+            gaps=analysis.gaps,
+            config=config,
+        ).to_json()
+        == encoded
+    )
 
 
 def test_cluster_records_alias_and_unknown_config_fail_closed():

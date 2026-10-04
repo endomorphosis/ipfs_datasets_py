@@ -19,26 +19,26 @@ from pathlib import Path
 
 async def demo_ytdlp_info():
     """Get information about a video without downloading."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: Video Information Extraction")
-    print("="*70)
-    
+    print("=" * 70)
+
     try:
         from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
-        
+
         # Initialize wrapper
         print("\n📺 Initializing yt-dlp wrapper...")
         ytdlp = YtDlpWrapper()
-        
+
         # Example URL (using a known stable video)
         url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Never Gonna Give You Up
-        
+
         print(f"\n🔍 Extracting information from: {url}")
         print("   (Not downloading, just getting metadata)")
-        
+
         # Get info without downloading
         info = await ytdlp.extract_info(url, download=False)
-        
+
         if info:
             print("\n✅ Video Information:")
             print(f"   Title: {info.get('title', 'N/A')}")
@@ -46,17 +46,19 @@ async def demo_ytdlp_info():
             print(f"   Duration: {info.get('duration', 0)} seconds")
             print(f"   View count: {info.get('view_count', 0):,}")
             print(f"   Upload date: {info.get('upload_date', 'N/A')}")
-            
+
             # Available formats
-            formats = info.get('formats', [])
+            formats = info.get("formats", [])
             print(f"\n   Available formats: {len(formats)}")
             if formats:
                 # Show first few formats
                 print("   Sample formats:")
                 for fmt in formats[:3]:
-                    print(f"      - {fmt.get('format_id')}: {fmt.get('ext')} "
-                          f"{fmt.get('width', 'N/A')}x{fmt.get('height', 'N/A')}")
-        
+                    print(
+                        f"      - {fmt.get('format_id')}: {fmt.get('ext')} "
+                        f"{fmt.get('width', 'N/A')}x{fmt.get('height', 'N/A')}"
+                    )
+
     except ImportError as e:
         print(f"\n❌ Missing dependencies: {e}")
         print("   Install with: pip install yt-dlp")
@@ -67,17 +69,17 @@ async def demo_ytdlp_info():
 
 async def demo_ytdlp_download():
     """Download video/audio from supported sites."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Video/Audio Download")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📥 Download Example (Demonstration Only)")
     print("   yt-dlp supports 1000+ websites including:")
     print("   - YouTube, Vimeo, Dailymotion")
     print("   - Twitter, Reddit, TikTok")
     print("   - Many news and educational sites")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
 import tempfile
 
@@ -102,10 +104,10 @@ video_file = await ytdlp.download(
 )
 
 print(f"Downloaded video: {video_file}")
-    '''
-    
+    """
+
     print(example_code)
-    
+
     print("\n💡 Format Options:")
     print("   - 'bestaudio': Best audio quality")
     print("   - 'bestvideo': Best video quality")
@@ -116,14 +118,14 @@ print(f"Downloaded video: {video_file}")
 
 async def demo_ffmpeg_conversion():
     """Convert media files using FFmpeg."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Media Conversion with FFmpeg")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🎬 FFmpeg Conversion Example")
     print("   FFmpeg can convert between formats, extract audio, resize, etc.")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 
 ffmpeg = FFmpegWrapper()
@@ -157,20 +159,20 @@ await ffmpeg.to_gif(
     fps=10,
     scale=320
 )
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_media_info():
     """Get media file information."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Media Information Extraction")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📊 Media Info Example")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.multimedia import MediaProcessor
 
 processor = MediaProcessor()
@@ -185,20 +187,20 @@ print(f"Frame rate: {info['fps']} fps")
 print(f"Audio codec: {info['audio_codec']}")
 print(f"Bitrate: {info['bitrate']} kb/s")
 print(f"File size: {info['size_mb']} MB")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_subtitle_extraction():
     """Extract subtitles from videos."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Subtitle Extraction")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📝 Subtitle Extraction Example")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
 
 ytdlp = YtDlpWrapper()
@@ -215,20 +217,20 @@ await ytdlp.download(
 
 # Subtitles will be saved alongside the video
 # video.mp4 -> video.en.srt, video.es.srt
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_batch_download():
     """Batch download multiple videos."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Batch Download")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📚 Batch Download Example")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
 import asyncio
 
@@ -254,20 +256,20 @@ for url, result in zip(urls, results):
         print(f"Failed: {url} - {result}")
     else:
         print(f"Success: {url} -> {result}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_playlist_download():
     """Download entire playlists."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Playlist Download")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🎵 Playlist Download Example")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
 
 ytdlp = YtDlpWrapper()
@@ -288,58 +290,58 @@ playlist_info = await ytdlp.extract_info(
 
 print(f"Playlist: {playlist_info['title']}")
 print(f"Videos: {len(playlist_info['entries'])}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for multimedia processing."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR MULTIMEDIA PROCESSING")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. yt-dlp Best Practices:")
     print("   - Check site support: yt-dlp --list-extractors")
     print("   - Get info first before downloading")
     print("   - Use format selection for optimal quality/size")
     print("   - Respect rate limits and copyright")
-    
+
     print("\n2. FFmpeg Optimization:")
     print("   - Hardware acceleration: Use -hwaccel cuda/vaapi")
     print("   - Preset selection: ultrafast to veryslow")
     print("   - CRF for quality: Lower = better (18-28 typical)")
     print("   - Two-pass encoding for best quality")
-    
+
     print("\n3. Format Selection:")
     print("   - MP4: Best compatibility, good compression")
     print("   - WebM: Open format, good for web")
     print("   - MKV: Container for multiple streams")
     print("   - MP3/AAC: Good audio compression")
-    
+
     print("\n4. Performance:")
     print("   - Download in parallel (with rate limiting)")
     print("   - Use FFmpeg filters for efficiency")
     print("   - Store intermediate files on fast storage")
-    
+
     print("\n5. Common Tasks:")
     print("   - Extract audio: Use extract_audio()")
     print("   - Create thumbnails: FFmpeg frame extraction")
     print("   - Trim videos: FFmpeg -ss and -t options")
     print("   - Concatenate: FFmpeg concat demuxer")
-    
+
     print("\n6. System Requirements:")
     print("   - yt-dlp: pip install yt-dlp")
     print("   - FFmpeg: apt install ffmpeg")
     print("   - Disk space: Consider file sizes")
     print("   - Network: Good bandwidth for downloads")
-    
+
     print("\n7. Legal & Ethical:")
     print("   - Respect copyright and terms of service")
     print("   - Don't download copyrighted content")
     print("   - Use for personal/educational purposes")
     print("   - Follow platform rate limits")
-    
+
     print("\n8. Next Steps:")
     print("   - See 09_batch_processing.py for scaling")
     print("   - Combine with embeddings for video understanding")
@@ -347,13 +349,13 @@ def show_tips():
 
 async def main():
     """Run all multimedia demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - MULTIMEDIA PROCESSING")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⚠️  Note: Some demos require internet connection")
     print("   and may take time to download files.")
-    
+
     await demo_ytdlp_info()
     await demo_ytdlp_download()
     await demo_ffmpeg_conversion()
@@ -361,12 +363,12 @@ async def main():
     await demo_subtitle_extraction()
     await demo_batch_download()
     await demo_playlist_download()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ MULTIMEDIA PROCESSING EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

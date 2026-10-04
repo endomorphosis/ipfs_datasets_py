@@ -6,14 +6,17 @@ Test suite for numeric range validation beyond confidence field.
 Tests range validation for all numeric fields including character counts,
 page numbers, and timestamp values.
 """
+
 import pytest
 from pydantic import ValidationError
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import (
+    all_words_are_present_in_error_msg,
+)
 
 
 class TestLLMChunkMetadataRangeValidation:
@@ -31,11 +34,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_word_count_invalid_negative_value(self):
         """
@@ -46,14 +48,13 @@ class TestLLMChunkMetadataRangeValidation:
         # Constants
         FIELD_NAME = "word_count"
         INVALID_VALUE = -5
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-        
 
     def test_sentence_count_invalid_negative_value(self):
         """
@@ -67,11 +68,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_token_count_invalid_negative_value(self):
         """
@@ -85,11 +85,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_page_number_invalid_zero_value(self):
         """
@@ -103,11 +102,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_page_number_invalid_negative_value(self):
         """
@@ -121,11 +119,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_chunk_position_in_doc_invalid_negative_value(self):
         """
@@ -139,11 +136,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_total_chunks_on_page_invalid_zero_value(self):
         """
@@ -157,7 +153,7 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
@@ -174,11 +170,10 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-
 
     def test_creation_timestamp_invalid_future_value(self):
         """
@@ -192,7 +187,7 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
@@ -209,7 +204,7 @@ class TestLLMChunkMetadataRangeValidation:
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)

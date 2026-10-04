@@ -313,9 +313,12 @@ python enhanced_cli.py --list-tools alert_tools
 
 ```python
 from ipfs_datasets_py.alerts import (
-    DiscordNotifier, DiscordEmbed,
-    AlertManager, AlertRule,
-    RuleEngine, RuleEvaluationError
+    DiscordNotifier,
+    DiscordEmbed,
+    AlertManager,
+    AlertRule,
+    RuleEngine,
+    RuleEvaluationError,
 )
 
 # All classes available for direct import

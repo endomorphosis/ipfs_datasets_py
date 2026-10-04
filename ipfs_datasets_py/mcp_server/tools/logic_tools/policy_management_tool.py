@@ -36,6 +36,7 @@ def _get_interface_repo() -> Any:
     global _interface_repo
     if _interface_repo is None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import InterfaceRepository
+
         _interface_repo = InterfaceRepository()
     return _interface_repo
 
@@ -63,6 +64,7 @@ def policy_register(name: str, nl_policy: str, description: str = "") -> Dict[st
     """
     try:
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import get_policy_registry
+
         registry = get_policy_registry()
         compiled = registry.register(name, nl_policy, description=description)
         return {
@@ -83,6 +85,7 @@ def policy_list() -> Dict[str, Any]:
     """
     try:
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import get_policy_registry
+
         registry = get_policy_registry()
         names = registry.list_names()
         return {"status": "ok", "names": names, "count": len(names)}
@@ -101,6 +104,7 @@ def policy_remove(name: str) -> Dict[str, Any]:
     """
     try:
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import get_policy_registry
+
         registry = get_policy_registry()
         removed = registry.remove(name)
         return {"status": "ok", "name": name, "removed": removed}
@@ -129,6 +133,7 @@ def policy_evaluate(
     try:
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import get_policy_registry, UCANPolicyGate
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject, artifact_cid
+
         registry = get_policy_registry()
         gate = UCANPolicyGate(registry=registry)
         intent = IntentObject(interface_cid="", tool=tool_name, input_cid="")
@@ -179,13 +184,16 @@ def interface_register(
             InterfaceDescriptor,
             MethodSignature,
         )
+
         sigs = []
-        for m in (methods or []):
-            sigs.append(MethodSignature(
-                name=m.get("name", ""),
-                input_schema=m.get("params", m.get("input_schema", {})),
-                output_schema=m.get("returns", m.get("output_schema", {})),
-            ))
+        for m in methods or []:
+            sigs.append(
+                MethodSignature(
+                    name=m.get("name", ""),
+                    input_schema=m.get("params", m.get("input_schema", {})),
+                    output_schema=m.get("returns", m.get("output_schema", {})),
+                )
+            )
         desc = InterfaceDescriptor(
             name=name,
             namespace=name,  # use name as namespace default

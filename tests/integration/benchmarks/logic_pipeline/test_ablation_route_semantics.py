@@ -12,9 +12,7 @@ from benchmarks.logic_pipeline.variants import get_variant_definition
 
 
 def _canonical_sha256(value: object) -> str:
-    return hashlib.sha256(
-        contracts.canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(contracts.canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _reviewed_chain() -> tuple[
@@ -83,9 +81,7 @@ def _spacy_artifact(
             "schema": adapters.SPACY_EVIDENCE_SCHEMA,
             "document": {
                 "normalized_text": source_text,
-                "text_sha256": hashlib.sha256(
-                    source_text.encode("utf-8")
-                ).hexdigest(),
+                "text_sha256": hashlib.sha256(source_text.encode("utf-8")).hexdigest(),
             },
             "execution": {"effective_model": "en_core_web_sm"},
             "sentences": [],
@@ -111,10 +107,7 @@ def _gated_symai_artifact() -> adapters.StageArtifact:
         contracts.StageName.SYMAI,
         contracts.StageStatus.SUCCESS,
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "policy-decision.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"),
             "stage": "symai",
             "invoked": False,
             "reason": "frontend_ambiguity_gate_closed",
@@ -179,9 +172,7 @@ def _hammer_request(
             case_manifest_sha256="a" * 64,
             variant_id=variant_id,
             input_data=value,
-            requested_identity=definition.requested_identity(
-                contracts.StageName.HAMMER
-            ),
+            requested_identity=definition.requested_identity(contracts.StageName.HAMMER),
             environment_sha256="b" * 64,
             upstream_artifacts=(
                 _compiler_artifact(compiled, translation),
@@ -224,9 +215,7 @@ def _unsat_result(
 def test_a10_runs_pinned_graph_selector_and_reorders_solver_premises(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    request, translation = _hammer_request(
-        "A10", symai=_gated_symai_artifact()
-    )
+    request, translation = _hammer_request("A10", symai=_gated_symai_artifact())
     observed: list[bytes] = []
 
     def solve(arguments: object, **kwargs: object):
@@ -244,14 +233,10 @@ def test_a10_runs_pinned_graph_selector_and_reorders_solver_premises(
     assert selection["used_learned_selector"] is True
     assert selection["fallback_reason"] == "none"
     assert [item["source_index"] for item in selection["selected"]] == [2, 1, 0]
-    ranked_problem = runtime._ranked_hammer_problem(
-        translation, selection
-    )
+    ranked_problem = runtime._ranked_hammer_problem(translation, selection)
     assert ranked_problem != translation.smt2_problem
     assert observed == [ranked_problem.encode("utf-8")]
-    assert output.effective_identity["premise_selection_sha256"] == (
-        selection["receipt_sha256"]
-    )
+    assert output.effective_identity["premise_selection_sha256"] == (selection["receipt_sha256"])
 
 
 def test_a11_consumes_symai_ranking_and_kernel_recomputes_its_receipt(
@@ -260,16 +245,12 @@ def test_a11_consumes_symai_ranking_and_kernel_recomputes_its_receipt(
 ) -> None:
     symai = _live_symai_artifact()
     request, translation = _hammer_request("A11", symai=symai)
-    monkeypatch.setattr(
-        runtime, "run_bounded_process_group", _unsat_result
-    )
+    monkeypatch.setattr(runtime, "run_bounded_process_group", _unsat_result)
     output = runtime._hammer_live_handler(_hammer_record())(request)
 
     assert output.status is contracts.StageStatus.SUCCESS
     selection = output.data["premise_selection"]
-    assert selection["ranking_contract"] == (
-        runtime.HAMMER_SYMAI_RANKING_CONTRACT
-    )
+    assert selection["ranking_contract"] == (runtime.HAMMER_SYMAI_RANKING_CONTRACT)
     assert selection["symai_invoked"] is True
     assert selection["symai_artifact_sha256"] == symai.digest
     assert [item["source_index"] for item in selection["selected"]] == [2, 0, 1]
@@ -301,9 +282,10 @@ def test_a11_consumes_symai_ranking_and_kernel_recomputes_its_receipt(
         tmp_path / "kernel-state",
         expected_hammer_identity=_hammer_record().identity,
     )
-    assert runner._validated_hammer_candidate(
-        kernel_request, translation
-    ) == (translation.hammer_proof_text, hammer.digest)
+    assert runner._validated_hammer_candidate(kernel_request, translation) == (
+        translation.hammer_proof_text,
+        hammer.digest,
+    )
 
     tampered = json.loads(contracts.canonical_json(output.data))
     tampered["premise_selection"]["semantic_signal_sha256"] = "0" * 64
@@ -327,9 +309,7 @@ def test_a11_consumes_symai_ranking_and_kernel_recomputes_its_receipt(
                 variant_id="A11",
                 input_data=request.input_data,
                 requested_identity=(
-                    get_variant_definition("A11").requested_identity(
-                        contracts.StageName.KERNEL
-                    )
+                    get_variant_definition("A11").requested_identity(contracts.StageName.KERNEL)
                 ),
                 environment_sha256=request.environment_sha256,
                 upstream_artifacts=(
@@ -351,9 +331,7 @@ def test_measured_semantic_context_requires_truthful_graph_invocation() -> None:
         case_manifest_sha256="a" * 64,
         variant_id="A10",
         input_data=value,
-        requested_identity=definition.requested_identity(
-            contracts.StageName.HAMMER
-        ),
+        requested_identity=definition.requested_identity(contracts.StageName.HAMMER),
         environment_sha256="b" * 64,
         invocation_index=3,
     )
@@ -395,9 +373,7 @@ def test_leanstral_provider_input_drops_evaluator_labels() -> None:
             "model": "Leanstral",
             "obligation_ids": ["label-blind-obligation"],
             "resource_class": "model",
-            "output_sha256": hashlib.sha256(
-                proof.encode("utf-8")
-            ).hexdigest(),
+            "output_sha256": hashlib.sha256(proof.encode("utf-8")).hexdigest(),
             "assurance": "unverified",
             "verified": False,
             "authoritative": False,

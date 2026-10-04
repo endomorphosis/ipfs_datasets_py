@@ -15,10 +15,12 @@ For more information, see: docs/PROCESSORS_REFACTORING_MIGRATION_GUIDE.md
 """
 
 import warnings
+
 warnings.warn(
     "processors.cli is deprecated. Use processors.infrastructure.cli instead. "
     "This import will be removed in v2.0.0 (August 2026).",
-    DeprecationWarning, stacklevel=2
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 # Re-export everything from new location

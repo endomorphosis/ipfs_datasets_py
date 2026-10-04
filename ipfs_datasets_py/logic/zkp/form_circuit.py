@@ -102,9 +102,7 @@ class FormCompletionCircuit:
         :class:`~ipfs_datasets_py.processors.form_requirements_verifier.VerificationReport`.
         """
         # Compute public input hashes
-        template_hash = hashlib.sha256(
-            (source_pdf or form_id or "").encode()
-        ).hexdigest()
+        template_hash = hashlib.sha256((source_pdf or form_id or "").encode()).hexdigest()
 
         try:
             rule_set_json = json.dumps(rule_set.to_dict(), sort_keys=True)
@@ -261,9 +259,7 @@ def _proof_public_inputs(proof: Any) -> Dict[str, Any]:
         return {}
 
     public_inputs = dict(raw_public_inputs)
-    if public_inputs.get("attestation_ref") and public_inputs.get(
-        "attestation_view_version"
-    ):
+    if public_inputs.get("attestation_ref") and public_inputs.get("attestation_view_version"):
         return public_inputs
 
     try:
@@ -358,7 +354,11 @@ def generate_form_certificate(
     }
 
     # Detect backend
-    use_groth16 = os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip() in {"1", "true", "yes"}
+    use_groth16 = os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip() in {
+        "1",
+        "true",
+        "yes",
+    }
     backend = "groth16" if use_groth16 else "simulated"
 
     try:

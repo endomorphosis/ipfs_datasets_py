@@ -14,7 +14,7 @@ Usage:
     def test_something(ontology_factory):
         # Get default ontology
         ont = ontology_factory()
-        
+
         # Customize parameters
         ont = ontology_factory(entity_count=10, relationship_count=5)
 """
@@ -34,17 +34,17 @@ import pytest
 @pytest.fixture
 def entity_factory():
     """Factory for creating Entity dataclass instances.
-    
+
     Returns:
         Callable that creates Entity objects with customizable parameters.
-        
+
     Example:
         >>> entity = entity_factory(id="e1", text="Alice", type="Person")
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
     from dataclasses import dataclass, field
     from typing import Dict, Any, Optional
-    
+
     def _create(
         id: str = "e1",
         text: str = "Alice",
@@ -63,39 +63,40 @@ def entity_factory():
             properties=properties if properties is not None else {},
             last_seen=last_seen,
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def entities_factory(entity_factory):
     """Factory for creating lists of Entity objects.
-    
+
     Returns:
         Callable that creates a list of Entity objects.
-        
+
     Example:
         >>> entities = entities_factory(count=5)  # 5 entities with auto IDs
         >>> entities = entities_factory(types=["Person", "Organization"])
     """
+
     def _create(count: int = 3, types: Optional[List[str]] = None) -> List:
         if types is None:
             types = ["Person", "Organization", "Location", "Date", "Concept"]
-        
+
         entities = []
         for i in range(count):
             type_name = types[i % len(types)]
             entities.append(
                 entity_factory(
-                    id=f"e{i+1}",
-                    text=f"{type_name} {i+1}",
+                    id=f"e{i + 1}",
+                    text=f"{type_name} {i + 1}",
                     type=type_name,
                     confidence=0.7 + (i * 0.05),  # Gradual confidence increase
                     source_span=(i * 10, (i * 10) + 5 + i),
                 )
             )
         return entities
-    
+
     return _create
 
 
@@ -107,15 +108,15 @@ def entities_factory(entity_factory):
 @pytest.fixture
 def relationship_factory():
     """Factory for creating Relationship dataclass instances.
-    
+
     Returns:
         Callable that creates Relationship objects with customizable parameters.
-        
+
     Example:
         >>> rel = relationship_factory(source_id="e1", target_id="e2", type="knows")
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
-    
+
     def _create(
         id: str = "r1",
         source_id: str = "e1",
@@ -132,21 +133,22 @@ def relationship_factory():
             confidence=confidence,
             properties=properties if properties is not None else {},
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def relationships_factory(relationship_factory):
     """Factory for creating lists of Relationship objects.
-    
+
     Returns:
         Callable that creates a list of Relationship objects.
-        
+
     Example:
         >>> rels = relationships_factory(count=5)
         >>> rels = relationships_factory(count=3, types=["knows", "works_for"])
     """
+
     def _create(
         count: int = 2,
         types: Optional[List[str]] = None,
@@ -154,25 +156,25 @@ def relationships_factory(relationship_factory):
     ) -> List:
         if types is None:
             types = ["related_to", "knows", "works_for", "located_in", "part_of"]
-        
+
         relationships = []
         for i in range(count):
             type_name = types[i % len(types)]
             # Create relationships between existing entities (circular pattern)
             source_idx = i % entity_count
             target_idx = (i + 1) % entity_count
-            
+
             relationships.append(
                 relationship_factory(
-                    id=f"r{i+1}",
-                    source_id=f"e{source_idx+1}",
-                    target_id=f"e{target_idx+1}",
+                    id=f"r{i + 1}",
+                    source_id=f"e{source_idx + 1}",
+                    target_id=f"e{target_idx + 1}",
                     type=type_name,
                     confidence=0.65 + (i * 0.05),
                 )
             )
         return relationships
-    
+
     return _create
 
 
@@ -184,15 +186,16 @@ def relationships_factory(relationship_factory):
 @pytest.fixture
 def ontology_dict_factory():
     """Factory for creating ontology dictionaries (plain dict format).
-    
+
     Returns:
         Callable that creates ontology dicts with entities and relationships.
-        
+
     Example:
         >>> ont = ontology_dict_factory()  # Default 3 entities, 2 relationships
         >>> ont = ontology_dict_factory(entity_count=10, relationship_count=5)
         >>> ont = ontology_dict_factory(domain="legal", metadata={"source": "test"})
     """
+
     def _create(
         entity_count: int = 3,
         relationship_count: int = 2,
@@ -202,19 +205,21 @@ def ontology_dict_factory():
     ) -> Dict[str, Any]:
         if entity_types is None:
             entity_types = ["Person", "Organization", "Location", "Date", "Concept"]
-        
+
         # Build entities
         entities = []
         for i in range(entity_count):
             entity_type = entity_types[i % len(entity_types)]
-            entities.append({
-                "id": f"e{i+1}",
-                "text": f"{entity_type} {i+1}",
-                "type": entity_type,
-                "confidence": 0.7 + (i * 0.03),
-                "properties": {},
-            })
-        
+            entities.append(
+                {
+                    "id": f"e{i + 1}",
+                    "text": f"{entity_type} {i + 1}",
+                    "type": entity_type,
+                    "confidence": 0.7 + (i * 0.03),
+                    "properties": {},
+                }
+            )
+
         # Build relationships
         relationships = []
         rel_types = ["related_to", "knows", "works_for", "located_in", "part_of"]
@@ -222,28 +227,30 @@ def ontology_dict_factory():
             rel_type = rel_types[i % len(rel_types)]
             source_idx = i % entity_count
             target_idx = (i + 1) % entity_count
-            
-            relationships.append({
-                "id": f"r{i+1}",
-                "source_id": f"e{source_idx+1}",
-                "target_id": f"e{target_idx+1}",
-                "type": rel_type,
-                "confidence": 0.65 + (i * 0.05),
-            })
-        
+
+            relationships.append(
+                {
+                    "id": f"r{i + 1}",
+                    "source_id": f"e{source_idx + 1}",
+                    "target_id": f"e{target_idx + 1}",
+                    "type": rel_type,
+                    "confidence": 0.65 + (i * 0.05),
+                }
+            )
+
         ontology = {
             "entities": entities,
             "relationships": relationships,
         }
-        
+
         # Add metadata if provided
         if metadata is not None or domain != "general":
             ontology["metadata"] = metadata if metadata is not None else {}
             if domain != "general":
                 ontology["metadata"]["domain"] = domain
-        
+
         return ontology
-    
+
     return _create
 
 
@@ -255,16 +262,16 @@ def ontology_dict_factory():
 @pytest.fixture
 def critic_score_factory():
     """Factory for creating CriticScore instances.
-    
+
     Returns:
         Callable that creates CriticScore objects with customizable dimensions.
-        
+
     Example:
         >>> score = critic_score_factory()  # All dimensions ~0.80
         >>> score = critic_score_factory(overall=0.95, completeness=0.90)
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-    
+
     def _create(
         completeness: float = 0.80,
         consistency: float = 0.82,
@@ -284,29 +291,36 @@ def critic_score_factory():
             granularity=granularity,
             relationship_coherence=relationship_coherence,
             domain_alignment=domain_alignment,
-            strengths=strengths if strengths is not None else ["clear entity names", "good type coverage"],
-            weaknesses=weaknesses if weaknesses is not None else ["missing properties", "sparse relationships"],
-            recommendations=recommendations if recommendations is not None else [
+            strengths=strengths
+            if strengths is not None
+            else ["clear entity names", "good type coverage"],
+            weaknesses=weaknesses
+            if weaknesses is not None
+            else ["missing properties", "sparse relationships"],
+            recommendations=recommendations
+            if recommendations is not None
+            else [
                 "add entity properties",
                 "infer more relationships",
             ],
             metadata=metadata if metadata is not None else {},
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def mock_feedback_factory():
     """Factory for creating Mock feedback objects (for use with mock critics).
-    
+
     Returns:
         Callable that creates Mock objects with CriticScore-like attributes.
-        
+
     Example:
         >>> feedback = mock_feedback_factory(overall=0.75)
         >>> assert feedback.overall == 0.75
     """
+
     def _create(
         overall: float = 0.80,
         completeness: float = 0.80,
@@ -325,12 +339,16 @@ def mock_feedback_factory():
         feedback.granularity = granularity
         feedback.relationship_coherence = relationship_coherence
         feedback.domain_alignment = domain_alignment
-        feedback.recommendations = recommendations if recommendations is not None else [
-            "add missing entity properties",
-            "normalize entity types",
-        ]
+        feedback.recommendations = (
+            recommendations
+            if recommendations is not None
+            else [
+                "add missing entity properties",
+                "normalize entity types",
+            ]
+        )
         return feedback
-    
+
     return _create
 
 
@@ -342,16 +360,16 @@ def mock_feedback_factory():
 @pytest.fixture
 def extraction_config_factory():
     """Factory for creating ExtractionConfig instances.
-    
+
     Returns:
         Callable that creates ExtractionConfig objects with sensible defaults.
-        
+
     Example:
         >>> config = extraction_config_factory()  # All defaults
         >>> config = extraction_config_factory(confidence_threshold=0.75, max_entities=100)
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
-    
+
     def _create(
         confidence_threshold: float = 0.5,
         max_entities: int = 0,
@@ -380,17 +398,17 @@ def extraction_config_factory():
             allowed_entity_types=allowed_entity_types if allowed_entity_types is not None else [],
             max_confidence=max_confidence,
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def generation_context_factory(extraction_config_factory):
     """Factory for creating OntologyGenerationContext instances.
-    
+
     Returns:
         Callable that creates OntologyGenerationContext objects.
-        
+
     Example:
         >>> ctx = generation_context_factory(domain="legal")
         >>> ctx = generation_context_factory(data_source="contract.pdf", domain="legal")
@@ -400,7 +418,7 @@ def generation_context_factory(extraction_config_factory):
         ExtractionStrategy,
         DataType,
     )
-    
+
     def _create(
         data_source: str = "test_data",
         data_type: str = "text",
@@ -412,13 +430,13 @@ def generation_context_factory(extraction_config_factory):
             extraction_strategy = ExtractionStrategy.RULE_BASED
         elif isinstance(extraction_strategy, str):
             extraction_strategy = ExtractionStrategy(extraction_strategy)
-        
+
         if isinstance(data_type, str):
             data_type = DataType(data_type)
-        
+
         if config is None:
             config = extraction_config_factory()
-        
+
         return OntologyGenerationContext(
             data_source=data_source,
             data_type=data_type,
@@ -426,7 +444,7 @@ def generation_context_factory(extraction_config_factory):
             extraction_strategy=extraction_strategy,
             config=config,
         )
-    
+
     return _create
 
 
@@ -438,16 +456,16 @@ def generation_context_factory(extraction_config_factory):
 @pytest.fixture
 def ontology_generator_factory():
     """Factory for creating OntologyGenerator instances.
-    
+
     Returns:
         Callable that creates OntologyGenerator objects.
-        
+
     Example:
         >>> generator = ontology_generator_factory()
         >>> generator = ontology_generator_factory(llm_backend=my_backend)
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
-    
+
     def _create(
         ipfs_accelerate_config: Optional[Dict[str, Any]] = None,
         use_ipfs_accelerate: bool = False,  # Default to False for tests
@@ -460,23 +478,23 @@ def ontology_generator_factory():
             logger=logger,
             llm_backend=llm_backend,
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def ontology_critic_factory():
     """Factory for creating OntologyCritic instances.
-    
+
     Returns:
         Callable that creates OntologyCritic objects.
-        
+
     Example:
         >>> critic = ontology_critic_factory()
         >>> critic = ontology_critic_factory(use_llm=False)
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
-    
+
     def _create(
         backend_config: Optional[Any] = None,
         use_llm: bool = False,
@@ -487,41 +505,41 @@ def ontology_critic_factory():
             use_llm=use_llm,
             logger=logger,
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def ontology_optimizer_factory():
     """Factory for creating OntologyOptimizer instances.
-    
+
     Returns:
         Callable that creates OntologyOptimizer objects.
-        
+
     Example:
         >>> optimizer = ontology_optimizer_factory()
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
-    
+
     def _create() -> OntologyOptimizer:
         return OntologyOptimizer()
-    
+
     return _create
 
 
 @pytest.fixture
 def ontology_pipeline_factory(ontology_generator_factory, ontology_critic_factory):
     """Factory for creating OntologyPipeline instances.
-    
+
     Returns:
         Callable that creates OntologyPipeline objects.
-        
+
     Example:
         >>> pipeline = ontology_pipeline_factory()
         >>> pipeline = ontology_pipeline_factory(domain="legal", use_llm=False)
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
-    
+
     def _create(
         domain: str = "general",
         use_llm: bool = False,
@@ -534,7 +552,7 @@ def ontology_pipeline_factory(ontology_generator_factory, ontology_critic_factor
             max_rounds=max_rounds,
             logger=logger,
         )
-    
+
     return _create
 
 
@@ -546,15 +564,15 @@ def ontology_pipeline_factory(ontology_generator_factory, ontology_critic_factor
 @pytest.fixture
 def extraction_result_factory(entities_factory, relationships_factory):
     """Factory for creating EntityExtractionResult instances.
-    
+
     Returns:
         Callable that creates EntityExtractionResult objects.
-        
+
     Example:
         >>> result = extraction_result_factory(entity_count=5, relationship_count=3)
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
-    
+
     def _create(
         entity_count: int = 3,
         relationship_count: int = 2,
@@ -562,24 +580,27 @@ def extraction_result_factory(entities_factory, relationships_factory):
     ) -> EntityExtractionResult:
         return EntityExtractionResult(
             entities=entities_factory(count=entity_count),
-            relationships=relationships_factory(count=relationship_count, entity_count=entity_count),
+            relationships=relationships_factory(
+                count=relationship_count, entity_count=entity_count
+            ),
             metadata=metadata if metadata is not None else {},
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def pipeline_result_factory(ontology_dict_factory, critic_score_factory):
     """Factory for creating PipelineResult instances (for OntologyPipeline).
-    
+
     Returns:
         Callable that creates PipelineResult objects.
-        
+
     Example:
         >>> result = pipeline_result_factory(entity_count=10, score_overall=0.85)
         >>> result = pipeline_result_factory(entity_count=5, rel_count=3)  # alias
     """
+
     def _create(
         entity_count: int = 5,
         relationship_count: Optional[int] = None,
@@ -590,34 +611,34 @@ def pipeline_result_factory(ontology_dict_factory, critic_score_factory):
         actions: Optional[List[str]] = None,  # Alias for actions_applied
     ):
         from unittest.mock import Mock
-        
+
         # Handle parameter aliases
         if relationship_count is None and rel_count is not None:
             relationship_count = rel_count
         elif relationship_count is None:
             relationship_count = 3
-        
+
         if score_overall is None and score_val is not None:
             score_overall = score_val
         elif score_overall is None:
             score_overall = 0.75
-        
+
         if actions_applied is None and actions is not None:
             actions_applied = actions
         elif actions_applied is None:
             actions_applied = []
-        
+
         ontology = ontology_dict_factory(
             entity_count=entity_count,
             relationship_count=relationship_count,
         )
-        
+
         # Create mock score
         score = Mock()
         score.overall = score_overall
         score.completeness = score_overall + 0.02
         score.consistency = score_overall - 0.03
-        
+
         # Mock PipelineResult structure
         result = Mock()
         result.ontology = ontology
@@ -625,9 +646,9 @@ def pipeline_result_factory(ontology_dict_factory, critic_score_factory):
         result.entities = ontology["entities"]
         result.relationships = ontology["relationships"]
         result.actions_applied = actions_applied
-        
+
         return result
-    
+
     return _create
 
 
@@ -639,17 +660,18 @@ def pipeline_result_factory(ontology_dict_factory, critic_score_factory):
 @pytest.fixture
 def entity_typeddict_factory():
     """Factory for creating Entity TypedDict instances (from ontology_types.py).
-    
+
     These are plain dicts conforming to the Entity TypedDict schema, used for
     JSON serialization and API contracts.
-    
+
     Returns:
         Callable that creates Entity TypedDict dicts.
-        
+
     Example:
         >>> entity = entity_typeddict_factory(id="e1", text="Alice")
         >>> entities = [entity_typeddict_factory(id=f"e{i}") for i in range(5)]
     """
+
     def _create(
         id: str = "e1",
         text: str = "Alice",
@@ -672,20 +694,21 @@ def entity_typeddict_factory():
         if source_span is not None:
             entity["source_span"] = source_span
         return entity
-    
+
     return _create
 
 
 @pytest.fixture
 def relationship_typeddict_factory():
     """Factory for creating Relationship TypedDict instances (from ontology_types.py).
-    
+
     Returns:
         Callable that creates Relationship TypedDict dicts.
-        
+
     Example:
         >>> rel = relationship_typeddict_factory(source_id="e1", target_id="e2")
     """
+
     def _create(
         id: str = "r1",
         source_id: str = "e1",
@@ -710,23 +733,24 @@ def relationship_typeddict_factory():
         if distance is not None:
             relationship["distance"] = distance
         return relationship
-    
+
     return _create
 
 
 @pytest.fixture
 def critic_score_typeddict_factory():
     """Factory for creating CriticScore TypedDict instances (from ontology_types.py).
-    
+
     Creates a dict conforming to the CriticScore TypedDict schema.
-    
+
     Returns:
         Callable that creates CriticScore TypedDict dicts.
-        
+
     Example:
         >>> score = critic_score_typeddict_factory()
         >>> score = critic_score_typeddict_factory(overall=0.95, completeness=0.90)
     """
+
     def _create(
         overall: float = 0.80,
         completeness: Optional[float] = None,
@@ -740,7 +764,7 @@ def critic_score_typeddict_factory():
         timestamp: Optional[str] = None,
     ) -> Dict[str, Any]:
         score = {"overall": overall}
-        
+
         if completeness is not None:
             score["completeness"] = completeness
         if consistency is not None:
@@ -759,23 +783,24 @@ def critic_score_typeddict_factory():
             score["recommendations"] = recommendations
         if timestamp is not None:
             score["timestamp"] = timestamp
-        
+
         return score
-    
+
     return _create
 
 
 @pytest.fixture
 def ontology_session_typeddict_factory(ontology_dict_factory, critic_score_typeddict_factory):
     """Factory for creating OntologySession TypedDict instances (from ontology_types.py).
-    
+
     Returns:
         Callable that creates OntologySession TypedDict dicts.
-        
+
     Example:
         >>> session = ontology_session_typeddict_factory(session_id="sess1")
         >>> session = ontology_session_typeddict_factory(current_round=3, convergence_threshold=0.85)
     """
+
     def _create(
         session_id: str = "sess1",
         data_source: str = "test_data.txt",
@@ -788,7 +813,7 @@ def ontology_session_typeddict_factory(ontology_dict_factory, critic_score_typed
         end_time_ms: Optional[int] = None,
     ) -> Dict[str, Any]:
         import time
-        
+
         session = {
             "session_id": session_id,
             "data_source": data_source,
@@ -796,10 +821,10 @@ def ontology_session_typeddict_factory(ontology_dict_factory, critic_score_typed
             "current_round": current_round,
             "convergence_threshold": convergence_threshold,
         }
-        
+
         if rounds is not None:
             session["rounds"] = rounds
-        
+
         if critic_scores is not None:
             session["critic_scores"] = critic_scores
         elif current_round > 1:
@@ -808,29 +833,29 @@ def ontology_session_typeddict_factory(ontology_dict_factory, critic_score_typed
                 critic_score_typeddict_factory(overall=0.70 + (i * 0.05))
                 for i in range(current_round)
             ]
-        
+
         if start_time_ms is not None:
             session["start_time_ms"] = start_time_ms
         else:
             session["start_time_ms"] = int(time.time() * 1000)
-        
+
         if end_time_ms is not None:
             session["end_time_ms"] = end_time_ms
-        
+
         return session
-    
+
     return _create
 
 
 @pytest.fixture
 def feedback_record_typeddict_factory():
     """Factory for creating FeedbackRecord TypedDict instances (from ontology_types.py).
-    
+
     Creates structured feedback for ontology refinement.
-    
+
     Returns:
         Callable that creates FeedbackRecord TypedDict dicts.
-        
+
     Example:
         >>> feedback = feedback_record_typeddict_factory()
         >>> feedback = feedback_record_typeddict_factory(
@@ -838,6 +863,7 @@ def feedback_record_typeddict_factory():
         ...     entities_to_merge=[["e3", "e4"]]
         ... )
     """
+
     def _create(
         entities_to_remove: Optional[List[str]] = None,
         entities_to_merge: Optional[List[List[str]]] = None,
@@ -847,7 +873,7 @@ def feedback_record_typeddict_factory():
         confidence_floor: Optional[float] = None,
     ) -> Dict[str, Any]:
         feedback = {}
-        
+
         if entities_to_remove is not None:
             feedback["entities_to_remove"] = entities_to_remove
         if entities_to_merge is not None:
@@ -860,9 +886,9 @@ def feedback_record_typeddict_factory():
             feedback["type_corrections"] = type_corrections
         if confidence_floor is not None:
             feedback["confidence_floor"] = confidence_floor
-        
+
         return feedback
-    
+
     return _create
 
 
@@ -874,18 +900,18 @@ def feedback_record_typeddict_factory():
 @pytest.fixture
 def random_ontology_factory():
     """Factory for creating randomized ontologies with reproducible seeds.
-    
+
     Replaces patterns like: generate_random_ontology(entity_count, rel_count, seed)
-    
+
     Returns:
         Callable that creates ontology dicts with random but reproducible content.
-        
+
     Example:
         >>> ont = random_ontology_factory(entity_count=10, seed=42)
         >>> ont2 = random_ontology_factory(entity_count=10, seed=42)  # Same as ont
     """
     import random
-    
+
     def _create(
         entity_count: int = 5,
         relationship_count: int = 3,
@@ -893,63 +919,78 @@ def random_ontology_factory():
         domain: Optional[str] = None,
     ) -> Dict[str, Any]:
         random.seed(seed)
-        
-        entity_types = ["Person", "Organization", "Location", "Concept", "Event", 
-                        "Date", "Product", "Document", "Law", "Contract"]
+
+        entity_types = [
+            "Person",
+            "Organization",
+            "Location",
+            "Concept",
+            "Event",
+            "Date",
+            "Product",
+            "Document",
+            "Law",
+            "Contract",
+        ]
         domains = ["legal", "medical", "technical", "general", "business"]
-        
+
         entities = []
         for i in range(entity_count):
             ent_type = random.choice(entity_types)
-            entities.append({
-                "id": f"entity_{i}",
-                "text": f"Entity_{i}_{random.choice(['Alpha', 'Beta', 'Gamma', 'Delta'])}",
-                "type": ent_type,
-                "confidence": random.uniform(0.3, 0.99),
-            })
-        
+            entities.append(
+                {
+                    "id": f"entity_{i}",
+                    "text": f"Entity_{i}_{random.choice(['Alpha', 'Beta', 'Gamma', 'Delta'])}",
+                    "type": ent_type,
+                    "confidence": random.uniform(0.3, 0.99),
+                }
+            )
+
         relationships = []
         rel_types = ["related_to", "depends_on", "mentions", "contains", "defined_by"]
         for i in range(relationship_count):
             if entity_count > 1:
                 source = random.choice(entities)["id"]
                 target = random.choice(entities)["id"]
-                
-                relationships.append({
-                    "id": f"rel_{i}",
-                    "source_id": source,
-                    "target_id": target,
-                    "type": random.choice(rel_types),
-                    "confidence": random.uniform(0.5, 0.95),
-                })
-        
+
+                relationships.append(
+                    {
+                        "id": f"rel_{i}",
+                        "source_id": source,
+                        "target_id": target,
+                        "type": random.choice(rel_types),
+                        "confidence": random.uniform(0.5, 0.95),
+                    }
+                )
+
         ontology = {
             "entities": entities,
             "relationships": relationships,
             "metadata": {
                 "source": f"test_seed_{seed}",
                 "domain": domain if domain else random.choice(domains),
-            }
+            },
         }
-        
+
         return ontology
-    
+
     return _create
 
 
 @pytest.fixture
 def sparse_ontology_factory(ontology_dict_factory):
     """Factory for creating ontologies with low relationship density.
-    
+
     Replaces patterns like: sparse_ontology = {"entities": [...10...], "relationships": [... only 1 ...]}
-    
+
     Returns:
         Callable that creates ontologies with many entities but few relationships.
-        
+
     Example:
         >>> ont = sparse_ontology_factory(entity_count=20, relationship_count=2)
         >>> density = len(ont["relationships"]) / len(ont["entities"])  # Very low density
     """
+
     def _create(
         entity_count: int = 10,
         relationship_count: int = 1,
@@ -959,25 +1000,26 @@ def sparse_ontology_factory(ontology_dict_factory):
             entity_count=entity_count,
             relationship_count=relationship_count,
             domain=domain,
-            metadata={"density": "sparse", "relationship_ratio": relationship_count / entity_count}
+            metadata={"density": "sparse", "relationship_ratio": relationship_count / entity_count},
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def dense_ontology_factory(ontology_dict_factory):
     """Factory for creating ontologies with high relationship density.
-    
+
     Replaces patterns like: dense_ontology with 2x-3x relationships per entity.
-    
+
     Returns:
         Callable that creates ontologies with many relationships relative to entities.
-        
+
     Example:
         >>> ont = dense_ontology_factory(entity_count=10)  # Creates 20+ relationships
         >>> density = len(ont["relationships"]) / len(ont["entities"])  # High density (>2.0)
     """
+
     def _create(
         entity_count: int = 10,
         density_factor: float = 2.5,
@@ -988,25 +1030,26 @@ def dense_ontology_factory(ontology_dict_factory):
             entity_count=entity_count,
             relationship_count=relationship_count,
             domain=domain,
-            metadata={"density": "dense", "relationship_ratio": density_factor}
+            metadata={"density": "dense", "relationship_ratio": density_factor},
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def domain_specific_ontology_factory(ontology_dict_factory):
     """Factory for creating domain-specific ontologies (legal, medical, business).
-    
+
     Replaces patterns like: _make_legal_ontology(), _make_medical_ontology()
-    
+
     Returns:
         Callable that creates ontologies with domain-specific entity types and relationships.
-        
+
     Example:
         >>> legal_ont = domain_specific_ontology_factory(domain="legal")
         >>> medical_ont = domain_specific_ontology_factory(domain="medical", entity_count=15)
     """
+
     def _create(
         domain: str = "legal",
         entity_count: int = 10,
@@ -1015,59 +1058,81 @@ def domain_specific_ontology_factory(ontology_dict_factory):
         # Domain-specific entity types
         domain_types = {
             "legal": ["Contract", "Clause", "Party", "Law", "Statute", "Case", "Precedent"],
-            "medical": ["Patient", "Diagnosis", "Treatment", "Symptom", "Medication", "Procedure", "Doctor"],
-            "business": ["Company", "Employee", "Product", "Service", "Transaction", "Department", "Asset"],
-            "technical": ["System", "Component", "Interface", "Protocol", "Service", "Database", "API"],
+            "medical": [
+                "Patient",
+                "Diagnosis",
+                "Treatment",
+                "Symptom",
+                "Medication",
+                "Procedure",
+                "Doctor",
+            ],
+            "business": [
+                "Company",
+                "Employee",
+                "Product",
+                "Service",
+                "Transaction",
+                "Department",
+                "Asset",
+            ],
+            "technical": [
+                "System",
+                "Component",
+                "Interface",
+                "Protocol",
+                "Service",
+                "Database",
+                "API",
+            ],
         }
-        
+
         types = domain_types.get(domain, ["Entity", "Concept", "Item"])
-        
+
         return ontology_dict_factory(
             entity_count=entity_count,
             relationship_count=relationship_count,
             domain=domain,
             entity_types=types,
-            metadata={"domain_specific": True, "domain": domain}
+            metadata={"domain_specific": True, "domain": domain},
         )
-    
+
     return _create
 
 
 @pytest.fixture
 def empty_ontology_factory():
     """Factory for creating empty ontologies (0 entities, 0 relationships).
-    
+
     Replaces patterns like: {"entities": [], "relationships": []}
-    
+
     Returns:
         Callable that creates empty ontology dicts.
-        
+
     Example:
         >>> ont = empty_ontology_factory()
         >>> assert len(ont["entities"]) == 0
     """
+
     def _create(domain: str = "general") -> Dict[str, Any]:
-        return {
-            "entities": [],
-            "relationships": [],
-            "metadata": {"domain": domain, "empty": True}
-        }
-    
+        return {"entities": [], "relationships": [], "metadata": {"domain": domain, "empty": True}}
+
     return _create
 
 
 @pytest.fixture
 def minimal_ontology_factory(ontology_dict_factory):
     """Factory for creating minimal ontologies (1-3 entities, 0-2 relationships).
-    
+
     Replaces patterns like: _minimal_ontology(n_entities=2, n_rels=1)
-    
+
     Returns:
         Callable that creates minimal ontology dicts for smoke tests.
-        
+
     Example:
         >>> ont = minimal_ontology_factory(entity_count=2, relationship_count=1)
     """
+
     def _create(
         entity_count: int = 2,
         relationship_count: int = 1,
@@ -1078,5 +1143,5 @@ def minimal_ontology_factory(ontology_dict_factory):
             relationship_count=relationship_count,
             domain=domain,
         )
-    
+
     return _create

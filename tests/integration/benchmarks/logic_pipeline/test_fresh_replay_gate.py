@@ -68,9 +68,7 @@ def _component(
         released=True,
         process_group_reaped=True,
         missing_reasons=(
-            {"wall_time_ms": "synthetic meter omitted wall time"}
-            if missing_wall_time
-            else {}
+            {"wall_time_ms": "synthetic meter omitted wall time"} if missing_wall_time else {}
         ),
     )
 
@@ -167,9 +165,7 @@ def g238_sources(tmp_path_factory: pytest.TempPathFactory):
     records = tuple(
         G238ReplaySourceRecordV2.create(
             runtime_evidence=evidence,
-            semantic_observation=G238SemanticObservationV2.create(
-                evidence
-            ),
+            semantic_observation=G238SemanticObservationV2.create(evidence),
             resource_receipt=_resource(
                 evidence,
                 f"source-{ordinal}",
@@ -189,10 +185,7 @@ def g238_sources(tmp_path_factory: pytest.TempPathFactory):
         source_executor_authority_cid=_cid("source-executor"),
         records=records,
     )
-    replay_by_case = {
-        record.case_cid: replay
-        for record, replay in zip(records, replay_runtimes)
-    }
+    replay_by_case = {record.case_cid: replay for record, replay in zip(records, replay_runtimes)}
     return {
         "root": root,
         "index": index,
@@ -216,41 +209,25 @@ def _receipt(
     replay_resource = (
         resource
         if resource is not None
-        else (
-            _resource(replay_runtime, f"replay-{ordinal}")
-            if include_resource
-            else None
-        )
+        else (_resource(replay_runtime, f"replay-{ordinal}") if include_resource else None)
     )
     return G238DetachedReplayReceiptV2.create(
         source_index=index,
         source_record=record,
         replay_run_id=replay_runtime.case_result.run_id,
         replay_worktree_cid=_cid(f"replay-worktree-{ordinal}"),
-        source_namespace_receipt_cid=_cid(
-            f"source-namespace-receipt-{ordinal}"
-        ),
-        source_process_namespace_cid=_cid(
-            f"source-process-{ordinal}"
-        ),
-        source_state_namespace_cid=_cid(
-            f"source-state-{ordinal}"
-        ),
-        source_cache_namespace_cid=_cid(
-            f"source-cache-{ordinal}"
-        ),
-        replay_process_namespace_cid=_cid(
-            f"replay-process-{ordinal}"
-        ),
+        source_namespace_receipt_cid=_cid(f"source-namespace-receipt-{ordinal}"),
+        source_process_namespace_cid=_cid(f"source-process-{ordinal}"),
+        source_state_namespace_cid=_cid(f"source-state-{ordinal}"),
+        source_cache_namespace_cid=_cid(f"source-cache-{ordinal}"),
+        replay_process_namespace_cid=_cid(f"replay-process-{ordinal}"),
         replay_state_namespace_cid=_cid(f"replay-state-{ordinal}"),
         replay_cache_namespace_cid=_cid(f"replay-cache-{ordinal}"),
         replay_executor_authority_cid=_cid("replay-executor"),
         replay_validator_authority_cid=_cid("replay-validator"),
         replay_runtime_evidence=replay_runtime,
         replay_semantic_observation=(
-            semantic
-            if semantic is not None
-            else G238SemanticObservationV2.create(replay_runtime)
+            semantic if semantic is not None else G238SemanticObservationV2.create(replay_runtime)
         ),
         replay_resource_receipt=replay_resource,
         detached=detached,
@@ -281,11 +258,7 @@ def _rebased_receipt(
 ) -> G238DetachedReplayReceiptV2:
     payload = receipt.to_dict()
     payload.update(changes)
-    body = {
-        key: value
-        for key, value in payload.items()
-        if key != "receipt_cid"
-    }
+    body = {key: value for key, value in payload.items() if key != "receipt_cid"}
     payload["receipt_cid"] = cid_for_dag_json(body)
     return G238DetachedReplayReceiptV2.from_dict(payload)
 
@@ -311,9 +284,7 @@ def test_receipt_only_gate_cannot_claim_operational_replay(
     assert gate["source_failure_count"] == 2
     # Every success plus one lexicographically selected A2 failure.
     assert gate["required_replay_count"] == 2
-    assert gate["failure_codes"] == [
-        "missing_operational_replay_source"
-    ]
+    assert gate["failure_codes"] == ["missing_operational_replay_source"]
     assert len(gate["validated_comparison_receipt_cids"]) == 2
     assert gate["validated_namespace_receipt_cids"] == []
     assert gate["validated_orchestration_receipt_cids"] == []
@@ -326,12 +297,7 @@ def test_receipt_only_gate_cannot_claim_operational_replay(
         validate_g238_detached_replay_gate_v2(
             gate,
             G238ReplaySourceIndexV2.from_dict(index.to_dict()),
-            [
-                G238DetachedReplayReceiptV2.from_dict(
-                    receipt.to_dict()
-                )
-                for receipt in receipts
-            ],
+            [G238DetachedReplayReceiptV2.from_dict(receipt.to_dict()) for receipt in receipts],
             validator_authority_cid=_cid("replay-validator"),
         )
         == gate["receipt_cid"]
@@ -342,11 +308,7 @@ def test_g240_recomputes_fresh_replay_namespace_from_full_runtime(
     g238_sources,
 ) -> None:
     index = g238_sources["index"]
-    record = next(
-        item
-        for item in index.records
-        if item.variant_id == "A0"
-    )
+    record = next(item for item in index.records if item.variant_id == "A0")
     source_runtime = record.runtime_evidence
     replay_runtime = g238_sources["replay_by_case"][record.case_cid]
     source_result = source_runtime.case_result
@@ -364,18 +326,14 @@ def test_g240_recomputes_fresh_replay_namespace_from_full_runtime(
         seed=83,
         variant_ids=(source_result.variant_id,),
         cache_modes=(source_result.cache_mode,),
-        environment_sha256=(
-            source_result.stages[0].provenance.environment_sha256
-        ),
+        environment_sha256=(source_result.stages[0].provenance.environment_sha256),
     )
     policy = build_g240_namespace_policy_v2(
         (plan,),
         source_commit_cid=index.source_commit_cid,
         recursive_gitlinks_cid=index.recursive_gitlinks_cid,
         environment_cid=index.environment_cid,
-        runtime_orchestration_policy_cid=_cid(
-            "g240-source-executor-contract"
-        ),
+        runtime_orchestration_policy_cid=_cid("g240-source-executor-contract"),
         namespace_authority_cid=_cid("g240-policy-authority"),
     )
     source_receipt = G240RuntimeNamespaceReceiptV2.create(
@@ -421,14 +379,8 @@ def test_g240_recomputes_fresh_replay_namespace_from_full_runtime(
     )
 
     assert restored.receipt_cid == replay_receipt.receipt_cid
-    assert (
-        restored.replay_process_namespace_cid
-        != source_receipt.process_namespace_cid
-    )
-    assert (
-        restored.replay_state_namespace_cid
-        != source_receipt.state_namespace_cid
-    )
+    assert restored.replay_process_namespace_cid != source_receipt.process_namespace_cid
+    assert restored.replay_state_namespace_cid != source_receipt.state_namespace_cid
     assert not (
         set(restored.replay_cache_namespace_cids.values())
         & set(source_receipt.cache_namespace_cids.values())
@@ -455,10 +407,7 @@ def test_semantic_observation_and_comparison_are_runtime_recomputed(
     assert comparison["kernel_equal"] is True
     assert comparison["status_equal"] is True
     assert comparison["resource_identity_equal"] is True
-    assert (
-        validate_g238_semantic_observation_v2(semantic, replay)
-        == semantic
-    )
+    assert validate_g238_semantic_observation_v2(semantic, replay) == semantic
     assert (
         validate_g238_replay_comparison_v2(
             comparison,
@@ -495,11 +444,7 @@ def test_semantic_drift_is_detected_from_complete_runtime(
     g238_sources,
 ) -> None:
     index = g238_sources["index"]
-    record = next(
-        item
-        for item in index.required_records
-        if item.variant_id == "A2"
-    )
+    record = next(item for item in index.required_records if item.variant_id == "A2")
     drift = _failed_runtime(
         g238_sources["root"] / "semantic-drift",
         run_id="semantic-drift-run",
@@ -539,9 +484,7 @@ def test_resource_measurements_use_frozen_tolerances_and_missingness(
     expected_code: str,
 ) -> None:
     index = g238_sources["index"]
-    receipts = list(
-        _complete_receipts(index, g238_sources["replay_by_case"])
-    )
+    receipts = list(_complete_receipts(index, g238_sources["replay_by_case"]))
     record = index.required_records[0]
     replay = g238_sources["replay_by_case"][record.case_cid]
     resource = _resource(
@@ -594,9 +537,7 @@ def test_partial_isolation_staleness_and_holdout_fail_closed(
     )
     assert "partial_replay_evidence" in gate["failure_codes"]
 
-    complete = list(
-        _complete_receipts(index, g238_sources["replay_by_case"])
-    )
+    complete = list(_complete_receipts(index, g238_sources["replay_by_case"]))
     complete[0] = _rebased_receipt(
         complete[0],
         environment_cid=_cid("stale-environment"),
@@ -618,26 +559,16 @@ def test_rebased_comparison_and_outer_cids_do_not_bypass_source_replay(
     g238_sources,
 ) -> None:
     index = g238_sources["index"]
-    receipts = list(
-        _complete_receipts(index, g238_sources["replay_by_case"])
-    )
+    receipts = list(_complete_receipts(index, g238_sources["replay_by_case"]))
     payload = receipts[0].to_dict()
     comparison = payload["comparison"]
     assert isinstance(comparison, dict)
     comparison["semantic_equal"] = False
     comparison_body = {
-        key: value
-        for key, value in comparison.items()
-        if key != "comparison_receipt_cid"
+        key: value for key, value in comparison.items() if key != "comparison_receipt_cid"
     }
-    comparison["comparison_receipt_cid"] = cid_for_dag_json(
-        comparison_body
-    )
-    outer_body = {
-        key: value
-        for key, value in payload.items()
-        if key != "receipt_cid"
-    }
+    comparison["comparison_receipt_cid"] = cid_for_dag_json(comparison_body)
+    outer_body = {key: value for key, value in payload.items() if key != "receipt_cid"}
     payload["receipt_cid"] = cid_for_dag_json(outer_body)
     receipts[0] = G238DetachedReplayReceiptV2.from_dict(payload)
 
@@ -647,18 +578,14 @@ def test_rebased_comparison_and_outer_cids_do_not_bypass_source_replay(
         validator_authority_cid=_cid("replay-validator"),
     )
 
-    assert "replay_comparison_not_source_recomputed" in (
-        gate["failure_codes"]
-    )
+    assert "replay_comparison_not_source_recomputed" in (gate["failure_codes"])
 
 
 def test_missing_duplicate_unexpected_shared_and_cid_tampering(
     g238_sources,
 ) -> None:
     index = g238_sources["index"]
-    complete = list(
-        _complete_receipts(index, g238_sources["replay_by_case"])
-    )
+    complete = list(_complete_receipts(index, g238_sources["replay_by_case"]))
     missing = build_g238_detached_replay_gate_v2(
         index,
         complete[:-1],
@@ -676,9 +603,7 @@ def test_missing_duplicate_unexpected_shared_and_cid_tampering(
     complete[1] = _rebased_receipt(
         complete[1],
         replay_worktree_cid=complete[0].replay_worktree_cid,
-        replay_process_namespace_cid=(
-            complete[0].replay_process_namespace_cid
-        ),
+        replay_process_namespace_cid=(complete[0].replay_process_namespace_cid),
     )
     shared = build_g238_detached_replay_gate_v2(
         index,
@@ -686,9 +611,7 @@ def test_missing_duplicate_unexpected_shared_and_cid_tampering(
         validator_authority_cid=_cid("replay-validator"),
     )
     assert "shared_replay_worktree_cid" in shared["failure_codes"]
-    assert "shared_replay_process_namespace_cid" in (
-        shared["failure_codes"]
-    )
+    assert "shared_replay_process_namespace_cid" in (shared["failure_codes"])
 
     tampered = complete[0].to_dict()
     tampered["receipt_cid"] = _cid("forged")

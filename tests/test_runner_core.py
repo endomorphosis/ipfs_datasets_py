@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TestResult:
     """Individual test result."""
+
     name: str
     status: str  # 'passed', 'failed', 'skipped', 'error'
     duration: float
@@ -32,6 +33,7 @@ class TestResult:
 @dataclass
 class TestSuiteResult:
     """Results from a test suite run."""
+
     suite_name: str
     tool: str  # 'pytest', 'unittest', 'mypy', 'flake8', etc.
     status: str  # 'passed', 'failed', 'error'
@@ -53,6 +55,7 @@ class TestSuiteResult:
 @dataclass
 class TestRunSummary:
     """Complete test run summary."""
+
     timestamp: str
     project_path: str
     total_suites: int
@@ -74,35 +77,32 @@ class TestExecutor:
     def __init__(self, timeout_seconds: int = 300):
         """
         Initialize test executor.
-        
+
         Args:
             timeout_seconds: Timeout for test execution (default: 300)
         """
         self.timeout_seconds = timeout_seconds
 
-    def run_pytest(self, path: Path, coverage: bool = True,
-                   verbose: bool = False) -> TestSuiteResult:
+    def run_pytest(
+        self, path: Path, coverage: bool = True, verbose: bool = False
+    ) -> TestSuiteResult:
         """Run pytest test suite."""
         start_time = time.time()
 
-        cmd = ['python', '-m', 'pytest', str(path)]
+        cmd = ["python", "-m", "pytest", str(path)]
 
         if coverage:
-            cmd.extend(['--cov', str(path), '--cov-report', 'json'])
+            cmd.extend(["--cov", str(path), "--cov-report", "json"])
 
         if verbose:
-            cmd.append('-v')
+            cmd.append("-v")
 
-        json_report_path = tempfile.mktemp(suffix='.json')
-        cmd.extend(['--json-report', f'--json-report-file={json_report_path}'])
+        json_report_path = tempfile.mktemp(suffix=".json")
+        cmd.extend(["--json-report", f"--json-report-file={json_report_path}"])
 
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=path,
-                timeout=self.timeout_seconds
+                cmd, capture_output=True, text=True, cwd=path, timeout=self.timeout_seconds
             )
 
             duration = time.time() - start_time
@@ -113,25 +113,25 @@ class TestExecutor:
 
             if os.path.exists(json_report_path):
                 try:
-                    with open(json_report_path, 'r') as f:
+                    with open(json_report_path, "r") as f:
                         report_data = json.load(f)
 
-                    for test in report_data.get('tests', []):
+                    for test in report_data.get("tests", []):
                         test_result = TestResult(
-                            name=test.get('name', ''),
-                            status=test.get('outcome', 'unknown'),
-                            duration=test.get('duration', 0.0),
-                            message=test.get('message'),
-                            file_path=test.get('file'),
-                            line_number=test.get('line')
+                            name=test.get("name", ""),
+                            status=test.get("outcome", "unknown"),
+                            duration=test.get("duration", 0.0),
+                            message=test.get("message"),
+                            file_path=test.get("file"),
+                            line_number=test.get("line"),
                         )
                         tests.append(test_result)
 
-                        if test_result.status == 'passed':
+                        if test_result.status == "passed":
                             passed += 1
-                        elif test_result.status == 'failed':
+                        elif test_result.status == "failed":
                             failed += 1
-                        elif test_result.status == 'skipped':
+                        elif test_result.status == "skipped":
                             skipped += 1
                         else:
                             errors += 1
@@ -148,7 +148,9 @@ class TestExecutor:
                         pass
 
             if total_tests == 0:
-                total_tests, passed, failed, skipped, errors = self._parse_pytest_output(result.stdout)
+                total_tests, passed, failed, skipped, errors = self._parse_pytest_output(
+                    result.stdout
+                )
 
             status = "passed" if result.returncode == 0 else "failed"
 
@@ -163,7 +165,7 @@ class TestExecutor:
                 errors=errors,
                 duration=duration,
                 tests=tests,
-                output=result.stdout + result.stderr
+                output=result.stdout + result.stderr,
             )
 
         except subprocess.TimeoutExpired:
@@ -177,7 +179,7 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output="Test execution timed out"
+                output="Test execution timed out",
             )
         except Exception as e:
             return TestSuiteResult(
@@ -190,29 +192,27 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output=f"Error running pytest: {e}"
+                output=f"Error running pytest: {e}",
             )
 
     def run_unittest(self, path: Path, verbose: bool = False) -> TestSuiteResult:
         """Run unittest test suite."""
         start_time = time.time()
 
-        cmd = ['python', '-m', 'unittest', 'discover']
+        cmd = ["python", "-m", "unittest", "discover"]
         if verbose:
-            cmd.append('-v')
+            cmd.append("-v")
 
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=path,
-                timeout=self.timeout_seconds
+                cmd, capture_output=True, text=True, cwd=path, timeout=self.timeout_seconds
             )
 
             duration = time.time() - start_time
 
-            total_tests, passed, failed, skipped, errors = self._parse_unittest_output(result.stderr)
+            total_tests, passed, failed, skipped, errors = self._parse_unittest_output(
+                result.stderr
+            )
 
             status = "passed" if result.returncode == 0 else "failed"
 
@@ -226,7 +226,7 @@ class TestExecutor:
                 skipped=skipped,
                 errors=errors,
                 duration=duration,
-                output=result.stdout + result.stderr
+                output=result.stdout + result.stderr,
             )
 
         except subprocess.TimeoutExpired:
@@ -240,7 +240,7 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output="Test execution timed out"
+                output="Test execution timed out",
             )
         except Exception as e:
             return TestSuiteResult(
@@ -253,30 +253,27 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output=f"Error running unittest: {e}"
+                output=f"Error running unittest: {e}",
             )
 
     def run_mypy(self, path: Path) -> TestSuiteResult:
         """Run mypy type checking."""
         start_time = time.time()
 
-        cmd = ['python', '-m', 'mypy', str(path)]
+        cmd = ["python", "-m", "mypy", str(path)]
 
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds
+                cmd, capture_output=True, text=True, timeout=self.timeout_seconds
             )
 
             duration = time.time() - start_time
 
             errors = warnings = 0
-            for line in result.stdout.split('\n'):
-                if ': error:' in line:
+            for line in result.stdout.split("\n"):
+                if ": error:" in line:
                     errors += 1
-                elif ': warning:' in line:
+                elif ": warning:" in line:
                     warnings += 1
 
             total_checks = errors + warnings
@@ -294,7 +291,7 @@ class TestExecutor:
                 skipped=0,
                 errors=warnings,
                 duration=duration,
-                output=result.stdout + result.stderr
+                output=result.stdout + result.stderr,
             )
 
         except subprocess.TimeoutExpired:
@@ -308,7 +305,7 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output="Type checking timed out"
+                output="Type checking timed out",
             )
         except Exception as e:
             return TestSuiteResult(
@@ -321,26 +318,23 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output=f"Error running mypy: {e}"
+                output=f"Error running mypy: {e}",
             )
 
     def run_flake8(self, path: Path) -> TestSuiteResult:
         """Run flake8 linting."""
         start_time = time.time()
 
-        cmd = ['python', '-m', 'flake8', str(path)]
+        cmd = ["python", "-m", "flake8", str(path)]
 
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds
+                cmd, capture_output=True, text=True, timeout=self.timeout_seconds
             )
 
             duration = time.time() - start_time
 
-            violations = len([line for line in result.stdout.split('\n') if line.strip()])
+            violations = len([line for line in result.stdout.split("\n") if line.strip()])
 
             status = "passed" if result.returncode == 0 else "failed"
             passed = 1 if violations == 0 else 0
@@ -356,7 +350,7 @@ class TestExecutor:
                 skipped=0,
                 errors=0,
                 duration=duration,
-                output=result.stdout + result.stderr
+                output=result.stdout + result.stderr,
             )
 
         except subprocess.TimeoutExpired:
@@ -370,7 +364,7 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output="Linting timed out"
+                output="Linting timed out",
             )
         except Exception as e:
             return TestSuiteResult(
@@ -383,7 +377,7 @@ class TestExecutor:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output=f"Error running flake8: {e}"
+                output=f"Error running flake8: {e}",
             )
 
     def _parse_pytest_output(self, output: str) -> Tuple[int, int, int, int, int]:
@@ -392,12 +386,12 @@ class TestExecutor:
 
         total = passed = failed = skipped = errors = 0
 
-        for line in output.split('\n'):
-            if 'passed' in line or 'failed' in line:
-                passed_match = re.search(r'(\d+) passed', line)
-                failed_match = re.search(r'(\d+) failed', line)
-                skipped_match = re.search(r'(\d+) skipped', line)
-                error_match = re.search(r'(\d+) error', line)
+        for line in output.split("\n"):
+            if "passed" in line or "failed" in line:
+                passed_match = re.search(r"(\d+) passed", line)
+                failed_match = re.search(r"(\d+) failed", line)
+                skipped_match = re.search(r"(\d+) skipped", line)
+                error_match = re.search(r"(\d+) error", line)
 
                 if passed_match:
                     passed = int(passed_match.group(1))
@@ -419,13 +413,13 @@ class TestExecutor:
 
         total = passed = failed = skipped = errors = 0
 
-        ran_match = re.search(r'Ran (\d+) tests?', output)
+        ran_match = re.search(r"Ran (\d+) tests?", output)
         if ran_match:
             total = int(ran_match.group(1))
 
-        if 'FAILED' in output:
-            failed_match = re.search(r'failures=(\d+)', output)
-            error_match = re.search(r'errors=(\d+)', output)
+        if "FAILED" in output:
+            failed_match = re.search(r"failures=(\d+)", output)
+            error_match = re.search(r"errors=(\d+)", output)
 
             if failed_match:
                 failed = int(failed_match.group(1))
@@ -443,7 +437,7 @@ class DatasetTestRunner:
     def __init__(self, timeout_seconds: int = 300):
         """
         Initialize dataset test runner.
-        
+
         Args:
             timeout_seconds: Timeout for test execution (default: 300)
         """
@@ -454,8 +448,9 @@ class DatasetTestRunner:
         start_time = time.time()
 
         try:
-            dataset_test_files = list(path.glob("**/test*dataset*.py")) + \
-                               list(path.glob("**/test*ipfs*.py"))
+            dataset_test_files = list(path.glob("**/test*dataset*.py")) + list(
+                path.glob("**/test*ipfs*.py")
+            )
 
             if not dataset_test_files:
                 return TestSuiteResult(
@@ -468,22 +463,20 @@ class DatasetTestRunner:
                     skipped=1,
                     errors=0,
                     duration=time.time() - start_time,
-                    output="No dataset test files found"
+                    output="No dataset test files found",
                 )
 
-            cmd = ['python', '-m', 'pytest', '-v'] + [str(f) for f in dataset_test_files]
+            cmd = ["python", "-m", "pytest", "-v"] + [str(f) for f in dataset_test_files]
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=path,
-                timeout=self.timeout_seconds
+                cmd, capture_output=True, text=True, cwd=path, timeout=self.timeout_seconds
             )
 
             duration = time.time() - start_time
 
-            total_tests, passed, failed, skipped, errors = self._parse_dataset_test_output(result.stdout)
+            total_tests, passed, failed, skipped, errors = self._parse_dataset_test_output(
+                result.stdout
+            )
 
             status = "passed" if result.returncode == 0 else "failed"
 
@@ -497,7 +490,7 @@ class DatasetTestRunner:
                 skipped=skipped,
                 errors=errors,
                 duration=duration,
-                output=result.stdout + result.stderr
+                output=result.stdout + result.stderr,
             )
 
         except subprocess.TimeoutExpired:
@@ -511,7 +504,7 @@ class DatasetTestRunner:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output="Dataset tests timed out"
+                output="Dataset tests timed out",
             )
         except Exception as e:
             return TestSuiteResult(
@@ -524,7 +517,7 @@ class DatasetTestRunner:
                 skipped=0,
                 errors=1,
                 duration=time.time() - start_time,
-                output=f"Error running dataset tests: {e}"
+                output=f"Error running dataset tests: {e}",
             )
 
     def _parse_dataset_test_output(self, output: str) -> Tuple[int, int, int, int, int]:
@@ -533,12 +526,12 @@ class DatasetTestRunner:
 
         total = passed = failed = skipped = errors = 0
 
-        for line in output.split('\n'):
-            if 'passed' in line or 'failed' in line:
-                passed_match = re.search(r'(\d+) passed', line)
-                failed_match = re.search(r'(\d+) failed', line)
-                skipped_match = re.search(r'(\d+) skipped', line)
-                error_match = re.search(r'(\d+) error', line)
+        for line in output.split("\n"):
+            if "passed" in line or "failed" in line:
+                passed_match = re.search(r"(\d+) passed", line)
+                failed_match = re.search(r"(\d+) failed", line)
+                skipped_match = re.search(r"(\d+) skipped", line)
+                error_match = re.search(r"(\d+) error", line)
 
                 if passed_match:
                     passed = int(passed_match.group(1))

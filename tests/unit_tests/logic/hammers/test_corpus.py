@@ -256,9 +256,7 @@ class TestTheoremEntryContent:
         assert entry.theorem_id == "Nat.add_comm"
         assert entry.corpus_id == "mathlib4"
         assert entry.source_itp is ITPKind.LEAN
-        assert entry.imports == sorted(
-            ["Mathlib.Data.Nat.Basic", "Mathlib.Algebra.Group.Defs"]
-        )
+        assert entry.imports == sorted(["Mathlib.Data.Nat.Basic", "Mathlib.Algebra.Group.Defs"])
 
     def test_imports_are_deduplicated(self):
         manifest = make_manifest_with_source()
@@ -533,8 +531,12 @@ class TestIteration:
         manifest.register_source(
             make_source(corpus_id="rocq-stdlib", name="Rocq stdlib", version_ref="ref2")
         )
-        manifest.add_theorem(theorem_id="Nat.add_comm", corpus_id="mathlib4", statement=MATHLIB_STATEMENT)
-        manifest.add_theorem(theorem_id="nat_add_comm", corpus_id="rocq-stdlib", statement=MATHLIB_STATEMENT)
+        manifest.add_theorem(
+            theorem_id="Nat.add_comm", corpus_id="mathlib4", statement=MATHLIB_STATEMENT
+        )
+        manifest.add_theorem(
+            theorem_id="nat_add_comm", corpus_id="rocq-stdlib", statement=MATHLIB_STATEMENT
+        )
 
         mathlib_ids = [e.theorem_id for e in manifest.theorems_for_corpus("mathlib4")]
         assert mathlib_ids == ["Nat.add_comm"]

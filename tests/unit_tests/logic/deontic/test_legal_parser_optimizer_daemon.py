@@ -86,9 +86,9 @@ class _MetricGateOptimizer(LegalParserParityOptimizer):
 
 def test_supervisor_preserves_sticky_agentic_reason_after_stopping_child():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
     function_start = script.index("run_agentic_maintenance() {")
     function_end = script.index("\nheartbeat_is_stale() {", function_start)
     function_body = script[function_start:function_end]
@@ -105,50 +105,65 @@ def test_supervisor_preserves_sticky_agentic_reason_after_stopping_child():
     )
     assert "SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS" in script
     assert '"agentic_idle_timeout_seconds"' in script
-    assert 'agentic maintenance idle timeout after' in function_body
+    assert "agentic maintenance idle timeout after" in function_body
     assert '"active_agentic_maintenance_started_at"' in script
     assert '"active_agentic_maintenance_timeout_seconds"' in script
     assert '"formal_logic_goal"' in script
-    assert 'prompt_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-prompt.XXXXXX")"' in function_body
+    assert (
+        'prompt_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-prompt.XXXXXX")"'
+        in function_body
+    )
     assert 'python3 - "$REPO_ROOT" "$REPO_ROOT/$maintenance_log" "$CODEX_BIN"' in function_body
-    assert "agentic maintenance validation passed; committing accepted maintenance changes" in function_body
-    assert 'git -C "$REPO_ROOT" commit -m "legal-parser-daemon: accept supervisor maintenance"' in function_body
+    assert (
+        "agentic maintenance validation passed; committing accepted maintenance changes"
+        in function_body
+    )
+    assert (
+        'git -C "$REPO_ROOT" commit -m "legal-parser-daemon: accept supervisor maintenance"'
+        in function_body
+    )
     assert 'last_agentic_maintenance_status="accepted_committed"' in function_body
 
 
 def test_supervisor_cleanup_clears_interrupted_maintenance_window():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
     function_start = script.index("cleanup() {")
     function_end = script.index("\ntrap 'cleanup", function_start)
     function_body = script[function_start:function_end]
 
     assert 'local final_status="${1:-stopped}"' in function_body
-    assert '*running)' in function_body
-    assert 'last_agentic_maintenance_status="${last_agentic_maintenance_status}_interrupted"' in function_body
+    assert "*running)" in function_body
+    assert (
+        'last_agentic_maintenance_status="${last_agentic_maintenance_status}_interrupted"'
+        in function_body
+    )
     assert 'active_agentic_maintenance_started_at=""' in function_body
     assert 'active_agentic_maintenance_timeout_seconds="null"' in function_body
     assert 'write_supervisor_status "$final_status"' in function_body
-    assert 'trap \'cleanup "terminated"; exit 143\' TERM INT' in script
+    assert "trap 'cleanup \"terminated\"; exit 143' TERM INT" in script
 
 
 def test_supervisor_uses_fast_restart_after_noop_recovery_outcomes():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
     loop_start = script.index("while true; do")
     restart_block = script[loop_start:]
 
     assert "SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS" in script
     assert '"fast_restart_backoff_seconds"' in script
     assert 'restart_delay_seconds="$RESTART_BACKOFF_SECONDS"' in restart_block
-    assert 'dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change' in restart_block
+    assert (
+        "dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change"
+        in restart_block
+    )
     assert "skipped_stale_trigger" not in restart_block
     assert 'restart_delay_seconds="$SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS"' in restart_block
-    assert 'restarting in ${restart_delay_seconds}s' in restart_block
+    assert "restarting in ${restart_delay_seconds}s" in restart_block
 
 
 def test_ensure_legal_parser_optimizer_daemon_wraps_supervisor_for_unattended_restarts():
@@ -201,9 +216,9 @@ def test_legal_parser_daemon_scope_includes_formal_logic_stack_targets():
 
 def test_supervisor_uses_worktree_transport_by_default():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert 'PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"' in script
     assert 'WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-1200}"' in script
@@ -215,9 +230,14 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '"worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX"' in script
     assert 'WORKTREE_NO_CHILD_STALL_SECONDS="${WORKTREE_NO_CHILD_STALL_SECONDS:-240}"' in script
     assert '"worktree_no_child_stall_seconds": $WORKTREE_NO_CHILD_STALL_SECONDS' in script
-    assert 'REPAIR_FAILED_TESTS_BEFORE_ROLLBACK="${REPAIR_FAILED_TESTS_BEFORE_ROLLBACK:-1}"' in script
+    assert (
+        'REPAIR_FAILED_TESTS_BEFORE_ROLLBACK="${REPAIR_FAILED_TESTS_BEFORE_ROLLBACK:-1}"' in script
+    )
     assert 'FAILED_TEST_REPAIR_ATTEMPTS="${FAILED_TEST_REPAIR_ATTEMPTS:-1}"' in script
-    assert '"repair_failed_tests_before_rollback": $(json_bool "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK")' in script
+    assert (
+        '"repair_failed_tests_before_rollback": $(json_bool "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK")'
+        in script
+    )
     assert '"failed_test_repair_attempts": $FAILED_TEST_REPAIR_ATTEMPTS' in script
     assert '--proposal-transport "$PROPOSAL_TRANSPORT"' in script
     assert '--worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"' in script
@@ -225,7 +245,7 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '--worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"' in script
     assert '--failed-test-repair-attempts "$FAILED_TEST_REPAIR_ATTEMPTS"' in script
     assert '--worktree-no-child-stall-seconds "$WORKTREE_NO_CHILD_STALL_SECONDS"' in script
-    assert 'python3_args+=(--disable-failed-test-repair)' in script
+    assert "python3_args+=(--disable-failed-test-repair)" in script
     assert '--codex-bin "$CODEX_BIN"' in script
     assert "worktree_phase_without_active_child_reason()" in script
     assert 'last_recycle_reason="worktree_phase_without_active_child"' in script
@@ -253,7 +273,10 @@ def test_check_script_reports_worktree_transport_health_fields():
     assert '"worktree_edit_timeout_seconds": current.get("worktree_edit_timeout_seconds")' in script
     assert '"worktree_stale_after_seconds": current.get("worktree_stale_after_seconds")' in script
     assert '"worktree_codex_sandbox": current.get("worktree_codex_sandbox")' in script
-    assert '"repair_failed_tests_before_rollback": current.get("repair_failed_tests_before_rollback")' in script
+    assert (
+        '"repair_failed_tests_before_rollback": current.get("repair_failed_tests_before_rollback")'
+        in script
+    )
     assert '"failed_test_repair_attempts": current.get("failed_test_repair_attempts")' in script
     assert '"worktree_no_child_stall_seconds": worktree_no_child_threshold' in script
     assert '"worktree_phase_worker_status": worktree_worker_status' in script
@@ -330,15 +353,19 @@ def test_legal_parser_health_recomputes_stale_ensure_supervisor_pid(tmp_path):
 
 def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
     recovery_start = script.index("confirmed_dirty_target_reason() {")
     recovery_end = script.index("\nrun_agentic_maintenance() {", recovery_start)
     recovery_body = script[recovery_start:recovery_end]
-    loop_start = script.index("while kill -0 \"$child_pid\"")
-    dirty_reason_pos = script.index('dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"', loop_start)
-    maintenance_reason_pos = script.index('maintenance_reason="$(agentic_maintenance_reason || true)"', loop_start)
+    loop_start = script.index('while kill -0 "$child_pid"')
+    dirty_reason_pos = script.index(
+        'dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"', loop_start
+    )
+    maintenance_reason_pos = script.index(
+        'maintenance_reason="$(agentic_maintenance_reason || true)"', loop_start
+    )
 
     assert "SUPERVISOR_DIRTY_TARGET_RECOVERY" in script
     assert '"dirty_target_recovery_enabled"' in script
@@ -354,7 +381,10 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "dirty_target_grace_seconds" in script
     assert '"requesting_llm_patch"' in recovery_body
     assert "dirty_legal_parser_targets_transient_phase" in recovery_body
-    assert 'def restore_failed_dirty_targets(progress: dict, paths: list[str]) -> bool:' in recovery_body
+    assert (
+        "def restore_failed_dirty_targets(progress: dict, paths: list[str]) -> bool:"
+        in recovery_body
+    )
     assert '"automatic restore failed"' in recovery_body
     assert "dirty_legal_parser_targets_known_bad_restore_failure" in recovery_body
     assert "and not known_bad_restore_failure" in recovery_body
@@ -371,9 +401,9 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
 
 def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert "SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" in script
     assert '"agentic_repeated_rejection_family_tail"' in script
@@ -386,25 +416,31 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert "def infer_legal_parser_targets(item: dict) -> list[str]:" in script
     assert "confirmed_repeated_rejection_dirty_target_reason()" in script
     assert "recover_repeated_rejection_dirty_targets()" in script
-    assert "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets" in script
+    assert (
+        "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets"
+        in script
+    )
     assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
     assert "repeated_rejection_family:" in script
     assert "repeated_rejection_family_count" in script
     assert "repeated_validation_failure_family:" in script
     assert "repeated_validation_failure_family_count" in script
-    assert "dirty_touched_file_rejections, repeated_rejection_family, or repeated_validation_failure_family" in script
+    assert (
+        "dirty_touched_file_rejections, repeated_rejection_family, or repeated_validation_failure_family"
+        in script
+    )
     assert "inspect the focused" in script
     assert "prevent" in script and "same focused test failure" in script
-    assert script.index("repeated_validation_failure_count >= validation_failure_family_threshold") < script.index(
-        "repeated_rejection_count >= repeated_rejection_family_threshold"
-    )
+    assert script.index(
+        "repeated_validation_failure_count >= validation_failure_family_threshold"
+    ) < script.index("repeated_rejection_count >= repeated_rejection_family_threshold")
 
 
 def test_supervisor_escalates_acceptance_stalls_into_agentic_maintenance():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
     check_script = (
         repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh"
     ).read_text(encoding="utf-8")
@@ -419,7 +455,10 @@ def test_supervisor_escalates_acceptance_stalls_into_agentic_maintenance():
     assert "If the daemon has no actionable implementation-plan tasks left" in script
     assert "update docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md" in script
     assert "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh" in script
-    assert 'bash -n "$REPO_ROOT/scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh"' in script
+    assert (
+        'bash -n "$REPO_ROOT/scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh"'
+        in script
+    )
     assert '"agentic_acceptance_stall_cycles"' in check_script
     assert '"ensure_status"' in check_script
     assert '"ensure_wrapper_pid_alive"' in check_script
@@ -427,16 +466,20 @@ def test_supervisor_escalates_acceptance_stalls_into_agentic_maintenance():
 
 def test_supervisor_escalates_repeated_recovery_failures_into_agentic_maintenance():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
-    loop_start = script.index("while kill -0 \"$child_pid\"")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
+    loop_start = script.index('while kill -0 "$child_pid"')
     repeated_recovery_pos = script.index(
         'recovery_failure_escalation_reason="$(confirmed_recovery_failure_escalation_reason || true)"',
         loop_start,
     )
-    dirty_recovery_pos = script.index('dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"', loop_start)
-    maintenance_pos = script.index('maintenance_reason="$(agentic_maintenance_reason || true)"', loop_start)
+    dirty_recovery_pos = script.index(
+        'dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"', loop_start
+    )
+    maintenance_pos = script.index(
+        'maintenance_reason="$(agentic_maintenance_reason || true)"', loop_start
+    )
 
     assert "SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL" in script
     assert '"recovery_failure_escalation_tail"' in script
@@ -538,7 +581,10 @@ def test_repeated_recovery_failure_prompt_carries_failed_pytest_nodes(tmp_path):
 
     assert "repeated_recovery_failure_contract" in prompt
     assert '"repeated_recovery_failed_tests": [' in prompt
-    assert "test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations" in prompt
+    assert (
+        "test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations"
+        in prompt
+    )
 
 
 def test_repeated_recovery_failure_quality_blocks_blind_retouch_of_restored_targets(tmp_path):
@@ -629,9 +675,9 @@ def test_repeated_recovery_failure_quality_allows_named_failed_test_repair(tmp_p
 
 def test_supervisor_stops_competing_automation_before_and_during_run():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
     function_start = script.index("terminate_competing_daemons() {")
     function_end = script.index("\nstop_child() {", function_start)
     function_body = script[function_start:function_end]
@@ -648,24 +694,33 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert "PPD_LLM_PROMPT_FILE" in function_body
     assert "isolated PP&D implementation workspace" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
-    startup_pos = script.rindex("terminate_matching_legal_parser_daemons\nterminate_competing_daemons\nsnapshot_dirty_legal_parser_target_baseline")
+    startup_pos = script.rindex(
+        "terminate_matching_legal_parser_daemons\nterminate_competing_daemons\nsnapshot_dirty_legal_parser_target_baseline"
+    )
     assert startup_pos >= 0
-    assert script.index("snapshot_dirty_legal_parser_target_baseline") < script.index("while true; do")
-    loop_start = script.index("while kill -0 \"$child_pid\"")
+    assert script.index("snapshot_dirty_legal_parser_target_baseline") < script.index(
+        "while true; do"
+    )
+    loop_start = script.index('while kill -0 "$child_pid"')
     assert loop_start < script.index("terminate_competing_daemons", loop_start)
 
 
 def test_supervisor_defers_stale_recovery_during_child_startup_grace():
     repo_root = Path(__file__).resolve().parents[4]
-    script = (
-        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
-    ).read_text(encoding="utf-8")
-    loop_start = script.index("while kill -0 \"$child_pid\"")
-    loop_body = script[loop_start: script.index("  done", loop_start)]
+    script = (repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh").read_text(
+        encoding="utf-8"
+    )
+    loop_start = script.index('while kill -0 "$child_pid"')
+    loop_body = script[loop_start : script.index("  done", loop_start)]
 
     assert "startup_grace_logged=0" in script
-    assert '[[ $((SECONDS - child_started_at)) -lt "$WATCHDOG_STARTUP_GRACE_SECONDS" ]]' in loop_body
-    assert "skipping stale progress recovery checks until fresh daemon status can be written" in loop_body
+    assert (
+        '[[ $((SECONDS - child_started_at)) -lt "$WATCHDOG_STARTUP_GRACE_SECONDS" ]]' in loop_body
+    )
+    assert (
+        "skipping stale progress recovery checks until fresh daemon status can be written"
+        in loop_body
+    )
     assert "continue" in loop_body
     assert loop_body.index("WATCHDOG_STARTUP_GRACE_SECONDS") < loop_body.index("heartbeat_is_stale")
     assert loop_body.index("WATCHDOG_STARTUP_GRACE_SECONDS") < loop_body.index(
@@ -720,7 +775,9 @@ def test_optimizer_builds_gpt55_router_request_without_calling_real_llm(tmp_path
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
 
-    proposal = optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+    proposal = optimizer.request_llm_patch(
+        cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert proposal.summary == "No-op patch for test."
     assert fake_router.calls
@@ -819,7 +876,9 @@ def test_optimizer_restores_worktree_after_llm_side_effects(tmp_path):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     touched = tmp_path / "tracked.txt"
     touched.write_text("before\n", encoding="utf-8")
-    __import__("subprocess").run(["git", "add", "tracked.txt"], cwd=tmp_path, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "add", "tracked.txt"], cwd=tmp_path, check=True, capture_output=True
+    )
 
     class _MutatingRouter:
         calls = []
@@ -847,16 +906,23 @@ def test_optimizer_restores_worktree_after_llm_side_effects(tmp_path):
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=router)
 
-    proposal = optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+    proposal = optimizer.request_llm_patch(
+        cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert proposal.summary == "No-op patch for test."
     assert touched.read_text(encoding="utf-8") == "before\n"
-    assert __import__("subprocess").run(
-        ["git", "diff", "--quiet"],
-        cwd=tmp_path,
-        check=False,
-        capture_output=True,
-    ).returncode == 0
+    assert (
+        __import__("subprocess")
+        .run(
+            ["git", "diff", "--quiet"],
+            cwd=tmp_path,
+            check=False,
+            capture_output=True,
+        )
+        .returncode
+        == 0
+    )
 
 
 def test_optimizer_uses_successful_git_apply_fallback_strategy(tmp_path, monkeypatch):
@@ -949,13 +1015,21 @@ def test_optimizer_worktree_edit_transport_generates_canonical_diff(tmp_path, mo
                 "acceptance_criteria": ["canonical diff is generated by git"],
                 "changed_files": [production_path, test_path],
                 "expected_metric_gain": {"parser_capability": "worktree"},
-                "tests_to_run": ["pytest -q tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py"],
+                "tests_to_run": [
+                    "pytest -q tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py"
+                ],
             }
             (Path(cwd) / ".legal_parser_worktree_proposal.json").write_text(
                 json.dumps(metadata),
                 encoding="utf-8",
             )
-            return {"valid": True, "returncode": 0, "command": command, "stdout": "edited", "stderr": ""}
+            return {
+                "valid": True,
+                "returncode": 0,
+                "command": command,
+                "stdout": "edited",
+                "stderr": "",
+            }
         if command[:3] == ["git", "status", "--porcelain"]:
             return {
                 "valid": True,
@@ -968,7 +1042,13 @@ def test_optimizer_worktree_edit_transport_generates_canonical_diff(tmp_path, mo
             assert test_path in command
             return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
         if command[:3] == ["git", "diff", "--binary"]:
-            return {"valid": True, "returncode": 0, "command": command, "stdout": canonical_diff, "stderr": ""}
+            return {
+                "valid": True,
+                "returncode": 0,
+                "command": command,
+                "stdout": canonical_diff,
+                "stderr": "",
+            }
         if command[:3] == ["git", "worktree", "remove"]:
             return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
         return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
@@ -1062,7 +1142,13 @@ def test_worktree_repair_transport_applies_base_diff_before_codex(tmp_path, monk
                 json.dumps(metadata),
                 encoding="utf-8",
             )
-            return {"valid": True, "returncode": 0, "command": command, "stdout": "repaired", "stderr": ""}
+            return {
+                "valid": True,
+                "returncode": 0,
+                "command": command,
+                "stdout": "repaired",
+                "stderr": "",
+            }
         if command[:3] == ["git", "status", "--porcelain"]:
             return {
                 "valid": True,
@@ -1074,7 +1160,13 @@ def test_worktree_repair_transport_applies_base_diff_before_codex(tmp_path, monk
         if command[:3] == ["git", "diff", "--binary"]:
             diff_calls["count"] += 1
             diff = base_diff if diff_calls["count"] == 1 else repaired_diff
-            return {"valid": True, "returncode": 0, "command": command, "stdout": diff, "stderr": ""}
+            return {
+                "valid": True,
+                "returncode": 0,
+                "command": command,
+                "stdout": diff,
+                "stderr": "",
+            }
         if command[:3] == ["git", "worktree", "remove"]:
             return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
         return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
@@ -1108,7 +1200,9 @@ def test_worktree_repair_transport_applies_base_diff_before_codex(tmp_path, monk
     codex_call = next(call for call in calls if call["cmd"][0] == "codex-test")
     assert '"base_unified_diff_applied": true' in codex_call["input_text"]
     assert "test_parser::test_value" in codex_call["input_text"]
-    assert calls.index(next(call for call in calls if call["cmd"][:3] == ["git", "apply", "--recount"])) < calls.index(codex_call)
+    assert calls.index(
+        next(call for call in calls if call["cmd"][:3] == ["git", "apply", "--recount"])
+    ) < calls.index(codex_call)
 
 
 def test_optimizer_cleans_up_stale_daemon_worktrees(tmp_path, monkeypatch):
@@ -1178,7 +1272,9 @@ def test_optimizer_cleans_up_stale_daemon_worktrees(tmp_path, monkeypatch):
     assert sum(1 for call in calls if call[:3] == ["git", "worktree", "prune"]) == 2
 
 
-def test_daemon_hybrid_transport_falls_back_to_worktree_after_patch_check_failure(tmp_path, monkeypatch):
+def test_daemon_hybrid_transport_falls_back_to_worktree_after_patch_check_failure(
+    tmp_path, monkeypatch
+):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     (tmp_path / "x.txt").write_text("before\n", encoding="utf-8")
     valid_diff = "\n".join(
@@ -1317,7 +1413,9 @@ def test_daemon_repairs_failed_tests_before_rollback(tmp_path, monkeypatch):
     (tmp_path / test_path).parent.mkdir(parents=True, exist_ok=True)
     (tmp_path / test_path).write_text("def test_existing():\n    assert True\n", encoding="utf-8")
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=tmp_path, check=True, capture_output=True
+    )
 
     original_diff = "\n".join(
         [
@@ -1491,7 +1589,9 @@ def test_daemon_keeps_worktree_phase_healthy_with_active_codex_worker(monkeypatc
     assert health["active_worker_pids"] == [123]
 
 
-def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(tmp_path, monkeypatch):
+def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(
+    tmp_path, monkeypatch
+):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     fake_router = _FakeRouter(
         json.dumps(
@@ -1531,7 +1631,9 @@ def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(
         },
     )
 
-    proposal = optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+    proposal = optimizer.request_llm_patch(
+        cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert proposal.summary == "No-op patch for test."
 
@@ -1671,8 +1773,12 @@ def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):
     )
     repo_root = tmp_path
     (repo_root / "docs/logic").mkdir(parents=True)
-    (repo_root / "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md").write_text("Improve parser.", encoding="utf-8")
-    (repo_root / "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md").write_text("Implement parser.", encoding="utf-8")
+    (repo_root / "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md").write_text(
+        "Improve parser.", encoding="utf-8"
+    )
+    (repo_root / "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md").write_text(
+        "Implement parser.", encoding="utf-8"
+    )
     config = LegalParserDaemonConfig(
         repo_root=repo_root,
         output_dir=repo_root / "out",
@@ -1791,16 +1897,27 @@ def test_current_status_exposes_phase_specific_stall_budget(tmp_path):
         cycle_dir=cycle_dir,
         started_at="2026-05-01T00:00:00+00:00",
     )
-    retry_worktree_status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    retry_worktree_status = json.loads(
+        (tmp_path / "out/current_status.json").read_text(encoding="utf-8")
+    )
 
     assert llm_status["phase_stale_after_seconds"] == 960
     assert llm_status["phase_stale_after_reason"] == "llm_timeout_seconds_plus_heartbeat_slack"
     assert test_status["phase_stale_after_seconds"] == 660
-    assert test_status["phase_stale_after_reason"] == "effective_test_timeout_seconds_plus_heartbeat_slack"
+    assert (
+        test_status["phase_stale_after_reason"]
+        == "effective_test_timeout_seconds_plus_heartbeat_slack"
+    )
     assert worktree_status["phase_stale_after_seconds"] == 1260
-    assert worktree_status["phase_stale_after_reason"] == "worktree_edit_timeout_seconds_plus_heartbeat_slack"
+    assert (
+        worktree_status["phase_stale_after_reason"]
+        == "worktree_edit_timeout_seconds_plus_heartbeat_slack"
+    )
     assert retry_worktree_status["phase_stale_after_seconds"] == 1260
-    assert retry_worktree_status["phase_stale_after_reason"] == "worktree_edit_timeout_seconds_plus_heartbeat_slack"
+    assert (
+        retry_worktree_status["phase_stale_after_reason"]
+        == "worktree_edit_timeout_seconds_plus_heartbeat_slack"
+    )
 
 
 def test_evaluation_uses_active_repair_projection_for_probe_metrics(tmp_path):
@@ -2110,9 +2227,10 @@ def test_daemon_retries_candidate_that_fails_changed_test_preflight(tmp_path):
     assert cycle["proposal_attempts"][0]["retry_reason"].startswith(
         "candidate_post_apply_validation_failed:"
     )
-    assert "changed deontic tests failed focused pytest" in cycle["proposal_attempts"][0][
-        "candidate_validation_reasons"
-    ]
+    assert (
+        "changed deontic tests failed focused pytest"
+        in cycle["proposal_attempts"][0]["candidate_validation_reasons"]
+    )
     assert cycle["proposal_attempts"][1]["candidate_validation_valid"] is True
     assert (tmp_path / test_path).read_text(encoding="utf-8").endswith("assert True\n")
 
@@ -2260,7 +2378,9 @@ def test_daemon_rejects_valid_patch_without_production_and_test_files(tmp_path):
     quality = daemon._assess_proposal_quality(proposal, ["docs/logic/example.md"])
 
     assert quality["valid"] is False
-    assert "patch must touch at least one production deontic parser/export file" in quality["reasons"]
+    assert (
+        "patch must touch at least one production deontic parser/export file" in quality["reasons"]
+    )
     assert "patch must touch at least one deontic parser test file" in quality["reasons"]
 
 
@@ -2386,11 +2506,23 @@ def test_dirty_legal_parser_target_status_summarizes_deletion_heavy_stranded_dif
     prod_path.parent.mkdir(parents=True)
     test_path.parent.mkdir(parents=True)
     prod_path.write_text("KEEP = True\nFAMILY = 'review'\nEXTRA = 1\n", encoding="utf-8")
-    test_path.write_text("def test_family():\n    assert True\n\ndef test_extra():\n    assert True\n", encoding="utf-8")
+    test_path.write_text(
+        "def test_family():\n    assert True\n\ndef test_extra():\n    assert True\n",
+        encoding="utf-8",
+    )
     parser_daemon_module._run_command(["git", "init"], cwd=tmp_path, timeout=30)
     parser_daemon_module._run_command(["git", "add", "."], cwd=tmp_path, timeout=30)
     parser_daemon_module._run_command(
-        ["git", "-c", "user.name=Daemon", "-c", "user.email=daemon@example.test", "commit", "-m", "baseline"],
+        [
+            "git",
+            "-c",
+            "user.name=Daemon",
+            "-c",
+            "user.email=daemon@example.test",
+            "commit",
+            "-m",
+            "baseline",
+        ],
         cwd=tmp_path,
         timeout=30,
     )
@@ -2711,7 +2843,9 @@ def test_recent_cycle_history_summarizes_test_failures_for_recovery_prompt(tmp_p
 
     history = optimizer._recent_cycle_history(limit=1)
     recent_failures = optimizer._recent_test_failures(history)
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert history[0]["tests_valid"] is False
     assert history[0]["test_failure_summary"]["exception_types"] == ["RecursionError"]
@@ -2773,7 +2907,9 @@ def test_recent_cycle_history_summarizes_post_apply_validation_failures(tmp_path
 
     history = optimizer._recent_cycle_history(limit=1)
     recent_failures = optimizer._recent_test_failures(history)
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert history[0]["post_apply_validation_valid"] is False
     assert "SyntaxError" in history[0]["validation_failure_summary"]["exception_types"]
@@ -2864,7 +3000,9 @@ def test_recent_cycle_history_summarizes_candidate_validation_failures(tmp_path)
 
     history = optimizer._recent_cycle_history(limit=1)
     recent_failures = optimizer._recent_test_failures(history)
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert history[0]["candidate_validation_valid"] is False
     assert recent_failures[0]["failure_phase"] == "candidate_post_apply_validation"
@@ -2877,9 +3015,10 @@ def test_recent_cycle_history_summarizes_candidate_validation_failures(tmp_path)
         "-q",
         "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     ]
-    assert "changed deontic tests failed focused pytest" in recent_failures[0][
-        "candidate_validation_reasons"
-    ]
+    assert (
+        "changed deontic tests failed focused pytest"
+        in recent_failures[0]["candidate_validation_reasons"]
+    )
     assert '"test_failure_recovery_mode": true' in prompt
     assert "candidate_post_apply_validation" in prompt
     assert "test_bad_formula" in prompt
@@ -2942,7 +3081,9 @@ def test_repeated_validation_progress_family_drives_repair_prompt_and_snapshots(
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
 
-    prompt = optimizer.build_patch_prompt(cycle_index=9, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=9, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert '"test_failure_recovery_mode": true' in prompt
     assert '"mode": "repair_with_material_followthrough"' in prompt
@@ -3127,7 +3268,9 @@ def test_high_score_repair_prompt_requires_material_followthrough(tmp_path):
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
 
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert '"test_failure_recovery_mode": true' in prompt
     assert '"slice_scale_contract": {' in prompt
@@ -3171,7 +3314,10 @@ def test_optimizer_prompt_includes_roadmap_task_snapshot_and_refresh_instruction
     )
 
     assert snapshot["status_counts"] == {"blocked": 1, "done": 1, "pending": 1}
-    assert snapshot["pending_preview"][0]["task"] == "Add prover syntax validation for decoder fixtures."
+    assert (
+        snapshot["pending_preview"][0]["task"]
+        == "Add prover syntax validation for decoder fixtures."
+    )
     assert '"roadmap_task_snapshot": {' in prompt
     assert "Use roadmap_task_snapshot.pending_preview as the implementation backlog" in prompt
     assert "refresh the implementation plan" in prompt
@@ -3179,7 +3325,9 @@ def test_optimizer_prompt_includes_roadmap_task_snapshot_and_refresh_instruction
 
 def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
-    daemon = LegalParserOptimizerDaemon(config, optimizer=LegalParserParityOptimizer(daemon_config=config))
+    daemon = LegalParserOptimizerDaemon(
+        config, optimizer=LegalParserParityOptimizer(daemon_config=config)
+    )
     proposal = LegalParserCycleProposal(
         summary="Bad mental state erasure test.",
         acceptance_criteria=["Reject contradictory slot erasure."],
@@ -3191,7 +3339,7 @@ def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
                 "+def test_bad_mental_state_erasure():",
                 "+    text = 'A person shall knowingly submit a false statement.'",
                 "+    norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])",
-                "+    assert norm.mental_state == \"\"",
+                '+    assert norm.mental_state == ""',
             ]
         ),
     )
@@ -3247,7 +3395,9 @@ def test_test_failure_files_receive_expanded_snapshots_in_prompt(tmp_path):
 
     history = optimizer._recent_cycle_history(limit=1)
     recent_failures = optimizer._recent_test_failures(history)
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert optimizer._recent_test_failed_files(recent_failures) == [target_file, test_file]
     assert '"recent_test_failed_files": [' in prompt
@@ -3287,7 +3437,9 @@ def test_metric_stall_no_progress_failures_are_prompt_feedback(tmp_path):
                         "moved_expected_metrics": {},
                         "score_delta": 0.0,
                         "feedback_reduced": False,
-                        "reasons": ["metric-stall patch passed tests but did not improve claimed metrics"],
+                        "reasons": [
+                            "metric-stall patch passed tests but did not improve claimed metrics"
+                        ],
                     },
                 },
                 "changed_files": [target_file, test_file],
@@ -3309,7 +3461,9 @@ def test_metric_stall_no_progress_failures_are_prompt_feedback(tmp_path):
 
     history = optimizer._recent_cycle_history(limit=1)
     failures = optimizer._recent_metric_stall_failures(history)
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert failures[0]["expected_metric_gain"] == {"repair_required_count": -1}
     assert failures[0]["pre_metrics"]["repair_required_count"] == 1
@@ -3362,7 +3516,9 @@ def test_optimizer_enters_patch_stability_mode_after_repeated_patch_check_failur
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
 
     history = optimizer._recent_cycle_history(limit=5)
-    prompt = optimizer.build_patch_prompt(cycle_index=4, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=4, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert optimizer._patch_stability_mode(history) is True
     assert optimizer._recent_failed_patch_files(history) == [target_file, test_file]
@@ -3405,7 +3561,9 @@ def test_optimizer_prompt_expands_slice_contract_when_metrics_are_stalled(tmp_pa
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
 
-    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"]
+    )
 
     assert '"slice_scale_contract": {' in prompt
     assert '"mode": "expanded_slice"' in prompt
@@ -3590,7 +3748,10 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
     cycle = daemon.run_cycle(cycle_index=1)
 
     assert len(fake_router.calls) == 2
-    assert "patch stability mode allows at most two changed files" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert (
+        "patch stability mode allows at most two changed files"
+        in cycle["proposal_attempts"][0]["retry_reason"]
+    )
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
@@ -3605,13 +3766,19 @@ def test_material_slice_gate_activates_for_unbounded_standard_and_expanded_modes
 
     assert daemon._material_slice_gate_active({"mode": "standard_material_slice"}) is True
     assert daemon._material_slice_gate_active({"mode": "expanded_slice"}) is True
-    assert daemon._material_slice_gate_active({"mode": "repair_with_material_followthrough"}) is True
+    assert (
+        daemon._material_slice_gate_active({"mode": "repair_with_material_followthrough"}) is True
+    )
     assert daemon._material_slice_gate_active({"mode": "repair_first"}) is False
 
-    bounded_config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out2", max_cycles=1)
+    bounded_config = LegalParserDaemonConfig(
+        repo_root=tmp_path, output_dir=tmp_path / "out2", max_cycles=1
+    )
     bounded_daemon = LegalParserOptimizerDaemon(
         config=bounded_config,
-        optimizer=LegalParserParityOptimizer(daemon_config=bounded_config, llm_backend=_FakeRouter("{}")),
+        optimizer=LegalParserParityOptimizer(
+            daemon_config=bounded_config, llm_backend=_FakeRouter("{}")
+        ),
     )
     assert bounded_daemon._material_slice_gate_active({"mode": "standard_material_slice"}) is False
 
@@ -3719,7 +3886,10 @@ def test_optimizer_prompt_marks_irreducible_residual_mode(tmp_path):
     assert '"irreducible_residual_mode": true' in prompt
     assert "stop chasing repair_required_count" in prompt
     assert "deterministic_coverage" in prompt
-    assert "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false" in prompt
+    assert (
+        "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false"
+        in prompt
+    )
 
 
 def test_optimizer_prompt_marks_roadmap_pivot_after_procedural_micro_patches(tmp_path):
@@ -3794,8 +3964,14 @@ def test_roadmap_pivot_activates_on_high_score_micro_patch_run_even_after_retain
                 "current_score": 0.9763,
                 "accepted_change_summaries": [
                     {"summary": "Add procedural trigger export coverage.", "focus_area": "exports"},
-                    {"summary": "Add proof prerequisite for procedure.event_relations.", "focus_area": "exports"},
-                    {"summary": "Add procedural timeline trigger coverage.", "focus_area": "formula"},
+                    {
+                        "summary": "Add proof prerequisite for procedure.event_relations.",
+                        "focus_area": "exports",
+                    },
+                    {
+                        "summary": "Add procedural timeline trigger coverage.",
+                        "focus_area": "formula",
+                    },
                     {"summary": "Add another export coverage trigger.", "focus_area": "exports"},
                 ],
             }
@@ -4051,16 +4227,19 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
     assert cycle["apply_result"]["reason"] == "metric_stall_no_metric_progress"
     assert cycle["retained_change"]["has_retained_changes"] is False
     assert cycle["retained_change"]["reason"] == "metric_stall_no_metric_progress"
-    assert cycle["commit_result"] == {"committed": False, "reason": "metric_stall_no_metric_progress"}
+    assert cycle["commit_result"] == {
+        "committed": False,
+        "reason": "metric_stall_no_metric_progress",
+    }
     assert (repo / prod_file).read_text(encoding="utf-8") == "EXPORT_MARKER = 'before_exports'\n"
-    assert (repo / test_file).read_text(encoding="utf-8") == "def test_marker():\n    assert 'before_test'\n"
+    assert (repo / test_file).read_text(
+        encoding="utf-8"
+    ) == "def test_marker():\n    assert 'before_test'\n"
 
 
 def test_daemon_metric_gate_tracks_phase8_quality_metrics():
     daemon = object.__new__(LegalParserOptimizerDaemon)
-    proposal = LegalParserCycleProposal(
-        expected_metric_gain={"phase8_quality_complete_rate": 0.1}
-    )
+    proposal = LegalParserCycleProposal(expected_metric_gain={"phase8_quality_complete_rate": 0.1})
 
     quality = daemon._enforce_metric_stall_quality(
         proposal=proposal,
@@ -4107,9 +4286,7 @@ def test_daemon_metric_gate_tracks_phase8_quality_metrics():
         "phase8_decoder_grounded_phrase_rate": 0.95,
         "phase8_prover_syntax_valid_rate": 1.0,
         "phase8_ir_grounded_slot_rate": 0.90,
-        "phase8_coverage_blocker_distribution": {
-            "missing_reconstruction_slot:action": 1
-        },
+        "phase8_coverage_blocker_distribution": {"missing_reconstruction_slot:action": 1},
     }
 
 
@@ -4293,7 +4470,10 @@ def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp
     cycle = daemon.run_cycle(cycle_index=2)
 
     assert len(fake_router.calls) == 2
-    assert "metric no-progress recovery requires a non-exports production" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert (
+        "metric no-progress recovery requires a non-exports production"
+        in cycle["proposal_attempts"][0]["retry_reason"]
+    )
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["changed_files"] == [
@@ -4367,7 +4547,9 @@ def test_roadmap_pivot_quality_rejects_more_procedural_trigger_exports(tmp_path)
     proposal = LegalParserCycleProposal(
         summary="Add deterministic export coverage for another procedural trigger proof prerequisite.",
         requirements_addressed=["procedural timeline export coverage"],
-        acceptance_criteria=["procedure.event_relations classify a new triggered_by_foo_of relation"],
+        acceptance_criteria=[
+            "procedure.event_relations classify a new triggered_by_foo_of relation"
+        ],
         expected_metric_gain={"coverage_expansion": "procedural trigger export coverage"},
     )
     quality = {"valid": True, "reasons": []}
@@ -4392,7 +4574,9 @@ def test_roadmap_pivot_quality_allows_phase8_prover_syntax_slice(tmp_path):
     proposal = LegalParserCycleProposal(
         summary="Add local theorem-prover syntax validation for LegalNormIR exports.",
         requirements_addressed=["Phase 8 prover syntax"],
-        acceptance_criteria=["frame logic and deontic temporal first-order logic syntax checks run"],
+        acceptance_criteria=[
+            "frame logic and deontic temporal first-order logic syntax checks run"
+        ],
         expected_metric_gain={"prover_syntax_coverage": "local logic stack syntax validation"},
     )
     quality = {"valid": True, "reasons": []}
@@ -4429,7 +4613,9 @@ def test_metric_stall_retention_accepts_claimed_metric_progress(tmp_path):
 def test_metric_stall_retention_allows_coverage_gain_for_irreducible_residual(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
-    proposal = LegalParserCycleProposal(expected_metric_gain={"deterministic_coverage": "new parser case"})
+    proposal = LegalParserCycleProposal(
+        expected_metric_gain={"deterministic_coverage": "new parser case"}
+    )
 
     result = daemon._metric_stall_retention_result(
         proposal=proposal,
@@ -4451,7 +4637,9 @@ def test_retained_change_summary_detects_no_content_change(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
 
-    retained = daemon._retained_change_summary({"ipfs_datasets_py/logic/deontic/example.py": "same"})
+    retained = daemon._retained_change_summary(
+        {"ipfs_datasets_py/logic/deontic/example.py": "same"}
+    )
 
     assert retained["has_retained_changes"] is False
     assert retained["reason"] == "no_file_content_changed_after_apply"
@@ -4464,7 +4652,9 @@ def test_retained_change_summary_detects_changed_file(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
 
-    retained = daemon._retained_change_summary({"ipfs_datasets_py/logic/deontic/example.py": "before"})
+    retained = daemon._retained_change_summary(
+        {"ipfs_datasets_py/logic/deontic/example.py": "before"}
+    )
 
     assert retained["has_retained_changes"] is True
     assert retained["changed_files"] == ["ipfs_datasets_py/logic/deontic/example.py"]
@@ -4473,13 +4663,17 @@ def test_retained_change_summary_detects_changed_file(tmp_path):
 def test_dirty_touched_files_reports_uncommitted_target_file(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
-    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo, check=True
+    )
     __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     path = repo / "ipfs_datasets_py/logic/deontic/example.py"
     path.parent.mkdir(parents=True)
     path.write_text("before\n", encoding="utf-8")
     __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
-    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True
+    )
     path.write_text("after\n", encoding="utf-8")
     config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
@@ -4492,13 +4686,17 @@ def test_dirty_touched_files_reports_uncommitted_target_file(tmp_path):
 def test_dirty_touched_files_reports_rename_destination(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
-    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo, check=True
+    )
     __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     old_path = repo / "ipfs_datasets_py/logic/deontic/old.py"
     old_path.parent.mkdir(parents=True)
     old_path.write_text("before\n", encoding="utf-8")
     __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
-    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True
+    )
     __import__("subprocess").run(
         [
             "git",
@@ -4537,7 +4735,9 @@ def test_git_status_porcelain_paths_deduplicate_and_use_rename_destination():
 def test_current_status_exposes_dirty_legal_parser_targets(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
-    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo, check=True
+    )
     __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
     maintenance_test = repo / "tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py"
@@ -4549,7 +4749,9 @@ def test_current_status_exposes_dirty_legal_parser_targets(tmp_path):
     maintenance_test.write_text("before\n", encoding="utf-8")
     unrelated.write_text("before\n", encoding="utf-8")
     __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
-    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True
+    )
     target.write_text("after\n", encoding="utf-8")
     maintenance_test.write_text("after\n", encoding="utf-8")
     unrelated.write_text("after\n", encoding="utf-8")
@@ -4592,9 +4794,10 @@ def test_current_status_exposes_dirty_legal_parser_targets(tmp_path):
     assert progress["dirty_legal_parser_targets_error"] == {}
     assert progress["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
     assert progress["dirty_legal_parser_targets_checked_at"]
-    assert progress["dirty_legal_parser_targets_fingerprint"] == status[
-        "dirty_legal_parser_targets_fingerprint"
-    ]
+    assert (
+        progress["dirty_legal_parser_targets_fingerprint"]
+        == status["dirty_legal_parser_targets_fingerprint"]
+    )
 
 
 def test_current_status_exposes_dirty_target_detection_failure(tmp_path, monkeypatch):
@@ -4646,12 +4849,16 @@ def test_current_status_exposes_dirty_target_detection_failure(tmp_path, monkeyp
 def test_dirty_legal_parser_target_fingerprint_changes_with_untracked_content(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
-    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo, check=True
+    )
     __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     tracked = repo / "README.md"
     tracked.write_text("tracked\n", encoding="utf-8")
     __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
-    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True
+    )
     target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
     target.parent.mkdir(parents=True)
     target.write_text("first\n", encoding="utf-8")
@@ -4711,13 +4918,17 @@ def test_progress_report_lists_dirty_target_detection_failure(tmp_path):
 def test_progress_summary_exposes_active_dirty_touched_rejection_files(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
-    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo, check=True
+    )
     __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
     target.parent.mkdir(parents=True)
     target.write_text("before\n", encoding="utf-8")
     __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
-    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True
+    )
     target.write_text("stranded\n", encoding="utf-8")
     config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
@@ -4755,13 +4966,17 @@ def test_progress_summary_exposes_active_dirty_touched_rejection_files(tmp_path)
 def test_progress_summary_does_not_report_stale_dirty_rejection_files_as_active(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
-    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo, check=True
+    )
     __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
     target.parent.mkdir(parents=True)
     target.write_text("clean\n", encoding="utf-8")
     __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
-    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True
+    )
     config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
     cycle = {
@@ -4847,7 +5062,9 @@ def test_progress_summary_exposes_candidate_validation_rejection_signature(tmp_p
     assert latest_failure["summary"]["failed_tests"] == [
         "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
     ]
-    assert progress["repeated_rejection_family"]["reason"] == "candidate_post_apply_validation_failed"
+    assert (
+        progress["repeated_rejection_family"]["reason"] == "candidate_post_apply_validation_failed"
+    )
     assert progress["repeated_rejection_family"]["count"] == 1
     assert progress["repeated_rejection_family"]["changed_files"] == [
         "ipfs_datasets_py/logic/deontic/formula_builder.py",
@@ -4990,8 +5207,16 @@ def test_repeated_validation_failure_family_uses_stable_focused_signature():
         },
     }
     rejections = [
-        {"cycle_index": 1, "changed_files": base_failure["changed_files"], "latest_candidate_validation_failure": base_failure},
-        {"cycle_index": 2, "changed_files": noisy_failure["changed_files"], "latest_candidate_validation_failure": noisy_failure},
+        {
+            "cycle_index": 1,
+            "changed_files": base_failure["changed_files"],
+            "latest_candidate_validation_failure": base_failure,
+        },
+        {
+            "cycle_index": 2,
+            "changed_files": noisy_failure["changed_files"],
+            "latest_candidate_validation_failure": noisy_failure,
+        },
     ]
 
     family = _repeated_validation_failure_family(rejections)
@@ -5078,8 +5303,16 @@ def test_repeated_validation_failure_family_normalizes_byte_repr_headers():
 
     family = _repeated_validation_failure_family(
         [
-            {"cycle_index": 1, "changed_files": changed_files, "latest_candidate_validation_failure": first_failure},
-            {"cycle_index": 2, "changed_files": changed_files, "latest_candidate_validation_failure": second_failure},
+            {
+                "cycle_index": 1,
+                "changed_files": changed_files,
+                "latest_candidate_validation_failure": first_failure,
+            },
+            {
+                "cycle_index": 2,
+                "changed_files": changed_files,
+                "latest_candidate_validation_failure": second_failure,
+            },
         ]
     )
 
@@ -5130,9 +5363,9 @@ def test_optimizer_progress_snapshot_includes_repeated_rejection_family(tmp_path
     assert snapshot["repeated_rejection_family"]["count"] == 4
     assert snapshot["repeated_validation_failure_family"]["count"] == 2
     assert snapshot["candidate_post_apply_validation_rejection_count"] == 4
-    assert snapshot["latest_candidate_post_apply_validation_failure"]["summary"]["failure_head"] == (
-        "focused_tests: failed"
-    )
+    assert snapshot["latest_candidate_post_apply_validation_failure"]["summary"][
+        "failure_head"
+    ] == ("focused_tests: failed")
 
 
 def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
@@ -5152,7 +5385,9 @@ def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
         "current_feedback": ["repair_required_count: 1"],
         "git_retained_work": {
             "head": "def456",
-            "commits_since_run_start": ["def456 legal-parser-daemon: cycle 2 retained parser improvement"],
+            "commits_since_run_start": [
+                "def456 legal-parser-daemon: cycle 2 retained parser improvement"
+            ],
             "uncommitted_files": ["M ipfs_datasets_py/logic/deontic/formula_builder.py"],
             "diff_since_run_start_stat": "formula_builder.py | 3 ++-",
         },

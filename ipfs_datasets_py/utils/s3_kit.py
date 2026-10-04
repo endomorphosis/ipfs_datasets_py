@@ -8,25 +8,26 @@ import tempfile
 import json
 from typing import Any, Dict, List, Optional, Union
 
+
 class s3_kit:
     """
     S3 Toolkit for AWS S3 and S3-Compatible Storage Operations
 
-    The s3_kit class provides a comprehensive interface for interacting with AWS S3 and 
-    S3-compatible storage services. It offers simplified methods for common file and 
-    directory operations including upload, download, copy, move, list, and delete 
-    operations. The class supports both file-level and directory-level operations 
+    The s3_kit class provides a comprehensive interface for interacting with AWS S3 and
+    S3-compatible storage services. It offers simplified methods for common file and
+    directory operations including upload, download, copy, move, list, and delete
+    operations. The class supports both file-level and directory-level operations
     with progress tracking capabilities.
 
-    This toolkit abstracts the complexity of boto3 S3 operations and provides a 
-    unified interface for managing S3 objects and directories. It supports custom 
-    S3 configurations, session management, and handles both AWS S3 and S3-compatible 
+    This toolkit abstracts the complexity of boto3 S3 operations and provides a
+    unified interface for managing S3 objects and directories. It supports custom
+    S3 configurations, session management, and handles both AWS S3 and S3-compatible
     endpoints.
 
     Args:
         resources (Any): Resource configuration for S3 operations (currently unused)
-        meta (Optional[Dict[str, Any]], optional): Metadata dictionary containing S3 
-            configuration. If provided and contains 's3cfg' key, initializes the S3 
+        meta (Optional[Dict[str, Any]], optional): Metadata dictionary containing S3
+            configuration. If provided and contains 's3cfg' key, initializes the S3
             session automatically. Defaults to None.
 
     Key Features:
@@ -100,16 +101,16 @@ class s3_kit:
             'endpoint': 'https://s3.amazonaws.com'
         }
         s3 = s3_kit(None, {'s3cfg': s3_config})
-        
+
         # List directory contents
         files = s3.s3_ls_dir('my-folder/', 'my-bucket')
-        
+
         # Upload a file
         result = s3.s3_ul_file('/local/file.txt', 'remote/file.txt', 'my-bucket')
-        
+
         # Download a directory
         result = s3.s3_dl_dir('remote-folder/', '/local/folder/', 'my-bucket')
-        
+
         # Use callable interface
         files = s3('ls_dir', dir='my-folder/', bucket_name='my-bucket')
 
@@ -120,6 +121,7 @@ class s3_kit:
         - Supports both AWS S3 and S3-compatible storage endpoints
         - Session management is handled automatically with configuration caching
     """
+
     def __init__(self, resources: Any, meta: Optional[Dict[str, Any]] = None) -> None:
         """
         Initialize the S3 toolkit with optional configuration.
@@ -129,7 +131,7 @@ class s3_kit:
         the provided configuration.
 
         Args:
-            resources (Any): Resource configuration parameter (currently unused but 
+            resources (Any): Resource configuration parameter (currently unused but
                 maintained for interface compatibility)
             meta (Optional[Dict[str, Any]], optional): Metadata dictionary that may contain:
                 - 's3cfg': S3 configuration dictionary with connection parameters
@@ -177,15 +179,15 @@ class s3_kit:
         self.get_session = self.get_session
         if meta is not None:
             if "s3cfg" in meta:
-                if meta['s3cfg'] is not None:
-                    self.config = meta['s3cfg']
-                    self.get_session(meta['s3cfg'])
+                if meta["s3cfg"] is not None:
+                    self.config = meta["s3cfg"]
+                    self.get_session(meta["s3cfg"])
 
     def __call__(self, method: str, **kwargs: Any) -> Any:
         """
         Dynamic method dispatcher for S3 operations.
 
-        Provides a callable interface to access all S3 operations through a single 
+        Provides a callable interface to access all S3 operations through a single
         method dispatcher. This allows for dynamic method invocation based on string
         method names.
 
@@ -222,50 +224,50 @@ class s3_kit:
             >>> result = s3('ul_file', upload_file='local.txt', path='remote.txt', bucket='my-bucket')
         """
         match method:
-            case 'ls_dir':
-                self.method = 'ls_dir'
+            case "ls_dir":
+                self.method = "ls_dir"
                 return self.s3_ls_dir(**kwargs)
-            case 'rm_dir':
-                self.method = 'rm_dir'
+            case "rm_dir":
+                self.method = "rm_dir"
                 return self.s3_rm_dir(**kwargs)
-            case 'cp_dir':
-                self.method = 'cp_dir'
+            case "cp_dir":
+                self.method = "cp_dir"
                 return self.s3_cp_dir(**kwargs)
-            case 'mv_dir':
-                self.method = 'mv_dir'
+            case "mv_dir":
+                self.method = "mv_dir"
                 return self.s3_mv_dir(**kwargs)
-            case 'dl_dir':
-                self.method = 'dl_dir'
+            case "dl_dir":
+                self.method = "dl_dir"
                 return self.s3_dl_dir(**kwargs)
-            case 'ul_dir':
-                self.method = 'ul_dir'
+            case "ul_dir":
+                self.method = "ul_dir"
                 return self.s3_ul_dir(**kwargs)
-            case 'ls_file':
-                self.method = 'ls_file'
+            case "ls_file":
+                self.method = "ls_file"
                 return self.s3_ls_file(**kwargs)
-            case 'rm_file':
-                self.method = 'rm_file'
+            case "rm_file":
+                self.method = "rm_file"
                 return self.s3_rm_file(**kwargs)
-            case 'cp_file':
-                self.method = 'cp_file'
+            case "cp_file":
+                self.method = "cp_file"
                 return self.s3_cp_file(**kwargs)
-            case 'mv_file':
-                self.method = 'mv_file'
+            case "mv_file":
+                self.method = "mv_file"
                 return self.s3_mv_file(**kwargs)
-            case 'dl_file':
-                self.method = 'dl_file'
+            case "dl_file":
+                self.method = "dl_file"
                 return self.s3_dl_file(**kwargs)
-            case 'ul_file':
-                self.method = 'ul_file'
+            case "ul_file":
+                self.method = "ul_file"
                 return self.s3_ul_file(**kwargs)
-            case 'mk_dir':
-                self.method = 'mk_dir'
+            case "mk_dir":
+                self.method = "mk_dir"
                 return self.s3_mkdir(**kwargs)
-            case 'get_session':
-                self.method = 'get_session'
+            case "get_session":
+                self.method = "get_session"
                 return self.get_session(**kwargs)
-            case 'config_to_boto':
-                self.method = 'config_to_boto'
+            case "config_to_boto":
+                self.method = "config_to_boto"
                 return self.config_to_boto(**kwargs)
             case _:
                 raise AttributeError(f"Method '{method}' not recognized")
@@ -297,7 +299,7 @@ class s3_kit:
             ...     print(f"File: {file['key']}, Size: {file['size']} bytes")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
 
@@ -307,10 +309,10 @@ class s3_kit:
         directory = {}
         for obj in bucket_objects:
             result = {}
-            result['key'] = obj.key
-            result['last_modified'] = datetime.datetime.timestamp(obj.last_modified)
-            result['size'] = obj.size
-            result['e_tag'] = obj.e_tag
+            result["key"] = obj.key
+            result["last_modified"] = datetime.datetime.timestamp(obj.last_modified)
+            result["size"] = obj.size
+            result["e_tag"] = obj.e_tag
             objects.append(result)
         return objects
 
@@ -339,7 +341,7 @@ class s3_kit:
             >>> print(f"Deleted {len(deleted_files)} files")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -355,13 +357,14 @@ class s3_kit:
                 "key": this_key,
                 "e_tag": this_etag,
                 "last_modified": datetime.datetime.timestamp(last_modified),
-                "size": size
+                "size": size,
             }
             directory.append(results)
         return directory
 
-
-    def s3_cp_dir(self, src_path: str, dst_path: str, bucket: str, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+    def s3_cp_dir(
+        self, src_path: str, dst_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Copy an S3 directory to another location within the same bucket.
 
@@ -388,7 +391,7 @@ class s3_kit:
             >>> print(f"Copied {len(results)} files")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
 
@@ -422,12 +425,14 @@ class s3_kit:
                     "key": src_key,
                     "e_tag": this_etag,
                     "last_modified": datetime.datetime.timestamp(last_modified),
-                    "size": size
+                    "size": size,
                 }
                 directory[obj.key] = results
         return directory
 
-    def s3_mv_dir(self, src_path: str, dst_path: str, bucket: str, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+    def s3_mv_dir(
+        self, src_path: str, dst_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Move an S3 directory to another location within the same bucket.
 
@@ -458,7 +463,7 @@ class s3_kit:
             >>> print(f"Moved {len(results)} files")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
 
@@ -488,18 +493,19 @@ class s3_kit:
                                 e_tag = request1[item][item2]
                             elif item2 == "LastModified":
                                 last_modified = request1[item][item2]
-                request2 = obj.delete(
-                )
+                request2 = obj.delete()
                 results = {
                     "key": src_key,
                     "e_tag": this_etag,
                     "last_modified": datetime.datetime.timestamp(last_modified),
-                    "size": size
+                    "size": size,
                 }
                 directory[obj.key] = results
         return directory
 
-    def s3_dl_dir(self, remote_path: str, local_path: str, bucket: str, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+    def s3_dl_dir(
+        self, remote_path: str, local_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Download an S3 directory to the local filesystem.
 
@@ -536,7 +542,7 @@ class s3_kit:
             >>> print(f"Downloaded {len(results)} files to /local/docs/")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         directory = {}
@@ -544,19 +550,19 @@ class s3_kit:
         objects = s3bucket.objects.filter(Prefix=remote_path)
         for obj in objects:
             request = obj.get()
-            data = request['Body'].read()
+            data = request["Body"].read()
             filename = os.path.basename(obj.key)
             if not os.path.exists(local_path):
                 os.makedirs(local_path)
             ## split te local path string and make sure that all the sub folders exist
-            local_path_split = local_path.split('/')
+            local_path_split = local_path.split("/")
             for i in range(1, len(local_path_split)):
-                local_path_check = os.path.join('/', *local_path_split[:i])
+                local_path_check = os.path.join("/", *local_path_split[:i])
                 if not os.path.exists(local_path_check):
                     os.mkdir(local_path_check)
 
             local_file = os.path.join(local_path, filename)
-            with open(local_file, 'wb') as this_file:
+            with open(local_file, "wb") as this_file:
                 this_file.write(data)
             results = {
                 "key": obj.key,
@@ -568,7 +574,9 @@ class s3_kit:
 
         return directory
 
-    def s3_ul_dir(self, local_path: str, remote_path: str, bucket: str, **kwargs: Any) -> Dict[str, Dict[str, Any]]:
+    def s3_ul_dir(
+        self, local_path: str, remote_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Upload a local directory to S3.
 
@@ -605,7 +613,7 @@ class s3_kit:
             >>> print(f"Uploaded {len(results)} files")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -616,7 +624,7 @@ class s3_kit:
         for upload_file in files:
             if os.path.isfile(upload_file):
                 file_extension = os.path.splitext(upload_file)[1]
-                upload_file = open(upload_file, 'rb')
+                upload_file = open(upload_file, "rb")
             else:
                 raise Exception("upload_file must be a file")
             upload_key = os.path.join(remote_path, os.path.basename(upload_file.name))
@@ -630,7 +638,9 @@ class s3_kit:
             results[response.key] = result
         return results
 
-    def s3_ls_file(self, filekey: str, bucket: str, **kwargs: Any) -> Union[Dict[str, Dict[str, Any]], bool]:
+    def s3_ls_file(
+        self, filekey: str, bucket: str, **kwargs: Any
+    ) -> Union[Dict[str, Dict[str, Any]], bool]:
         """
         List metadata for a specific S3 file or files matching a prefix.
 
@@ -644,7 +654,7 @@ class s3_kit:
                 - s3cfg (Dict[str, Any], optional): S3 configuration override
 
         Returns:
-            Union[Dict[str, Dict[str, Any]], bool]: 
+            Union[Dict[str, Dict[str, Any]], bool]:
                 - If objects found: Dictionary mapping object keys to metadata dictionaries,
                   each containing:
                   - key (str): S3 object key
@@ -666,7 +676,7 @@ class s3_kit:
             ...     print("File not found")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -720,7 +730,7 @@ class s3_kit:
             >>> print(f"Deleted file: {result['key']}, Size: {result['size']} bytes")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -732,7 +742,7 @@ class s3_kit:
         request = this_object.delete(
             Key=this_path,
         )
-        #print(request)
+        # print(request)
         results = {
             "key": key,
             "e_tag": e_tag,
@@ -741,7 +751,9 @@ class s3_kit:
         }
         return results
 
-    def s3_cp_file(self, src_path: str, dst_path: str, bucket: str, **kwargs: Any) -> Dict[str, Any]:
+    def s3_cp_file(
+        self, src_path: str, dst_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Any]:
         """
         Copy an S3 file to another location within the same bucket.
 
@@ -771,7 +783,7 @@ class s3_kit:
             >>> print(f"Copied to: {result['key']}, Size: {result['size']} bytes")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -801,7 +813,9 @@ class s3_kit:
         }
         return results
 
-    def s3_mv_file(self, src_path: str, dst_path: str, bucket: str, **kwargs: Any) -> Dict[str, Any]:
+    def s3_mv_file(
+        self, src_path: str, dst_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Any]:
         """
         Move an S3 file to another location within the same bucket.
 
@@ -835,7 +849,7 @@ class s3_kit:
             >>> print(f"Moved to: {result['key']}, Size: {result['size']} bytes")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -851,18 +865,17 @@ class s3_kit:
 
         content_length = this_object.content_length
         for obj in request1:
-            #print(obj)
+            # print(obj)
             if obj == "CopyObjectResult":
                 request_result = request1[obj]
                 for result in request_result:
-                    #print(result)
+                    # print(result)
                     if result == "ETag":
                         e_tag = request_result[result]
                     elif result == "LastModified":
                         last_modified = request_result[result]
                         pass
-        request2 = this_object.delete(
-        )
+        request2 = this_object.delete()
         results = {
             "key": dst_path,
             "e_tag": e_tag,
@@ -871,12 +884,13 @@ class s3_kit:
         }
         return results
 
-
-    def s3_dl_file(self, remote_path: str, local_path: str, bucket: str, **kwargs: Any) -> Dict[str, Any]:
+    def s3_dl_file(
+        self, remote_path: str, local_path: str, bucket: str, **kwargs: Any
+    ) -> Dict[str, Any]:
         """
         Download an S3 file to the local filesystem.
 
-        Downloads a single file from S3 to the specified local path. Handles S3 URL 
+        Downloads a single file from S3 to the specified local path. Handles S3 URL
         parsing and creates local directory structure as needed.
 
         Args:
@@ -903,12 +917,12 @@ class s3_kit:
         Examples:
             >>> result = s3.s3_dl_file('documents/report.pdf', '/local/report.pdf', 'my-bucket')
             >>> print(f"Downloaded {result['size']} bytes to {result['local_path']}")
-            
+
             >>> # Using S3 URL
             >>> result = s3.s3_dl_file('s3://my-bucket/documents/report.pdf', '/local/report.pdf', 'my-bucket')
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         if "s3://" in remote_path:
@@ -918,8 +932,8 @@ class s3_kit:
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
         this_object = s3bucket.Object(remote_path)
         response = this_object.get()
-        data = response['Body'].read()
-        with open(local_path, 'wb') as this_file:
+        data = response["Body"].read()
+        with open(local_path, "wb") as this_file:
             this_file.write(data)
         results = {
             "key": remote_path,
@@ -966,19 +980,19 @@ class s3_kit:
             >>> # Upload local file
             >>> result = s3.s3_ul_file('/local/report.pdf', 'documents/report.pdf', 'my-bucket')
             >>> print(f"Uploaded to: {result['key']}, Size: {result['size']} bytes")
-            
+
             >>> # Upload raw bytes
             >>> data = b"Hello, world!"
             >>> result = s3.s3_ul_file(data, 'text/hello.txt', 'my-bucket')
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
 
         if os.path.isfile(upload_file):
             file_extension = os.path.splitext(upload_file)[1]
-            upload_file = open(upload_file, 'rb')
+            upload_file = open(upload_file, "rb")
         else:
             upload_file = io.BytesIO(upload_file)
             file_extension = os.path.splitext(path)[1]
@@ -1031,7 +1045,7 @@ class s3_kit:
             >>> print(f"Created directory: {result['key']}")
         """
         if "s3cfg" in kwargs:
-            s3_config = kwargs['s3cfg']
+            s3_config = kwargs["s3cfg"]
         else:
             s3_config = self.config
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
@@ -1044,32 +1058,28 @@ class s3_kit:
         }
         return results
 
-
-    def s3_upload_object(self, f: Any, bucket: str, key: str, s3_config: Any, progress_callback: Any) -> Any:
+    def s3_upload_object(
+        self, f: Any, bucket: str, key: str, s3_config: Any, progress_callback: Any
+    ) -> Any:
         """
         Upload a file object to an S3 bucket.
-        
+
         Args:
             f (Any): File-like object to upload to S3.
             bucket (str): Name of the S3 bucket to upload to.
             key (str): S3 object key (path) where the file will be stored.
             s3_config (Any): Configuration object containing S3 connection settings.
             progress_callback (Any): Callback function to track upload progress.
-            
+
         Returns:
             Any: Response from the S3 upload operation.
-            
+
         Raises:
             Exception: If the upload fails due to network issues, authentication errors,
                       or invalid bucket/key parameters.
         """
         s3 = self.get_session(s3_config)
-        return s3.upload_fileobj(
-            f,
-            bucket,
-            key,
-            Callback=progress_callback
-        )
+        return s3.upload_fileobj(f, bucket, key, Callback=progress_callback)
 
     def s3_download_object(self, f, bucket, key, s3_config, progress_callback):
         """
@@ -1086,13 +1096,7 @@ class s3_kit:
             The result of the S3 download operation
         """
         s3 = self.get_session(s3_config)
-        return s3.download_fileobj(
-            bucket,
-            key,
-            f,
-            Callback=progress_callback
-        )
-
+        return s3.download_fileobj(bucket, key, f, Callback=progress_callback)
 
     def upload_dir(self, dir: str, bucket: str, s3_config: Any, progress_callback: Any) -> Any:
         """
@@ -1108,11 +1112,7 @@ class s3_kit:
             Any: Result of the upload operation from the S3 session.
         """
         s3 = self.get_session(s3_config)
-        return s3.upload_file(
-            dir,
-            bucket,
-            progress_callback
-        )
+        return s3.upload_file(dir, bucket, progress_callback)
 
     def download_dir(self, dir: str, bucket: str, s3_config: Any, progress_callback: Any) -> Any:
         """
@@ -1128,11 +1128,7 @@ class s3_kit:
             Any: The result of the download operation from the S3 session.
         """
         s3 = self.get_session(s3_config)
-        return s3.download_file(
-            bucket,
-            dir,
-            progress_callback
-        )
+        return s3.download_file(bucket, dir, progress_callback)
 
     def s3_read_dir(self, dir: str, bucket: str, s3_config: Any) -> Any:
         """
@@ -1192,12 +1188,7 @@ class s3_kit:
             The result of the S3 download operation
         """
         s3 = self.get_session(s3_config)
-        return s3.download_fileobj(
-            bucket,
-            key,
-            f,
-            Callback=progress_callback
-        )
+        return s3.download_fileobj(bucket, key, f, Callback=progress_callback)
 
     def s3_mkdir(self, dir: str, bucket: str, s3_config: Any) -> Any:
         """
@@ -1206,7 +1197,7 @@ class s3_kit:
         Args:
             dir (str): The directory path/key to create in the S3 bucket.
             bucket (str): The name of the S3 bucket where the directory will be created.
-            s3_config (Any): S3 configuration object containing connection parameters 
+            s3_config (Any): S3 configuration object containing connection parameters
                              that will be converted to boto3 format.
 
         Returns:
@@ -1289,26 +1280,26 @@ class s3_kit:
             >>> # Legacy format
             >>> legacy_config = {'accessKey': 'key', 'secretKey': 'secret', 'endpoint': 'https://s3.amazonaws.com'}
             >>> boto_config = s3.config_to_boto(legacy_config)
-            
+
             >>> # Boto3 format
             >>> boto3_config = {'aws_access_key_id': 'key', 'aws_secret_access_key': 'secret', 'endpoint_url': 'https://s3.amazonaws.com'}
             >>> boto_config = s3.config_to_boto(boto3_config)
         """
         if "accessKey" in s3_config.keys():
             results = dict(
-                service_name = 's3',
-                aws_access_key_id = s3_config['accessKey'],
-                aws_secret_access_key = s3_config['secretKey'],
-                endpoint_url = s3_config['endpoint'],
+                service_name="s3",
+                aws_access_key_id=s3_config["accessKey"],
+                aws_secret_access_key=s3_config["secretKey"],
+                endpoint_url=s3_config["endpoint"],
             )
             self.config = results
             return results
         elif "aws_access_key_id" in s3_config.keys():
             results = dict(
-                service_name = 's3',
-                aws_access_key_id = s3_config['aws_access_key_id'],
-                aws_secret_access_key = s3_config['aws_secret_access_key'],
-                endpoint_url = s3_config['endpoint_url'],
+                service_name="s3",
+                aws_access_key_id=s3_config["aws_access_key_id"],
+                aws_secret_access_key=s3_config["aws_secret_access_key"],
+                endpoint_url=s3_config["endpoint_url"],
             )
             self.config = results
             return results

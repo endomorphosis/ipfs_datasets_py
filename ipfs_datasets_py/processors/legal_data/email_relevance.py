@@ -23,7 +23,9 @@ DEFAULT_QUERY_TERMS: tuple[str, ...] = (
 
 
 def tokenize_relevance_text(value: str) -> list[str]:
-    return [token for token in re.findall(r"[A-Za-z0-9]+", str(value or "").lower()) if len(token) >= 3]
+    return [
+        token for token in re.findall(r"[A-Za-z0-9]+", str(value or "").lower()) if len(token) >= 3
+    ]
 
 
 def load_keyword_lines(raw_keywords: Iterable[str], keyword_files: Iterable[str]) -> list[str]:
@@ -65,9 +67,13 @@ def collect_email_relevance_text(
 ) -> dict[str, str]:
     return {
         "subject": str(subject or ""),
-        "headers": "\n".join(part for part in (sender, recipient, cc, reply_to) if str(part or "").strip()),
+        "headers": "\n".join(
+            part for part in (sender, recipient, cc, reply_to) if str(part or "").strip()
+        ),
         "body": str(body_text or ""),
-        "attachments": "\n".join(str(item or "") for item in attachment_names if str(item or "").strip()),
+        "attachments": "\n".join(
+            str(item or "") for item in attachment_names if str(item or "").strip()
+        ),
     }
 
 
@@ -139,7 +145,9 @@ def generate_email_search_plan(
         for index in range(0, min(len(subject_terms), max_subject_terms), 2)
         if " ".join(subject_terms[index : index + 2]).strip()
     ]
-    address_filters = [str(value or "").strip().lower() for value in addresses if str(value or "").strip()]
+    address_filters = [
+        str(value or "").strip().lower() for value in addresses if str(value or "").strip()
+    ]
     return {
         "complaint_query": str(complaint_query or "").strip(),
         "complaint_terms": complaint_terms,

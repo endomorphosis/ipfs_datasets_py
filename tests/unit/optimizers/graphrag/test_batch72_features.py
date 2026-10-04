@@ -26,10 +26,9 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMedia
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx():
-    return OntologyGenerationContext(
-        data_source="test", data_type="text", domain="general"
-    )
+    return OntologyGenerationContext(data_source="test", data_type="text", domain="general")
 
 
 def _ont(n=2):
@@ -48,6 +47,7 @@ def _mediator():
 # ---------------------------------------------------------------------------
 # OntologyCritic.compare_with_baseline
 # ---------------------------------------------------------------------------
+
 
 class TestCompareWithBaseline:
     def test_returns_dict(self):
@@ -74,7 +74,14 @@ class TestCompareWithBaseline:
     def test_dimension_deltas_keys(self):
         critic = OntologyCritic(use_llm=False)
         r = critic.compare_with_baseline(_ont(), _ont(), _ctx())
-        dims = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        dims = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert dims == set(r["dimension_deltas"].keys())
 
     def test_improved_when_current_higher(self):
@@ -95,6 +102,7 @@ class TestCompareWithBaseline:
 # ---------------------------------------------------------------------------
 # OntologyCritic.summarize_batch_results
 # ---------------------------------------------------------------------------
+
 
 class TestSummarizeBatchResults:
     def test_returns_list(self):
@@ -124,6 +132,7 @@ class TestSummarizeBatchResults:
 # ---------------------------------------------------------------------------
 # OntologyMediator.log_action_summary
 # ---------------------------------------------------------------------------
+
 
 class TestLogActionSummary:
     def test_no_error_empty(self, caplog):
@@ -162,6 +171,7 @@ class TestLogActionSummary:
 # ExtractionConfig.to_json
 # ---------------------------------------------------------------------------
 
+
 class TestExtractionConfigToJson:
     def test_returns_str(self):
         assert isinstance(ExtractionConfig().to_json(), str)
@@ -189,6 +199,7 @@ class TestExtractionConfigToJson:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.extract_keyphrases
 # ---------------------------------------------------------------------------
+
 
 class TestExtractKeyphrases:
     def test_returns_list(self):

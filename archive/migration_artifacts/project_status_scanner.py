@@ -18,6 +18,7 @@ from typing import Dict, List, Any, Optional
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+
 class ProjectStatusScanner:
     def __init__(self):
         self.project_root = Path(__file__).resolve().parent
@@ -30,7 +31,7 @@ class ProjectStatusScanner:
             "missing_components": [],
             "test_coverage": {},
             "integration_status": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
     def scan_tools_structure(self):
@@ -43,7 +44,7 @@ class ProjectStatusScanner:
 
         tool_categories = []
         for item in self.tools_path.iterdir():
-            if item.is_dir() and not item.name.startswith('__'):
+            if item.is_dir() and not item.name.startswith("__"):
                 tool_categories.append(item.name)
 
         print(f"Found {len(tool_categories)} tool categories: {', '.join(tool_categories)}")
@@ -53,14 +54,14 @@ class ProjectStatusScanner:
             tools = []
 
             for item in category_path.iterdir():
-                if item.is_file() and item.suffix == '.py' and not item.name.startswith('__'):
+                if item.is_file() and item.suffix == ".py" and not item.name.startswith("__"):
                     tool_name = item.stem
                     tools.append(tool_name)
 
             self.status["tools_analysis"][category] = {
                 "tools": tools,
                 "count": len(tools),
-                "path": str(category_path)
+                "path": str(category_path),
             }
 
             print(f"  {category}: {len(tools)} tools - {', '.join(tools)}")
@@ -84,30 +85,36 @@ class ProjectStatusScanner:
 
                     # Check if the tool has the expected function
                     if hasattr(module, tool_name):
-                        category_results.append({
-                            "name": tool_name,
-                            "status": "✅ Import OK",
-                            "has_function": True
-                        })
+                        category_results.append(
+                            {"name": tool_name, "status": "✅ Import OK", "has_function": True}
+                        )
                         successful_imports += 1
                     else:
-                        category_results.append({
-                            "name": tool_name,
-                            "status": "⚠️ Import OK but no main function",
-                            "has_function": False
-                        })
+                        category_results.append(
+                            {
+                                "name": tool_name,
+                                "status": "⚠️ Import OK but no main function",
+                                "has_function": False,
+                            }
+                        )
 
                 except Exception as e:
-                    category_results.append({
-                        "name": tool_name,
-                        "status": f"❌ Import failed: {str(e)[:50]}...",
-                        "error": str(e)
-                    })
+                    category_results.append(
+                        {
+                            "name": tool_name,
+                            "status": f"❌ Import failed: {str(e)[:50]}...",
+                            "error": str(e),
+                        }
+                    )
 
             import_results[category] = category_results
 
         self.status["test_coverage"]["import_results"] = import_results
-        self.status["test_coverage"]["import_success_rate"] = f"{successful_imports}/{total_tools} ({successful_imports/total_tools*100:.1f}%)" if total_tools > 0 else "0/0"
+        self.status["test_coverage"]["import_success_rate"] = (
+            f"{successful_imports}/{total_tools} ({successful_imports / total_tools * 100:.1f}%)"
+            if total_tools > 0
+            else "0/0"
+        )
 
         print(f"Import Success Rate: {self.status['test_coverage']['import_success_rate']}")
 
@@ -125,7 +132,7 @@ class ProjectStatusScanner:
             "simple_server.py",
             "configs.py",
             "logger.py",
-            "__init__.py"
+            "__init__.py",
         ]
 
         server_status = {}
@@ -139,6 +146,7 @@ class ProjectStatusScanner:
                 if component == "server.py":
                     try:
                         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+
                         server_status[component] += " (IPFSDatasetsMCPServer importable)"
                     except Exception as e:
                         server_status[component] += f" (Import error: {str(e)[:30]}...)"
@@ -146,6 +154,7 @@ class ProjectStatusScanner:
                 elif component == "configs.py":
                     try:
                         from ipfs_datasets_py.mcp_server.configs import Configs
+
                         server_status[component] += " (Configs importable)"
                     except Exception as e:
                         server_status[component] += f" (Import error: {str(e)[:30]}...)"
@@ -185,7 +194,7 @@ class ProjectStatusScanner:
             "ipfs_knn_index.py",
             "data_provenance.py",
             "security.py",
-            "knowledge_graph_extraction.py"
+            "knowledge_graph_extraction.py",
         ]
 
         integration_status = {}
@@ -213,30 +222,42 @@ class ProjectStatusScanner:
         if "import_success_rate" in self.status["test_coverage"]:
             success_rate = self.status["test_coverage"]["import_success_rate"]
             if "100%" not in success_rate:
-                recommendations.append("🔧 Fix tool import issues - not all tools are importing correctly")
+                recommendations.append(
+                    "🔧 Fix tool import issues - not all tools are importing correctly"
+                )
 
         # Check for missing server components
         if self.status["missing_components"]:
-            recommendations.append(f"📁 Create missing components: {', '.join(self.status['missing_components'])}")
+            recommendations.append(
+                f"📁 Create missing components: {', '.join(self.status['missing_components'])}"
+            )
 
         # Check tool coverage vs library features
         total_tools = sum(info["count"] for info in self.status["tools_analysis"].values())
         if total_tools < 20:
-            recommendations.append("🛠️ Consider adding more tools to improve library feature coverage")
+            recommendations.append(
+                "🛠️ Consider adding more tools to improve library feature coverage"
+            )
 
         # Check for integration issues
-        missing_modules = [k for k, v in self.status["integration_status"].items() if "Missing" in v]
+        missing_modules = [
+            k for k, v in self.status["integration_status"].items() if "Missing" in v
+        ]
         if missing_modules:
-            recommendations.append(f"🔗 Check integration - some library modules are missing: {', '.join(missing_modules)}")
+            recommendations.append(
+                f"🔗 Check integration - some library modules are missing: {', '.join(missing_modules)}"
+            )
 
         # General recommendations
-        recommendations.extend([
-            "🧪 Run comprehensive functional tests on all tools",
-            "📝 Validate that all library features are properly exposed via MCP tools",
-            "🚀 Test the complete MCP server startup and tool registration process",
-            "📋 Create integration tests with actual MCP clients",
-            "🔍 Verify async/sync compatibility across all tools"
-        ])
+        recommendations.extend(
+            [
+                "🧪 Run comprehensive functional tests on all tools",
+                "📝 Validate that all library features are properly exposed via MCP tools",
+                "🚀 Test the complete MCP server startup and tool registration process",
+                "📋 Create integration tests with actual MCP clients",
+                "🔍 Verify async/sync compatibility across all tools",
+            ]
+        )
 
         self.status["recommendations"] = recommendations
 
@@ -246,7 +267,7 @@ class ProjectStatusScanner:
     def save_status_report(self):
         """Save the complete status report."""
         report_path = self.project_root / "project_status_report.json"
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(self.status, f, indent=2, default=str)
         print(f"\n📄 Full report saved to: {report_path}")
 
@@ -267,9 +288,11 @@ class ProjectStatusScanner:
         print("🎯 SCAN COMPLETE - Check recommendations above")
         print("=" * 60)
 
+
 def main():
     scanner = ProjectStatusScanner()
     scanner.run_comprehensive_scan()
+
 
 if __name__ == "__main__":
     main()

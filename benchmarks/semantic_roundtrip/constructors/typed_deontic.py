@@ -30,15 +30,9 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 
 
-TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE: Final = (
-    "TypedDeonticCanonicalConstructor@1"
-)
-TYPED_DEONTIC_DIAGNOSTICS_INTERFACE: Final = (
-    "TypedDeonticConstructorDiagnostics@1"
-)
-TYPED_DEONTIC_TRIGGER_DETECTOR_INTERFACE: Final = (
-    "TypedDeonticDiagnosticTriggerDetector@1"
-)
+TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE: Final = "TypedDeonticCanonicalConstructor@1"
+TYPED_DEONTIC_DIAGNOSTICS_INTERFACE: Final = "TypedDeonticConstructorDiagnostics@1"
+TYPED_DEONTIC_TRIGGER_DETECTOR_INTERFACE: Final = "TypedDeonticDiagnosticTriggerDetector@1"
 
 # Conservative default aligned with SelectiveRepairPolicy.
 DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD: Final = 0.65
@@ -92,9 +86,7 @@ def _flatten_strings(value: object) -> list[str]:
             result.append(str(key))
             result.extend(_flatten_strings(item))
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         result = []
         for item in value:
             result.extend(_flatten_strings(item))
@@ -131,10 +123,7 @@ def _best_atom_scored(
     scored = sorted(
         (
             (
-                max(
-                    [_jaccard(text, candidate)]
-                    + [_jaccard(piece, candidate) for piece in pieces]
-                ),
+                max([_jaccard(text, candidate)] + [_jaccard(piece, candidate) for piece in pieces]),
                 candidate,
             )
             for candidate in candidates
@@ -166,23 +155,13 @@ def _best_atom(
 
 def _map_many(value: object, candidates: Sequence[str]) -> tuple[str, ...]:
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
     else:
         values = [value]
-    return tuple(
-        sorted(
-            {
-                atom
-                for item in values
-                if (atom := _best_atom(item, candidates))
-            }
-        )
-    )
+    return tuple(sorted({atom for item in values if (atom := _best_atom(item, candidates))}))
 
 
 def _map_many_scored(
@@ -191,9 +170,7 @@ def _map_many_scored(
     """Map multi-valued facets and retain the minimum matched confidence."""
 
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
@@ -253,21 +230,21 @@ def _modality_conflict(value: object, source_text: str = "") -> bool:
             flags=re.IGNORECASE,
         )
     }
-    label_conflict = len(
-        {
-            "obligation" if item.lower() in {"obligation"} else item.lower()
-            for item in modality_labels
-        }
-        & {"obligation", "prohibition", "permission", "forbidden", "permitted"}
-    ) > 1
+    label_conflict = (
+        len(
+            {
+                "obligation" if item.lower() in {"obligation"} else item.lower()
+                for item in modality_labels
+            }
+            & {"obligation", "prohibition", "permission", "forbidden", "permitted"}
+        )
+        > 1
+    )
     return bool(
         (has_obligation and has_prohibition)
         or (has_obligation and has_permission and has_prohibition)
         or label_conflict
-        or (
-            "obligation" in text.lower()
-            and "prohibition" in text.lower()
-        )
+        or ("obligation" in text.lower() and "prohibition" in text.lower())
     )
 
 
@@ -294,14 +271,11 @@ class TypedDeonticSlotDiagnostic:
         ):
             raise ContractError("slot diagnostic rule_index must be nonnegative")
         if self.canonical_field not in RULE_FIELDS:
-            raise ContractError(
-                f"unknown slot diagnostic field: {self.canonical_field!r}"
-            )
+            raise ContractError(f"unknown slot diagnostic field: {self.canonical_field!r}")
         kind = str(self.kind or "").strip().lower()
         if kind not in {"missing", "low_confidence", "contradictory"}:
             raise ContractError(
-                "slot diagnostic kind must be missing, low_confidence, "
-                "or contradictory"
+                "slot diagnostic kind must be missing, low_confidence, or contradictory"
             )
         object.__setattr__(self, "kind", kind)
         if self.confidence is not None:
@@ -310,9 +284,7 @@ class TypedDeonticSlotDiagnostic:
                 or not isinstance(self.confidence, (int, float))
                 or not 0.0 <= float(self.confidence) <= 1.0
             ):
-                raise ContractError(
-                    "slot diagnostic confidence must be from zero to one"
-                )
+                raise ContractError("slot diagnostic confidence must be from zero to one")
             object.__setattr__(self, "confidence", float(self.confidence))
         if self.evidence is not None:
             cleaned = " ".join(str(self.evidence).split())
@@ -341,9 +313,7 @@ class TypedDeonticConstructorDiagnostics:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "slots", tuple(self.slots))
-        if not all(
-            isinstance(item, TypedDeonticSlotDiagnostic) for item in self.slots
-        ):
+        if not all(isinstance(item, TypedDeonticSlotDiagnostic) for item in self.slots):
             raise ContractError("diagnostics slots are invalid")
         if self.detail is not None and not str(self.detail).strip():
             raise ContractError("diagnostics detail must be nonblank")
@@ -360,9 +330,7 @@ class TypedDeonticConstructorDiagnostics:
     def repair_triggers(
         self,
         *,
-        low_confidence_threshold: float = (
-            DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-        ),
+        low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
     ) -> tuple[object, ...]:
         """Project slot diagnostics into selective-repair ``RepairTrigger``s.
 
@@ -410,12 +378,8 @@ class TypedDeonticConstruction:
     def __post_init__(self) -> None:
         if not isinstance(self.result, ConstructorResult):
             raise ContractError("result must be a ConstructorResult")
-        if not isinstance(
-            self.diagnostics, TypedDeonticConstructorDiagnostics
-        ):
-            raise ContractError(
-                "diagnostics must be TypedDeonticConstructorDiagnostics"
-            )
+        if not isinstance(self.diagnostics, TypedDeonticConstructorDiagnostics):
+            raise ContractError("diagnostics must be TypedDeonticConstructorDiagnostics")
 
 
 def derive_slot_diagnostics(
@@ -423,9 +387,7 @@ def derive_slot_diagnostics(
     *,
     source_text: str = "",
     field_confidences: Mapping[tuple[int, str], float | None] | None = None,
-    low_confidence_threshold: float = (
-        DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-    ),
+    low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
     modality_raw: Mapping[int, object] | None = None,
 ) -> tuple[TypedDeonticSlotDiagnostic, ...]:
     """Derive missing / low-confidence / contradictory slot diagnostics.
@@ -455,10 +417,7 @@ def derive_slot_diagnostics(
                         canonical_field=field,
                         kind="missing",
                         confidence=confidence,
-                        evidence=(
-                            "source contains temporal cue but temporal "
-                            "slot is empty"
-                        ),
+                        evidence=("source contains temporal cue but temporal slot is empty"),
                         value=value,
                     )
                 )
@@ -506,8 +465,7 @@ def derive_slot_diagnostics(
                     kind="contradictory",
                     confidence=confidences.get((index, "modality")),
                     evidence=(
-                        "obligation and prohibition cues co-occur in "
-                        "compiler or source evidence"
+                        "obligation and prohibition cues co-occur in compiler or source evidence"
                     ),
                     value=rule.modality,
                 )
@@ -539,9 +497,7 @@ def project_legal_norms_with_diagnostics(
     vocabulary: AllowedAtomVocabulary,
     *,
     source_text: str = "",
-    low_confidence_threshold: float = (
-        DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-    ),
+    low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
 ) -> tuple[CanonicalRuleIR, TypedDeonticConstructorDiagnostics]:
     """Project norms and retain field-level diagnostic evidence."""
 
@@ -558,13 +514,9 @@ def project_legal_norms_with_diagnostics(
             raise ContractError("typed deontic norm must provide to_dict()")
         data = to_dict()
         if not isinstance(data, Mapping):
-            raise ContractError(
-                "typed deontic norm to_dict() must return an object"
-            )
+            raise ContractError("typed deontic norm to_dict() must return an object")
 
-        actor, actor_conf = _best_atom_scored(
-            data.get("actor"), vocabulary.actors
-        )
+        actor, actor_conf = _best_atom_scored(data.get("actor"), vocabulary.actors)
         action, action_conf = _best_atom_scored(
             [data.get("action"), data.get("action_verb")],
             vocabulary.actions,
@@ -643,9 +595,7 @@ def project_legal_norms(
     canonical boundary.
     """
 
-    canonical_ir, _diagnostics = project_legal_norms_with_diagnostics(
-        norms, vocabulary
-    )
+    canonical_ir, _diagnostics = project_legal_norms_with_diagnostics(norms, vocabulary)
     return canonical_ir
 
 
@@ -653,9 +603,7 @@ def derive_repair_triggers_from_ir_and_source(
     request: ConstructorRequest,
     baseline_ir: CanonicalRuleIR,
     *,
-    low_confidence_threshold: float = (
-        DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-    ),
+    low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
     field_confidences: Mapping[tuple[int, str], float | None] | None = None,
 ) -> tuple[object, ...]:
     """Emit repair triggers from IR + source diagnostics (no IR mutation)."""
@@ -671,9 +619,7 @@ def derive_repair_triggers_from_ir_and_source(
         ),
         source_text=request.source_text,
     )
-    return diagnostics.repair_triggers(
-        low_confidence_threshold=low_confidence_threshold
-    )
+    return diagnostics.repair_triggers(low_confidence_threshold=low_confidence_threshold)
 
 
 def _failure(
@@ -694,9 +640,7 @@ class TypedDeonticCanonicalConstructor:
     def identity(self) -> str:
         return TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
 
-    def construct_with_diagnostics(
-        self, request: ConstructorRequest
-    ) -> TypedDeonticConstruction:
+    def construct_with_diagnostics(self, request: ConstructorRequest) -> TypedDeonticConstruction:
         """Construct IR and retain trigger-ready diagnostics out of band.
 
         The scored no-repair baseline continues to use :meth:`construct`, which
@@ -710,9 +654,7 @@ class TypedDeonticCanonicalConstructor:
                     FailureReason.INVALID_OUTPUT,
                     "request must be ConstructorRequest",
                 ),
-                TypedDeonticConstructorDiagnostics(
-                    detail="request must be ConstructorRequest"
-                ),
+                TypedDeonticConstructorDiagnostics(detail="request must be ConstructorRequest"),
             )
 
         try:
@@ -748,9 +690,7 @@ class TypedDeonticCanonicalConstructor:
                     f"typed deontic conversion raised {type(exc).__name__}",
                 ),
                 TypedDeonticConstructorDiagnostics(
-                    detail=(
-                        f"typed deontic conversion raised {type(exc).__name__}"
-                    ),
+                    detail=(f"typed deontic conversion raised {type(exc).__name__}"),
                     source_text=request.source_text,
                 ),
             )
@@ -782,10 +722,7 @@ class TypedDeonticCanonicalConstructor:
             )
 
         try:
-            norms = [
-                LegalNormIR.from_parser_element(element)
-                for element in elements
-            ]
+            norms = [LegalNormIR.from_parser_element(element) for element in elements]
             canonical_ir, diagnostics = project_legal_norms_with_diagnostics(
                 norms,
                 request.allowed_atom_vocabulary,
@@ -806,9 +743,7 @@ class TypedDeonticCanonicalConstructor:
                     f"typed deontic projection raised {type(exc).__name__}",
                 ),
                 TypedDeonticConstructorDiagnostics(
-                    detail=(
-                        f"typed deontic projection raised {type(exc).__name__}"
-                    ),
+                    detail=(f"typed deontic projection raised {type(exc).__name__}"),
                     source_text=request.source_text,
                 ),
             )
@@ -817,14 +752,10 @@ class TypedDeonticCanonicalConstructor:
             return TypedDeonticConstruction(
                 _failure(
                     FailureReason.EMPTY_L1,
-                    "typed deontic records did not map to supported "
-                    "canonical rules",
+                    "typed deontic records did not map to supported canonical rules",
                 ),
                 TypedDeonticConstructorDiagnostics(
-                    detail=(
-                        "typed deontic records did not map to supported "
-                        "canonical rules"
-                    ),
+                    detail=("typed deontic records did not map to supported canonical rules"),
                     source_text=request.source_text,
                 ),
             )
@@ -852,21 +783,15 @@ class TypedDeonticDiagnosticTriggerDetector:
     def __init__(
         self,
         *,
-        low_confidence_threshold: float = (
-            DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-        ),
-        field_confidences: (
-            Mapping[tuple[int, str], float | None] | None
-        ) = None,
+        low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
+        field_confidences: (Mapping[tuple[int, str], float | None] | None) = None,
     ) -> None:
         if (
             isinstance(low_confidence_threshold, bool)
             or not isinstance(low_confidence_threshold, (int, float))
             or not 0.0 <= float(low_confidence_threshold) <= 1.0
         ):
-            raise ContractError(
-                "low_confidence_threshold must be from zero to one"
-            )
+            raise ContractError("low_confidence_threshold must be from zero to one")
         self._low_confidence_threshold = float(low_confidence_threshold)
         self._field_confidences = dict(field_confidences or {})
 

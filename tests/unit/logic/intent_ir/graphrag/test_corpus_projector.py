@@ -62,13 +62,10 @@ def _record(**changes: object) -> SkillCenterSkillRecord:
         "source_id": "source-1",
         "primary_source_id": "primary-1",
         "metadata_yaml": (
-            'license_spdx: "MIT"\n'
-            'author: "Example Maintainer"\n'
-            "tools: [git, curl]\n"
+            'license_spdx: "MIT"\nauthor: "Example Maintainer"\ntools: [git, curl]\n'
         ),
         "skill_md": (
-            "# Install\n\nUse the package.\n"
-            "## Verify\n\nSee https://example.test/reference.\n"
+            "# Install\n\nUse the package.\n## Verify\n\nSee https://example.test/reference.\n"
         ),
         "library_md": "",
         "dataset_id": "example/skillcenter",
@@ -187,12 +184,8 @@ def test_deterministic_batch_projects_duplicate_and_source_family_edges() -> Non
     )
     second_evidence = CorpusEvidenceRecord(second)
 
-    graph_a = CorpusProjector(RecordingStore()).project(
-        (first_evidence, second_evidence)
-    )
-    graph_b = CorpusProjector(RecordingStore()).project(
-        (second_evidence, first_evidence)
-    )
+    graph_a = CorpusProjector(RecordingStore()).project((first_evidence, second_evidence))
+    graph_b = CorpusProjector(RecordingStore()).project((second_evidence, first_evidence))
 
     assert graph_a == graph_b
     edge_types = [edge.edge_type for edge in graph_a.edges]
@@ -200,13 +193,9 @@ def test_deterministic_batch_projects_duplicate_and_source_family_edges() -> Non
     assert edge_types.count(CorpusEdgeType.SAME_PRIMARY_SOURCE) == 1
     assert edge_types.count(CorpusEdgeType.NEIGHBOR_OF) == 1
     duplicate = next(
-        edge
-        for edge in graph_a.edges
-        if edge.edge_type is CorpusEdgeType.DUPLICATE_OF
+        edge for edge in graph_a.edges if edge.edge_type is CorpusEdgeType.DUPLICATE_OF
     )
-    assert duplicate.properties["content_digest"] == (
-        "sha256:" + first.content_sha256
-    )
+    assert duplicate.properties["content_digest"] == ("sha256:" + first.content_sha256)
 
 
 def test_scored_neighbor_observation_is_bound_to_the_graph_edge() -> None:
@@ -235,11 +224,7 @@ def test_scored_neighbor_observation_is_bound_to_the_graph_edge() -> None:
         )
     )
 
-    edge = next(
-        item
-        for item in graph.edges
-        if item.edge_type is CorpusEdgeType.NEIGHBOR_OF
-    )
+    edge = next(item for item in graph.edges if item.edge_type is CorpusEdgeType.NEIGHBOR_OF)
     assert edge.properties == {
         "matched_terms": ("credential", "rotate"),
         "retrieval_method": "bm25-okapi",
@@ -262,9 +247,7 @@ def test_policy_limited_record_is_indexed_without_copying_its_body() -> None:
     assert graph.source_bodies[0].stored is False
     assert graph.source_bodies[0].cid not in store.blocks
     assert len(store.blocks) == 1  # graph block only
-    skill = next(
-        node for node in graph.nodes if node.node_type is CorpusNodeType.SKILL
-    )
+    skill = next(node for node in graph.nodes if node.node_type is CorpusNodeType.SKILL)
     assert skill.properties["allowed_use"] == "quarantined_unknown"
     assert skill.properties["body_stored"] is False
 
@@ -373,9 +356,7 @@ def test_current_ipld_adapter_wraps_store_without_legacy_graph_module() -> None:
     adapter = IPLDArtifactStore(raw_store)
     payload = b"current IPLD adapter"
 
-    assert adapter.put_bytes(payload, media_type="application/octet-stream") == (
-        cid_v1(payload)
-    )
+    assert adapter.put_bytes(payload, media_type="application/octet-stream") == (cid_v1(payload))
     assert raw_store.calls == [(payload, True, "raw")]
     module_source = inspect.getsource(corpus_projector)
     assert "from ipfs_datasets_py.knowledge_graphs.ipld" not in module_source
@@ -384,9 +365,7 @@ def test_current_ipld_adapter_wraps_store_without_legacy_graph_module() -> None:
 
 def test_projector_rejects_mismatched_policy_and_dangling_neighbor() -> None:
     record = _record()
-    other_decision = SkillSourcePolicy().evaluate(
-        replace(record, skill_id="other")
-    )
+    other_decision = SkillSourcePolicy().evaluate(replace(record, skill_id="other"))
     with pytest.raises(CorpusProjectionError, match="does not match"):
         CorpusEvidenceRecord(record, policy_decision=other_decision)
     store = RecordingStore()

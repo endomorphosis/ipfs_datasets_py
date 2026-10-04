@@ -23,8 +23,16 @@ def main() -> None:
     ap.add_argument("--shadow-audit", required=True, help="Shadow mode audit JSON path")
     ap.add_argument("--canary-decision", required=True, help="Canary decision JSON path")
     ap.add_argument("--candidate-report", required=True, help="Hybrid/candidate report JSON path")
-    ap.add_argument("--runtime-stats", default="", help="Optional runtime stats JSON path (p95_latency_ms, timeout_rate, error_rate)")
-    ap.add_argument("--allow-missing-runtime-stats", action="store_true", help="Do not fail GA gate when runtime stats are missing")
+    ap.add_argument(
+        "--runtime-stats",
+        default="",
+        help="Optional runtime stats JSON path (p95_latency_ms, timeout_rate, error_rate)",
+    )
+    ap.add_argument(
+        "--allow-missing-runtime-stats",
+        action="store_true",
+        help="Do not fail GA gate when runtime stats are missing",
+    )
     ap.add_argument("--output", required=True, help="Output GA gate assessment JSON path")
     args = ap.parse_args()
 

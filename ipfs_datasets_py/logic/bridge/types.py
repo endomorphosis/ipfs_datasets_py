@@ -66,10 +66,7 @@ class LegalIRDocument:
             "source": self.source,
             "source_text": self.source_text,
             "version": self.version,
-            "views": {
-                name: view.to_dict()
-                for name, view in sorted(self.views.items())
-            },
+            "views": {name: view.to_dict() for name, view in sorted(self.views.items())},
         }
 
     def to_json(self) -> str:
@@ -371,9 +368,7 @@ def _graph_data_has_neo4j_shape(graph_data: Any) -> bool:
         return False
 
     node_ids = {
-        str(getattr(node, "id", "") or "")
-        for node in nodes
-        if str(getattr(node, "id", "") or "")
+        str(getattr(node, "id", "") or "") for node in nodes if str(getattr(node, "id", "") or "")
     }
     if len(node_ids) != len(nodes):
         return False

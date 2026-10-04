@@ -39,8 +39,7 @@ def _adaptive_explicit_ambiguity_from_source(
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
         and ambiguity.metadata.get("predicted_family") == predicted_family
         and ambiguity.metadata.get("target_family") == target_family
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == predicted_family_source
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == predicted_family_source
     ]
     return matches[0] if matches else None
 
@@ -132,9 +131,7 @@ def test_compiler_exposes_packet_001865_explicit_compiler_ambiguity(
     priority: float,
     expected_type: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -176,11 +173,6 @@ def test_compiler_exposes_packet_001865_explicit_compiler_ambiguity(
         ambiguity.metadata.get("effective_compiler_ambiguity_policy_pair")
         == f"{predicted_family}->{target_family}"
     )
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)

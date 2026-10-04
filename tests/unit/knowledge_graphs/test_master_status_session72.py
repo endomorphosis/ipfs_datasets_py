@@ -27,14 +27,16 @@ _DOCS_KG = _REPO_ROOT / "docs" / "knowledge_graphs"
 # Test helper: lazy KnowledgeGraph construction
 # ---------------------------------------------------------------------------
 
+
 def _make_kg():
     from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
     kg = KnowledgeGraph("test_gql")
     alice = kg.add_entity("person", "Alice", {"age": 30, "city": "NYC"})
-    bob   = kg.add_entity("person", "Bob",   {"age": 25})
-    carol = kg.add_entity("org",    "Acme",  {"size": 100})
-    kg.add_relationship("knows",    alice, bob)
-    kg.add_relationship("works_at", bob,   carol)
+    bob = kg.add_entity("person", "Bob", {"age": 25})
+    carol = kg.add_entity("org", "Acme", {"size": 100})
+    kg.add_relationship("knows", alice, bob)
+    kg.add_relationship("works_at", bob, carol)
     return kg, alice, bob, carol
 
 
@@ -42,11 +44,13 @@ def _make_kg():
 # 1. GraphQLParser — valid queries
 # ===========================================================================
 
+
 class TestGraphQLParser:
     """GraphQLParser handles the supported query subset."""
 
     def test_simple_selection(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ person { name } }")
         assert len(doc.selections) == 1
         assert doc.selections[0].name == "person"
@@ -54,32 +58,38 @@ class TestGraphQLParser:
 
     def test_multiple_top_level_fields(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ person { name } org { size } }")
         assert len(doc.selections) == 2
         assert doc.selections[1].name == "org"
 
     def test_arguments_string(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse('{ person(name: "Alice") { name } }')
         assert doc.selections[0].arguments == {"name": "Alice"}
 
     def test_arguments_int(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ person(age: 30) { name } }")
         assert doc.selections[0].arguments["age"] == 30
 
     def test_arguments_bool(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ person(active: true) { name } }")
         assert doc.selections[0].arguments["active"] is True
 
     def test_arguments_null(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ person(email: null) { name } }")
         assert doc.selections[0].arguments["email"] is None
 
     def test_alias(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ folks: person { name } }")
         sel = doc.selections[0]
         assert sel.alias == "folks"
@@ -87,11 +97,13 @@ class TestGraphQLParser:
 
     def test_query_keyword_ignored(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("query MyOp { person { name } }")
         assert doc.selections[0].name == "person"
 
     def test_nested_fields(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ person { name knows { name age } } }")
         fields = doc.selections[0].sub_fields
         nested = next(f for f in fields if f.name == "knows")
@@ -99,6 +111,7 @@ class TestGraphQLParser:
 
     def test_float_argument(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLParser
+
         doc = GraphQLParser().parse("{ entity(confidence: 0.9) { name } }")
         assert abs(doc.selections[0].arguments["confidence"] - 0.9) < 1e-9
 
@@ -107,20 +120,25 @@ class TestGraphQLParser:
 # 2. GraphQLParseError — invalid queries
 # ===========================================================================
 
+
 class TestGraphQLParseErrors:
     """GraphQLParser raises GraphQLParseError for malformed input."""
 
     def test_unclosed_brace(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import (
-            GraphQLParser, GraphQLParseError,
+            GraphQLParser,
+            GraphQLParseError,
         )
+
         with pytest.raises(GraphQLParseError):
             GraphQLParser().parse("{ person { name }")
 
     def test_missing_colon_after_alias(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import (
-            GraphQLParser, GraphQLParseError,
+            GraphQLParser,
+            GraphQLParseError,
         )
+
         # "{ a b }" — 'a' is consumed as a name, then 'b' next to it triggers
         # an issue when treated as alias; depends on parser path
         # Simplest trigger: expect ':' but get '{'
@@ -129,8 +147,10 @@ class TestGraphQLParseErrors:
 
     def test_invalid_argument_value(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import (
-            GraphQLParser, GraphQLParseError,
+            GraphQLParser,
+            GraphQLParseError,
         )
+
         with pytest.raises(GraphQLParseError):
             GraphQLParser().parse("{ person(name: {}) { name } }")
 
@@ -139,6 +159,7 @@ class TestGraphQLParseErrors:
         from ipfs_datasets_py.knowledge_graphs.query.graphql import (
             KnowledgeGraphQLExecutor,
         )
+
         kg, *_ = _make_kg()
         exe = KnowledgeGraphQLExecutor(kg)
         result = exe.execute("{ unclosed {")
@@ -150,18 +171,21 @@ class TestGraphQLParseErrors:
 # 3. KnowledgeGraphQLExecutor — basic entity queries
 # ===========================================================================
 
+
 class TestKGQLExecutorBasic:
     """Basic entity-type selection without filters."""
 
     def test_no_entities_returns_empty_list(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg = KnowledgeGraph("empty")
         result = KnowledgeGraphQLExecutor(kg).execute("{ person { name } }")
         assert result["data"]["person"] == []
 
     def test_returns_all_matching_type(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, bob, carol = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute("{ person { name } }")
         names = {r["name"] for r in result["data"]["person"]}
@@ -169,6 +193,7 @@ class TestKGQLExecutorBasic:
 
     def test_field_projection_name(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute("{ person { name } }")
         for r in result["data"]["person"]:
@@ -176,6 +201,7 @@ class TestKGQLExecutorBasic:
 
     def test_field_projection_id(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute("{ person { id } }")
         ids = {r["id"] for r in result["data"]["person"]}
@@ -183,6 +209,7 @@ class TestKGQLExecutorBasic:
 
     def test_field_projection_type(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute("{ person { type } }")
         for r in result["data"]["person"]:
@@ -190,6 +217,7 @@ class TestKGQLExecutorBasic:
 
     def test_no_sub_fields_returns_default_dict(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute("{ person }")
         first = result["data"]["person"][0]
@@ -199,6 +227,7 @@ class TestKGQLExecutorBasic:
 
     def test_data_key_always_present(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute("{ person { name } }")
         assert "data" in result
@@ -206,10 +235,9 @@ class TestKGQLExecutorBasic:
 
     def test_multiple_top_level_selections(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
-        result = KnowledgeGraphQLExecutor(kg).execute(
-            "{ person { name } org { name } }"
-        )
+        result = KnowledgeGraphQLExecutor(kg).execute("{ person { name } org { name } }")
         assert "person" in result["data"]
         assert "org" in result["data"]
         assert len(result["data"]["org"]) == 1
@@ -219,15 +247,15 @@ class TestKGQLExecutorBasic:
 # 4. KnowledgeGraphQLExecutor — argument filters
 # ===========================================================================
 
+
 class TestKGQLExecutorFilters:
     """Argument-based equality filters."""
 
     def test_filter_by_name(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, *_ = _make_kg()
-        result = KnowledgeGraphQLExecutor(kg).execute(
-            '{ person(name: "Alice") { name age } }'
-        )
+        result = KnowledgeGraphQLExecutor(kg).execute('{ person(name: "Alice") { name age } }')
         rows = result["data"]["person"]
         assert len(rows) == 1
         assert rows[0]["name"] == "Alice"
@@ -235,24 +263,23 @@ class TestKGQLExecutorFilters:
 
     def test_filter_by_property(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, *_ = _make_kg()
-        result = KnowledgeGraphQLExecutor(kg).execute(
-            "{ person(age: 25) { name } }"
-        )
+        result = KnowledgeGraphQLExecutor(kg).execute("{ person(age: 25) { name } }")
         rows = result["data"]["person"]
         assert len(rows) == 1
         assert rows[0]["name"] == "Bob"
 
     def test_filter_no_match_returns_empty(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
-        result = KnowledgeGraphQLExecutor(kg).execute(
-            '{ person(name: "Zara") { name } }'
-        )
+        result = KnowledgeGraphQLExecutor(kg).execute('{ person(name: "Zara") { name } }')
         assert result["data"]["person"] == []
 
     def test_filter_by_id(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, *_ = _make_kg()
         query = '{ person(id: "%s") { name } }' % alice.entity_id
         result = KnowledgeGraphQLExecutor(kg).execute(query)
@@ -260,10 +287,9 @@ class TestKGQLExecutorFilters:
 
     def test_arbitrary_property_filter(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
-        result = KnowledgeGraphQLExecutor(kg).execute(
-            '{ person(city: "NYC") { name } }'
-        )
+        result = KnowledgeGraphQLExecutor(kg).execute('{ person(city: "NYC") { name } }')
         rows = result["data"]["person"]
         assert len(rows) == 1
         assert rows[0]["name"] == "Alice"
@@ -273,11 +299,13 @@ class TestKGQLExecutorFilters:
 # 5. KnowledgeGraphQLExecutor — relationship traversal
 # ===========================================================================
 
+
 class TestKGQLExecutorRelationships:
     """Nested field resolves outgoing relationships to target entities."""
 
     def test_single_relationship(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, bob, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute(
             '{ person(name: "Alice") { name knows { name } } }'
@@ -288,6 +316,7 @@ class TestKGQLExecutorRelationships:
 
     def test_no_outgoing_relationship(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute(
             '{ person(name: "Alice") { name works_at { name } } }'
@@ -297,6 +326,7 @@ class TestKGQLExecutorRelationships:
 
     def test_relationship_with_sub_fields(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, bob, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute(
             '{ person(name: "Alice") { knows { name age } } }'
@@ -307,6 +337,7 @@ class TestKGQLExecutorRelationships:
 
     def test_aliased_relationship_field(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, *_ = _make_kg()
         result = KnowledgeGraphQLExecutor(kg).execute(
             '{ person(name: "Alice") { friends: knows { name } } }'
@@ -317,6 +348,7 @@ class TestKGQLExecutorRelationships:
     def test_relationship_target_has_default_fields(self):
         """No sub-field selection on leaf returns entity property (None for missing)."""
         from ipfs_datasets_py.knowledge_graphs.query.graphql import KnowledgeGraphQLExecutor
+
         kg, alice, *_ = _make_kg()
         # "knows" with no braces is a leaf property field, not relationship traversal
         result = KnowledgeGraphQLExecutor(kg).execute(
@@ -333,6 +365,7 @@ class TestKGQLExecutorRelationships:
 # 6. Integration — query module exports
 # ===========================================================================
 
+
 class TestQueryModuleExports:
     """GraphQL symbols are importable from the query module."""
 
@@ -347,6 +380,7 @@ class TestQueryModuleExports:
 
     def test_graphql_in_query_all(self):
         import ipfs_datasets_py.knowledge_graphs.query as q
+
         for sym in (
             "GraphQLParser",
             "GraphQLParseError",
@@ -358,6 +392,7 @@ class TestQueryModuleExports:
 
     def test_graphql_field_is_leaf(self):
         from ipfs_datasets_py.knowledge_graphs.query.graphql import GraphQLField
+
         leaf = GraphQLField(name="foo")
         nested = GraphQLField(name="bar", sub_fields=[leaf])
         assert leaf.is_leaf is True
@@ -367,6 +402,7 @@ class TestQueryModuleExports:
 # ===========================================================================
 # 7. Doc integrity — DEFERRED_FEATURES + ROADMAP
 # ===========================================================================
+
 
 class TestDocIntegritySession72:
     """Documentation reflects session 72 changes."""
@@ -395,6 +431,7 @@ class TestDocIntegritySession72:
 # ===========================================================================
 # 8. Version agreement
 # ===========================================================================
+
 
 class TestVersionAgreement:
     """MASTER_STATUS / CHANGELOG / ROADMAP all declare v3.22.26."""

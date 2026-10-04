@@ -190,7 +190,7 @@
 # # def test_permission_denied_config_file(tmp_path):
 # #     mock = mock_open()
 # #     mock.side_effect = PermissionError("Permission denied")
-    
+
 # #     with patch('builtins.open', mock):
 # #         config_path = tmp_path / "dummy.yaml"
 # #         parser = ConfigParser()
@@ -224,10 +224,10 @@
 # #         ("[1, 2, 3]", "list instead of mapping"),
 # #         ("true", "boolean instead of mapping")
 # #     ]
-    
+
 # #     parser = ConfigParser()
 # #     parser.configs_file_path = config_path
-    
+
 # #     for yaml_content, case_desc in test_cases:
 # #         config_path.write_text(yaml_content)
 # #         with pytest.raises(ValueError, match=r"Invalid configuration structure.*"), \
@@ -242,16 +242,13 @@
 # #     config_path2 = tmp_path / "configs2.yaml"
 # #     config_path1.touch()
 # #     config_path2.touch()
-    
+
 # #     with patch('os.getcwd', return_value=str(tmp_path)):
 # #         parser = ConfigParser()
 # #         with pytest.raises(ValueError, match="Multiple config files found"):
 # #             parser.load_and_parse_configs_file()
 
 # #### load_and_parse_configs_file() Argument Validation Issues ####
-
-
-
 
 
 # #### load_and_parse_configs_file() Version and compatibility Issues ####
@@ -268,5 +265,5 @@
 # #### parse_command_line() ####
 
 
-# #### save_current_config_settings_to_configs_file() #### 
+# #### save_current_config_settings_to_configs_file() ####
 

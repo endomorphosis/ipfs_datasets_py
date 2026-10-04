@@ -29,10 +29,7 @@ _PACKET_003779_FAMILY_PAIRS = (
 
 
 def test_packet_003779_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_003779_FAMILY_PAIRS)
-        == _PACKET_003779_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_003779_FAMILY_PAIRS) == _PACKET_003779_FAMILY_PAIRS
 
 
 def test_packet_003779_pairs_are_in_refined_modal_family_cue_policy_table() -> None:
@@ -63,7 +60,10 @@ def test_packet_003779_pairs_are_supported_across_compiler_ambiguity_policies() 
 
 def test_packet_003779_refined_margin_buffer_covers_target_pairs() -> None:
     for predicted_family, target_family in _PACKET_003779_FAMILY_PAIRS:
-        assert compiler_refined_modal_family_cue_margin_buffer(
-            predicted_family,
-            target_family,
-        ) > 0.0
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )

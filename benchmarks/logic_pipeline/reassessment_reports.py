@@ -84,9 +84,7 @@ REPORTS_SNAPSHOT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reassessment-reports-snapshot.v1"
 )
 REPLAY_RUN_ID: Final = "holdout-reassessment-v2-replay"
-_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(
-    PUBLISHED_REASSESSMENT_RUN_ID
-)
+_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(PUBLISHED_REASSESSMENT_RUN_ID)
 DEFAULT_REPLAY_INDEX_PATH: Final = _PUBLISHED_LAYOUT.replay_index
 DEFAULT_STATISTICS_PATH: Final = _PUBLISHED_LAYOUT.statistics_report
 DEFAULT_REPORTS_SNAPSHOT: Final = _PUBLISHED_LAYOUT.reports_snapshot
@@ -120,11 +118,7 @@ class ReassessmentReportsError(ValueError):
 
 
 def _replay_run_id(run_id: str) -> str:
-    return (
-        REPLAY_RUN_ID
-        if run_id == PUBLISHED_REASSESSMENT_RUN_ID
-        else run_id
-    )
+    return REPLAY_RUN_ID if run_id == PUBLISHED_REASSESSMENT_RUN_ID else run_id
 
 
 def HSSLEV1605D50() -> str:
@@ -150,9 +144,7 @@ def _sha_bytes(value: bytes) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise ReassessmentReportsError(f"{field} must be an object")
     return value
 
@@ -190,22 +182,16 @@ def _reject_duplicate_pairs(
 
 
 def _reject_nonfinite(token: str) -> object:
-    raise ReassessmentReportsError(
-        f"non-finite JSON number is forbidden: {token}"
-    )
+    raise ReassessmentReportsError(f"non-finite JSON number is forbidden: {token}")
 
 
 def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
     try:
         file_stat = path.lstat()
         if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(file_stat.st_mode):
-            raise ReassessmentReportsError(
-                f"{field} must be a regular non-symlink file"
-            )
+            raise ReassessmentReportsError(f"{field} must be a regular non-symlink file")
         if file_stat.st_size <= 0 or file_stat.st_size > _MAX_ARTIFACT_BYTES:
-            raise ReassessmentReportsError(
-                f"{field} size is outside the safe bound"
-            )
+            raise ReassessmentReportsError(f"{field} size is outside the safe bound")
         raw = path.read_bytes()
         text = raw.decode("utf-8")
     except ReassessmentReportsError:
@@ -258,9 +244,7 @@ def _load_sources(
         PilotReassessmentError,
         MatrixReassessmentError,
     ) as exc:
-        raise ReassessmentReportsError(
-            "reassessment source graph failed validation"
-        ) from exc
+        raise ReassessmentReportsError("reassessment source graph failed validation") from exc
     return holdout, pilot, matrix
 
 
@@ -330,23 +314,13 @@ def _build_pending_measured_replay_index(
             )
         ]
     except (TypeError, ValueError) as exc:
-        raise ReassessmentReportsError(
-            "holdout case results failed strict validation"
-        ) from exc
-    candidates = [
-        item for item in results if item.variant_id in selected_variants
-    ]
-    successes = sorted(
-        item.digest for item in candidates if item.kernel_accepted
-    )
+        raise ReassessmentReportsError("holdout case results failed strict validation") from exc
+    candidates = [item for item in results if item.variant_id in selected_variants]
+    successes = sorted(item.digest for item in candidates if item.kernel_accepted)
     failures = sorted(
         (
             (
-                (
-                    item.failure_code.value
-                    if item.failure_code is not None
-                    else item.status.value
-                ),
+                (item.failure_code.value if item.failure_code is not None else item.status.value),
                 item.variant_id,
                 item.case_id,
                 item.cache_mode.value,
@@ -395,17 +369,13 @@ def _build_pending_measured_replay_index(
         },
         "selection": {
             "kernel_verified_success_result_sha256s": successes,
-            "observed_failure_result_sha256s": [
-                item[-1] for item in failures
-            ],
+            "observed_failure_result_sha256s": [item[-1] for item in failures],
             "sampled_failure_result_sha256s": sampled,
             "required_success_replay_count": len(successes),
             "required_sampled_failure_replay_count": len(sampled),
             "selection_complete": True,
             "failure_sampling": {
-                "method": (
-                    "frozen deterministic sample by failure code and case id"
-                ),
+                "method": ("frozen deterministic sample by failure code and case id"),
                 "seed": 160550,
                 "status": "complete",
             },
@@ -479,9 +449,7 @@ def _build_replay_index(
     _assert_sealed_zero_population(holdout)
     holdout_path = _rooted(root, layout.holdout_report)
     source_binding = _mapping(holdout["source_binding"], "holdout source binding")
-    contract = _mapping(
-        holdout["frozen_execution_contract"], "holdout execution contract"
-    )
+    contract = _mapping(holdout["frozen_execution_contract"], "holdout execution contract")
     value: dict[str, object] = {
         "schema": REPLAY_REASSESSMENT_SCHEMA,
         "evidence": "HSSLEV1605D50",
@@ -620,9 +588,7 @@ def validate_replay_index(
         benchmark_root=benchmark_root,
     )
     if data != expected:
-        raise ReassessmentReportsError(
-            "replay index differs from recomputed holdout population"
-        )
+        raise ReassessmentReportsError("replay index differs from recomputed holdout population")
     return data
 
 
@@ -692,9 +658,7 @@ def _statistics_requests(
                 or case_result["run_id"] != matrix["run_id"]
                 or case_result["protocol_sha256"] != matrix["protocol_sha256"]
             ):
-                raise ReassessmentReportsError(
-                    "matrix statistics source identity changed"
-                )
+                raise ReassessmentReportsError("matrix statistics source identity changed")
             key = (
                 split,
                 str(reference["cache_mode"]),
@@ -702,9 +666,7 @@ def _statistics_requests(
                 str(reference["case_id"]),
             )
             if key in rows:
-                raise ReassessmentReportsError(
-                    "duplicate matrix statistics coordinate"
-                )
+                raise ReassessmentReportsError("duplicate matrix statistics coordinate")
             rows[key] = payload
 
     requests: list[AnalysisRequest] = []
@@ -713,30 +675,18 @@ def _statistics_requests(
             for candidate in _CANDIDATES:
                 observations: list[PairedCaseObservation] = []
                 case_ids = sorted(
-                    key[3]
-                    for key in rows
-                    if key[:3] == (split.value, cache_mode.value, "A0")
+                    key[3] for key in rows if key[:3] == (split.value, cache_mode.value, "A0")
                 )
                 if len(case_ids) != 10:
-                    raise ReassessmentReportsError(
-                        "matrix baseline statistics coverage changed"
-                    )
+                    raise ReassessmentReportsError("matrix baseline statistics coverage changed")
                 for case_id in case_ids:
-                    baseline_payload = rows[
-                        (split.value, cache_mode.value, "A0", case_id)
-                    ]
-                    candidate_payload = rows[
-                        (split.value, cache_mode.value, candidate, case_id)
-                    ]
-                    baseline = _mapping(
-                        baseline_payload["case_result"], "baseline case result"
-                    )
+                    baseline_payload = rows[(split.value, cache_mode.value, "A0", case_id)]
+                    candidate_payload = rows[(split.value, cache_mode.value, candidate, case_id)]
+                    baseline = _mapping(baseline_payload["case_result"], "baseline case result")
                     candidate_result = _mapping(
                         candidate_payload["case_result"], "candidate case result"
                     )
-                    baseline_job = _mapping(
-                        baseline_payload["job"], "baseline job"
-                    )
+                    baseline_job = _mapping(baseline_payload["job"], "baseline job")
                     case = _mapping(baseline_job["case"], "baseline case")
                     input_data = _mapping(case["input_data"], "case input data")
                     observations.append(
@@ -744,35 +694,22 @@ def _statistics_requests(
                             protocol_sha256=str(matrix["protocol_sha256"]),
                             run_id=str(matrix["run_id"]),
                             case_id=case_id,
-                            case_manifest_sha256=str(
-                                baseline["case_manifest_sha256"]
-                            ),
+                            case_manifest_sha256=str(baseline["case_manifest_sha256"]),
                             split=split,
                             cache_mode=cache_mode,
                             stratum=str(input_data["stratum"]),
                             baseline_variant_id="A0",
                             candidate_variant_id=candidate,
-                            baseline_result_sha256=str(
-                                baseline_payload["case_result_sha256"]
-                            ),
-                            candidate_result_sha256=str(
-                                candidate_payload["case_result_sha256"]
-                            ),
-                            baseline_value=(
-                                1.0 if baseline["kernel_accepted"] is True else 0.0
-                            ),
+                            baseline_result_sha256=str(baseline_payload["case_result_sha256"]),
+                            candidate_result_sha256=str(candidate_payload["case_result_sha256"]),
+                            baseline_value=(1.0 if baseline["kernel_accepted"] is True else 0.0),
                             candidate_value=(
-                                1.0
-                                if candidate_result["kernel_accepted"] is True
-                                else 0.0
+                                1.0 if candidate_result["kernel_accepted"] is True else 0.0
                             ),
                         )
                     )
                 spec = ComparisonSpec(
-                    comparison_id=(
-                        f"kernel-{split.value}-{cache_mode.value}-"
-                        f"{candidate.lower()}"
-                    ),
+                    comparison_id=(f"kernel-{split.value}-{cache_mode.value}-{candidate.lower()}"),
                     metric_id="kernel_verified_completion_rate",
                     category=MetricCategory.PRIMARY,
                     direction=MetricDirection.MAXIMIZE,
@@ -784,12 +721,8 @@ def _statistics_requests(
                     domain=AnalysisDomain.QUALITY,
                     stratum_dimension=StratumDimension.LOGIC_FAMILY,
                 )
-                requests.append(
-                    AnalysisRequest(spec=spec, observations=tuple(observations))
-                )
-    if len(requests) != 48 or sum(
-        len(item.observations) for item in requests
-    ) != 480:
+                requests.append(AnalysisRequest(spec=spec, observations=tuple(observations)))
+    if len(requests) != 48 or sum(len(item.observations) for item in requests) != 480:
         raise ReassessmentReportsError(
             "statistics request matrix is not 48 complete paired comparisons"
         )
@@ -809,24 +742,16 @@ def _build_reassessment_statistics(
     analyses = analyze_requests(requests, plan=plan)
     candidates: list[ParetoCandidate] = []
     pilot_candidates = {
-        str(_mapping(item, "pilot candidate")["variant_id"]): _mapping(
-            item, "pilot candidate"
-        )
+        str(_mapping(item, "pilot candidate")["variant_id"]): _mapping(item, "pilot candidate")
         for item in _array(
             pilot["candidate_evidence"],
             "pilot candidate evidence",
         )
     }
     for candidate_id in _CANDIDATES:
-        linked = tuple(
-            item
-            for item in analyses
-            if item.spec.candidate_variant_id == candidate_id
-        )
+        linked = tuple(item for item in analyses if item.spec.candidate_variant_id == candidate_id)
         linked_requests = tuple(
-            item
-            for item in requests
-            if item.spec.candidate_variant_id == candidate_id
+            item for item in requests if item.spec.candidate_variant_id == candidate_id
         )
         receipt_sha256s = tuple(
             sorted(
@@ -842,9 +767,7 @@ def _build_reassessment_statistics(
             )
         )
         linked_estimates = [
-            _mapping(item.summary, "paired analysis summary").get(
-                "candidate_estimate"
-            )
+            _mapping(item.summary, "paired analysis summary").get("candidate_estimate")
             for item in linked
         ]
         measured_estimates = [
@@ -856,8 +779,7 @@ def _build_reassessment_statistics(
             metric_value = 0.0
             safety_feasible = False
             safety_reason = (
-                "independent semantic-quality evidence unavailable; "
-                "holdout sealed unopened"
+                "independent semantic-quality evidence unavailable; holdout sealed unopened"
             )
         else:
             metric_value = (
@@ -974,9 +896,7 @@ def _domain_reports(
         "latency": {
             "pilot_development": {
                 "wall_time_ms_total": efficiency["wall_time_ms_total"],
-                "wall_time_ms_mean_per_coordinate": efficiency[
-                    "wall_time_ms_mean_per_coordinate"
-                ],
+                "wall_time_ms_mean_per_coordinate": efficiency["wall_time_ms_mean_per_coordinate"],
             },
             "holdout": None,
         },
@@ -996,9 +916,7 @@ def _domain_reports(
         "reliability": {
             "pilot_development": {
                 "status_counts": completeness["status_counts"],
-                "all_coordinates_terminal": completeness[
-                    "all_coordinates_terminal"
-                ],
+                "all_coordinates_terminal": completeness["all_coordinates_terminal"],
                 "kernel_invocation_count": proof["kernel_invocation_count"],
                 "kernel_acceptance_count": proof["kernel_acceptance_count"],
             },
@@ -1015,20 +933,16 @@ def _domain_reports(
             "pilot_development": [
                 {
                     "variant_id": item["variant_id"],
-                    "kernel_verified_rate": _mapping(
-                        item["efficacy"], "candidate efficacy"
-                    )["kernel_verified_rate"],
-                    "hard_case_verified_gain": _mapping(
-                        item["efficacy"], "candidate efficacy"
-                    )["hard_case_verified_gain"],
-                    "model_calls": _mapping(
-                        item["cost"], "candidate cost"
-                    )["model_calls"],
+                    "kernel_verified_rate": _mapping(item["efficacy"], "candidate efficacy")[
+                        "kernel_verified_rate"
+                    ],
+                    "hard_case_verified_gain": _mapping(item["efficacy"], "candidate efficacy")[
+                        "hard_case_verified_gain"
+                    ],
+                    "model_calls": _mapping(item["cost"], "candidate cost")["model_calls"],
                     "eligible": item["eligible"],
                 }
-                for item in _array(
-                    pilot["candidate_evidence"], "candidate evidence"
-                )
+                for item in _array(pilot["candidate_evidence"], "candidate evidence")
             ],
             "holdout": None,
         },
@@ -1069,9 +983,7 @@ def _domain_reports(
             "scheduled_pair_count": outcomes["scheduled_pair_count"],
             "observed_pair_count": outcomes["observed_pair_count"],
             "terminal_pair_count": outcomes["terminal_pair_count"],
-            "explicit_failure_pair_count": outcomes[
-                "explicit_failure_pair_count"
-            ],
+            "explicit_failure_pair_count": outcomes["explicit_failure_pair_count"],
         }  # type: ignore[index]
         domains["marginal_escalation_value"]["holdout"] = None  # type: ignore[index]
         domains["unnecessary_calls"]["holdout"] = metric_rows["routing"][  # type: ignore[index]
@@ -1079,24 +991,12 @@ def _domain_reports(
         ]
         domains["complexity_pareto"]["holdout"] = None  # type: ignore[index]
         decision_holdout_status = {
-            "safety": (
-                "measured" if metric_rows["safety"]["complete"] else "incomplete"
-            ),
-            "quality": (
-                "measured" if metric_rows["quality"]["complete"] else "incomplete"
-            ),
-            "latency": (
-                "measured" if metric_rows["latency"]["complete"] else "incomplete"
-            ),
-            "resources": (
-                "measured"
-                if metric_rows["resource"]["complete"]
-                else "incomplete"
-            ),
+            "safety": ("measured" if metric_rows["safety"]["complete"] else "incomplete"),
+            "quality": ("measured" if metric_rows["quality"]["complete"] else "incomplete"),
+            "latency": ("measured" if metric_rows["latency"]["complete"] else "incomplete"),
+            "resources": ("measured" if metric_rows["resource"]["complete"] else "incomplete"),
             "reliability": "measured",
-            "routing": (
-                "measured" if metric_rows["routing"]["complete"] else "incomplete"
-            ),
+            "routing": ("measured" if metric_rows["routing"]["complete"] else "incomplete"),
             "marginal_escalation_value": "incomplete",
             "unnecessary_calls": (
                 "measured" if metric_rows["routing"]["complete"] else "incomplete"
@@ -1105,8 +1005,7 @@ def _domain_reports(
         }
     else:
         decision_holdout_status = {
-            name: "not_applicable_before_authorization"
-            for name in REQUIRED_DECISION_DOMAINS
+            name: "not_applicable_before_authorization" for name in REQUIRED_DECISION_DOMAINS
         }
     return {
         "required_domains": list(REQUIRED_DECISION_DOMAINS),
@@ -1125,18 +1024,12 @@ def _domain_reports(
             for name in REQUIRED_DECISION_DOMAINS
         ],
         "structurally_complete": True,
-        "all_applicable_values_non_null": (
-            True if sealed else bool(holdout_metrics["complete"])
-        ),
-        "holdout_measured_domain_count": int(
-            holdout_metrics["measured_domain_count"]
-        ),
+        "all_applicable_values_non_null": (True if sealed else bool(holdout_metrics["complete"])),
+        "holdout_measured_domain_count": int(holdout_metrics["measured_domain_count"]),
         "holdout_pair_count": int(outcomes["observed_pair_count"]),
         "missingness_synthesized_as_zero": False,
         "measured_holdout_claims_published": not sealed,
-        "statistics_comparison_count": len(
-            _array(statistics["analyses"], "statistics analyses")
-        ),
+        "statistics_comparison_count": len(_array(statistics["analyses"], "statistics analyses")),
         "statistics_paired_observation_count": sum(
             int(_mapping(item, "analysis")["scheduled_count"])
             for item in _array(statistics["analyses"], "statistics analyses")
@@ -1145,9 +1038,7 @@ def _domain_reports(
     }
 
 
-def _artifact_binding(
-    path: Path, relative: Path, semantic: object
-) -> dict[str, object]:
+def _artifact_binding(path: Path, relative: Path, semantic: object) -> dict[str, object]:
     return {
         "path": relative.as_posix(),
         "bytes_sha256": _sha_bytes(path.read_bytes()),
@@ -1254,9 +1145,7 @@ def _snapshot(
             },
             "replay": {
                 "status": replay["status"],
-                "required_success_replay_count": replay_selection[
-                    "required_success_replay_count"
-                ],
+                "required_success_replay_count": replay_selection["required_success_replay_count"],
                 "required_sampled_failure_replay_count": replay_selection[
                     "required_sampled_failure_replay_count"
                 ],
@@ -1351,17 +1240,11 @@ def validate_reassessment_publication(
         layout=layout,
     )
     if report != expected_statistics:
-        raise ReassessmentReportsError(
-            "statistics differ from the validated reassessment matrix"
-        )
-    replay_value, _ = _read_canonical(
-        _rooted(root, layout.replay_index), "replay index"
-    )
+        raise ReassessmentReportsError("statistics differ from the validated reassessment matrix")
+    replay_value, _ = _read_canonical(_rooted(root, layout.replay_index), "replay index")
     replay = dict(_mapping(replay_value, "replay index"))
     if replay != _build_replay_index(root, holdout, layout=layout):
-        raise ReassessmentReportsError(
-            "replay index differs from recomputed holdout population"
-        )
+        raise ReassessmentReportsError("replay index differs from recomputed holdout population")
     if validate_snapshot:
         snapshot, _ = _read_canonical(
             _rooted(root, layout.reports_snapshot),
@@ -1448,11 +1331,7 @@ def reassessment_statistics_summary(
             benchmark_root=benchmark_root,
         )
         replay_status = str(replay["status"])
-        replay_claimed = bool(
-            _mapping(replay["execution"], "replay execution")[
-                "replay_claimed"
-            ]
-        )
+        replay_claimed = bool(_mapping(replay["execution"], "replay execution")["replay_claimed"])
         layout = ReassessmentRunLayout.for_run(
             run_id,
             benchmark_root=benchmark_root,
@@ -1464,9 +1343,7 @@ def reassessment_statistics_summary(
             benchmark_root=benchmark_root,
         )
         holdout_measured_domain_count = int(
-            _mapping(holdout["metrics"], "holdout metrics")[
-                "measured_domain_count"
-            ]
+            _mapping(holdout["metrics"], "holdout metrics")["measured_domain_count"]
         )
     return {
         **summary,
@@ -1537,18 +1414,12 @@ def write_reassessment_reports(
             run_id,
             benchmark_root=benchmark_root,
         )
-        replay_reference = Path(
-            layout.replay_index if replay_path is None else replay_path
-        )
+        replay_reference = Path(layout.replay_index if replay_path is None else replay_path)
         statistics_reference = Path(
-            layout.statistics_report
-            if statistics_path is None
-            else statistics_path
+            layout.statistics_report if statistics_path is None else statistics_path
         )
         snapshot_reference = Path(
-            layout.reports_snapshot
-            if snapshot_path is None
-            else snapshot_path
+            layout.reports_snapshot if snapshot_path is None else snapshot_path
         )
         reject_published_write_targets(
             repository_root=root,

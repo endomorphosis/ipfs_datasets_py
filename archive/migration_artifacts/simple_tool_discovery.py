@@ -7,15 +7,23 @@ import sys
 import importlib
 from pathlib import Path
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def discover_tools():
     """Discover all MCP tools."""
     tools_base_path = Path("ipfs_datasets_py/mcp_server/tools")
     tool_categories = [
-        "audit_tools", "dataset_tools", "web_archive_tools",
-        "cli", "functions", "security_tools", "vector_tools",
-        "graph_tools", "provenance_tools", "ipfs_tools"
+        "audit_tools",
+        "dataset_tools",
+        "web_archive_tools",
+        "cli",
+        "functions",
+        "security_tools",
+        "vector_tools",
+        "graph_tools",
+        "provenance_tools",
+        "ipfs_tools",
     ]
 
     discovered_tools = {}
@@ -29,11 +37,12 @@ def discover_tools():
             module = importlib.import_module(module_path)
 
             # Get all exported functions
-            exported_functions = getattr(module, '__all__', [])
+            exported_functions = getattr(module, "__all__", [])
             if not exported_functions:
                 exported_functions = [
-                    name for name in dir(module)
-                    if not name.startswith('_') and callable(getattr(module, name))
+                    name
+                    for name in dir(module)
+                    if not name.startswith("_") and callable(getattr(module, name))
                 ]
 
             discovered_tools[category] = exported_functions
@@ -48,6 +57,7 @@ def discover_tools():
 
     print(f"\nTotal discovered tools: {total_tools}")
     return discovered_tools, total_tools
+
 
 if __name__ == "__main__":
     tools, count = discover_tools()

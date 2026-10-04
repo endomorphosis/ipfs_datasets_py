@@ -3,6 +3,7 @@
 Covers issues #1165 (CNL Grammar + Ambiguity), #1169 (Round-Trip),
 and #1174 (V3 10-example pack, CNL side).
 """
+
 from __future__ import annotations
 
 import json
@@ -12,9 +13,13 @@ import pytest
 
 # Path is set up by the layered conftest.py files (root, tests/, and this directory)
 from reasoner.hybrid_v2_blueprint import (
-    parse_cnl_to_ir_with_diagnostics, parse_cnl_to_ir,
-    compile_ir_to_dcec, compile_ir_to_temporal_deontic_fol,
-    generate_cnl_from_ir, CNLParseError, DeonticOpV2,
+    parse_cnl_to_ir_with_diagnostics,
+    parse_cnl_to_ir,
+    compile_ir_to_dcec,
+    compile_ir_to_temporal_deontic_fol,
+    generate_cnl_from_ir,
+    CNLParseError,
+    DeonticOpV2,
 )
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -23,6 +28,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 # ---------------------------------------------------------------------------
 # TestCNLParseReplay (#1165)
 # ---------------------------------------------------------------------------
+
 
 class TestCNLParseReplay:
     def test_canonical_shall_template(self):
@@ -61,9 +67,7 @@ class TestCNLParseReplay:
 
     def test_temporal_within_days(self):
         # GIVEN a sentence with "within N days" temporal clause
-        ir, diag = parse_cnl_to_ir_with_diagnostics(
-            "Vendor shall deliver the goods within 7 days"
-        )
+        ir, diag = parse_cnl_to_ir_with_diagnostics("Vendor shall deliver the goods within 7 days")
         # THEN temporal is detected
         assert diag["temporal_detected"] is True
         assert len(ir.temporals) > 0
@@ -78,6 +82,7 @@ class TestCNLParseReplay:
         assert len(ir.temporals) > 0
         temporal = list(ir.temporals.values())[0]
         from reasoner.hybrid_v2_blueprint import TemporalRelationV2
+
         assert temporal.relation == TemporalRelationV2.BY
 
     def test_activation_if_clause(self):
@@ -133,6 +138,7 @@ class TestCNLParseReplay:
 # TestParseReplayCandidateDiagnostics
 # ---------------------------------------------------------------------------
 
+
 class TestParseReplayCandidateDiagnostics:
     def test_diagnostics_include_parse_alternatives(self):
         # GIVEN a normal sentence
@@ -160,6 +166,7 @@ class TestParseReplayCandidateDiagnostics:
 # ---------------------------------------------------------------------------
 # TestRoundTripCNL (#1169)
 # ---------------------------------------------------------------------------
+
 
 class TestRoundTripCNL:
     def test_round_trip_strict_mode(self):
@@ -232,6 +239,7 @@ class TestRoundTripCNL:
 # TestV3TransformationPack (#1174 CNL side)
 # ---------------------------------------------------------------------------
 
+
 class TestV3TransformationPack:
     def test_v3_transformation_fixture_exists(self):
         # GIVEN the fixture path
@@ -257,8 +265,7 @@ class TestV3TransformationPack:
         # GIVEN the first 5 norm cases from the fixture
         fixture_path = FIXTURES_DIR / "cnl_v3_transformation_cases.json"
         cases = [
-            c for c in json.loads(fixture_path.read_text())
-            if c["expected_parse_mode"] == "norm"
+            c for c in json.loads(fixture_path.read_text()) if c["expected_parse_mode"] == "norm"
         ][:5]
         # WHEN CNL is generated twice for the same IR
         for case in cases:
@@ -267,6 +274,4 @@ class TestV3TransformationPack:
                 norm_ref = list(ir.norms.keys())[0]
                 cnl1 = generate_cnl_from_ir(norm_ref, ir)
                 cnl2 = generate_cnl_from_ir(norm_ref, ir)
-                assert cnl1 == cnl2, (
-                    f"Case {case['id']}: CNL round-trip not deterministic"
-                )
+                assert cnl1 == cnl2, f"Case {case['id']}: CNL round-trip not deterministic"

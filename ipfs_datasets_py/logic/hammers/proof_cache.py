@@ -107,11 +107,7 @@ def canonicalize_obligation(value: Any) -> Any:
 
     if not isinstance(value, str):
         return _json_ready(value)
-    text = (
-        unicodedata.normalize("NFC", value)
-        .replace("\r\n", "\n")
-        .replace("\r", "\n")
-    )
+    text = unicodedata.normalize("NFC", value).replace("\r\n", "\n").replace("\r", "\n")
     lines = [" ".join(line.strip().split()) for line in text.split("\n")]
     return "\n".join(line for line in lines if line)
 
@@ -138,9 +134,7 @@ class ProofCacheKey:
 
     def __post_init__(self) -> None:
         if self.schema_version != PROOF_CACHE_KEY_SCHEMA_VERSION:
-            raise ProofCacheError(
-                f"unsupported proof cache key schema: {self.schema_version!r}"
-            )
+            raise ProofCacheError(f"unsupported proof cache key schema: {self.schema_version!r}")
         for name in (
             "obligation_digest",
             "translation_version_digest",
@@ -182,9 +176,7 @@ class ProofCacheKey:
                 )
             )
         else:
-            premise_digests = tuple(
-                sorted({_identity_digest(item) for item in selected_premises})
-            )
+            premise_digests = tuple(sorted({_identity_digest(item) for item in selected_premises}))
         return cls(
             obligation_digest=content_digest(canonicalize_obligation(obligation)),
             selected_premise_digests=premise_digests,
@@ -659,7 +651,8 @@ class PersistentProofCache:
         lean_digest = _identity_digest(lean_toolchain_identity)
         with self._lock:
             stale = [
-                digest for digest, entry in self._entries.items()
+                digest
+                for digest, entry in self._entries.items()
                 if entry.key.solver_identities_digest != solver_digest
                 or entry.key.lean_toolchain_identity_digest != lean_digest
             ]

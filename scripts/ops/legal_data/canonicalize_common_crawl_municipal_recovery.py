@@ -217,16 +217,34 @@ def _dedupe(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Canonicalize Common Crawl municipal recovery parquet.")
-    parser.add_argument("--input", required=True, help="Recovered pages.parquet from retrieve_municipal_laws_from_common_crawl.py.")
-    parser.add_argument("--output-root", required=True, help="Output directory for canonical parquet and artifacts.")
-    parser.add_argument("--state-code", default="OR", help="State code used for artifact naming/filtering.")
-    parser.add_argument("--build-artifacts", action="store_true", help="Build CID, BM25, KG, embeddings, and FAISS artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Canonicalize Common Crawl municipal recovery parquet."
+    )
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Recovered pages.parquet from retrieve_municipal_laws_from_common_crawl.py.",
+    )
+    parser.add_argument(
+        "--output-root", required=True, help="Output directory for canonical parquet and artifacts."
+    )
+    parser.add_argument(
+        "--state-code", default="OR", help="State code used for artifact naming/filtering."
+    )
+    parser.add_argument(
+        "--build-artifacts",
+        action="store_true",
+        help="Build CID, BM25, KG, embeddings, and FAISS artifacts.",
+    )
     parser.add_argument("--provider", default="", help="Embedding provider override.")
     parser.add_argument("--model", default="thenlper/gte-small", help="Embedding model name.")
     parser.add_argument("--device", default="", help="Embedding device override, e.g. cuda.")
     parser.add_argument("--no-faiss", action="store_true", help="Skip FAISS index build.")
-    parser.add_argument("--include-empty-text", action="store_true", help="Keep document-only rows even when text extraction failed.")
+    parser.add_argument(
+        "--include-empty-text",
+        action="store_true",
+        help="Keep document-only rows even when text extraction failed.",
+    )
     parser.add_argument("--json", action="store_true", help="Print JSON manifest.")
     return parser.parse_args()
 
@@ -275,7 +293,9 @@ def main() -> int:
         "canonical_row_count": len(canonical_rows),
         "artifact": artifact,
     }
-    (output_root / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    (output_root / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     if args.json:
         print(json.dumps(manifest, indent=2, ensure_ascii=False))
     else:

@@ -276,14 +276,14 @@ python -m spacy download en_core_web_sm
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
     EntityExtractionError,
     QueryError,
-    EntityNotFoundError
+    EntityNotFoundError,
 )
 
 # Raise with context
 if entity_id not in graph.entities:
     raise EntityNotFoundError(
         f"Entity {entity_id} not found",
-        details={'entity_id': entity_id, 'graph_size': len(graph.entities)}
+        details={"entity_id": entity_id, "graph_size": len(graph.entities)},
     )
 
 # Catch specific errors
@@ -302,7 +302,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     Entity,
     Relationship,
     KnowledgeGraph,
-    KnowledgeGraphExtractor
+    KnowledgeGraphExtractor,
 )
 
 # OLD (deprecated but still works)
@@ -310,7 +310,7 @@ from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Entity,
     Relationship,
     KnowledgeGraph,
-    KnowledgeGraphExtractor
+    KnowledgeGraphExtractor,
 )
 ```
 

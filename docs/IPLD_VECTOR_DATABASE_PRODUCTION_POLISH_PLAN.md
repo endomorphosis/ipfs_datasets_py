@@ -204,26 +204,19 @@ class ShardCoordinator:
 **Code Structure:**
 ```python
 async def distributed_search(
-    self,
-    query_vector: np.ndarray,
-    top_k: int = 10,
-    timeout: float = 5.0
+    self, query_vector: np.ndarray, top_k: int = 10, timeout: float = 5.0
 ) -> List[SearchResult]:
     """Search across all shards in parallel."""
-    
+
     # 1. Identify relevant shards
     shards = await self.coordinator.get_all_shards()
-    
+
     # 2. Query shards in parallel with timeout
-    tasks = [
-        self.query_shard(shard, query_vector, top_k * 2)
-        for shard in shards
-    ]
+    tasks = [self.query_shard(shard, query_vector, top_k * 2) for shard in shards]
     results = await asyncio.wait_for(
-        asyncio.gather(*tasks, return_exceptions=True),
-        timeout=timeout
+        asyncio.gather(*tasks, return_exceptions=True), timeout=timeout
     )
-    
+
     # 3. Merge and re-rank top results
     merged = self.merge_results(results)
     return merged[:top_k]
@@ -274,22 +267,14 @@ async def distributed_search(
 ```python
 class FAISSBridge(VectorStoreBridge):
     """Bridge between IPLD and FAISS vector stores."""
-    
-    async def export_to_target(
-        self,
-        collection_name: str,
-        batch_size: int = 1000
-    ) -> int:
+
+    async def export_to_target(self, collection_name: str, batch_size: int = 1000) -> int:
         """Export from IPLD to FAISS."""
         # Stream vectors in batches
         # Build FAISS index incrementally
         # Verify data integrity
-        
-    async def import_from_target(
-        self,
-        collection_name: str,
-        batch_size: int = 1000
-    ) -> int:
+
+    async def import_from_target(self, collection_name: str, batch_size: int = 1000) -> int:
         """Import from FAISS to IPLD."""
         # Read FAISS index
         # Convert to IPLD blocks
@@ -354,30 +339,30 @@ class FAISSBridge(VectorStoreBridge):
 **Tools to Create:**
 ```python
 # Core Operations
-- create_vector_collection
-- add_vectors_to_collection
-- search_vectors
-- get_vector_by_id
-- delete_vectors
-- update_vector_metadata
+-create_vector_collection
+-add_vectors_to_collection
+-search_vectors
+-get_vector_by_id
+-delete_vectors
+-update_vector_metadata
 
 # IPLD Operations
-- export_collection_to_ipld
-- import_collection_from_ipld
-- export_collection_to_car
-- import_collection_from_car
-- pin_collection_to_ipfs
-- get_collection_cid
+-export_collection_to_ipld
+-import_collection_from_ipld
+-export_collection_to_car
+-import_collection_from_car
+-pin_collection_to_ipfs
+-get_collection_cid
 
 # Migration Operations
-- migrate_collection
-- list_available_stores
-- get_store_health
+-migrate_collection
+-list_available_stores
+-get_store_health
 
 # Management
-- list_collections
-- get_collection_stats
-- optimize_collection
+-list_collections
+-get_collection_stats
+-optimize_collection
 ```
 
 **Deliverables:**
@@ -699,24 +684,24 @@ docs/
 **Test Scenarios:**
 ```python
 # Bridge Tests
-- test_faiss_to_ipld_migration
-- test_qdrant_to_ipld_migration
-- test_elasticsearch_to_ipld_migration
-- test_round_trip_migration
-- test_migration_with_large_dataset
+-test_faiss_to_ipld_migration
+-test_qdrant_to_ipld_migration
+-test_elasticsearch_to_ipld_migration
+-test_round_trip_migration
+-test_migration_with_large_dataset
 
 # Distributed Tests
-- test_multi_shard_search
-- test_shard_replication
-- test_shard_rebalancing
-- test_partial_shard_failure
-- test_network_partition
+-test_multi_shard_search
+-test_shard_replication
+-test_shard_rebalancing
+-test_partial_shard_failure
+-test_network_partition
 
 # Consistency Tests
-- test_read_your_writes
-- test_quorum_reads
-- test_conflict_resolution
-- test_eventual_consistency
+-test_read_your_writes
+-test_quorum_reads
+-test_conflict_resolution
+-test_eventual_consistency
 ```
 
 **Deliverables:**

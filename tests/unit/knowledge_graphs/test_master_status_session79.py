@@ -20,11 +20,11 @@ def _read(path: pathlib.Path) -> str:
 
 
 QUERY_README = _read(KG_DIR / "query" / "README.md")
-API_REF      = _read(DOCS_DIR / "API_REFERENCE.md")
-USER_GUIDE   = _read(DOCS_DIR / "USER_GUIDE.md")
-MASTER       = _read(DOCS_DIR / "MASTER_STATUS.md")
-CHANGELOG    = _read(DOCS_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md")
-ROADMAP      = _read(DOCS_DIR / "ROADMAP.md")
+API_REF = _read(DOCS_DIR / "API_REFERENCE.md")
+USER_GUIDE = _read(DOCS_DIR / "USER_GUIDE.md")
+MASTER = _read(DOCS_DIR / "MASTER_STATUS.md")
+CHANGELOG = _read(DOCS_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md")
+ROADMAP = _read(DOCS_DIR / "ROADMAP.md")
 
 
 # ──────────────────────────────────────────────────────────────
@@ -145,8 +145,7 @@ class TestUserGuide:
 
     def test_delivery_table_present(self):
         # All 3 original "future" v4.0+ items in the table
-        assert "Blockchain Integration for Provenance" in USER_GUIDE or \
-               "Provenance" in USER_GUIDE
+        assert "Blockchain Integration for Provenance" in USER_GUIDE or "Provenance" in USER_GUIDE
 
     def test_graphql_delivered_entry(self):
         assert "GraphQL" in USER_GUIDE
@@ -168,8 +167,7 @@ class TestUserGuide:
 
     def test_stale_experimental_imports_removed(self):
         # Old stale "from ipfs_datasets_py.knowledge_graphs.experimental import NeuralExtractor"
-        assert "experimental import" not in USER_GUIDE or \
-               "NeuralExtractor" not in USER_GUIDE
+        assert "experimental import" not in USER_GUIDE or "NeuralExtractor" not in USER_GUIDE
 
     def test_last_updated_not_stale(self):
         assert "2026-02-17" not in USER_GUIDE  # was the old stale date

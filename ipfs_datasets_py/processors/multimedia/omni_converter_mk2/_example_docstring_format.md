@@ -20,7 +20,7 @@ class GraphRAGIntegrator:
         similarity_threshold (float, optional): Threshold for entity similarity matching.
             Values between 0.0 and 1.0, where higher values require more similarity.
             Defaults to 0.8.
-        entity_extraction_confidence (float, optional): Minimum confidence score for 
+        entity_extraction_confidence (float, optional): Minimum confidence score for
             entity extraction. Values between 0.0 and 1.0, where higher values require
             more confidence. Defaults to 0.6.
 
@@ -121,7 +121,12 @@ class GraphRAGIntegrator:
 ## Example __init__ Method Stub
 
 ```python
-def __init__(self, storage: Optional[IPLDStorage] = None, similarity_threshold: float = 0.8, entity_extraction_confidence: float = 0.6):
+def __init__(
+    self,
+    storage: Optional[IPLDStorage] = None,
+    similarity_threshold: float = 0.8,
+    entity_extraction_confidence: float = 0.6,
+):
     """
     This class integrates Knowledge Graphs with Retrieval-Augmented Generation (RAG)
     for enhanced document processing and analysis capabilities.
@@ -132,7 +137,7 @@ def __init__(self, storage: Optional[IPLDStorage] = None, similarity_threshold: 
         similarity_threshold (float, optional): Threshold for entity similarity matching.
             Values between 0.0 and 1.0, where higher values require more similarity.
             Defaults to 0.8.
-        entity_extraction_confidence (float, optional): Minimum confidence score for 
+        entity_extraction_confidence (float, optional): Minimum confidence score for
             entity extraction. Values between 0.0 and 1.0, where higher values require
             more confidence. Defaults to 0.6.
 
@@ -140,11 +145,11 @@ def __init__(self, storage: Optional[IPLDStorage] = None, similarity_threshold: 
         storage (IPLDStorage): IPLD storage instance for data persistence.
         similarity_threshold (float): Threshold for entity similarity matching.
         entity_extraction_confidence (float): Minimum confidence for entity extraction.
-        knowledge_graphs (Dict[str, KnowledgeGraph]): Storage for document-specific 
+        knowledge_graphs (Dict[str, KnowledgeGraph]): Storage for document-specific
             knowledge graphs, keyed by document identifier.
         global_entities (Dict[str, Entity]): Global registry of entities across all
             documents, keyed by entity identifier.
-        cross_document_relationships (List[CrossDocumentRelationship]): List of 
+        cross_document_relationships (List[CrossDocumentRelationship]): List of
             relationships that span across multiple documents.
         document_graphs (Dict[str, nx.DiGraph]): NetworkX directed graphs for each
             document, keyed by document identifier.
@@ -166,7 +171,7 @@ def _infer_relationship_type(self, entity1: Entity, entity2: Entity, context: st
 
     Args:
         entity1 (Entity): The first entity in the relationship
-        entity2 (Entity): The second entity in the relationship  
+        entity2 (Entity): The second entity in the relationship
         context (str): The textual context containing information about the relationship
 
     Returns:
@@ -195,5 +200,5 @@ def _infer_relationship_type(self, entity1: Entity, entity2: Entity, context: st
         The method performs case-insensitive keyword matching and prioritizes more specific
         relationships over generic ones. The relationship direction is implied by the order
         of entities (entity1 -> entity2).
-        """
+    """
 ```

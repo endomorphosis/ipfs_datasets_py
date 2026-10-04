@@ -120,7 +120,7 @@ print(f"Total cost: ${stats['total_cost']:.4f}")
 print(f"Success rate: {stats['success_rate']:.1%}")
 
 # Identify expensive operations
-for provider, tokens in stats['tokens_by_provider'].items():
+for provider, tokens in stats["tokens_by_provider"].items():
     cost = tokens * PROVIDER_CAPABILITIES[provider].cost_per_1k_tokens / 1000
     print(f"{provider}: {tokens:,} tokens (${cost:.4f})")
 ```
@@ -218,22 +218,22 @@ validator = OptimizationValidator(
 # Implement validation result caching
 validation_cache = {}
 
+
 def validate_with_cache(code: str, level: ValidationLevel):
     # Create cache key
     import hashlib
-    cache_key = hashlib.sha256(
-        f"{code}{level.value}".encode()
-    ).hexdigest()
-    
+
+    cache_key = hashlib.sha256(f"{code}{level.value}".encode()).hexdigest()
+
     # Check cache
     if cache_key in validation_cache:
         print("✅ Using cached validation result")
         return validation_cache[cache_key]
-    
+
     # Validate
     validator = OptimizationValidator(level=level)
     result = validator.validate_sync(code, [], {})
-    
+
     # Cache result
     validation_cache[cache_key] = result
     return result
@@ -268,7 +268,7 @@ with monitor.monitor():
     large_optimization()
 
 stats = monitor.get_stats()
-if stats['peak_memory_mb'] > 1000:
+if stats["peak_memory_mb"] > 1000:
     print("⚠️ High memory usage detected!")
     print("Consider reducing batch size or optimization scope")
 ```
@@ -414,7 +414,7 @@ optimizer.optimize(task)
 
 profiler.disable()
 stats = pstats.Stats(profiler)
-stats.sort_stats('cumulative')
+stats.sort_stats("cumulative")
 stats.print_stats(20)  # Top 20 slowest functions
 ```
 

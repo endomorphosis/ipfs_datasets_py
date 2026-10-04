@@ -62,7 +62,9 @@ class HeartbeatSnapshot:
     def to_payload(self, *, prefix: str = "heartbeat") -> JsonDict:
         return {
             f"{prefix}_at": None if self.heartbeat_at is None else self.heartbeat_at.isoformat(),
-            f"{prefix}_age_seconds": None if self.age_seconds is None else round(self.age_seconds, 3),
+            f"{prefix}_age_seconds": None
+            if self.age_seconds is None
+            else round(self.age_seconds, 3),
             "daemon_pid": self.pid,
             "daemon_pid_alive": self.pid_alive,
             f"{prefix}_stale_after_seconds": self.stale_after_seconds,
@@ -87,7 +89,9 @@ def heartbeat_snapshot(
         if heartbeat_at is not None:
             break
     now_at = _aware_utc(now) or now_utc()
-    age_seconds = None if heartbeat_at is None else max(0.0, (now_at - heartbeat_at).total_seconds())
+    age_seconds = (
+        None if heartbeat_at is None else max(0.0, (now_at - heartbeat_at).total_seconds())
+    )
     pid = None
     for key in pid_keys:
         pid = status.get(key)
@@ -178,7 +182,9 @@ def worktree_phase_worker_status(
     if phase not in phases:
         return {"required": False, "phase": phase}
     started = _aware_utc(
-        parse_timestamp(first_present(current.get("phase_started_at"), current.get("phase_updated_at")))
+        parse_timestamp(
+            first_present(current.get("phase_started_at"), current.get("phase_updated_at"))
+        )
     )
     now_at = _aware_utc(now) or now_utc()
     age = None if started is None else max(0.0, (now_at - started).total_seconds())
@@ -190,7 +196,9 @@ def worktree_phase_worker_status(
         if "codex" in str(item.get("cmdline") or "").lower()
         and " exec" in (" " + " ".join(str(item.get("cmdline") or "").lower().split()))
     ]
-    stalled = bool(age is not None and threshold_seconds > 0 and age >= threshold_seconds and not workers)
+    stalled = bool(
+        age is not None and threshold_seconds > 0 and age >= threshold_seconds and not workers
+    )
     return {
         "required": True,
         "phase": phase,

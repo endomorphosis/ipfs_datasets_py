@@ -3,6 +3,7 @@ Dependency Analysis Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/dependency_chain_analyzer.py.
 """
+
 from __future__ import annotations
 
 import json
@@ -32,9 +33,7 @@ def analyze_dependency_chain(
             "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        result["isolated_packages"] = [
-            pkg for pkg, deps in dependencies.items() if not deps
-        ]
+        result["isolated_packages"] = [pkg for pkg, deps in dependencies.items() if not deps]
 
         dependency_counts: Dict[str, int] = {}
         for deps in dependencies.values():
@@ -150,55 +149,65 @@ def suggest_dependency_improvements(analysis_result: Dict[str, Any]) -> Dict[str
         cycles = analysis_result.get("cycles", [])
         if cycles:
             priority = "high"
-            suggestions.append({
-                "severity": "high",
-                "issue": f"Found {len(cycles)} circular dependencies",
-                "recommendation": (
-                    "Break circular dependencies by refactoring or using dependency injection"
-                ),
-                "affected_packages": [c["cycle"] for c in cycles],
-            })
+            suggestions.append(
+                {
+                    "severity": "high",
+                    "issue": f"Found {len(cycles)} circular dependencies",
+                    "recommendation": (
+                        "Break circular dependencies by refactoring or using dependency injection"
+                    ),
+                    "affected_packages": [c["cycle"] for c in cycles],
+                }
+            )
 
         max_depth = analysis_result.get("max_depth", 0)
         if max_depth > 10:
-            suggestions.append({
-                "severity": "medium",
-                "issue": f"Deep dependency chain detected (depth: {max_depth})",
-                "recommendation": (
-                    "Consider flattening dependency structure or using dependency bundling"
-                ),
-                "details": f"Maximum depth is {max_depth}, recommended < 10",
-            })
+            suggestions.append(
+                {
+                    "severity": "medium",
+                    "issue": f"Deep dependency chain detected (depth: {max_depth})",
+                    "recommendation": (
+                        "Consider flattening dependency structure or using dependency bundling"
+                    ),
+                    "details": f"Maximum depth is {max_depth}, recommended < 10",
+                }
+            )
 
         most_depended = analysis_result.get("most_depended_on", [])
         if most_depended and most_depended[0].get("count", 0) > 20:
-            suggestions.append({
-                "severity": "medium",
-                "issue": (
-                    f"High coupling detected: '{most_depended[0]['package']}' is depended "
-                    f"upon by {most_depended[0]['count']} packages"
-                ),
-                "recommendation": (
-                    "Consider splitting this package into smaller, more focused modules"
-                ),
-                "package": most_depended[0]["package"],
-            })
+            suggestions.append(
+                {
+                    "severity": "medium",
+                    "issue": (
+                        f"High coupling detected: '{most_depended[0]['package']}' is depended "
+                        f"upon by {most_depended[0]['count']} packages"
+                    ),
+                    "recommendation": (
+                        "Consider splitting this package into smaller, more focused modules"
+                    ),
+                    "package": most_depended[0]["package"],
+                }
+            )
 
         isolated = analysis_result.get("isolated_packages", [])
         if len(isolated) > 10:
-            suggestions.append({
-                "severity": "low",
-                "issue": f"Many isolated packages ({len(isolated)}) detected",
-                "recommendation": "Consider consolidating small utility packages",
-                "count": len(isolated),
-            })
+            suggestions.append(
+                {
+                    "severity": "low",
+                    "issue": f"Many isolated packages ({len(isolated)}) detected",
+                    "recommendation": "Consider consolidating small utility packages",
+                    "count": len(isolated),
+                }
+            )
 
         if not suggestions:
-            suggestions.append({
-                "severity": "info",
-                "issue": "No major issues detected",
-                "recommendation": "Dependency chain looks healthy",
-            })
+            suggestions.append(
+                {
+                    "severity": "info",
+                    "issue": "No major issues detected",
+                    "recommendation": "Dependency chain looks healthy",
+                }
+            )
 
         return {"success": True, "suggestions": suggestions, "priority": priority}
 

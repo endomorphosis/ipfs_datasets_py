@@ -161,9 +161,11 @@ This comprehensive refactoring effort has delivered **11,270+ lines** of product
 ```python
 class SpecificConverter(LogicConverter[InputType, OutputType]):
     """All converters follow this pattern"""
+
     def _convert_impl(self, input, options):
         # Conversion logic here
         pass
+
     # Inherits: convert(), convert_batch(), convert_async()
     # Auto-gets: caching, monitoring, validation, ML, IPFS
 ```

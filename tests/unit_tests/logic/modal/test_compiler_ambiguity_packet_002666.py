@@ -179,9 +179,7 @@ def test_compiler_exposes_packet_002666_explicit_adaptive_ambiguities(
         expected_severity,
         expected_priority,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="regex")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -212,7 +210,4 @@ def test_compiler_exposes_packet_002666_explicit_adaptive_ambiguities(
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

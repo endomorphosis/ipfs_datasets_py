@@ -101,22 +101,20 @@ class BaseOptimizer(ABC):
 ```python
 class LogicTheoremOptimizer(BaseOptimizer):
     """Unified logic theorem optimizer using BaseOptimizer."""
-    
+
     def __init__(self, config=None, llm_backend=None):
         super().__init__(config, llm_backend)
         self.extractor = LogicExtractor(llm_backend)
         self.critic = LogicCritic()
         self.prover = ProverIntegration()
-        
+
     def generate(self, input_data, context):
         """Extract formal logic from input text."""
         # Delegate to logic_extractor
         return self.extractor.extract(
-            text=input_data,
-            domain=context.domain,
-            format=context.metadata.get('format', 'FOL')
+            text=input_data, domain=context.domain, format=context.metadata.get("format", "FOL")
         )
-    
+
     def critique(self, artifact, context):
         """Evaluate logic quality."""
         # Delegate to logic_critic
@@ -124,13 +122,13 @@ class LogicTheoremOptimizer(BaseOptimizer):
         score = result.overall_score
         feedback = result.recommendations
         return score, feedback
-    
+
     def optimize(self, artifact, score, feedback, context):
         """Improve logic based on feedback."""
         # Use existing logic_optimizer suggestions
         improved = apply_improvements(artifact, feedback)
         return improved
-    
+
     def validate(self, artifact, context):
         """Validate logic with theorem provers."""
         # Delegate to prover_integration
@@ -229,33 +227,33 @@ class LogicTheoremOptimizer(BaseOptimizer):
 ```python
 class GraphRAGOptimizer(BaseOptimizer):
     """Unified GraphRAG optimizer using BaseOptimizer."""
-    
+
     def __init__(self, config=None, llm_backend=None):
         super().__init__(config, llm_backend)
         self.generator = OntologyGenerator(llm_backend)
         self.critic = OntologyCritic()
         self.validator = LogicValidator()
-        
+
     def generate(self, input_data, context):
         """Generate ontology from documents."""
         return self.generator.generate(
             documents=input_data,
             domain=context.domain,
-            strategy=context.metadata.get('strategy', 'hybrid')
+            strategy=context.metadata.get("strategy", "hybrid"),
         )
-    
+
     def critique(self, artifact, context):
         """Evaluate ontology quality."""
         result = self.critic.evaluate(artifact)
         score = result.overall_score
         feedback = result.recommendations
         return score, feedback
-    
+
     def optimize(self, artifact, score, feedback, context):
         """Improve ontology based on feedback."""
         improved = apply_ontology_improvements(artifact, feedback)
         return improved
-    
+
     def validate(self, artifact, context):
         """Validate ontology structure."""
         return self.validator.check(artifact)

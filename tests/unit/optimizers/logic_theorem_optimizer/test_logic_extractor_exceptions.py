@@ -33,7 +33,11 @@ def test_logic_extractor_defaults_to_codex_53_model() -> None:
 def test_extract_handles_typed_value_error(monkeypatch: pytest.MonkeyPatch) -> None:
     extractor = _build_extractor()
     context = _build_context()
-    monkeypatch.setattr(extractor, "_build_extraction_prompt", lambda ctx: (_ for _ in ()).throw(ValueError("bad prompt")))
+    monkeypatch.setattr(
+        extractor,
+        "_build_extraction_prompt",
+        lambda ctx: (_ for _ in ()).throw(ValueError("bad prompt")),
+    )
 
     result = extractor.extract(context)
 

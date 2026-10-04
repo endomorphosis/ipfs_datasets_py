@@ -5,6 +5,7 @@ from __future__ import annotations
 #   ipfs_datasets_py.mcp_server.tools.vector_store_tools
 # See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
 import warnings
+
 warnings.warn(
     "legacy_mcp_tools.vector_store_tools is deprecated. "
     "Use ipfs_datasets_py.mcp_server.tools.vector_store_tools instead.",
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 try:
     from ipfs_datasets_py.vector_stores.vector_store_engine import MockVectorStoreService
     from ipfs_datasets_py.mcp_server.tools.validators import validator
+
     _VECTOR_SERVICE = MockVectorStoreService()
     _SERVICE_AVAILABLE = True
 except ImportError:
@@ -51,7 +53,9 @@ async def manage_vector_index(
             case "info":
                 result = await _VECTOR_SERVICE.get_index_info(index_name)
             case _:
-                raise ValueError(f"Unsupported action: {action!r}. Must be one of create, update, delete, info.")
+                raise ValueError(
+                    f"Unsupported action: {action!r}. Must be one of create, update, delete, info."
+                )
         return {"action": action, "index_name": index_name, "result": result, "success": True}
     except Exception as e:
         logger.error(f"Vector index operation failed: {e}")
@@ -70,9 +74,17 @@ async def retrieve_vectors(
             return {"success": False, "error": "Vector service not available"}
         collection = validator.validate_text_input(collection)
         vectors = await _VECTOR_SERVICE.retrieve_vectors(
-            collection=collection, ids=ids, filters=filters or {}, limit=limit,
+            collection=collection,
+            ids=ids,
+            filters=filters or {},
+            limit=limit,
         )
-        return {"collection": collection, "vectors": vectors, "count": len(vectors), "success": True}
+        return {
+            "collection": collection,
+            "vectors": vectors,
+            "count": len(vectors),
+            "success": True,
+        }
     except Exception as e:
         logger.error(f"Vector retrieval failed: {e}")
         raise
@@ -102,14 +114,22 @@ async def manage_vector_metadata(
             case "update":
                 if not vector_id or not metadata:
                     raise ValueError("vector_id and metadata are required for update action")
-                result = await _VECTOR_SERVICE.update_vector_metadata(collection, vector_id, metadata)
+                result = await _VECTOR_SERVICE.update_vector_metadata(
+                    collection, vector_id, metadata
+                )
             case "delete":
                 if not vector_id:
                     raise ValueError("vector_id is required for delete action")
                 result = await _VECTOR_SERVICE.delete_vector_metadata(collection, vector_id)
             case _:
                 result = await _VECTOR_SERVICE.list_vector_metadata(collection, filters or {})
-        return {"action": action, "collection": collection, "vector_id": vector_id, "result": result, "success": True}
+        return {
+            "action": action,
+            "collection": collection,
+            "vector_id": vector_id,
+            "result": result,
+            "success": True,
+        }
     except Exception as e:
         logger.error(f"Vector metadata operation failed: {e}")
         raise

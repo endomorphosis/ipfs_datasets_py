@@ -12,23 +12,23 @@ MCP tool for unified web scraping with automatic strategy fallback.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.web_scraping_tools import (
-    scrape_url, scrape_urls, extract_structured_data
+    scrape_url,
+    scrape_urls,
+    extract_structured_data,
 )
 
 # Scrape a single URL
 result = await scrape_url(
     url="https://example.com/page",
-    strategy="auto",           # "auto" | "requests" | "playwright" | "selenium"
+    strategy="auto",  # "auto" | "requests" | "playwright" | "selenium"
     extract=["title", "text", "links", "metadata"],
-    timeout=30
+    timeout=30,
 )
 # Returns: {"url": "...", "title": "...", "text": "...", "links": [...]}
 
 # Batch scrape
 results = await scrape_urls(
-    urls=["https://a.com", "https://b.com"],
-    max_concurrent=5,
-    respect_robots_txt=True
+    urls=["https://a.com", "https://b.com"], max_concurrent=5, respect_robots_txt=True
 )
 
 # Extract structured data (with CSS selectors or XPath)
@@ -37,13 +37,9 @@ data = await extract_structured_data(
     schema={
         "articles": {
             "selector": "article.post",
-            "fields": {
-                "title": "h2.title",
-                "date": "time[datetime]",
-                "body": "div.content"
-            }
+            "fields": {"title": "h2.title", "date": "time[datetime]", "body": "div.content"},
         }
-    }
+    },
 )
 ```
 

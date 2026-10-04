@@ -122,21 +122,20 @@ The dashboard exposes REST API endpoints:
 import requests
 
 # Test token
-response = requests.post('http://localhost:8889/mcp/discord/api/test_token', 
-                        json={"token": "YOUR_TOKEN"})
+response = requests.post(
+    "http://localhost:8889/mcp/discord/api/test_token", json={"token": "YOUR_TOKEN"}
+)
 print(response.json())
 
 # List guilds (uses DISCORD_TOKEN from environment)
-response = requests.get('http://localhost:8889/mcp/discord/api/list_guilds')
-guilds = response.json()['guilds']
+response = requests.get("http://localhost:8889/mcp/discord/api/list_guilds")
+guilds = response.json()["guilds"]
 
 # Export channel
-response = requests.post('http://localhost:8889/mcp/discord/api/export_channel',
-                        json={
-                            "channel_id": "123456789",
-                            "format": "Json",
-                            "download_media": True
-                        })
+response = requests.post(
+    "http://localhost:8889/mcp/discord/api/export_channel",
+    json={"channel_id": "123456789", "format": "Json", "download_media": True},
+)
 print(response.json())
 ```
 
@@ -225,32 +224,34 @@ ipfs-datasets discord export --help
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def main():
     # Initialize wrapper with your token
     wrapper = DiscordWrapper(
         token="YOUR_DISCORD_TOKEN",
         default_format="Json",  # Options: Json, HtmlDark, HtmlLight, Csv, PlainText
-        default_output_dir="/path/to/exports"
+        default_output_dir="/path/to/exports",
     )
-    
+
     # List all accessible servers (guilds)
     guilds = await wrapper.list_guilds()
     print(f"Found {guilds['count']} servers")
-    for guild in guilds['guilds']:
+    for guild in guilds["guilds"]:
         print(f"  - {guild['name']} (ID: {guild['id']})")
-    
+
     # List channels in a specific server
     channels = await wrapper.list_channels(guild_id="YOUR_GUILD_ID")
-    for channel in channels['channels']:
+    for channel in channels["channels"]:
         print(f"  - {channel['name']} (Category: {channel['category']})")
-    
+
     # Export a single channel
     result = await wrapper.export_channel(
         channel_id="YOUR_CHANNEL_ID",
         format="Json",
-        download_media=True  # Download attachments, avatars, etc.
+        download_media=True,  # Download attachments, avatars, etc.
     )
     print(f"Exported to: {result['output_path']}")
+
 
 asyncio.run(main())
 ```
@@ -261,20 +262,22 @@ asyncio.run(main())
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def export_server():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
-    
+
     # Export all channels in a server
     result = await wrapper.export_guild(
         guild_id="YOUR_GUILD_ID",
         output_dir="/path/to/server_exports",
         format="Json",
         include_threads="all",  # Options: 'none', 'active', 'all'
-        include_vc=True  # Include voice channels
+        include_vc=True,  # Include voice channels
     )
-    
+
     print(f"Exported {result['channels_exported']} channels")
     print(f"Time taken: {result['export_time']:.2f} seconds")
+
 
 asyncio.run(export_server())
 ```
@@ -285,19 +288,21 @@ asyncio.run(export_server())
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def filtered_export():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
-    
+
     # Export with date range and message filtering
     result = await wrapper.export_channel(
         channel_id="YOUR_CHANNEL_ID",
         after="2024-01-01",  # Messages after this date
         before="2024-12-31",  # Messages before this date
         filter_text="from:username has:image",  # Message filter expression
-        partition_limit="1000"  # Split into files of 1000 messages each
+        partition_limit="1000",  # Split into files of 1000 messages each
     )
-    
+
     print(f"Export completed: {result['status']}")
+
 
 asyncio.run(filtered_export())
 ```
@@ -310,17 +315,16 @@ asyncio.run(filtered_export())
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def export_all_dms():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
-    
+
     # Export all DMs using native exportdm command (most efficient)
-    result = await wrapper.export_dm(
-        format="Json",
-        output_dir="/exports/dms"
-    )
-    
+    result = await wrapper.export_dm(format="Json", output_dir="/exports/dms")
+
     print(f"Exported {result['dm_channels_exported']} DM channels")
     print(f"Output: {result['output_dir']}")
+
 
 asyncio.run(export_all_dms())
 ```
@@ -331,20 +335,19 @@ asyncio.run(export_all_dms())
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def export_dms():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
-    
+
     # List all DM channels
     dms = await wrapper.list_dm_channels()
     print(f"Found {dms['count']} DM channels")
-    
+
     # Export a specific DM channel
-    result = await wrapper.export_channel(
-        channel_id=dms['channels'][0]['id'],
-        format="HtmlDark"
-    )
-    
+    result = await wrapper.export_channel(channel_id=dms["channels"][0]["id"], format="HtmlDark")
+
     print(f"DM exported to: {result['output_path']}")
+
 
 asyncio.run(export_dms())
 ```
@@ -362,25 +365,24 @@ import asyncio
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
     discord_list_guilds,
     discord_list_channels,
-    discord_list_dm_channels
+    discord_list_dm_channels,
 )
+
 
 async def list_discord_data():
     # List all servers
     guilds_result = await discord_list_guilds(token="YOUR_TOKEN")
-    
+
     # List channels in a server
-    channels_result = await discord_list_channels(
-        guild_id="YOUR_GUILD_ID",
-        token="YOUR_TOKEN"
-    )
-    
+    channels_result = await discord_list_channels(guild_id="YOUR_GUILD_ID", token="YOUR_TOKEN")
+
     # List DM channels
     dm_result = await discord_list_dm_channels(token="YOUR_TOKEN")
-    
+
     print(f"Guilds: {guilds_result['count']}")
     print(f"Channels: {channels_result['count']}")
     print(f"DMs: {dm_result['count']}")
+
 
 asyncio.run(list_discord_data())
 ```
@@ -393,41 +395,32 @@ from ipfs_datasets_py.mcp_server.tools.discord_tools import (
     discord_export_channel,
     discord_export_guild,
     discord_export_dm_channels,  # Native exportdm
-    discord_export_all_channels
+    discord_export_all_channels,
 )
+
 
 async def mcp_exports():
     # Export a single channel
     channel_result = await discord_export_channel(
-        channel_id="YOUR_CHANNEL_ID",
-        token="YOUR_TOKEN",
-        format="Json",
-        download_media=True
+        channel_id="YOUR_CHANNEL_ID", token="YOUR_TOKEN", format="Json", download_media=True
     )
-    
+
     # Export entire server
     guild_result = await discord_export_guild(
-        guild_id="YOUR_GUILD_ID",
-        token="YOUR_TOKEN",
-        include_threads="all"
+        guild_id="YOUR_GUILD_ID", token="YOUR_TOKEN", include_threads="all"
     )
-    
+
     # Export all DMs using native exportdm (most efficient)
-    dm_result = await discord_export_dm_channels(
-        token="YOUR_TOKEN",
-        format="Json"
-    )
-    
+    dm_result = await discord_export_dm_channels(token="YOUR_TOKEN", format="Json")
+
     # Export everything accessible
-    all_result = await discord_export_all_channels(
-        token="YOUR_TOKEN",
-        format="Csv"
-    )
-    
+    all_result = await discord_export_all_channels(token="YOUR_TOKEN", format="Csv")
+
     print(f"Channel export: {channel_result['status']}")
     print(f"Guild export: {guild_result['status']}")
     print(f"DM export: {dm_result['status']} - {dm_result['dm_channels_exported']} channels")
     print(f"All channels export: {all_result['status']}")
+
 
 asyncio.run(mcp_exports())
 ```
@@ -439,8 +432,9 @@ import asyncio
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
     discord_analyze_channel,
     discord_analyze_guild,
-    discord_analyze_export
+    discord_analyze_export,
 )
+
 
 async def analyze_discord():
     # Analyze a channel (automatically exports first)
@@ -448,29 +442,28 @@ async def analyze_discord():
         channel_id="YOUR_CHANNEL_ID",
         token="YOUR_TOKEN",
         analysis_types=[
-            'message_stats',    # Basic message statistics
-            'user_activity',    # User activity patterns
-            'content_patterns', # Content analysis
-            'time_patterns'     # Temporal patterns
-        ]
+            "message_stats",  # Basic message statistics
+            "user_activity",  # User activity patterns
+            "content_patterns",  # Content analysis
+            "time_patterns",  # Temporal patterns
+        ],
     )
-    
+
     # Print analysis results
-    if analysis['status'] == 'success':
-        stats = analysis['analyses']['message_stats']
+    if analysis["status"] == "success":
+        stats = analysis["analyses"]["message_stats"]
         print(f"Total messages: {stats['total_messages']}")
         print(f"Date range: {stats['date_range']['earliest']} to {stats['date_range']['latest']}")
-        
-        activity = analysis['analyses']['user_activity']
+
+        activity = analysis["analyses"]["user_activity"]
         print(f"Active users: {activity['total_users']}")
         print(f"Most active: {activity['most_active_user']}")
-    
+
     # Analyze a previously exported file
-    file_analysis = await discord_analyze_export(
-        export_path="/path/to/export.json"
-    )
-    
+    file_analysis = await discord_analyze_export(export_path="/path/to/export.json")
+
     print(f"File analysis: {file_analysis['status']}")
+
 
 asyncio.run(analyze_discord())
 ```
@@ -487,7 +480,7 @@ from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
 # Initialize with custom settings
 exporter = DiscordChatExporter(
     install_dir="/custom/install/path",
-    version="2.46"  # Specific version
+    version="2.46",  # Specific version
 )
 
 # Download and install
@@ -499,13 +492,10 @@ if exporter.verify_installation():
     print(f"Installed version: {exporter.get_version()}")
 
 # Execute raw CLI commands
-result = exporter.execute([
-    'export',
-    '-c', 'CHANNEL_ID',
-    '-t', 'YOUR_TOKEN',
-    '-f', 'Json',
-    '-o', '/output/path.json'
-], timeout=300)
+result = exporter.execute(
+    ["export", "-c", "CHANNEL_ID", "-t", "YOUR_TOKEN", "-f", "Json", "-o", "/output/path.json"],
+    timeout=300,
+)
 
 print(f"Exit code: {result.returncode}")
 print(f"Output: {result.stdout}")
@@ -517,25 +507,25 @@ print(f"Output: {result.stdout}")
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def batch_export_servers():
     wrapper = DiscordWrapper(token="YOUR_TOKEN", default_format="Json")
-    
+
     # Get all servers
     guilds = await wrapper.list_guilds()
-    
+
     # Export each server
-    for guild in guilds['guilds']:
+    for guild in guilds["guilds"]:
         print(f"Exporting {guild['name']}...")
-        
+
         result = await wrapper.export_guild(
-            guild_id=guild['id'],
-            output_dir=f"/exports/{guild['name']}",
-            include_threads="active"
+            guild_id=guild["id"], output_dir=f"/exports/{guild['name']}", include_threads="active"
         )
-        
+
         print(f"  - Status: {result['status']}")
         print(f"  - Channels: {result.get('channels_exported', 0)}")
         print(f"  - Time: {result['export_time']:.2f}s")
+
 
 asyncio.run(batch_export_servers())
 ```
@@ -546,21 +536,23 @@ asyncio.run(batch_export_servers())
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def multiple_formats():
     wrapper = DiscordWrapper(token="YOUR_TOKEN")
-    
+
     channel_id = "YOUR_CHANNEL_ID"
-    
+
     # Export in multiple formats
-    formats = ['Json', 'HtmlDark', 'Csv', 'PlainText']
-    
+    formats = ["Json", "HtmlDark", "Csv", "PlainText"]
+
     for fmt in formats:
         result = await wrapper.export_channel(
             channel_id=channel_id,
             format=fmt,
-            output_path=f"/exports/channel_{channel_id}.{fmt.lower()}"
+            output_path=f"/exports/channel_{channel_id}.{fmt.lower()}",
         )
         print(f"{fmt}: {result['status']}")
+
 
 asyncio.run(multiple_formats())
 ```
@@ -571,23 +563,23 @@ asyncio.run(multiple_formats())
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
+
 async def safe_export():
     try:
         wrapper = DiscordWrapper(token="YOUR_TOKEN")
-        
-        result = await wrapper.export_channel(
-            channel_id="INVALID_ID"
-        )
-        
-        if result['status'] == 'error':
+
+        result = await wrapper.export_channel(channel_id="INVALID_ID")
+
+        if result["status"] == "error":
             print(f"Export failed: {result['error']}")
         else:
             print(f"Export successful: {result['output_path']}")
-            
+
     except ValueError as e:
         print(f"Configuration error: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
+
 
 asyncio.run(safe_export())
 ```
@@ -601,23 +593,22 @@ import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 # Assuming you have IPFS integration available
 
+
 async def export_to_ipfs():
     wrapper = DiscordWrapper(token="YOUR_TOKEN")
-    
+
     # Export channel
-    result = await wrapper.export_channel(
-        channel_id="YOUR_CHANNEL_ID",
-        format="Json"
-    )
-    
-    if result['status'] == 'success':
-        export_path = result['output_path']
-        
+    result = await wrapper.export_channel(channel_id="YOUR_CHANNEL_ID", format="Json")
+
+    if result["status"] == "success":
+        export_path = result["output_path"]
+
         # Add to IPFS (example - adjust based on your IPFS integration)
         # ipfs_hash = await ipfs_client.add_file(export_path)
         # print(f"Discord export stored on IPFS: {ipfs_hash}")
-        
+
         print(f"Ready to upload to IPFS: {export_path}")
+
 
 asyncio.run(export_to_ipfs())
 ```
@@ -774,22 +765,14 @@ converter.convert_file("data.json", "data.parquet", to_format="parquet")
 converter.convert_file("data.json", "data.json-ld", to_format="jsonld")
 
 # Convert with options
-converter.convert_file(
-    "data.json",
-    "data.parquet",
-    to_format="parquet",
-    compression="snappy"
-)
+converter.convert_file("data.json", "data.parquet", to_format="parquet", compression="snappy")
 
 # Convert with custom JSON-LD context
 converter.convert_file(
     "data.json",
     "data.json-ld",
     to_format="jsonld",
-    context={
-        "@vocab": "http://schema.org/",
-        "discord": "https://discord.com/developers/docs/"
-    }
+    context={"@vocab": "http://schema.org/", "discord": "https://discord.com/developers/docs/"},
 )
 
 # Programmatic conversion (in-memory)
@@ -804,35 +787,27 @@ jsonld_data = converter.convert(data, "list", "jsonld")
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 import asyncio
 
+
 async def convert_exports():
     wrapper = DiscordWrapper()
-    
+
     # Export Discord channel
-    export_result = await wrapper.export_channel(
-        channel_id="123456789",
-        output_path="channel.json"
-    )
-    
+    export_result = await wrapper.export_channel(channel_id="123456789", output_path="channel.json")
+
     # Convert to multiple formats
+    await wrapper.convert_export("channel.json", "channel.jsonl", to_format="jsonl")
+
     await wrapper.convert_export(
-        "channel.json",
-        "channel.jsonl",
-        to_format="jsonl"
+        "channel.json", "channel.parquet", to_format="parquet", compression="snappy"
     )
-    
-    await wrapper.convert_export(
-        "channel.json",
-        "channel.parquet",
-        to_format="parquet",
-        compression="snappy"
-    )
-    
+
     await wrapper.convert_export(
         "channel.json",
         "channel.json-ld",
         to_format="jsonld",
-        context={"discord": "https://discord.com/developers/docs/"}
+        context={"discord": "https://discord.com/developers/docs/"},
     )
+
 
 asyncio.run(convert_exports())
 ```
@@ -842,7 +817,7 @@ asyncio.run(convert_exports())
 ```python
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
     discord_convert_export,
-    discord_batch_convert_exports
+    discord_batch_convert_exports,
 )
 
 # Convert single export
@@ -850,7 +825,7 @@ result = await discord_convert_export(
     input_path="channel.json",
     output_path="channel.parquet",
     to_format="parquet",
-    compression="snappy"
+    compression="snappy",
 )
 
 print(f"Status: {result['status']}")
@@ -863,7 +838,7 @@ batch_result = await discord_batch_convert_exports(
     output_dir="./exports/parquet/",
     to_format="parquet",
     file_pattern="*.json",
-    compression="snappy"
+    compression="snappy",
 )
 
 print(f"Total files: {batch_result['total_files']}")
@@ -893,8 +868,8 @@ converter.convert_file(
         "Guild": "discord:Guild",
         "Channel": "discord:Channel",
         "createdAt": {"@type": "http://www.w3.org/2001/XMLSchema#dateTime"},
-        "content": "http://schema.org/text"
-    }
+        "content": "http://schema.org/text",
+    },
 )
 ```
 
@@ -903,9 +878,7 @@ converter.convert_file(
 ```python
 # Convert with formal logic annotations
 converter.convert_file(
-    "discord_export.json",
-    "discord_export.logic.json-ld",
-    to_format="jsonld-logic"
+    "discord_export.json", "discord_export.logic.json-ld", to_format="jsonld-logic"
 )
 
 # The output includes logic annotations:
@@ -936,21 +909,21 @@ converter.convert_file(
     "large_export.json",
     "large_export.parquet",
     to_format="parquet",
-    compression="snappy"  # Fast compression
+    compression="snappy",  # Fast compression
 )
 
 converter.convert_file(
     "large_export.json",
     "large_export.parquet",
     to_format="parquet",
-    compression="gzip"  # Better compression ratio
+    compression="gzip",  # Better compression ratio
 )
 
 converter.convert_file(
     "large_export.json",
     "large_export.parquet",
     to_format="parquet",
-    compression="brotli"  # Best compression
+    compression="brotli",  # Best compression
 )
 ```
 
@@ -958,18 +931,10 @@ converter.convert_file(
 
 ```python
 # Convert to IPLD (content-addressed)
-converter.convert_file(
-    "discord_export.json",
-    "discord_export.ipld",
-    to_format="ipld"
-)
+converter.convert_file("discord_export.json", "discord_export.ipld", to_format="ipld")
 
 # Convert to CAR (IPFS archive)
-converter.convert_file(
-    "discord_export.json",
-    "discord_export.car",
-    to_format="car"
-)
+converter.convert_file("discord_export.json", "discord_export.car", to_format="car")
 
 # The output can be directly added to IPFS:
 # ipfs dag import discord_export.car
@@ -982,70 +947,58 @@ from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 from ipfs_datasets_py.utils.data_format_converter import get_converter
 import asyncio
 
+
 async def complete_workflow():
     """Complete workflow: Export -> Convert -> Analyze"""
     wrapper = DiscordWrapper()
     converter = get_converter()
-    
+
     # 1. Export Discord channel
     print("Exporting Discord channel...")
     export_result = await wrapper.export_channel(
-        channel_id="123456789",
-        output_path="channel.json",
-        format="Json",
-        download_media=True
+        channel_id="123456789", output_path="channel.json", format="Json", download_media=True
     )
-    
+
     # 2. Convert to multiple formats for different use cases
     print("Converting to multiple formats...")
-    
+
     # JSONL for streaming processing
-    converter.convert_file(
-        "channel.json",
-        "channel.jsonl",
-        to_format="jsonl"
-    )
-    
+    converter.convert_file("channel.json", "channel.jsonl", to_format="jsonl")
+
     # Parquet for analytics
     converter.convert_file(
-        "channel.json",
-        "channel.parquet",
-        to_format="parquet",
-        compression="snappy"
+        "channel.json", "channel.parquet", to_format="parquet", compression="snappy"
     )
-    
+
     # JSON-LD for semantic web
     converter.convert_file(
         "channel.json",
         "channel.json-ld",
         to_format="jsonld",
-        context={"discord": "https://discord.com/developers/docs/"}
+        context={"discord": "https://discord.com/developers/docs/"},
     )
-    
+
     # IPLD for IPFS
-    converter.convert_file(
-        "channel.json",
-        "channel.ipld",
-        to_format="ipld"
-    )
-    
+    converter.convert_file("channel.json", "channel.ipld", to_format="ipld")
+
     # 3. Analyze the data
     print("Analyzing Discord data...")
     from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_analyze_export
-    
+
     analysis = await discord_analyze_export(
         export_path="channel.json",
-        analysis_types=["message_stats", "user_activity", "content_patterns"]
+        analysis_types=["message_stats", "user_activity", "content_patterns"],
     )
-    
+
     print(f"Total messages: {analysis['message_stats']['total_messages']}")
     print(f"Unique users: {analysis['user_activity']['unique_users']}")
-    
+
     return {
         "export": export_result,
         "formats": ["json", "jsonl", "parquet", "jsonld", "ipld"],
-        "analysis": analysis
+        "analysis": analysis,
     }
+
 
 # Run the complete workflow
 result = asyncio.run(complete_workflow())
@@ -1058,34 +1011,27 @@ from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 from ipfs_datasets_py.utils.data_format_converter import get_converter
 import subprocess
 
+
 async def export_to_ipfs():
     """Export Discord data and add to IPFS"""
     wrapper = DiscordWrapper()
     converter = get_converter()
-    
+
     # Export Discord server
-    await wrapper.export_guild(
-        guild_id="987654321",
-        output_dir="./discord_server/",
-        format="Json"
-    )
-    
+    await wrapper.export_guild(guild_id="987654321", output_dir="./discord_server/", format="Json")
+
     # Convert all exports to CAR format
     await wrapper.convert_export(
-        "./discord_server/export.json",
-        "./discord_server/export.car",
-        to_format="car"
+        "./discord_server/export.json", "./discord_server/export.car", to_format="car"
     )
-    
+
     # Add to IPFS
     result = subprocess.run(
-        ["ipfs", "dag", "import", "./discord_server/export.car"],
-        capture_output=True,
-        text=True
+        ["ipfs", "dag", "import", "./discord_server/export.car"], capture_output=True, text=True
     )
-    
+
     print(f"IPFS CID: {result.stdout.strip()}")
-    
+
     return result.stdout.strip()
 ```
 

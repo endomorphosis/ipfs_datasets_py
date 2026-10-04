@@ -1,6 +1,7 @@
 """Batch 63: evaluate_ontology timeout guard, OntologyMediator property tests,
 OntologyPipeline negative tests, analyze_batch_parallel structured log.
 """
+
 from __future__ import annotations
 
 import json
@@ -29,14 +30,20 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx(domain: str = "test"):
     return OntologyGenerationContext(data_source="test", data_type="text", domain=domain)
 
 
 def _score(**kwargs):
     defaults = dict(
-        completeness=0.7, consistency=0.7, clarity=0.6, granularity=0.5,
-        relationship_coherence=0.4, domain_alignment=0.4, recommendations=[],
+        completeness=0.7,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.4,
+        recommendations=[],
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -52,31 +59,40 @@ def _make_mediator():
 # evaluate_ontology timeout guard
 # ---------------------------------------------------------------------------
 
+
 class TestEvaluateOntologyTimeout:
     def _critic(self):
         return OntologyCritic(use_llm=False)
 
     def test_no_timeout_succeeds(self, ontology_dict_factory):
         critic = self._critic()
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = critic.evaluate_ontology(ontology, _ctx())
         assert isinstance(score, CriticScore)
 
     def test_large_timeout_succeeds(self, ontology_dict_factory):
         critic = self._critic()
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = critic.evaluate_ontology(ontology, _ctx(), timeout=30.0)
         assert isinstance(score, CriticScore)
 
     def test_timeout_returns_critic_score_on_time(self, ontology_dict_factory):
         critic = self._critic()
-        ontology = ontology_dict_factory(entity_count=5, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=5, relationship_count=0, domain="test", metadata={}
+        )
         score = critic.evaluate_ontology(ontology, _ctx(), timeout=10.0)
         assert 0.0 <= score.overall <= 1.0
 
     def test_timeout_none_is_default_behavior(self, ontology_dict_factory):
         critic = self._critic()
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score1 = critic.evaluate_ontology(ontology, _ctx(), timeout=None)
         score2 = critic.evaluate_ontology(ontology, _ctx())
         assert score1.completeness == pytest.approx(score2.completeness)
@@ -87,7 +103,9 @@ class TestEvaluateOntologyTimeout:
         import time
 
         critic = self._critic()
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
 
         # Patch _evaluate_ontology_impl to sleep briefly
         original_impl = critic._evaluate_ontology_impl
@@ -102,7 +120,9 @@ class TestEvaluateOntologyTimeout:
 
     def test_timeout_with_source_data(self, ontology_dict_factory):
         critic = self._critic()
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = critic.evaluate_ontology(ontology, _ctx(), source_data="test text", timeout=10.0)
         assert isinstance(score, CriticScore)
 
@@ -110,6 +130,7 @@ class TestEvaluateOntologyTimeout:
 # ---------------------------------------------------------------------------
 # OntologyMediator.refine_ontology property tests (Hypothesis)
 # ---------------------------------------------------------------------------
+
 
 @st.composite
 def ontology_strategy(draw):
@@ -122,13 +143,15 @@ def ontology_strategy(draw):
     rels = []
     for i in range(n_rels):
         if n_entities >= 2:
-            rels.append({
-                "id": f"r{i}",
-                "source_id": entities[i % n_entities]["id"],
-                "target_id": entities[(i + 1) % n_entities]["id"],
-                "type": "related_to",
-                "confidence": 0.7,
-            })
+            rels.append(
+                {
+                    "id": f"r{i}",
+                    "source_id": entities[i % n_entities]["id"],
+                    "target_id": entities[(i + 1) % n_entities]["id"],
+                    "type": "related_to",
+                    "confidence": 0.7,
+                }
+            )
     return {
         "entities": entities,
         "relationships": rels,
@@ -137,7 +160,9 @@ def ontology_strategy(draw):
     }
 
 
-@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(
+    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None
+)
 @given(ontology=ontology_strategy())
 def test_refine_ontology_preserves_structure(ontology):
     """refine_ontology always returns a dict with 'entities' and 'relationships'."""
@@ -150,7 +175,9 @@ def test_refine_ontology_preserves_structure(ontology):
     assert "relationships" in refined
 
 
-@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(
+    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None
+)
 @given(ontology=ontology_strategy())
 def test_refine_ontology_entity_count_does_not_decrease(ontology):
     """refine_ontology never removes existing entities."""
@@ -162,7 +189,9 @@ def test_refine_ontology_entity_count_does_not_decrease(ontology):
     assert len(refined["entities"]) >= original_count
 
 
-@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(
+    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None
+)
 @given(ontology=ontology_strategy())
 def test_refine_ontology_returns_metadata(ontology):
     """refine_ontology always tags the result with refinement_actions metadata."""
@@ -174,6 +203,7 @@ def test_refine_ontology_returns_metadata(ontology):
 # ---------------------------------------------------------------------------
 # OntologyPipeline negative tests
 # ---------------------------------------------------------------------------
+
 
 class TestOntologyPipelineNegative:
     def test_empty_string_does_not_crash(self):
@@ -227,9 +257,11 @@ class TestOntologyPipelineNegative:
 # analyze_batch_parallel structured JSON log
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzeBatchParallelJsonLog:
     def _make_session_result(self, score_val: float = 0.7):
         """Create a minimal session result stub."""
+
         class _FakeScore:
             overall = score_val
 

@@ -61,14 +61,8 @@ def _coordinate(
         failure_reason=FailureReason.TIMEOUT if failed else None,
         failure_detail="synthetic timeout" if failed else None,
     )
-    effective_exact = (
-        0.0 if failed else 1.0 - loss
-        if exact_rule_f1 is None
-        else exact_rule_f1
-    )
-    effective_facet = (
-        0.0 if failed else 1.0 - loss if facet is None else facet
-    )
+    effective_exact = 0.0 if failed else 1.0 - loss if exact_rule_f1 is None else exact_rule_f1
+    effective_facet = 0.0 if failed else 1.0 - loss if facet is None else facet
     effective_eligible = not failed if eligible is None else eligible
     diagnostics = {
         "semantic_comparisons": {
@@ -175,14 +169,10 @@ def test_schedule_is_seeded_uncached_and_counterbalanced() -> None:
     )
     serialized = first.to_dict()
     coordinates = [
-        coordinate
-        for block in serialized["blocks"]
-        for coordinate in block["coordinates"]
+        coordinate for block in serialized["blocks"] for coordinate in block["coordinates"]
     ]
     assert all(item["cache_mode"] == "uncached" for item in coordinates)
-    assert len({item["cache_namespace"] for item in coordinates}) == len(
-        coordinates
-    )
+    assert len({item["cache_namespace"] for item in coordinates}) == len(coordinates)
 
 
 def test_model_schedule_rejects_fewer_than_five_repeats() -> None:
@@ -200,31 +190,21 @@ def test_repeats_are_aggregated_within_case_before_macro_average() -> None:
     baseline = "baseline__realizer"
     candidate = "candidate__realizer"
     rows = [
-        *(
-            _observation("many", baseline, repeat_index, 0.0)
-            for repeat_index in range(10)
-        ),
+        *(_observation("many", baseline, repeat_index, 0.0) for repeat_index in range(10)),
         _observation("one", baseline, 0, 1.0),
-        *(
-            _observation("many", candidate, repeat_index, 0.2)
-            for repeat_index in range(10)
-        ),
+        *(_observation("many", candidate, repeat_index, 0.2) for repeat_index in range(10)),
         _observation("one", candidate, 0, 0.6),
     ]
 
-    report = RoundTripPairedStatistics(
-        seed=17, bootstrap_samples=100
-    ).analyze(rows, baseline_arm_id=baseline)
+    report = RoundTripPairedStatistics(seed=17, bootstrap_samples=100).analyze(
+        rows, baseline_arm_id=baseline
+    )
     result = report.to_dict()
-    baseline_loss = result["arm_summaries"][baseline]["metrics"]["losses"][
+    baseline_loss = result["arm_summaries"][baseline]["metrics"]["losses"]["end_to_end"]
+    candidate_loss = result["arm_summaries"][candidate]["metrics"]["losses"]["end_to_end"]
+    paired = result["paired_comparisons"][f"{candidate}__vs__{baseline}"]["metrics"]["losses"][
         "end_to_end"
     ]
-    candidate_loss = result["arm_summaries"][candidate]["metrics"]["losses"][
-        "end_to_end"
-    ]
-    paired = result["paired_comparisons"][
-        f"{candidate}__vs__{baseline}"
-    ]["metrics"]["losses"]["end_to_end"]
 
     assert baseline_loss["mean"] == 0.5
     assert candidate_loss["mean"] == 0.4
@@ -246,21 +226,22 @@ def test_failure_is_retained_with_loss_one_and_zero_coverage() -> None:
         _observation("case-a", candidate, 0, 0.0, failed=True),
     ]
 
-    result = RoundTripPairedStatistics(
-        bootstrap_samples=20
-    ).analyze(rows, baseline_arm_id=baseline).to_dict()
+    result = (
+        RoundTripPairedStatistics(bootstrap_samples=20)
+        .analyze(rows, baseline_arm_id=baseline)
+        .to_dict()
+    )
     candidate_summary = result["arm_summaries"][candidate]
 
     assert candidate_summary["failure_count"] == 1
     assert candidate_summary["metrics"]["losses"]["end_to_end"]["mean"] == 1.0
-    assert candidate_summary["metrics"]["coverage"]["success_rate"][
-        "mean"
-    ] == 0.0
-    assert result["paired_comparisons"][
-        f"{candidate}__vs__{baseline}"
-    ]["metrics"]["losses"]["end_to_end"][
-        "candidate_minus_baseline"
-    ] == 1.0
+    assert candidate_summary["metrics"]["coverage"]["success_rate"]["mean"] == 0.0
+    assert (
+        result["paired_comparisons"][f"{candidate}__vs__{baseline}"]["metrics"]["losses"][
+            "end_to_end"
+        ]["candidate_minus_baseline"]
+        == 1.0
+    )
 
 
 def test_model_repeat_validation_requires_five_unique_uncached_results() -> None:
@@ -282,9 +263,9 @@ def test_model_repeat_validation_requires_five_unique_uncached_results() -> None
         model_arm_ids=(model,),
     )
 
-    assert report.to_dict()["model_repeat_validation"]["arms"][model][
-        "repeat_count_by_case"
-    ] == {"case-a": MIN_UNCACHED_MODEL_REPEATS}
+    assert report.to_dict()["model_repeat_validation"]["arms"][model]["repeat_count_by_case"] == {
+        "case-a": MIN_UNCACHED_MODEL_REPEATS
+    }
 
     with pytest.raises(ContractError, match="marked uncached"):
         RoundTripPairedStatistics(bootstrap_samples=20).analyze(
@@ -309,23 +290,15 @@ def test_paired_bootstrap_resamples_cases_not_repeat_coordinates() -> None:
     rows = []
     for case_id, candidate_loss in (("case-a", 0.2), ("case-b", 0.4)):
         for repeat_index in range(MIN_UNCACHED_MODEL_REPEATS):
-            rows.append(
-                _observation(case_id, baseline, repeat_index, 0.0)
-            )
-            rows.append(
-                _observation(
-                    case_id, candidate, repeat_index, candidate_loss
-                )
-            )
+            rows.append(_observation(case_id, baseline, repeat_index, 0.0))
+            rows.append(_observation(case_id, candidate, repeat_index, candidate_loss))
 
     analyzer = RoundTripPairedStatistics(seed=41, bootstrap_samples=500)
     first = analyzer.analyze(rows, baseline_arm_id=baseline).to_dict()
-    second = analyzer.analyze(
-        reversed(rows), baseline_arm_id=baseline
-    ).to_dict()
-    paired = first["paired_comparisons"][
-        f"{candidate}__vs__{baseline}"
-    ]["metrics"]["losses"]["end_to_end"]
+    second = analyzer.analyze(reversed(rows), baseline_arm_id=baseline).to_dict()
+    paired = first["paired_comparisons"][f"{candidate}__vs__{baseline}"]["metrics"]["losses"][
+        "end_to_end"
+    ]
 
     assert first == second
     assert paired["candidate_minus_baseline"] == 0.3
@@ -372,13 +345,13 @@ def test_exact_facets_coverage_and_cost_are_separate_report_axes() -> None:
         ),
     ]
 
-    result = RoundTripPairedStatistics(
-        bootstrap_samples=20
-    ).analyze(rows, baseline_arm_id=baseline).to_dict()
+    result = (
+        RoundTripPairedStatistics(bootstrap_samples=20)
+        .analyze(rows, baseline_arm_id=baseline)
+        .to_dict()
+    )
     candidate_metrics = result["arm_summaries"][candidate]["metrics"]
-    paired_metrics = result["paired_comparisons"][
-        f"{candidate}__vs__{baseline}"
-    ]["metrics"]
+    paired_metrics = result["paired_comparisons"][f"{candidate}__vs__{baseline}"]["metrics"]
 
     assert set(candidate_metrics) == {
         "losses",
@@ -391,12 +364,8 @@ def test_exact_facets_coverage_and_cost_are_separate_report_axes() -> None:
     assert candidate_metrics["facets"]["temporal_survival"]["mean"] == 1.0
     assert candidate_metrics["coverage"]["full_coverage_rate"]["mean"] == 1.0
     assert candidate_metrics["cost"]["estimated_cost"]["mean"] == 0.03
-    assert paired_metrics["losses"]["end_to_end"][
-        "candidate_minus_baseline"
-    ] == -0.1
-    assert paired_metrics["cost"]["estimated_cost"][
-        "candidate_minus_baseline"
-    ] == 0.02
+    assert paired_metrics["losses"]["end_to_end"]["candidate_minus_baseline"] == -0.1
+    assert paired_metrics["cost"]["estimated_cost"]["candidate_minus_baseline"] == 0.02
     assert result["analysis_policy"]["cost_folded_into_semantic_loss"] is False
 
 
@@ -421,19 +390,17 @@ def test_missing_cost_is_explicit_and_report_is_deeply_immutable() -> None:
     report_cid = serialized.pop("report_cid")
     assert cid_for_dag_json(serialized) == report_cid
     assert serialized["input_coordinate_count"] == 2
-    assert {
-        item["coordinate_record_cid"]
-        for item in serialized["observation_manifest"]
-    } == {
+    assert {item["coordinate_record_cid"] for item in serialized["observation_manifest"]} == {
         "case-a-baseline__realizer-record",
         "case-a-candidate__realizer-record",
     }
-    assert serialized["arm_summaries"][baseline]["metrics"]["cost"][
-        "model_calls"
-    ]["mean"] is None
-    assert serialized["arm_summaries"][baseline]["metrics"]["cost"][
-        "model_calls"
-    ]["missing_case_count"] == 1
+    assert serialized["arm_summaries"][baseline]["metrics"]["cost"]["model_calls"]["mean"] is None
+    assert (
+        serialized["arm_summaries"][baseline]["metrics"]["cost"]["model_calls"][
+            "missing_case_count"
+        ]
+        == 1
+    )
     with pytest.raises(TypeError):
         report.arm_summaries[baseline] = {}  # type: ignore[index]
     with pytest.raises(TypeError):

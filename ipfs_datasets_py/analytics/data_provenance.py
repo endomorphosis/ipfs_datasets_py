@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 
+
 # Define provenance record types
 class ProvenanceRecordType(Enum):
     """Types of records in the provenance tracking system.
@@ -53,27 +54,28 @@ class ProvenanceRecordType(Enum):
         CHECKPOINT: Represents checkpoints or snapshots of data state for recovery
             or versioning purposes.
     """
-    SOURCE = "source"                  # Original data source
+
+    SOURCE = "source"  # Original data source
     TRANSFORMATION = "transformation"  # Data transformation
-    MERGE = "merge"                    # Merging multiple data sources
-    FILTER = "filter"                  # Filtering data
-    EXPORT = "export"                  # Exporting data to another format
-    IMPORT = "import"                  # Importing data from another format
-    QUERY = "query"                    # Querying data
-    RESULT = "result"                  # Result of a query or operation
-    CHECKPOINT = "checkpoint"          # Checkpoint/snapshot of data state
+    MERGE = "merge"  # Merging multiple data sources
+    FILTER = "filter"  # Filtering data
+    EXPORT = "export"  # Exporting data to another format
+    IMPORT = "import"  # Importing data from another format
+    QUERY = "query"  # Querying data
+    RESULT = "result"  # Result of a query or operation
+    CHECKPOINT = "checkpoint"  # Checkpoint/snapshot of data state
 
 
 @dataclass
 class ProvenanceRecord:
     """
     Base class for provenance records.
-    
+
     This class represents a fundamental unit of provenance information, tracking
     the essential details of data operations and transformations within the system.
     Each record captures metadata about what happened, when it happened, who or
     what performed the operation, and how different data entities are related.
-    
+
     Attributes:
         id: Unique identifier for this provenance record
         record_type: Type of provenance operation (source, transformation, etc.)
@@ -86,6 +88,7 @@ class ProvenanceRecord:
         parameters: Operation-specific parameters and configuration
         cid: Content identifier for IPFS/IPLD storage integration
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     record_type: ProvenanceRecordType = ProvenanceRecordType.TRANSFORMATION
     timestamp: float = field(default_factory=time.time)
@@ -100,25 +103,26 @@ class ProvenanceRecord:
     def to_dict(self) -> Dict[str, Any]:
         """Convert record to dictionary representation."""
         result = asdict(self)
-        result['record_type'] = self.record_type.value
+        result["record_type"] = self.record_type.value
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ProvenanceRecord':
+    def from_dict(cls, data: Dict[str, Any]) -> "ProvenanceRecord":
         """Create record from dictionary representation."""
         # Convert string record type to enum
-        if 'record_type' in data and isinstance(data['record_type'], str):
-            data['record_type'] = ProvenanceRecordType(data['record_type'])
+        if "record_type" in data and isinstance(data["record_type"], str):
+            data["record_type"] = ProvenanceRecordType(data["record_type"])
         return cls(**data)
 
 
 @dataclass
 class SourceRecord(ProvenanceRecord):
     """Record for an original data source."""
+
     record_type: ProvenanceRecordType = ProvenanceRecordType.SOURCE
     source_type: str = ""  # E.g., "file", "database", "api", "web"
-    location: str = ""     # Source location
-    format: str = ""       # Data format
+    location: str = ""  # Source location
+    format: str = ""  # Data format
     size: Optional[int] = None  # Size in bytes if known
     hash: Optional[str] = None  # Content hash if available
 
@@ -126,10 +130,11 @@ class SourceRecord(ProvenanceRecord):
 @dataclass
 class TransformationRecord(ProvenanceRecord):
     """Record for a data transformation operation."""
+
     record_type: ProvenanceRecordType = ProvenanceRecordType.TRANSFORMATION
     transformation_type: str = ""  # Type of transformation
-    tool: str = ""                 # Tool used for transformation
-    version: str = ""              # Tool version
+    tool: str = ""  # Tool used for transformation
+    version: str = ""  # Tool version
     parameters: Dict[str, Any] = field(default_factory=dict)  # Transformation parameters
     execution_time: Optional[float] = None  # Execution time in seconds
     success: bool = True  # Whether transformation succeeded
@@ -139,6 +144,7 @@ class TransformationRecord(ProvenanceRecord):
 @dataclass
 class MergeRecord(ProvenanceRecord):
     """Record for merging multiple data sources."""
+
     record_type: ProvenanceRecordType = ProvenanceRecordType.MERGE
     merge_type: str = ""  # Type of merge (e.g., "union", "join", "concatenate")
     merge_keys: Optional[List[str]] = None  # Keys used for joining if applicable
@@ -148,6 +154,7 @@ class MergeRecord(ProvenanceRecord):
 @dataclass
 class QueryRecord(ProvenanceRecord):
     """Record for a query operation."""
+
     record_type: ProvenanceRecordType = ProvenanceRecordType.QUERY
     query_type: str = ""  # Type of query
     query_text: str = ""  # Raw query text or representation
@@ -159,6 +166,7 @@ class QueryRecord(ProvenanceRecord):
 @dataclass
 class ResultRecord(ProvenanceRecord):
     """Record for an operation result."""
+
     record_type: ProvenanceRecordType = ProvenanceRecordType.RESULT
     result_type: str = ""  # Type of result
     size: Optional[int] = None  # Size of result in bytes if applicable
@@ -181,7 +189,7 @@ class ProvenanceManager:
         storage_path: Optional[str] = None,
         enable_ipld_storage: bool = False,
         default_agent_id: Optional[str] = None,
-        tracking_level: str = "detailed"  # "minimal", "standard", "detailed"
+        tracking_level: str = "detailed",  # "minimal", "standard", "detailed"
     ):
         """
         Initialize the provenance manager.
@@ -218,7 +226,7 @@ class ProvenanceManager:
         description: str = "",
         size: Optional[int] = None,
         hash: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record an original data source.
@@ -248,7 +256,7 @@ class ProvenanceManager:
             location=location,
             format=format,
             size=size,
-            hash=hash
+            hash=hash,
         )
 
         # Store the record
@@ -258,11 +266,13 @@ class ProvenanceManager:
         self.entity_latest_record[data_id] = record.id
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                            record_type=record.record_type.value,
-                            description=description,
-                            timestamp=record.timestamp,
-                            data_id=data_id)
+        self.graph.add_node(
+            record.id,
+            record_type=record.record_type.value,
+            description=description,
+            timestamp=record.timestamp,
+            data_id=data_id,
+        )
 
         # If this is part of a current operation, link it
         if self.current_operations:
@@ -279,7 +289,7 @@ class ProvenanceManager:
         version: str = "",
         input_ids: Optional[List[str]] = None,
         parameters: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Begin tracking a data transformation.
@@ -311,17 +321,19 @@ class ProvenanceManager:
             tool=tool,
             version=version,
             parameters=parameters,
-            execution_time=None  # Will be set when transformation ends
+            execution_time=None,  # Will be set when transformation ends
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                            record_type=record.record_type.value,
-                            description=description,
-                            timestamp=record.timestamp)
+        self.graph.add_node(
+            record.id,
+            record_type=record.record_type.value,
+            description=description,
+            timestamp=record.timestamp,
+        )
 
         # Link to input data entities
         input_record_ids = []
@@ -341,7 +353,7 @@ class ProvenanceManager:
         transformation_id: str,
         output_ids: Optional[List[str]] = None,
         success: bool = True,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> str:
         """
         End tracking a data transformation.
@@ -377,9 +389,9 @@ class ProvenanceManager:
 
             # Add data entity node if it doesn't exist
             if not self.graph.has_node(output_id):
-                self.graph.add_node(output_id,
-                                  record_type="data_entity",
-                                  description=f"Data entity {output_id}")
+                self.graph.add_node(
+                    output_id, record_type="data_entity", description=f"Data entity {output_id}"
+                )
 
             # Link transformation to output
             self.graph.add_edge(transformation_id, output_id, type="output")
@@ -399,7 +411,7 @@ class ProvenanceManager:
         merge_keys: Optional[List[str]] = None,
         merge_strategy: str = "default",
         parameters: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a data merge operation.
@@ -431,7 +443,7 @@ class ProvenanceManager:
             parameters=parameters,
             merge_type=merge_type,
             merge_keys=merge_keys,
-            merge_strategy=merge_strategy
+            merge_strategy=merge_strategy,
         )
 
         # Store the record
@@ -441,10 +453,12 @@ class ProvenanceManager:
         self.entity_latest_record[output_id] = record.id
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                          record_type=record.record_type.value,
-                          description=description,
-                          timestamp=record.timestamp)
+        self.graph.add_node(
+            record.id,
+            record_type=record.record_type.value,
+            description=description,
+            timestamp=record.timestamp,
+        )
 
         # Link to input data entities
         for input_id in input_ids:
@@ -464,7 +478,7 @@ class ProvenanceManager:
         query_text: str,
         description: str = "",
         query_parameters: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a data query operation.
@@ -495,17 +509,19 @@ class ProvenanceManager:
             input_ids=input_ids,
             query_type=query_type,
             query_text=query_text,
-            query_parameters=query_parameters
+            query_parameters=query_parameters,
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                          record_type=record.record_type.value,
-                          description=description,
-                          timestamp=record.timestamp)
+        self.graph.add_node(
+            record.id,
+            record_type=record.record_type.value,
+            description=description,
+            timestamp=record.timestamp,
+        )
 
         # Link to input data entities
         for input_id in input_ids:
@@ -532,7 +548,7 @@ class ProvenanceManager:
         size: Optional[int] = None,
         fields: Optional[List[str]] = None,
         sample: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record the result of a query operation.
@@ -577,7 +593,7 @@ class ProvenanceManager:
             size=size,
             record_count=result_count,
             fields=fields,
-            sample=sample
+            sample=sample,
         )
 
         # Store the result record
@@ -587,10 +603,12 @@ class ProvenanceManager:
         self.entity_latest_record[output_id] = result_record.id
 
         # Add to provenance graph
-        self.graph.add_node(result_record.id,
-                          record_type=result_record.record_type.value,
-                          description=result_record.description,
-                          timestamp=result_record.timestamp)
+        self.graph.add_node(
+            result_record.id,
+            record_type=result_record.record_type.value,
+            description=result_record.description,
+            timestamp=result_record.timestamp,
+        )
 
         # Link query to result
         self.graph.add_edge(query_id, result_record.id, type="produces")
@@ -609,7 +627,7 @@ class ProvenanceManager:
         data_id: str,
         description: str = "",
         checkpoint_type: str = "snapshot",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Record a checkpoint/snapshot of a data entity.
@@ -633,17 +651,19 @@ class ProvenanceManager:
             metadata=metadata,
             input_ids=[data_id],
             output_ids=[data_id],
-            parameters={"checkpoint_type": checkpoint_type}
+            parameters={"checkpoint_type": checkpoint_type},
         )
 
         # Store the record
         self.records[record.id] = record
 
         # Add to provenance graph
-        self.graph.add_node(record.id,
-                          record_type=record.record_type.value,
-                          description=description,
-                          timestamp=record.timestamp)
+        self.graph.add_node(
+            record.id,
+            record_type=record.record_type.value,
+            description=description,
+            timestamp=record.timestamp,
+        )
 
         # Link to data entity
         if data_id in self.entity_latest_record:
@@ -669,10 +689,10 @@ class ProvenanceManager:
                 "created_at": datetime.datetime.now().isoformat(),
                 "agent_id": self.default_agent_id,
                 "tracking_level": self.tracking_level,
-                "record_count": len(records_dict)
+                "record_count": len(records_dict),
             },
             "records": records_dict,
-            "entity_latest_record": self.entity_latest_record
+            "entity_latest_record": self.entity_latest_record,
         }
 
     def export_provenance_to_json(self, file_path: Optional[str] = None) -> Optional[str]:
@@ -689,7 +709,7 @@ class ProvenanceManager:
         json_str = json.dumps(provenance_dict, indent=2)
 
         if file_path:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(json_str)
             return None
         else:
@@ -731,10 +751,12 @@ class ProvenanceManager:
                 self.records[record_id] = record
 
                 # Add to provenance graph
-                self.graph.add_node(record_id,
-                                  record_type=record.record_type.value,
-                                  description=record.description,
-                                  timestamp=record.timestamp)
+                self.graph.add_node(
+                    record_id,
+                    record_type=record.record_type.value,
+                    description=record.description,
+                    timestamp=record.timestamp,
+                )
 
                 # Link to input and output entities
                 for input_id in record.input_ids:
@@ -756,9 +778,11 @@ class ProvenanceManager:
                     else:
                         # Add data entity node if it doesn't exist
                         if not self.graph.has_node(output_id):
-                            self.graph.add_node(output_id,
-                                              record_type="data_entity",
-                                              description=f"Data entity {output_id}")
+                            self.graph.add_node(
+                                output_id,
+                                record_type="data_entity",
+                                description=f"Data entity {output_id}",
+                            )
 
                         # Link record to output
                         self.graph.add_edge(record_id, output_id, type="output")
@@ -784,7 +808,7 @@ class ProvenanceManager:
         Args:
             file_path: Path to JSON file
         """
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             json_str = f.read()
         self.import_provenance_from_json(json_str)
 
@@ -813,7 +837,7 @@ class ProvenanceManager:
             "record_id": record_id,
             "record": self.records[record_id].to_dict(),
             "parents": [],
-            "depth": 0
+            "depth": 0,
         }
 
         # Helper function for recursive tracing
@@ -832,7 +856,7 @@ class ProvenanceManager:
                     "record_id": parent_id,
                     "record": parent_record.to_dict(),
                     "parents": [],
-                    "depth": current_depth + 1
+                    "depth": current_depth + 1,
                 }
 
                 # Recursively trace parents
@@ -854,7 +878,7 @@ class ProvenanceManager:
         include_parameters: bool = False,
         show_timestamps: bool = True,
         file_path: Optional[str] = None,
-        return_base64: bool = False
+        return_base64: bool = False,
     ) -> Optional[str]:
         """
         Visualize the provenance graph for specified data entities.
@@ -871,7 +895,8 @@ class ProvenanceManager:
             str: Base64-encoded image if return_base64 is True
         """
         import matplotlib
-        matplotlib.use('Agg')  # Use non-interactive backend
+
+        matplotlib.use("Agg")  # Use non-interactive backend
 
         # Create a subgraph for visualization
         if data_ids:
@@ -912,23 +937,23 @@ class ProvenanceManager:
         # Define node colors based on record type
         node_colors = []
         for node in subgraph.nodes():
-            node_type = subgraph.nodes[node].get('record_type', '')
+            node_type = subgraph.nodes[node].get("record_type", "")
             if node_type == ProvenanceRecordType.SOURCE.value:
-                color = 'lightblue'
+                color = "lightblue"
             elif node_type == ProvenanceRecordType.TRANSFORMATION.value:
-                color = 'lightgreen'
+                color = "lightgreen"
             elif node_type == ProvenanceRecordType.MERGE.value:
-                color = 'orange'
+                color = "orange"
             elif node_type == ProvenanceRecordType.QUERY.value:
-                color = 'lightcoral'
+                color = "lightcoral"
             elif node_type == ProvenanceRecordType.RESULT.value:
-                color = 'yellow'
+                color = "yellow"
             elif node_type == ProvenanceRecordType.CHECKPOINT.value:
-                color = 'purple'
-            elif node_type == 'data_entity':
-                color = 'gray'
+                color = "purple"
+            elif node_type == "data_entity":
+                color = "gray"
             else:
-                color = 'white'
+                color = "white"
             node_colors.append(color)
 
         # Draw nodes
@@ -940,11 +965,11 @@ class ProvenanceManager:
         # Prepare node labels
         node_labels = {}
         for node in subgraph.nodes():
-            node_type = subgraph.nodes[node].get('record_type', '')
-            description = subgraph.nodes[node].get('description', '')
+            node_type = subgraph.nodes[node].get("record_type", "")
+            description = subgraph.nodes[node].get("description", "")
 
             # For data entities, just use the node ID
-            if node_type == 'data_entity':
+            if node_type == "data_entity":
                 node_labels[node] = node
                 continue
 
@@ -956,7 +981,7 @@ class ProvenanceManager:
                 else:
                     timestamp_str = ""
 
-                if include_parameters and hasattr(record, 'parameters') and record.parameters:
+                if include_parameters and hasattr(record, "parameters") and record.parameters:
                     param_str = f"\nParams: {str(record.parameters)[:20]}..."
                 else:
                     param_str = ""
@@ -968,37 +993,97 @@ class ProvenanceManager:
             node_labels[node] = label
 
         # Draw node labels
-        nx.draw_networkx_labels(subgraph, pos, labels=node_labels, font_size=8, font_family='sans-serif')
+        nx.draw_networkx_labels(
+            subgraph, pos, labels=node_labels, font_size=8, font_family="sans-serif"
+        )
 
         # Set plot title
         if data_ids:
-            plt.title(f"Provenance for {', '.join(data_ids[:3])}{' and others' if len(data_ids) > 3 else ''}")
+            plt.title(
+                f"Provenance for {', '.join(data_ids[:3])}{' and others' if len(data_ids) > 3 else ''}"
+            )
         else:
             plt.title("Full Provenance Graph")
 
         # Add a legend
         legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightblue', markersize=10, label='Source'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgreen', markersize=10, label='Transformation'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=10, label='Merge'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightcoral', markersize=10, label='Query'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='yellow', markersize=10, label='Result'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='purple', markersize=10, label='Checkpoint'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='gray', markersize=10, label='Data Entity')
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="lightblue",
+                markersize=10,
+                label="Source",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="lightgreen",
+                markersize=10,
+                label="Transformation",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="orange",
+                markersize=10,
+                label="Merge",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="lightcoral",
+                markersize=10,
+                label="Query",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="yellow",
+                markersize=10,
+                label="Result",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="purple",
+                markersize=10,
+                label="Checkpoint",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="gray",
+                markersize=10,
+                label="Data Entity",
+            ),
         ]
-        plt.legend(handles=legend_elements, loc='upper right')
+        plt.legend(handles=legend_elements, loc="upper right")
 
         # Save or return the plot
         if file_path:
-            plt.savefig(file_path, bbox_inches='tight')
+            plt.savefig(file_path, bbox_inches="tight")
             plt.close()
             return None
         elif return_base64:
             buf = io.BytesIO()
-            plt.savefig(buf, format='png', bbox_inches='tight')
+            plt.savefig(buf, format="png", bbox_inches="tight")
             plt.close()
             buf.seek(0)
-            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            img_base64 = base64.b64encode(buf.read()).decode("utf-8")
             return img_base64
         else:
             plt.close()
@@ -1012,7 +1097,7 @@ class ProvenanceManager:
         agent_id: Optional[str] = None,
         operation_types: Optional[List[str]] = None,
         include_parameters: bool = False,
-        format: str = "text"  # "text", "html", "json", "md"
+        format: str = "text",  # "text", "html", "json", "md"
     ) -> str:
         """
         Generate an audit report for specified data entities.
@@ -1035,8 +1120,10 @@ class ProvenanceManager:
         for record_id, record in self.records.items():
             # Filter by data IDs
             if data_ids:
-                if not (set(record.input_ids).intersection(data_ids) or
-                        set(record.output_ids).intersection(data_ids)):
+                if not (
+                    set(record.input_ids).intersection(data_ids)
+                    or set(record.output_ids).intersection(data_ids)
+                ):
                     continue
 
             # Filter by time range
@@ -1057,10 +1144,7 @@ class ProvenanceManager:
             filtered_records[record_id] = record
 
         # Sort records by timestamp
-        sorted_records = sorted(
-            filtered_records.values(),
-            key=lambda r: r.timestamp
-        )
+        sorted_records = sorted(filtered_records.values(), key=lambda r: r.timestamp)
 
         # Generate report based on format
         if format == "json":
@@ -1073,9 +1157,7 @@ class ProvenanceManager:
             return self._generate_text_report(sorted_records, include_parameters)
 
     def _generate_text_report(
-        self,
-        records: List[ProvenanceRecord],
-        include_parameters: bool
+        self, records: List[ProvenanceRecord], include_parameters: bool
     ) -> str:
         """Generate a text audit report."""
         lines = ["# Data Provenance Audit Report", ""]
@@ -1100,7 +1182,9 @@ class ProvenanceManager:
         # Add detailed records
         lines.append("## Detailed Records")
         for record in records:
-            record_time = datetime.datetime.fromtimestamp(record.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+            record_time = datetime.datetime.fromtimestamp(record.timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             lines.append(f"### {record.record_type.value.capitalize()} ({record_time})")
             lines.append(f"ID: {record.id}")
             lines.append(f"Description: {record.description}")
@@ -1110,7 +1194,7 @@ class ProvenanceManager:
             if record.output_ids:
                 lines.append(f"Outputs: {', '.join(record.output_ids)}")
 
-            if include_parameters and hasattr(record, 'parameters') and record.parameters:
+            if include_parameters and hasattr(record, "parameters") and record.parameters:
                 lines.append("Parameters:")
                 for key, value in record.parameters.items():
                     lines.append(f"  - {key}: {value}")
@@ -1166,32 +1250,28 @@ class ProvenanceManager:
         return "\n".join(lines)
 
     def _generate_json_report(
-        self,
-        records: List[ProvenanceRecord],
-        include_parameters: bool
+        self, records: List[ProvenanceRecord], include_parameters: bool
     ) -> str:
         """Generate a JSON audit report."""
         report = {
             "generated_at": datetime.datetime.now().isoformat(),
             "record_count": len(records),
-            "records": []
+            "records": [],
         }
 
         for record in records:
             record_dict = record.to_dict()
 
             # Remove parameters if not included
-            if not include_parameters and 'parameters' in record_dict:
-                del record_dict['parameters']
+            if not include_parameters and "parameters" in record_dict:
+                del record_dict["parameters"]
 
             report["records"].append(record_dict)
 
         return json.dumps(report, indent=2)
 
     def _generate_html_report(
-        self,
-        records: List[ProvenanceRecord],
-        include_parameters: bool
+        self, records: List[ProvenanceRecord], include_parameters: bool
     ) -> str:
         """Generate an HTML audit report."""
         # Simple HTML report template
@@ -1219,7 +1299,7 @@ class ProvenanceManager:
             "<body>",
             "  <h1>Data Provenance Audit Report</h1>",
             f"  <p>Generated: {datetime.datetime.now().isoformat()}</p>",
-            f"  <p>Total Records: {len(records)}</p>"
+            f"  <p>Total Records: {len(records)}</p>",
         ]
 
         # Group records by type
@@ -1241,85 +1321,104 @@ class ProvenanceManager:
         # Add detailed records
         html_parts.append("  <h2>Detailed Records</h2>")
         for record in records:
-            record_time = datetime.datetime.fromtimestamp(record.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+            record_time = datetime.datetime.fromtimestamp(record.timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             record_type = record.record_type.value
             html_parts.append(f'  <div class="{record_type}">')
-            html_parts.append(f'    <h3>{record_type.capitalize()} ({record_time})</h3>')
-            html_parts.append(f'    <p><strong>ID:</strong> {record.id}</p>')
-            html_parts.append(f'    <p><strong>Description:</strong> {record.description}</p>')
+            html_parts.append(f"    <h3>{record_type.capitalize()} ({record_time})</h3>")
+            html_parts.append(f"    <p><strong>ID:</strong> {record.id}</p>")
+            html_parts.append(f"    <p><strong>Description:</strong> {record.description}</p>")
 
             if record.input_ids:
-                html_parts.append(f'    <p><strong>Inputs:</strong> {", ".join(record.input_ids)}</p>')
+                html_parts.append(
+                    f"    <p><strong>Inputs:</strong> {', '.join(record.input_ids)}</p>"
+                )
             if record.output_ids:
-                html_parts.append(f'    <p><strong>Outputs:</strong> {", ".join(record.output_ids)}</p>')
+                html_parts.append(
+                    f"    <p><strong>Outputs:</strong> {', '.join(record.output_ids)}</p>"
+                )
 
             # Add record-specific details
             if isinstance(record, SourceRecord):
-                html_parts.append(f'    <p><strong>Source Type:</strong> {record.source_type}</p>')
-                html_parts.append(f'    <p><strong>Location:</strong> {record.location}</p>')
+                html_parts.append(f"    <p><strong>Source Type:</strong> {record.source_type}</p>")
+                html_parts.append(f"    <p><strong>Location:</strong> {record.location}</p>")
                 if record.format:
-                    html_parts.append(f'    <p><strong>Format:</strong> {record.format}</p>')
+                    html_parts.append(f"    <p><strong>Format:</strong> {record.format}</p>")
                 if record.size:
-                    html_parts.append(f'    <p><strong>Size:</strong> {record.size} bytes</p>')
+                    html_parts.append(f"    <p><strong>Size:</strong> {record.size} bytes</p>")
                 if record.hash:
-                    html_parts.append(f'    <p><strong>Hash:</strong> {record.hash}</p>')
+                    html_parts.append(f"    <p><strong>Hash:</strong> {record.hash}</p>")
 
             elif isinstance(record, TransformationRecord):
-                html_parts.append(f'    <p><strong>Transformation Type:</strong> {record.transformation_type}</p>')
+                html_parts.append(
+                    f"    <p><strong>Transformation Type:</strong> {record.transformation_type}</p>"
+                )
                 if record.tool:
-                    html_parts.append(f'    <p><strong>Tool:</strong> {record.tool} (v{record.version})</p>')
+                    html_parts.append(
+                        f"    <p><strong>Tool:</strong> {record.tool} (v{record.version})</p>"
+                    )
                 if record.execution_time:
-                    html_parts.append(f'    <p><strong>Execution Time:</strong> {record.execution_time:.2f} seconds</p>')
-                html_parts.append(f'    <p><strong>Success:</strong> {record.success}</p>')
+                    html_parts.append(
+                        f"    <p><strong>Execution Time:</strong> {record.execution_time:.2f} seconds</p>"
+                    )
+                html_parts.append(f"    <p><strong>Success:</strong> {record.success}</p>")
                 if not record.success and record.error_message:
-                    html_parts.append(f'    <p><strong>Error:</strong> {record.error_message}</p>')
+                    html_parts.append(f"    <p><strong>Error:</strong> {record.error_message}</p>")
 
             elif isinstance(record, MergeRecord):
-                html_parts.append(f'    <p><strong>Merge Type:</strong> {record.merge_type}</p>')
+                html_parts.append(f"    <p><strong>Merge Type:</strong> {record.merge_type}</p>")
                 if record.merge_keys:
-                    html_parts.append(f'    <p><strong>Merge Keys:</strong> {", ".join(record.merge_keys)}</p>')
-                html_parts.append(f'    <p><strong>Merge Strategy:</strong> {record.merge_strategy}</p>')
+                    html_parts.append(
+                        f"    <p><strong>Merge Keys:</strong> {', '.join(record.merge_keys)}</p>"
+                    )
+                html_parts.append(
+                    f"    <p><strong>Merge Strategy:</strong> {record.merge_strategy}</p>"
+                )
 
             elif isinstance(record, QueryRecord):
-                html_parts.append(f'    <p><strong>Query Type:</strong> {record.query_type}</p>')
-                html_parts.append(f'    <p><strong>Query:</strong> {record.query_text}</p>')
+                html_parts.append(f"    <p><strong>Query Type:</strong> {record.query_type}</p>")
+                html_parts.append(f"    <p><strong>Query:</strong> {record.query_text}</p>")
                 if record.execution_time:
-                    html_parts.append(f'    <p><strong>Execution Time:</strong> {record.execution_time:.2f} seconds</p>')
+                    html_parts.append(
+                        f"    <p><strong>Execution Time:</strong> {record.execution_time:.2f} seconds</p>"
+                    )
                 if record.result_count is not None:
-                    html_parts.append(f'    <p><strong>Result Count:</strong> {record.result_count}</p>')
+                    html_parts.append(
+                        f"    <p><strong>Result Count:</strong> {record.result_count}</p>"
+                    )
 
             elif isinstance(record, ResultRecord):
-                html_parts.append(f'    <p><strong>Result Type:</strong> {record.result_type}</p>')
+                html_parts.append(f"    <p><strong>Result Type:</strong> {record.result_type}</p>")
                 if record.size:
-                    html_parts.append(f'    <p><strong>Size:</strong> {record.size} bytes</p>')
+                    html_parts.append(f"    <p><strong>Size:</strong> {record.size} bytes</p>")
                 if record.record_count:
-                    html_parts.append(f'    <p><strong>Record Count:</strong> {record.record_count}</p>')
+                    html_parts.append(
+                        f"    <p><strong>Record Count:</strong> {record.record_count}</p>"
+                    )
                 if record.fields:
-                    html_parts.append(f'    <p><strong>Fields:</strong> {", ".join(record.fields)}</p>')
+                    html_parts.append(
+                        f"    <p><strong>Fields:</strong> {', '.join(record.fields)}</p>"
+                    )
                 if record.sample:
-                    html_parts.append(f'    <p><strong>Sample:</strong> {record.sample}</p>')
+                    html_parts.append(f"    <p><strong>Sample:</strong> {record.sample}</p>")
 
             # Include parameters if requested
-            if include_parameters and hasattr(record, 'parameters') and record.parameters:
-                html_parts.append('    <div><strong>Parameters:</strong></div>')
-                html_parts.append('    <table>')
+            if include_parameters and hasattr(record, "parameters") and record.parameters:
+                html_parts.append("    <div><strong>Parameters:</strong></div>")
+                html_parts.append("    <table>")
                 for key, value in record.parameters.items():
-                    html_parts.append(f'      <tr><td>{key}</td><td>{value}</td></tr>')
-                html_parts.append('    </table>')
+                    html_parts.append(f"      <tr><td>{key}</td><td>{value}</td></tr>")
+                html_parts.append("    </table>")
 
-            html_parts.append('  </div>')
+            html_parts.append("  </div>")
 
-        html_parts.extend([
-            "</body>",
-            "</html>"
-        ])
+        html_parts.extend(["</body>", "</html>"])
 
-        return '\n'.join(html_parts)
+        return "\n".join(html_parts)
 
     def _generate_markdown_report(
-        self,
-        records: List[ProvenanceRecord],
-        include_parameters: bool
+        self, records: List[ProvenanceRecord], include_parameters: bool
     ) -> str:
         """Generate a Markdown audit report."""
         lines = ["# Data Provenance Audit Report", ""]
@@ -1347,7 +1446,9 @@ class ProvenanceManager:
         # Add detailed records
         lines.append("## Detailed Records")
         for record in records:
-            record_time = datetime.datetime.fromtimestamp(record.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+            record_time = datetime.datetime.fromtimestamp(record.timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             lines.append(f"### {record.record_type.value.capitalize()} ({record_time})")
             lines.append(f"**ID:** {record.id}")
             lines.append(f"**Description:** {record.description}")
@@ -1404,7 +1505,7 @@ class ProvenanceManager:
                     lines.append(f"**Sample:** {record.sample}")
 
             # Include parameters if requested
-            if include_parameters and hasattr(record, 'parameters') and record.parameters:
+            if include_parameters and hasattr(record, "parameters") and record.parameters:
                 lines.append("**Parameters:**")
                 for key, value in record.parameters.items():
                     lines.append(f"- {key}: {value}")
@@ -1431,7 +1532,7 @@ class ProvenanceContext:
         version: str = "",
         input_ids: Optional[List[str]] = None,
         parameters: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize the provenance context.
@@ -1458,7 +1559,7 @@ class ProvenanceContext:
         self.success = True
         self.error_message = None
 
-    def __enter__(self) -> 'ProvenanceContext':
+    def __enter__(self) -> "ProvenanceContext":
         """Begin tracking a data transformation."""
         self.transformation_id = self.provenance_manager.begin_transformation(
             description=self.description,
@@ -1467,7 +1568,7 @@ class ProvenanceContext:
             version=self.version,
             input_ids=self.input_ids,
             parameters=self.parameters,
-            metadata=self.metadata
+            metadata=self.metadata,
         )
         return self
 
@@ -1480,9 +1581,9 @@ class ProvenanceContext:
         if self.transformation_id:
             self.provenance_manager.end_transformation(
                 transformation_id=self.transformation_id,
-                output_ids=self.output_ids if hasattr(self, 'output_ids') else None,
+                output_ids=self.output_ids if hasattr(self, "output_ids") else None,
                 success=self.success,
-                error_message=self.error_message
+                error_message=self.error_message,
             )
 
         # Don't suppress exceptions
@@ -1501,7 +1602,7 @@ def example_usage():
         storage_path=None,  # In-memory only
         enable_ipld_storage=False,
         default_agent_id="example_user",
-        tracking_level="detailed"
+        tracking_level="detailed",
     )
 
     # Record a source
@@ -1512,7 +1613,7 @@ def example_usage():
         format="csv",
         description="Raw data from customer survey",
         size=1024 * 1024,  # 1 MB
-        hash="sha256:abc123"
+        hash="sha256:abc123",
     )
 
     # Record a transformation
@@ -1523,7 +1624,7 @@ def example_usage():
         tool="pandas",
         version="1.5.3",
         input_ids=["raw_data_001"],
-        parameters={"dropna": True, "normalize": True}
+        parameters={"dropna": True, "normalize": True},
     ) as context:
         # Simulate processing
         # ... actual data processing code here ...
@@ -1537,7 +1638,7 @@ def example_usage():
         query_type="sql",
         query_text="SELECT * FROM survey_data WHERE age > 30",
         description="Filter survey data for respondents over 30",
-        query_parameters={"min_age": 30}
+        query_parameters={"min_age": 30},
     )
 
     # Record the query result
@@ -1547,7 +1648,7 @@ def example_usage():
         result_count=250,
         result_type="filtered_dataset",
         size=512 * 1024,  # 512 KB
-        fields=["id", "age", "gender", "response"]
+        fields=["id", "age", "gender", "response"],
     )
 
     # Record a merge operation
@@ -1558,14 +1659,14 @@ def example_usage():
         description="Merge survey data with external demographic data",
         merge_keys=["respondent_id"],
         merge_strategy="left_join",
-        parameters={"how": "left", "on": "respondent_id"}
+        parameters={"how": "left", "on": "respondent_id"},
     )
 
     # Record a checkpoint
     checkpoint_id = provenance_manager.record_checkpoint(
         data_id="merged_data_001",
         description="Checkpoint after merging data",
-        checkpoint_type="snapshot"
+        checkpoint_type="snapshot",
     )
 
     # Export provenance to JSON
@@ -1575,21 +1676,18 @@ def example_usage():
     provenance_manager.visualize_provenance(
         data_ids=["filtered_data_001", "merged_data_001"],
         max_depth=3,
-        file_path="provenance_graph.png"
+        file_path="provenance_graph.png",
     )
 
     # Generate audit report
-    audit_report = provenance_manager.generate_audit_report(
-        include_parameters=True,
-        format="html"
-    )
+    audit_report = provenance_manager.generate_audit_report(include_parameters=True, format="html")
 
     print("Provenance tracking example completed.")
 
     return {
         "json": json_str,
         "audit_report": audit_report,
-        "provenance_manager": provenance_manager
+        "provenance_manager": provenance_manager,
     }
 
 

@@ -15,6 +15,7 @@ try:
     from ipfs_datasets_py.logic.fol.converter import FOLConverter
     from ipfs_datasets_py.logic.deontic.converter import DeonticConverter
     from ipfs_datasets_py.logic.common.proof_cache import ProofCache
+
     LOGIC_AVAILABLE = True
 except ImportError:
     LOGIC_AVAILABLE = False
@@ -39,7 +40,7 @@ class TestPerformanceBenchmarks:
             "If P then Q",
         ]
         converter = FOLConverter()
-        
+
         # WHEN
         durations = []
         for formula in simple_formulas:
@@ -47,15 +48,15 @@ class TestPerformanceBenchmarks:
             result = converter.to_fol(formula)
             duration = time.time() - start
             durations.append(duration)
-            
+
             # THEN - Individual conversions should be fast
             assert result is not None
             assert duration < 0.1, f"Simple conversion took {duration:.3f}s, expected <0.1s"
-        
+
         # Average should also be fast
         avg_duration = sum(durations) / len(durations)
         assert avg_duration < 0.05, f"Average {avg_duration:.3f}s, expected <0.05s"
-        
+
     def test_complex_conversion_speed(self):
         """
         GIVEN complex formulas with quantifiers
@@ -69,16 +70,16 @@ class TestPerformanceBenchmarks:
             "All x (Exists y (R(x,y) implies S(y)))",
         ]
         converter = FOLConverter()
-        
+
         # WHEN/THEN
         for formula in complex_formulas:
             start = time.time()
             result = converter.to_fol(formula)
             duration = time.time() - start
-            
+
             assert result is not None
             assert duration < 0.5, f"Complex conversion took {duration:.3f}s, expected <0.5s"
-            
+
     def test_proof_search_speed(self):
         """
         GIVEN a simple proof scenario
@@ -88,16 +89,16 @@ class TestPerformanceBenchmarks:
         # GIVEN
         converter = FOLConverter()
         formula = "If P and (P implies Q) then Q"
-        
+
         # WHEN
         start = time.time()
         result = converter.to_fol(formula)
         duration = time.time() - start
-        
+
         # THEN
         assert result is not None
         assert duration < 1.0, f"Proof search took {duration:.3f}s, expected <1.0s"
-        
+
     def test_cache_hit_speed(self):
         """
         GIVEN a cached formula
@@ -109,16 +110,16 @@ class TestPerformanceBenchmarks:
         key = "test_formula_123"
         value = "cached_result"
         cache.cache[key] = value
-        
+
         # WHEN
         start = time.time()
         result = cache.cache.get(key)
         duration = time.time() - start
-        
+
         # THEN
         assert result == value
         assert duration < 0.01, f"Cache hit took {duration:.3f}s, expected <0.01s"
-        
+
     def test_cache_miss_speed(self):
         """
         GIVEN a non-cached formula
@@ -128,16 +129,16 @@ class TestPerformanceBenchmarks:
         # GIVEN
         cache = ProofCache()
         key = "nonexistent_key"
-        
+
         # WHEN
         start = time.time()
         result = cache.cache.get(key)
         duration = time.time() - start
-        
+
         # THEN
         assert result is None
         assert duration < 0.01, f"Cache miss took {duration:.3f}s, expected <0.01s"
-        
+
     def test_fallback_conversion_speed(self):
         """
         GIVEN fallback conversion methods
@@ -147,16 +148,16 @@ class TestPerformanceBenchmarks:
         # GIVEN
         converter = FOLConverter()
         formula = "All humans are mortal"
-        
+
         # WHEN
         start = time.time()
         result = converter.to_fol(formula)
         duration = time.time() - start
-        
+
         # THEN
         assert result is not None
         assert duration < 0.2, f"Fallback took {duration:.3f}s, expected <0.2s"
-        
+
     def test_batch_processing_speed(self):
         """
         GIVEN 50 formulas to process
@@ -166,17 +167,17 @@ class TestPerformanceBenchmarks:
         # GIVEN
         formulas = [f"P{i} implies Q{i}" for i in range(50)]
         converter = FOLConverter()
-        
+
         # WHEN
         start = time.time()
         results = [converter.to_fol(f) for f in formulas]
         duration = time.time() - start
-        
+
         # THEN
         assert len(results) == 50
         throughput = 50 / duration
         assert throughput > 10, f"Throughput {throughput:.1f} formulas/s, expected >10/s"
-        
+
     def test_memory_usage_profiling(self):
         """
         GIVEN multiple conversions
@@ -186,7 +187,7 @@ class TestPerformanceBenchmarks:
         # GIVEN
         converter = FOLConverter()
         formulas = [f"test formula {i}" for i in range(100)]
-        
+
         # WHEN - Process multiple formulas
         initial_size = sys.getsizeof(converter)
         results = []
@@ -194,12 +195,12 @@ class TestPerformanceBenchmarks:
             result = converter.to_fol(formula)
             results.append(result)
         final_size = sys.getsizeof(converter)
-        
+
         # THEN - Memory growth should be reasonable
         # Converter object size shouldn't grow dramatically
         growth = final_size - initial_size
         assert growth < 1000000, f"Memory grew {growth} bytes, expected <1MB"
-        
+
     def test_concurrent_performance(self):
         """
         GIVEN concurrent conversion requests
@@ -210,7 +211,7 @@ class TestPerformanceBenchmarks:
         converter = FOLConverter()
         formula = "test concurrent formula"
         iterations = 10
-        
+
         # WHEN - Simulate concurrent by rapid sequential calls
         start = time.time()
         results = []
@@ -218,12 +219,12 @@ class TestPerformanceBenchmarks:
             result = converter.to_fol(formula)
             results.append(result)
         duration = time.time() - start
-        
+
         # THEN
         assert len(results) == iterations
         avg_time = duration / iterations
         assert avg_time < 0.1, f"Average time {avg_time:.3f}s, expected <0.1s"
-        
+
     def test_large_formula_set_handling(self):
         """
         GIVEN a large set of formulas
@@ -231,12 +232,9 @@ class TestPerformanceBenchmarks:
         THEN system should handle without errors
         """
         # GIVEN
-        large_set = [
-            f"All x{i} (P{i}(x{i}) implies Q{i}(x{i}))"
-            for i in range(100)
-        ]
+        large_set = [f"All x{i} (P{i}(x{i}) implies Q{i}(x{i}))" for i in range(100)]
         converter = FOLConverter()
-        
+
         # WHEN
         start = time.time()
         successful = 0
@@ -248,7 +246,7 @@ class TestPerformanceBenchmarks:
             except Exception:
                 pass
         duration = time.time() - start
-        
+
         # THEN
         success_rate = successful / len(large_set)
         assert success_rate > 0.8, f"Success rate {success_rate:.1%}, expected >80%"

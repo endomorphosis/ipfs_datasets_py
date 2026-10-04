@@ -62,10 +62,57 @@ _PHONE_PATTERN = _re.compile(r"^[\+\d\s\-().]{7,20}$")
 _SSN_PATTERN = _re.compile(r"^\d{3}-?\d{2}-?\d{4}$")
 _ZIP_PATTERN = _re.compile(r"^\d{5}(-\d{4})?$")
 _STATE_ABBREVS = {
-    "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
-    "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
-    "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
-    "VA","WA","WV","WI","WY","DC",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
 }
 
 
@@ -111,6 +158,7 @@ def _validate_typed_value(value: str, data_type: str) -> Tuple[bool, str]:
 # Field-filling answer store
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FilledField:
     """A field that has been answered, with validation metadata."""
@@ -127,6 +175,7 @@ class FilledField:
 # ---------------------------------------------------------------------------
 # FormFillingAgent
 # ---------------------------------------------------------------------------
+
 
 class FormFillingAgent:
     """Autonomous agent that fills PDF forms.
@@ -163,7 +212,7 @@ class FormFillingAgent:
 
         self._answers: Dict[str, FilledField] = {}
         self._analysis: Any = None  # FormAnalysisResult
-        self._kg: Any = None        # FormKnowledgeGraph
+        self._kg: Any = None  # FormKnowledgeGraph
         self._rule_set: Any = None  # DeonticRuleSet
         self._field_map: Dict[str, Any] = {}  # name → FormFieldSpec
 
@@ -174,7 +223,10 @@ class FormFillingAgent:
     def analyse(self, pdf_path: str | Path) -> None:
         """Parse the PDF and build the knowledge graph synchronously."""
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form
-        from ipfs_datasets_py.processors.pdf_form_ir import FormToLegalIR, build_form_knowledge_graph
+        from ipfs_datasets_py.processors.pdf_form_ir import (
+            FormToLegalIR,
+            build_form_knowledge_graph,
+        )
 
         kwargs: dict[str, Any] = {}
         if self.ocr_provider is not None:
@@ -210,6 +262,7 @@ class FormFillingAgent:
             return str(self.context[spec.data_type])
         # Label-based fuzzy key
         from ipfs_datasets_py.processors.pdf_form_filler import slugify_field_name
+
         slug = slugify_field_name(spec.label)
         if slug in self.context:
             return str(self.context[slug])
@@ -376,17 +429,12 @@ class FormFillingAgent:
                 spec.name
                 for spec in (self._analysis.fields or [])
                 if spec.required
-                and (
-                    spec.name not in self._answers
-                    or not self._answers[spec.name].validated
-                )
+                and (spec.name not in self._answers or not self._answers[spec.name].validated)
             ]
             if missing:
                 raise ValueError(f"Required fields not filled or invalid: {missing}")
 
-        values: Dict[str, Any] = {
-            name: ff.value for name, ff in self._answers.items()
-        }
+        values: Dict[str, Any] = {name: ff.value for name, ff in self._answers.items()}
         return fill_pdf_fields(input_pdf, output_pdf, values, strict=False)
 
     def run(

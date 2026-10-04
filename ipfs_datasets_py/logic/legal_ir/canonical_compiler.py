@@ -111,9 +111,7 @@ del _CONFIG_PAYLOAD
 
 _TOKEN_RE: Final = re.compile(r"[a-z0-9]+")
 _ALLOWED_REQUEST_CONFIG: Final = frozenset({"document_type"})
-_SUPPORTED_NORM_TYPES: Final = frozenset(
-    {"", "obligation", "duty", "permission", "prohibition"}
-)
+_SUPPORTED_NORM_TYPES: Final = frozenset({"", "obligation", "duty", "permission", "prohibition"})
 _UNREPRESENTED_SEMANTIC_FIELDS: Final = (
     "mental_state",
     "recipient",
@@ -167,9 +165,7 @@ def _flatten_strings(value: object) -> list[str]:
             result.append(str(key))
             result.extend(_flatten_strings(item))
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         result = []
         for item in value:
             result.extend(_flatten_strings(item))
@@ -204,10 +200,7 @@ def _best_atom(
     scored = sorted(
         (
             (
-                max(
-                    [_jaccard(text, candidate)]
-                    + [_jaccard(piece, candidate) for piece in pieces]
-                ),
+                max([_jaccard(text, candidate)] + [_jaccard(piece, candidate) for piece in pieces]),
                 candidate,
             )
             for candidate in candidates
@@ -221,29 +214,17 @@ def _best_atom(
 
 def _map_many(value: object, candidates: Sequence[str]) -> tuple[str, ...]:
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
     else:
         values = [value]
-    return tuple(
-        sorted(
-            {
-                atom
-                for item in values
-                if (atom := _best_atom(item, candidates))
-            }
-        )
-    )
+    return tuple(sorted({atom for item in values if (atom := _best_atom(item, candidates))}))
 
 
 def _many_values(value: object) -> list[object]:
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return list(value)
     if value is None or value == "" or value == []:
         return []
@@ -253,9 +234,7 @@ def _many_values(value: object) -> list[object]:
 def _has_semantic_value(value: object) -> bool:
     if value is None or value is False or value == "":
         return False
-    if isinstance(value, (Mapping, Sequence)) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, (Mapping, Sequence)) and not isinstance(value, (str, bytes, bytearray)):
         return bool(value)
     return True
 
@@ -267,8 +246,7 @@ def _unmapped_qualifier_count(
     return sum(
         1
         for item in _many_values(value)
-        if _clean_text(" ".join(_flatten_strings(item)))
-        and not _best_atom(item, candidates)
+        if _clean_text(" ".join(_flatten_strings(item))) and not _best_atom(item, candidates)
     )
 
 
@@ -289,14 +267,10 @@ def _modality_from_text(value: object) -> str:
 def _norm_data(norm: object) -> Mapping[str, object]:
     to_dict = getattr(norm, "to_dict", None)
     if not callable(to_dict):
-        raise CanonicalContractError(
-            "typed deontic norm must provide to_dict()"
-        )
+        raise CanonicalContractError("typed deontic norm must provide to_dict()")
     data = to_dict()
     if not isinstance(data, Mapping):
-        raise CanonicalContractError(
-            "typed deontic norm to_dict() must return an object"
-        )
+        raise CanonicalContractError("typed deontic norm to_dict() must return an object")
     return data
 
 
@@ -333,12 +307,8 @@ def _project_legal_norms(
     vocabulary: CanonicalAtomVocabulary,
 ) -> tuple[tuple[_ProjectedRule, ...], tuple[_UnsupportedProjection, ...]]:
     if not isinstance(vocabulary, CanonicalAtomVocabulary):
-        raise CanonicalContractError(
-            "vocabulary must be CanonicalAtomVocabulary"
-        )
-    if not isinstance(norms, Sequence) or isinstance(
-        norms, (str, bytes, bytearray)
-    ):
+        raise CanonicalContractError("vocabulary must be CanonicalAtomVocabulary")
+    if not isinstance(norms, Sequence) or isinstance(norms, (str, bytes, bytearray)):
         raise CanonicalContractError("norms must be an array")
 
     projected: list[_ProjectedRule] = []
@@ -388,9 +358,7 @@ def _project_legal_norms(
         )
         if not actor or not action:
             missing = [
-                field
-                for field, value in (("actor", actor), ("action", action))
-                if not value
+                field for field, value in (("actor", actor), ("action", action)) if not value
             ]
             unsupported.append(
                 _UnsupportedProjection(
@@ -406,10 +374,7 @@ def _project_legal_norms(
             )
             continue
 
-        if (
-            _clean_text(" ".join(_flatten_strings(data.get("action_object"))))
-            and not object_atom
-        ):
+        if _clean_text(" ".join(_flatten_strings(data.get("action_object")))) and not object_atom:
             unsupported.append(
                 _UnsupportedProjection(
                     code="typed_deontic.unmapped_object",
@@ -450,9 +415,7 @@ def _project_legal_norms(
         projected.append(
             _ProjectedRule(
                 rule=CanonicalRule(
-                    modality=_modality_from_text(
-                        [data.get("modality"), data.get("norm_type")]
-                    ),
+                    modality=_modality_from_text([data.get("modality"), data.get("norm_type")]),
                     actor=actor,
                     action=action,
                     object=object_atom,
@@ -558,9 +521,7 @@ def _unsupported_semantics(
     partial: bool,
 ) -> tuple[UnsupportedSemantic, ...]:
     disposition = (
-        UnsupportedDisposition.EXPLICIT_PARTIAL
-        if partial
-        else UnsupportedDisposition.ABSTAIN
+        UnsupportedDisposition.EXPLICIT_PARTIAL if partial else UnsupportedDisposition.ABSTAIN
     )
     return tuple(
         UnsupportedSemantic(
@@ -587,9 +548,7 @@ def _base_provenance(
         "policy_cid": request.policy_cid,
         "constructor_interface": SELECTED_CONSTRUCTOR_INTERFACE,
         "constructor_adapter_raw_cid": SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID,
-        "implementation_representative_arm_id": (
-            IMPLEMENTATION_REPRESENTATIVE_ARM_ID
-        ),
+        "implementation_representative_arm_id": (IMPLEMENTATION_REPRESENTATIVE_ARM_ID),
         "implementation_representative_arm_identity_cid": (
             IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID
         ),
@@ -637,11 +596,7 @@ def _failure(
     abstained: bool = False,
 ) -> CompilerResult:
     return CompilerResult(
-        status=(
-            OperationStatus.ABSTAINED
-            if abstained
-            else OperationStatus.FAILED
-        ),
+        status=(OperationStatus.ABSTAINED if abstained else OperationStatus.FAILED),
         request_cid=request.request_cid,
         unsupported_semantics=tuple(unsupported),
         provenance=_base_provenance(
@@ -828,10 +783,7 @@ class TypedDeonticCanonicalCompiler:
             )
 
         try:
-            norms = [
-                legal_norm_type.from_parser_element(element)
-                for element in elements
-            ]
+            norms = [legal_norm_type.from_parser_element(element) for element in elements]
             projected, unsupported_records = _project_legal_norms(
                 norms,
                 request.atom_vocabulary,
@@ -857,17 +809,13 @@ class TypedDeonticCanonicalCompiler:
                 ),
             )
 
-        if unsupported_records and (
-            not request.allow_explicit_partial or not projected
-        ):
+        if unsupported_records and (not request.allow_explicit_partial or not projected):
             unsupported = _unsupported_semantics(
                 unsupported_records,
                 request,
                 partial=False,
             )
-            affected_norm_count = len(
-                {record.norm_index for record in unsupported_records}
-            )
+            affected_norm_count = len({record.norm_index for record in unsupported_records})
             message = (
                 f"{len(unsupported)} unsupported semantic issue(s) affect "
                 f"{affected_norm_count} typed deontic record(s); the compiler "
@@ -897,9 +845,7 @@ class TypedDeonticCanonicalCompiler:
             )
 
         if not projected:
-            message = (
-                "Typed deontic records did not map to a nonempty canonical IR."
-            )
+            message = "Typed deontic records did not map to a nonempty canonical IR."
             return _failure(
                 request,
                 code=CanonicalErrorCode.EMPTY_OUTPUT,
@@ -916,14 +862,9 @@ class TypedDeonticCanonicalCompiler:
             )
 
         try:
-            canonical_ir = CanonicalRoundTripIR(
-                tuple(item.rule for item in projected)
-            )
+            canonical_ir = CanonicalRoundTripIR(tuple(item.rule for item in projected))
         except CanonicalContractError as exc:
-            message = (
-                "The projected rules violate CanonicalRoundTripIR@1: "
-                f"{exc}"
-            )
+            message = f"The projected rules violate CanonicalRoundTripIR@1: {exc}"
             return _failure(
                 request,
                 code=CanonicalErrorCode.INVALID_IR,

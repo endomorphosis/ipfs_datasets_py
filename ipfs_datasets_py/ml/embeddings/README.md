@@ -59,7 +59,7 @@ from ipfs_datasets_py.embeddings import generate_embeddings, EmbeddingRequest
 request = EmbeddingRequest(
     texts=["Your text here", "Another document"],
     model="sentence-transformers/all-MiniLM-L6-v2",
-    chunk_size=512
+    chunk_size=512,
 )
 
 embeddings = await generate_embeddings(request)
@@ -71,11 +71,7 @@ print(f"Generated {len(embeddings.vectors)} embeddings")
 from ipfs_datasets_py.embeddings import SemanticChunker, ChunkingConfig
 
 # Configure semantic chunking
-config = ChunkingConfig(
-    max_chunk_size=512,
-    overlap_size=50,
-    similarity_threshold=0.8
-)
+config = ChunkingConfig(max_chunk_size=512, overlap_size=50, similarity_threshold=0.8)
 
 chunker = SemanticChunker(config)
 chunks = chunker.chunk_text(long_document)
@@ -90,7 +86,7 @@ search_request = VectorSearchRequest(
     query_vector=query_embedding,
     limit=10,
     similarity_metric=SimilarityMetric.COSINE,
-    filters={"category": "research"}
+    filters={"category": "research"},
 )
 ```
 
@@ -102,7 +98,7 @@ embedding_config = {
     "model_name": "sentence-transformers/all-MiniLM-L6-v2",
     "device": "cuda",  # or "cpu"
     "batch_size": 32,
-    "max_length": 512
+    "max_length": 512,
 }
 ```
 
@@ -112,7 +108,7 @@ chunking_config = {
     "strategy": "semantic",
     "max_size": 512,
     "overlap": 50,
-    "preserve_sentences": True
+    "preserve_sentences": True,
 }
 ```
 

@@ -55,9 +55,7 @@ from .splits import (
 )
 
 
-INTENT_FORMALIZATION_BENCHMARK_SCHEMA_VERSION: Final = (
-    "intent-formalization-benchmark/v1"
-)
+INTENT_FORMALIZATION_BENCHMARK_SCHEMA_VERSION: Final = "intent-formalization-benchmark/v1"
 INTENT_FORMALIZATION_BENCHMARK_EXAMPLE_SCHEMA_VERSION: Final = (
     "intent-formalization-benchmark-example/v1"
 )
@@ -109,9 +107,7 @@ def _canonical_json(value: Any) -> str:
 
 
 def _digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(
-        _canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _bounded_text(value: Any, field_name: str, *, required: bool = True) -> str:
@@ -120,20 +116,14 @@ def _bounded_text(value: Any, field_name: str, *, required: bool = True) -> str:
     result = value.strip()
     if (required and not result) or len(result) > 1024 or "\x00" in result:
         qualifier = "non-empty " if required else ""
-        raise IntentBenchmarkError(
-            f"{field_name} must be bounded {qualifier}text"
-        )
+        raise IntentBenchmarkError(f"{field_name} must be bounded {qualifier}text")
     return result
 
 
 def _strings(value: Sequence[str], field_name: str) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise IntentBenchmarkError(f"{field_name} must be a sequence")
-    result = tuple(
-        _bounded_text(item, field_name) for item in value
-    )
+    result = tuple(_bounded_text(item, field_name) for item in value)
     if len(result) != len(set(result)):
         raise IntentBenchmarkError(f"{field_name} must not contain duplicates")
     return tuple(sorted(result))
@@ -146,9 +136,7 @@ def _finite_nonnegative(value: Any, field_name: str) -> float:
         or not math.isfinite(float(value))
         or float(value) < 0.0
     ):
-        raise IntentBenchmarkError(
-            f"{field_name} must be a finite non-negative number"
-        )
+        raise IntentBenchmarkError(f"{field_name} must be a finite non-negative number")
     return float(value)
 
 
@@ -185,11 +173,7 @@ def _percentile(values: Sequence[float], percentile: float) -> float:
 def _formula_map(
     artifact: FormalizationArtifact | None,
 ) -> dict[str, Any]:
-    return (
-        {}
-        if artifact is None
-        else {item.formula_id: item for item in artifact.formulas}
-    )
+    return {} if artifact is None else {item.formula_id: item for item in artifact.formulas}
 
 
 def _expression(formula: Any) -> Mapping[str, Any]:
@@ -200,11 +184,7 @@ def _expression(formula: Any) -> Mapping[str, Any]:
 def _first_node_id(formula: Any) -> str:
     metadata = formula.metadata.to_dict()
     values = metadata.get("intent_node_ids", ())
-    if (
-        isinstance(values, Sequence)
-        and not isinstance(values, (str, bytes, bytearray))
-        and values
-    ):
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes, bytearray)) and values:
         return str(values[0])
     for node_id in formula.input_node_ids:
         if node_id.startswith("intent-node:") and ":" in node_id:
@@ -280,11 +260,7 @@ def _obligation_key(obligation: Any) -> str:
 
     metadata = obligation.metadata
     kind = str(metadata.get("obligation_kind") or obligation.logic_family)
-    semantic_id = str(
-        metadata.get("intent_semantic_id")
-        or metadata.get("intent_node_id")
-        or ""
-    )
+    semantic_id = str(metadata.get("intent_semantic_id") or metadata.get("intent_node_id") or "")
     formula_id = str(metadata.get("formula_id") or "")
     if semantic_id or formula_id:
         return f"{kind}|{semantic_id}|{formula_id}"
@@ -299,9 +275,7 @@ def _execution_keys(
 ) -> set[str]:
     if execution is None:
         return set()
-    obligations = {
-        item.obligation_id: item for item in execution.packet.obligations
-    }
+    obligations = {item.obligation_id: item for item in execution.packet.obligations}
     return {
         _obligation_key(obligations[outcome.obligation_id])
         for outcome in execution.outcomes
@@ -319,10 +293,7 @@ def _expected_obligation_keys(
         packet = IntentProofObligations().generate(artifact)
     except IntentProofObligationError:
         return {f"id:{item}" for item in obligation_ids}
-    by_id = {
-        item.obligation_id: _obligation_key(item)
-        for item in packet.obligations
-    }
+    by_id = {item.obligation_id: _obligation_key(item) for item in packet.obligations}
     return {by_id.get(item, f"id:{item}") for item in obligation_ids}
 
 
@@ -339,9 +310,7 @@ class IntentBenchmarkCost:
         for name in ("input_tokens", "output_tokens"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise IntentBenchmarkError(
-                    f"{name} must be a non-negative integer"
-                )
+                raise IntentBenchmarkError(f"{name} must be a non-negative integer")
         for name in ("compute_seconds", "estimated_usd"):
             object.__setattr__(
                 self,
@@ -383,9 +352,7 @@ class IntentBenchmarkExample:
     unsupported_obligation_ids: tuple[str, ...] = ()
     expected_unsupported_formula_ids: tuple[str, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
-    schema_version: str = (
-        INTENT_FORMALIZATION_BENCHMARK_EXAMPLE_SCHEMA_VERSION
-    )
+    schema_version: str = INTENT_FORMALIZATION_BENCHMARK_EXAMPLE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
         document = validate_intent_ir(self.document)
@@ -393,16 +360,12 @@ class IntentBenchmarkExample:
         reference = self.reference_artifact
         if reference is not None:
             if not isinstance(reference, FormalizationArtifact):
-                raise IntentBenchmarkError(
-                    "reference_artifact must be a FormalizationArtifact"
-                )
+                raise IntentBenchmarkError("reference_artifact must be a FormalizationArtifact")
             reference.validate()
             if (
                 reference.declaration_id != document.document_id
                 or reference.declaration_digest
-                != IntentFormalizationCompiler()
-                .adapt_sample(document)
-                .declaration_digest
+                != IntentFormalizationCompiler().adapt_sample(document).declaration_digest
             ):
                 raise IntentBenchmarkError(
                     "reference artifact does not identify the example document"
@@ -412,15 +375,9 @@ class IntentBenchmarkExample:
             "unsupported_obligation_ids",
             "expected_unsupported_formula_ids",
         ):
-            object.__setattr__(
-                self, name, _strings(getattr(self, name), name)
-            )
-        if set(self.provable_obligation_ids) & set(
-            self.unsupported_obligation_ids
-        ):
-            raise IntentBenchmarkError(
-                "an obligation cannot be both provable and unsupported"
-            )
+            object.__setattr__(self, name, _strings(getattr(self, name), name))
+        if set(self.provable_obligation_ids) & set(self.unsupported_obligation_ids):
+            raise IntentBenchmarkError("an obligation cannot be both provable and unsupported")
         if not isinstance(self.metadata, Mapping) or any(
             not isinstance(key, str) for key in self.metadata
         ):
@@ -428,31 +385,21 @@ class IntentBenchmarkExample:
         object.__setattr__(
             self,
             "metadata",
-            MappingProxyType(
-                json.loads(_canonical_json(dict(self.metadata)))
-            ),
+            MappingProxyType(json.loads(_canonical_json(dict(self.metadata)))),
         )
-        if (
-            self.schema_version
-            != INTENT_FORMALIZATION_BENCHMARK_EXAMPLE_SCHEMA_VERSION
-        ):
+        if self.schema_version != INTENT_FORMALIZATION_BENCHMARK_EXAMPLE_SCHEMA_VERSION:
             raise IntentBenchmarkError("unsupported benchmark example schema")
 
     @property
     def sample_id(self) -> str:
         return self.document.document_id
 
-    def with_reference(
-        self, compiler: IntentFormalizationCompiler
-    ) -> "IntentBenchmarkExample":
+    def with_reference(self, compiler: IntentFormalizationCompiler) -> "IntentBenchmarkExample":
         if self.reference_artifact is not None:
             return self
         artifact = compiler.compile(self.document)
-        unsupported_formulas = (
-            self.expected_unsupported_formula_ids
-            or tuple(
-                item.formula_id for item in artifact.formulas if item.opaque
-            )
+        unsupported_formulas = self.expected_unsupported_formula_ids or tuple(
+            item.formula_id for item in artifact.formulas if item.opaque
         )
         try:
             packet = IntentProofObligations().generate(artifact)
@@ -483,25 +430,17 @@ class IntentBenchmarkExample:
             "document_digest": (
                 self.reference_artifact.declaration_digest
                 if self.reference_artifact is not None
-                else IntentFormalizationCompiler()
-                .adapt_sample(self.document)
-                .declaration_digest
+                else IntentFormalizationCompiler().adapt_sample(self.document).declaration_digest
             ),
-            "expected_unsupported_formula_ids": list(
-                self.expected_unsupported_formula_ids
-            ),
+            "expected_unsupported_formula_ids": list(self.expected_unsupported_formula_ids),
             "metadata": dict(self.metadata),
             "provable_obligation_ids": list(self.provable_obligation_ids),
             "reference_artifact_digest": (
-                self.reference_artifact.digest
-                if self.reference_artifact is not None
-                else ""
+                self.reference_artifact.digest if self.reference_artifact is not None else ""
             ),
             "sample_id": self.sample_id,
             "schema_version": self.schema_version,
-            "unsupported_obligation_ids": list(
-                self.unsupported_obligation_ids
-            ),
+            "unsupported_obligation_ids": list(self.unsupported_obligation_ids),
         }
 
 
@@ -524,14 +463,10 @@ class IntentBenchmarkObservation:
     latency_ms: float = 0.0
     peak_memory_bytes: int = 0
     cost: IntentBenchmarkCost = field(default_factory=IntentBenchmarkCost)
-    schema_version: str = (
-        INTENT_FORMALIZATION_BENCHMARK_OBSERVATION_SCHEMA_VERSION
-    )
+    schema_version: str = INTENT_FORMALIZATION_BENCHMARK_OBSERVATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "sample_id", _bounded_text(self.sample_id, "sample_id")
-        )
+        object.__setattr__(self, "sample_id", _bounded_text(self.sample_id, "sample_id"))
         try:
             arm = (
                 self.arm
@@ -539,34 +474,24 @@ class IntentBenchmarkObservation:
                 else IntentBenchmarkArm(self.arm)
             )
         except (TypeError, ValueError) as exc:
-            raise IntentBenchmarkError(
-                f"unknown benchmark arm: {self.arm!r}"
-            ) from exc
+            raise IntentBenchmarkError(f"unknown benchmark arm: {self.arm!r}") from exc
         object.__setattr__(self, "arm", arm)
         if self.artifact is not None:
             if not isinstance(self.artifact, FormalizationArtifact):
-                raise IntentBenchmarkError(
-                    "artifact must be a FormalizationArtifact or None"
-                )
+                raise IntentBenchmarkError("artifact must be a FormalizationArtifact or None")
             self.artifact.validate()
             if self.artifact.declaration_id != self.sample_id:
-                raise IntentBenchmarkError(
-                    "observation artifact identifies another sample"
-                )
+                raise IntentBenchmarkError("observation artifact identifies another sample")
         if self.proof_execution is not None and not isinstance(
             self.proof_execution, IntentProofExecution
         ):
-            raise IntentBenchmarkError(
-                "proof_execution must be an IntentProofExecution"
-            )
+            raise IntentBenchmarkError("proof_execution must be an IntentProofExecution")
         for name in (
             "claimed_proof_ids",
             "retrieved_sample_ids",
             "authority_violations",
         ):
-            object.__setattr__(
-                self, name, _strings(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _strings(getattr(self, name), name))
         if not isinstance(self.claimed_completion, bool):
             raise IntentBenchmarkError("claimed_completion must be a boolean")
         if not isinstance(self.confidences, Mapping):
@@ -574,13 +499,9 @@ class IntentBenchmarkObservation:
         confidences: dict[str, float] = {}
         for formula_id, raw_confidence in self.confidences.items():
             formula_id = _bounded_text(formula_id, "confidence formula ID")
-            confidence = _finite_nonnegative(
-                raw_confidence, f"confidence[{formula_id!r}]"
-            )
+            confidence = _finite_nonnegative(raw_confidence, f"confidence[{formula_id!r}]")
             if confidence > 1.0:
-                raise IntentBenchmarkError(
-                    "confidence values must be between zero and one"
-                )
+                raise IntentBenchmarkError("confidence values must be between zero and one")
             confidences[formula_id] = confidence
         object.__setattr__(
             self,
@@ -591,9 +512,7 @@ class IntentBenchmarkObservation:
             object.__setattr__(
                 self,
                 name,
-                _bounded_text(
-                    getattr(self, name), name, required=False
-                ),
+                _bounded_text(getattr(self, name), name, required=False),
             )
         default_authority = (
             "deterministic_compiler_output"
@@ -603,9 +522,7 @@ class IntentBenchmarkObservation:
         object.__setattr__(
             self,
             "authority",
-            _bounded_text(
-                self.authority or default_authority, "authority"
-            ),
+            _bounded_text(self.authority or default_authority, "authority"),
         )
         object.__setattr__(
             self,
@@ -617,33 +534,20 @@ class IntentBenchmarkObservation:
             or not isinstance(self.peak_memory_bytes, int)
             or self.peak_memory_bytes < 0
         ):
-            raise IntentBenchmarkError(
-                "peak_memory_bytes must be a non-negative integer"
-            )
+            raise IntentBenchmarkError("peak_memory_bytes must be a non-negative integer")
         if not isinstance(self.cost, IntentBenchmarkCost):
             if isinstance(self.cost, Mapping):
                 object.__setattr__(self, "cost", IntentBenchmarkCost(**self.cost))
             else:
-                raise IntentBenchmarkError(
-                    "cost must be an IntentBenchmarkCost"
-                )
-        if (
-            self.schema_version
-            != INTENT_FORMALIZATION_BENCHMARK_OBSERVATION_SCHEMA_VERSION
-        ):
-            raise IntentBenchmarkError(
-                "unsupported benchmark observation schema"
-            )
+                raise IntentBenchmarkError("cost must be an IntentBenchmarkCost")
+        if self.schema_version != INTENT_FORMALIZATION_BENCHMARK_OBSERVATION_SCHEMA_VERSION:
+            raise IntentBenchmarkError("unsupported benchmark observation schema")
 
     @property
     def authoritative_positive_ids(self) -> tuple[str, ...]:
         if self.proof_execution is None:
             return ()
-        return tuple(
-            item.obligation_id
-            for item in self.proof_execution.outcomes
-            if item.positive
-        )
+        return tuple(item.obligation_id for item in self.proof_execution.outcomes if item.positive)
 
     @property
     def unsupported_proof_ids(self) -> tuple[str, ...]:
@@ -673,9 +577,7 @@ class IntentBenchmarkObservation:
 
         if not isinstance(run, IntentAdvisorRun):
             raise IntentBenchmarkError("run must be an IntentAdvisorRun")
-        normalized_arm = (
-            arm if isinstance(arm, IntentBenchmarkArm) else IntentBenchmarkArm(arm)
-        )
+        normalized_arm = arm if isinstance(arm, IntentBenchmarkArm) else IntentBenchmarkArm(arm)
         artifact = run.deterministic_artifact
         authority = "deterministic_compiler_output"
         if normalized_arm is not IntentBenchmarkArm.DETERMINISTIC_ONLY:
@@ -686,9 +588,7 @@ class IntentBenchmarkObservation:
                     or not isinstance(candidate_index, int)
                     or not 0 <= candidate_index < len(run.candidates)
                 ):
-                    raise IntentBenchmarkError(
-                        "candidate_index is outside the advisor candidates"
-                    )
+                    raise IntentBenchmarkError("candidate_index is outside the advisor candidates")
                 artifact = replace(
                     artifact,
                     formulas=run.candidates[candidate_index].formulas,
@@ -720,17 +620,11 @@ class CalibrationMetrics:
         }
 
 
-def _calibration(
-    pairs: Sequence[tuple[float, bool]], *, bin_count: int = 10
-) -> CalibrationMetrics:
+def _calibration(pairs: Sequence[tuple[float, bool]], *, bin_count: int = 10) -> CalibrationMetrics:
     if not pairs:
         return CalibrationMetrics()
-    brier = _mean(
-        [(confidence - float(correct)) ** 2 for confidence, correct in pairs]
-    )
-    bins: list[list[tuple[float, bool]]] = [
-        [] for _ in range(bin_count)
-    ]
+    brier = _mean([(confidence - float(correct)) ** 2 for confidence, correct in pairs])
+    bins: list[list[tuple[float, bool]]] = [[] for _ in range(bin_count)]
     for confidence, correct in pairs:
         index = min(bin_count - 1, int(confidence * bin_count))
         bins[index].append((confidence, correct))
@@ -802,8 +696,7 @@ class IntentBenchmarkMetrics:
             "authority_violation_count": self.authority_violation_count,
             "calibration": self.calibration.to_dict(),
             "calibration_by_review_state": {
-                key: value.to_dict()
-                for key, value in self.calibration_by_review_state.items()
+                key: value.to_dict() for key, value in self.calibration_by_review_state.items()
             },
             "control_f1": self.control_f1,
             "cost": self.cost.to_dict(),
@@ -884,9 +777,7 @@ class IntentBenchmarkReport:
     paired_deltas: Mapping[IntentBenchmarkArm, IntentPairedDelta]
     leakage_violations: tuple[Mapping[str, Any], ...] = ()
     authority_violations: tuple[Mapping[str, str], ...] = ()
-    schema_version: str = (
-        INTENT_FORMALIZATION_BENCHMARK_REPORT_SCHEMA_VERSION
-    )
+    schema_version: str = INTENT_FORMALIZATION_BENCHMARK_REPORT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -913,10 +804,7 @@ class IntentBenchmarkReport:
                 )
             ),
         )
-        if (
-            self.schema_version
-            != INTENT_FORMALIZATION_BENCHMARK_REPORT_SCHEMA_VERSION
-        ):
+        if self.schema_version != INTENT_FORMALIZATION_BENCHMARK_REPORT_SCHEMA_VERSION:
             raise IntentBenchmarkError("unsupported benchmark report schema")
 
     @property
@@ -931,11 +819,9 @@ class IntentBenchmarkReport:
     def promotion_eligible(self) -> bool:
         return (
             set(self.metrics_by_arm) == set(IntentBenchmarkArm)
-            and IntentBenchmarkArm.DETERMINISTIC_ONLY
-            not in self.paired_deltas
+            and IntentBenchmarkArm.DETERMINISTIC_ONLY not in self.paired_deltas
             and set(self.paired_deltas)
-            == set(IntentBenchmarkArm)
-            - {IntentBenchmarkArm.DETERMINISTIC_ONLY}
+            == set(IntentBenchmarkArm) - {IntentBenchmarkArm.DETERMINISTIC_ONLY}
             and self.leakage_count == 0
             and self.authority_violation_count == 0
             and all(item.promotion_safe for item in self.metrics_by_arm.values())
@@ -971,12 +857,10 @@ class IntentBenchmarkReport:
             "leakage_count": self.leakage_count,
             "leakage_violations": [dict(item) for item in self.leakage_violations],
             "metrics_by_arm": {
-                arm.value: metrics.to_dict()
-                for arm, metrics in self.metrics_by_arm.items()
+                arm.value: metrics.to_dict() for arm, metrics in self.metrics_by_arm.items()
             },
             "paired_deltas": {
-                arm.value: delta.to_dict()
-                for arm, delta in self.paired_deltas.items()
+                arm.value: delta.to_dict() for arm, delta in self.paired_deltas.items()
             },
             "promotion_eligible": self.promotion_eligible,
             "schema_version": self.schema_version,
@@ -996,10 +880,7 @@ class IntentBenchmarkReport:
 
 BenchmarkRunner = Callable[
     [IntentBenchmarkExample],
-    IntentBenchmarkObservation
-    | IntentAdvisorRun
-    | FormalizationArtifact
-    | None,
+    IntentBenchmarkObservation | IntentAdvisorRun | FormalizationArtifact | None,
 ]
 
 
@@ -1017,9 +898,7 @@ class IntentFormalizationBenchmark:
         evaluation_partitions: Sequence[str] = DEFAULT_EVALUATION_PARTITIONS,
         compiler: IntentFormalizationCompiler | None = None,
     ) -> None:
-        if isinstance(examples, (str, bytes, bytearray)) or not isinstance(
-            examples, Sequence
-        ):
+        if isinstance(examples, (str, bytes, bytearray)) or not isinstance(examples, Sequence):
             raise IntentBenchmarkError("examples must be a sequence")
         self.compiler = compiler or IntentFormalizationCompiler()
         normalized = tuple(
@@ -1036,9 +915,7 @@ class IntentFormalizationBenchmark:
                 "benchmark examples must be non-empty with unique sample IDs"
             )
         if not isinstance(split_manifest, IntentSplitManifest):
-            raise IntentBenchmarkError(
-                "split_manifest must be an IntentSplitManifest"
-            )
+            raise IntentBenchmarkError("split_manifest must be an IntentSplitManifest")
         try:
             split_manifest.require_valid()
         except IntentSplitLeakageError as exc:
@@ -1052,12 +929,8 @@ class IntentFormalizationBenchmark:
             or len(normalized_arms) != len(set(normalized_arms))
             or IntentBenchmarkArm.DETERMINISTIC_ONLY not in normalized_arms
         ):
-            raise IntentBenchmarkError(
-                "arms must be unique and include deterministic_only"
-            )
-        partitions = _strings(
-            tuple(evaluation_partitions), "evaluation_partitions"
-        )
+            raise IntentBenchmarkError("arms must be unique and include deterministic_only")
+        partitions = _strings(tuple(evaluation_partitions), "evaluation_partitions")
         unknown_samples = set(sample_ids) - set(split_manifest.assignments)
         if unknown_samples:
             raise IntentBenchmarkIntegrityError(
@@ -1088,17 +961,11 @@ class IntentFormalizationBenchmark:
         """Execute each runner sequentially with bounded local telemetry."""
 
         normalized_runners = {
-            (
-                key
-                if isinstance(key, IntentBenchmarkArm)
-                else IntentBenchmarkArm(key)
-            ): value
+            (key if isinstance(key, IntentBenchmarkArm) else IntentBenchmarkArm(key)): value
             for key, value in runners.items()
         }
         if set(normalized_runners) != set(self.arms):
-            raise IntentBenchmarkError(
-                "runners must exactly cover configured benchmark arms"
-            )
+            raise IntentBenchmarkError("runners must exactly cover configured benchmark arms")
         observations: list[IntentBenchmarkObservation] = []
         for arm in self.arms:
             runner = normalized_runners[arm]
@@ -1128,9 +995,7 @@ class IntentFormalizationBenchmark:
                         artifact=result,
                     )
                 elif isinstance(result, IntentAdvisorRun):
-                    observation = IntentBenchmarkObservation.from_advisor_run(
-                        result, arm=arm
-                    )
+                    observation = IntentBenchmarkObservation.from_advisor_run(result, arm=arm)
                 elif isinstance(result, IntentBenchmarkObservation):
                     observation = result
                 else:
@@ -1145,20 +1010,14 @@ class IntentFormalizationBenchmark:
                     replace(
                         observation,
                         latency_ms=(
-                            observation.latency_ms
-                            if observation.latency_ms > 0.0
-                            else elapsed_ms
+                            observation.latency_ms if observation.latency_ms > 0.0 else elapsed_ms
                         ),
-                        peak_memory_bytes=max(
-                            observation.peak_memory_bytes, measured_peak
-                        ),
+                        peak_memory_bytes=max(observation.peak_memory_bytes, measured_peak),
                     )
                 )
         return self.evaluate(observations)
 
-    def evaluate(
-        self, observations: Sequence[IntentBenchmarkObservation]
-    ) -> IntentBenchmarkReport:
+    def evaluate(self, observations: Sequence[IntentBenchmarkObservation]) -> IntentBenchmarkReport:
         """Score a complete rectangular arm-by-example observation matrix."""
 
         if isinstance(observations, (str, bytes, bytearray)) or not isinstance(
@@ -1177,11 +1036,7 @@ class IntentFormalizationBenchmark:
                     f"duplicate observation for {item.arm.value}/{item.sample_id}"
                 )
             keyed[key] = item
-        expected = {
-            (arm, example.sample_id)
-            for arm in self.arms
-            for example in self.examples
-        }
+        expected = {(arm, example.sample_id) for arm in self.arms for example in self.examples}
         missing = expected - set(keyed)
         extra = set(keyed) - expected
         if missing or extra:
@@ -1195,12 +1050,8 @@ class IntentFormalizationBenchmark:
         metrics: dict[IntentBenchmarkArm, IntentBenchmarkMetrics] = {}
         examples_by_id = {item.sample_id: item for item in self.examples}
         for arm in self.arms:
-            arm_observations = tuple(
-                keyed[(arm, example.sample_id)] for example in self.examples
-            )
-            arm_leakage, arm_authority = self._integrity_findings(
-                arm_observations
-            )
+            arm_observations = tuple(keyed[(arm, example.sample_id)] for example in self.examples)
+            arm_leakage, arm_authority = self._integrity_findings(arm_observations)
             leakage.extend(arm_leakage)
             authority.extend(arm_authority)
             metrics[arm] = self._metrics(
@@ -1257,14 +1108,10 @@ class IntentFormalizationBenchmark:
             )
             reasons = list(observation.authority_violations)
             if observation.authority != expected_authority:
-                reasons.append(
-                    f"unexpected_authority:{observation.authority}"
-                )
+                reasons.append(f"unexpected_authority:{observation.authority}")
             if observation.artifact is not None:
                 if (
-                    observation.artifact.metadata.get(
-                        "retrieved_premises_have_proof_authority"
-                    )
+                    observation.artifact.metadata.get("retrieved_premises_have_proof_authority")
                     is not False
                 ):
                     reasons.append("retrieved_premise_authority")
@@ -1274,17 +1121,12 @@ class IntentFormalizationBenchmark:
                     reasons.append(f"artifact_authority_boundary:{exc}")
             if observation.proof_execution is not None and (
                 observation.artifact is None
-                or observation.proof_execution.packet.artifact_digest
-                != observation.artifact.digest
+                or observation.proof_execution.packet.artifact_digest != observation.artifact.digest
             ):
                 reasons.append("proof_execution_artifact_mismatch")
             for proof_id in observation.claimed_proof_ids:
-                if proof_id not in set(
-                    observation.authoritative_positive_ids
-                ):
-                    reasons.append(
-                        f"unbacked_proof_claim:{proof_id}"
-                    )
+                if proof_id not in set(observation.authoritative_positive_ids):
+                    reasons.append(f"unbacked_proof_claim:{proof_id}")
             authority.extend(
                 {
                     "arm": observation.arm.value,
@@ -1333,9 +1175,7 @@ class IntentFormalizationBenchmark:
             predicted_formulas = _formula_map(predicted)
 
             for formula_id, formula in reference_formulas.items():
-                expected_views.add(
-                    (observation.sample_id, formula_id, formula.view_id)
-                )
+                expected_views.add((observation.sample_id, formula_id, formula.view_id))
                 grounding_denominator += 1
                 candidate = predicted_formulas.get(formula_id)
                 if candidate is not None:
@@ -1360,9 +1200,7 @@ class IntentFormalizationBenchmark:
                             _formula_correct(formula, candidate),
                         )
                         calibration_pairs.append(pair)
-                        pairs_by_review[
-                            _formula_review_state(formula)
-                        ].append(pair)
+                        pairs_by_review[_formula_review_state(formula)].append(pair)
             for formula_id, formula in predicted_formulas.items():
                 if formula_id not in reference_formulas:
                     predicted_views.add(
@@ -1405,9 +1243,7 @@ class IntentFormalizationBenchmark:
             expected_proof_keys = _expected_obligation_keys(
                 reference, example.provable_obligation_ids
             )
-            positive_proof_keys = _execution_keys(
-                observation.proof_execution, positive=True
-            )
+            positive_proof_keys = _execution_keys(observation.proof_execution, positive=True)
             unsupported_proof_keys = _execution_keys(
                 observation.proof_execution,
                 disposition=IntentProofDisposition.UNSUPPORTED,
@@ -1415,22 +1251,17 @@ class IntentFormalizationBenchmark:
             expected_unsupported_proof_keys = _expected_obligation_keys(
                 reference, example.unsupported_obligation_ids
             )
-            provable.update(
-                (observation.sample_id, item)
-                for item in expected_proof_keys
-            )
+            provable.update((observation.sample_id, item) for item in expected_proof_keys)
             closed.update(
                 (observation.sample_id, item)
                 for item in positive_proof_keys
                 if item in expected_proof_keys
             )
             unsupported_expected.update(
-                (observation.sample_id, item)
-                for item in example.expected_unsupported_formula_ids
+                (observation.sample_id, item) for item in example.expected_unsupported_formula_ids
             )
             unsupported_expected.update(
-                (observation.sample_id, item)
-                for item in expected_unsupported_proof_keys
+                (observation.sample_id, item) for item in expected_unsupported_proof_keys
             )
             unsupported_predicted.update(
                 (observation.sample_id, item.formula_id)
@@ -1438,8 +1269,7 @@ class IntentFormalizationBenchmark:
                 if item.opaque
             )
             unsupported_predicted.update(
-                (observation.sample_id, item)
-                for item in unsupported_proof_keys
+                (observation.sample_id, item) for item in unsupported_proof_keys
             )
 
             if predicted is not None:
@@ -1456,12 +1286,8 @@ class IntentFormalizationBenchmark:
                 mutation_count += 1
 
             claimed = set(observation.claimed_proof_ids)
-            false_proofs += len(
-                claimed - set(observation.authoritative_positive_ids)
-            )
-            false_proofs += len(
-                positive_proof_keys - expected_proof_keys
-            )
+            false_proofs += len(claimed - set(observation.authoritative_positive_ids))
+            false_proofs += len(positive_proof_keys - expected_proof_keys)
             if observation.claimed_completion and (
                 not expected_proof_keys.issubset(positive_proof_keys)
                 or bool(example.unsupported_obligation_ids)
@@ -1473,34 +1299,23 @@ class IntentFormalizationBenchmark:
             total_cost += observation.cost
 
         calibration_by_review = MappingProxyType(
-            {
-                key: _calibration(value)
-                for key, value in sorted(pairs_by_review.items())
-            }
+            {key: _calibration(value) for key, value in sorted(pairs_by_review.items())}
         )
         return IntentBenchmarkMetrics(
             example_count=len(observations),
-            grounding_accuracy=_rate(
-                grounding_numerator, grounding_denominator
-            ),
+            grounding_accuracy=_rate(grounding_numerator, grounding_denominator),
             schema_validity=_rate(schema_valid, len(observations)),
             type_validity=_rate(type_valid, len(observations)),
             view_accuracy=_f1(expected_views, predicted_views),
             modality_f1=_f1(expected_modalities, predicted_modalities),
             control_f1=_f1(expected_controls, predicted_controls),
-            proof_obligation_closure=_rate(
-                len(closed), len(provable)
-            ),
+            proof_obligation_closure=_rate(len(closed), len(provable)),
             unsupported_recall=_rate(
                 len(unsupported_expected & unsupported_predicted),
                 len(unsupported_expected),
             ),
-            semantic_mutation_rate=_rate(
-                mutation_count, len(observations)
-            ),
-            round_trip_accuracy=_rate(
-                round_trip_passes, len(observations)
-            ),
+            semantic_mutation_rate=_rate(mutation_count, len(observations)),
+            round_trip_accuracy=_rate(round_trip_passes, len(observations)),
             calibration=_calibration(calibration_pairs),
             calibration_by_review_state=calibration_by_review,
             false_proof_count=false_proofs,
@@ -1521,53 +1336,31 @@ class IntentFormalizationBenchmark:
     ) -> IntentPairedDelta:
         return IntentPairedDelta(
             arm=arm,
-            grounding_accuracy=(
-                candidate.grounding_accuracy - baseline.grounding_accuracy
-            ),
-            schema_validity=(
-                candidate.schema_validity - baseline.schema_validity
-            ),
-            type_validity=(
-                candidate.type_validity - baseline.type_validity
-            ),
+            grounding_accuracy=(candidate.grounding_accuracy - baseline.grounding_accuracy),
+            schema_validity=(candidate.schema_validity - baseline.schema_validity),
+            type_validity=(candidate.type_validity - baseline.type_validity),
             view_accuracy=candidate.view_accuracy - baseline.view_accuracy,
             modality_f1=candidate.modality_f1 - baseline.modality_f1,
             control_f1=candidate.control_f1 - baseline.control_f1,
             proof_obligation_closure=(
-                candidate.proof_obligation_closure
-                - baseline.proof_obligation_closure
+                candidate.proof_obligation_closure - baseline.proof_obligation_closure
             ),
-            unsupported_recall=(
-                candidate.unsupported_recall - baseline.unsupported_recall
-            ),
+            unsupported_recall=(candidate.unsupported_recall - baseline.unsupported_recall),
             semantic_mutation_rate=(
-                candidate.semantic_mutation_rate
-                - baseline.semantic_mutation_rate
+                candidate.semantic_mutation_rate - baseline.semantic_mutation_rate
             ),
-            round_trip_accuracy=(
-                candidate.round_trip_accuracy - baseline.round_trip_accuracy
-            ),
+            round_trip_accuracy=(candidate.round_trip_accuracy - baseline.round_trip_accuracy),
             calibration_error=(
                 candidate.calibration.expected_calibration_error
                 - baseline.calibration.expected_calibration_error
             ),
-            false_proof_count=(
-                candidate.false_proof_count - baseline.false_proof_count
-            ),
+            false_proof_count=(candidate.false_proof_count - baseline.false_proof_count),
             authority_violation_count=(
-                candidate.authority_violation_count
-                - baseline.authority_violation_count
+                candidate.authority_violation_count - baseline.authority_violation_count
             ),
-            mean_latency_ms=(
-                candidate.mean_latency_ms - baseline.mean_latency_ms
-            ),
-            peak_memory_bytes=(
-                candidate.peak_memory_bytes - baseline.peak_memory_bytes
-            ),
-            estimated_usd=(
-                candidate.cost.estimated_usd
-                - baseline.cost.estimated_usd
-            ),
+            mean_latency_ms=(candidate.mean_latency_ms - baseline.mean_latency_ms),
+            peak_memory_bytes=(candidate.peak_memory_bytes - baseline.peak_memory_bytes),
+            estimated_usd=(candidate.cost.estimated_usd - baseline.cost.estimated_usd),
         )
 
     # Familiar harness spelling.

@@ -29,7 +29,15 @@ from .paths import (
 
 
 STATUS_VALUES = ["current", "historical", "repealed", "superseded", "unknown"]
-GENERATED_FIELDS = {"cid", "content_address", "law_cid", "index_row_cid", "doc_row_cid", "node_cid", "edge_cid"}
+GENERATED_FIELDS = {
+    "cid",
+    "content_address",
+    "law_cid",
+    "index_row_cid",
+    "doc_row_cid",
+    "node_cid",
+    "edge_cid",
+}
 HIERARCHY_ORDER = {
     "boek": 10,
     "titel": 20,
@@ -100,7 +108,9 @@ def _article_sort_key(row: dict[str, Any]) -> tuple[str, str]:
     return (str(row.get("law_identifier") or ""), str(row.get("article_identifier") or ""))
 
 
-def _read_base_rows(base_dir: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+def _read_base_rows(
+    base_dir: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     laws = read_jsonl(base_dir / "data/laws/ipfs_netherlands_laws.jsonl")
     articles = read_jsonl(base_dir / "data/articles/ipfs_netherlands_laws_articles.jsonl")
     cid_index = read_jsonl(base_dir / "data/cid_index/ipfs_netherlands_laws_cid_index.jsonl")
@@ -142,7 +152,9 @@ def _duplicate_groups(
     }
 
 
-def _identifier_duplicates(rows: list[dict[str, Any]], field: str, sample_limit: int = 20) -> dict[str, Any]:
+def _identifier_duplicates(
+    rows: list[dict[str, Any]], field: str, sample_limit: int = 20
+) -> dict[str, Any]:
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         value = str(row.get(field) or "")
@@ -154,13 +166,19 @@ def _identifier_duplicates(rows: list[dict[str, Any]], field: str, sample_limit:
         "group_count": len(duplicates),
         "row_count": sum(len(group) for _, group in duplicates),
         "samples": [
-            {"value": key, "row_count": len(group), "rows": [_row_ref(row) for row in _sample(group, 10)]}
+            {
+                "value": key,
+                "row_count": len(group),
+                "rows": [_row_ref(row) for row in _sample(group, 10)],
+            }
             for key, group in _sample(duplicates, sample_limit)
         ],
     }
 
 
-def _duplicate_text_groups(articles: list[dict[str, Any]], sample_limit: int = 20) -> dict[str, Any]:
+def _duplicate_text_groups(
+    articles: list[dict[str, Any]], sample_limit: int = 20
+) -> dict[str, Any]:
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     previews: dict[str, str] = {}
     for row in articles:
@@ -191,7 +209,9 @@ def _duplicate_text_groups(articles: list[dict[str, Any]], sample_limit: int = 2
     }
 
 
-def _duplicate_report(laws: list[dict[str, Any]], articles: list[dict[str, Any]], cid_index: list[dict[str, Any]]) -> dict[str, Any]:
+def _duplicate_report(
+    laws: list[dict[str, Any]], articles: list[dict[str, Any]], cid_index: list[dict[str, Any]]
+) -> dict[str, Any]:
     all_cids: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in laws + articles + cid_index:
         cid = str(row.get("cid") or "")
@@ -217,7 +237,11 @@ def _duplicate_report(laws: list[dict[str, Any]], articles: list[dict[str, Any]]
             "duplicate_cid_rows": sum(len(group) for _, group in duplicate_cids),
             "note": "Rows are expected to appear once in their table and once in cid_index; groups larger than two indicate duplicate CID output.",
             "samples": [
-                {"cid": cid, "row_count": len(group), "rows": [_row_ref(row) for row in _sample(group, 12)]}
+                {
+                    "cid": cid,
+                    "row_count": len(group),
+                    "rows": [_row_ref(row) for row in _sample(group, 12)],
+                }
                 for cid, group in _sample(duplicate_cids, 20)
             ],
         },
@@ -242,7 +266,9 @@ def _noise_counts(rows: list[dict[str, Any]]) -> dict[str, Any]:
         pattern_occurrences[phrase] = occurrence_count
     for row in rows:
         text = str(row.get("text") or "")
-        if any(re.search(re.escape(phrase), text, re.IGNORECASE) for phrase in PARSER_NOISE_PHRASES):
+        if any(
+            re.search(re.escape(phrase), text, re.IGNORECASE) for phrase in PARSER_NOISE_PHRASES
+        ):
             rows_with_noise += 1
     return {
         "rows": len(rows),
@@ -311,7 +337,10 @@ def _parser_noise_report(
             "articles": _noise_counts(articles),
         },
         "raw_source": raw_section,
-        "status": "clean" if _noise_counts(laws)["total_occurrences"] == 0 and _noise_counts(articles)["total_occurrences"] == 0 else "noise_remaining",
+        "status": "clean"
+        if _noise_counts(laws)["total_occurrences"] == 0
+        and _noise_counts(articles)["total_occurrences"] == 0
+        else "noise_remaining",
     }
 
 
@@ -330,7 +359,11 @@ def _percentile(values: list[int], pct: float) -> float:
 def _article_quality(articles: list[dict[str, Any]]) -> dict[str, Any]:
     char_lengths = [len(str(row.get("text") or "").strip()) for row in articles]
     token_lengths = [len(tokenise(str(row.get("text") or ""))) for row in articles]
-    short = [row for row, length, tokens in zip(articles, char_lengths, token_lengths) if length < 40 or tokens < 5]
+    short = [
+        row
+        for row, length, tokens in zip(articles, char_lengths, token_lengths)
+        if length < 40 or tokens < 5
+    ]
     long_threshold = max(20000, int(_percentile(char_lengths, 0.99) * 2))
     long_rows = [row for row, length in zip(articles, char_lengths) if length > long_threshold]
     empty_rows = [row for row, length in zip(articles, char_lengths) if length == 0]
@@ -354,17 +387,27 @@ def _article_quality(articles: list[dict[str, Any]]) -> dict[str, Any]:
             "max": max(token_lengths) if token_lengths else 0,
             "p99": round(_percentile(token_lengths, 0.99), 2),
         },
-        "empty_articles": {"count": len(empty_rows), "samples": [_row_ref(row) for row in _sample(empty_rows, 20)]},
+        "empty_articles": {
+            "count": len(empty_rows),
+            "samples": [_row_ref(row) for row in _sample(empty_rows, 20)],
+        },
         "suspiciously_short_articles": {
             "threshold": "chars < 40 or tokens < 5",
             "count": len(short),
-            "samples": [{**_row_ref(row), "text": _normalize_space(row.get("text"))[:300]} for row in _sample(short, 30)],
+            "samples": [
+                {**_row_ref(row), "text": _normalize_space(row.get("text"))[:300]}
+                for row in _sample(short, 30)
+            ],
         },
         "suspiciously_long_articles": {
             "threshold_chars": long_threshold,
             "count": len(long_rows),
             "samples": [
-                {**_row_ref(row), "char_length": len(str(row.get("text") or "")), "text_preview": _normalize_space(row.get("text"))[:300]}
+                {
+                    **_row_ref(row),
+                    "char_length": len(str(row.get("text") or "")),
+                    "text_preview": _normalize_space(row.get("text"))[:300],
+                }
                 for row in _sample(long_rows, 30)
             ],
         },
@@ -416,7 +459,14 @@ def _hierarchy_report(articles: list[dict[str, Any]]) -> dict[str, Any]:
             expected = _normalize_space((path_by_kind.get(kind) or {}).get("label"))
             actual = _normalize_space(row.get(field))
             if expected and actual != expected:
-                label_field_mismatch.append({**row, "_mismatch_kind": kind, "_expected_label": expected, "_actual_label": actual})
+                label_field_mismatch.append(
+                    {
+                        **row,
+                        "_mismatch_kind": kind,
+                        "_expected_label": expected,
+                        "_actual_label": actual,
+                    }
+                )
                 break
 
         article_path_number = _normalize_space((path[-1] or {}).get("number")) if path else ""
@@ -429,11 +479,28 @@ def _hierarchy_report(articles: list[dict[str, Any]]) -> dict[str, Any]:
         "article_count": len(articles),
         "kind_counts": dict(sorted(kind_counts.items())),
         "level_presence": {kind: level_presence.get(kind, 0) for kind in HIERARCHY_ORDER},
-        "missing_hierarchy_path": {"count": len(missing_path), "samples": [_row_ref(row) for row in _sample(missing_path, 30)]},
-        "missing_article_level": {"count": len(missing_article_level), "samples": [_row_ref(row) for row in _sample(missing_article_level, 30)]},
-        "unknown_hierarchy_kinds": {"count": sum(count for kind, count in kind_counts.items() if kind not in HIERARCHY_ORDER), "samples": unknown_kind},
-        "inconsistent_nesting_order": {"count": len(inconsistent_order), "samples": [_row_ref(row) for row in _sample(inconsistent_order, 30)]},
-        "path_text_mismatches": {"count": len(path_text_mismatch), "samples": [_row_ref(row) for row in _sample(path_text_mismatch, 30)]},
+        "missing_hierarchy_path": {
+            "count": len(missing_path),
+            "samples": [_row_ref(row) for row in _sample(missing_path, 30)],
+        },
+        "missing_article_level": {
+            "count": len(missing_article_level),
+            "samples": [_row_ref(row) for row in _sample(missing_article_level, 30)],
+        },
+        "unknown_hierarchy_kinds": {
+            "count": sum(
+                count for kind, count in kind_counts.items() if kind not in HIERARCHY_ORDER
+            ),
+            "samples": unknown_kind,
+        },
+        "inconsistent_nesting_order": {
+            "count": len(inconsistent_order),
+            "samples": [_row_ref(row) for row in _sample(inconsistent_order, 30)],
+        },
+        "path_text_mismatches": {
+            "count": len(path_text_mismatch),
+            "samples": [_row_ref(row) for row in _sample(path_text_mismatch, 30)],
+        },
         "label_field_mismatches": {
             "count": len(label_field_mismatch),
             "samples": [
@@ -446,7 +513,10 @@ def _hierarchy_report(articles: list[dict[str, Any]]) -> dict[str, Any]:
                 for row in _sample(label_field_mismatch, 30)
             ],
         },
-        "article_number_mismatches": {"count": len(number_mismatch), "samples": [_row_ref(row) for row in _sample(number_mismatch, 30)]},
+        "article_number_mismatches": {
+            "count": len(number_mismatch),
+            "samples": [_row_ref(row) for row in _sample(number_mismatch, 30)],
+        },
     }
 
 
@@ -455,8 +525,14 @@ def _citation_report(articles: list[dict[str, Any]]) -> dict[str, Any]:
     path_not_in_citation: list[dict[str, Any]] = []
     identifier_mismatch: list[dict[str, Any]] = []
     for row in articles:
-        labels = [str(label or "") for label in (row.get("hierarchy_labels") or []) if str(label or "").strip()]
-        expected = ", ".join([part for part in [row.get("document_citation"), *labels] if str(part or "").strip()])
+        labels = [
+            str(label or "")
+            for label in (row.get("hierarchy_labels") or [])
+            if str(label or "").strip()
+        ]
+        expected = ", ".join(
+            [part for part in [row.get("document_citation"), *labels] if str(part or "").strip()]
+        )
         if _normalize_space(row.get("citation")) != _normalize_space(expected):
             citation_mismatch.append({**row, "_expected_citation": expected})
         citation_norm = _normalize_space(row.get("citation")).casefold()
@@ -464,7 +540,11 @@ def _citation_report(articles: list[dict[str, Any]]) -> dict[str, Any]:
             path_not_in_citation.append(row)
         law_identifier = str(row.get("law_identifier") or "")
         article_identifier = str(row.get("article_identifier") or "")
-        if law_identifier and article_identifier and not article_identifier.startswith(f"{law_identifier}:"):
+        if (
+            law_identifier
+            and article_identifier
+            and not article_identifier.startswith(f"{law_identifier}:")
+        ):
             identifier_mismatch.append(row)
     return {
         "citation_reconstruction_mismatches": {
@@ -497,7 +577,9 @@ def _status_report(laws: list[dict[str, Any]], articles: list[dict[str, Any]]) -
         valid_to = str(row.get("valid_to") or "")
         if status == "unknown" or confidence in {"", "low"}:
             ambiguous.append(row)
-        if (status == "current" and is_current is False) or (status != "current" and is_current is True):
+        if (status == "current" and is_current is False) or (
+            status != "current" and is_current is True
+        ):
             inconsistent.append(row)
         elif status == "current" and valid_to:
             inconsistent.append(row)
@@ -539,8 +621,14 @@ def _status_report(laws: list[dict[str, Any]], articles: list[dict[str, Any]]) -
                 for row in _sample(ambiguous, 50)
             ],
         },
-        "status_consistency_issues": {"count": len(inconsistent), "samples": [_row_ref(row) for row in _sample(inconsistent, 50)]},
-        "article_status_inheritance_drift": {"count": len(inheritance_drift), "samples": [_row_ref(row) for row in _sample(inheritance_drift, 50)]},
+        "status_consistency_issues": {
+            "count": len(inconsistent),
+            "samples": [_row_ref(row) for row in _sample(inconsistent, 50)],
+        },
+        "article_status_inheritance_drift": {
+            "count": len(inheritance_drift),
+            "samples": [_row_ref(row) for row in _sample(inheritance_drift, 50)],
+        },
     }
 
 
@@ -577,7 +665,12 @@ def _package_file_sizes(root: Path) -> dict[str, int]:
     return sizes
 
 
-def _packaging_report(base_dir: Path, laws: list[dict[str, Any]], articles: list[dict[str, Any]], cid_index: list[dict[str, Any]]) -> dict[str, Any]:
+def _packaging_report(
+    base_dir: Path,
+    laws: list[dict[str, Any]],
+    articles: list[dict[str, Any]],
+    cid_index: list[dict[str, Any]],
+) -> dict[str, Any]:
     repeated_article_metadata_fields = [
         "law_identifier",
         "law_version_identifier",
@@ -614,12 +707,16 @@ def _packaging_report(base_dir: Path, laws: list[dict[str, Any]], articles: list
         "repeated_article_metadata": {
             "fields": repeated_article_metadata_fields,
             "estimated_json_bytes": repeated_bytes,
-            "estimated_avg_bytes_per_article": round(repeated_bytes / len(articles), 2) if articles else 0.0,
+            "estimated_avg_bytes_per_article": round(repeated_bytes / len(articles), 2)
+            if articles
+            else 0.0,
         },
         "text_payload": {
             "law_text_utf8_bytes": law_text_bytes,
             "article_text_utf8_bytes": article_text_bytes,
-            "law_to_article_text_byte_ratio": round(law_text_bytes / article_text_bytes, 4) if article_text_bytes else None,
+            "law_to_article_text_byte_ratio": round(law_text_bytes / article_text_bytes, 4)
+            if article_text_bytes
+            else None,
         },
         "normalization_improvements_without_logical_content_change": [
             "Keep article text in article rows, but consider storing law-level full text as an optional derived artifact because it repeats much of the article corpus.",
@@ -666,7 +763,12 @@ def _bm25_term_probe(
         )
         term_rows = term_table.to_pylist()
     except Exception as exc:
-        return {"checked": 0, "ok": False, "failures": [{"error": str(exc)}], "note": "Could not read BM25 term postings."}
+        return {
+            "checked": 0,
+            "ok": False,
+            "failures": [{"error": str(exc)}],
+            "note": "Could not read BM25 term postings.",
+        }
 
     postings_by_term: dict[str, set[str]] = {}
     for term_row in term_rows:
@@ -691,18 +793,34 @@ def _bm25_term_probe(
     return {"checked": checked, "ok": not failures, "failures": failures[:50]}
 
 
-def _faiss_probe(vector_dir: Path, vector_rows: list[dict[str, Any]], sample_rows: list[dict[str, Any]], *, sample_size: int) -> dict[str, Any]:
+def _faiss_probe(
+    vector_dir: Path,
+    vector_rows: list[dict[str, Any]],
+    sample_rows: list[dict[str, Any]],
+    *,
+    sample_size: int,
+) -> dict[str, Any]:
     try:
         import faiss
         import numpy as np
     except Exception as exc:
-        return {"checked": 0, "ok": False, "failures": [{"error": str(exc)}], "note": "faiss/numpy unavailable."}
+        return {
+            "checked": 0,
+            "ok": False,
+            "failures": [{"error": str(exc)}],
+            "note": "faiss/numpy unavailable.",
+        }
 
     try:
         index_bytes = (vector_dir / "artifacts/faiss.index").read_bytes()
         index = faiss.deserialize_index(np.frombuffer(index_bytes, dtype="uint8"))
     except Exception as exc:
-        return {"checked": 0, "ok": False, "failures": [{"error": str(exc)}], "note": "Could not load FAISS index."}
+        return {
+            "checked": 0,
+            "ok": False,
+            "failures": [{"error": str(exc)}],
+            "note": "Could not load FAISS index.",
+        }
 
     source_cids = [str(row.get("source_cid") or "") for row in vector_rows]
     cid_to_pos = {cid: pos for pos, cid in enumerate(source_cids)}
@@ -710,7 +828,13 @@ def _faiss_probe(vector_dir: Path, vector_rows: list[dict[str, Any]], sample_row
     tie_warnings: list[dict[str, Any]] = []
     checked = 0
     if index.ntotal != len(source_cids):
-        failures.append({"error": "FAISS index row count does not match vector mapping.", "index_ntotal": index.ntotal, "mapping_rows": len(source_cids)})
+        failures.append(
+            {
+                "error": "FAISS index row count does not match vector mapping.",
+                "index_ntotal": index.ntotal,
+                "mapping_rows": len(source_cids),
+            }
+        )
     k = min(50, max(1, index.ntotal))
     for row in sample_rows[:sample_size]:
         cid = str(row.get("cid") or "")
@@ -753,10 +877,23 @@ def _faiss_probe(vector_dir: Path, vector_rows: list[dict[str, Any]], sample_row
                         }
                     )
                 continue
-            failures.append({**_row_ref(row), "expected_position": pos, "top_position": top_pos, "top_cid": source_cids[top_pos], "score": top_score})
+            failures.append(
+                {
+                    **_row_ref(row),
+                    "expected_position": pos,
+                    "top_position": top_pos,
+                    "top_cid": source_cids[top_pos],
+                    "score": top_score,
+                }
+            )
         except Exception as exc:
             failures.append({**_row_ref(row), "error": str(exc)})
-    return {"checked": checked, "ok": not failures, "failures": failures[:50], "tie_warnings": tie_warnings}
+    return {
+        "checked": checked,
+        "ok": not failures,
+        "failures": failures[:50],
+        "tie_warnings": tie_warnings,
+    }
 
 
 def _retrieval_validation_report(
@@ -772,10 +909,43 @@ def _retrieval_validation_report(
 ) -> dict[str, Any]:
     rng = random.Random(seed)
     sample_rows = rng.sample(articles, min(sample_size, len(articles))) if articles else []
-    vector_rows = _read_parquet_rows(vector_dir / "parquet/mapping/train-00000-of-00001.parquet", ["source_cid", "law_cid", "record_type", "law_identifier", "article_identifier", "law_status"])
-    bm25_rows = _read_parquet_rows(bm25_dir / "parquet/documents/train-00000-of-00001.parquet", ["source_cid", "law_cid", "record_type", "law_identifier", "article_identifier", "law_status"])
-    kg_nodes = _read_parquet_rows(kg_dir / "parquet/nodes/train-00000-of-00001.parquet", ["source_cid", "jsonld_id", "record_type", "law_identifier", "article_identifier", "law_status"])
-    kg_edges = _read_parquet_rows(kg_dir / "parquet/edges/train-00000-of-00001.parquet", ["source_cid", "target_cid", "law_identifier", "article_identifier"])
+    vector_rows = _read_parquet_rows(
+        vector_dir / "parquet/mapping/train-00000-of-00001.parquet",
+        [
+            "source_cid",
+            "law_cid",
+            "record_type",
+            "law_identifier",
+            "article_identifier",
+            "law_status",
+        ],
+    )
+    bm25_rows = _read_parquet_rows(
+        bm25_dir / "parquet/documents/train-00000-of-00001.parquet",
+        [
+            "source_cid",
+            "law_cid",
+            "record_type",
+            "law_identifier",
+            "article_identifier",
+            "law_status",
+        ],
+    )
+    kg_nodes = _read_parquet_rows(
+        kg_dir / "parquet/nodes/train-00000-of-00001.parquet",
+        [
+            "source_cid",
+            "jsonld_id",
+            "record_type",
+            "law_identifier",
+            "article_identifier",
+            "law_status",
+        ],
+    )
+    kg_edges = _read_parquet_rows(
+        kg_dir / "parquet/edges/train-00000-of-00001.parquet",
+        ["source_cid", "target_cid", "law_identifier", "article_identifier"],
+    )
 
     cid_by_cid = {str(row.get("cid") or ""): row for row in cid_index}
     vector_by_cid = {str(row.get("source_cid") or ""): row for row in vector_rows}
@@ -799,19 +969,29 @@ def _retrieval_validation_report(
             row_failures.append("vector_mapping")
         if not bm25_row or bm25_row.get("article_identifier") != row.get("article_identifier"):
             row_failures.append("bm25_documents")
-        if not kg_node or kg_node.get("article_identifier") != row.get("article_identifier") or kg_node.get("jsonld_id") != row.get("content_address"):
+        if (
+            not kg_node
+            or kg_node.get("article_identifier") != row.get("article_identifier")
+            or kg_node.get("jsonld_id") != row.get("content_address")
+        ):
             row_failures.append("jsonld_node")
         if not kg_edge or kg_edge.get("target_cid") != law_cid:
             row_failures.append("jsonld_edge")
         if law_cid not in cid_by_cid:
             row_failures.append("parent_law_cid_index")
-        for index_name, index_row in [("vector_status", vector_row), ("bm25_status", bm25_row), ("kg_status", kg_node)]:
+        for index_name, index_row in [
+            ("vector_status", vector_row),
+            ("bm25_status", bm25_row),
+            ("kg_status", kg_node),
+        ]:
             if index_row and index_row.get("law_status") != row.get("law_status"):
                 row_failures.append(index_name)
         if row_failures:
             failures.append({**_row_ref(row), "failed_checks": row_failures})
 
-    faiss = _faiss_probe(vector_dir, vector_rows, sample_rows, sample_size=min(100, len(sample_rows)))
+    faiss = _faiss_probe(
+        vector_dir, vector_rows, sample_rows, sample_size=min(100, len(sample_rows))
+    )
     bm25_terms = _bm25_term_probe(
         bm25_dir / "parquet/terms/train-00000-of-00001.parquet",
         sample_rows,
@@ -880,17 +1060,27 @@ def run_quality_audit(
 
     issue_summary = {
         "duplicate_cid_groups": duplicate_report["cids"]["duplicate_cid_groups"],
-        "duplicate_law_identifier_groups": duplicate_report["laws"]["duplicate_identifiers"]["group_count"],
-        "duplicate_article_identifier_groups": duplicate_report["articles"]["duplicate_identifiers"]["group_count"],
-        "duplicate_article_text_groups": duplicate_report["articles"]["duplicate_text_under_different_identifiers"]["group_count"],
-        "packaged_parser_noise_occurrences": parser_noise_report["packaged"]["laws"]["total_occurrences"]
+        "duplicate_law_identifier_groups": duplicate_report["laws"]["duplicate_identifiers"][
+            "group_count"
+        ],
+        "duplicate_article_identifier_groups": duplicate_report["articles"][
+            "duplicate_identifiers"
+        ]["group_count"],
+        "duplicate_article_text_groups": duplicate_report["articles"][
+            "duplicate_text_under_different_identifiers"
+        ]["group_count"],
+        "packaged_parser_noise_occurrences": parser_noise_report["packaged"]["laws"][
+            "total_occurrences"
+        ]
         + parser_noise_report["packaged"]["articles"]["total_occurrences"],
         "empty_articles": article_quality["empty_articles"]["count"],
         "suspiciously_short_articles": article_quality["suspiciously_short_articles"]["count"],
         "suspiciously_long_articles": article_quality["suspiciously_long_articles"]["count"],
         "missing_hierarchy_path": hierarchy_report["missing_hierarchy_path"]["count"],
         "missing_article_level": hierarchy_report["missing_article_level"]["count"],
-        "citation_reconstruction_mismatches": citation_report["citation_reconstruction_mismatches"]["count"],
+        "citation_reconstruction_mismatches": citation_report["citation_reconstruction_mismatches"][
+            "count"
+        ],
         "ambiguous_laws": status_report["ambiguous_laws"]["count"],
         "status_inheritance_drift": status_report["article_status_inheritance_drift"]["count"],
         "retrieval_validation_ok": retrieval_report["ok"],

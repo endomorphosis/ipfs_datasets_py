@@ -70,10 +70,10 @@ All installations now use the `main` branch instead of the deprecated `known_goo
 
 ```python
 # Old (deprecated)
-'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good'
+"ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good"
 
 # New (current)
-'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main'
+"ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main"
 ```
 
 To update existing installations:
@@ -162,16 +162,10 @@ from ipfs_datasets_py.ipfs_kit_integration import IPFSKit
 kit = IPFSKit()
 
 # Create CAR file from directory
-car_path = kit.create_car(
-    source_path="my_dataset/",
-    output_path="my_dataset.car"
-)
+car_path = kit.create_car(source_path="my_dataset/", output_path="my_dataset.car")
 
 # Extract CAR file
-kit.extract_car(
-    car_path="my_dataset.car",
-    output_dir="extracted_dataset/"
-)
+kit.extract_car(car_path="my_dataset.car", output_dir="extracted_dataset/")
 
 # Get CID from CAR file
 root_cid = kit.get_car_root_cid("my_dataset.car")
@@ -190,10 +184,7 @@ from ipfs_datasets_py import DatasetManager
 manager = DatasetManager(storage="ipfs")
 
 # Save dataset to IPFS
-cid = manager.save_dataset(
-    dataset=my_dataset,
-    format="parquet"
-)
+cid = manager.save_dataset(dataset=my_dataset, format="parquet")
 print(f"Dataset saved to IPFS: {cid}")
 
 # Load dataset from IPFS
@@ -210,10 +201,7 @@ from ipfs_datasets_py.pdf_processing import PDFProcessor
 processor = PDFProcessor(storage_backend="ipfs")
 
 # Process and store on IPFS
-result = processor.process_document(
-    pdf_path="document.pdf",
-    store_on_ipfs=True
-)
+result = processor.process_document(pdf_path="document.pdf", store_on_ipfs=True)
 print(f"Processed document CID: {result['ipfs_cid']}")
 ```
 
@@ -245,10 +233,7 @@ from ipfs_datasets_py.embeddings import EmbeddingManager
 manager = EmbeddingManager(storage="ipfs")
 
 # Store embeddings
-cid = manager.store_embeddings(
-    embeddings=embedding_vectors,
-    metadata=metadata_dict
-)
+cid = manager.store_embeddings(embeddings=embedding_vectors, metadata=metadata_dict)
 
 # Retrieve embeddings
 embeddings = manager.load_embeddings(cid)
@@ -264,10 +249,7 @@ from ipfs_datasets_py.processors.web_archiving import WebArchiveProcessor
 processor = WebArchiveProcessor()
 
 # Scrape and store on IPFS
-result = processor.scrape_url(
-    url="https://example.com",
-    store_on_ipfs=True
-)
+result = processor.scrape_url(url="https://example.com", store_on_ipfs=True)
 print(f"Web archive CID: {result['ipfs_cid']}")
 ```
 
@@ -282,7 +264,7 @@ from ipfs_datasets_py.ipfs_kit_integration import IPFSKit
 kit = IPFSKit(
     api_url="/ip4/127.0.0.1/tcp/5001",  # Custom API endpoint
     gateway_url="http://localhost:8080",  # Custom gateway
-    timeout=60  # Connection timeout
+    timeout=60,  # Connection timeout
 )
 ```
 
@@ -294,17 +276,11 @@ from ipfs_datasets_py.ipfs_kit_integration import IPFSKit
 kit = IPFSKit()
 
 # Add pinning service
-kit.add_pinning_service(
-    service_name="pinata",
-    api_key="your_api_key",
-    api_secret="your_api_secret"
-)
+kit.add_pinning_service(service_name="pinata", api_key="your_api_key", api_secret="your_api_secret")
 
 # Pin to remote service
 kit.remote_pin(
-    cid="QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",
-    service="pinata",
-    name="my_important_data"
+    cid="QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG", service="pinata", name="my_important_data"
 )
 ```
 
@@ -355,8 +331,7 @@ kit = IPFSKit()
 
 # Verify content matches CID
 is_valid = kit.verify_content(
-    cid="QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",
-    content=file_content
+    cid="QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG", content=file_content
 )
 print(f"Content valid: {is_valid}")
 
@@ -395,7 +370,7 @@ configure_ipfs_kit(
     gateway_url="http://localhost:8080",
     integration_mode="direct",
     timeout=60,
-    retry_attempts=3
+    retry_attempts=3,
 )
 ```
 
@@ -500,9 +475,8 @@ kit = IPFSKit()
 cids = ["Qm...", "Qm...", "Qm..."]
 
 with ThreadPoolExecutor(max_workers=5) as executor:
-    futures = [executor.submit(kit.get_file, cid, f"file_{i}.dat") 
-               for i, cid in enumerate(cids)]
-    
+    futures = [executor.submit(kit.get_file, cid, f"file_{i}.dat") for i, cid in enumerate(cids)]
+
     for future in futures:
         future.result()  # Wait for completion
 ```
@@ -529,19 +503,21 @@ content2 = kit.get_content(cid)  # Much faster
 import pytest
 from ipfs_datasets_py.ipfs_kit_integration import IPFSKit
 
+
 @pytest.fixture
 def ipfs_kit():
     return IPFSKit()
+
 
 def test_add_and_get(ipfs_kit, tmp_path):
     # Create test file
     test_file = tmp_path / "test.txt"
     test_file.write_text("Hello, IPFS!")
-    
+
     # Add to IPFS
     cid = ipfs_kit.add_file(str(test_file))
     assert cid.startswith("Qm") or cid.startswith("bafy")
-    
+
     # Retrieve content
     content = ipfs_kit.get_bytes(cid)
     assert content == b"Hello, IPFS!"
@@ -638,7 +614,7 @@ import logging
 
 # Enable debug logging
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('ipfs_datasets_py.ipfs_kit_integration')
+logger = logging.getLogger("ipfs_datasets_py.ipfs_kit_integration")
 logger.setLevel(logging.DEBUG)
 
 # Now see detailed IPFS operations
@@ -670,6 +646,7 @@ kit.create_car("large_dataset/", "dataset.car")
 
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential
+
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def reliable_add(file_path):

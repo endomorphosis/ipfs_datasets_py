@@ -20,9 +20,9 @@ class TestEntityToJson:
             text="Alice",
             confidence=0.95,
         )
-        
+
         json_str = entity.to_json()
-        
+
         # Should be valid JSON
         parsed = json.loads(json_str)
         assert parsed["id"] == "e1"
@@ -39,10 +39,10 @@ class TestEntityToJson:
             properties={"industry": "Technology", "founded": 1999},
             confidence=0.88,
         )
-        
+
         json_str = entity.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["properties"]["industry"] == "Technology"
         assert parsed["properties"]["founded"] == 1999
 
@@ -55,16 +55,16 @@ class TestEntityToJson:
             source_span=(10, 18),
             confidence=0.92,
         )
-        
+
         json_str = entity.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["source_span"] == [10, 18]
 
     def test_to_json_with_last_seen(self):
         """Test JSON serialization with last_seen timestamp."""
         import time
-        
+
         timestamp = time.time()
         entity = Entity(
             id="e4",
@@ -72,10 +72,10 @@ class TestEntityToJson:
             text="Conference",
             last_seen=timestamp,
         )
-        
+
         json_str = entity.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["last_seen"] == timestamp
 
     def test_to_json_pretty_print(self):
@@ -85,9 +85,9 @@ class TestEntityToJson:
             type="Concept",
             text="Democracy",
         )
-        
+
         json_str = entity.to_json(indent=2)
-        
+
         # Should have newlines for pretty formatting
         assert "\n" in json_str
         assert "  " in json_str  # Indentation
@@ -99,9 +99,9 @@ class TestEntityToJson:
             type="Person",
             text="Bob",
         )
-        
+
         json_str = entity.to_json(sort_keys=True)
-        
+
         # Parse and check that keys would be sorted
         parsed = json.loads(json_str)
         keys = list(parsed.keys())
@@ -117,11 +117,11 @@ class TestEntityToJson:
             confidence=0.85,
             source_span=(5, 12),
         )
-        
+
         json_str = original.to_json()
         parsed_dict = json.loads(json_str)
         reconstructed = Entity.from_dict(parsed_dict)
-        
+
         assert reconstructed.id == original.id
         assert reconstructed.type == original.type
         assert reconstructed.text == original.text
@@ -141,9 +141,9 @@ class TestRelationshipToDict:
             target_id="e2",
             type="owns",
         )
-        
+
         d = rel.to_dict()
-        
+
         assert d["id"] == "r1"
         assert d["source_id"] == "e1"
         assert d["target_id"] == "e2"
@@ -161,9 +161,9 @@ class TestRelationshipToDict:
             properties={"strength": "strong", "evidence": "text-based"},
             confidence=0.75,
         )
-        
+
         d = rel.to_dict()
-        
+
         assert d["properties"]["strength"] == "strong"
         assert d["properties"]["evidence"] == "text-based"
         assert d["confidence"] == 0.75
@@ -177,9 +177,9 @@ class TestRelationshipToDict:
             type="obligates",
             direction="subject_to_object",
         )
-        
+
         d = rel.to_dict()
-        
+
         assert d["direction"] == "subject_to_object"
 
 
@@ -194,9 +194,9 @@ class TestRelationshipFromDict:
             "target_id": "e8",
             "type": "related_to",
         }
-        
+
         rel = Relationship.from_dict(d)
-        
+
         assert rel.id == "r4"
         assert rel.source_id == "e7"
         assert rel.target_id == "e8"
@@ -210,9 +210,9 @@ class TestRelationshipFromDict:
             "target_id": "e10",
             "type": "depends_on",
         }
-        
+
         rel = Relationship.from_dict(d)
-        
+
         assert rel.confidence == 1.0
         assert rel.direction == "unknown"
         assert rel.properties == {}
@@ -228,9 +228,9 @@ class TestRelationshipFromDict:
             "properties": {"scope": "full", "temporal": "always"},
             "direction": "undirected",
         }
-        
+
         rel = Relationship.from_dict(d)
-        
+
         assert rel.id == "r6"
         assert rel.confidence == 0.88
         assert rel.properties["scope"] == "full"
@@ -247,10 +247,10 @@ class TestRelationshipFromDict:
             properties={"frequency": "high"},
             direction="subject_to_object",
         )
-        
+
         d = original.to_dict()
         reconstructed = Relationship.from_dict(d)
-        
+
         assert reconstructed.id == original.id
         assert reconstructed.source_id == original.source_id
         assert reconstructed.target_id == original.target_id
@@ -271,10 +271,10 @@ class TestRelationshipToJson:
             target_id="e16",
             type="links_to",
         )
-        
+
         json_str = rel.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["id"] == "r8"
         assert parsed["source_id"] == "e15"
         assert parsed["target_id"] == "e16"
@@ -290,10 +290,10 @@ class TestRelationshipToJson:
             properties={"temporal_gap": "1 day", "certainty": "high"},
             confidence=0.92,
         )
-        
+
         json_str = rel.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["properties"]["temporal_gap"] == "1 day"
         assert parsed["confidence"] == 0.92
 
@@ -305,9 +305,9 @@ class TestRelationshipToJson:
             target_id="e20",
             type="supports",
         )
-        
+
         json_str = rel.to_json(indent=2, sort_keys=True)
-        
+
         # Should be formatted
         assert "\n" in json_str
         assert "  " in json_str
@@ -323,11 +323,11 @@ class TestRelationshipToJson:
             properties={"degree": "moderate"},
             direction="subject_to_object",
         )
-        
+
         json_str = original.to_json()
         parsed_dict = json.loads(json_str)
         reconstructed = Relationship.from_dict(parsed_dict)
-        
+
         assert reconstructed.id == original.id
         assert reconstructed.source_id == original.source_id
         assert reconstructed.target_id == original.target_id
@@ -349,10 +349,10 @@ class TestJsonEdgeCases:
             source_span=None,
             last_seen=None,
         )
-        
+
         json_str = entity.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["source_span"] is None
         assert parsed["last_seen"] is None
 
@@ -363,7 +363,7 @@ class TestJsonEdgeCases:
             "source_id": "e1",
             # Missing target_id and type
         }
-        
+
         with pytest.raises(KeyError):
             Relationship.from_dict(d)
 
@@ -375,10 +375,10 @@ class TestJsonEdgeCases:
             text="Empty Props",
             properties={},
         )
-        
+
         json_str = entity.to_json()
         parsed = json.loads(json_str)
-        
+
         assert parsed["properties"] == {}
 
     def test_relationship_json_with_special_characters(self):
@@ -390,10 +390,10 @@ class TestJsonEdgeCases:
             type='contains "quotes"',
             properties={"note": "Line1\nLine2"},
         )
-        
+
         json_str = rel.to_json()
         parsed = json.loads(json_str)
-        
+
         # JSON should handle escaping
         assert parsed["type"] == 'contains "quotes"'
         assert parsed["properties"]["note"] == "Line1\nLine2"
@@ -401,10 +401,10 @@ class TestJsonEdgeCases:
     def test_entity_to_json_kwargs_forwarded(self):
         """Test that kwargs are forwarded to json.dumps."""
         entity = Entity(id="e-kwargs", type="Test", text="Kwargs Test")
-        
+
         # Test with ensure_ascii=False
         json_str = entity.to_json(ensure_ascii=False)
-        
+
         # Should be callable without error
         assert isinstance(json_str, str)
 
@@ -417,9 +417,9 @@ class TestJsonEdgeCases:
             "type": "test",
             "confidence": "0.85",  # String instead of float
         }
-        
+
         rel = Relationship.from_dict(d)
-        
+
         # Should convert string to float
         assert isinstance(rel.confidence, float)
         assert rel.confidence == 0.85

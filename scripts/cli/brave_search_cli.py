@@ -22,6 +22,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def _find_repo_root(start: Path) -> Path:
     for candidate in (start, *start.parents):
         if (candidate / "setup.py").is_file() and (candidate / "pyproject.toml").is_file():

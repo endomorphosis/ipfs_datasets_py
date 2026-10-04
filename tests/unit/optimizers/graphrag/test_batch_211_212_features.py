@@ -22,6 +22,7 @@ Batch 212 new methods:
 - OntologyPipeline.run_score_ewma(alpha)
 - LogicValidator.multi_edge_count(ontology)
 """
+
 from __future__ import annotations
 
 import math
@@ -50,6 +51,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _report(score: float) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
 
@@ -70,8 +72,12 @@ def _adapter_with(scores: list[float]) -> OntologyLearningAdapter:
 
 def _make_critic_score(**kwargs) -> CriticScore:
     defaults = dict(
-        completeness=0.8, consistency=0.7, clarity=0.6,
-        granularity=0.5, relationship_coherence=0.4, domain_alignment=0.3,
+        completeness=0.8,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.3,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -107,6 +113,7 @@ def _pipeline_with(scores: list[float]) -> OntologyPipeline:
 # BATCH 211 — New methods
 # ===========================================================================
 
+
 class TestMinMaxDimensionRatio:
     """OntologyCritic.min_max_dimension_ratio(score)"""
 
@@ -119,32 +126,48 @@ class TestMinMaxDimensionRatio:
     def test_all_equal_dimensions_returns_one(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert critic.min_max_dimension_ratio(score) == pytest.approx(1.0)
 
     def test_max_is_zero_returns_zero(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert critic.min_max_dimension_ratio(score) == pytest.approx(0.0)
 
     def test_min_is_zero_returns_zero(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.0, consistency=0.5, clarity=0.8,
-            granularity=0.6, relationship_coherence=0.7, domain_alignment=0.9,
+            completeness=0.0,
+            consistency=0.5,
+            clarity=0.8,
+            granularity=0.6,
+            relationship_coherence=0.7,
+            domain_alignment=0.9,
         )
         assert critic.min_max_dimension_ratio(score) == pytest.approx(0.0)
 
     def test_ratio_in_zero_one(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.2, consistency=0.4, clarity=0.6,
-            granularity=0.8, relationship_coherence=0.5, domain_alignment=1.0,
+            completeness=0.2,
+            consistency=0.4,
+            clarity=0.6,
+            granularity=0.8,
+            relationship_coherence=0.5,
+            domain_alignment=1.0,
         )
         ratio = critic.min_max_dimension_ratio(score)
         assert 0.0 <= ratio <= 1.0
@@ -152,8 +175,12 @@ class TestMinMaxDimensionRatio:
     def test_known_ratio(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.2, consistency=0.4, clarity=0.4,
-            granularity=0.4, relationship_coherence=0.4, domain_alignment=0.4,
+            completeness=0.2,
+            consistency=0.4,
+            clarity=0.4,
+            granularity=0.4,
+            relationship_coherence=0.4,
+            domain_alignment=0.4,
         )
         # min=0.2, max=0.4 → ratio=0.5
         assert critic.min_max_dimension_ratio(score) == pytest.approx(0.5)
@@ -161,12 +188,20 @@ class TestMinMaxDimensionRatio:
     def test_higher_uniformity_gives_higher_ratio(self):
         critic = OntologyCritic()
         uniform = _make_critic_score(
-            completeness=0.7, consistency=0.8, clarity=0.75,
-            granularity=0.7, relationship_coherence=0.75, domain_alignment=0.8,
+            completeness=0.7,
+            consistency=0.8,
+            clarity=0.75,
+            granularity=0.7,
+            relationship_coherence=0.75,
+            domain_alignment=0.8,
         )
         spread = _make_critic_score(
-            completeness=0.1, consistency=0.9, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.1,
+            consistency=0.9,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert critic.min_max_dimension_ratio(uniform) >= critic.min_max_dimension_ratio(spread)
 
@@ -247,7 +282,7 @@ class TestEdgeDensity:
         lv = LogicValidator()
         ents = [{"id": "e1"}, {"id": "e2"}, {"id": "e3"}]
         rels = [{"source": "e1", "target": "e2", "id": "r1"}]
-        assert lv.edge_density({"entities": ents, "relationships": rels}) == pytest.approx(1/6)
+        assert lv.edge_density({"entities": ents, "relationships": rels}) == pytest.approx(1 / 6)
 
     def test_fully_connected_directed_graph(self):
         # 4 nodes, all 12 directed edges → density=1.0
@@ -255,15 +290,19 @@ class TestEdgeDensity:
         ents = [{"id": f"e{i}"} for i in range(4)]
         rels = [
             {"source": f"e{i}", "target": f"e{j}", "id": f"r{i}{j}"}
-            for i in range(4) for j in range(4) if i != j
+            for i in range(4)
+            for j in range(4)
+            if i != j
         ]
         assert lv.edge_density({"entities": ents, "relationships": rels}) == pytest.approx(1.0)
 
     def test_result_in_zero_one(self):
         lv = LogicValidator()
         ents = [{"id": "e1"}, {"id": "e2"}, {"id": "e3"}]
-        rels = [{"source": "e1", "target": "e2", "id": "r1"},
-                {"source": "e2", "target": "e3", "id": "r2"}]
+        rels = [
+            {"source": "e1", "target": "e2", "id": "r1"},
+            {"source": "e2", "target": "e3", "id": "r2"},
+        ]
         d = lv.edge_density({"entities": ents, "relationships": rels})
         assert 0.0 <= d <= 1.0
 
@@ -279,6 +318,7 @@ class TestEdgeDensity:
 # ===========================================================================
 # BATCH 211 — Smoke tests for pre-existing methods
 # ===========================================================================
+
 
 class TestBatch211SmokePreExisting:
     """Verify pre-existing Batch 211 items are callable without errors."""
@@ -313,9 +353,11 @@ class TestBatch211SmokePreExisting:
     def test_strongly_connected_count(self):
         lv = LogicValidator()
         ents = [{"id": "e1"}, {"id": "e2"}, {"id": "e3"}]
-        rels = [{"source": "e1", "target": "e2", "id": "r1"},
-                {"source": "e2", "target": "e3", "id": "r2"},
-                {"source": "e3", "target": "e1", "id": "r3"}]
+        rels = [
+            {"source": "e1", "target": "e2", "id": "r1"},
+            {"source": "e2", "target": "e3", "id": "r2"},
+            {"source": "e3", "target": "e1", "id": "r3"},
+        ]
         count = lv.strongly_connected_count({"entities": ents, "relationships": rels})
         assert isinstance(count, int) and count >= 0
 
@@ -323,6 +365,7 @@ class TestBatch211SmokePreExisting:
 # ===========================================================================
 # BATCH 212 — New methods
 # ===========================================================================
+
 
 class TestScoreMad:
     """OntologyOptimizer.score_mad()"""
@@ -372,16 +415,24 @@ class TestDimensionRange:
     def test_all_equal_returns_zero(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert critic.dimension_range(score) == pytest.approx(0.0)
 
     def test_known_range(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.1, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.9,
+            completeness=0.1,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.9,
         )
         # max=0.9, min=0.1 → range=0.8
         assert critic.dimension_range(score) == pytest.approx(0.8)
@@ -393,19 +444,33 @@ class TestDimensionRange:
     def test_max_possible_range(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=1.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=1.0,
         )
         assert critic.dimension_range(score) == pytest.approx(1.0)
 
     def test_range_is_max_minus_min(self):
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.2, consistency=0.4, clarity=0.6,
-            granularity=0.7, relationship_coherence=0.3, domain_alignment=0.5,
+            completeness=0.2,
+            consistency=0.4,
+            clarity=0.6,
+            granularity=0.7,
+            relationship_coherence=0.3,
+            domain_alignment=0.5,
         )
-        vals = [score.completeness, score.consistency, score.clarity,
-                score.granularity, score.relationship_coherence, score.domain_alignment]
+        vals = [
+            score.completeness,
+            score.consistency,
+            score.clarity,
+            score.granularity,
+            score.relationship_coherence,
+            score.domain_alignment,
+        ]
         expected = max(vals) - min(vals)
         assert critic.dimension_range(score) == pytest.approx(expected)
 
@@ -447,7 +512,7 @@ class TestRelationshipDensity:
     def test_result_in_zero_one(self):
         og = OntologyGenerator()
         ents = [_entity(f"e{i}") for i in range(5)]
-        rels = [_rel(f"r{i}", f"e{i}", f"e{(i+1)%5}") for i in range(5)]
+        rels = [_rel(f"r{i}", f"e{i}", f"e{(i + 1) % 5}") for i in range(5)]
         result = _make_result(entities=ents, relationships=rels)
         d = og.relationship_density(result)
         assert 0.0 <= d <= 1.0
@@ -548,29 +613,37 @@ class TestMultiEdgeCount:
 
     def test_no_duplicates_returns_zero(self):
         lv = LogicValidator()
-        rels = [{"source": "A", "target": "B", "id": "r1"},
-                {"source": "B", "target": "C", "id": "r2"}]
+        rels = [
+            {"source": "A", "target": "B", "id": "r1"},
+            {"source": "B", "target": "C", "id": "r2"},
+        ]
         assert lv.multi_edge_count({"entities": [], "relationships": rels}) == 0
 
     def test_one_duplicate_returns_one(self):
         lv = LogicValidator()
-        rels = [{"source": "A", "target": "B", "id": "r1"},
-                {"source": "A", "target": "B", "id": "r2"},
-                {"source": "A", "target": "C", "id": "r3"}]
+        rels = [
+            {"source": "A", "target": "B", "id": "r1"},
+            {"source": "A", "target": "B", "id": "r2"},
+            {"source": "A", "target": "C", "id": "r3"},
+        ]
         assert lv.multi_edge_count({"entities": [], "relationships": rels}) == 1
 
     def test_triple_duplicate_returns_two(self):
         lv = LogicValidator()
-        rels = [{"source": "X", "target": "Y", "id": "r1"},
-                {"source": "X", "target": "Y", "id": "r2"},
-                {"source": "X", "target": "Y", "id": "r3"}]
+        rels = [
+            {"source": "X", "target": "Y", "id": "r1"},
+            {"source": "X", "target": "Y", "id": "r2"},
+            {"source": "X", "target": "Y", "id": "r3"},
+        ]
         assert lv.multi_edge_count({"entities": [], "relationships": rels}) == 2
 
     def test_reverse_direction_not_counted(self):
         # A→B and B→A are distinct directed edges, not multi-edges
         lv = LogicValidator()
-        rels = [{"source": "A", "target": "B", "id": "r1"},
-                {"source": "B", "target": "A", "id": "r2"}]
+        rels = [
+            {"source": "A", "target": "B", "id": "r1"},
+            {"source": "B", "target": "A", "id": "r2"},
+        ]
         assert lv.multi_edge_count({"entities": [], "relationships": rels}) == 0
 
     def test_multiple_duplicate_pairs(self):
@@ -585,8 +658,10 @@ class TestMultiEdgeCount:
 
     def test_edges_key_alias(self):
         lv = LogicValidator()
-        rels = [{"source": "A", "target": "B", "id": "r1"},
-                {"source": "A", "target": "B", "id": "r2"}]
+        rels = [
+            {"source": "A", "target": "B", "id": "r1"},
+            {"source": "A", "target": "B", "id": "r2"},
+        ]
         ont = {"entities": [], "edges": rels}
         assert lv.multi_edge_count(ont) == 1
 

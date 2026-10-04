@@ -23,7 +23,9 @@ def _resolve_token(token: Optional[str]) -> Optional[str]:
     if explicit:
         return explicit
     try:
-        from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import _resolve_hf_token
+        from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import (
+            _resolve_hf_token,
+        )
 
         return _resolve_hf_token()
     except Exception:
@@ -32,10 +34,15 @@ def _resolve_token(token: Optional[str]) -> Optional[str]:
 
 def _range_magic_check(url: str, timeout: int = 60) -> Dict[str, Any]:
     import time
+
     for attempt in range(3):
         try:
-            head = requests.get(url, headers={"Range": "bytes=0-3"}, allow_redirects=True, timeout=timeout)
-            foot = requests.get(url, headers={"Range": "bytes=-4"}, allow_redirects=True, timeout=timeout)
+            head = requests.get(
+                url, headers={"Range": "bytes=0-3"}, allow_redirects=True, timeout=timeout
+            )
+            foot = requests.get(
+                url, headers={"Range": "bytes=-4"}, allow_redirects=True, timeout=timeout
+            )
             if head.status_code == 429 or foot.status_code == 429:
                 wait = 15 * (attempt + 1)
                 time.sleep(wait)
@@ -62,9 +69,7 @@ def _duckdb_remote_probe(url: str, cid_column: str) -> Dict[str, Any]:
     import duckdb
 
     con = duckdb.connect()
-    schema_rows = con.execute(
-        f"DESCRIBE SELECT * FROM read_parquet('{url}')"
-    ).fetchall()
+    schema_rows = con.execute(f"DESCRIBE SELECT * FROM read_parquet('{url}')").fetchall()
     column_names = [str(row[0]) for row in schema_rows]
     probe: Dict[str, Any] = {
         "columns": column_names,
@@ -120,7 +125,11 @@ def publish(
     except Exception as exc:
         msg = str(exc)
         # HF raises when nothing changed — treat as success (files already current)
-        if "no files have been modified" in msg.lower() or "nothing to commit" in msg.lower() or "empty commit" in msg.lower():
+        if (
+            "no files have been modified" in msg.lower()
+            or "nothing to commit" in msg.lower()
+            or "empty commit" in msg.lower()
+        ):
             upload_info = "no_change_already_current"
         else:
             raise
@@ -135,9 +144,13 @@ def publish(
 
     files = list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
     parquet_files = [f for f in files if f.endswith(".parquet")]
-    uploaded_parquet_files = _uploaded_parquet_repo_paths(local_dir=local_dir, path_in_repo=path_in_repo)
+    uploaded_parquet_files = _uploaded_parquet_repo_paths(
+        local_dir=local_dir, path_in_repo=path_in_repo
+    )
     remote_file_set = set(files)
-    matched_uploaded_parquet_files = [path for path in uploaded_parquet_files if path in remote_file_set]
+    matched_uploaded_parquet_files = [
+        path for path in uploaded_parquet_files if path in remote_file_set
+    ]
 
     normalized_prefix = path_in_repo.strip("/")
     if normalized_prefix:
@@ -172,20 +185,32 @@ def publish(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Publish local parquet shards to a Hugging Face dataset")
-    parser.add_argument("--local-dir", required=True, help="Local directory containing parquet shards")
-    parser.add_argument("--repo-id", required=True, help="Hugging Face dataset repo id, e.g. user/dataset")
-    parser.add_argument("--token", default=None, help="HF token (optional if already authenticated)")
+    parser = argparse.ArgumentParser(
+        description="Publish local parquet shards to a Hugging Face dataset"
+    )
+    parser.add_argument(
+        "--local-dir", required=True, help="Local directory containing parquet shards"
+    )
+    parser.add_argument(
+        "--repo-id", required=True, help="Hugging Face dataset repo id, e.g. user/dataset"
+    )
+    parser.add_argument(
+        "--token", default=None, help="HF token (optional if already authenticated)"
+    )
     parser.add_argument("--create-repo", action="store_true", help="Create dataset repo if missing")
     parser.add_argument("--path-in-repo", default="", help="Destination path inside dataset repo")
-    parser.add_argument("--commit-message", default="Publish validated parquet shards", help="Commit message")
+    parser.add_argument(
+        "--commit-message", default="Publish validated parquet shards", help="Commit message"
+    )
     parser.add_argument(
         "--allow-pattern",
         action="append",
         default=["*.parquet", "*.json", "*.md"],
         help="Upload allow-pattern (repeatable)",
     )
-    parser.add_argument("--verify", action="store_true", help="Run remote range+duckdb verification after upload")
+    parser.add_argument(
+        "--verify", action="store_true", help="Run remote range+duckdb verification after upload"
+    )
     parser.add_argument("--cid-column", default="cid", help="CID column name for SQL probe")
     args = parser.parse_args()
 

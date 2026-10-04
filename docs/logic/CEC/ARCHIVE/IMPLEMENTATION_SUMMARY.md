@@ -100,10 +100,7 @@ framework = CECFramework()
 framework.initialize()
 
 # Reason about natural language
-task = framework.reason_about(
-    "The agent must fulfill their obligation",
-    prove=True
-)
+task = framework.reason_about("The agent must fulfill their obligation", prove=True)
 
 print(f"Formula: {task.dcec_formula}")
 print(f"Success: {task.success}")

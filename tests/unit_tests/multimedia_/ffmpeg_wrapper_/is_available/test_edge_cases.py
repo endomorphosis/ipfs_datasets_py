@@ -9,6 +9,7 @@ Terminology:
 - dependency_state_change: System environment where dependency availability changes during runtime
 - import_failure_conditions: System states where import operations fail for various reasons
 """
+
 import pytest
 from unittest.mock import patch
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -17,7 +18,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperIsAvailableEdgeCases:
     """
     Edge case scenarios for FFmpegWrapper.is_available method.
-    
+
     Tests the is_available method with edge cases including
     partial dependencies, runtime changes, and unusual system states.
     """
@@ -30,15 +31,15 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         """
         # GIVEN: FFmpegWrapper instance
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         # WHEN: is_available is called
         result = wrapper.is_available()
-        
+
         # THEN: returns boolean indicating FFmpeg availability
         assert isinstance(result, bool)
-        
+
         # If ffmpeg-python is not available, should return False
         # If it is available, should return True
         # This validates the method works correctly regardless of dependency state
@@ -51,15 +52,15 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         """
         # GIVEN: FFmpegWrapper instance that can detect both library and executable availability
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         # WHEN: is_available is called
         result = wrapper.is_available()
-        
+
         # THEN: returns boolean indicating practical FFmpeg availability
         assert isinstance(result, bool)
-        
+
         # The method should handle both library availability and executable accessibility
         # This validates comprehensive availability checking
 
@@ -71,15 +72,15 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         """
         # Since is_available() has a working implementation, test actual functionality
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         # Test actual method behavior
         result = wrapper.is_available()
-        
+
         # Method should return a boolean value
         assert isinstance(result, bool)
-        
+
         # The result indicates current FFmpeg availability status
         # True = FFmpeg functionality is accessible
         # False = FFmpeg functionality is not accessible
@@ -92,21 +93,23 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         """
         # Since is_available() has a working implementation, test stability
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         # Test that multiple calls return consistent results
         result1 = wrapper.is_available()
         result2 = wrapper.is_available()
         result3 = wrapper.is_available()
-        
+
         # All results should be boolean and consistent
         assert isinstance(result1, bool)
         assert isinstance(result2, bool)
         assert isinstance(result3, bool)
         assert result1 == result2 == result3  # Consistency check
 
-    def test_when_system_path_modified_after_initialization_then_reflects_current_availability(self):
+    def test_when_system_path_modified_after_initialization_then_reflects_current_availability(
+        self,
+    ):
         """
         GIVEN FFmpegWrapper instance initialized and system PATH subsequently modified
         WHEN is_available is called after PATH changes affecting FFmpeg executable availability
@@ -114,22 +117,24 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         """
         # Since is_available() has a working implementation, test its behavior
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         # Create wrapper instance
         wrapper = FFmpegWrapper()
-        
+
         # Test availability status
         initial_availability = wrapper.is_available()
-        
+
         # The method should consistently return the same boolean status
         # as it reflects module-level FFMPEG_AVAILABLE variable
         second_check = wrapper.is_available()
-        
+
         assert isinstance(initial_availability, bool)
         assert isinstance(second_check, bool)
         assert initial_availability == second_check  # Should be consistent
 
-    def test_when_called_in_restricted_execution_environment_then_handles_security_constraints(self):
+    def test_when_called_in_restricted_execution_environment_then_handles_security_constraints(
+        self,
+    ):
         """
         GIVEN restricted execution environment with limited system access or import capabilities
         WHEN is_available is called in constrained execution context
@@ -137,10 +142,10 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         """
         # Since is_available() has a working implementation, test execution safety
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         # Test that the method executes safely in various contexts
         wrapper = FFmpegWrapper()
-        
+
         # Method should not raise exceptions during execution
         try:
             result = wrapper.is_available()

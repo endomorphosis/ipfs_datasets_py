@@ -25,18 +25,19 @@ sys.path.insert(0, str(project_root))
 TEST_DATA = {
     "small_dataset": {
         "data": [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}],
-        "format": "json"
+        "format": "json",
     },
     "test_vectors": [
         [0.1, 0.2, 0.3, 0.4, 0.5],
         [0.2, 0.3, 0.4, 0.5, 0.6],
-        [0.3, 0.4, 0.5, 0.6, 0.7]
+        [0.3, 0.4, 0.5, 0.6, 0.7],
     ],
     "test_graph_data": {
         "nodes": [{"id": "1", "name": "node1"}, {"id": "2", "name": "node2"}],
-        "edges": [{"source": "1", "target": "2", "relation": "connects_to"}]
-    }
+        "edges": [{"source": "1", "target": "2", "relation": "connects_to"}],
+    },
 }
+
 
 class MCPToolsTester:
     def __init__(self):
@@ -47,12 +48,12 @@ class MCPToolsTester:
             "total_tools": 0,
             "passed": 0,
             "failed": 0,
-            "tools": {}
+            "tools": {},
         }
 
     def __del__(self):
         # Cleanup test directory
-        if hasattr(self, 'test_dir') and os.path.exists(self.test_dir):
+        if hasattr(self, "test_dir") and os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir, ignore_errors=True)
 
     async def test_cli_tools(self):
@@ -64,45 +65,44 @@ class MCPToolsTester:
 
             # Test basic command execution
             result = await execute_command("echo 'Hello World'")
-            assert result['status'] == 'success'
-            assert 'Hello World' in result['output']
+            assert result["status"] == "success"
+            assert "Hello World" in result["output"]
 
             # Test command with error
             result = await execute_command("nonexistent_command_12345")
-            assert result['status'] == 'error'
+            assert result["status"] == "error"
 
             self.report["tools"]["cli.execute_command"] = {
                 "status": "passed",
-                "tests": ["basic_execution", "error_handling"]
+                "tests": ["basic_execution", "error_handling"],
             }
 
         except Exception as e:
-            self.report["tools"]["cli.execute_command"] = {
-                "status": "failed",
-                "error": str(e)
-            }
+            self.report["tools"]["cli.execute_command"] = {"status": "failed", "error": str(e)}
 
     async def test_security_tools(self):
         """Test security tools."""
         print("Testing security tools...")
 
         try:
-            from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import check_access_permission
+            from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import (
+                check_access_permission,
+            )
 
             # Test access permission check
             result = await check_access_permission("test_resource", "test_user")
             assert isinstance(result, dict)
-            assert 'permitted' in result
+            assert "permitted" in result
 
             self.report["tools"]["security_tools.check_access_permission"] = {
                 "status": "passed",
-                "tests": ["permission_check"]
+                "tests": ["permission_check"],
             }
 
         except Exception as e:
             self.report["tools"]["security_tools.check_access_permission"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_function_tools(self):
@@ -110,25 +110,27 @@ class MCPToolsTester:
         print("Testing function tools...")
 
         try:
-            from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import execute_python_snippet
+            from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import (
+                execute_python_snippet,
+            )
 
             # Test simple Python execution
             result = await execute_python_snippet("print('test')")
-            assert result['status'] == 'success'
+            assert result["status"] == "success"
 
             # Test Python with syntax error
             result = await execute_python_snippet("print('unclosed string")
-            assert result['status'] == 'error'
+            assert result["status"] == "error"
 
             self.report["tools"]["functions.execute_python_snippet"] = {
                 "status": "passed",
-                "tests": ["basic_execution", "syntax_error_handling"]
+                "tests": ["basic_execution", "syntax_error_handling"],
             }
 
         except Exception as e:
             self.report["tools"]["functions.execute_python_snippet"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_ipfs_tools(self):
@@ -142,18 +144,15 @@ class MCPToolsTester:
             # Test with a known test CID (this will likely fail due to network, but should handle gracefully)
             result = await get_from_ipfs("QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG")
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["ipfs_tools.get_from_ipfs"] = {
                 "status": "passed",
-                "tests": ["basic_retrieval"]
+                "tests": ["basic_retrieval"],
             }
 
         except Exception as e:
-            self.report["tools"]["ipfs_tools.get_from_ipfs"] = {
-                "status": "failed",
-                "error": str(e)
-            }
+            self.report["tools"]["ipfs_tools.get_from_ipfs"] = {"status": "failed", "error": str(e)}
 
         # Test pin_to_ipfs
         try:
@@ -161,45 +160,46 @@ class MCPToolsTester:
 
             # Create a test file
             test_file = os.path.join(self.test_dir, "test_pin.txt")
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 f.write("Test content for pinning")
 
             result = await pin_to_ipfs(test_file)
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["ipfs_tools.pin_to_ipfs"] = {
                 "status": "passed",
-                "tests": ["basic_pinning"]
+                "tests": ["basic_pinning"],
             }
 
         except Exception as e:
-            self.report["tools"]["ipfs_tools.pin_to_ipfs"] = {
-                "status": "failed",
-                "error": str(e)
-            }
+            self.report["tools"]["ipfs_tools.pin_to_ipfs"] = {"status": "failed", "error": str(e)}
 
     async def test_graph_tools(self):
         """Test graph tools."""
         print("Testing graph tools...")
 
         try:
-            from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
+            from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import (
+                query_knowledge_graph,
+            )
 
             # Test graph query
-            result = await query_knowledge_graph("test_graph", "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 5")
+            result = await query_knowledge_graph(
+                "test_graph", "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 5"
+            )
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["graph_tools.query_knowledge_graph"] = {
                 "status": "passed",
-                "tests": ["sparql_query"]
+                "tests": ["sparql_query"],
             }
 
         except Exception as e:
             self.report["tools"]["graph_tools.query_knowledge_graph"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_audit_tools(self):
@@ -208,40 +208,44 @@ class MCPToolsTester:
 
         # Test record_audit_event
         try:
-            from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
+            from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import (
+                record_audit_event,
+            )
 
             result = await record_audit_event("test_action", "test_user", {"resource": "test"})
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["audit_tools.record_audit_event"] = {
                 "status": "passed",
-                "tests": ["event_recording"]
+                "tests": ["event_recording"],
             }
 
         except Exception as e:
             self.report["tools"]["audit_tools.record_audit_event"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
         # Test generate_audit_report
         try:
-            from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
+            from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import (
+                generate_audit_report,
+            )
 
             result = await generate_audit_report()
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["audit_tools.generate_audit_report"] = {
                 "status": "passed",
-                "tests": ["report_generation"]
+                "tests": ["report_generation"],
             }
 
         except Exception as e:
             self.report["tools"]["audit_tools.generate_audit_report"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_vector_tools(self):
@@ -250,40 +254,44 @@ class MCPToolsTester:
 
         # Test create_vector_index
         try:
-            from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
+            from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import (
+                create_vector_index,
+            )
 
             result = await create_vector_index(TEST_DATA["test_vectors"], "test_index")
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["vector_tools.create_vector_index"] = {
                 "status": "passed",
-                "tests": ["index_creation"]
+                "tests": ["index_creation"],
             }
 
         except Exception as e:
             self.report["tools"]["vector_tools.create_vector_index"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
         # Test search_vector_index
         try:
-            from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
+            from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import (
+                search_vector_index,
+            )
 
             result = await search_vector_index("test_index", [0.1, 0.2, 0.3, 0.4, 0.5])
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["vector_tools.search_vector_index"] = {
                 "status": "passed",
-                "tests": ["vector_search"]
+                "tests": ["vector_search"],
             }
 
         except Exception as e:
             self.report["tools"]["vector_tools.search_vector_index"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_provenance_tools(self):
@@ -291,22 +299,25 @@ class MCPToolsTester:
         print("Testing provenance tools...")
 
         try:
-            from ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance import record_provenance
+            from ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance import (
+                record_provenance,
+            )
 
-            result = await record_provenance("test_dataset", "transformation",
-                                           {"input": "data.csv", "output": "processed.json"})
+            result = await record_provenance(
+                "test_dataset", "transformation", {"input": "data.csv", "output": "processed.json"}
+            )
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["provenance_tools.record_provenance"] = {
                 "status": "passed",
-                "tests": ["provenance_recording"]
+                "tests": ["provenance_recording"],
             }
 
         except Exception as e:
             self.report["tools"]["provenance_tools.record_provenance"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_web_archive_tools(self):
@@ -318,12 +329,16 @@ class MCPToolsTester:
         test_cdxj = os.path.join(self.test_dir, "test.cdxj")
 
         # Create minimal test WARC content
-        with open(test_warc, 'w') as f:
-            f.write("WARC/1.0\r\nWARC-Type: response\r\nWARC-Record-ID: <urn:uuid:12345>\r\n\r\nTest content")
+        with open(test_warc, "w") as f:
+            f.write(
+                "WARC/1.0\r\nWARC-Type: response\r\nWARC-Record-ID: <urn:uuid:12345>\r\n\r\nTest content"
+            )
 
         # Create minimal test CDXJ content
-        with open(test_cdxj, 'w') as f:
-            f.write('{"url": "http://example.com", "timestamp": "20230101000000", "status": "200"}\n')
+        with open(test_cdxj, "w") as f:
+            f.write(
+                '{"url": "http://example.com", "timestamp": "20230101000000", "status": "200"}\n'
+            )
 
         # Test each web archive tool
         tools_to_test = [
@@ -332,28 +347,30 @@ class MCPToolsTester:
             ("extract_links_from_warc", [test_warc]),
             ("index_warc", [test_warc]),
             ("extract_metadata_from_warc", [test_warc]),
-            ("extract_text_from_warc", [test_warc])
+            ("extract_text_from_warc", [test_warc]),
         ]
 
         for tool_name, args in tools_to_test:
             try:
-                module = __import__(f"ipfs_datasets_py.mcp_server.tools.web_archive_tools.{tool_name}",
-                                  fromlist=[tool_name])
+                module = __import__(
+                    f"ipfs_datasets_py.mcp_server.tools.web_archive_tools.{tool_name}",
+                    fromlist=[tool_name],
+                )
                 func = getattr(module, tool_name)
 
                 result = await func(*args)
                 assert isinstance(result, dict)
-                assert 'status' in result
+                assert "status" in result
 
                 self.report["tools"][f"web_archive_tools.{tool_name}"] = {
                     "status": "passed",
-                    "tests": ["basic_functionality"]
+                    "tests": ["basic_functionality"],
                 }
 
             except Exception as e:
                 self.report["tools"][f"web_archive_tools.{tool_name}"] = {
                     "status": "failed",
-                    "error": str(e)
+                    "error": str(e),
                 }
 
     async def test_dataset_tools(self):
@@ -367,83 +384,91 @@ class MCPToolsTester:
             # Test with a small built-in dataset (might fail, but should handle gracefully)
             result = await load_dataset("squad", format="json")
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["dataset_tools.load_dataset"] = {
                 "status": "passed",
-                "tests": ["dataset_loading"]
+                "tests": ["dataset_loading"],
             }
 
         except Exception as e:
             self.report["tools"]["dataset_tools.load_dataset"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
         # Test save_dataset
         try:
             from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset
 
-            result = await save_dataset("test_dataset", TEST_DATA["small_dataset"]["data"],
-                                      os.path.join(self.test_dir, "output.json"))
+            result = await save_dataset(
+                "test_dataset",
+                TEST_DATA["small_dataset"]["data"],
+                os.path.join(self.test_dir, "output.json"),
+            )
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["dataset_tools.save_dataset"] = {
                 "status": "passed",
-                "tests": ["dataset_saving"]
+                "tests": ["dataset_saving"],
             }
 
         except Exception as e:
             self.report["tools"]["dataset_tools.save_dataset"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
         # Test convert_dataset_format
         try:
-            from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import convert_dataset_format
+            from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import (
+                convert_dataset_format,
+            )
 
-            result = await convert_dataset_format("test_dataset", "csv",
-                                                 input_data=TEST_DATA["small_dataset"]["data"])
+            result = await convert_dataset_format(
+                "test_dataset", "csv", input_data=TEST_DATA["small_dataset"]["data"]
+            )
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["dataset_tools.convert_dataset_format"] = {
                 "status": "passed",
-                "tests": ["format_conversion"]
+                "tests": ["format_conversion"],
             }
 
         except Exception as e:
             self.report["tools"]["dataset_tools.convert_dataset_format"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
         # Test process_dataset
         try:
-            from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import process_dataset
+            from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import (
+                process_dataset,
+            )
 
             result = await process_dataset(TEST_DATA["small_dataset"]["data"], ["normalize"])
             assert isinstance(result, dict)
-            assert 'status' in result
+            assert "status" in result
 
             self.report["tools"]["dataset_tools.process_dataset"] = {
                 "status": "passed",
-                "tests": ["dataset_processing"]
+                "tests": ["dataset_processing"],
             }
 
         except Exception as e:
             self.report["tools"]["dataset_tools.process_dataset"] = {
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def run_all_tests(self):
         """Run all test categories."""
-        print("="*60)
+        print("=" * 60)
         print("COMPREHENSIVE MCP TOOLS TEST SUITE")
-        print("="*60)
+        print("=" * 60)
 
         test_categories = [
             self.test_cli_tools,
@@ -455,7 +480,7 @@ class MCPToolsTester:
             self.test_vector_tools,
             self.test_provenance_tools,
             self.test_web_archive_tools,
-            self.test_dataset_tools
+            self.test_dataset_tools,
         ]
 
         for test_func in test_categories:
@@ -467,8 +492,9 @@ class MCPToolsTester:
 
         # Calculate final statistics
         self.report["total_tools"] = len(self.report["tools"])
-        self.report["passed"] = sum(1 for tool in self.report["tools"].values()
-                                  if tool["status"] == "passed")
+        self.report["passed"] = sum(
+            1 for tool in self.report["tools"].values() if tool["status"] == "passed"
+        )
         self.report["failed"] = self.report["total_tools"] - self.report["passed"]
 
         return self.report
@@ -487,7 +513,7 @@ class MCPToolsTester:
             "vector_tools": self._generate_vector_test_template,
             "provenance_tools": self._generate_provenance_test_template,
             "web_archive_tools": self._generate_web_archive_test_template,
-            "dataset_tools": self._generate_dataset_test_template
+            "dataset_tools": self._generate_dataset_test_template,
         }
 
         tests_dir = project_root / "tests"
@@ -852,9 +878,10 @@ class TestDatasetTools:
 
     def save_report(self, filename="comprehensive_test_report.json"):
         """Save the test report to a file."""
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(self.report, f, indent=2)
         print(f"Test report saved to: {filename}")
+
 
 async def main():
     """Main execution function."""
@@ -864,20 +891,24 @@ async def main():
     report = await tester.run_all_tests()
 
     # Print summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
     print(f"Total tools tested: {report['total_tools']}")
     print(f"Passed: {report['passed']}")
     print(f"Failed: {report['failed']}")
-    print(f"Success rate: {report['passed']/report['total_tools']*100:.1f}%" if report['total_tools'] > 0 else "0%")
+    print(
+        f"Success rate: {report['passed'] / report['total_tools'] * 100:.1f}%"
+        if report["total_tools"] > 0
+        else "0%"
+    )
 
     # Show failed tools
-    failed_tools = [name for name, data in report['tools'].items() if data['status'] == 'failed']
+    failed_tools = [name for name, data in report["tools"].items() if data["status"] == "failed"]
     if failed_tools:
         print(f"\nFailed tools ({len(failed_tools)}):")
         for tool in failed_tools:
-            error = report['tools'][tool].get('error', 'Unknown error')
+            error = report["tools"][tool].get("error", "Unknown error")
             print(f"  - {tool}: {error}")
 
     # Save report
@@ -887,6 +918,7 @@ async def main():
     tester.generate_test_files()
 
     print(f"\nTest completed. Report saved and individual test files generated.")
+
 
 if __name__ == "__main__":
     anyio.run(main())

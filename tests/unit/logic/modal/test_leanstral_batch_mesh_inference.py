@@ -65,9 +65,7 @@ def test_leanstral_batch_defaults_to_ipfs_accelerate_mesh_router(
         __name__="ipfs_accelerate_py.llm_router",
         generate_text=lambda prompt, **kwargs: _abstain_response(requests[0]),
         generate_text_batch=fake_generate_text_batch,
-        get_last_generation_trace=lambda: {
-            "effective_provider_name": "leanstral_local"
-        },
+        get_last_generation_trace=lambda: {"effective_provider_name": "leanstral_local"},
     )
 
     def fake_import_module(name: str) -> object:
@@ -103,10 +101,7 @@ def test_leanstral_batch_defaults_to_ipfs_accelerate_mesh_router(
     assert calls[0]["model_name"] == "Leanstral"
     assert "llm_router:ipfs_accelerate_py" in results[0].repair_reasons
     assert "llm_router_mode:mesh_batch" in results[0].repair_reasons
-    assert (
-        "llm_router_effective_provider:leanstral_local"
-        in results[0].repair_reasons
-    )
+    assert "llm_router_effective_provider:leanstral_local" in results[0].repair_reasons
 
 
 def test_leanstral_router_resolver_reports_fallback_metadata(

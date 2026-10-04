@@ -26,7 +26,7 @@ Example:
     ...     OntologyCritic,
     ...     OntologyGenerationContext
     ... )
-    >>> 
+    >>>
     >>> generator = OntologyGenerator()
     >>> critic = OntologyCritic()
     >>> mediator = OntologyMediator(
@@ -35,7 +35,7 @@ Example:
     ...     max_rounds=10,
     ...     convergence_threshold=0.85
     ... )
-    >>> 
+    >>>
     >>> state = mediator.run_refinement_cycle(data, context)
     >>> print(f"Converged: {state.converged} after {state.current_round} rounds")
 
@@ -64,6 +64,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_types import (
 
 try:
     from opentelemetry import trace  # type: ignore[import-not-found]
+
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover
     trace = None
@@ -79,7 +80,9 @@ def _new_session_id() -> str:
 class BatchStrategyResults(list):
     """List-like batch result with summary metadata for backward compatibility."""
 
-    def __init__(self, strategies: List[Dict[str, Any] | None], errors: List[Dict[str, Any]]) -> None:
+    def __init__(
+        self, strategies: List[Dict[str, Any] | None], errors: List[Dict[str, Any]]
+    ) -> None:
         super().__init__(strategies)
         self._errors = list(errors)
 
@@ -138,7 +141,7 @@ class MediatorState(BaseSession):
         >>> state = MediatorState(current_ontology=ontology)
         >>> print(f"Round {state.current_round}, Score: {state.critic_scores[-1].overall}")
     """
-    
+
     session_id: str = field(default_factory=_new_session_id)
     domain: str = "graphrag"
     max_rounds: int = 10
@@ -148,16 +151,16 @@ class MediatorState(BaseSession):
     refinement_history: List[Dict[str, Any]] = field(default_factory=list)
     critic_scores: List[Any] = field(default_factory=list)  # List[CriticScore]
     total_time_ms: float = 0.0
-    
+
     def add_round(
         self,
         ontology: Dict[str, Any],
         score: Any,  # CriticScore
-        refinement_action: str
+        refinement_action: str,
     ):
         """
         Add a refinement round to the history.
-        
+
         Args:
             ontology: Ontology for this round
             score: Critic score for this round
@@ -167,12 +170,14 @@ class MediatorState(BaseSession):
         self.current_ontology = ontology
         self.critic_scores.append(score)
         round_number = len(self.refinement_history) + 1
-        self.refinement_history.append({
-            'round': round_number,
-            'ontology': ontology,
-            'score': score.to_dict() if hasattr(score, 'to_dict') else score,
-            'action': refinement_action,
-        })
+        self.refinement_history.append(
+            {
+                "round": round_number,
+                "ontology": ontology,
+                "score": score.to_dict() if hasattr(score, "to_dict") else score,
+                "action": refinement_action,
+            }
+        )
 
         score_value = 0.0
         if hasattr(score, "overall"):
@@ -186,25 +191,25 @@ class MediatorState(BaseSession):
             artifact_snapshot=ontology,
             metadata={"action": refinement_action},
         )
-    
+
     def get_score_trend(self) -> str:
         """
         Get the trend of scores over rounds.
-        
+
         Returns:
             'improving', 'stable', or 'degrading'
         """
         if len(self.critic_scores) < 2:
-            return 'insufficient_data'
-        
+            return "insufficient_data"
+
         recent_scores = [s.overall for s in self.critic_scores[-3:]]
-        
+
         if recent_scores[-1] > recent_scores[0] + 0.05:
-            return 'improving'
+            return "improving"
         elif recent_scores[-1] < recent_scores[0] - 0.05:
-            return 'degrading'
+            return "degrading"
         else:
-            return 'stable'
+            return "stable"
 
     def __repr__(self) -> str:
         """Concise REPL-friendly representation."""
@@ -219,7 +224,7 @@ class MediatorState(BaseSession):
         """Serialize MediatorState to a dictionary, including all refinement-specific fields."""
         # Get base session fields from parent
         result = super().to_dict()
-        
+
         # Override rounds serialization to include full detail
         result["rounds"] = [
             {
@@ -232,33 +237,32 @@ class MediatorState(BaseSession):
             }
             for r in self.rounds
         ]
-        
+
         # Add MediatorState-specific fields
         result["current_ontology"] = self.current_ontology
         result["refinement_history"] = self.refinement_history
         result["critic_scores"] = [
-            s.to_dict() if hasattr(s, "to_dict") else s
-            for s in self.critic_scores
+            s.to_dict() if hasattr(s, "to_dict") else s for s in self.critic_scores
         ]
         result["total_time_ms"] = self.total_time_ms
         result["convergence_threshold"] = self.convergence_threshold
-        
+
         return result
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MediatorState":
         """Reconstruct a MediatorState from a dictionary.
-        
+
         Args:
             data: Dictionary as produced by :meth:`to_dict`.
-            
+
         Returns:
             A new MediatorState with all fields restored.
         """
         import datetime as _dt
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
         from ipfs_datasets_py.optimizers.common.base_session import RoundRecord
-        
+
         # Create base instance
         state = cls(
             session_id=data.get("session_id", "unknown"),
@@ -269,10 +273,10 @@ class MediatorState(BaseSession):
             current_ontology=data.get("current_ontology", {}),
             total_time_ms=data.get("total_time_ms", 0.0),
         )
-        
+
         # Restore refinement history
         state.refinement_history = data.get("refinement_history", [])
-        
+
         # Restore critic scores
         critic_scores_data = data.get("critic_scores", [])
         state.critic_scores = []
@@ -281,7 +285,7 @@ class MediatorState(BaseSession):
                 state.critic_scores.append(CriticScore.from_dict(score_data))
             else:
                 state.critic_scores.append(score_data)
-        
+
         # Restore base session rounds directly (not via record_round)
         rounds_data = data.get("rounds", [])
         state.rounds = []
@@ -295,10 +299,10 @@ class MediatorState(BaseSession):
                 metadata=r.get("metadata", {}),
             )
             state.rounds.append(round_record)
-        
+
         # Restore convergence state
         state.converged = data.get("converged", False)
-        
+
         # Restore metadata and timestamps
         state.metadata.update(data.get("metadata") or {})
         try:
@@ -310,27 +314,27 @@ class MediatorState(BaseSession):
                 state.finished_at = _dt.datetime.fromisoformat(data["finished_at"])
             except (ValueError,):
                 pass
-        
+
         return state
 
 
 class OntologyMediator:
     """
     Mediates ontology generation and refinement cycles.
-    
+
     The mediator orchestrates the iterative refinement of ontologies by
     coordinating between the generator and critic. It adapts extraction
     prompts based on critic feedback and monitors convergence.
-    
+
     Inspired by the mediator pattern from complaint-generator, adapted
     for ontology refinement with focus on logical consistency and quality.
-    
+
     Attributes:
         generator: OntologyGenerator instance
         critic: OntologyCritic instance
         max_rounds: Maximum number of refinement rounds
         convergence_threshold: Quality score threshold for convergence
-        
+
     Example:
         >>> mediator = OntologyMediator(
         ...     generator=generator,
@@ -338,7 +342,7 @@ class OntologyMediator:
         ...     max_rounds=10,
         ...     convergence_threshold=0.85
         ... )
-        >>> 
+        >>>
         >>> state = mediator.run_refinement_cycle(data, context)
         >>> if state.converged:
         ...     print(f"Converged after {state.current_round} rounds")
@@ -389,7 +393,7 @@ class OntologyMediator:
         "split_entity": "Split broad entities into granular parts",
         "rename_entity": "Normalize naming conventions",
     }
-    
+
     def __init__(
         self,
         generator: Any,  # OntologyGenerator
@@ -400,7 +404,7 @@ class OntologyMediator:
     ):
         """
         Initialize the ontology mediator.
-        
+
         Args:
             generator: OntologyGenerator for creating/refining ontologies
             critic: OntologyCritic for evaluating quality
@@ -408,14 +412,15 @@ class OntologyMediator:
             convergence_threshold: Score threshold for convergence (0.0 to 1.0)
             logger: Optional :class:`logging.Logger` instance.  If ``None``,
                 uses the module-level logger.
-            
+
         Raises:
             ValueError: If convergence_threshold is not in valid range
         """
         import logging as _logging
+
         if not 0.0 <= convergence_threshold <= 1.0:
             raise ValueError("convergence_threshold must be between 0.0 and 1.0")
-        
+
         self.generator = generator
         self.critic = critic
         self.max_rounds = max_rounds
@@ -457,8 +462,7 @@ class OntologyMediator:
                 self._tracer = None
 
         self._log.info(
-            f"Initialized mediator: max_rounds={max_rounds}, "
-            f"threshold={convergence_threshold}"
+            f"Initialized mediator: max_rounds={max_rounds}, threshold={convergence_threshold}"
         )
 
     def register_refinement_playbook(
@@ -626,51 +630,51 @@ class OntologyMediator:
                 except (AttributeError, RuntimeError, TypeError, ValueError):
                     self._log.debug("Failed to set span attribute %s", key, exc_info=True)
             yield span
-    
+
     def generate_prompt(
         self,
         context: Any,  # OntologyGenerationContext
-        feedback: Optional[Any] = None  # Optional[CriticScore]
+        feedback: Optional[Any] = None,  # Optional[CriticScore]
     ) -> str:
         """
         Generate extraction prompt incorporating critic feedback.
-        
+
         Creates a prompt for the generator that incorporates lessons from
         previous rounds of refinement, focusing on areas identified as
         weak by the critic.
-        
+
         Args:
             context: Generation context with domain and strategy
             feedback: Optional critic feedback from previous round
-            
+
         Returns:
             Generated prompt string
-            
+
         Example:
             >>> prompt = mediator.generate_prompt(context, previous_score)
             >>> print(f"Generated prompt: {prompt[:100]}...")
         """
         _DOMAIN_FOCUS: dict[str, str] = {
-            'legal': (
+            "legal": (
                 "Focus on legal parties (persons, organisations), obligations, rights, "
                 "duties, breaches, penalties, dates, and monetary amounts."
             ),
-            'medical': (
+            "medical": (
                 "Focus on patients, diagnoses, symptoms, treatments, medications, "
                 "procedures, outcomes, and temporal relationships."
             ),
-            'technical': (
+            "technical": (
                 "Focus on software components, services, APIs, interfaces, dependencies, "
                 "protocols, events, and version relationships."
             ),
-            'financial': (
+            "financial": (
                 "Focus on assets, liabilities, transactions, accounts, payments, "
                 "interest rates, counterparties, and risk factors."
             ),
         }
 
-        domain = getattr(context, 'domain', 'general')
-        strategy = getattr(getattr(context, 'extraction_strategy', None), 'value', 'hybrid')
+        domain = getattr(context, "domain", "general")
+        strategy = getattr(getattr(context, "extraction_strategy", None), "value", "hybrid")
 
         lines: list[str] = [
             f"Extract a structured ontology from the following {domain} domain data.",
@@ -696,58 +700,58 @@ class OntologyMediator:
 
         # Feedback-driven refinements
         if feedback:
-            if getattr(feedback, 'completeness', 1.0) < 0.7:
+            if getattr(feedback, "completeness", 1.0) < 0.7:
                 lines.append(
                     "⚠ Previous round had LOW COMPLETENESS — ensure broad coverage: "
                     "include at least 10 entities of at least 3 distinct types."
                 )
-            if getattr(feedback, 'consistency', 1.0) < 0.7:
+            if getattr(feedback, "consistency", 1.0) < 0.7:
                 lines.append(
                     "⚠ Previous round had LOW CONSISTENCY — every relationship must "
                     "reference entity IDs that exist in the entities list."
                 )
-            if getattr(feedback, 'clarity', 1.0) < 0.7:
+            if getattr(feedback, "clarity", 1.0) < 0.7:
                 lines.append(
                     "⚠ Previous round had LOW CLARITY — each entity must have a non-empty "
                     "text field and at least one property."
                 )
-            if getattr(feedback, 'granularity', 1.0) < 0.7:
+            if getattr(feedback, "granularity", 1.0) < 0.7:
                 lines.append(
                     "⚠ Previous round had LOW GRANULARITY — aim for ~3 properties per "
                     "entity and ~1.5 relationships per entity."
                 )
-            if getattr(feedback, 'domain_alignment', 1.0) < 0.7:
+            if getattr(feedback, "domain_alignment", 1.0) < 0.7:
                 lines.append(
                     f"⚠ Previous round had LOW DOMAIN ALIGNMENT — use {domain}-specific "
                     "vocabulary for entity and relationship types."
                 )
-            for rec in getattr(feedback, 'recommendations', [])[:3]:
+            for rec in getattr(feedback, "recommendations", [])[:3]:
                 lines.append(f"• Recommendation: {rec}")
 
         return " ".join(lines)
-    
+
     @profile_method("ontology_mediator.refine_ontology")
     def refine_ontology(
         self,
         ontology: Dict[str, Any],
         feedback: Any,  # CriticScore
-        context: Any  # OntologyGenerationContext
+        context: Any,  # OntologyGenerationContext
     ) -> Ontology:
         """
         Refine ontology based on critic feedback.
-        
+
         Applies targeted refinements to the ontology based on specific
         weaknesses identified by the critic. Can add missing entities,
         clarify relationships, or fix inconsistencies.
-        
+
         Args:
             ontology: Current ontology to refine
             feedback: Critic feedback with scores and recommendations
             context: Generation context
-            
+
         Returns:
             Refined ontology
-            
+
         Example:
             >>> refined = mediator.refine_ontology(
             ...     ontology,
@@ -759,13 +763,15 @@ class OntologyMediator:
         import copy as _copy
         import re as _re
 
-        self._log.info(f"Refining ontology based on {len(feedback.recommendations)} recommendations")
+        self._log.info(
+            f"Refining ontology based on {len(feedback.recommendations)} recommendations"
+        )
 
         refined = _copy.deepcopy(ontology)
         # Save snapshot BEFORE applying refinements (for undo support)
         self._undo_stack.append(_copy.deepcopy(ontology))
-        refined.setdefault('entities', [])
-        refined.setdefault('relationships', [])
+        refined.setdefault("entities", [])
+        refined.setdefault("relationships", [])
 
         actions_applied: list[str] = []
 
@@ -778,140 +784,169 @@ class OntologyMediator:
             )
 
             # Action: add missing entity properties when clarity is low
-            if any(k in rec_lower for k in ('property', 'detail', 'clarity', 'definition')):
-                for ent in refined['entities']:
-                    if isinstance(ent, dict) and not ent.get('properties'):
-                        ent['properties'] = {'description': f"Auto-populated for {ent.get('text', ent.get('id', ''))}"}
-                actions_applied.append('add_missing_properties')
+            if any(k in rec_lower for k in ("property", "detail", "clarity", "definition")):
+                for ent in refined["entities"]:
+                    if isinstance(ent, dict) and not ent.get("properties"):
+                        ent["properties"] = {
+                            "description": f"Auto-populated for {ent.get('text', ent.get('id', ''))}"
+                        }
+                actions_applied.append("add_missing_properties")
 
             # Action: normalize entity/relationship type names to PascalCase
-            elif any(k in rec_lower for k in ('naming', 'convention', 'normalize', 'consistent')):
+            elif any(k in rec_lower for k in ("naming", "convention", "normalize", "consistent")):
+
                 def _to_pascal(s: str) -> str:
-                    return ''.join(w.capitalize() for w in _re.split(r'[_\s]+', s) if w)
-                for ent in refined['entities']:
-                    if isinstance(ent, dict) and ent.get('type'):
-                        ent['type'] = _to_pascal(ent['type'])
-                for rel in refined['relationships']:
-                    if isinstance(rel, dict) and rel.get('type'):
-                        rel['type'] = _to_pascal(rel['type'])
-                actions_applied.append('normalize_names')
+                    return "".join(w.capitalize() for w in _re.split(r"[_\s]+", s) if w)
+
+                for ent in refined["entities"]:
+                    if isinstance(ent, dict) and ent.get("type"):
+                        ent["type"] = _to_pascal(ent["type"])
+                for rel in refined["relationships"]:
+                    if isinstance(rel, dict) and rel.get("type"):
+                        rel["type"] = _to_pascal(rel["type"])
+                actions_applied.append("normalize_names")
 
             # Action: remove orphan entities (no relationships) when completeness is flagged
-            elif any(k in rec_lower for k in ('orphan', 'prune', 'coverage', 'coverage')):
+            elif any(k in rec_lower for k in ("orphan", "prune", "coverage", "coverage")):
                 linked_ids: set = set()
-                for rel in refined['relationships']:
+                for rel in refined["relationships"]:
                     if isinstance(rel, dict):
-                        linked_ids.add(rel.get('source_id'))
-                        linked_ids.add(rel.get('target_id'))
-                before = len(refined['entities'])
-                refined['entities'] = [
-                    e for e in refined['entities']
-                    if not isinstance(e, dict) or e.get('id') in linked_ids
+                        linked_ids.add(rel.get("source_id"))
+                        linked_ids.add(rel.get("target_id"))
+                before = len(refined["entities"])
+                refined["entities"] = [
+                    e
+                    for e in refined["entities"]
+                    if not isinstance(e, dict) or e.get("id") in linked_ids
                 ]
-                pruned = before - len(refined['entities'])
+                pruned = before - len(refined["entities"])
                 if pruned:
                     self._log.info(f"Pruned {pruned} orphan entities")
-                actions_applied.append('prune_orphans')
+                actions_applied.append("prune_orphans")
 
             # Action: deduplicate entities by (type, text) when consistency is flagged
-            elif any(k in rec_lower for k in ('duplicate', 'consistency', 'dedup', 'merge')):
+            elif any(k in rec_lower for k in ("duplicate", "consistency", "dedup", "merge")):
                 seen: dict[tuple, str] = {}  # (type, text_lower) → kept id
                 keep_ids: set = set()
                 id_remap: dict[str, str] = {}
-                for ent in refined['entities']:
+                for ent in refined["entities"]:
                     if not isinstance(ent, dict):
                         continue
-                    key = (ent.get('type', ''), (ent.get('text') or '').lower())
+                    key = (ent.get("type", ""), (ent.get("text") or "").lower())
                     if key not in seen:
-                        seen[key] = ent['id']
-                        keep_ids.add(ent['id'])
+                        seen[key] = ent["id"]
+                        keep_ids.add(ent["id"])
                     else:
-                        id_remap[ent['id']] = seen[key]
-                refined['entities'] = [e for e in refined['entities'] if isinstance(e, dict) and e.get('id') in keep_ids]
-                for rel in refined['relationships']:
+                        id_remap[ent["id"]] = seen[key]
+                refined["entities"] = [
+                    e
+                    for e in refined["entities"]
+                    if isinstance(e, dict) and e.get("id") in keep_ids
+                ]
+                for rel in refined["relationships"]:
                     if isinstance(rel, dict):
-                        rel['source_id'] = id_remap.get(rel['source_id'], rel['source_id'])
-                        rel['target_id'] = id_remap.get(rel['target_id'], rel['target_id'])
-                actions_applied.append('merge_duplicates')
+                        rel["source_id"] = id_remap.get(rel["source_id"], rel["source_id"])
+                        rel["target_id"] = id_remap.get(rel["target_id"], rel["target_id"])
+                actions_applied.append("merge_duplicates")
 
             # Action: link orphan entities via co-occurrence when coverage is flagged
-            elif any(k in rec_lower for k in ('missing relationship', 'orphan link', 'add_missing_relationships', 'unlinked')):
+            elif any(
+                k in rec_lower
+                for k in (
+                    "missing relationship",
+                    "orphan link",
+                    "add_missing_relationships",
+                    "unlinked",
+                )
+            ):
                 import uuid as _uuid
+
                 linked_ids: set = set()
-                for rel in refined['relationships']:
+                for rel in refined["relationships"]:
                     if isinstance(rel, dict):
-                        linked_ids.add(rel.get('source_id'))
-                        linked_ids.add(rel.get('target_id'))
+                        linked_ids.add(rel.get("source_id"))
+                        linked_ids.add(rel.get("target_id"))
                 orphans = [
-                    e for e in refined['entities']
-                    if isinstance(e, dict) and e.get('id') not in linked_ids
+                    e
+                    for e in refined["entities"]
+                    if isinstance(e, dict) and e.get("id") not in linked_ids
                 ]
                 # Link consecutive orphan pairs via co_occurrence
                 for i in range(0, len(orphans) - 1, 2):
-                    src = orphans[i].get('id')
-                    tgt = orphans[i + 1].get('id')
+                    src = orphans[i].get("id")
+                    tgt = orphans[i + 1].get("id")
                     if src and tgt:
-                        refined['relationships'].append({
-                            'id': f"auto_{_uuid.uuid4().hex[:8]}",
-                            'source_id': src,
-                            'target_id': tgt,
-                            'type': 'co_occurrence',
-                            'confidence': 0.3,
-                            'provenance': ['add_missing_relationships'],
-                        })
-                actions_applied.append('add_missing_relationships')
+                        refined["relationships"].append(
+                            {
+                                "id": f"auto_{_uuid.uuid4().hex[:8]}",
+                                "source_id": src,
+                                "target_id": tgt,
+                                "type": "co_occurrence",
+                                "confidence": 0.3,
+                                "provenance": ["add_missing_relationships"],
+                            }
+                        )
+                actions_applied.append("add_missing_relationships")
 
             # Action: split_entity — when granularity is flagged, detect entities
             # whose text contains multiple comma/conjunction-delimited tokens and
             # replace them with individual entities.
-            elif any(k in rec_lower for k in ('split', 'granular', 'too broad', 'overloaded')):
+            elif any(k in rec_lower for k in ("split", "granular", "too broad", "overloaded")):
                 import uuid as _uuid
+
                 new_entities = []
                 removed_ids: set = set()
-                for ent in list(refined['entities']):
+                for ent in list(refined["entities"]):
                     if not isinstance(ent, dict):
                         new_entities.append(ent)
                         continue
-                    text = ent.get('text', '')
+                    text = ent.get("text", "")
                     # Only split on " and " or commas with 2+ parts, each ≥ 2 chars
                     import re as _split_re
-                    parts = [p.strip() for p in _split_re.split(r'\s+and\s+|,\s*', text) if p.strip()]
+
+                    parts = [
+                        p.strip() for p in _split_re.split(r"\s+and\s+|,\s*", text) if p.strip()
+                    ]
                     if len(parts) >= 2 and all(len(p) >= 2 for p in parts):
-                        removed_ids.add(ent.get('id'))
+                        removed_ids.add(ent.get("id"))
                         for part in parts:
                             new_ent = dict(ent)
-                            new_ent['id'] = f"split_{_uuid.uuid4().hex[:8]}"
-                            new_ent['text'] = part
-                            new_ent.setdefault('properties', {})
-                            new_ent['properties']['split_from'] = ent.get('id', '')
+                            new_ent["id"] = f"split_{_uuid.uuid4().hex[:8]}"
+                            new_ent["text"] = part
+                            new_ent.setdefault("properties", {})
+                            new_ent["properties"]["split_from"] = ent.get("id", "")
                             new_entities.append(new_ent)
                     else:
                         new_entities.append(ent)
                 if removed_ids:
                     # Remove relationships to/from removed IDs
-                    refined['relationships'] = [
-                        r for r in refined['relationships']
+                    refined["relationships"] = [
+                        r
+                        for r in refined["relationships"]
                         if isinstance(r, dict)
-                        and r.get('source_id') not in removed_ids
-                        and r.get('target_id') not in removed_ids
+                        and r.get("source_id") not in removed_ids
+                        and r.get("target_id") not in removed_ids
                     ]
-                    refined['entities'] = new_entities
-                    actions_applied.append('split_entity')
+                    refined["entities"] = new_entities
+                    actions_applied.append("split_entity")
 
             # Action: rename_entity — normalise entity text to Title Case when
             # casing issues are flagged (e.g. "alice" → "Alice", "LONDON" → "London").
-            elif any(k in rec_lower for k in ('rename', 'casing', 'normalise', 'normalize name', 'title case')):
-                for ent in refined['entities']:
-                    if isinstance(ent, dict) and isinstance(ent.get('text'), str):
-                        old_text = ent['text']
+            elif any(
+                k in rec_lower
+                for k in ("rename", "casing", "normalise", "normalize name", "title case")
+            ):
+                for ent in refined["entities"]:
+                    if isinstance(ent, dict) and isinstance(ent.get("text"), str):
+                        old_text = ent["text"]
                         new_text = old_text.title()
                         if new_text != old_text:
-                            ent['text'] = new_text
-                actions_applied.append('rename_entity')
+                            ent["text"] = new_text
+                actions_applied.append("rename_entity")
 
-        refined.setdefault('metadata', {})
-        refined['metadata']['refinement_actions'] = actions_applied
-        
+        refined.setdefault("metadata", {})
+        refined["metadata"]["refinement_actions"] = actions_applied
+
         # Structured JSON logging for per-round metrics
         try:
             import json as _json
@@ -920,10 +955,12 @@ class OntologyMediator:
                 redact_payload,
                 with_schema,
             )
-            
+
             round_number = len(self._undo_stack)
-            entity_delta = len(refined.get('entities', [])) - len(ontology.get('entities', []))
-            relationship_delta = len(refined.get('relationships', [])) - len(ontology.get('relationships', []))
+            entity_delta = len(refined.get("entities", [])) - len(ontology.get("entities", []))
+            relationship_delta = len(refined.get("relationships", [])) - len(
+                ontology.get("relationships", [])
+            )
 
             def _safe_float(value: Any, default: float = 0.0) -> float:
                 try:
@@ -932,37 +969,39 @@ class OntologyMediator:
                     return float(value)
                 except (TypeError, ValueError):
                     return default
-            
+
             round_metrics = {
-                'timestamp': _datetime.now(_timezone.utc).isoformat(),
-                'level': 'INFO',
-                'message': 'Ontology mediator refinement round completed',
-                'event': 'ontology_refinement_round',
-                'module': __name__,
-                'component': 'ontology_mediator',
-                'optimizer_type': 'graphrag',
-                'optimizer_pipeline': 'graphrag',
-                'run_id': f"ontology-mediator-round-{round_number}",
-                'round': round_number,
-                'recommendations_count': len(feedback.recommendations),
-                'actions_applied': actions_applied,
-                'actions_count': len(actions_applied),
-                'entity_delta': entity_delta,
-                'relationship_delta': relationship_delta,
-                'final_entity_count': len(refined.get('entities', [])),
-                'final_relationship_count': len(refined.get('relationships', [])),
-                'feedback_score': _safe_float(getattr(feedback, 'overall', 0.0)),
-                'feedback_dimensions': {
-                    'completeness': _safe_float(getattr(feedback, 'completeness', 0.0)),
-                    'consistency': _safe_float(getattr(feedback, 'consistency', 0.0)),
-                    'clarity': _safe_float(getattr(feedback, 'clarity', 0.0)),
-                    'granularity': _safe_float(getattr(feedback, 'granularity', 0.0)),
-                    'relationship_coherence': _safe_float(getattr(feedback, 'relationship_coherence', 0.0)),
-                    'domain_alignment': _safe_float(getattr(feedback, 'domain_alignment', 0.0)),
+                "timestamp": _datetime.now(_timezone.utc).isoformat(),
+                "level": "INFO",
+                "message": "Ontology mediator refinement round completed",
+                "event": "ontology_refinement_round",
+                "module": __name__,
+                "component": "ontology_mediator",
+                "optimizer_type": "graphrag",
+                "optimizer_pipeline": "graphrag",
+                "run_id": f"ontology-mediator-round-{round_number}",
+                "round": round_number,
+                "recommendations_count": len(feedback.recommendations),
+                "actions_applied": actions_applied,
+                "actions_count": len(actions_applied),
+                "entity_delta": entity_delta,
+                "relationship_delta": relationship_delta,
+                "final_entity_count": len(refined.get("entities", [])),
+                "final_relationship_count": len(refined.get("relationships", [])),
+                "feedback_score": _safe_float(getattr(feedback, "overall", 0.0)),
+                "feedback_dimensions": {
+                    "completeness": _safe_float(getattr(feedback, "completeness", 0.0)),
+                    "consistency": _safe_float(getattr(feedback, "consistency", 0.0)),
+                    "clarity": _safe_float(getattr(feedback, "clarity", 0.0)),
+                    "granularity": _safe_float(getattr(feedback, "granularity", 0.0)),
+                    "relationship_coherence": _safe_float(
+                        getattr(feedback, "relationship_coherence", 0.0)
+                    ),
+                    "domain_alignment": _safe_float(getattr(feedback, "domain_alignment", 0.0)),
                 },
-                'status': 'success',
+                "status": "success",
             }
-            
+
             # Log as structured JSON
             self._log.info(
                 "REFINEMENT_ROUND: %s",
@@ -970,7 +1009,7 @@ class OntologyMediator:
             )
         except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             self._log.debug(f"Could not log structured metrics: {e}")
-        
+
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")
         # Update cumulative action counts
         for action in actions_applied:
@@ -1029,8 +1068,7 @@ class OntologyMediator:
 
         if len(ontologies) != len(feedbacks):
             raise ValueError(
-                f"Length mismatch: {len(ontologies)} ontologies vs "
-                f"{len(feedbacks)} feedbacks"
+                f"Length mismatch: {len(ontologies)} ontologies vs {len(feedbacks)} feedbacks"
             )
 
         logger = self._log or _logging.getLogger(__name__)
@@ -1241,12 +1279,35 @@ class OntologyMediator:
         # Count recommendations by pattern to identify repeated issues
         recommendations = list(getattr(score, "recommendations", []))
         recommendation_patterns = {
-            "property": sum(1 for r in recommendations if any(k in r.lower() for k in ["property", "detail", "clarity", "definition"])),
-            "naming": sum(1 for r in recommendations if any(k in r.lower() for k in ["naming", "convention", "normalize", "consistent", "casing"])),
-            "orphan": sum(1 for r in recommendations if any(k in r.lower() for k in ["orphan", "prune", "coverage"])),
-            "duplicate": sum(1 for r in recommendations if any(k in r.lower() for k in ["duplicate", "consistency", "dedup", "merge"])),
+            "property": sum(
+                1
+                for r in recommendations
+                if any(k in r.lower() for k in ["property", "detail", "clarity", "definition"])
+            ),
+            "naming": sum(
+                1
+                for r in recommendations
+                if any(
+                    k in r.lower()
+                    for k in ["naming", "convention", "normalize", "consistent", "casing"]
+                )
+            ),
+            "orphan": sum(
+                1
+                for r in recommendations
+                if any(k in r.lower() for k in ["orphan", "prune", "coverage"])
+            ),
+            "duplicate": sum(
+                1
+                for r in recommendations
+                if any(k in r.lower() for k in ["duplicate", "consistency", "dedup", "merge"])
+            ),
             "relationship": sum(1 for r in recommendations if "relationship" in r.lower()),
-            "granular": sum(1 for r in recommendations if any(k in r.lower() for k in ["split", "granular", "too broad", "overloaded"])),
+            "granular": sum(
+                1
+                for r in recommendations
+                if any(k in r.lower() for k in ["split", "granular", "too broad", "overloaded"])
+            ),
         }
 
         # Determine bottleneck dimensions
@@ -1270,94 +1331,110 @@ class OntologyMediator:
 
         if overall >= 0.85:
             # Already high quality
-            strategy.update({
-                "action": "converged",
-                "priority": "low",
-                "rationale": f"Ontology quality converged at {overall:.2f}. No further refinement needed.",
-                "estimated_impact": 0.0,
-            })
+            strategy.update(
+                {
+                    "action": "converged",
+                    "priority": "low",
+                    "rationale": f"Ontology quality converged at {overall:.2f}. No further refinement needed.",
+                    "estimated_impact": 0.0,
+                }
+            )
             return strategy
 
         # Pattern 1: Low clarity → add properties
         if clarity < 0.55 and recommendation_patterns["property"] >= 2:
             affected = sum(1 for e in entities if not e.get("properties"))
-            strategy.update({
-                "action": "add_missing_properties",
-                "priority": "high" if clarity < 0.45 else "medium",
-                "rationale": f"Clarity score is low ({clarity:.2f}). {affected} entities lack property definitions.",
-                "estimated_impact": 0.12,
-                "affected_entity_count": affected,
-                "alternative_actions": ["normalize_names", "split_entity"],
-            })
+            strategy.update(
+                {
+                    "action": "add_missing_properties",
+                    "priority": "high" if clarity < 0.45 else "medium",
+                    "rationale": f"Clarity score is low ({clarity:.2f}). {affected} entities lack property definitions.",
+                    "estimated_impact": 0.12,
+                    "affected_entity_count": affected,
+                    "alternative_actions": ["normalize_names", "split_entity"],
+                }
+            )
 
         # Pattern 2: Low consistency + duplicate recommendations → merge
         elif consistency < 0.55 and recommendation_patterns["duplicate"] >= 2:
-            strategy.update({
-                "action": "merge_duplicates",
-                "priority": "high" if consistency < 0.45 else "medium",
-                "rationale": f"Consistency score is low ({consistency:.2f}). Multiple duplicate entity recommendations detected.",
-                "estimated_impact": 0.15,
-                "affected_entity_count": min(10, entity_count // 5),
-                "alternative_actions": ["normalize_names", "add_missing_properties"],
-            })
+            strategy.update(
+                {
+                    "action": "merge_duplicates",
+                    "priority": "high" if consistency < 0.45 else "medium",
+                    "rationale": f"Consistency score is low ({consistency:.2f}). Multiple duplicate entity recommendations detected.",
+                    "estimated_impact": 0.15,
+                    "affected_entity_count": min(10, entity_count // 5),
+                    "alternative_actions": ["normalize_names", "add_missing_properties"],
+                }
+            )
 
         # Pattern 3: Low completeness + relationship recommendations → add relationships
         elif completeness < 0.55 and recommendation_patterns["relationship"] >= 2:
-            strategy.update({
-                "action": "add_missing_relationships",
-                "priority": "high" if completeness < 0.45 else "medium",
-                "rationale": f"Completeness score is low ({completeness:.2f}). {entity_count} entities but only {relationship_count} relationships; {entity_count - relationship_count} orphans detected.",
-                "estimated_impact": 0.18,
-                "affected_entity_count": entity_count - relationship_count,
-                "alternative_actions": ["split_entity", "prune_orphans"],
-            })
+            strategy.update(
+                {
+                    "action": "add_missing_relationships",
+                    "priority": "high" if completeness < 0.45 else "medium",
+                    "rationale": f"Completeness score is low ({completeness:.2f}). {entity_count} entities but only {relationship_count} relationships; {entity_count - relationship_count} orphans detected.",
+                    "estimated_impact": 0.18,
+                    "affected_entity_count": entity_count - relationship_count,
+                    "alternative_actions": ["split_entity", "prune_orphans"],
+                }
+            )
 
         # Pattern 4: Orphaned entities recommendation
         elif recommendation_patterns["orphan"] >= 1:
             orphan_count = entity_count - min(entity_count, relationship_count + 5)
-            strategy.update({
-                "action": "prune_orphans",
-                "priority": "medium",
-                "rationale": f"~{orphan_count} orphaned entities detected (entities not in any relationship).",
-                "estimated_impact": 0.08,
-                "affected_entity_count": orphan_count,
-                "alternative_actions": ["add_missing_relationships", "split_entity"],
-            })
+            strategy.update(
+                {
+                    "action": "prune_orphans",
+                    "priority": "medium",
+                    "rationale": f"~{orphan_count} orphaned entities detected (entities not in any relationship).",
+                    "estimated_impact": 0.08,
+                    "affected_entity_count": orphan_count,
+                    "alternative_actions": ["add_missing_relationships", "split_entity"],
+                }
+            )
 
         # Pattern 5: Granularity/splitting recommendation
         elif recommendation_patterns["granular"] >= 1 and entity_count < 50:
-            strategy.update({
-                "action": "split_entity",
-                "priority": "medium",
-                "rationale": "Some entities are too broad and should be split into more granular entities.",
-                "estimated_impact": 0.10,
-                "affected_entity_count": min(5, entity_count // 10),
-                "alternative_actions": ["add_missing_properties", "normalize_names"],
-            })
+            strategy.update(
+                {
+                    "action": "split_entity",
+                    "priority": "medium",
+                    "rationale": "Some entities are too broad and should be split into more granular entities.",
+                    "estimated_impact": 0.10,
+                    "affected_entity_count": min(5, entity_count // 10),
+                    "alternative_actions": ["add_missing_properties", "normalize_names"],
+                }
+            )
 
         # Pattern 6: Naming convention recommendation
         elif recommendation_patterns["naming"] >= 2:
-            strategy.update({
-                "action": "normalize_names",
-                "priority": "medium",
-                "rationale": f"Entity/relationship naming is inconsistent. Multiple convention recommendations detected.",
-                "estimated_impact": 0.07,
-                "affected_entity_count": entity_count,
-                "alternative_actions": ["add_missing_properties", "merge_duplicates"],
-            })
+            strategy.update(
+                {
+                    "action": "normalize_names",
+                    "priority": "medium",
+                    "rationale": f"Entity/relationship naming is inconsistent. Multiple convention recommendations detected.",
+                    "estimated_impact": 0.07,
+                    "affected_entity_count": entity_count,
+                    "alternative_actions": ["add_missing_properties", "merge_duplicates"],
+                }
+            )
 
         # Fallback: general property enrichment
         elif clarity < 0.65:
             affected = sum(1 for e in entities if not e.get("properties"))
             if affected > 0:
-                strategy.update({
-                    "action": "add_missing_properties",
-                    "priority": "medium",
-                    "rationale": f"Clarity could be improved. {affected} entities lack property definitions.",
-                    "estimated_impact": 0.10,
-                    "affected_entity_count": affected,
-                    "alternative_actions": ["normalize_names"],
-                })
+                strategy.update(
+                    {
+                        "action": "add_missing_properties",
+                        "priority": "medium",
+                        "rationale": f"Clarity could be improved. {affected} entities lack property definitions.",
+                        "estimated_impact": 0.10,
+                        "affected_entity_count": affected,
+                        "alternative_actions": ["normalize_names"],
+                    }
+                )
 
         self._log.info(
             f"Suggested refinement strategy: {strategy['action']} "
@@ -1432,10 +1509,12 @@ class OntologyMediator:
                 RuntimeError,
             ) as exc:
                 strategies.append(None)
-                errors.append({
-                    "index": idx,
-                    "error": str(exc),
-                })
+                errors.append(
+                    {
+                        "index": idx,
+                        "error": str(exc),
+                    }
+                )
 
         return BatchStrategyResults(strategies, errors)
 
@@ -1470,7 +1549,9 @@ class OntologyMediator:
             )
             strategies = [strategy for strategy in batch_result if isinstance(strategy, dict)]
         else:
-            strategies = [strategy for strategy in strategies_or_ontologies if isinstance(strategy, dict)]
+            strategies = [
+                strategy for strategy in strategies_or_ontologies if isinstance(strategy, dict)
+            ]
 
         if not strategies:
             return StrategyComparisonResults([])
@@ -1481,13 +1562,15 @@ class OntologyMediator:
             priority_numeric = priority_map.get(strategy.get("priority", "low"), 1)
             impact = float(strategy.get("estimated_impact", 0.0))
             priority_score = min(1.0, max(0.0, (priority_numeric / 4.0) * 0.7 + impact * 0.3))
-            ranked.append({
-                "index": idx,
-                "strategy": strategy,
-                "priority_numeric": priority_numeric,
-                "estimated_impact": impact,
-                "priority_score": priority_score,
-            })
+            ranked.append(
+                {
+                    "index": idx,
+                    "strategy": strategy,
+                    "priority_numeric": priority_numeric,
+                    "estimated_impact": impact,
+                    "priority_score": priority_score,
+                }
+            )
 
         ranked.sort(
             key=lambda item: (
@@ -1520,41 +1603,45 @@ class OntologyMediator:
         fmt = (format or "").strip().lower()
 
         if fmt == "mermaid":
-            return "\n".join([
-                "flowchart TD",
-                "    A[Start: score + recommendations] --> B{overall >= 0.85?}",
-                "    B -- yes --> C[converged]",
-                "    B -- no --> D{clarity < 0.50 & property recs >= 2?}",
-                "    D -- yes --> E[add_missing_properties]",
-                "    D -- no --> F{consistency < 0.55 & duplicate recs >= 2?}",
-                "    F -- yes --> G[merge_duplicates]",
-                "    F -- no --> H{completeness < 0.55 & relationship recs >= 2?}",
-                "    H -- yes --> I[add_missing_relationships]",
-                "    H -- no --> J{orphan recs >= 1?}",
-                "    J -- yes --> K[prune_orphans]",
-                "    J -- no --> L{granular recs >= 1 & entities < 50?}",
-                "    L -- yes --> M[split_entity]",
-                "    L -- no --> N{naming recs >= 2?}",
-                "    N -- yes --> O[normalize_names]",
-                "    N -- no --> P{clarity < 0.65?}",
-                "    P -- yes --> Q[add_missing_properties]",
-                "    P -- no --> R[converged/no-op]",
-            ])
+            return "\n".join(
+                [
+                    "flowchart TD",
+                    "    A[Start: score + recommendations] --> B{overall >= 0.85?}",
+                    "    B -- yes --> C[converged]",
+                    "    B -- no --> D{clarity < 0.50 & property recs >= 2?}",
+                    "    D -- yes --> E[add_missing_properties]",
+                    "    D -- no --> F{consistency < 0.55 & duplicate recs >= 2?}",
+                    "    F -- yes --> G[merge_duplicates]",
+                    "    F -- no --> H{completeness < 0.55 & relationship recs >= 2?}",
+                    "    H -- yes --> I[add_missing_relationships]",
+                    "    H -- no --> J{orphan recs >= 1?}",
+                    "    J -- yes --> K[prune_orphans]",
+                    "    J -- no --> L{granular recs >= 1 & entities < 50?}",
+                    "    L -- yes --> M[split_entity]",
+                    "    L -- no --> N{naming recs >= 2?}",
+                    "    N -- yes --> O[normalize_names]",
+                    "    N -- no --> P{clarity < 0.65?}",
+                    "    P -- yes --> Q[add_missing_properties]",
+                    "    P -- no --> R[converged/no-op]",
+                ]
+            )
 
         if fmt == "ascii":
-            return "\n".join([
-                "Start: score + recommendations",
-                "├─ overall >= 0.85                     -> converged",
-                "└─ otherwise",
-                "   ├─ clarity < 0.50 & property recs>=2 -> add_missing_properties",
-                "   ├─ consistency < 0.55 & dup recs>=2  -> merge_duplicates",
-                "   ├─ completeness < 0.55 & rel recs>=2 -> add_missing_relationships",
-                "   ├─ orphan recs>=1                    -> prune_orphans",
-                "   ├─ granular recs>=1 & entities<50    -> split_entity",
-                "   ├─ naming recs>=2                    -> normalize_names",
-                "   ├─ clarity < 0.65                    -> add_missing_properties",
-                "   └─ else                              -> converged/no-op",
-            ])
+            return "\n".join(
+                [
+                    "Start: score + recommendations",
+                    "├─ overall >= 0.85                     -> converged",
+                    "└─ otherwise",
+                    "   ├─ clarity < 0.50 & property recs>=2 -> add_missing_properties",
+                    "   ├─ consistency < 0.55 & dup recs>=2  -> merge_duplicates",
+                    "   ├─ completeness < 0.55 & rel recs>=2 -> add_missing_relationships",
+                    "   ├─ orphan recs>=1                    -> prune_orphans",
+                    "   ├─ granular recs>=1 & entities<50    -> split_entity",
+                    "   ├─ naming recs>=2                    -> normalize_names",
+                    "   ├─ clarity < 0.65                    -> add_missing_properties",
+                    "   └─ else                              -> converged/no-op",
+                ]
+            )
 
         raise ValueError(f"Unsupported format: {format!r}. Use 'mermaid' or 'ascii'.")
 
@@ -1930,6 +2017,7 @@ class OntologyMediator:
             True
         """
         import copy as _copy
+
         self._undo_stack.append(_copy.deepcopy(ontology))
         return len(self._undo_stack)
 
@@ -1976,6 +2064,7 @@ class OntologyMediator:
             >>> mediator.log_snapshot("before_refinement", my_ontology)
         """
         import copy as _copy
+
         self._undo_stack.append(_copy.deepcopy(ontology))
         self._action_entries.append({"action": f"snapshot:{label}", "round": len(self._undo_stack)})
 
@@ -2015,9 +2104,7 @@ class OntologyMediator:
         if not entries:
             self._log.info("Action summary: (no actions recorded)")
             return
-        parts = ", ".join(
-            f"[{e['rank']}] {e['action']}={e['count']}" for e in entries
-        )
+        parts = ", ".join(f"[{e['rank']}] {e['action']}={e['count']}" for e in entries)
         self._log.info("Action summary: %s", parts)
 
     def undo_last_action(self) -> Optional[Dict[str, Any]]:
@@ -2044,41 +2131,42 @@ class OntologyMediator:
     def run_refinement_cycle(
         self,
         data: Any,
-        context: Any  # OntologyGenerationContext
+        context: Any,  # OntologyGenerationContext
     ) -> MediatorState:
         """
         Run complete refinement cycle.
-        
+
         Executes multiple rounds of ontology generation, evaluation, and
         refinement until convergence or max rounds reached. Returns complete
         state including all intermediate results.
-        
+
         Args:
             data: Source data for ontology generation
             context: Generation context with configuration
-            
+
         Returns:
             Final MediatorState with complete refinement history
-            
+
         Example:
             >>> state = mediator.run_refinement_cycle(
             ...     pdf_data,
             ...     context
             ... )
-            >>> 
+            >>>
             >>> print(f"Final score: {state.critic_scores[-1].overall:.2f}")
             >>> print(f"Rounds: {state.current_round}")
             >>> print(f"Converged: {state.converged}")
-            >>> 
+            >>>
             >>> # Review history
             >>> for round_info in state.refinement_history:
             ...     print(f"Round {round_info['round']}: {round_info['score']['overall']:.2f}")
         """
         import time
+
         start_time = time.time()
-        
+
         self._log.info(f"Starting refinement cycle (max {self.max_rounds} rounds)")
-        
+
         # Generate initial ontology
         domain = str(getattr(context, "domain", "unknown"))
         with self._start_otel_span(
@@ -2091,7 +2179,7 @@ class OntologyMediator:
         ):
             initial_ontology = self.generator.generate_ontology(data, context)
             initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
-        
+
         # Initialize state
         state = MediatorState(
             current_ontology=initial_ontology,
@@ -2100,20 +2188,22 @@ class OntologyMediator:
         )
         state.add_round(initial_ontology, initial_score, "initial_generation")
         self._record_prometheus_round(initial_score.overall, context)
-        
+
         self._log.info(f"Initial score: {initial_score.overall:.2f}")
-        
+
         # Refinement loop
         for round_num in range(1, self.max_rounds):
             # Check convergence
             if initial_score.overall >= self.convergence_threshold:
-                self._log.info(f"Converged at round {round_num} (score: {initial_score.overall:.2f})")
+                self._log.info(
+                    f"Converged at round {round_num} (score: {initial_score.overall:.2f})"
+                )
                 state.converged = True
                 break
-            
+
             # Generate refined prompt
             prompt = self.generate_prompt(context, initial_score)
-            
+
             # Refine ontology
             with self._start_otel_span(
                 "ontology_mediator.round",
@@ -2125,44 +2215,34 @@ class OntologyMediator:
                 },
             ):
                 refined_ontology = self.refine_ontology(
-                    state.current_ontology,
-                    initial_score,
-                    context
+                    state.current_ontology, initial_score, context
                 )
-                
+
                 # Evaluate refined version
-                refined_score = self.critic.evaluate_ontology(
-                    refined_ontology,
-                    context,
-                    data
-                )
-            
+                refined_score = self.critic.evaluate_ontology(refined_ontology, context, data)
+
             # Update state
-            state.add_round(
-                refined_ontology,
-                refined_score,
-                f"refinement_round_{round_num}"
-            )
+            state.add_round(refined_ontology, refined_score, f"refinement_round_{round_num}")
             self._record_prometheus_round(refined_score.overall, context)
-            
+
             self._log.info(
                 f"Round {round_num}: score={refined_score.overall:.2f} "
                 f"(Δ={refined_score.overall - initial_score.overall:+.2f})"
             )
-            
+
             # Check for degradation
             if refined_score.overall < initial_score.overall - 0.1:
                 self._log.warning("Score degraded significantly, stopping refinement")
                 break
-            
+
             # Update for next iteration
             initial_score = refined_score
-        
+
         # Finalize state
         state.total_time_ms = (time.time() - start_time) * 1000
-        state.metadata['final_score'] = state.critic_scores[-1].overall
-        state.metadata['score_trend'] = state.get_score_trend()
-        state.metadata['improvement'] = (
+        state.metadata["final_score"] = state.critic_scores[-1].overall
+        state.metadata["score_trend"] = state.get_score_trend()
+        state.metadata["improvement"] = (
             state.critic_scores[-1].overall - state.critic_scores[0].overall
         )
         self._record_prometheus_session_summary(state)
@@ -2178,13 +2258,13 @@ class OntologyMediator:
             },
         ):
             pass
-        
+
         self._log.info(
             f"Refinement cycle complete: {state.current_round} rounds, "
             f"final score={state.metadata['final_score']:.2f}, "
             f"improvement={state.metadata['improvement']:+.2f}"
         )
-        
+
         return state
 
     def run_agentic_refinement_cycle(
@@ -2459,34 +2539,31 @@ class OntologyMediator:
         )
 
         return state
-    
-    def check_convergence(
-        self,
-        state: MediatorState
-    ) -> bool:
+
+    def check_convergence(self, state: MediatorState) -> bool:
         """
         Check if refinement has converged.
-        
+
         Convergence is determined by:
         1. Score exceeds threshold
         2. Score has stabilized (no improvement in recent rounds)
         3. Max rounds reached
-        
+
         Args:
             state: Current mediator state
-            
+
         Returns:
             True if converged, False otherwise
         """
         if not state.critic_scores:
             return False
-        
+
         current_score = state.critic_scores[-1].overall
-        
+
         # Check threshold
         if current_score >= self.convergence_threshold:
             return True
-        
+
         # Check stabilization (no improvement in last 3 rounds)
         if len(state.critic_scores) >= 3:
             recent_scores = [s.overall for s in state.critic_scores[-3:]]
@@ -2494,7 +2571,7 @@ class OntologyMediator:
             if abs(improvement) < 0.01:  # Less than 1% improvement
                 self._log.info("Score stabilized, considering as converged")
                 return True
-        
+
         return False
 
     def action_frequency(self) -> dict:
@@ -2549,7 +2626,7 @@ class OntologyMediator:
             >>> entropy = mediator.action_sequence_entropy()
             >>> print(f"Action entropy: {entropy:.2f} bits")
             Action entropy: 1.58 bits  # log2(3) for uniform distribution
-            >>> 
+            >>>
             >>> # With highly repetitive actions (one dominant type)
             >>> # entropy approaches 0.0
         """
@@ -2557,12 +2634,13 @@ class OntologyMediator:
 
         # Extract action names from _action_entries: [(action_name, round_idx), ...]
         action_names = [entry[0] for entry in self._action_entries if entry]
-        
+
         if not action_names:
             return 0.0
 
         # Count frequency of each action type
         from collections import Counter
+
         action_counts = Counter(action_names)
         total = len(action_names)
 
@@ -2659,7 +2737,7 @@ class OntologyMediator:
         Returns:
             Integer count; ``0`` when no feedback has been recorded.
         """
-        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        history = getattr(self, "_feedback_history", None) or getattr(self, "_feedback", None) or []
         return len(history)
 
     def action_count_unique(self) -> int:
@@ -2673,15 +2751,15 @@ class OntologyMediator:
 
     def feedback_age(self, idx: int) -> int:
         """Return how many rounds/refinements ago the feedback at index was recorded.
-        
+
         Args:
             idx: Index into feedback history (0 = oldest, -1 = newest).
-        
+
         Returns:
             Integer age in refinement steps (0 = just added, 1 = one round ago, etc.).
             Returns -1 if index is out of bounds or no feedback exists.
         """
-        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        history = getattr(self, "_feedback_history", None) or getattr(self, "_feedback", None) or []
         if not history or idx < -len(history) or idx >= len(history):
             return -1
         # Convert negative index to positive
@@ -2699,10 +2777,10 @@ class OntologyMediator:
             Integer count of records that were removed.
         """
         removed = 0
-        if hasattr(self, '_feedback_history') and self._feedback_history:
+        if hasattr(self, "_feedback_history") and self._feedback_history:
             removed += len(self._feedback_history)
             self._feedback_history.clear()
-        if hasattr(self, '_feedback') and isinstance(self._feedback, list):
+        if hasattr(self, "_feedback") and isinstance(self._feedback, list):
             removed += len(self._feedback)
             self._feedback.clear()
         return removed
@@ -2717,12 +2795,12 @@ class OntologyMediator:
         Returns:
             Float mean; ``0.0`` when no feedback records.
         """
-        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        history = getattr(self, "_feedback_history", None) or getattr(self, "_feedback", None) or []
         if not history:
             return 0.0
         scores = []
         for rec in history:
-            v = getattr(rec, 'score', None) or getattr(rec, 'final_score', None)
+            v = getattr(rec, "score", None) or getattr(rec, "final_score", None)
             if isinstance(v, (int, float)):
                 scores.append(float(v))
         return sum(scores) / len(scores) if scores else 0.0
@@ -2740,15 +2818,21 @@ class OntologyMediator:
         """
         # Try scored feedback first (populated by subclasses / external callers)
         scored_store = (
-            getattr(self, "_feedback_history", None)
-            or getattr(self, "_feedback", None)
-            or []
+            getattr(self, "_feedback_history", None) or getattr(self, "_feedback", None) or []
         )
         totals: dict = {}
         counts: dict = {}
         for entry in scored_store:
-            score = entry.get("score", 0.0) if isinstance(entry, dict) else getattr(entry, "final_score", 0.0)
-            actions = entry.get("actions", []) if isinstance(entry, dict) else getattr(entry, "action_types", [])
+            score = (
+                entry.get("score", 0.0)
+                if isinstance(entry, dict)
+                else getattr(entry, "final_score", 0.0)
+            )
+            actions = (
+                entry.get("actions", [])
+                if isinstance(entry, dict)
+                else getattr(entry, "action_types", [])
+            )
             for action in actions:
                 totals[action] = totals.get(action, 0.0) + score
                 counts[action] = counts.get(action, 0) + 1
@@ -2799,6 +2883,7 @@ class OntologyMediator:
             Float; 0.0 when no actions recorded.
         """
         import math
+
         counts = [v for v in self._action_counts.values() if v > 0]
         total = sum(counts)
         if total == 0:
@@ -2816,11 +2901,7 @@ class OntologyMediator:
         """
         import math
 
-        history = (
-            getattr(self, "_feedback_history", None)
-            or getattr(self, "_feedback", None)
-            or []
-        )
+        history = getattr(self, "_feedback_history", None) or getattr(self, "_feedback", None) or []
         if len(history) < 2:
             return 0.0
 
@@ -2900,6 +2981,7 @@ class OntologyMediator:
             Float diversity; 0.0 when no actions or only one unique action.
         """
         import math
+
         total = sum(self._action_counts.values())
         if total == 0 or len(self._action_counts) <= 1:
             return 0.0
@@ -2907,9 +2989,7 @@ class OntologyMediator:
         if max_entropy == 0:
             return 0.0
         entropy = -sum(
-            (cnt / total) * math.log(cnt / total)
-            for cnt in self._action_counts.values()
-            if cnt > 0
+            (cnt / total) * math.log(cnt / total) for cnt in self._action_counts.values() if cnt > 0
         )
         return entropy / max_entropy
 
@@ -3051,6 +3131,7 @@ class OntologyMediator:
             Float in [0.0, 1.0]; 0.0 when no actions or only one type.
         """
         import math
+
         total = sum(self._action_counts.values())
         n_types = len(self._action_counts)
         if total == 0 or n_types <= 1:
@@ -3095,7 +3176,7 @@ class OntologyMediator:
         if mean == 0:
             return 0.0
         var = sum((v - mean) ** 2 for v in vals) / n
-        cv = (var ** 0.5) / mean
+        cv = (var**0.5) / mean
         return float(max(0.0, min(1.0, 1.0 - cv)))
 
     def action_peak_fraction(self) -> float:
@@ -3196,16 +3277,15 @@ class OntologyMediator:
         """
         if len(self._history) < window + 1:
             return False
-        
+
         recent_deltas = []
         for i in range(len(self._history) - window, len(self._history)):
             if i > 0:
                 delta = abs(
-                    self._history[i].get("score", 0.0) 
-                    - self._history[i-1].get("score", 0.0)
+                    self._history[i].get("score", 0.0) - self._history[i - 1].get("score", 0.0)
                 )
                 recent_deltas.append(delta)
-        
+
         if not recent_deltas:
             return False
         return all(d < threshold for d in recent_deltas)
@@ -3221,10 +3301,10 @@ class OntologyMediator:
         total_actions = self.total_refinements()
         if total_actions == 0 or len(self._history) < 2:
             return 0.0
-        
+
         first_score = self._history[0].get("score", 0.0)
         last_score = self._history[-1].get("score", 0.0)
-        
+
         improvement = last_score - first_score
         return improvement / total_actions if total_actions > 0 else 0.0
 
@@ -3236,15 +3316,12 @@ class OntologyMediator:
         """
         if len(self._history) < 2:
             return 0.0
-        
+
         deltas = []
         for i in range(1, len(self._history)):
-            delta = abs(
-                self._history[i].get("score", 0.0) 
-                - self._history[i-1].get("score", 0.0)
-            )
+            delta = abs(self._history[i].get("score", 0.0) - self._history[i - 1].get("score", 0.0))
             deltas.append(delta)
-        
+
         return sum(deltas) / len(deltas) if deltas else 0.0
 
     def action_impact(self, action_name: str) -> float:
@@ -3271,19 +3348,18 @@ class OntologyMediator:
         """
         if len(self._history) < 2:
             return -1
-        
-        max_improvement = -float('inf')
+
+        max_improvement = -float("inf")
         best_round = -1
-        
+
         for i in range(1, len(self._history)):
-            improvement = (
-                self._history[i].get("score", 0.0) 
-                - self._history[i-1].get("score", 0.0)
+            improvement = self._history[i].get("score", 0.0) - self._history[i - 1].get(
+                "score", 0.0
             )
             if improvement > max_improvement:
                 max_improvement = improvement
                 best_round = i
-        
+
         return best_round if max_improvement > 0 else -1
 
     def refinement_stagnation_rounds(self, threshold: float = 0.001) -> int:
@@ -3298,18 +3374,15 @@ class OntologyMediator:
         _float_tolerance = 1e-12  # guard against IEEE 754 rounding errors
         if len(self._history) < 2:
             return 0
-        
+
         stagnation_count = 0
         for i in range(len(self._history) - 1, 0, -1):
-            delta = abs(
-                self._history[i].get("score", 0.0) 
-                - self._history[i-1].get("score", 0.0)
-            )
+            delta = abs(self._history[i].get("score", 0.0) - self._history[i - 1].get("score", 0.0))
             if delta <= threshold + _float_tolerance:
                 stagnation_count += 1
             else:
                 break
-        
+
         return stagnation_count
 
     def score_volatility(self) -> float:
@@ -3320,11 +3393,11 @@ class OntologyMediator:
         """
         if len(self._history) < 2:
             return 0.0
-        
+
         scores = [entry.get("score", 0.0) for entry in self._history]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return variance**0.5
 
     def refinement_trajectory(self) -> str:
         """Get description of overall refinement trajectory.
@@ -3333,23 +3406,23 @@ class OntologyMediator:
             One of: 'improving', 'degrading', 'stable', 'volatile', 'unknown'
         """
         if len(self._history) < 2:
-            return 'unknown'
-        
+            return "unknown"
+
         first = self._history[0].get("score", 0.0)
         last = self._history[-1].get("score", 0.0)
         volatility = self.score_volatility()
-        
+
         delta = last - first
-        
+
         # Classify based on volatility and delta
         if volatility > 0.2:  # High volatility
-            return 'volatile'
+            return "volatile"
         elif delta > 0.05:  # Significant improvement
-            return 'improving'
+            return "improving"
         elif delta < -0.05:  # Significant degradation
-            return 'degrading'
+            return "degrading"
         else:  # Small changes
-            return 'stable'
+            return "stable"
 
     def retry_last_round(
         self,
@@ -3373,6 +3446,7 @@ class OntologyMediator:
             A newly refined ontology dict.
         """
         import copy as _copy
+
         if self._undo_stack:
             # Roll back to the snapshot before the last refinement
             base = _copy.deepcopy(self._undo_stack[-1])
@@ -3383,6 +3457,6 @@ class OntologyMediator:
 
 # Export public API
 __all__ = [
-    'OntologyMediator',
-    'MediatorState',
+    "OntologyMediator",
+    "MediatorState",
 ]

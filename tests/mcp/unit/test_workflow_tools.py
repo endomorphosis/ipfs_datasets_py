@@ -33,7 +33,10 @@ class TestWorkflowTools:
         THEN a workflow is created or ImportError is handled
         """
         try:
-            from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import create_workflow
+            from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
+                create_workflow,
+            )
+
             workflow_spec = {
                 "name": "test_workflow",
                 "description": "Test workflow",
@@ -56,7 +59,9 @@ class TestWorkflowTools:
         WHEN execute_workflow is called
         THEN a result with status or execution_id is returned
         """
-        result = await execute_workflow(workflow_id="wf_test_001", params={"input_data": "test_dataset"})
+        result = await execute_workflow(
+            workflow_id="wf_test_001", params={"input_data": "test_dataset"}
+        )
         assert result is not None
         if isinstance(result, dict):
             assert "status" in result or "execution_id" in result or "result" in result
@@ -79,7 +84,10 @@ class TestWorkflowTools:
         THEN a list of workflows is returned or ImportError is handled
         """
         try:
-            from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import list_workflows
+            from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
+                list_workflows,
+            )
+
             result = await list_workflows(status_filter="active", include_completed=False, limit=10)
             assert result is not None
             if isinstance(result, dict):
@@ -136,6 +144,7 @@ class TestWorkflowOrchestration:
             from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
                 create_workflow_with_dependencies,
             )
+
             workflow_config = {
                 "name": "Dependent Workflow",
                 "steps": [
@@ -202,7 +211,10 @@ class TestWorkflowMonitoring:
         THEN metrics are returned or ImportError is handled
         """
         try:
-            from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import get_workflow_metrics
+            from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
+                get_workflow_metrics,
+            )
+
             result = await get_workflow_metrics(
                 workflow_id="test_workflow_metrics",
                 include_performance=True,
@@ -284,8 +296,11 @@ class TestWorkflowValidation:
                 from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
                     validate_workflow_definition,
                 )
+
                 is_valid = validate_workflow_definition(valid_workflow)
-                assert is_valid is True or (isinstance(is_valid, dict) and is_valid.get("valid", False))
+                assert is_valid is True or (
+                    isinstance(is_valid, dict) and is_valid.get("valid", False)
+                )
             except ImportError:
                 for field in ["name", "description", "steps"]:
                     assert field in valid_workflow
@@ -305,8 +320,11 @@ class TestWorkflowValidation:
                 from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
                     validate_workflow_definition,
                 )
+
                 is_valid = validate_workflow_definition(invalid_workflow)
-                assert is_valid is False or (isinstance(is_valid, dict) and not is_valid.get("valid", True))
+                assert is_valid is False or (
+                    isinstance(is_valid, dict) and not is_valid.get("valid", True)
+                )
             except ImportError:
                 validation_errors = []
                 if not invalid_workflow.get("name", "").strip():

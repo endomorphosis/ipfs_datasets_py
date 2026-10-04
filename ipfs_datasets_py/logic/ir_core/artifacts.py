@@ -75,9 +75,7 @@ class ArtifactIntegrityError(ArtifactManifestValidationError):
 
     def __init__(self, report: "IntegrityReport") -> None:
         self.report = report
-        summary = "; ".join(
-            f"{issue.kind.value}: {issue.message}" for issue in report.issues
-        )
+        summary = "; ".join(f"{issue.kind.value}: {issue.message}" for issue in report.issues)
         super().__init__(summary or "artifact integrity verification failed")
 
 
@@ -110,9 +108,7 @@ class IntegrityIssueKind(str, Enum):
 
 def _require_id(label: str, value: str) -> None:
     if not isinstance(value, str) or not _ID_RE.fullmatch(value):
-        raise ArtifactManifestValidationError(
-            f"{label} must be a stable non-empty identifier"
-        )
+        raise ArtifactManifestValidationError(f"{label} must be a stable non-empty identifier")
 
 
 def _require_text(label: str, value: str) -> None:
@@ -149,9 +145,7 @@ def _sorted_unique_strings(
     result = _string_tuple(value, label=label)
     if len(set(result)) != len(result):
         duplicate = next(item for item in result if result.count(item) > 1)
-        raise ArtifactManifestValidationError(
-            f"{label} contains duplicate value {duplicate!r}"
-        )
+        raise ArtifactManifestValidationError(f"{label} contains duplicate value {duplicate!r}")
     if validate_ids:
         for item in result:
             _require_id(label, item)
@@ -164,9 +158,7 @@ def _enum_value(enum_type: type[Enum], value: Any, label: str) -> Any:
     try:
         return enum_type(value)
     except (TypeError, ValueError) as exc:
-        raise ArtifactManifestValidationError(
-            f"{label} has unsupported value {value!r}"
-        ) from exc
+        raise ArtifactManifestValidationError(f"{label} has unsupported value {value!r}") from exc
 
 
 def _relative_artifact_path(value: str, *, allow_empty: bool = False) -> str:
@@ -177,9 +169,7 @@ def _relative_artifact_path(value: str, *, allow_empty: bool = False) -> str:
             return ""
         raise ArtifactManifestValidationError("Artifact.path must not be empty")
     if "\\" in value or "\x00" in value:
-        raise ArtifactManifestValidationError(
-            "Artifact.path must be a root-relative POSIX path"
-        )
+        raise ArtifactManifestValidationError("Artifact.path must be a root-relative POSIX path")
     path = PurePosixPath(value)
     if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
         raise ArtifactManifestValidationError(
@@ -187,9 +177,7 @@ def _relative_artifact_path(value: str, *, allow_empty: bool = False) -> str:
         )
     normalized = path.as_posix()
     if normalized != value:
-        raise ArtifactManifestValidationError(
-            "Artifact.path must be normalized POSIX text"
-        )
+        raise ArtifactManifestValidationError("Artifact.path must be normalized POSIX text")
     return normalized
 
 
@@ -275,27 +263,19 @@ class Artifact:
     def content_identity(self) -> str:
         """Return the declared CID or the fixed-profile CID for the digest."""
 
-        return self.content_cid or cid_v1_from_digest(
-            bytes.fromhex(self.content_sha256)
-        )
+        return self.content_cid or cid_v1_from_digest(bytes.fromhex(self.content_sha256))
 
     def validate(self) -> None:
         _require_id("Artifact.artifact_id", self.artifact_id)
         if not isinstance(self.role, ArtifactRole):
-            raise ArtifactManifestValidationError(
-                "Artifact.role must be an ArtifactRole member"
-            )
+            raise ArtifactManifestValidationError("Artifact.role must be an ArtifactRole member")
         _require_sha256("Artifact.content_sha256", self.content_sha256)
         if isinstance(self.size, bool) or not isinstance(self.size, int) or self.size < 0:
-            raise ArtifactManifestValidationError(
-                "Artifact.size must be a non-negative integer"
-            )
+            raise ArtifactManifestValidationError("Artifact.size must be a non-negative integer")
         if self.path:
             _relative_artifact_path(self.path)
         elif self.role is not ArtifactRole.PARENT:
-            raise ArtifactManifestValidationError(
-                "Only an external parent artifact may omit path"
-            )
+            raise ArtifactManifestValidationError("Only an external parent artifact may omit path")
         if self.media_type:
             _require_text("Artifact.media_type", self.media_type)
         for label, value in (
@@ -306,13 +286,9 @@ class Artifact:
             if value:
                 _require_id(label, value)
         if self.schema_version and not self.schema_id:
-            raise ArtifactManifestValidationError(
-                "Artifact.schema_version requires schema_id"
-            )
+            raise ArtifactManifestValidationError("Artifact.schema_version requires schema_id")
         if self.config_id and not self.producer_id:
-            raise ArtifactManifestValidationError(
-                "Artifact.config_id requires producer_id"
-            )
+            raise ArtifactManifestValidationError("Artifact.config_id requires producer_id")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -373,9 +349,7 @@ class ManifestDecision:
 
     def __post_init__(self) -> None:
         kind = _enum_value(DecisionKind, self.kind, "ManifestDecision.kind")
-        subjects = _sorted_unique_strings(
-            self.subject_ids, label="ManifestDecision.subject_ids"
-        )
+        subjects = _sorted_unique_strings(self.subject_ids, label="ManifestDecision.subject_ids")
         evidence = _sorted_unique_strings(
             self.evidence_ref_ids,
             label="ManifestDecision.evidence_ref_ids",
@@ -395,9 +369,7 @@ class ManifestDecision:
         _require_id("ManifestDecision.decision_id", self.decision_id)
         _require_text("ManifestDecision.decision", self.decision)
         if not self.subject_ids:
-            raise ArtifactManifestValidationError(
-                "ManifestDecision.subject_ids must not be empty"
-            )
+            raise ArtifactManifestValidationError("ManifestDecision.subject_ids must not be empty")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -414,9 +386,7 @@ class ManifestDecision:
     def from_dict(cls, data: Mapping[str, Any]) -> "ManifestDecision":
         return cls(
             decision_id=str(data.get("decision_id") or ""),
-            kind=_enum_value(
-                DecisionKind, data.get("kind"), "ManifestDecision.kind"
-            ),
+            kind=_enum_value(DecisionKind, data.get("kind"), "ManifestDecision.kind"),
             decision=str(data.get("decision") or ""),
             subject_ids=_string_tuple(
                 data.get("subject_ids"), label="ManifestDecision.subject_ids"
@@ -477,12 +447,8 @@ class RunObservations:
             started_at=str(data.get("started_at") or ""),
             finished_at=str(data.get("finished_at") or ""),
             duration_ms=data.get("duration_ms"),
-            environment=_mapping(
-                data.get("environment"), "RunObservations.environment"
-            ),
-            resource_usage=_mapping(
-                data.get("resource_usage"), "RunObservations.resource_usage"
-            ),
+            environment=_mapping(data.get("environment"), "RunObservations.environment"),
+            resource_usage=_mapping(data.get("resource_usage"), "RunObservations.resource_usage"),
             metadata=_mapping(data.get("metadata"), "RunObservations.metadata"),
         )
 
@@ -558,9 +524,7 @@ class ArtifactManifest:
 
     def __post_init__(self) -> None:
         artifacts = tuple(
-            item
-            if isinstance(item, Artifact)
-            else Artifact.from_dict(_mapping(item, "artifact"))
+            item if isinstance(item, Artifact) else Artifact.from_dict(_mapping(item, "artifact"))
             for item in self.artifacts
         )
         producers = tuple(
@@ -700,9 +664,7 @@ class ArtifactManifest:
             "solver_versions",
         ):
             _validate_string_map(name, getattr(self, name))
-        _validate_digest_map(
-            "prompt_template_digests", self.prompt_template_digests
-        )
+        _validate_digest_map("prompt_template_digests", self.prompt_template_digests)
 
     def _validate_reused_bindings(self) -> None:
         try:
@@ -740,14 +702,10 @@ class ArtifactManifest:
                 )
             ],
             "configs": [
-                item.to_dict()
-                for item in sorted(self.configs, key=lambda item: item.config_id)
+                item.to_dict() for item in sorted(self.configs, key=lambda item: item.config_id)
             ],
             "decisions": [
-                item.to_dict()
-                for item in sorted(
-                    self.decisions, key=lambda item: item.decision_id
-                )
+                item.to_dict() for item in sorted(self.decisions, key=lambda item: item.decision_id)
             ],
             "deterministic_metadata": thaw_json(self.deterministic_metadata),
             "diagnostic_ids": list(self.diagnostic_ids),
@@ -755,14 +713,9 @@ class ArtifactManifest:
             "model_versions": thaw_json(self.model_versions),
             "ontology_versions": thaw_json(self.ontology_versions),
             "producers": [
-                item.to_dict()
-                for item in sorted(
-                    self.producers, key=lambda item: item.producer_id
-                )
+                item.to_dict() for item in sorted(self.producers, key=lambda item: item.producer_id)
             ],
-            "prompt_template_digests": thaw_json(
-                self.prompt_template_digests
-            ),
+            "prompt_template_digests": thaw_json(self.prompt_template_digests),
             "repository_commit": self.repository_commit,
             "schema_version": self.schema_version,
             "schema_versions": thaw_json(self.schema_versions),
@@ -812,15 +765,12 @@ class ArtifactManifest:
         producer_ids = {item.producer_id for item in self.producers}
         config_ids = {item.config_id for item in self.configs}
         for artifact in self.artifacts:
-            unknown_parents = sorted(
-                set(artifact.parent_artifact_ids) - artifact_ids
-            )
+            unknown_parents = sorted(set(artifact.parent_artifact_ids) - artifact_ids)
             if unknown_parents:
                 issues.append(
                     IntegrityIssue(
                         IntegrityIssueKind.UNBOUND,
-                        f"artifact {artifact.artifact_id!r} has unknown parents "
-                        f"{unknown_parents}",
+                        f"artifact {artifact.artifact_id!r} has unknown parents {unknown_parents}",
                         artifact_id=artifact.artifact_id,
                         path=artifact.path,
                     )
@@ -891,9 +841,7 @@ class ArtifactManifest:
             return _integrity_report(issues, checked)
 
         bound_paths: set[str] = set()
-        for artifact in sorted(
-            self.artifacts, key=lambda item: (item.path, item.artifact_id)
-        ):
+        for artifact in sorted(self.artifacts, key=lambda item: (item.path, item.artifact_id)):
             if not artifact.path:
                 continue
             bound_paths.add(artifact.path)
@@ -956,10 +904,7 @@ class ArtifactManifest:
                 )
 
         if reject_unbound:
-            ignored = {
-                _relative_artifact_path(item)
-                for item in ignore_paths
-            }
+            ignored = {_relative_artifact_path(item) for item in ignore_paths}
             for path in sorted(item for item in resolved_root.rglob("*") if item.is_file()):
                 resolved = path.resolve()
                 if not resolved.is_relative_to(resolved_root):
@@ -1009,19 +954,11 @@ class ArtifactManifest:
                 ConfigBinding.from_dict(_mapping(item, "config"))
                 for item in _sequence(data.get("configs"), "configs")
             ),
-            schema_versions=_mapping(
-                data.get("schema_versions"), "schema_versions"
-            ),
-            ontology_versions=_mapping(
-                data.get("ontology_versions"), "ontology_versions"
-            ),
+            schema_versions=_mapping(data.get("schema_versions"), "schema_versions"),
+            ontology_versions=_mapping(data.get("ontology_versions"), "ontology_versions"),
             tool_versions=_mapping(data.get("tool_versions"), "tool_versions"),
-            model_versions=_mapping(
-                data.get("model_versions"), "model_versions"
-            ),
-            solver_versions=_mapping(
-                data.get("solver_versions"), "solver_versions"
-            ),
+            model_versions=_mapping(data.get("model_versions"), "model_versions"),
+            solver_versions=_mapping(data.get("solver_versions"), "solver_versions"),
             prompt_template_digests=_mapping(
                 data.get("prompt_template_digests"),
                 "prompt_template_digests",
@@ -1051,17 +988,13 @@ class ArtifactManifest:
             try:
                 value = bytes(value).decode("utf-8")
             except UnicodeDecodeError as exc:
-                raise ArtifactManifestValidationError(
-                    "manifest JSON must be UTF-8"
-                ) from exc
+                raise ArtifactManifestValidationError("manifest JSON must be UTF-8") from exc
         if not isinstance(value, str):
             raise TypeError("manifest JSON must be str or bytes")
         try:
             data = json.loads(value)
         except (TypeError, ValueError) as exc:
-            raise ArtifactManifestValidationError(
-                f"invalid manifest JSON: {exc}"
-            ) from exc
+            raise ArtifactManifestValidationError(f"invalid manifest JSON: {exc}") from exc
         return cls.from_dict(_mapping(data, "manifest"))
 
 
@@ -1081,13 +1014,9 @@ def artifact_from_path(
         file_path = root_path / file_path
     resolved = file_path.resolve(strict=True)
     if not resolved.is_relative_to(root_path):
-        raise ArtifactManifestValidationError(
-            f"artifact path escapes root: {path}"
-        )
+        raise ArtifactManifestValidationError(f"artifact path escapes root: {path}")
     if not resolved.is_file():
-        raise ArtifactManifestValidationError(
-            f"artifact path is not a regular file: {path}"
-        )
+        raise ArtifactManifestValidationError(f"artifact path is not a regular file: {path}")
     size, digest = _hash_file(resolved)
     return Artifact(
         artifact_id=artifact_id,

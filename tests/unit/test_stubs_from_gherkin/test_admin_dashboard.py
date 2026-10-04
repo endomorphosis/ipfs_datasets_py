@@ -4,11 +4,13 @@ Test stubs for admin_dashboard module.
 Feature: Admin Dashboard
   Administrative interface for system management
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def activity_logging_is_enabled():
@@ -65,6 +67,7 @@ def the_dashboard_is_accessed():
 
 
 # Test scenarios
+
 
 def test_display_system_status():
     """
@@ -177,6 +180,7 @@ def test_schedule_maintenance_tasks():
 
 
 # Step definitions
+
 
 # Given steps
 @given("activity logging is enabled")
@@ -361,4 +365,3 @@ def user_accounts_can_be_created_or_modified():
     """Step: Then user accounts can be created or modified"""
     # TODO: Implement step
     pass
-

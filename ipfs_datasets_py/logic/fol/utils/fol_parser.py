@@ -146,7 +146,7 @@ def build_fol_formula(
 def parse_fol(text: str) -> Dict[str, Any]:
     """
     Parse FOL from text with AST caching (PHASE 7 optimized).
-    
+
     Uses LRU cache for 2-3x speedup on repeated conversions.
     Cache size of 1000 covers most typical workloads.
     """

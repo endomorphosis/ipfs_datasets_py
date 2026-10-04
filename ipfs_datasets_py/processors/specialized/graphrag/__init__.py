@@ -15,7 +15,7 @@ Main Classes:
 
 Example:
     from ipfs_datasets_py.processors.specialized.graphrag import UnifiedGraphRAGProcessor
-    
+
     processor = UnifiedGraphRAGProcessor()
     result = await processor.process("https://example.com")
 """
@@ -25,10 +25,12 @@ from .unified_graphrag import UnifiedGraphRAGProcessor, GraphRAGConfiguration
 # Optional imports with fallback
 try:
     from .integration import GraphRAGIntegration, HybridVectorGraphSearch, GraphRAGFactory
+
     _integration_available = True
 except ImportError as e:
     # Create stub classes for when dependencies are missing
     import warnings
+
     warnings.warn(f"GraphRAG integration features unavailable: {e}", ImportWarning)
     GraphRAGIntegration = None
     HybridVectorGraphSearch = None
@@ -37,9 +39,11 @@ except ImportError as e:
 
 try:
     from .website_system import WebsiteGraphRAGSystem, SearchResult
+
     _website_available = True
 except ImportError as e:
     import warnings
+
     warnings.warn(f"GraphRAG website system unavailable: {e}", ImportWarning)
     WebsiteGraphRAGSystem = None
     SearchResult = None
@@ -47,22 +51,24 @@ except ImportError as e:
 
 try:
     from .adapter import GraphRAGAdapter, create_graphrag_adapter_from_dataset
+
     _adapter_available = True
 except ImportError as e:
     import warnings
+
     warnings.warn(f"GraphRAG adapter unavailable: {e}", ImportWarning)
     GraphRAGAdapter = None
     create_graphrag_adapter_from_dataset = None
     _adapter_available = False
 
 __all__ = [
-    'UnifiedGraphRAGProcessor',
-    'GraphRAGConfiguration',
-    'GraphRAGIntegration',
-    'HybridVectorGraphSearch',
-    'GraphRAGFactory',
-    'WebsiteGraphRAGSystem',
-    'SearchResult',
-    'GraphRAGAdapter',
-    'create_graphrag_adapter_from_dataset',
+    "UnifiedGraphRAGProcessor",
+    "GraphRAGConfiguration",
+    "GraphRAGIntegration",
+    "HybridVectorGraphSearch",
+    "GraphRAGFactory",
+    "WebsiteGraphRAGSystem",
+    "SearchResult",
+    "GraphRAGAdapter",
+    "create_graphrag_adapter_from_dataset",
 ]

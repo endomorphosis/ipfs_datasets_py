@@ -43,20 +43,12 @@ def _positive_int(value: str) -> int:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _default_hf_snapshot(dataset_id: str, revision: str) -> Path:
     hf_home = str(os.environ.get("HF_HOME") or "").strip()
-    cache = (
-        Path(hf_home).expanduser()
-        if hf_home
-        else Path("~/.cache/huggingface").expanduser()
-    )
+    cache = Path(hf_home).expanduser() if hf_home else Path("~/.cache/huggingface").expanduser()
     repo_slug = "datasets--" + dataset_id.replace("/", "--")
     return cache / "hub" / repo_slug / "snapshots" / revision
 
@@ -109,10 +101,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     output_dir = args.output_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-corpus"
-        / args.revision
-        / "full"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-corpus" / args.revision / "full"
     )
     if args.verify_only:
         index = SkillCenterCorpusIndex.load(output_dir)
@@ -136,9 +125,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             )
         if not source_dir.is_dir():
-            raise FileNotFoundError(
-                f"pinned snapshot is unavailable: {source_dir}; use --download"
-            )
+            raise FileNotFoundError(f"pinned snapshot is unavailable: {source_dir}; use --download")
         sqlite_files = sorted(source_dir.glob("*.sqlite"), key=lambda path: path.name)
         if len(sqlite_files) != args.expected_bundles:
             raise ValueError(
@@ -171,9 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or summary.source_records != args.expected_records
         or summary.unique_entry_cids != args.expected_records
     ):
-        raise ValueError(
-            "verified corpus does not have complete one-to-one CID coverage"
-        )
+        raise ValueError("verified corpus does not have complete one-to-one CID coverage")
     print(json.dumps({"skillcenter_corpus": summary.to_dict()}, indent=2, sort_keys=True))
     return 0
 

@@ -52,7 +52,7 @@ warnings.warn(
     "ipfs_datasets_py.data_transformation.car_conversion is deprecated and will be removed in version 2.0.0. "
     "Please update your imports to use ipfs_datasets_py.data_transformation.serialization.car_conversion instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 

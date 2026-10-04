@@ -63,8 +63,7 @@ def _canonical_policy(**overrides: object) -> LeanstralRuleGapReauditPolicy:
 def _candidate() -> dict[str, object]:
     return {
         "candidate": (
-            "frame(entity:Entity, relation:Relation) "
-            "and ontology(entity:Entity, class:Class)"
+            "frame(entity:Entity, relation:Relation) and ontology(entity:Entity, class:Class)"
         ),
         "compiler_surface": "modal.frame_logic",
         "confidence": 0.8,
@@ -208,12 +207,8 @@ def _baseline_report() -> dict[str, object]:
 
 def test_canonical_nine_reports_deduplicate_to_one_conflicted_identity() -> None:
     assert len(HISTORICAL_REPORTS) == 9
-    sources = load_historical_rule_gap_reports(
-        HISTORICAL_REPORTS, policy=_canonical_policy()
-    )
-    identities, provenance = deduplicate_historical_rule_gaps(
-        sources, policy=_canonical_policy()
-    )
+    sources = load_historical_rule_gap_reports(HISTORICAL_REPORTS, policy=_canonical_policy())
+    identities, provenance = deduplicate_historical_rule_gaps(sources, policy=_canonical_policy())
 
     assert len(identities) == 1
     identity = identities[0]
@@ -273,9 +268,7 @@ def test_fresh_sanitized_current_trusted_reconstructed_candidate_is_bounded() ->
     assert report["selected_guidance"]["active"] is True
     assert report["selected_guidance"]["influence"] == 0.07
     assert report["selected_guidance"]["candidate_sha256"].startswith("sha256:")
-    assert report["selected_guidance"]["proof_receipt_ids"] == [
-        "reconstruction-current-1"
-    ]
+    assert report["selected_guidance"]["proof_receipt_ids"] == ["reconstruction-current-1"]
     assert report["baseline_guidance"]["influence"] == 0.0
     assert str(_candidate()["candidate"]) not in encoded
     assert '"candidate":' not in encoded
@@ -303,16 +296,12 @@ def test_fresh_sanitized_current_trusted_reconstructed_candidate_is_bounded() ->
         (
             lambda evidence: evidence["hammer_verification"]["candidate_results"][0][
                 "hammer_report"
-            ]["reconstruction_receipts"][0].update(
-                native_reconstruction_verified=False
-            ),
+            ]["reconstruction_receipts"][0].update(native_reconstruction_verified=False),
             "native_reconstruction_required",
         ),
     ],
 )
-def test_any_current_trust_failure_rejects_to_zero_guidance(
-    mutate, reason: str
-) -> None:
+def test_any_current_trust_failure_rejects_to_zero_guidance(mutate, reason: str) -> None:
     baseline = _baseline_report()
     evidence = _fresh_evidence(str(baseline["target_gap_identity_id"]))
     mutate(evidence)

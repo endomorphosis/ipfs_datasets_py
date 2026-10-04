@@ -17,6 +17,7 @@ from ipfs_datasets_py.mcp_server.exceptions import (
 
 logger = logging.getLogger(__name__)
 
+
 class ClaudeMCPTool(ABC):
     """
     Base class for Claude MCP (Model Context Protocol) Tools.
@@ -53,12 +54,13 @@ class ClaudeMCPTool(ABC):
         ...         super().__init__()
         ...         self.name = "my_tool"
         ...         self.description = "Does something useful"
-        ...     
+        ...
         ...     async def execute(self, parameters):
         ...         return {"result": "success"}
         >>> tool = MyTool()
         >>> result = await tool.run(param1="value1")
     """
+
     def __init__(self):
         """
         Attributes initialized:
@@ -81,7 +83,7 @@ class ClaudeMCPTool(ABC):
         self.created_at = datetime.now(tz=timezone.utc)
         self.last_used = None
         self.usage_count = 0
-    
+
     @abstractmethod
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the tool with the provided parameters and return the result.
@@ -95,7 +97,7 @@ class ClaudeMCPTool(ABC):
                 execution. The structure and required keys depend on the specific tool implementation.
                 Common parameter types may include:
                 - Configuration settings
-                - Input data or file paths  
+                - Input data or file paths
                 - Processing options and flags
                 - Authentication credentials (if required)
 
@@ -125,7 +127,7 @@ class ClaudeMCPTool(ABC):
             True
         """
         pass
-    
+
     def get_schema(self) -> Dict[str, Any]:
         """Get the complete tool schema with all metadata.
 
@@ -157,9 +159,9 @@ class ClaudeMCPTool(ABC):
             "input_schema": self.input_schema,
             "category": self.category,
             "tags": self.tags,
-            "version": self.version
+            "version": self.version,
         }
-    
+
     async def run(self, **kwargs) -> Dict[str, Any]:
         """Execute the tool with provided keyword arguments and update usage statistics.
 
@@ -247,6 +249,7 @@ class ToolRegistry:
         registry.register_tool(my_tool)
         result = await registry.execute_tool("my_tool", {"param": "value"})
     """
+
     def __init__(self):
         """Initialize the tool registry.
 
@@ -263,7 +266,7 @@ class ToolRegistry:
         self._tags: Dict[str, List[str]] = {}
         self.total_executions = 0
         logger.info("Tool registry initialized")
-    
+
     def register_tool(self, tool: Union[ClaudeMCPTool, BaseMCPTool]) -> None:
         """Register a tool with the registry.
 
@@ -302,27 +305,27 @@ class ToolRegistry:
         """
         if not isinstance(tool, (ClaudeMCPTool, BaseMCPTool)):
             raise ValueError("Tool must inherit from ClaudeMCPTool or BaseMCPTool")
-        
+
         if tool.name in self._tools:
             logger.warning(f"Tool '{tool.name}' already registered, overwriting")
-        
+
         self._tools[tool.name] = tool
-        
+
         # Update categories
         if tool.category not in self._categories:
             self._categories[tool.category] = []
         if tool.name not in self._categories[tool.category]:
             self._categories[tool.category].append(tool.name)
-        
+
         # Update tags
         for tag in tool.tags:
             if tag not in self._tags:
                 self._tags[tag] = []
             if tool.name not in self._tags[tag]:
                 self._tags[tag].append(tool.name)
-        
+
         logger.info(f"Registered tool: {tool.name} (category: {tool.category})")
-    
+
     def unregister_tool(self, tool_name: str) -> bool:
         """Unregister a tool from the registry and clean up all associated references.
 
@@ -357,27 +360,27 @@ class ToolRegistry:
         """
         if tool_name not in self._tools:
             return False
-        
+
         tool = self._tools[tool_name]
-        
+
         # Remove from categories
         if tool.category in self._categories:
             if tool_name in self._categories[tool.category]:
                 self._categories[tool.category].remove(tool_name)
             if not self._categories[tool.category]:
                 del self._categories[tool.category]
-        
+
         # Remove from tags
         for tag in tool.tags:
             if tag in self._tags and tool_name in self._tags[tag]:
                 self._tags[tag].remove(tool_name)
                 if not self._tags[tag]:
                     del self._tags[tag]
-        
+
         del self._tools[tool_name]
         logger.info(f"Unregistered tool: {tool_name}")
         return True
-    
+
     def get_tool(self, tool_name: str) -> Optional[ClaudeMCPTool]:
         """Retrieve a tool instance by its unique name identifier.
 
@@ -410,47 +413,47 @@ class ToolRegistry:
             value appropriately in your code.
         """
         return self._tools.get(tool_name)
-    
+
     def has_tool(self, tool_name: str) -> bool:
         """Check if a tool with the given name is registered in the registry.
-        
+
         This method performs a quick membership test to determine whether a tool
         with the specified name exists in the registry. It's useful for validation
         before attempting tool retrieval or execution operations.
-        
+
         Args:
             tool_name (str): The unique name/identifier of the tool to check.
                     Case-sensitive and must match exactly with the registered name.
-        
+
         Returns:
             bool: True if the tool is registered, False otherwise.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(my_tool)
             >>> if registry.has_tool("my_tool"):
             ...     tool = registry.get_tool("my_tool")
             ...     result = await tool.execute(params)
-        
+
         Note:
             This is a fast O(1) lookup operation that checks tool name membership
             in the internal tools dictionary.
         """
         return tool_name in self._tools
-    
+
     def get_all_tools(self) -> List[ClaudeMCPTool]:
         """Retrieve a complete list of all tools currently registered in the registry.
-        
+
         This method returns all tool instances that have been registered, regardless
         of their category, tags, or other metadata. The tools are returned as a list
         in no guaranteed order.
-        
+
         Returns:
             List[ClaudeMCPTool]: A list containing all registered tool instances.
                         Returns an empty list if no tools are registered. The list
                         is a snapshot of current registrations and modifications to
                         it won't affect the registry.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(tool1)
@@ -460,7 +463,7 @@ class ToolRegistry:
             Total tools: 2
             >>> for tool in all_tools:
             ...     print(f"- {tool.name}")
-        
+
         Note:
             - This returns the actual tool instances, not just their names or schemas
             - For large registries, consider using get_tools_by_category() or
@@ -468,22 +471,22 @@ class ToolRegistry:
             - The returned list is a new instance; modifying it won't affect the registry
         """
         return list(self._tools.values())
-    
+
     def list_tools(self) -> List[Dict[str, Any]]:
         """List all registered tools with their complete MCP schema definitions.
-        
+
         This method provides a comprehensive overview of all registered tools by
         returning their full MCP schema definitions. Each schema includes the tool's
         name, description, parameters, and any other metadata defined in the tool
         specification. This is particularly useful for MCP protocol communication
         and tool discovery interfaces.
-        
+
         Returns:
             List[Dict[str, Any]]: A list of dictionaries, where each dictionary
                         contains the complete MCP schema for a registered tool.
                         Returns an empty list if no tools are registered. Schemas
                         follow the MCP protocol specification format.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(my_tool)
@@ -492,7 +495,7 @@ class ToolRegistry:
             ...     print(f"Tool: {schema['name']}")
             ...     print(f"Description: {schema['description']}")
             ...     print(f"Parameters: {schema.get('inputSchema', {})}")
-        
+
         Note:
             - Each tool's get_schema() method is called to generate the schema
             - Schemas are regenerated on each call (not cached)
@@ -500,25 +503,25 @@ class ToolRegistry:
             - Suitable for JSON serialization and transmission over MCP protocol
         """
         return [tool.get_schema() for tool in self._tools.values()]
-    
+
     def get_tools_by_category(self, category: str) -> List[ClaudeMCPTool]:
         """Retrieve all tools that belong to a specific category.
-        
+
         This method filters the registered tools by category, returning only those
         tools that were assigned to the specified category during registration.
         Categories are used to organize tools by their functional domain (e.g.,
         "dataset_tools", "ipfs_tools", "analysis_tools").
-        
+
         Args:
             category (str): The category name to filter by. Must match exactly
                     with category names assigned during tool registration
                     (case-sensitive).
-        
+
         Returns:
             List[ClaudeMCPTool]: A list of tool instances in the specified category.
                         Returns an empty list if the category doesn't exist or has
                         no tools registered. Tools are returned in registration order.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(dataset_tool)  # category="dataset_tools"
@@ -527,7 +530,7 @@ class ToolRegistry:
             >>> print(f"Found {len(dataset_tools)} dataset tools")
             >>> for tool in dataset_tools:
             ...     print(f"- {tool.name}")
-        
+
         Note:
             - Category filtering is case-sensitive
             - Returns actual tool instances, not copies
@@ -536,25 +539,25 @@ class ToolRegistry:
         """
         tool_names = self._categories.get(category, [])
         return [self._tools[name] for name in tool_names if name in self._tools]
-    
+
     def get_tools_by_tag(self, tag: str) -> List[ClaudeMCPTool]:
         """Retrieve all tools that have been assigned a specific tag.
-        
+
         This method filters the registered tools by tag, returning all tools that
         were tagged with the specified label during registration. Tags provide a
         flexible cross-cutting classification system (e.g., "async", "experimental",
         "production-ready") that complements the hierarchical category system.
-        
+
         Args:
             tag (str): The tag name to filter by. Must match exactly with tag
                     names assigned during tool registration (case-sensitive).
-        
+
         Returns:
             List[ClaudeMCPTool]: A list of tool instances with the specified tag.
                         Returns an empty list if the tag doesn't exist or no tools
                         have been tagged with it. Tools are returned in the order
                         they were tagged.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(async_tool)     # tags=["async", "production"]
@@ -563,7 +566,7 @@ class ToolRegistry:
             >>> print(f"Found {len(prod_tools)} production tools")
             >>> async_tools = registry.get_tools_by_tag("async")
             >>> print(f"Found {len(async_tools)} async tools")
-        
+
         Note:
             - Tag filtering is case-sensitive
             - Returns actual tool instances, not copies
@@ -573,19 +576,19 @@ class ToolRegistry:
         """
         tool_names = self._tags.get(tag, [])
         return [self._tools[name] for name in tool_names if name in self._tools]
-    
+
     def get_categories(self) -> List[str]:
         """Retrieve a list of all unique categories currently in use by registered tools.
-        
+
         This method returns the complete set of category names that have been assigned
         to at least one registered tool. Categories provide a hierarchical organization
         system for tools, grouping them by functional domain or purpose.
-        
+
         Returns:
             List[str]: A list of all category names that have registered tools.
                         Returns an empty list if no tools are registered or no
                         categories have been assigned. The list order is not guaranteed.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(dataset_tool)  # category="dataset_tools"
@@ -596,7 +599,7 @@ class ToolRegistry:
             ['dataset_tools', 'ipfs_tools']
             >>> print(f"Total categories: {len(categories)}")
             Total categories: 2
-        
+
         Note:
             - Only categories with at least one registered tool are returned
             - Categories with all tools unregistered are automatically removed
@@ -604,20 +607,20 @@ class ToolRegistry:
             - Useful for building category navigation or tool discovery interfaces
         """
         return list(self._categories.keys())
-    
+
     def get_tags(self) -> List[str]:
         """Retrieve a list of all unique tags currently assigned to registered tools.
-        
+
         This method returns the complete set of tag names that have been assigned
         to at least one registered tool. Tags provide a flexible, cross-cutting
         classification system that complements the hierarchical category structure,
         allowing tools to be labeled with multiple attributes or characteristics.
-        
+
         Returns:
             List[str]: A list of all tag names that have been assigned to registered
                         tools. Returns an empty list if no tools are registered or no
                         tags have been assigned. The list order is not guaranteed.
-        
+
         Example:
             >>> registry = ToolRegistry()
             >>> registry.register_tool(async_tool)  # tags=["async", "experimental"]
@@ -628,7 +631,7 @@ class ToolRegistry:
             ['async', 'experimental', 'production', 'sync']
             >>> print(f"Total unique tags: {len(tags)}")
             Total unique tags: 4
-        
+
         Note:
             - Only tags assigned to at least one registered tool are returned
             - Tags with all associated tools unregistered are automatically removed
@@ -637,7 +640,7 @@ class ToolRegistry:
             - Unlike categories, tools can have multiple tags simultaneously
         """
         return list(self._tags.keys())
-    
+
     async def execute_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a tool with the given parameters and track execution statistics.
 
@@ -678,11 +681,12 @@ class ToolRegistry:
         """
         if tool_name not in self._tools:
             from ipfs_datasets_py.mcp_server.exceptions import ToolNotFoundError
+
             raise ToolNotFoundError(tool_name)
-        
+
         tool = self._tools[tool_name]
         self.total_executions += 1
-        
+
         try:
             result = await tool.execute(parameters)
             logger.debug(f"Tool '{tool_name}' executed successfully")
@@ -693,7 +697,7 @@ class ToolRegistry:
         except Exception as e:
             logger.error(f"Tool '{tool_name}' execution failed: {e}", exc_info=True)
             raise ToolExecutionError(tool_name, e)
-    
+
     def get_tool_statistics(self) -> Dict[str, Any]:
         """Get comprehensive usage statistics for all tools and registry.
 
@@ -737,13 +741,13 @@ class ToolRegistry:
                 name: {
                     "usage_count": tool.usage_count,
                     "last_used": tool.last_used.isoformat() if tool.last_used else None,
-                    "category": tool.category
+                    "category": tool.category,
                 }
                 for name, tool in self._tools.items()
-            }
+            },
         }
         return stats
-    
+
     def search_tools(self, query: str) -> List[ClaudeMCPTool]:
         """Search for tools by name, description, or tags using a flexible query string.
 
@@ -780,15 +784,17 @@ class ToolRegistry:
         """
         query_lower = query.lower()
         matching_tools = []
-        
+
         for tool in self._tools.values():
-            if (query_lower in tool.name.lower() or 
-                query_lower in tool.description.lower() or
-                any(query_lower in tag.lower() for tag in tool.tags)):
+            if (
+                query_lower in tool.name.lower()
+                or query_lower in tool.description.lower()
+                or any(query_lower in tag.lower() for tag in tool.tags)
+            ):
                 matching_tools.append(tool)
-        
+
         return matching_tools
-    
+
     def validate_tool_parameters(self, tool_name: str, parameters: Dict[str, Any]) -> bool:
         """Validate parameters against a tool's input schema with comprehensive validation.
 
@@ -827,18 +833,20 @@ class ToolRegistry:
         tool = self.get_tool(tool_name)
         if not tool:
             return False
-        
+
         # TODO Basic validation - could be extended with JSON schema validation
         schema = tool.input_schema
         if "required" in schema:
             for required_param in schema["required"]:
                 if required_param not in parameters:
                     return False
-        
+
         return True
 
 
-def _register_embedding_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_embedding_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register embedding tools with the registry."""
     try:
         from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_tools import (
@@ -868,7 +876,9 @@ def _register_embedding_tools(registry: ToolRegistry, embedding_service: Optiona
                 wrap_function_as_tool(generate_embedding, "generate_embedding", "embedding")
             )
             registry.register_tool(
-                wrap_function_as_tool(generate_batch_embeddings, "generate_batch_embeddings", "embedding")
+                wrap_function_as_tool(
+                    generate_batch_embeddings, "generate_batch_embeddings", "embedding"
+                )
             )
         except ToolRegistrationError as e2:
             logger.warning(f"Tool registration error for embedding fallbacks: {e2}")
@@ -896,7 +906,9 @@ def _register_search_tools(registry: ToolRegistry, embedding_service: Optional[A
         logger.warning(f"Unexpected error registering search tools: {e}", exc_info=True)
 
 
-def _register_analysis_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_analysis_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register analysis tools with the registry."""
     try:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
@@ -905,19 +917,30 @@ def _register_analysis_tools(registry: ToolRegistry, embedding_service: Optional
             quality_assessment,
         )
 
-        registry.register_tool(wrap_function_as_tool(cluster_analysis, "cluster_analysis", "analysis"))
-        registry.register_tool(wrap_function_as_tool(quality_assessment, "quality_assessment", "analysis"))
-        registry.register_tool(wrap_function_as_tool(dimensionality_reduction, "dimensionality_reduction", "analysis"))
+        registry.register_tool(
+            wrap_function_as_tool(cluster_analysis, "cluster_analysis", "analysis")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(quality_assessment, "quality_assessment", "analysis")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(dimensionality_reduction, "dimensionality_reduction", "analysis")
+        )
     except ToolRegistrationError as e:
         logger.warning(f"Tool registration error for analysis tools: {e}")
     except Exception as e:
         logger.warning(f"Unexpected error registering analysis tools: {e}", exc_info=True)
 
 
-def _register_storage_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_storage_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register storage tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import CollectionManagementTool, StorageManagementTool
+        from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import (
+            CollectionManagementTool,
+            StorageManagementTool,
+        )
 
         registry.register_tool(StorageManagementTool(embedding_service))
         registry.register_tool(CollectionManagementTool(embedding_service))
@@ -929,11 +952,17 @@ def _register_storage_tools(registry: ToolRegistry, embedding_service: Optional[
         logger.warning(f"Unexpected error registering storage tools: {e}", exc_info=True)
 
 
-def _register_data_processing_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_data_processing_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register data processing tools with the registry."""
     if embedding_service is not None:
         try:
-            from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import ChunkingTool, DatasetLoadingTool, ParquetToCarTool
+            from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
+                ChunkingTool,
+                DatasetLoadingTool,
+                ParquetToCarTool,
+            )
 
             registry.register_tool(ChunkingTool(embedding_service))
             registry.register_tool(DatasetLoadingTool(embedding_service))
@@ -943,7 +972,9 @@ def _register_data_processing_tools(registry: ToolRegistry, embedding_service: O
         except ConfigurationError as e:
             logger.warning(f"Configuration error for data processing tools: {e}")
         except Exception as e:
-            logger.warning(f"Unexpected error registering data processing tools: {e}", exc_info=True)
+            logger.warning(
+                f"Unexpected error registering data processing tools: {e}", exc_info=True
+            )
     else:
         logger.info("Skipping data processing tools registration (no embedding service provided)")
 
@@ -951,7 +982,11 @@ def _register_data_processing_tools(registry: ToolRegistry, embedding_service: O
 def _register_auth_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
     """Register auth tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools import AuthenticationTool, TokenValidationTool, UserInfoTool
+        from ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools import (
+            AuthenticationTool,
+            TokenValidationTool,
+            UserInfoTool,
+        )
 
         registry.register_tool(AuthenticationTool(embedding_service))
         registry.register_tool(UserInfoTool(embedding_service))
@@ -967,7 +1002,11 @@ def _register_auth_tools(registry: ToolRegistry, embedding_service: Optional[Any
 def _register_admin_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
     """Register admin tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.admin_tools.admin_tools import EndpointManagementTool, SystemConfigurationTool, UserManagementTool
+        from ipfs_datasets_py.mcp_server.tools.admin_tools.admin_tools import (
+            EndpointManagementTool,
+            SystemConfigurationTool,
+            UserManagementTool,
+        )
 
         registry.register_tool(EndpointManagementTool(embedding_service))
         registry.register_tool(UserManagementTool(embedding_service))
@@ -983,7 +1022,11 @@ def _register_admin_tools(registry: ToolRegistry, embedding_service: Optional[An
 def _register_cache_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
     """Register cache tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_tools import CacheManagementTool, CacheMonitoringTool, CacheStatsTool
+        from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_tools import (
+            CacheManagementTool,
+            CacheMonitoringTool,
+            CacheStatsTool,
+        )
 
         registry.register_tool(CacheStatsTool(embedding_service))
         registry.register_tool(CacheManagementTool(embedding_service))
@@ -996,10 +1039,17 @@ def _register_cache_tools(registry: ToolRegistry, embedding_service: Optional[An
         logger.warning(f"Unexpected error registering cache tools: {e}", exc_info=True)
 
 
-def _register_monitoring_tools_group(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_monitoring_tools_group(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register monitoring tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import AlertManagementTool, HealthCheckTool, MetricsCollectionTool, SystemMonitoringTool
+        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import (
+            AlertManagementTool,
+            HealthCheckTool,
+            MetricsCollectionTool,
+            SystemMonitoringTool,
+        )
 
         registry.register_tool(HealthCheckTool(embedding_service))
         registry.register_tool(MetricsCollectionTool(embedding_service))
@@ -1013,10 +1063,16 @@ def _register_monitoring_tools_group(registry: ToolRegistry, embedding_service: 
         logger.warning(f"Unexpected error registering monitoring tools: {e}", exc_info=True)
 
 
-def _register_background_task_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_background_task_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register background task tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import BackgroundTaskManagementTool, BackgroundTaskStatusTool, TaskQueueManagementTool
+        from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
+            BackgroundTaskManagementTool,
+            BackgroundTaskStatusTool,
+            TaskQueueManagementTool,
+        )
 
         registry.register_tool(BackgroundTaskStatusTool(embedding_service))
         registry.register_tool(BackgroundTaskManagementTool(embedding_service))
@@ -1029,10 +1085,16 @@ def _register_background_task_tools(registry: ToolRegistry, embedding_service: O
         logger.warning(f"Unexpected error registering background task tools: {e}", exc_info=True)
 
 
-def _register_rate_limiting_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_rate_limiting_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register rate limiting tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import RateLimitConfigurationTool, RateLimitManagementTool, RateLimitMonitoringTool
+        from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
+            RateLimitConfigurationTool,
+            RateLimitManagementTool,
+            RateLimitMonitoringTool,
+        )
 
         registry.register_tool(RateLimitConfigurationTool(embedding_service))
         registry.register_tool(RateLimitMonitoringTool(embedding_service))
@@ -1045,10 +1107,16 @@ def _register_rate_limiting_tools(registry: ToolRegistry, embedding_service: Opt
         logger.warning(f"Unexpected error registering rate limiting tools: {e}", exc_info=True)
 
 
-def _register_index_management_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_index_management_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register index management tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import IndexLoadingTool, IndexStatusTool, ShardManagementTool
+        from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
+            IndexLoadingTool,
+            IndexStatusTool,
+            ShardManagementTool,
+        )
 
         registry.register_tool(IndexLoadingTool(embedding_service))
         registry.register_tool(ShardManagementTool(embedding_service))
@@ -1061,10 +1129,16 @@ def _register_index_management_tools(registry: ToolRegistry, embedding_service: 
         logger.warning(f"Unexpected error registering index management tools: {e}", exc_info=True)
 
 
-def _register_sparse_embedding_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_sparse_embedding_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register sparse embedding tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.sparse_embedding_tools.sparse_embedding_tools import SparseEmbeddingGenerationTool, SparseIndexingTool, SparseSearchTool
+        from ipfs_datasets_py.mcp_server.tools.sparse_embedding_tools.sparse_embedding_tools import (
+            SparseEmbeddingGenerationTool,
+            SparseIndexingTool,
+            SparseSearchTool,
+        )
 
         registry.register_tool(SparseEmbeddingGenerationTool(embedding_service))
         registry.register_tool(SparseIndexingTool(embedding_service))
@@ -1077,10 +1151,16 @@ def _register_sparse_embedding_tools(registry: ToolRegistry, embedding_service: 
         logger.warning(f"Unexpected error registering sparse embedding tools: {e}", exc_info=True)
 
 
-def _register_ipfs_cluster_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_ipfs_cluster_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register IPFS cluster tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.ipfs_cluster_tools.enhanced_ipfs_cluster_tools import IPFSClusterManagementTool, IPFSPinningTool, StorachaIntegrationTool
+        from ipfs_datasets_py.mcp_server.tools.ipfs_cluster_tools.enhanced_ipfs_cluster_tools import (
+            IPFSClusterManagementTool,
+            IPFSPinningTool,
+            StorachaIntegrationTool,
+        )
 
         registry.register_tool(IPFSClusterManagementTool(embedding_service))
         registry.register_tool(StorachaIntegrationTool(embedding_service))
@@ -1093,10 +1173,16 @@ def _register_ipfs_cluster_tools(registry: ToolRegistry, embedding_service: Opti
         logger.warning(f"Unexpected error registering IPFS cluster tools: {e}", exc_info=True)
 
 
-def _register_session_tools(registry: ToolRegistry, embedding_service: Optional[Any] = None) -> None:
+def _register_session_tools(
+    registry: ToolRegistry, embedding_service: Optional[Any] = None
+) -> None:
     """Register session tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.session_tools.session_tools import SessionCleanupTool, SessionCreationTool, SessionMonitoringTool
+        from ipfs_datasets_py.mcp_server.tools.session_tools.session_tools import (
+            SessionCleanupTool,
+            SessionCreationTool,
+            SessionMonitoringTool,
+        )
 
         registry.register_tool(SessionCreationTool(embedding_service))
         registry.register_tool(SessionMonitoringTool(embedding_service))
@@ -1117,8 +1203,12 @@ def _register_embedding_generation_tools(registry: ToolRegistry) -> None:
             generate_batch_embeddings,
         )
 
-        registry.register_tool(wrap_function_as_tool(generate_embedding, "create_embeddings", "embedding"))
-        registry.register_tool(wrap_function_as_tool(generate_batch_embeddings, "batch_create_embeddings", "embedding"))
+        registry.register_tool(
+            wrap_function_as_tool(generate_embedding, "create_embeddings", "embedding")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(generate_batch_embeddings, "batch_create_embeddings", "embedding")
+        )
     except ToolRegistrationError as e:
         logger.warning(f"Tool registration error for create embeddings tools: {e}")
     except Exception as e:
@@ -1128,10 +1218,18 @@ def _register_embedding_generation_tools(registry: ToolRegistry) -> None:
 def _register_shard_embedding_tools(registry: ToolRegistry) -> None:
     """Register shard embedding tools with the registry."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.embedding_tools.shard_embeddings_tool import merge_shards_tool, shard_embeddings_tool, shard_info_tool
+        from ipfs_datasets_py.mcp_server.tools.embedding_tools.shard_embeddings_tool import (
+            merge_shards_tool,
+            shard_embeddings_tool,
+            shard_info_tool,
+        )
 
-        registry.register_tool(wrap_function_as_tool(shard_embeddings_tool, "shard_embeddings", "processing"))
-        registry.register_tool(wrap_function_as_tool(merge_shards_tool, "merge_shards", "processing"))
+        registry.register_tool(
+            wrap_function_as_tool(shard_embeddings_tool, "shard_embeddings", "processing")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(merge_shards_tool, "merge_shards", "processing")
+        )
         registry.register_tool(wrap_function_as_tool(shard_info_tool, "shard_info", "analysis"))
     except ToolRegistrationError as e:
         logger.warning(f"Tool registration error for shard embeddings tools: {e}")
@@ -1151,12 +1249,30 @@ def _register_vector_store_tools(registry: ToolRegistry) -> None:
             search_vector_store_tool,
         )
 
-        registry.register_tool(wrap_function_as_tool(create_vector_store_tool, "create_vector_store", "storage"))
-        registry.register_tool(wrap_function_as_tool(add_embeddings_to_store_tool, "add_embeddings_to_store", "storage"))
-        registry.register_tool(wrap_function_as_tool(search_vector_store_tool, "search_vector_store", "search"))
-        registry.register_tool(wrap_function_as_tool(get_vector_store_stats_tool, "get_vector_store_stats", "analysis"))
-        registry.register_tool(wrap_function_as_tool(delete_from_vector_store_tool, "delete_from_vector_store", "storage"))
-        registry.register_tool(wrap_function_as_tool(optimize_vector_store_tool, "optimize_vector_store", "optimization"))
+        registry.register_tool(
+            wrap_function_as_tool(create_vector_store_tool, "create_vector_store", "storage")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(
+                add_embeddings_to_store_tool, "add_embeddings_to_store", "storage"
+            )
+        )
+        registry.register_tool(
+            wrap_function_as_tool(search_vector_store_tool, "search_vector_store", "search")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(get_vector_store_stats_tool, "get_vector_store_stats", "analysis")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(
+                delete_from_vector_store_tool, "delete_from_vector_store", "storage"
+            )
+        )
+        registry.register_tool(
+            wrap_function_as_tool(
+                optimize_vector_store_tool, "optimize_vector_store", "optimization"
+            )
+        )
     except Exception as e:
         logger.warning(f"Could not register vector store tools: {e}")
 
@@ -1171,15 +1287,27 @@ def _register_workflow_tools(registry: ToolRegistry) -> None:
             list_workflows_tool,
         )
 
-        registry.register_tool(wrap_function_as_tool(execute_workflow_tool, "execute_workflow", "orchestration"))
-        registry.register_tool(wrap_function_as_tool(create_embedding_pipeline_tool, "create_embedding_pipeline", "orchestration"))
-        registry.register_tool(wrap_function_as_tool(get_workflow_status_tool, "get_workflow_status", "monitoring"))
-        registry.register_tool(wrap_function_as_tool(list_workflows_tool, "list_workflows", "monitoring"))
+        registry.register_tool(
+            wrap_function_as_tool(execute_workflow_tool, "execute_workflow", "orchestration")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(
+                create_embedding_pipeline_tool, "create_embedding_pipeline", "orchestration"
+            )
+        )
+        registry.register_tool(
+            wrap_function_as_tool(get_workflow_status_tool, "get_workflow_status", "monitoring")
+        )
+        registry.register_tool(
+            wrap_function_as_tool(list_workflows_tool, "list_workflows", "monitoring")
+        )
     except Exception as e:
         logger.warning(f"Could not register workflow orchestration tools: {e}")
 
 
-def initialize_laion_tools(registry: Optional[ToolRegistry] = None, embedding_service: Optional[Any] = None) -> Optional[List[Any]]:
+def initialize_laion_tools(
+    registry: Optional[ToolRegistry] = None, embedding_service: Optional[Any] = None
+) -> Optional[List[Any]]:
     """Initialize and register all LAION embedding tools with the tool registry.
 
     This function performs comprehensive initialization of all available tools in the LAION
@@ -1190,7 +1318,7 @@ def initialize_laion_tools(registry: Optional[ToolRegistry] = None, embedding_se
     Args:
         registry: The ToolRegistry instance to register tools with (creates new one if None)
         embedding_service: Optional embedding service instance for actual functionality
-    
+
     Returns:
         List of tools if registry is None, otherwise None
 
@@ -1239,7 +1367,7 @@ def initialize_laion_tools(registry: Optional[ToolRegistry] = None, embedding_se
     Example:
         >>> # Create new registry with all available tools
         >>> tools = initialize_laion_tools()
-        >>> 
+        >>>
         >>> # Register tools with existing registry
         >>> registry = ToolRegistry()
         >>> embedding_svc = MyEmbeddingService()

@@ -270,9 +270,7 @@ def test_post_publication_verification(tmp_path: Path):
         "commit_sha": commit.commit_sha,
     }
     with pytest.raises(HuggingFacePublicationError, match="digest mismatch"):
-        publisher.verify_post_publication(
-            commit_receipt=commit, plan=plan, remote_objects=bad
-        )
+        publisher.verify_post_publication(commit_receipt=commit, plan=plan, remote_objects=bad)
 
 
 def test_pinned_redownload_validation(tmp_path: Path):
@@ -284,9 +282,7 @@ def test_pinned_redownload_validation(tmp_path: Path):
     _materialize_local(root, manifest)
     publisher = HuggingFaceReleasePublisher()
     plan = publisher.plan_dry_run(manifest, local_root=root)
-    payloads = {
-        op.remote_path: (root / op.relative_path).read_bytes() for op in plan.operations
-    }
+    payloads = {op.remote_path: (root / op.relative_path).read_bytes() for op in plan.operations}
     cache = tmp_path / "empty-cache"
     result = publisher.redownload_and_validate_pinned(
         commit_sha="f" * 40,
@@ -585,22 +581,20 @@ def test_evidence_phrases_are_discoverable_in_implementation_modules():
 
     publisher_text = Path(publisher_mod.__file__).read_text(encoding="utf-8")
     hf_release_text = Path(hf_release_mod.__file__).read_text(encoding="utf-8")
-    script_path = (
-        Path(__file__).resolve().parents[4]
-        / "scripts"
-        / "publish_abby_voice_release.py"
-    )
+    script_path = Path(__file__).resolve().parents[4] / "scripts" / "publish_abby_voice_release.py"
     if not script_path.is_file():
         # Workspace layout: repo_root/ipfs_datasets_py/tests/unit/voice → parents[4] is repo root.
         script_path = (
-            Path(__file__).resolve().parents[5]
-            / "scripts"
-            / "publish_abby_voice_release.py"
+            Path(__file__).resolve().parents[5] / "scripts" / "publish_abby_voice_release.py"
         )
     # Resolve relative to package path more robustly.
     repo_candidates = [
-        Path(publisher_mod.__file__).resolve().parents[3] / "scripts" / "publish_abby_voice_release.py",
-        Path(publisher_mod.__file__).resolve().parents[4] / "scripts" / "publish_abby_voice_release.py",
+        Path(publisher_mod.__file__).resolve().parents[3]
+        / "scripts"
+        / "publish_abby_voice_release.py",
+        Path(publisher_mod.__file__).resolve().parents[4]
+        / "scripts"
+        / "publish_abby_voice_release.py",
         Path.cwd() / "scripts" / "publish_abby_voice_release.py",
     ]
     script_text = ""

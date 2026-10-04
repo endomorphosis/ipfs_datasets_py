@@ -100,9 +100,7 @@ class FixedConstructor:
     identity = "FixedTypedConstructor@1"
 
     def __init__(self, result: ConstructorResult | None = None) -> None:
-        self.result = result or ConstructorResult(
-            ComponentStatus.SUCCESS, canonical_ir=BASELINE_IR
-        )
+        self.result = result or ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=BASELINE_IR)
         self.calls: list[ConstructorRequest] = []
 
     def construct(self, request: ConstructorRequest) -> ConstructorResult:
@@ -233,15 +231,11 @@ def test_selective_repair_records_every_call_and_changed_field() -> None:
         selected_by=selector(policy, seen=seen),
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert isinstance(repairer, RoundTripConstructor)
     assert repairer.identity.startswith(SELECTIVE_LEANSTRAL_REPAIR_INTERFACE)
-    assert repairer.selector.identity.startswith(
-        HAMMER_CANDIDATE_SELECTOR_INTERFACE
-    )
+    assert repairer.selector.identity.startswith(HAMMER_CANDIDATE_SELECTOR_INTERFACE)
     assert construction.result.status is ComponentStatus.SUCCESS
     assert construction.result.canonical_ir == REPAIRED_IR
     assert construction.baseline_result.canonical_ir == BASELINE_IR
@@ -250,17 +244,12 @@ def test_selective_repair_records_every_call_and_changed_field() -> None:
     assert construction.receipt.score_disposition == "selected_candidate"
     assert construction.receipt.forced_loss is None
     assert len(construction.receipt.model_calls) == 2
-    assert all(
-        item.status is ModelCallStatus.RETURNED
-        for item in construction.receipt.model_calls
-    )
+    assert all(item.status is ModelCallStatus.RETURNED for item in construction.receipt.model_calls)
     assert construction.receipt.selection is not None
     first, second = construction.receipt.selection.evaluations
     assert first.accepted is False
     assert first.changed_fields == ("modality", "object")
-    assert "untriggered_fields_changed:rules[0].modality" in (
-        first.rejection_reasons
-    )
+    assert "untriggered_fields_changed:rules[0].modality" in (first.rejection_reasons)
     assert second.accepted is True
     assert second.changed_fields == ("object",)
     assert construction.receipt.changed_fields == ("modality", "object")
@@ -298,9 +287,7 @@ def test_only_schema_valid_nonempty_candidates_reach_validators() -> None:
         selected_by=selector(policy, seen=seen),
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert construction.result.status is ComponentStatus.FAILED
     assert construction.result.failure_reason is FailureReason.INVALID_OUTPUT
@@ -341,14 +328,10 @@ def test_structural_rejection_is_visible_and_scores_as_failure() -> None:
     repairer, _ = repair(
         [REPAIRED_IR.to_dict()],
         policy=policy,
-        selected_by=HammerCandidateSelector(
-            policy, validators=(binding,)
-        ),
+        selected_by=HammerCandidateSelector(policy, validators=(binding,)),
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert construction.result.failure_reason is FailureReason.INVALID_OUTPUT
     assert construction.receipt.status is RepairAttemptStatus.REJECTED
@@ -360,9 +343,7 @@ def test_structural_rejection_is_visible_and_scores_as_failure() -> None:
     assert evaluation.canonical_ir == REPAIRED_IR
     assert evaluation.changed_fields == ("object",)
     assert evaluation.structural_receipts[0].passed is False
-    assert evaluation.rejection_reasons == (
-        "structural_rejection:lean-pinned",
-    )
+    assert evaluation.rejection_reasons == ("structural_rejection:lean-pinned",)
 
 
 def test_missing_structural_capability_fails_closed_without_hiding_candidate() -> None:
@@ -373,17 +354,13 @@ def test_missing_structural_capability_fails_closed_without_hiding_candidate() -
         selected_by=HammerCandidateSelector(policy),
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert construction.result.failure_reason is FailureReason.INVALID_OUTPUT
     assert construction.receipt.selection is not None
     evaluation = construction.receipt.selection.evaluations[0]
     assert evaluation.canonical_ir == REPAIRED_IR
-    assert evaluation.rejection_reasons == (
-        "structural_validator_unavailable",
-    )
+    assert evaluation.rejection_reasons == ("structural_validator_unavailable",)
 
 
 def test_failed_model_calls_are_all_recorded_and_receive_failure_loss() -> None:
@@ -396,9 +373,7 @@ def test_failed_model_calls_are_all_recorded_and_receive_failure_loss() -> None:
         policy=policy,
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert len(client.calls) == 2
     assert construction.result.failure_reason is FailureReason.RETRY_EXHAUSTED
@@ -419,9 +394,7 @@ def test_no_trigger_returns_exact_baseline_without_model_or_proof_calls() -> Non
         selected_by=selector(seen=seen),
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=()
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=())
 
     assert construction.result is construction.baseline_result
     assert construction.result.canonical_ir == BASELINE_IR
@@ -443,37 +416,26 @@ def test_candidate_ranking_uses_fewest_changes_then_call_order() -> None:
             confidence=0.2,
         ),
     )
-    two_changes = CanonicalRuleIR(
-        (replace(REPAIRED_IR.rules[0], temporal=("after_30_days",)),)
-    )
+    two_changes = CanonicalRuleIR((replace(REPAIRED_IR.rules[0], temporal=("after_30_days",)),))
     repairer, _ = repair(
         [two_changes.to_dict(), REPAIRED_IR.to_dict()],
         policy=policy,
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=triggers
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=triggers)
 
     assert construction.result.canonical_ir == REPAIRED_IR
     assert construction.receipt.selection is not None
     assert construction.receipt.selection.selected_ordinal == 1
-    assert all(
-        item.accepted
-        for item in construction.receipt.selection.evaluations
-    )
+    assert all(item.accepted for item in construction.receipt.selection.evaluations)
 
 
 def test_confident_fields_cannot_be_silently_rewritten() -> None:
     policy = SelectiveRepairPolicy(candidate_count=1)
-    rewritten = CanonicalRuleIR(
-        (replace(REPAIRED_IR.rules[0], modality="F"),)
-    )
+    rewritten = CanonicalRuleIR((replace(REPAIRED_IR.rules[0], modality="F"),))
     repairer, _ = repair([rewritten.to_dict()], policy=policy)
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert construction.result.status is ComponentStatus.FAILED
     assert construction.receipt.selection is not None
@@ -514,15 +476,11 @@ def test_validator_failure_is_a_recorded_rejection_not_an_exception() -> None:
         selected_by=HammerCandidateSelector(policy, validators=(binding,)),
     )
 
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
 
     assert construction.result.failure_reason is FailureReason.INVALID_OUTPUT
     assert construction.receipt.selection is not None
-    receipt = construction.receipt.selection.evaluations[
-        0
-    ].structural_receipts[0]
+    receipt = construction.receipt.selection.evaluations[0].structural_receipts[0]
     assert receipt.passed is False
     assert receipt.semantic_authority is False
     assert "RuntimeError" in (receipt.detail or "")
@@ -580,17 +538,9 @@ class _Norm:
 def test_activation_fixture_pack_forces_required_trigger_kinds() -> None:
     pack = activation_fixture_pack()
     assert len(pack) >= 3
-    kinds = {
-        trigger.kind
-        for case in pack
-        for trigger in case.triggers
-    }
+    kinds = {trigger.kind for case in pack for trigger in case.triggers}
     assert set(REQUIRED_ACTIVATION_TRIGGER_KINDS) <= kinds
-    fields = {
-        trigger.canonical_field
-        for case in pack
-        for trigger in case.triggers
-    }
+    fields = {trigger.canonical_field for case in pack for trigger in case.triggers}
     assert "temporal" in fields
     assert any(
         trigger.kind is RepairTriggerKind.LOW_CONFIDENCE
@@ -616,9 +566,7 @@ def test_activation_harness_fires_triggers_attempts_repair_and_scopes_fields() -
     observed_kinds: set[str] = set()
     for receipt in report.coordinate_receipts:
         payload = receipt.to_dict()
-        assert payload["interface"] == (
-            SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE
-        )
+        assert payload["interface"] == (SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE)
         assert "repair_triggered" in payload
         assert "repair_applied" in payload
         assert "model_calls" in payload
@@ -631,9 +579,7 @@ def test_activation_harness_fires_triggers_attempts_repair_and_scopes_fields() -
         # Accepted repair may only touch trigger fields.
         assert set(receipt.changed_fields) <= set(receipt.trigger_fields)
 
-    assert set(item.value for item in REQUIRED_ACTIVATION_TRIGGER_KINDS) <= (
-        observed_kinds
-    )
+    assert set(item.value for item in REQUIRED_ACTIVATION_TRIGGER_KINDS) <= (observed_kinds)
 
 
 def test_selective_arm_with_zero_triggers_on_fixture_pack_fails_validation() -> None:
@@ -653,12 +599,8 @@ def test_selective_arm_with_zero_triggers_on_fixture_pack_fails_validation() -> 
 
 def test_coordinate_receipt_from_construction_reports_activation_metrics() -> None:
     repairer, _ = repair([REPAIRED_IR.to_dict()], policy=SelectiveRepairPolicy(candidate_count=1))
-    construction = repairer.construct_with_diagnostics(
-        request(), triggers=(OBJECT_TRIGGER,)
-    )
-    receipt = coordinate_receipt_from_construction(
-        "object_slot", construction
-    )
+    construction = repairer.construct_with_diagnostics(request(), triggers=(OBJECT_TRIGGER,))
+    receipt = coordinate_receipt_from_construction("object_slot", construction)
 
     assert receipt.repair_triggered is True
     assert receipt.repair_applied is True
@@ -722,9 +664,7 @@ def test_typed_deontic_emits_triggers_from_diagnostics_without_breaking_baseline
     assert "low_confidence" in kinds
     assert "contradictory" in kinds
 
-    detector = TypedDeonticDiagnosticTriggerDetector(
-        field_confidences={(0, "object"): 0.2}
-    )
+    detector = TypedDeonticDiagnosticTriggerDetector(field_confidences={(0, "object"): 0.2})
     detected = detector.detect(
         ConstructorRequest(source, vocabulary, {}),
         projected,
@@ -775,25 +715,18 @@ def test_typed_deontic_diagnostic_triggers_drive_selective_repair() -> None:
     detector = TypedDeonticDiagnosticTriggerDetector()
     client = RecordingClient([repaired_ir.to_dict()])
     repairer = SelectiveLeanstralRepair(
-        FixedConstructor(
-            ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=baseline_ir)
-        ),
+        FixedConstructor(ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=baseline_ir)),
         client=client,
         policy=SelectiveRepairPolicy(candidate_count=1),
         selector=selector(SelectiveRepairPolicy(candidate_count=1)),
         trigger_detector=detector,
     )
-    construction = repairer.construct_with_diagnostics(
-        ConstructorRequest(source, vocabulary, {})
-    )
-    receipt = coordinate_receipt_from_construction(
-        "typed_deontic_temporal", construction
-    )
+    construction = repairer.construct_with_diagnostics(ConstructorRequest(source, vocabulary, {}))
+    receipt = coordinate_receipt_from_construction("typed_deontic_temporal", construction)
 
     assert construction.receipt.triggers
     assert any(
-        item.canonical_field == "temporal"
-        and item.kind is RepairTriggerKind.MISSING
+        item.canonical_field == "temporal" and item.kind is RepairTriggerKind.MISSING
         for item in construction.receipt.triggers
     )
     assert receipt.repair_triggered is True
@@ -810,4 +743,3 @@ def test_slot_diagnostic_rejects_unknown_fields() -> None:
             canonical_field="not_a_field",
             kind="missing",
         )
-

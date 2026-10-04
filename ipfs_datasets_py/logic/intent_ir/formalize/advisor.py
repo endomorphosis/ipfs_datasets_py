@@ -65,13 +65,9 @@ from .compiler import (
 from .features import extract_intent_features
 
 
-INTENT_FORMALIZATION_ADVISOR_VERSION: Final = (
-    "intent-formalization-advisor/v1"
-)
+INTENT_FORMALIZATION_ADVISOR_VERSION: Final = "intent-formalization-advisor/v1"
 INTENT_FORMALIZATION_ADVISOR_ID: Final = "intent:formalization-advisor"
-INTENT_FORMALIZATION_ADVISOR_CONFIG_ID: Final = (
-    "intent:formalization-advisor:bounded-default"
-)
+INTENT_FORMALIZATION_ADVISOR_CONFIG_ID: Final = "intent:formalization-advisor:bounded-default"
 
 _MODAL_OPERATORS: Final = frozenset(item.value for item in IntentModality)
 _EDGE_OPERATORS: Final = frozenset(item.value for item in ControlEdgeKind)
@@ -83,9 +79,7 @@ _VIEW_KINDS: Final[dict[str, frozenset[str]]] = {
     INTENT_FACT_VIEW_ID: frozenset({"typed_fact", "typed_action_fact"}),
     INTENT_MODAL_VIEW_ID: frozenset({"intention_deontic_formula"}),
     INTENT_ACTION_VIEW_ID: frozenset({"hoare_action_contract"}),
-    INTENT_WORKFLOW_VIEW_ID: frozenset(
-        {"workflow_boundary", "workflow_temporal_transition"}
-    ),
+    INTENT_WORKFLOW_VIEW_ID: frozenset({"workflow_boundary", "workflow_temporal_transition"}),
     INTENT_INVARIANT_VIEW_ID: frozenset({"safety_invariant"}),
     INTENT_FAILURE_VIEW_ID: frozenset({"failure_condition"}),
     INTENT_VERIFICATION_VIEW_ID: frozenset({"verification_condition"}),
@@ -114,9 +108,7 @@ def _mapping(value: Any, field_name: str) -> Mapping[str, Any]:
 def _string(value: Any, field_name: str, *, nonempty: bool = False) -> str:
     if not isinstance(value, str) or (nonempty and not value):
         qualifier = "non-empty " if nonempty else ""
-        raise IntentAdvisorValidationError(
-            f"{field_name} must be a {qualifier}string"
-        )
+        raise IntentAdvisorValidationError(f"{field_name} must be a {qualifier}string")
     return value
 
 
@@ -125,25 +117,19 @@ def _number(value: Any, field_name: str) -> float:
         raise IntentAdvisorValidationError(f"{field_name} must be numeric")
     result = float(value)
     if not 0.0 <= result <= 1.0:
-        raise IntentAdvisorValidationError(
-            f"{field_name} must be between zero and one"
-        )
+        raise IntentAdvisorValidationError(f"{field_name} must be between zero and one")
     return result
 
 
 def _sequence(value: Any, field_name: str) -> Sequence[Any]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise IntentAdvisorValidationError(f"{field_name} must be a sequence")
     return value
 
 
 def _strings(value: Any, field_name: str) -> tuple[str, ...]:
     values = _sequence(value, field_name)
-    result = tuple(
-        _string(item, field_name, nonempty=True) for item in values
-    )
+    result = tuple(_string(item, field_name, nonempty=True) for item in values)
     return result
 
 
@@ -177,9 +163,7 @@ _STATEMENT_BODY_FIELDS: Final = frozenset(
         "text",
     }
 )
-_STATEMENT_RECORD_FIELDS: Final = frozenset(
-    IntentStatement.__dataclass_fields__
-)
+_STATEMENT_RECORD_FIELDS: Final = frozenset(IntentStatement.__dataclass_fields__)
 _ACTION_FIELDS: Final = frozenset(IntentAction.__dataclass_fields__)
 _EDGE_FIELDS: Final = frozenset(IntentControlEdge.__dataclass_fields__)
 
@@ -194,21 +178,13 @@ def _validate_statement_body(value: Any, field_name: str) -> None:
             f"{field_name}.grounding is not an Intent grounding value"
         )
     if _string(body["modality"], f"{field_name}.modality") not in _MODAL_OPERATORS:
-        raise IntentAdvisorValidationError(
-            f"{field_name}.modality is not an Intent modality"
-        )
+        raise IntentAdvisorValidationError(f"{field_name}.modality is not an Intent modality")
     _string(body["predicate"], f"{field_name}.predicate")
-    if (
-        _string(body["review_status"], f"{field_name}.review_status")
-        not in _REVIEW_VALUES
-    ):
+    if _string(body["review_status"], f"{field_name}.review_status") not in _REVIEW_VALUES:
         raise IntentAdvisorValidationError(
             f"{field_name}.review_status is not an Intent review status"
         )
-    if (
-        _string(body["statement_kind"], f"{field_name}.statement_kind")
-        not in _STATEMENT_KINDS
-    ):
+    if _string(body["statement_kind"], f"{field_name}.statement_kind") not in _STATEMENT_KINDS:
         raise IntentAdvisorValidationError(
             f"{field_name}.statement_kind is not an Intent statement kind"
         )
@@ -299,8 +275,7 @@ def _validate_formula_expression(formula: FormalFormula) -> None:
     )
     if kind not in _VIEW_KINDS[formula.view_id]:
         raise IntentAdvisorValidationError(
-            f"formula {formula.formula_id!r} has invalid type {kind!r} "
-            f"for view {formula.view_id!r}"
+            f"formula {formula.formula_id!r} has invalid type {kind!r} for view {formula.view_id!r}"
         )
 
     if kind == "typed_fact":
@@ -319,9 +294,7 @@ def _validate_formula_expression(formula: FormalFormula) -> None:
             frozenset({"action", "kind"}),
             f"formula {formula.formula_id!r}",
         )
-        _validate_action(
-            expression["action"], f"formula {formula.formula_id!r}.action"
-        )
+        _validate_action(expression["action"], f"formula {formula.formula_id!r}.action")
     elif kind in {
         "intention_deontic_formula",
         "safety_invariant",
@@ -333,9 +306,7 @@ def _validate_formula_expression(formula: FormalFormula) -> None:
             frozenset({"body", "kind", "operator"}),
             f"formula {formula.formula_id!r}",
         )
-        _validate_statement_body(
-            expression["body"], f"formula {formula.formula_id!r}.body"
-        )
+        _validate_statement_body(expression["body"], f"formula {formula.formula_id!r}.body")
         operator = _string(
             expression["operator"],
             f"formula {formula.formula_id!r}.operator",
@@ -366,9 +337,7 @@ def _validate_formula_expression(formula: FormalFormula) -> None:
             ),
             f"formula {formula.formula_id!r}",
         )
-        _validate_action(
-            expression["action"], f"formula {formula.formula_id!r}.action"
-        )
+        _validate_action(expression["action"], f"formula {formula.formula_id!r}.action")
         for name in (
             "effects",
             "postcondition",
@@ -381,15 +350,11 @@ def _validate_formula_expression(formula: FormalFormula) -> None:
                     f"formula {formula.formula_id!r}.{name}",
                 )
             ):
-                _validate_statement_record(
-                    item, f"formula {formula.formula_id!r}.{name}[{index}]"
-                )
+                _validate_statement_record(item, f"formula {formula.formula_id!r}.{name}[{index}]")
     elif kind == "workflow_boundary":
         _exact_keys(
             expression,
-            frozenset(
-                {"entry_action_ids", "kind", "terminal_action_ids"}
-            ),
+            frozenset({"entry_action_ids", "kind", "terminal_action_ids"}),
             f"formula {formula.formula_id!r}",
         )
         _strings(
@@ -406,13 +371,9 @@ def _validate_formula_expression(formula: FormalFormula) -> None:
             frozenset({"edge", "guard", "kind", "operator"}),
             f"formula {formula.formula_id!r}",
         )
-        _validate_edge(
-            expression["edge"], f"formula {formula.formula_id!r}.edge"
-        )
+        _validate_edge(expression["edge"], f"formula {formula.formula_id!r}.edge")
         if expression["guard"] is not None:
-            _validate_statement_record(
-                expression["guard"], f"formula {formula.formula_id!r}.guard"
-            )
+            _validate_statement_record(expression["guard"], f"formula {formula.formula_id!r}.guard")
         if (
             _string(
                 expression["operator"],
@@ -431,28 +392,20 @@ def validate_intent_advisor_artifact(
     """Require a current deterministic Intent artifact with typed views."""
 
     if not isinstance(artifact, FormalizationArtifact):
-        raise IntentAdvisorValidationError(
-            "Intent advisor input must be a FormalizationArtifact"
-        )
+        raise IntentAdvisorValidationError("Intent advisor input must be a FormalizationArtifact")
     artifact.validate()
     if artifact.domain != "intent":
         raise IntentAdvisorValidationError(
             "Intent advisor requires an Intent formalization artifact"
         )
     if (
-        artifact.compiler_config.compiler_id
-        != INTENT_FORMALIZATION_PRODUCER_ID
-        or artifact.compiler_config.compiler_version
-        != INTENT_FORMALIZATION_COMPILER_VERSION
+        artifact.compiler_config.compiler_id != INTENT_FORMALIZATION_PRODUCER_ID
+        or artifact.compiler_config.compiler_version != INTENT_FORMALIZATION_COMPILER_VERSION
     ):
         raise IntentAdvisorValidationError(
-            "Intent advisor requires a current deterministic Intent compiler "
-            "artifact"
+            "Intent advisor requires a current deterministic Intent compiler artifact"
         )
-    if (
-        artifact.view_registry.identity.digest
-        != INTENT_FORMALIZATION_VIEW_REGISTRY.identity.digest
-    ):
+    if artifact.view_registry.identity.digest != INTENT_FORMALIZATION_VIEW_REGISTRY.identity.digest:
         raise IntentAdvisorValidationError(
             "Intent advisor artifact uses a stale or unsupported view registry"
         )
@@ -478,9 +431,7 @@ def build_intent_advisor_features(
     """Bind structural Intent features to the compiler's sample identity."""
 
     artifact = validate_intent_advisor_artifact(artifact)
-    extracted = extract_intent_features(
-        document, context_snapshot_ids=context_snapshot_ids
-    )
+    extracted = extract_intent_features(document, context_snapshot_ids=context_snapshot_ids)
     if extracted.declaration_digest != artifact.declaration_digest:
         raise IntentAdvisorValidationError(
             "Intent document does not identify the deterministic artifact"
@@ -537,16 +488,11 @@ def default_intent_repair_scope(
     unknown = set(requested) - set(INTENT_FORMALIZATION_VIEW_REGISTRY.view_ids)
     if unknown:
         raise IntentAdvisorValidationError(
-            "unsupported Intent advisor view IDs: "
-            + ", ".join(sorted(unknown))
+            "unsupported Intent advisor view IDs: " + ", ".join(sorted(unknown))
         )
-    formulas = tuple(
-        item for item in artifact.formulas if item.view_id in set(requested)
-    )
+    formulas = tuple(item for item in artifact.formulas if item.view_id in set(requested))
     if not formulas:
-        raise IntentAdvisorValidationError(
-            "no Intent formulas match the requested advisor views"
-        )
+        raise IntentAdvisorValidationError("no Intent formulas match the requested advisor views")
     paths = {
         path
         for formula in formulas
@@ -554,9 +500,7 @@ def default_intent_repair_scope(
         if _path_exists(thaw_json(formula.expression), path)
     }
     if not paths:
-        raise IntentAdvisorValidationError(
-            "selected Intent formulas expose no safe repair paths"
-        )
+        raise IntentAdvisorValidationError("selected Intent formulas expose no safe repair paths")
     return RepairScope(
         formula_ids=tuple(item.formula_id for item in formulas),
         allowed_paths=tuple(paths),
@@ -573,9 +517,7 @@ class IntentAdvisorRun:
     path: IntentAdvisorPath = IntentAdvisorPath.DETERMINISTIC_ONLY
 
     def __post_init__(self) -> None:
-        artifact = validate_intent_advisor_artifact(
-            self.deterministic_artifact
-        )
+        artifact = validate_intent_advisor_artifact(self.deterministic_artifact)
         object.__setattr__(self, "deterministic_artifact", artifact)
         try:
             path = (
@@ -595,9 +537,7 @@ class IntentAdvisorRun:
                 )
         else:
             if not isinstance(self.advice, AdvisorResult):
-                raise IntentAdvisorValidationError(
-                    "candidate path requires an AdvisorResult"
-                )
+                raise IntentAdvisorValidationError("candidate path requires an AdvisorResult")
             if self.advice.input_artifact_identity != artifact.digest:
                 raise IntentAdvisorValidationError(
                     "advisor result does not identify the deterministic baseline"
@@ -624,9 +564,7 @@ class IntentAdvisorRun:
     @property
     def authority(self) -> str:
         return (
-            "deterministic_compiler_output"
-            if self.advice is None
-            else "unverified_candidate_only"
+            "deterministic_compiler_output" if self.advice is None else "unverified_candidate_only"
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -650,18 +588,12 @@ class IntentFormalizationAdvisor:
         config: AdvisorConfig | None = None,
         checkpoint_policy: IntentCheckpointPolicy = INTENT_CHECKPOINT_POLICY,
     ) -> None:
-        if model is not None and not callable(
-            getattr(model, "generate_candidates", None)
-        ):
+        if model is not None and not callable(getattr(model, "generate_candidates", None)):
             raise TypeError("model must implement generate_candidates")
-        if compiler is not None and not isinstance(
-            compiler, IntentFormalizationCompiler
-        ):
+        if compiler is not None and not isinstance(compiler, IntentFormalizationCompiler):
             raise TypeError("compiler must be an IntentFormalizationCompiler")
         if not isinstance(checkpoint_policy, IntentCheckpointPolicy):
-            raise TypeError(
-                "checkpoint_policy must be an IntentCheckpointPolicy"
-            )
+            raise TypeError("checkpoint_policy must be an IntentCheckpointPolicy")
         self._model = model
         self._checkpoint = checkpoint
         self.compiler = compiler or IntentFormalizationCompiler()
@@ -684,47 +616,31 @@ class IntentFormalizationAdvisor:
         )
         if not isinstance(self.config, AdvisorConfig):
             raise TypeError("config must be an AdvisorConfig")
-        self._bounded = (
-            None
-            if model is None
-            else BoundedFormalizationAdvisor(model, self.config)
-        )
+        self._bounded = None if model is None else BoundedFormalizationAdvisor(model, self.config)
 
     def advise(self, request: FormalizationAdvisorRequest) -> AdvisorResult:
         """Validate one pre-built request and return candidate-only output."""
 
         if not isinstance(request, FormalizationAdvisorRequest):
-            raise IntentAdvisorValidationError(
-                "request must be a FormalizationAdvisorRequest"
-            )
+            raise IntentAdvisorValidationError("request must be a FormalizationAdvisorRequest")
         artifact = validate_intent_advisor_artifact(request.artifact)
         scoped = set(request.repair_scope.formula_ids)
         scoped_views = tuple(
             sorted(
-                {
-                    formula.view_id
-                    for formula in artifact.formulas
-                    if formula.formula_id in scoped
-                }
+                {formula.view_id for formula in artifact.formulas if formula.formula_id in scoped}
             )
         )
-        self.checkpoint_policy.validate(
-            request.checkpoint, requested_view_ids=scoped_views
-        )
+        self.checkpoint_policy.validate(request.checkpoint, requested_view_ids=scoped_views)
         if request.ontology_identity != INTENT_FORMALIZATION_ONTOLOGY_IDENTITY:
             raise IntentAdvisorValidationError(
                 "Intent advisor request uses a stale ontology identity"
             )
         if self._bounded is None:
-            raise IntentAdvisorValidationError(
-                "candidate path requires an advisor model backend"
-            )
+            raise IntentAdvisorValidationError("candidate path requires an advisor model backend")
         baseline_identity = artifact.digest
         result = self._bounded.advise(request)
         if artifact.digest != baseline_identity:
-            raise IntentAdvisorValidationError(
-                "advisor mutated the deterministic artifact"
-            )
+            raise IntentAdvisorValidationError("advisor mutated the deterministic artifact")
         for candidate in result.candidates:
             self.checkpoint_policy.validate(
                 request.checkpoint,
@@ -733,8 +649,7 @@ class IntentFormalizationAdvisor:
                         {
                             formula.view_id
                             for formula in candidate.formulas
-                            if formula.formula_id
-                            in set(candidate.changed_formula_ids)
+                            if formula.formula_id in set(candidate.changed_formula_ids)
                         }
                     )
                 ),
@@ -788,9 +703,7 @@ class IntentFormalizationAdvisor:
         """
 
         if use_advisor is not None and not isinstance(use_advisor, bool):
-            raise IntentAdvisorValidationError(
-                "use_advisor must be a boolean or None"
-            )
+            raise IntentAdvisorValidationError("use_advisor must be a boolean or None")
         artifact = self.compiler.compile(
             document,
             compiler_config,
@@ -807,9 +720,7 @@ class IntentFormalizationAdvisor:
             )
         head = self.checkpoint_policy.validate(selected)
         head_spec = self.checkpoint_policy.resolve_head(head.head_id)
-        scope = repair_scope or default_intent_repair_scope(
-            artifact, view_ids=head_spec.view_ids
-        )
+        scope = repair_scope or default_intent_repair_scope(artifact, view_ids=head_spec.view_ids)
         features = build_intent_advisor_features(
             document,
             artifact,

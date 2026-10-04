@@ -89,7 +89,9 @@ def test_competing_scope_backfill_reinforces_temporal_to_deontic_when_scope_is_e
     assert counts[ModalLogicFamily.DEONTIC.value] == pytest.approx(1.0)
 
 
-def test_competing_scope_backfill_reinforces_temporal_to_frame_when_frame_scope_is_structural() -> None:
+def test_competing_scope_backfill_reinforces_temporal_to_frame_when_frame_scope_is_structural() -> (
+    None
+):
     counts = {
         ModalLogicFamily.TEMPORAL.value: 4.0,
         ModalLogicFamily.FRAME.value: 0.0,
@@ -136,6 +138,8 @@ def test_directional_backfill_reinforces_epistemic_to_deontic_with_statutory_sco
     }
     _apply_directional_modal_family_pair_backfill(counts, signals)
     assert counts[ModalLogicFamily.DEONTIC.value] == pytest.approx(1.35)
+
+
 def test_spacy_signals_treat_reasonably_believes_as_epistemic_scope_phrase() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -196,9 +200,7 @@ def test_directional_backfill_reinforces_temporal_to_structural_frame_scope() ->
 
 
 def test_compiler_tracks_epistemic_target_signals_for_doxastic_predictions() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
 
     target_signals = compiler._adaptive_target_signal_by_family(
         ModalLogicFamily.DOXASTIC.value,
@@ -212,6 +214,8 @@ def test_compiler_tracks_epistemic_target_signals_for_doxastic_predictions() -> 
     assert target_signals == {
         ModalLogicFamily.EPISTEMIC.value: True,
     }
+
+
 def test_packet_003115_refined_pairs_include_temporal_to_alethic_as_required_target() -> None:
     predicted = ModalLogicFamily.TEMPORAL.value
     target = ModalLogicFamily.ALETHIC.value

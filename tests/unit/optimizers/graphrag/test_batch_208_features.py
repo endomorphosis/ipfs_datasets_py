@@ -16,6 +16,7 @@ Smoke tests for pre-existing Batch 208 items:
 - OntologyLearningAdapter.feedback_trend_slope()
 - OntologyPipeline.run_score_variance()
 """
+
 from __future__ import annotations
 
 import pytest
@@ -43,6 +44,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _report(score: float) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
 
@@ -63,8 +65,12 @@ def _adapter_with(scores: list[float]) -> OntologyLearningAdapter:
 
 def _make_critic_score(**kwargs) -> CriticScore:
     defaults = dict(
-        completeness=0.8, consistency=0.7, clarity=0.6,
-        granularity=0.5, relationship_coherence=0.4, domain_alignment=0.3,
+        completeness=0.8,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.3,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -72,8 +78,7 @@ def _make_critic_score(**kwargs) -> CriticScore:
 
 def _make_result_with_rels(types: list[str]) -> EntityExtractionResult:
     rels = [
-        Relationship(id=f"r{i}", source_id="a", target_id="b", type=t)
-        for i, t in enumerate(types)
+        Relationship(id=f"r{i}", source_id="a", target_id="b", type=t) for i, t in enumerate(types)
     ]
     return EntityExtractionResult(entities=[], relationships=rels, confidence=0.8)
 
@@ -107,6 +112,7 @@ def ontology_builder(ontology_dict_factory):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_trend_slope
 # ---------------------------------------------------------------------------
+
 
 class TestScoreTrendSlope:
     def test_empty_history_returns_zero(self):
@@ -150,14 +156,19 @@ class TestScoreTrendSlope:
 # OntologyCritic.score_dimension_variance
 # ---------------------------------------------------------------------------
 
+
 class TestScoreDimensionVariance:
     def setup_method(self):
         self.critic = OntologyCritic()
 
     def test_uniform_dims_returns_zero(self):
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert self.critic.score_dimension_variance(score) == pytest.approx(0.0)
 
@@ -172,8 +183,12 @@ class TestScoreDimensionVariance:
     def test_max_spread_high_variance(self):
         # [0,0,0,1,1,1] → mean=0.5; variance = 3*(0.25)+3*(0.25) / 6 = 0.25
         score = _make_critic_score(
-            completeness=1.0, consistency=1.0, clarity=1.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert self.critic.score_dimension_variance(score) == pytest.approx(0.25)
 
@@ -189,6 +204,7 @@ class TestScoreDimensionVariance:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.relationship_type_count
 # ---------------------------------------------------------------------------
+
 
 class TestRelationshipTypeCount:
     def setup_method(self):
@@ -222,6 +238,7 @@ class TestRelationshipTypeCount:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.last_improving_run
 # ---------------------------------------------------------------------------
+
 
 class TestLastImprovingRun:
     def test_empty_returns_minus_one(self):
@@ -267,6 +284,7 @@ class TestLastImprovingRun:
 # ---------------------------------------------------------------------------
 # LogicValidator.closeness_centrality_approx
 # ---------------------------------------------------------------------------
+
 
 class TestClosenessCentralityApprox:
     def setup_method(self):
@@ -315,6 +333,7 @@ class TestClosenessCentralityApprox:
 # LogicValidator.reciprocal_edge_count
 # ---------------------------------------------------------------------------
 
+
 class TestReciprocalEdgeCount:
     def setup_method(self):
         self.validator = LogicValidator()
@@ -357,6 +376,7 @@ class TestReciprocalEdgeCount:
 # ---------------------------------------------------------------------------
 # Smoke tests for pre-existing Batch 208 items
 # ---------------------------------------------------------------------------
+
 
 class TestExistingBatch208Methods:
     def test_history_variance_returns_float(self):

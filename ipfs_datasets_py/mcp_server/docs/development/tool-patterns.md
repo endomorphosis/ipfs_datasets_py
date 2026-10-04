@@ -43,39 +43,36 @@ from typing import Optional, Dict, Any
 from ipfs_datasets_py.mcp_server.tool_wrapper import wrap_function_as_tool
 from ipfs_datasets_py.core_operations import DatasetLoader
 
+
 @wrap_function_as_tool(
     name="load_dataset",
     description="Load a dataset from a source",
     category="dataset_tools",
-    tags=["dataset", "loading"]
+    tags=["dataset", "loading"],
 )
-async def load_dataset(
-    source: str,
-    format: Optional[str] = None,
-    **kwargs
-) -> Dict[str, Any]:
+async def load_dataset(source: str, format: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """
     Load a dataset from the specified source.
-    
+
     This tool is a thin wrapper around DatasetLoader from core_operations.
     All business logic for dataset loading is in the core module.
-    
+
     Args:
         source: Dataset source identifier (file path, URL, or dataset name)
         format: Optional format specification (json, csv, parquet, etc.)
         **kwargs: Additional options passed to the loader
-    
+
     Returns:
         Dictionary with:
             - status: "success" or "error"
             - data: Loaded dataset (if successful)
             - message: Status message
             - metadata: Dataset metadata
-    
+
     Raises:
         ValueError: If source is invalid
         FileNotFoundError: If source file doesn't exist
-    
+
     Example:
         >>> result = await load_dataset("data.json")
         >>> print(result["status"])
@@ -83,24 +80,15 @@ async def load_dataset(
     """
     # 1. Minimal validation (only check required params)
     if not source:
-        return {
-            "status": "error",
-            "message": "source parameter is required"
-        }
-    
+        return {"status": "error", "message": "source parameter is required"}
+
     # 2. Delegate to core module
     loader = DatasetLoader()
     try:
         result = await loader.load(source, format=format, **kwargs)
-        return {
-            "status": "success",
-            "data": result
-        }
+        return {"status": "success", "data": result}
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
 ```
 
 **Characteristics:**
@@ -133,54 +121,41 @@ from ipfs_datasets_py.mcp_server.tool_wrapper import wrap_function_as_tool
 from ipfs_datasets_py.search.search_tools_api import (
     semantic_search_from_parameters,
     similarity_search_from_parameters,
-    faceted_search_from_parameters
+    faceted_search_from_parameters,
 )
+
 
 @wrap_function_as_tool(
     name="semantic_search",
     description="Perform semantic search using embeddings",
     category="search_tools",
-    tags=["search", "semantic", "embeddings"]
+    tags=["search", "semantic", "embeddings"],
 )
 async def semantic_search(
-    query: str,
-    model: str = "default",
-    top_k: int = 5,
-    **kwargs
+    query: str, model: str = "default", top_k: int = 5, **kwargs
 ) -> Dict[str, Any]:
     """Perform semantic search."""
     if not query:
         return {"status": "error", "message": "query is required"}
-    
-    return await semantic_search_from_parameters(
-        query=query,
-        model=model,
-        top_k=top_k,
-        **kwargs
-    )
+
+    return await semantic_search_from_parameters(query=query, model=model, top_k=top_k, **kwargs)
 
 
 @wrap_function_as_tool(
     name="similarity_search",
     description="Find similar items using cosine similarity",
     category="search_tools",
-    tags=["search", "similarity"]
+    tags=["search", "similarity"],
 )
 async def similarity_search(
-    query: str,
-    threshold: float = 0.7,
-    top_k: int = 5,
-    **kwargs
+    query: str, threshold: float = 0.7, top_k: int = 5, **kwargs
 ) -> Dict[str, Any]:
     """Find similar items."""
     if not query:
         return {"status": "error", "message": "query is required"}
-    
+
     return await similarity_search_from_parameters(
-        query=query,
-        threshold=threshold,
-        top_k=top_k,
-        **kwargs
+        query=query, threshold=threshold, top_k=top_k, **kwargs
     )
 
 
@@ -188,23 +163,20 @@ async def similarity_search(
     name="faceted_search",
     description="Search with faceted filters",
     category="search_tools",
-    tags=["search", "faceted", "filters"]
+    tags=["search", "faceted", "filters"],
 )
 async def faceted_search(
     query: str,
     facets: Optional[List[str]] = None,
     filters: Optional[Dict[str, Any]] = None,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """Faceted search with filters."""
     if not query:
         return {"status": "error", "message": "query is required"}
-    
+
     return await faceted_search_from_parameters(
-        query=query,
-        facets=facets or [],
-        filters=filters or {},
-        **kwargs
+        query=query, facets=facets or [], filters=filters or {}, **kwargs
     )
 ```
 
@@ -237,57 +209,44 @@ from typing import Dict, Any, Optional
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 from ipfs_datasets_py.core_operations import CacheManager
 
+
 class CacheTool(ClaudeMCPTool):
     """
     Tool for managing a persistent cache.
-    
+
     This tool maintains state across calls and should be initialized once
     per session. Use class-based pattern only when state persistence is required.
     """
-    
+
     def __init__(self, cache_manager: Optional[CacheManager] = None):
         super().__init__()
         self.name = "cache_get"
         self.description = "Get a value from the cache"
         self.category = "cache_tools"
         self.tags = ["cache", "storage"]
-        
+
         # State management (why we use class pattern)
         self.cache_manager = cache_manager or CacheManager()
-        
+
         self.input_schema = {
             "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string",
-                    "description": "Cache key to retrieve"
-                }
-            },
-            "required": ["key"]
+            "properties": {"key": {"type": "string", "description": "Cache key to retrieve"}},
+            "required": ["key"],
         }
-    
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the cache get operation."""
         key = parameters.get("key")
-        
+
         if not key:
-            return {
-                "status": "error",
-                "message": "key is required"
-            }
-        
+            return {"status": "error", "message": "key is required"}
+
         # Delegate to core module (with persistent state)
         try:
             value = await self.cache_manager.get(key)
-            return {
-                "status": "success",
-                "value": value
-            }
+            return {"status": "success", "value": value}
         except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}
 ```
 
 **Characteristics:**
@@ -330,10 +289,10 @@ All parameters and return types MUST have type hints:
 
 ```python
 async def tool_name(
-    param1: str,                    # ✅ Type hint
-    param2: Optional[int] = None,   # ✅ Optional type
-    **kwargs                        # ✅ OK for catch-all
-) -> Dict[str, Any]:                # ✅ Return type
+    param1: str,  # ✅ Type hint
+    param2: Optional[int] = None,  # ✅ Optional type
+    **kwargs,  # ✅ OK for catch-all
+) -> Dict[str, Any]:  # ✅ Return type
     ...
 ```
 
@@ -412,10 +371,11 @@ async def simple_tool(param: str) -> dict:
     """Docstring."""
     if not param:
         return {"status": "error", "message": "required"}
-    
+
     service = CoreService()
     result = await service.work(param)
     return {"status": "success", "result": result}
+
 
 # ❌ BAD: 200+ lines (extract to core module)
 ```
@@ -431,9 +391,9 @@ async def simple_tool(param: str) -> dict:
 @wrap_function_as_tool(...)
 async def process_data(data: List[dict]) -> dict:
     # Business logic in tool (should be in core module)
-    filtered = [d for d in data if d['value'] > 0]
-    normalized = [{'val': d['value'] / 100} for d in filtered]
-    aggregated = sum(n['val'] for n in normalized)
+    filtered = [d for d in data if d["value"] > 0]
+    normalized = [{"val": d["value"] / 100} for d in filtered]
+    aggregated = sum(n["val"] for n in normalized)
     return {"result": aggregated}
 ```
 
@@ -460,6 +420,7 @@ async def calculate(a: int, b: int) -> dict:
 # ✅ GOOD: Uses core module
 from ipfs_datasets_py.processors import Calculator
 
+
 @wrap_function_as_tool(...)
 async def calculate(a: int, b: int) -> dict:
     calc = Calculator()
@@ -477,7 +438,7 @@ async def create_user(name: str, age: int) -> dict:
         return {"error": "Name too short"}
     if age < 13:
         return {"error": "Must be 13+"}
-    if not re.match(r'^[a-zA-Z]+$', name):
+    if not re.match(r"^[a-zA-Z]+$", name):
         return {"error": "Name must be letters only"}
     # ... more validation
 ```
@@ -485,6 +446,7 @@ async def create_user(name: str, age: int) -> dict:
 ```python
 # ✅ GOOD: Core module validates
 from ipfs_datasets_py.user_management import UserService
+
 
 @wrap_function_as_tool(...)
 async def create_user(name: str, age: int) -> dict:
@@ -503,6 +465,7 @@ async def create_user(name: str, age: int) -> dict:
 import pytest
 from ipfs_datasets_py.mcp_server.tools.your_tool import your_tool_function
 
+
 @pytest.mark.asyncio
 async def test_tool_success():
     """Test successful execution."""
@@ -510,12 +473,14 @@ async def test_tool_success():
     assert result["status"] == "success"
     assert "result" in result
 
+
 @pytest.mark.asyncio
 async def test_tool_validation():
     """Test parameter validation."""
     result = await your_tool_function("")
     assert result["status"] == "error"
     assert "required" in result["message"].lower()
+
 
 @pytest.mark.asyncio
 async def test_tool_error_handling():

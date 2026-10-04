@@ -10,11 +10,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_consistency_score()
   - OntologyMediator.action_gini_coefficient()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,11 +29,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, confidence=1.0, text=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=text or eid, confidence=confidence)
 
 
@@ -45,6 +49,7 @@ def _make_rel_mock(source_id="src", target_id="tgt", rel_type="related"):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -54,16 +59,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -74,21 +82,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.score_trimmed_range ────────────────────────────────────
+
 
 class TestScoreTrimmedRange:
     def test_empty_returns_zero(self):
@@ -113,6 +127,7 @@ class TestScoreTrimmedRange:
 
 # ── OntologyOptimizer.history_geometric_mean ─────────────────────────────────
 
+
 class TestHistoryGeometricMean:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -125,6 +140,7 @@ class TestHistoryGeometricMean:
 
     def test_two_values(self):
         import math
+
         o = _make_optimizer()
         _push_opt(o, 0.25)
         _push_opt(o, 1.0)
@@ -140,6 +156,7 @@ class TestHistoryGeometricMean:
 
 
 # ── OntologyGenerator.entity_text_length_median ──────────────────────────────
+
 
 class TestEntityTextLengthMedian:
     def test_empty_returns_zero(self):
@@ -174,6 +191,7 @@ class TestEntityTextLengthMedian:
 
 # ── OntologyGenerator.relationship_type_entropy ──────────────────────────────
 
+
 class TestRelationshipTypeEntropy:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -201,6 +219,7 @@ class TestRelationshipTypeEntropy:
 
 # ── LogicValidator.singleton_entity_count ────────────────────────────────────
 
+
 class TestSingletonEntityCount:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -225,6 +244,7 @@ class TestSingletonEntityCount:
 
 
 # ── OntologyPipeline.run_median_score ────────────────────────────────────────
+
 
 class TestRunMedianScore:
     def test_empty_returns_zero(self):
@@ -251,6 +271,7 @@ class TestRunMedianScore:
 
 # ── OntologyLearningAdapter.feedback_consistency_score ───────────────────────
 
+
 class TestFeedbackConsistencyScore:
     def test_empty_returns_one(self):
         a = _make_adapter()
@@ -276,6 +297,7 @@ class TestFeedbackConsistencyScore:
 
 
 # ── OntologyMediator.action_gini_coefficient ─────────────────────────────────
+
 
 class TestActionGiniCoefficient:
     def test_empty_returns_zero(self):

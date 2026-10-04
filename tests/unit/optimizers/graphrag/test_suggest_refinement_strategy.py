@@ -4,6 +4,7 @@ Tests for OntologyMediator.suggest_refinement_strategy()
 This test module validates the suggest_refinement_strategy() method,
 which recommends optimal refinement actions based on critic feedback.
 """
+
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
@@ -58,13 +59,17 @@ def context():
 
 def test_suggest_high_quality_ontology(mediator, test_ontology, context):
     """Test recommendation for high-quality ontology (should suggest convergence)."""
-    score = type("CriticScore", (), {
-        "completeness": 0.90,
-        "consistency": 0.88,
-        "clarity": 0.92,
-        "overall": 0.90,
-        "recommendations": [],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.90,
+            "consistency": 0.88,
+            "clarity": 0.92,
+            "overall": 0.90,
+            "recommendations": [],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -77,16 +82,20 @@ def test_suggest_high_quality_ontology(mediator, test_ontology, context):
 def test_suggest_low_clarity_properties_missing(mediator, test_ontology, context):
     """Test recommendation when clarity is low and properties are missing."""
     # Add recommendation hints about properties
-    score = type("CriticScore", (), {
-        "completeness": 0.70,
-        "consistency": 0.70,
-        "clarity": 0.45,
-        "overall": 0.60,
-        "recommendations": [
-            "Add more property details to entities",
-            "Clarify entity definitions with property values",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.70,
+            "consistency": 0.70,
+            "clarity": 0.45,
+            "overall": 0.60,
+            "recommendations": [
+                "Add more property details to entities",
+                "Clarify entity definitions with property values",
+            ],
+        },
+    )()
 
     # Ensure entities lack properties
     for entity in test_ontology["entities"]:
@@ -102,16 +111,20 @@ def test_suggest_low_clarity_properties_missing(mediator, test_ontology, context
 
 def test_suggest_low_consistency_duplicates(mediator, test_ontology, context):
     """Test recommendation when consistency is low due to duplicates."""
-    score = type("CriticScore", (), {
-        "completeness": 0.70,
-        "consistency": 0.40,
-        "clarity": 0.70,
-        "overall": 0.60,
-        "recommendations": [
-            "Merge duplicate entities",
-            "Remove entity duplicates",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.70,
+            "consistency": 0.40,
+            "clarity": 0.70,
+            "overall": 0.60,
+            "recommendations": [
+                "Merge duplicate entities",
+                "Remove entity duplicates",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -122,16 +135,20 @@ def test_suggest_low_consistency_duplicates(mediator, test_ontology, context):
 
 def test_suggest_low_completeness_missing_relationships(mediator, test_ontology, context):
     """Test recommendation when completeness is low due to missing relationships."""
-    score = type("CriticScore", (), {
-        "completeness": 0.40,
-        "consistency": 0.70,
-        "clarity": 0.70,
-        "overall": 0.60,
-        "recommendations": [
-            "Add missing relationships between entities",
-            "Infer more relationships from context",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.40,
+            "consistency": 0.70,
+            "clarity": 0.70,
+            "overall": 0.60,
+            "recommendations": [
+                "Add missing relationships between entities",
+                "Infer more relationships from context",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -143,21 +160,27 @@ def test_suggest_low_completeness_missing_relationships(mediator, test_ontology,
 def test_suggest_orphan_entities(mediator, test_ontology, context):
     """Test recommendation when orphan entities are detected."""
     # Create ontology with many orphan entities
-    test_ontology["entities"].extend([
-        {"id": "e5", "text": "Isolated A", "type": "Concept", "confidence": 0.6},
-        {"id": "e6", "text": "Isolated B", "type": "Concept", "confidence": 0.6},
-        {"id": "e7", "text": "Isolated C", "type": "Concept", "confidence": 0.6},
-    ])
+    test_ontology["entities"].extend(
+        [
+            {"id": "e5", "text": "Isolated A", "type": "Concept", "confidence": 0.6},
+            {"id": "e6", "text": "Isolated B", "type": "Concept", "confidence": 0.6},
+            {"id": "e7", "text": "Isolated C", "type": "Concept", "confidence": 0.6},
+        ]
+    )
 
-    score = type("CriticScore", (), {
-        "completeness": 0.50,
-        "consistency": 0.70,
-        "clarity": 0.70,
-        "overall": 0.62,
-        "recommendations": [
-            "Remove orphaned entities not connected to any relationships",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.50,
+            "consistency": 0.70,
+            "clarity": 0.70,
+            "overall": 0.62,
+            "recommendations": [
+                "Remove orphaned entities not connected to any relationships",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -168,16 +191,20 @@ def test_suggest_orphan_entities(mediator, test_ontology, context):
 
 def test_suggest_granularity_issues(mediator, test_ontology, context):
     """Test recommendation when entities are too broad."""
-    score = type("CriticScore", (), {
-        "completeness": 0.70,
-        "consistency": 0.70,
-        "clarity": 0.70,
-        "overall": 0.70,
-        "recommendations": [
-            "Split overly broad entities",
-            "Increase entity granularity",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.70,
+            "consistency": 0.70,
+            "clarity": 0.70,
+            "overall": 0.70,
+            "recommendations": [
+                "Split overly broad entities",
+                "Increase entity granularity",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -188,17 +215,21 @@ def test_suggest_granularity_issues(mediator, test_ontology, context):
 
 def test_suggest_naming_conventions(mediator, test_ontology, context):
     """Test recommendation when naming conventions are inconsistent."""
-    score = type("CriticScore", (), {
-        "completeness": 0.70,
-        "consistency": 0.65,
-        "clarity": 0.70,
-        "overall": 0.68,
-        "recommendations": [
-            "Normalize entity naming conventions",
-            "Use consistent naming patterns",
-            "Standardize type names",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.70,
+            "consistency": 0.65,
+            "clarity": 0.70,
+            "overall": 0.68,
+            "recommendations": [
+                "Normalize entity naming conventions",
+                "Use consistent naming patterns",
+                "Standardize type names",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -209,15 +240,19 @@ def test_suggest_naming_conventions(mediator, test_ontology, context):
 
 def test_strategy_includes_alternative_actions(mediator, test_ontology, context):
     """Test that suggested strategy includes alternative actions."""
-    score = type("CriticScore", (), {
-        "completeness": 0.45,
-        "consistency": 0.70,
-        "clarity": 0.70,
-        "overall": 0.60,
-        "recommendations": [
-            "Add missing relationships between entities",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.45,
+            "consistency": 0.70,
+            "clarity": 0.70,
+            "overall": 0.60,
+            "recommendations": [
+                "Add missing relationships between entities",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -229,13 +264,17 @@ def test_strategy_includes_alternative_actions(mediator, test_ontology, context)
 
 def test_strategy_output_format(mediator, test_ontology, context):
     """Test that strategy output has all required fields."""
-    score = type("CriticScore", (), {
-        "completeness": 0.70,
-        "consistency": 0.70,
-        "clarity": 0.70,
-        "overall": 0.70,
-        "recommendations": [],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.70,
+            "consistency": 0.70,
+            "clarity": 0.70,
+            "overall": 0.70,
+            "recommendations": [],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -262,13 +301,17 @@ def test_strategy_output_format(mediator, test_ontology, context):
 
 def test_strategy_impact_estimation_reasonable(mediator, test_ontology, context):
     """Test that estimated impact is within reasonable bounds."""
-    score = type("CriticScore", (), {
-        "completeness": 0.50,
-        "consistency": 0.70,
-        "clarity": 0.70,
-        "overall": 0.63,
-        "recommendations": ["Add missing properties"],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.50,
+            "consistency": 0.70,
+            "clarity": 0.70,
+            "overall": 0.63,
+            "recommendations": ["Add missing properties"],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -277,17 +320,21 @@ def test_strategy_impact_estimation_reasonable(mediator, test_ontology, context)
 
 def test_multiple_low_scores_balanced_recommendation(mediator, test_ontology, context):
     """Test recommendation when multiple dimensions are low."""
-    score = type("CriticScore", (), {
-        "completeness": 0.45,
-        "consistency": 0.50,
-        "clarity": 0.48,
-        "overall": 0.47,
-        "recommendations": [
-            "Add missing properties",
-            "Remove duplicates",
-            "Add relationships",
-        ],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.45,
+            "consistency": 0.50,
+            "clarity": 0.48,
+            "overall": 0.47,
+            "recommendations": [
+                "Add missing properties",
+                "Remove duplicates",
+                "Add relationships",
+            ],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 
@@ -301,13 +348,17 @@ def test_empty_ontology_strategy(mediator, context):
     """Test recommendation for empty/minimal ontology."""
     empty_ontology = {"entities": [], "relationships": [], "metadata": {}}
 
-    score = type("CriticScore", (), {
-        "completeness": 0.10,
-        "consistency": 0.50,
-        "clarity": 0.20,
-        "overall": 0.25,
-        "recommendations": ["No entities found"],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.10,
+            "consistency": 0.50,
+            "clarity": 0.20,
+            "overall": 0.25,
+            "recommendations": ["No entities found"],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(empty_ontology, score, context)
 
@@ -320,17 +371,21 @@ def test_empty_ontology_strategy(mediator, context):
 def test_strategy_logging(mediator, test_ontology, context, caplog):
     """Test that strategy selection is logged."""
     import logging
-    
+
     # Ensure we capture DEBUG and INFO level logs
     caplog.set_level(logging.DEBUG)
 
-    score = type("CriticScore", (), {
-        "completeness": 0.70,
-        "consistency": 0.70,
-        "clarity": 0.45,
-        "overall": 0.60,
-        "recommendations": ["Add properties"],
-    })()
+    score = type(
+        "CriticScore",
+        (),
+        {
+            "completeness": 0.70,
+            "consistency": 0.70,
+            "clarity": 0.45,
+            "overall": 0.60,
+            "recommendations": ["Add properties"],
+        },
+    )()
 
     strategy = mediator.suggest_refinement_strategy(test_ontology, score, context)
 

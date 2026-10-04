@@ -2,6 +2,7 @@
 Test file for interface_factory.py converted from unittest to pytest.
 Generated automatically by test generator - converted to pytest format.
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -35,15 +36,19 @@ class TestInterfaceFactoryFunction:
     Function under test: interface_factory
     """
 
-    def test_when_valid_args_provided_then_returns_interface_factory_instance(self, mock_resources, mock_configs):
+    def test_when_valid_args_provided_then_returns_interface_factory_instance(
+        self, mock_resources, mock_configs
+    ):
         """
         GIVEN valid resources and configs parameters
         WHEN interface_factory is called with resources and configs
         THEN expect function returns InterfaceFactory instance
         """
         result = interface_factory(mock_resources, mock_configs)
-        
-        assert isinstance(result, EXPECTED_FACTORY_TYPE), f"Expected {EXPECTED_FACTORY_TYPE}, got {type(result)}"
+
+        assert isinstance(result, EXPECTED_FACTORY_TYPE), (
+            f"Expected {EXPECTED_FACTORY_TYPE}, got {type(result)}"
+        )
 
     def test_when_none_resources_provided_then_raises_type_error(self, mock_configs):
         """
@@ -78,8 +83,10 @@ class TestInterfaceFactoryInitialization:
         THEN expect instance is created successfully
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
-        assert isinstance(factory, InterfaceFactory), f"Expected InterfaceFactory instance, got {type(factory)}"
+
+        assert isinstance(factory, InterfaceFactory), (
+            f"Expected InterfaceFactory instance, got {type(factory)}"
+        )
 
     def test_when_valid_args_provided_then_stores_resources(self, mock_resources, mock_configs):
         """
@@ -88,8 +95,10 @@ class TestInterfaceFactoryInitialization:
         THEN expect resources attribute matches provided resources
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
-        assert factory.resources is mock_resources, f"Expected resources to be {mock_resources}, got {factory.resources}"
+
+        assert factory.resources is mock_resources, (
+            f"Expected resources to be {mock_resources}, got {factory.resources}"
+        )
 
     def test_when_valid_args_provided_then_stores_configs(self, mock_resources, mock_configs):
         """
@@ -98,8 +107,10 @@ class TestInterfaceFactoryInitialization:
         THEN expect configs attribute matches provided configs
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
-        assert factory.configs is mock_configs, f"Expected configs to be {mock_configs}, got {factory.configs}"
+
+        assert factory.configs is mock_configs, (
+            f"Expected configs to be {mock_configs}, got {factory.configs}"
+        )
 
 
 @pytest.mark.unit
@@ -116,23 +127,25 @@ class TestInterfaceFactoryCreateCli:
         THEN expect CLI instance is returned
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
+
         cli = factory.create_cli()
-        
+
         assert cli is not None, "Expected CLI instance, got None"
 
-    def test_when_create_cli_called_then_uses_configured_resources(self, mock_resources, mock_configs):
+    def test_when_create_cli_called_then_uses_configured_resources(
+        self, mock_resources, mock_configs
+    ):
         """
         GIVEN InterfaceFactory instance with specific resources
         WHEN create_cli method is called
         THEN expect CLI is created with factory resources
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
+
         cli = factory.create_cli()
-        
+
         # Verify resources were used (implementation dependent)
-        assert hasattr(factory, 'resources'), "Factory should have resources attribute"
+        assert hasattr(factory, "resources"), "Factory should have resources attribute"
 
 
 @pytest.mark.unit
@@ -149,20 +162,22 @@ class TestInterfaceFactoryCreateApi:
         THEN expect PythonAPI instance is returned
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
+
         api = factory.create_api()
-        
+
         assert api is not None, "Expected API instance, got None"
 
-    def test_when_create_api_called_then_uses_configured_resources(self, mock_resources, mock_configs):
+    def test_when_create_api_called_then_uses_configured_resources(
+        self, mock_resources, mock_configs
+    ):
         """
         GIVEN InterfaceFactory instance with specific resources
         WHEN create_api method is called
         THEN expect API is created with factory resources
         """
         factory = InterfaceFactory(mock_resources, mock_configs)
-        
+
         api = factory.create_api()
-        
+
         # Verify resources were used (implementation dependent)
-        assert hasattr(factory, 'resources'), "Factory should have resources attribute"
+        assert hasattr(factory, "resources"), "Factory should have resources attribute"

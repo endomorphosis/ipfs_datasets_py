@@ -154,20 +154,12 @@ def test_build_load_search_and_graph_retrieval_are_integrity_bound(
     assert summary.vector_count == 3
     assert summary.neighbor_edges == 3
     assert loaded.summary == summary
-    assert {
-        edge.edge_type
-        for edge in loaded.graph.edges
-    } >= {CorpusEdgeType.NEIGHBOR_OF, CorpusEdgeType.CONTAINS}
-    assert len(
-        [
-            node
-            for node in loaded.graph.nodes
-            if node.node_type is CorpusNodeType.SKILL
-        ]
-    ) == 4
-    assert {
-        item.stored for item in loaded.graph.source_bodies
-    } == {False, True}
+    assert {edge.edge_type for edge in loaded.graph.edges} >= {
+        CorpusEdgeType.NEIGHBOR_OF,
+        CorpusEdgeType.CONTAINS,
+    }
+    assert len([node for node in loaded.graph.nodes if node.node_type is CorpusNodeType.SKILL]) == 4
+    assert {item.stored for item in loaded.graph.source_bodies} == {False, True}
 
     query = _embed(["alpha query"])[0]
     hits = loaded.search_vector(query, k=2)
@@ -243,9 +235,7 @@ def test_bm25_neighborhoods_regenerate_explainable_graph_edges(
     )
     loaded = SkillCenterGraphRAGIndex.load(output_dir)
     neighbor_edges = [
-        edge
-        for edge in loaded.graph.edges
-        if edge.edge_type is CorpusEdgeType.NEIGHBOR_OF
+        edge for edge in loaded.graph.edges if edge.edge_type is CorpusEdgeType.NEIGHBOR_OF
     ]
 
     assert summary.neighbor_backend == "bm25-okapi"

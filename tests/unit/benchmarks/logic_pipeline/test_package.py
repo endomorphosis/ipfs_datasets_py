@@ -40,18 +40,13 @@ def test_package_import_does_not_load_optional_or_production_components(
     monkeypatch.setattr(builtins, "__import__", guarded_import)
     reloaded = importlib.reload(logic_pipeline)
 
+    assert reloaded.HSSLEV0009A31() == "isolated benchmark package and execution skeleton"
     assert (
-        reloaded.HSSLEV0009A31()
-        == "isolated benchmark package and execution skeleton"
-    )
-    assert (
-        reloaded.HSSLEV2007A42()
-        == "label-blind CID-bound semantic projection protocol with "
+        reloaded.HSSLEV2007A42() == "label-blind CID-bound semantic projection protocol with "
         "non-vacuous producer validation and fail-closed calibration contracts"
     )
     assert (
-        reloaded.HSSLEV2343B16()
-        == "source-recomputed full-runtime paired efficacy, reliability, "
+        reloaded.HSSLEV2343B16() == "source-recomputed full-runtime paired efficacy, reliability, "
         "and routing validators"
     )
     assert (
@@ -60,8 +55,7 @@ def test_package_import_does_not_load_optional_or_production_components(
         "exact full-runtime joins and fatal terminal native-kernel authority"
     )
     assert (
-        reloaded.HSSLEV2350C27()
-        == "CID-native G201 source replay with label-blind producer/cache "
+        reloaded.HSSLEV2350C27() == "CID-native G201 source replay with label-blind producer/cache "
         "proofs and per-arm non-vacuous absolute semantic quality"
     )
     assert (
@@ -156,9 +150,7 @@ def test_package_import_does_not_load_optional_or_production_components(
 
 
 def test_g236_package_exports_match_the_reviewed_control_module() -> None:
-    reviewed_control = importlib.import_module(
-        "benchmarks.logic_pipeline.reviewed_control"
-    )
+    reviewed_control = importlib.import_module("benchmarks.logic_pipeline.reviewed_control")
     public = {
         "G236_REQUIRED_CACHE_MODES",
         "G236_REQUIRED_VARIANT_IDS",
@@ -201,9 +193,7 @@ def test_g236_package_exports_match_the_reviewed_control_module() -> None:
 def test_revision_2_gate_package_exports_match_source_module(
     module_name: str,
 ) -> None:
-    module = importlib.import_module(
-        f"benchmarks.logic_pipeline.{module_name}"
-    )
+    module = importlib.import_module(f"benchmarks.logic_pipeline.{module_name}")
     public = set(module.__all__)
 
     assert public <= set(logic_pipeline.__all__)
@@ -331,9 +321,7 @@ def test_smoke_manifest_is_deterministic_and_canonical(tmp_path: Path) -> None:
     canonical = logic_pipeline.canonical_manifest_json(first)
 
     assert first == second
-    assert logic_pipeline.manifest_sha256(first) == logic_pipeline.manifest_sha256(
-        second
-    )
+    assert logic_pipeline.manifest_sha256(first) == logic_pipeline.manifest_sha256(second)
     assert json.loads(canonical) == first
     assert canonical == json.dumps(
         first,
@@ -382,13 +370,8 @@ def test_g240_public_api_excludes_forgeable_builders_and_synthetic_factory() -> 
     }
 
     assert forbidden.isdisjoint(logic_pipeline.__all__)
-    assert all(
-        not hasattr(logic_pipeline, name)
-        for name in forbidden
-    )
-    assert callable(
-        logic_pipeline.validate_g240_production_execution_request_v2
-    )
+    assert all(not hasattr(logic_pipeline, name) for name in forbidden)
+    assert callable(logic_pipeline.validate_g240_production_execution_request_v2)
 
 
 def test_g241_custody_access_api_is_exported_exactly_once() -> None:
@@ -407,7 +390,6 @@ def test_g241_custody_access_api_is_exported_exactly_once() -> None:
 
     assert expected <= set(logic_pipeline.__all__)
     assert all(
-        logic_pipeline.__all__.count(name) == 1
-        and hasattr(logic_pipeline, name)
+        logic_pipeline.__all__.count(name) == 1 and hasattr(logic_pipeline, name)
         for name in expected
     )

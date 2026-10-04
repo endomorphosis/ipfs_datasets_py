@@ -21,9 +21,7 @@ from types import MappingProxyType
 from typing import Final, Mapping, Self, TypeVar
 
 
-FIXTURE_IMPORT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.fixture-import.v1"
-)
+FIXTURE_IMPORT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.fixture-import.v1"
 FIXTURE_IMPORT_MANIFEST_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.fixture-import-manifest.v1"
 )
@@ -133,9 +131,7 @@ def _decode_json(text: str, context: str) -> object:
 
 
 def _mapping(value: object, field_name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise FixtureImportError(f"{field_name} must be a JSON object")
     return value
 
@@ -153,9 +149,7 @@ def _exact_keys(
             details.append(f"missing {sorted(missing)!r}")
         if unknown:
             details.append(f"unknown {sorted(unknown)!r}")
-        raise FixtureImportError(
-            f"{field_name} fields invalid: {', '.join(details)}"
-        )
+        raise FixtureImportError(f"{field_name} fields invalid: {', '.join(details)}")
 
 
 def _nonempty(value: object, field_name: str, *, maximum: int = 512) -> str:
@@ -219,9 +213,7 @@ def _enum(
 def _string_tuple(value: object, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, list):
         raise FixtureImportError(f"{field_name} must be an array")
-    result = tuple(
-        _nonempty(item, f"{field_name}[]", maximum=128) for item in value
-    )
+    result = tuple(_nonempty(item, f"{field_name}[]", maximum=128) for item in value)
     if len(result) != len(set(result)):
         raise FixtureImportError(f"{field_name} must not contain duplicates")
     return result
@@ -238,28 +230,18 @@ def _freeze_json(value: object, field_name: str) -> object:
         if not all(isinstance(key, str) for key in value):
             raise FixtureImportError(f"{field_name} contains a non-string key")
         return MappingProxyType(
-            {
-                key: _freeze_json(item, f"{field_name}.{key}")
-                for key, item in value.items()
-            }
+            {key: _freeze_json(item, f"{field_name}.{key}") for key, item in value.items()}
         )
     if isinstance(value, (list, tuple)):
-        return tuple(
-            _freeze_json(item, f"{field_name}[]") for item in value
-        )
-    raise FixtureImportError(
-        f"{field_name} contains unsupported value {type(value).__name__}"
-    )
+        return tuple(_freeze_json(item, f"{field_name}[]") for item in value)
+    raise FixtureImportError(f"{field_name} contains unsupported value {type(value).__name__}")
 
 
 def _thaw_json(value: object) -> object:
     """Return JSON-native containers for canonical serialization."""
 
     if isinstance(value, Mapping):
-        return {
-            key: _thaw_json(item)
-            for key, item in value.items()
-        }
+        return {key: _thaw_json(item) for key, item in value.items()}
     if isinstance(value, tuple):
         return [_thaw_json(item) for item in value]
     return value
@@ -268,11 +250,7 @@ def _thaw_json(value: object) -> object:
 def _contains_model_origin(value: object) -> bool:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if (
-                key.casefold() in _MODEL_ORIGIN_KEYS
-                and item is not False
-                and item is not None
-            ):
+            if key.casefold() in _MODEL_ORIGIN_KEYS and item is not False and item is not None:
                 return True
             if _contains_model_origin(item):
                 return True
@@ -283,11 +261,7 @@ def _contains_model_origin(value: object) -> bool:
 
 def _source_path(value: object) -> str:
     result = _nonempty(value, "source_path")
-    if (
-        not _SOURCE_PATH.fullmatch(result)
-        or "\\" in result
-        or result.startswith("/")
-    ):
+    if not _SOURCE_PATH.fullmatch(result) or "\\" in result or result.startswith("/"):
         raise FixtureImportError("source_path must be a safe relative POSIX path")
     pure_path = PurePosixPath(result)
     if any(part in {"", ".", ".."} for part in pure_path.parts):
@@ -339,27 +313,17 @@ class FixtureImportSpec:
             _field_name(component, "collection_path[]")
         _field_name(self.identity_field, "identity_field")
         _nonempty(self.original_id, "original_id", maximum=256)
-        expected_reference = (
-            f"{self.source_path}#{self.identity_field}={self.original_id}"
-        )
+        expected_reference = f"{self.source_path}#{self.identity_field}={self.original_id}"
         if self.source_reference != expected_reference:
-            raise FixtureImportError(
-                "source_reference must preserve the exact source selector"
-            )
+            raise FixtureImportError("source_reference must preserve the exact source selector")
         _digest(self.source_sha256, "source_sha256")
         _digest(self.record_sha256, "record_sha256")
         if self.expected_result_origin != "existing_fixture":
-            raise FixtureImportError(
-                "expected_result_origin must be existing_fixture"
-            )
+            raise FixtureImportError("expected_result_origin must be existing_fixture")
         if type(self.model_generated_expected_result) is not bool:
-            raise FixtureImportError(
-                "model_generated_expected_result must be a boolean"
-            )
+            raise FixtureImportError("model_generated_expected_result must be a boolean")
         if self.model_generated_expected_result:
-            raise FixtureImportError(
-                "model-generated expected results are forbidden"
-            )
+            raise FixtureImportError("model-generated expected results are forbidden")
 
     def to_dict(self) -> dict[str, object]:
         """Return the canonical JSON-native import descriptor."""
@@ -400,24 +364,14 @@ class FixtureImportSpec:
             coverage=_enum(Coverage, record["coverage"], "coverage"),
             semantic_tags=_string_tuple(record["semantic_tags"], "semantic_tags"),
             source_path=_source_path(record["source_path"]),
-            source_format=_enum(
-                SourceFormat, record["source_format"], "source_format"
-            ),
+            source_format=_enum(SourceFormat, record["source_format"], "source_format"),
             collection_path=tuple(
                 _field_name(item, "collection_path[]")
-                for item in _string_tuple(
-                    record["collection_path"], "collection_path"
-                )
+                for item in _string_tuple(record["collection_path"], "collection_path")
             ),
-            identity_field=_field_name(
-                record["identity_field"], "identity_field"
-            ),
-            original_id=_nonempty(
-                record["original_id"], "original_id", maximum=256
-            ),
-            source_reference=_nonempty(
-                record["source_reference"], "source_reference"
-            ),
+            identity_field=_field_name(record["identity_field"], "identity_field"),
+            original_id=_nonempty(record["original_id"], "original_id", maximum=256),
+            source_reference=_nonempty(record["source_reference"], "source_reference"),
             source_sha256=_digest(record["source_sha256"], "source_sha256"),
             record_sha256=_digest(record["record_sha256"], "record_sha256"),
             expected_result_origin=_nonempty(
@@ -475,9 +429,7 @@ class FixtureImportManifest:
         )
         if self.import_count != len(self.imports) or not self.imports:
             raise FixtureImportError("import_count does not match imports")
-        if tuple(item.ordinal for item in self.imports) != tuple(
-            range(len(self.imports))
-        ):
+        if tuple(item.ordinal for item in self.imports) != tuple(range(len(self.imports))):
             raise FixtureImportError("import ordinals must be contiguous and ordered")
         import_ids = tuple(item.import_id for item in self.imports)
         if len(import_ids) != len(set(import_ids)):
@@ -491,9 +443,7 @@ class FixtureImportManifest:
             for family in FixtureFamily
         }
         actual_coverage_counts = {
-            coverage.value: sum(
-                item.coverage is coverage for item in self.imports
-            )
+            coverage.value: sum(item.coverage is coverage for item in self.imports)
             for coverage in Coverage
         }
         if dict(self.family_counts) != actual_family_counts:
@@ -503,9 +453,7 @@ class FixtureImportManifest:
         if any(count == 0 for count in actual_family_counts.values()):
             raise FixtureImportError("every required fixture family must be present")
         if any(count == 0 for count in actual_coverage_counts.values()):
-            raise FixtureImportError(
-                "positive and negative fixture coverage must both be present"
-            )
+            raise FixtureImportError("positive and negative fixture coverage must both be present")
         fol_tags = {
             tag
             for item in self.imports
@@ -522,30 +470,20 @@ class FixtureImportManifest:
             for item in self.imports
             if item.family is FixtureFamily.LEGAL_IR_AMBIGUITY
         ):
-            raise FixtureImportError(
-                "Legal IR ambiguity imports must retain the ambiguity tag"
-            )
+            raise FixtureImportError("Legal IR ambiguity imports must retain the ambiguity tag")
         hammer_coverage = {
-            item.coverage
-            for item in self.imports
-            if item.family is FixtureFamily.HAMMER
+            item.coverage for item in self.imports if item.family is FixtureFamily.HAMMER
         }
         if hammer_coverage != set(Coverage):
-            raise FixtureImportError(
-                "Hammer imports must retain positive and negative coverage"
-            )
+            raise FixtureImportError("Hammer imports must retain positive and negative coverage")
         if any(
             "regression" not in item.semantic_tags
             for item in self.imports
             if item.family is FixtureFamily.LEANSTRAL
         ):
-            raise FixtureImportError(
-                "Leanstral imports must retain their regression role"
-            )
+            raise FixtureImportError("Leanstral imports must retain their regression role")
         actual_imports_sha256 = hashlib.sha256(
-            canonical_json(
-                [_spec_to_dict(spec) for spec in self.imports]
-            ).encode("utf-8")
+            canonical_json([_spec_to_dict(spec) for spec in self.imports]).encode("utf-8")
         ).hexdigest()
         if self.imports_sha256 != actual_imports_sha256:
             raise FixtureImportError("imports_sha256 does not match imports")
@@ -603,9 +541,7 @@ class FixtureImportManifest:
             family_counts=MappingProxyType(family_counts),
             coverage_counts=MappingProxyType(coverage_counts),
             imports_sha256=_digest(record["imports_sha256"], "imports_sha256"),
-            imports=tuple(
-                FixtureImportSpec.from_mapping(item) for item in raw_imports
-            ),
+            imports=tuple(FixtureImportSpec.from_mapping(item) for item in raw_imports),
         )
 
 
@@ -616,10 +552,7 @@ def _count_mapping(
 ) -> dict[str, int]:
     record = _mapping(value, field_name)
     _exact_keys(record, expected_keys, field_name)
-    return {
-        key: _integer(item, f"{field_name}.{key}")
-        for key, item in record.items()
-    }
+    return {key: _integer(item, f"{field_name}.{key}") for key, item in record.items()}
 
 
 def _spec_to_dict(spec: FixtureImportSpec) -> dict[str, object]:
@@ -630,9 +563,7 @@ def _spec_to_dict(spec: FixtureImportSpec) -> dict[str, object]:
         "family": spec.family.value,
         "identity_field": spec.identity_field,
         "import_id": spec.import_id,
-        "model_generated_expected_result": (
-            spec.model_generated_expected_result
-        ),
+        "model_generated_expected_result": (spec.model_generated_expected_result),
         "ordinal": spec.ordinal,
         "original_id": spec.original_id,
         "record_sha256": spec.record_sha256,
@@ -660,22 +591,15 @@ class ImportedFixture:
         if not isinstance(frozen_payload, Mapping):
             raise FixtureImportError("payload must be an immutable JSON object")
         object.__setattr__(self, "payload", frozen_payload)
-        if (
-            frozen_payload.get(self.spec.identity_field)
-            != self.spec.original_id
-        ):
+        if frozen_payload.get(self.spec.identity_field) != self.spec.original_id:
             raise FixtureImportError("imported payload does not preserve original_id")
         payload_sha256 = hashlib.sha256(
             canonical_json(_thaw_json(frozen_payload)).encode("utf-8")
         ).hexdigest()
         if payload_sha256 != self.spec.record_sha256:
-            raise FixtureImportError(
-                "imported payload does not match record_sha256"
-            )
+            raise FixtureImportError("imported payload does not match record_sha256")
         if _contains_model_origin(frozen_payload):
-            raise FixtureImportError(
-                "source record asserts a model-generated expected result"
-            )
+            raise FixtureImportError("source record asserts a model-generated expected result")
 
 
 @dataclass(frozen=True, slots=True)
@@ -689,19 +613,13 @@ class ImportedFixtureSet:
 
     def __post_init__(self) -> None:
         if not isinstance(self.manifest, FixtureImportManifest):
-            raise FixtureImportError(
-                "manifest must be a FixtureImportManifest"
-            )
+            raise FixtureImportError("manifest must be a FixtureImportManifest")
         _digest(self.manifest_sha256, "manifest_sha256")
         expected_manifest_sha256 = hashlib.sha256(
-            (
-                canonical_json(self.manifest.to_dict()) + "\n"
-            ).encode("utf-8")
+            (canonical_json(self.manifest.to_dict()) + "\n").encode("utf-8")
         ).hexdigest()
         if self.manifest_sha256 != expected_manifest_sha256:
-            raise FixtureImportError(
-                "manifest_sha256 does not match canonical manifest bytes"
-            )
+            raise FixtureImportError("manifest_sha256 does not match canonical manifest bytes")
         if not isinstance(self.fixtures, tuple) or not all(
             isinstance(item, ImportedFixture) for item in self.fixtures
         ):
@@ -715,12 +633,7 @@ class ImportedFixtureSet:
         object.__setattr__(
             self,
             "by_id",
-            MappingProxyType(
-                {
-                    fixture.spec.import_id: fixture
-                    for fixture in self.fixtures
-                }
-            ),
+            MappingProxyType({fixture.spec.import_id: fixture for fixture in self.fixtures}),
         )
 
 
@@ -768,9 +681,7 @@ def _load_source_records(
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
-        raise FixtureImportError(
-            f"source fixture is not UTF-8: {spec.source_path}"
-        ) from exc
+        raise FixtureImportError(f"source fixture is not UTF-8: {spec.source_path}") from exc
     if spec.source_format is SourceFormat.JSONL:
         if spec.collection_path:
             raise FixtureImportError("JSONL imports cannot have collection_path")
@@ -789,21 +700,15 @@ def _load_source_records(
                 f"{spec.source_path} collection path",
             )
             if component not in container:
-                raise FixtureImportError(
-                    f"collection_path component is missing: {component}"
-                )
+                raise FixtureImportError(f"collection_path component is missing: {component}")
             selected = container[component]
         if isinstance(selected, Mapping):
             values = [selected]
         elif isinstance(selected, list):
             values = selected
         else:
-            raise FixtureImportError(
-                "selected source collection must be an object or array"
-            )
-    return tuple(
-        _mapping(value, f"{spec.source_path} record") for value in values
-    )
+            raise FixtureImportError("selected source collection must be an object or array")
+    return tuple(_mapping(value, f"{spec.source_path} record") for value in values)
 
 
 def _import_fixture(
@@ -814,36 +719,22 @@ def _import_fixture(
     try:
         raw = source_path.read_bytes()
     except OSError as exc:
-        raise FixtureImportError(
-            f"cannot read source fixture {spec.source_path}: {exc}"
-        ) from exc
+        raise FixtureImportError(f"cannot read source fixture {spec.source_path}: {exc}") from exc
     if hashlib.sha256(raw).hexdigest() != spec.source_sha256:
-        raise FixtureImportError(
-            f"source fixture digest mismatch: {spec.source_path}"
-        )
+        raise FixtureImportError(f"source fixture digest mismatch: {spec.source_path}")
     records = _load_source_records(raw, spec)
-    matches = [
-        record
-        for record in records
-        if record.get(spec.identity_field) == spec.original_id
-    ]
+    matches = [record for record in records if record.get(spec.identity_field) == spec.original_id]
     if len(matches) != 1:
         raise FixtureImportError(
-            "source selector must resolve to exactly one record: "
-            f"{spec.source_reference}"
+            f"source selector must resolve to exactly one record: {spec.source_reference}"
         )
     record = matches[0]
-    actual_record_sha256 = hashlib.sha256(
-        canonical_json(record).encode("utf-8")
-    ).hexdigest()
+    actual_record_sha256 = hashlib.sha256(canonical_json(record).encode("utf-8")).hexdigest()
     if actual_record_sha256 != spec.record_sha256:
-        raise FixtureImportError(
-            f"selected record digest mismatch: {spec.source_reference}"
-        )
+        raise FixtureImportError(f"selected record digest mismatch: {spec.source_reference}")
     if _contains_model_origin(record):
         raise FixtureImportError(
-            f"model-generated expected result is forbidden: "
-            f"{spec.source_reference}"
+            f"model-generated expected result is forbidden: {spec.source_reference}"
         )
     frozen = _freeze_json(record, "payload")
     if not isinstance(frozen, Mapping):
@@ -868,10 +759,7 @@ def load_fixture_imports(
         Path(manifest_path),
         expected_manifest_sha256,
     )
-    fixtures = tuple(
-        _import_fixture(spec, Path(repository_root))
-        for spec in manifest.imports
-    )
+    fixtures = tuple(_import_fixture(spec, Path(repository_root)) for spec in manifest.imports)
     return ImportedFixtureSet(
         manifest=manifest,
         manifest_sha256=manifest_sha256,

@@ -1,30 +1,34 @@
-
 from datetime import datetime
-from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import Callable, DatabaseCursor, Logger
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import (
+    Callable,
+    DatabaseCursor,
+    Logger,
+)
 import threading
 
+
 def save_validation_errors(
-        validation_results: list[dict], 
-        cursor: 'DatabaseCursor', 
-        logger: Logger,
-        make_cid: Callable,
-        sql_string: str 
-        ) -> int:
+    validation_results: list[dict],
+    cursor: "DatabaseCursor",
+    logger: Logger,
+    make_cid: Callable,
+    sql_string: str,
+) -> int:
     """Save any validation errors found to the error database."""
     error_count = 0
 
     insert_batch = []
     for result in validation_results:
-        gnis = result['gnis']
-        citation_cid = result['cid']
+        gnis = result["gnis"]
+        citation_cid = result["cid"]
 
         # Check each validation type for errors
         errors = {
-            'geography': result.get('geography', {}),
-            'type': result.get('type', {}),
-            'section': result.get('section', {}),
-            'date': result.get('date', {}),
-            'format': result.get('format', {})
+            "geography": result.get("geography", {}),
+            "type": result.get("type", {}),
+            "section": result.get("section", {}),
+            "date": result.get("date", {}),
+            "format": result.get("format", {}),
         }
 
         # Only save if there are errors
@@ -35,31 +39,33 @@ def save_validation_errors(
                 if msg is None:
                     continue
                 else:
-                    error_messages.append(f"{error.capitalize()}: {msg.get('message', 'Unknown error')}")
+                    error_messages.append(
+                        f"{error.capitalize()}: {msg.get('message', 'Unknown error')}"
+                    )
 
             # Determine severity based on number and type of errors.
             num_errors = sum(len(error_messages))
-            critical_errors = errors['geography'] or errors['type']
+            critical_errors = errors["geography"] or errors["type"]
 
             row = {
                 "cid": None,  # Placeholder for CID generation
                 "citation_cid": citation_cid,
                 "gnis": gnis,
-                "geography_error": errors['geography'],
-                "type_error": errors['type'],
-                "section_error": errors['section'],
-                "date_error": errors['date'],
-                "format_error": errors['format'],
+                "geography_error": errors["geography"],
+                "type_error": errors["type"],
+                "section_error": errors["section"],
+                "date_error": errors["date"],
+                "format_error": errors["format"],
                 "severity": 5 if critical_errors else num_errors,
                 "error_message": "; ".join(error_messages),
-                "updated_at": f"{datetime.now().isoformat()}"
+                "updated_at": f"{datetime.now().isoformat()}",
             }
             # Generate CID based on the merged dictionary values.
             # NOTE Order matters here for consistent CID generation.
-            row['cid'] = make_cid("".join(str(v) for v in row.values()))
+            row["cid"] = make_cid("".join(str(v) for v in row.values()))
             insert_batch.append(row)
 
-    if insert_batch: # TODO Move this into it's own function and test it
+    if insert_batch:  # TODO Move this into it's own function and test it
         try:
             cursor.begin()
             # Insert error record into database
@@ -72,8 +78,8 @@ def save_validation_errors(
 
     # return error_count
     # def _save_validation_errors(
-    #     error_db, 
-    #     errors: list[dict], 
+    #     error_db,
+    #     errors: list[dict],
     #     logger: Logger
     #     ) -> int:
     #     """
@@ -99,12 +105,12 @@ def save_validation_errors(
     #             cursor.execute("""
     #             INSERT INTO error_reports (
     #                 cid,
-    #                 citation_cid, 
-    #                 gnis, 
-    #                 geography_error, 
-    #                 type_error, 
-    #                 section_error, 
-    #                 date_error, 
+    #                 citation_cid,
+    #                 gnis,
+    #                 geography_error,
+    #                 type_error,
+    #                 section_error,
+    #                 date_error,
     #                 format_error,
     #                 severity,
     #                 report_text
