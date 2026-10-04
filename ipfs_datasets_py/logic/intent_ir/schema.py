@@ -8,6 +8,7 @@ separate content-addressed artifacts and are joined through identifiers.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -21,6 +22,82 @@ INTENT_IR_SCHEMA_VERSION = "intent-ir/v1"
 LEGACY_INTENT_IR_SCHEMA_VERSION = "intent-ir/v0.1"
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+# Datasets-owned direct-objective submission identity (DOEP-010).  Parallel to
+# IntentIRDocument: describes one bounded high-level idea without authorizing
+# execution, admitting policy, or completing objectives.
+SUPERVISOR_OBJECTIVE_INTENT_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/supervisor-objective-intent@1"
+)
+SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION = "supervisor-objective-intent/v1"
+SUPERVISOR_OBJECTIVE_INTENT_MAX_IDEA_UTF8_BYTES = 16384
+SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS = 32
+SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS = frozenset(
+    {
+        "authorization",
+        "authorization_decision",
+        "budget_profile",
+        "budgets",
+        "completion_authoritative",
+        "dry_run",
+        "ducklake",
+        "effect_claims",
+        "expected_effects",
+        "fencing_epoch",
+        "fencing_generation",
+        "formal_plan",
+        "goal_cids",
+        "lease_id",
+        "objective_cid",
+        "objective_revision_cid",
+        "partial_order",
+        "plan",
+        "plan_root_cid",
+        "policy",
+        "policy_document",
+        "policy_id",
+        "policy_revision",
+        "quack_mutation",
+        "risk_class",
+        "task_cids",
+        "terminalize",
+    }
+)
+
+# Datasets-owned semantic materialization identity (DOEP-011).  A receipt
+# records the immutable relationship between an accepted direct-objective
+# intent and its semantic objective references.  It is evidence only: the
+# operational service owns admission and execution, while Kit owns durable
+# bytes and CID storage.
+OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/objective-materialization-receipt@1"
+)
+OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION = "objective-materialization-receipt/v1"
+OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS = frozenset(
+    {
+        "authorization",
+        "authorization_decision",
+        "budget_profile",
+        "budgets",
+        "completion_authoritative",
+        "duckdb",
+        "ducklake",
+        "execution_authorization",
+        "fencing_epoch",
+        "fencing_generation",
+        "lease_id",
+        "plan",
+        "plan_root_cid",
+        "policy",
+        "policy_document",
+        "policy_id",
+        "policy_revision",
+        "quack_mutation",
+        "storage_authorization",
+        "task_cids",
+        "terminalize",
+    }
+)
 
 
 class IntentIRValidationError(ValueError):
@@ -675,12 +752,332 @@ def _require_statement_kinds(
         )
 
 
+class SupervisorObjectiveSubmitterKind(str, Enum):
+    """Who submitted the direct high-level objective idea."""
+
+    HUMAN = "human"
+    DELEGATED_AGENT = "delegated_agent"
+
+
+@dataclass(frozen=True, slots=True)
+class SupervisorObjectiveIntent:
+    """Datasets-owned semantic contract for one direct objective submission.
+
+    Parallel to :class:`IntentIRDocument` (skill-corpus IR).  This record binds
+    a caller's bounded high-level idea and opaque identity hints.  It does not
+    authorize execution, supply authoritative policy, open leases, compile
+    plans, or complete objectives.  Accelerate admits and materializes it.
+    """
+
+    intent_id: str
+    idea_text: str
+    idea_sha256: str
+    submitter_kind: SupervisorObjectiveSubmitterKind
+    caller: str
+    repository_id: str = ""
+    board_namespace: str = ""
+    title_hint: str = ""
+    tags: tuple[str, ...] = ()
+    schema_version: str = SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_supervisor_objective_intent(self)
+
+    @property
+    def schema(self) -> str:
+        return SUPERVISOR_OBJECTIVE_INTENT_SCHEMA
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "board_namespace": self.board_namespace,
+            "caller": self.caller,
+            "idea_sha256": self.idea_sha256,
+            "idea_text": self.idea_text,
+            "intent_id": self.intent_id,
+            "repository_id": self.repository_id,
+            "schema": SUPERVISOR_OBJECTIVE_INTENT_SCHEMA,
+            "schema_version": self.schema_version,
+            "submitter_kind": self.submitter_kind.value,
+            "tags": sorted(set(self.tags)),
+            "title_hint": self.title_hint,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "SupervisorObjectiveIntent":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "SupervisorObjectiveIntent mapping must be a mapping"
+            )
+        unknown_forbidden = sorted(
+            key for key in value if key in SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS
+        )
+        if unknown_forbidden:
+            raise IntentIRValidationError(
+                "SupervisorObjectiveIntent forbids authoritative fields: "
+                + ", ".join(unknown_forbidden)
+            )
+        allowed = {
+            "board_namespace",
+            "caller",
+            "idea_sha256",
+            "idea_text",
+            "intent_id",
+            "repository_id",
+            "schema",
+            "schema_version",
+            "submitter_kind",
+            "tags",
+            "title_hint",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "SupervisorObjectiveIntent has unknown fields: " + ", ".join(unknown)
+            )
+        schema = value.get("schema", SUPERVISOR_OBJECTIVE_INTENT_SCHEMA)
+        if schema != SUPERVISOR_OBJECTIVE_INTENT_SCHEMA:
+            raise IntentIRValidationError(
+                f"Unsupported SupervisorObjectiveIntent schema: {schema!r}"
+            )
+        raw_kind = value.get("submitter_kind", "")
+        try:
+            submitter_kind = SupervisorObjectiveSubmitterKind(raw_kind)
+        except ValueError as exc:
+            raise IntentIRValidationError(
+                f"SupervisorObjectiveIntent.submitter_kind is invalid: {raw_kind!r}"
+            ) from exc
+        tags_value = value.get("tags", ())
+        if isinstance(tags_value, str) or not isinstance(tags_value, Iterable):
+            raise IntentIRValidationError(
+                "SupervisorObjectiveIntent.tags must be an iterable of strings"
+            )
+        return cls(
+            intent_id=str(value.get("intent_id") or ""),
+            idea_text=str(value.get("idea_text") or ""),
+            idea_sha256=str(value.get("idea_sha256") or ""),
+            submitter_kind=submitter_kind,
+            caller=str(value.get("caller") or ""),
+            repository_id=str(value.get("repository_id") or ""),
+            board_namespace=str(value.get("board_namespace") or ""),
+            title_hint=str(value.get("title_hint") or ""),
+            tags=tuple(str(item) for item in tags_value),
+            schema_version=str(
+                value.get("schema_version") or SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION
+            ),
+        )
+
+
+def idea_text_sha256(idea_text: str) -> str:
+    """Return the lowercase hex SHA-256 of UTF-8 ``idea_text``."""
+
+    if not isinstance(idea_text, str):
+        raise IntentIRValidationError("idea_text must be a string")
+    return hashlib.sha256(idea_text.encode("utf-8")).hexdigest()
+
+
+def validate_supervisor_objective_intent(
+    intent: SupervisorObjectiveIntent | Mapping[str, Any],
+) -> SupervisorObjectiveIntent:
+    """Validate and return a :class:`SupervisorObjectiveIntent`."""
+
+    if isinstance(intent, Mapping):
+        intent = SupervisorObjectiveIntent.from_dict(intent)
+    if not isinstance(intent, SupervisorObjectiveIntent):
+        raise IntentIRValidationError(
+            "SupervisorObjectiveIntent mappings require from_dict or a typed value"
+        )
+    if intent.schema_version != SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported SupervisorObjectiveIntent schema_version: "
+            f"{intent.schema_version!r}"
+        )
+    _validate_identifier("SupervisorObjectiveIntent.intent_id", intent.intent_id)
+    _validate_non_empty_string("SupervisorObjectiveIntent.idea_text", intent.idea_text)
+    idea_bytes = intent.idea_text.encode("utf-8")
+    if len(idea_bytes) > SUPERVISOR_OBJECTIVE_INTENT_MAX_IDEA_UTF8_BYTES:
+        raise IntentIRValidationError(
+            "SupervisorObjectiveIntent.idea_text exceeds "
+            f"{SUPERVISOR_OBJECTIVE_INTENT_MAX_IDEA_UTF8_BYTES} UTF-8 bytes"
+        )
+    _validate_sha256("SupervisorObjectiveIntent.idea_sha256", intent.idea_sha256)
+    expected_digest = hashlib.sha256(idea_bytes).hexdigest()
+    if intent.idea_sha256 != expected_digest:
+        raise IntentIRValidationError(
+            "SupervisorObjectiveIntent.idea_sha256 does not match idea_text"
+        )
+    _validate_enum(
+        "SupervisorObjectiveIntent.submitter_kind",
+        intent.submitter_kind,
+        SupervisorObjectiveSubmitterKind,
+    )
+    _validate_non_empty_string("SupervisorObjectiveIntent.caller", intent.caller)
+    _validate_string("SupervisorObjectiveIntent.repository_id", intent.repository_id)
+    if intent.repository_id:
+        _validate_identifier(
+            "SupervisorObjectiveIntent.repository_id",
+            intent.repository_id,
+        )
+    _validate_string("SupervisorObjectiveIntent.board_namespace", intent.board_namespace)
+    if intent.board_namespace:
+        _validate_identifier(
+            "SupervisorObjectiveIntent.board_namespace",
+            intent.board_namespace,
+        )
+    _validate_string("SupervisorObjectiveIntent.title_hint", intent.title_hint)
+    _require_tuple("SupervisorObjectiveIntent.tags", intent.tags)
+    _validate_string_items("SupervisorObjectiveIntent.tags", intent.tags)
+    _require_unique(intent.tags, "SupervisorObjectiveIntent.tags member")
+    if len(intent.tags) > SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS:
+        raise IntentIRValidationError(
+            "SupervisorObjectiveIntent.tags exceeds "
+            f"{SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS} members"
+        )
+    return intent
+
+
+@dataclass(frozen=True, slots=True)
+class ObjectiveMaterializationReceipt:
+    """Immutable semantic evidence produced when an objective is materialized.
+
+    The receipt binds the submitted intent's digest to the materialized
+    semantic objective and revision identities.  It neither admits work nor
+    authorizes storage, execution, policy decisions, or task completion.
+    """
+
+    receipt_id: str
+    intent_id: str
+    intent_sha256: str
+    objective_id: str
+    objective_cid: str
+    objective_revision_cid: str
+    schema_version: str = OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_objective_materialization_receipt(self)
+
+    @property
+    def schema(self) -> str:
+        return OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA
+
+    @property
+    def is_completion_authority(self) -> bool:
+        """Receipts are evidence and can never complete an objective."""
+
+        return False
+
+    def to_dict(self) -> dict[str, str]:
+        self.validate()
+        return {
+            "intent_id": self.intent_id,
+            "intent_sha256": self.intent_sha256,
+            "objective_cid": self.objective_cid,
+            "objective_id": self.objective_id,
+            "objective_revision_cid": self.objective_revision_cid,
+            "receipt_id": self.receipt_id,
+            "schema": OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA,
+            "schema_version": self.schema_version,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "ObjectiveMaterializationReceipt":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "ObjectiveMaterializationReceipt mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key
+            for key in value
+            if key in OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "ObjectiveMaterializationReceipt forbids authoritative fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "intent_id",
+            "intent_sha256",
+            "objective_cid",
+            "objective_id",
+            "objective_revision_cid",
+            "receipt_id",
+            "schema",
+            "schema_version",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "ObjectiveMaterializationReceipt has unknown fields: "
+                + ", ".join(unknown)
+            )
+        schema = value.get("schema", OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA)
+        if schema != OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA:
+            raise IntentIRValidationError(
+                "Unsupported ObjectiveMaterializationReceipt schema: "
+                f"{schema!r}"
+            )
+        return cls(
+            receipt_id=str(value.get("receipt_id") or ""),
+            intent_id=str(value.get("intent_id") or ""),
+            intent_sha256=str(value.get("intent_sha256") or ""),
+            objective_id=str(value.get("objective_id") or ""),
+            objective_cid=str(value.get("objective_cid") or ""),
+            objective_revision_cid=str(value.get("objective_revision_cid") or ""),
+            schema_version=str(
+                value.get("schema_version")
+                or OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_objective_materialization_receipt(
+    receipt: ObjectiveMaterializationReceipt | Mapping[str, Any],
+) -> ObjectiveMaterializationReceipt:
+    """Validate and return an :class:`ObjectiveMaterializationReceipt`."""
+
+    if isinstance(receipt, Mapping):
+        receipt = ObjectiveMaterializationReceipt.from_dict(receipt)
+    if not isinstance(receipt, ObjectiveMaterializationReceipt):
+        raise IntentIRValidationError(
+            "ObjectiveMaterializationReceipt mappings require from_dict or a typed value"
+        )
+    if receipt.schema_version != OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported ObjectiveMaterializationReceipt schema_version: "
+            f"{receipt.schema_version!r}"
+        )
+    for name in ("receipt_id", "intent_id", "objective_id"):
+        _validate_identifier(
+            f"ObjectiveMaterializationReceipt.{name}", getattr(receipt, name)
+        )
+    _validate_sha256(
+        "ObjectiveMaterializationReceipt.intent_sha256", receipt.intent_sha256
+    )
+    for name in ("objective_cid", "objective_revision_cid"):
+        _validate_identifier(
+            f"ObjectiveMaterializationReceipt.{name}", getattr(receipt, name)
+        )
+    return receipt
+
+
 __all__ = [
     "CollectionSemantics",
     "INTENT_IR_COLLECTION_SCHEMA",
     "INTENT_IR_SCHEMA_VERSION",
     "INTENT_IR_COLLECTION_SEMANTICS",
     "LEGACY_INTENT_IR_SCHEMA_VERSION",
+    "OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS",
+    "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA",
+    "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION",
+    "SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS",
+    "SUPERVISOR_OBJECTIVE_INTENT_MAX_IDEA_UTF8_BYTES",
+    "SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS",
+    "SUPERVISOR_OBJECTIVE_INTENT_SCHEMA",
+    "SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION",
     "ControlEdgeKind",
     "GroundingKind",
     "IntentAction",
@@ -691,9 +1088,15 @@ __all__ = [
     "IntentModality",
     "IntentStatement",
     "NodeGrounding",
+    "ObjectiveMaterializationReceipt",
     "ReviewStatus",
     "SourceRef",
     "SourceSpan",
     "StatementKind",
+    "SupervisorObjectiveIntent",
+    "SupervisorObjectiveSubmitterKind",
+    "idea_text_sha256",
     "validate_intent_ir",
+    "validate_objective_materialization_receipt",
+    "validate_supervisor_objective_intent",
 ]

@@ -1,0 +1,42 @@
+{
+  "authority": {"canonical_semantic_identity": "ipfs_datasets_py", "exact_bytes_cid_storage": "ipfs_kit_py", "operational_admission": "ipfs_accelerate_py"},
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "candidate_status": "implemented",
+  "changed_paths": ["ipfs_datasets_py/proof_context/context_pack.py", "tests/doep/test_doep_061_implement_datasets_semantic_builder.py", "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-061.json", "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-061.json"],
+  "completion_authoritative": false,
+  "expected_outputs": ["ipfs_datasets_py/proof_context/context_pack.py", "tests/doep/test_doep_061_implement_datasets_semantic_builder.py", "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-061.json", "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-061.json"],
+  "goal_id": "DOEP-G070.S1",
+  "no_competing_subsystem_created": true,
+  "outputs_present": {"artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-061.json": true, "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-061.json": true, "ipfs_datasets_py/proof_context/context_pack.py": true, "tests/doep/test_doep_061_implement_datasets_semantic_builder.py": true},
+  "parent_goal_id": "DOEP-G070",
+  "path_digests": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-061.json": "sha256:f90744566bab8295f38c48c69a53c1288ccbb82d17346c27ae2d12070447ec56",
+    "ipfs_datasets_py/proof_context/context_pack.py": "sha256:7fccd864a946e08acc31f119d9126795528675bd57ae2b40cae2c19b91dc84d6",
+    "tests/doep/test_doep_061_implement_datasets_semantic_builder.py": "sha256:f01a6355954cf56cf991df3c1be5ce4e9e95ca43014540233dbd5ced1da9640f"
+  },
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "plan_revision": "DOEP-PLAN-V5",
+  "required_evidence": {
+    "changed_path_digest": "sha256:3a9313bb16fffcea46707283621bc802d1bb4c299011896e5e6fc5c35326c2e1",
+    "limitations": ["Candidate receipt only; independent fenced supervisor admission is required.", "The facade delegates canonical semantic identity and sufficiency evaluation to build_context_pack; it owns neither durable bytes nor operational admission.", "Worker or model assertion alone is insufficient for task completion."],
+    "receipt_cid": {"reason": "ipfs CLI absent from sealed validation PATH; SHA-256 is not substituted for a CID.", "status": "unavailable"},
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {"commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f", "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"},
+      "ipfs_datasets_py": {"commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7", "tree": "456e09b51d6a07a3a5873436df24054768195320"},
+      "ipfs_kit_py": {"commit": "b6c65ba732733d7e33852713ba18aa3b12235668", "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"},
+      "lift_coding": {"commit": "bb8869ed72eb7002434345d9969efee729c4f7f6", "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"}
+    },
+    "test_proof_results": {"proof_reason": "Semantic construction is deterministically exercised by pytest; no formal prover is selected.", "proof_selection": "verified_empty", "validation_command": ["python3", "-m", "pytest", "tests/doep/test_doep_061_implement_datasets_semantic_builder.py", "-q"]},
+    "verifier_admission": "pending_independent_fenced_supervisor"
+  },
+  "root_goal_id": "DOEP-G000",
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "supervisor_acceptance": {"completion_authoritative": false, "state": "pending_independent_fenced_supervisor"},
+  "task_cid": "sha256:f0068c1d1b2edf69d97ca0b4611019bed1b87b2c3fc0fff697d797f7c92152b8",
+  "task_id": "DOEP-061",
+  "title": "Implement Datasets semantic builder",
+  "validation": {"commands": [{"argv": ["python3", "-m", "pytest", "tests/doep/test_doep_061_implement_datasets_semantic_builder.py", "-q"], "cwd": "external/ipfs_datasets", "status": "candidate_local"}]},
+  "worker_completion_insufficient": true,
+  "write_scope": ["ipfs_datasets_py/proof_context/context_pack.py", "tests/doep/test_doep_061_implement_datasets_semantic_builder.py", "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-061.json", "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-061.json"]
+}
