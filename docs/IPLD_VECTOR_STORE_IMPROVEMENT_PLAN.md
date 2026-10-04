@@ -139,20 +139,24 @@ async def export_to_ipld(self, collection_name: Optional[str] = None) -> str:
     """Export collection to IPLD format, return root CID."""
     pass
 
+
 @abstractmethod
 async def import_from_ipld(self, root_cid: str, collection_name: Optional[str] = None) -> bool:
     """Import collection from IPLD CID."""
     pass
+
 
 @abstractmethod
 async def export_to_car(self, output_path: str, collection_name: Optional[str] = None) -> bool:
     """Export collection to CAR file."""
     pass
 
+
 @abstractmethod
 async def import_from_car(self, car_path: str, collection_name: Optional[str] = None) -> bool:
     """Import collection from CAR file."""
     pass
+
 
 @abstractmethod
 async def get_store_info(self) -> Dict[str, Any]:
@@ -168,21 +172,22 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from ..ml.embeddings.schema import VectorStoreConfig
 
+
 @dataclass
 class UnifiedVectorStoreConfig(VectorStoreConfig):
     """Enhanced config with router integration."""
-    
+
     # Router settings
     use_embeddings_router: bool = True
     use_ipfs_router: bool = True
     embeddings_router_provider: Optional[str] = None
     ipfs_router_backend: Optional[str] = None
-    
+
     # IPLD settings
     enable_ipld_export: bool = True
     auto_pin_to_ipfs: bool = False
     car_export_dir: Optional[str] = None
-    
+
     # Cross-store settings
     enable_multi_store_sync: bool = False
     sync_stores: Optional[List[str]] = None
@@ -242,29 +247,30 @@ IPLDVectorStore
 ```python
 class RouterIntegration:
     """Helper class for router integration."""
-    
+
     def __init__(self, config: UnifiedVectorStoreConfig):
         self.config = config
         self.embeddings_router = None
         self.ipfs_router = None
-        
+
     async def get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings using embeddings_router."""
         if not self.config.use_embeddings_router:
             raise ValueError("Embeddings router not enabled")
-        
+
         from ..embeddings_router import generate_embeddings
+
         return await generate_embeddings(
-            texts=texts,
-            provider=self.config.embeddings_router_provider
+            texts=texts, provider=self.config.embeddings_router_provider
         )
-    
+
     async def store_to_ipfs(self, data: bytes) -> str:
         """Store data to IPFS using ipfs_backend_router."""
         if not self.config.use_ipfs_router:
             raise ValueError("IPFS router not enabled")
-            
+
         from ..ipfs_backend_router import ipfs_add
+
         return await ipfs_add(data, pin=self.config.auto_pin_to_ipfs)
 ```
 
@@ -290,53 +296,51 @@ from typing import List, Optional, AsyncIterator
 from ..base import BaseVectorStore
 from ...ml.embeddings.schema import EmbeddingResult
 
+
 class VectorStoreBridge(ABC):
     """Base class for vector store bridges."""
-    
+
     def __init__(self, source_store: BaseVectorStore, target_store: BaseVectorStore):
         self.source_store = source_store
         self.target_store = target_store
-    
+
     @abstractmethod
     async def export_collection(
-        self, 
-        collection_name: str,
-        batch_size: int = 1000
+        self, collection_name: str, batch_size: int = 1000
     ) -> AsyncIterator[List[EmbeddingResult]]:
         """Stream embeddings from source store."""
         pass
-    
+
     @abstractmethod
     async def import_collection(
         self,
         embeddings: AsyncIterator[List[EmbeddingResult]],
         collection_name: str,
-        batch_size: int = 1000
+        batch_size: int = 1000,
     ) -> int:
         """Import embeddings to target store."""
         pass
-    
+
     async def migrate_collection(
         self,
         collection_name: str,
         target_collection_name: Optional[str] = None,
-        batch_size: int = 1000
+        batch_size: int = 1000,
     ) -> int:
         """Full collection migration."""
         target_name = target_collection_name or collection_name
-        
+
         # Create target collection
         await self.target_store.create_collection(
-            collection_name=target_name,
-            dimension=self.source_store.dimension
+            collection_name=target_name, dimension=self.source_store.dimension
         )
-        
+
         # Stream and import
         count = 0
         async for batch in self.export_collection(collection_name, batch_size):
             await self.target_store.add_embeddings(batch, target_name)
             count += len(batch)
-        
+
         return count
 ```
 
@@ -367,7 +371,7 @@ def create_bridge(
     source_type: VectorStoreType,
     target_type: VectorStoreType,
     source_store: BaseVectorStore,
-    target_store: BaseVectorStore
+    target_store: BaseVectorStore,
 ) -> VectorStoreBridge:
     """Factory for creating appropriate bridge."""
     bridge_map = {
@@ -375,11 +379,11 @@ def create_bridge(
         (VectorStoreType.IPLD, VectorStoreType.FAISS): IPLDToFAISSBridge,
         # ... more mappings
     }
-    
+
     bridge_class = bridge_map.get((source_type, target_type))
     if not bridge_class:
         raise ValueError(f"No bridge for {source_type} -> {target_type}")
-    
+
     return bridge_class(source_store, target_store)
 ```
 
@@ -393,35 +397,29 @@ def create_bridge(
 ```python
 class VectorStoreManager:
     """Unified manager for all vector stores."""
-    
+
     def __init__(self, config: UnifiedVectorStoreConfig):
         self.config = config
         self.stores: Dict[str, BaseVectorStore] = {}
         self.bridges: Dict[Tuple[str, str], VectorStoreBridge] = {}
-        
+
     async def get_store(self, store_type: VectorStoreType) -> BaseVectorStore:
         """Get or create vector store instance."""
         if store_type not in self.stores:
             self.stores[store_type] = self._create_store(store_type)
         return self.stores[store_type]
-    
+
     async def migrate(
-        self,
-        source_type: VectorStoreType,
-        target_type: VectorStoreType,
-        collection_name: str
+        self, source_type: VectorStoreType, target_type: VectorStoreType, collection_name: str
     ) -> int:
         """Migrate collection between stores."""
         source = await self.get_store(source_type)
         target = await self.get_store(target_type)
         bridge = create_bridge(source_type, target_type, source, target)
         return await bridge.migrate_collection(collection_name)
-    
+
     async def search_all(
-        self,
-        query_vector: List[float],
-        stores: List[VectorStoreType],
-        top_k: int = 10
+        self, query_vector: List[float], stores: List[VectorStoreType], top_k: int = 10
     ) -> Dict[VectorStoreType, List[SearchResult]]:
         """Search across multiple stores."""
         results = {}
@@ -437,12 +435,13 @@ class VectorStoreManager:
 ```python
 # Simple API for common operations
 
+
 async def create_ipld_vector_store(
     collection_name: str,
     dimension: int = 768,
     metric: str = "cosine",
     use_embeddings_router: bool = True,
-    use_ipfs_router: bool = True
+    use_ipfs_router: bool = True,
 ) -> IPLDVectorStore:
     """Create IPLD vector store with defaults."""
     config = UnifiedVectorStoreConfig(
@@ -450,14 +449,13 @@ async def create_ipld_vector_store(
         dimension=dimension,
         distance_metric=metric,
         use_embeddings_router=use_embeddings_router,
-        use_ipfs_router=use_ipfs_router
+        use_ipfs_router=use_ipfs_router,
     )
     return IPLDVectorStore(config)
 
+
 async def migrate_store(
-    source_store: BaseVectorStore,
-    target_store: BaseVectorStore,
-    collection_name: str
+    source_store: BaseVectorStore, target_store: BaseVectorStore, collection_name: str
 ) -> int:
     """Migrate collection between stores."""
     # Detect store types and use appropriate bridge
@@ -477,18 +475,18 @@ async def generate_and_store_embeddings(
     texts: List[str],
     vector_store: Optional[BaseVectorStore] = None,
     collection_name: Optional[str] = None,
-    provider: Optional[str] = None
+    provider: Optional[str] = None,
 ) -> List[str]:
     """Generate embeddings and store in vector store."""
     embeddings = await generate_embeddings(texts, provider)
-    
+
     if vector_store:
         embedding_results = [
             EmbeddingResult(text=text, vector=vector, metadata={})
             for text, vector in zip(texts, embeddings)
         ]
         return await vector_store.add_embeddings(embedding_results, collection_name)
-    
+
     return embeddings
 ```
 
@@ -497,19 +495,15 @@ async def generate_and_store_embeddings(
 
 Add vector store helpers:
 ```python
-async def store_vector_collection_to_ipfs(
-    collection_data: Dict[str, Any],
-    pin: bool = True
-) -> str:
+async def store_vector_collection_to_ipfs(collection_data: Dict[str, Any], pin: bool = True) -> str:
     """Store entire vector collection to IPFS."""
     # Serialize collection
     # Store to IPFS
     # Return root CID
     pass
 
-async def load_vector_collection_from_ipfs(
-    root_cid: str
-) -> Dict[str, Any]:
+
+async def load_vector_collection_from_ipfs(root_cid: str) -> Dict[str, Any]:
     """Load vector collection from IPFS."""
     # Fetch from IPFS
     # Deserialize
@@ -522,8 +516,7 @@ async def load_vector_collection_from_ipfs(
 
 ```python
 def create_router_aware_store(
-    store_type: VectorStoreType,
-    config: UnifiedVectorStoreConfig
+    store_type: VectorStoreType, config: UnifiedVectorStoreConfig
 ) -> BaseVectorStore:
     """Create vector store with router integration."""
     # Initialize store
@@ -638,16 +631,16 @@ from .bridges import create_bridge
 from .config import UnifiedVectorStoreConfig
 
 __all__ = [
-    'BaseVectorStore',
-    'IPLDVectorStore',
-    'FAISSVectorStore',
-    'QdrantVectorStore',
-    'ElasticsearchVectorStore',
-    'VectorStoreManager',
-    'create_ipld_vector_store',
-    'migrate_store',
-    'create_bridge',
-    'UnifiedVectorStoreConfig',
+    "BaseVectorStore",
+    "IPLDVectorStore",
+    "FAISSVectorStore",
+    "QdrantVectorStore",
+    "ElasticsearchVectorStore",
+    "VectorStoreManager",
+    "create_ipld_vector_store",
+    "migrate_store",
+    "create_bridge",
+    "UnifiedVectorStoreConfig",
 ]
 ```
 
@@ -821,10 +814,7 @@ ipfs_datasets_py/vector_stores/
 from ipfs_datasets_py.vector_stores import create_ipld_vector_store
 
 store = await create_ipld_vector_store(
-    collection_name="documents",
-    dimension=768,
-    use_embeddings_router=True,
-    use_ipfs_router=True
+    collection_name="documents", dimension=768, use_embeddings_router=True, use_ipfs_router=True
 )
 
 # Add vectors (embeddings generated automatically)
@@ -832,11 +822,7 @@ texts = ["Hello world", "IPFS is great"]
 ids = await store.add_texts(texts, collection_name="documents")
 
 # Search
-results = await store.search_by_text(
-    "greeting message",
-    top_k=5,
-    collection_name="documents"
-)
+results = await store.search_by_text("greeting message", top_k=5, collection_name="documents")
 
 # Export to IPFS
 root_cid = await store.export_to_ipld("documents")

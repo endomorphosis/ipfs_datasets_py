@@ -56,16 +56,10 @@ from ipfs_datasets_py.optimizers.agentic import OptimizerLLMRouter
 router = OptimizerLLMRouter(enable_caching=True)
 
 # First call - cache miss, hits API
-response1 = router.generate(
-    prompt="optimize this function",
-    method=OptimizationMethod.TEST_DRIVEN
-)
+response1 = router.generate(prompt="optimize this function", method=OptimizationMethod.TEST_DRIVEN)
 
 # Second call - cache hit, no API call
-response2 = router.generate(
-    prompt="optimize this function", 
-    method=OptimizationMethod.TEST_DRIVEN
-)
+response2 = router.generate(prompt="optimize this function", method=OptimizationMethod.TEST_DRIVEN)
 # Returns instantly from cache
 
 # View performance
@@ -131,23 +125,15 @@ After warmup, typical optimization workflow:
 ### Usage Example
 
 ```python
-from ipfs_datasets_py.optimizers.agentic import (
-    OptimizationValidator,
-    ValidationLevel
-)
+from ipfs_datasets_py.optimizers.agentic import OptimizationValidator, ValidationLevel
 
 # Create validator with enhanced parallel (default)
 validator = OptimizationValidator(
-    level=ValidationLevel.STANDARD,
-    use_enhanced_parallel=True,
-    max_workers=4
+    level=ValidationLevel.STANDARD, use_enhanced_parallel=True, max_workers=4
 )
 
 # Validate code (40-60% faster)
-result = await validator.validate(
-    code=optimized_code,
-    target_files=[Path("module.py")]
-)
+result = await validator.validate(code=optimized_code, target_files=[Path("module.py")])
 
 print(f"Validation passed: {result.passed}")
 print(f"Execution time: {result.execution_time:.2f}s")
@@ -155,8 +141,7 @@ print(f"Validators run: {len(validator.validators)}")
 
 # Standard mode for comparison
 validator_standard = OptimizationValidator(
-    level=ValidationLevel.STANDARD,
-    use_enhanced_parallel=False
+    level=ValidationLevel.STANDARD, use_enhanced_parallel=False
 )
 # ~40-60% slower
 ```

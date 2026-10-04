@@ -13,7 +13,7 @@ from .deontic_parser import extract_normative_elements, build_deontic_formula, i
 
 __all__ = [
     "extract_predicates",
-    "normalize_predicate", 
+    "normalize_predicate",
     "format_fol",
     "format_deontic",
     "format_output",
@@ -22,5 +22,5 @@ __all__ = [
     "validate_fol_syntax",
     "extract_normative_elements",
     "build_deontic_formula",
-    "identify_obligations"
+    "identify_obligations",
 ]

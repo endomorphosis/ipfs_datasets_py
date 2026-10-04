@@ -130,9 +130,9 @@ class ExpansionRule(ABC):
 Added to public API:
 ```python
 # Expansion Rules (Phase 1 refactoring)
-"ExpansionContext",
-"ExpansionResult",
-"ExpansionRule",
+("ExpansionContext",)
+("ExpansionResult",)
+("ExpansionRule",)
 ```
 
 #### 4.2 Backward Compatibility

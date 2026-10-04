@@ -16,7 +16,7 @@ from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
 
 class TestDirectConflicts:
     """Test direct conflicts between obligations and prohibitions."""
-    
+
     def test_obligation_prohibition_conflict(self):
         """
         GIVEN: An obligation and prohibition for the same action
@@ -31,7 +31,7 @@ class TestDirectConflicts:
                 "subject": "citizens",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
+                "exceptions": [],
             },
             {
                 "norm_type": "prohibition",
@@ -40,17 +40,17 @@ class TestDirectConflicts:
                 "subject": "citizens",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
-            }
+                "exceptions": [],
+            },
         ]
-        
+
         conflicts = detect_normative_conflicts(elements)
-        
+
         assert len(conflicts) == 1
         assert conflicts[0]["type"] == "direct_conflict"
         assert conflicts[0]["severity"] == "high"
         assert "lex_superior" in conflicts[0]["resolution_strategies"]
-    
+
     def test_no_conflict_different_actions(self):
         """
         GIVEN: An obligation and prohibition for different actions
@@ -64,7 +64,7 @@ class TestDirectConflicts:
                 "subject": "citizens",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
+                "exceptions": [],
             },
             {
                 "norm_type": "prohibition",
@@ -72,18 +72,18 @@ class TestDirectConflicts:
                 "subject": "citizens",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
-            }
+                "exceptions": [],
+            },
         ]
-        
+
         conflicts = detect_normative_conflicts(elements)
-        
+
         assert len(conflicts) == 0
 
 
 class TestPermissionConflicts:
     """Test conflicts between permissions and prohibitions."""
-    
+
     def test_permission_prohibition_conflict(self):
         """
         GIVEN: A permission and prohibition for the same action
@@ -98,7 +98,7 @@ class TestPermissionConflicts:
                 "subject": "visitors",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
+                "exceptions": [],
             },
             {
                 "norm_type": "prohibition",
@@ -107,12 +107,12 @@ class TestPermissionConflicts:
                 "subject": "visitors",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
-            }
+                "exceptions": [],
+            },
         ]
-        
+
         conflicts = detect_normative_conflicts(elements)
-        
+
         assert len(conflicts) == 1
         assert conflicts[0]["type"] == "permission_conflict"
         assert conflicts[0]["severity"] == "medium"
@@ -120,7 +120,7 @@ class TestPermissionConflicts:
 
 class TestTemporalConflicts:
     """Test conflicts with temporal constraints."""
-    
+
     def test_temporal_obligation_prohibition_conflict(self):
         """
         GIVEN: An obligation and prohibition with overlapping time periods
@@ -134,7 +134,7 @@ class TestTemporalConflicts:
                 "subject": "employees",
                 "conditions": [],
                 "temporal_constraints": ["by March 15"],
-                "exceptions": []
+                "exceptions": [],
             },
             {
                 "norm_type": "prohibition",
@@ -142,12 +142,12 @@ class TestTemporalConflicts:
                 "subject": "employees",
                 "conditions": [],
                 "temporal_constraints": ["during March"],
-                "exceptions": []
-            }
+                "exceptions": [],
+            },
         ]
-        
+
         conflicts = detect_normative_conflicts(elements)
-        
+
         assert len(conflicts) == 1
         assert conflicts[0]["type"] == "temporal_conflict"
         assert conflicts[0]["severity"] == "medium"
@@ -155,7 +155,7 @@ class TestTemporalConflicts:
 
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
-    
+
     def test_empty_elements_list(self):
         """
         GIVEN: An empty list of normative elements
@@ -165,7 +165,7 @@ class TestEdgeCases:
         elements = []
         conflicts = detect_normative_conflicts(elements)
         assert len(conflicts) == 0
-    
+
     def test_missing_action_field(self):
         """
         GIVEN: Normative elements with missing action fields
@@ -178,15 +178,15 @@ class TestEdgeCases:
                 "subject": "citizens",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
+                "exceptions": [],
             },
             {
                 "norm_type": "prohibition",
                 "subject": "citizens",
                 "conditions": [],
                 "temporal_constraints": [],
-                "exceptions": []
-            }
+                "exceptions": [],
+            },
         ]
         conflicts = detect_normative_conflicts(elements)
         assert len(conflicts) == 0

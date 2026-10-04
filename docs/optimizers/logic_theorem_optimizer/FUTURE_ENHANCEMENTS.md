@@ -38,7 +38,8 @@ This document tracks the implementation of future enhancements for the Logic The
 **Usage Example**:
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    NeuralSymbolicHybridProver, HybridStrategy
+    NeuralSymbolicHybridProver,
+    HybridStrategy,
 )
 
 prover = NeuralSymbolicHybridProver(strategy=HybridStrategy.PARALLEL)
@@ -82,7 +83,8 @@ print(f"Valid: {result.is_valid}, Confidence: {result.confidence:.2f}")
 **Usage Example**:
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    PromptOptimizer, OptimizationStrategy
+    PromptOptimizer,
+    OptimizationStrategy,
 )
 
 optimizer = PromptOptimizer(strategy=OptimizationStrategy.MULTI_ARMED_BANDIT)
@@ -90,8 +92,9 @@ optimizer.add_baseline_prompt("Extract logic: {data}")
 optimizer.add_prompt("Analyze {data} and extract {formalism} logic")
 
 # Record usage
-optimizer.record_usage("prompt1", success=True, confidence=0.9, 
-                       critic_score=0.85, extraction_time=1.5)
+optimizer.record_usage(
+    "prompt1", success=True, confidence=0.9, critic_score=0.85, extraction_time=1.5
+)
 
 # Get best prompt
 best = optimizer.get_best_prompt(domain="legal")
@@ -137,15 +140,11 @@ print(f"Improvement: {result.improvement_over_baseline:.2f}")
 
 **Usage Example**:
 ```python
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    OntologyEvolution, UpdateStrategy
-)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import OntologyEvolution, UpdateStrategy
 
 # Initialize with moderate strategy
 evolution = OntologyEvolution(
-    base_ontology=ontology,
-    strategy=UpdateStrategy.MODERATE,
-    enable_versioning=True
+    base_ontology=ontology, strategy=UpdateStrategy.MODERATE, enable_versioning=True
 )
 
 # Learn from new statements
@@ -205,27 +204,20 @@ evolution.export_ontology("ontology_v2.json")
 
 **Usage Example**:
 ```python
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    DistributedProcessor
-)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import DistributedProcessor
 
 # Initialize with 4 workers
-processor = DistributedProcessor(
-    num_workers=4,
-    max_retries=3,
-    enable_fault_tolerance=True
-)
+processor = DistributedProcessor(num_workers=4, max_retries=3, enable_fault_tolerance=True)
+
 
 # Define processing function
 def process_item(data):
     # Your logic extraction/optimization here
     return extract_logic(data)
 
+
 # Process distributed
-result = processor.process_distributed(
-    tasks=data_samples,
-    process_func=process_item
-)
+result = processor.process_distributed(tasks=data_samples, process_func=process_item)
 
 print(f"Completed: {result.completed_tasks}/{result.total_tasks}")
 print(f"Failed: {result.failed_tasks}")

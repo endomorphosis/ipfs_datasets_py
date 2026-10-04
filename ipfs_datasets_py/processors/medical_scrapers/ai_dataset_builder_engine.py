@@ -35,6 +35,7 @@ except ImportError:
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DatasetMetrics:
     """Metrics for evaluating dataset quality."""
@@ -63,6 +64,7 @@ class SyntheticDataConfig:
 # ---------------------------------------------------------------------------
 # AI Dataset Builder class
 # ---------------------------------------------------------------------------
+
 
 class AIDatasetBuilder:
     """AI-powered dataset builder using HuggingFace models via ipfs_accelerate_py.
@@ -226,12 +228,14 @@ class AIDatasetBuilder:
                     temperature=config.temperature,
                     top_p=config.top_p,
                 )
-                synthetic_samples.append({
-                    "id": f"synthetic_{i + 1}",
-                    "content": text,
-                    "template_id": template.get("pmid") or template.get("nct_id"),
-                    "generated_at": datetime.now().isoformat(),
-                })
+                synthetic_samples.append(
+                    {
+                        "id": f"synthetic_{i + 1}",
+                        "content": text,
+                        "template_id": template.get("pmid") or template.get("nct_id"),
+                        "generated_at": datetime.now().isoformat(),
+                    }
+                )
             except Exception as exc:
                 self.logger.error("Synthetic generation failed for sample %d: %s", i, exc)
 
@@ -289,7 +293,11 @@ class AIDatasetBuilder:
         )
         try:
             result = self.model.generate(prompt, max_length=500, temperature=0.5)
-            return {"ai_analysis": result, "model_used": self.model_name, "sample_size": sample_size}
+            return {
+                "ai_analysis": result,
+                "model_used": self.model_name,
+                "sample_size": sample_size,
+            }
         except Exception as exc:
             self.logger.error("AI analysis failed: %s", exc)
             return {"error": str(exc), "fallback": "AI analysis unavailable"}
@@ -297,9 +305,7 @@ class AIDatasetBuilder:
     def _basic_analyze_patterns(self, dataset: List[Dict[str, Any]]) -> Dict[str, Any]:
         from collections import Counter
 
-        all_text = " ".join(
-            self._extract_text_for_analysis(item) for item in dataset[:100]
-        )
+        all_text = " ".join(self._extract_text_for_analysis(item) for item in dataset[:100])
         words = all_text.lower().split()
         common_words = Counter(words).most_common(20)
         return {
@@ -315,9 +321,16 @@ class AIDatasetBuilder:
             text = self._extract_text_for_analysis(item)
             record_id = item.get("pmid") or item.get("nct_id")
             if self.use_accelerate and self.model:
-                prompt = f"Summarise the following medical research in 2-3 sentences:\n\n{text[:1000]}"
+                prompt = (
+                    f"Summarise the following medical research in 2-3 sentences:\n\n{text[:1000]}"
+                )
                 try:
-                    summaries.append({"original_id": record_id, "summary": self.model.generate(prompt, max_length=150, temperature=0.3)})
+                    summaries.append(
+                        {
+                            "original_id": record_id,
+                            "summary": self.model.generate(prompt, max_length=150, temperature=0.3),
+                        }
+                    )
                 except Exception as exc:
                     self.logger.warning("Summarisation failed: %s", exc)
                     summaries.append({"original_id": record_id, "summary": text[:200] + "..."})
@@ -338,11 +351,23 @@ class AIDatasetBuilder:
                     "List Conditions, Treatments, Outcomes, Measurements as JSON."
                 )
                 try:
-                    entities.append({"record_id": record_id, "entities": self.model.generate(prompt, max_length=300, temperature=0.2)})
+                    entities.append(
+                        {
+                            "record_id": record_id,
+                            "entities": self.model.generate(
+                                prompt, max_length=300, temperature=0.2
+                            ),
+                        }
+                    )
                 except Exception as exc:
                     self.logger.warning("Entity extraction failed: %s", exc)
             else:
-                entities.append({"record_id": record_id, "entities": {"conditions": [], "treatments": [], "outcomes": []}})
+                entities.append(
+                    {
+                        "record_id": record_id,
+                        "entities": {"conditions": [], "treatments": [], "outcomes": []},
+                    }
+                )
         return {"success": True, "extracted_entities": entities, "count": len(entities)}
 
     def _normalize_dataset(
@@ -368,13 +393,20 @@ class AIDatasetBuilder:
             {
                 "id": f"synthetic_{i + 1}",
                 "content": f"[Mock] Variation of: {template_data[i % len(template_data)].get('title', 'Unknown')}",
-                "template_id": template_data[i % len(template_data)].get("pmid") or template_data[i % len(template_data)].get("nct_id"),
+                "template_id": template_data[i % len(template_data)].get("pmid")
+                or template_data[i % len(template_data)].get("nct_id"),
                 "generated_at": datetime.now().isoformat(),
                 "note": "Mock data — ipfs_accelerate_py not available",
             }
             for i in range(min(config.num_samples, 5))
         ]
-        return {"success": True, "synthetic_data": samples, "count": len(samples), "config": config.__dict__, "mock": True}
+        return {
+            "success": True,
+            "synthetic_data": samples,
+            "count": len(samples),
+            "config": config.__dict__,
+            "mock": True,
+        }
 
     def _create_synthetic_generation_prompt(self, template: Dict[str, Any]) -> str:
         title = template.get("title", "")
@@ -386,13 +418,9 @@ class AIDatasetBuilder:
         )
 
     def _extract_text_for_analysis(self, item: Dict[str, Any]) -> str:
-        return " ".join(
-            item[k] for k in ("title", "abstract", "summary") if k in item and item[k]
-        )
+        return " ".join(item[k] for k in ("title", "abstract", "summary") if k in item and item[k])
 
-    def _create_assessment_prompt(
-        self, text: str, criteria: Optional[Dict[str, Any]]
-    ) -> str:
+    def _create_assessment_prompt(self, text: str, criteria: Optional[Dict[str, Any]]) -> str:
         criteria_str = json.dumps(criteria) if criteria else "general quality and relevance"
         return (
             f"Assess the following medical research text for: {criteria_str}\n\n"
@@ -410,7 +438,8 @@ class AIDatasetBuilder:
         ids = [item.get("pmid") or item.get("nct_id") for item in dataset]
         unique = len(set(filter(None, ids)))
         complete = sum(
-            1 for item in dataset
+            1
+            for item in dataset
             if item.get("title") and (item.get("abstract") or item.get("summary"))
         )
         completeness = complete / total if total > 0 else 0.0

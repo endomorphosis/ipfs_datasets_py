@@ -44,14 +44,15 @@ Profiled `optimize_query()` method showed:
 def optimize_query(self, query, priority="normal"):
     # ... existing code ...
     caching_key = hashlib.sha256(...).hexdigest()  # EXPENSIVE - 38% of time
-    
+
+
 # AFTER (integrated fast-path):
 def optimize_query(self, query, priority="normal"):
     # Fast-path for cached queries
     query_sig = self._get_query_signature(query)  # O(1) dict lookup
     if query_sig in self._fingerprint_cache:
         return self._cached_result.get(query_sig)
-    
+
     # ... existing code ...
     caching_key = self._fingerprint_cache[query_sig]
 ```
@@ -143,12 +144,13 @@ if caching["enabled"]:
     except (TypeError, ValueError):
         pass
 
+
 def _get_cached_fingerprint(self, query):
     # Create lightweight signature (O(1))
     sig = self._create_fingerprint_signature(query)
     if sig in self._fingerprint_cache:
         return self._fingerprint_cache[sig]
-    
+
     # Compute fingerprint (cache for next time)
     fingerprint = self._compute_fingerprint_fast(query, sig)
     if len(self._fingerprint_cache) < self._cache_config["max_fingerprints"]:

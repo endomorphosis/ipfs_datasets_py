@@ -23,7 +23,7 @@ Usage:
         is_accelerate_available,
         get_compute_backend
     )
-    
+
     # Check if accelerate is available and enabled
     if is_accelerate_available():
         manager = AccelerateManager()
@@ -45,14 +45,14 @@ __version__ = "0.1.0"
 logger = logging.getLogger(__name__)
 
 # Check if accelerate should be enabled (default: enabled)
-_ACCELERATE_ENABLED_ENV = os.environ.get('IPFS_ACCELERATE_ENABLED', '1').lower()
-_ACCELERATE_DISABLED = _ACCELERATE_ENABLED_ENV in ('0', 'false', 'no', 'disabled')
+_ACCELERATE_ENABLED_ENV = os.environ.get("IPFS_ACCELERATE_ENABLED", "1").lower()
+_ACCELERATE_DISABLED = _ACCELERATE_ENABLED_ENV in ("0", "false", "no", "disabled")
 
 
 def is_accelerate_available() -> bool:
     """
     Check if ipfs_accelerate_py is available and enabled.
-    
+
     Returns:
         bool: True if accelerate is available and not disabled, False otherwise
     """
@@ -65,14 +65,14 @@ def is_accelerate_available() -> bool:
 def get_accelerate_status() -> Dict[str, Any]:
     """
     Get detailed status of ipfs_accelerate_py integration.
-    
+
     Returns:
         dict: Status information including availability, enabled state, and any errors
     """
     # Re-read the environment at call time so status reporting reflects
     # runtime configuration changes (e.g., tests using monkeypatch.setenv).
-    env_value = os.environ.get('IPFS_ACCELERATE_ENABLED', '1').lower()
-    env_disabled = env_value in ('0', 'false', 'no', 'disabled')
+    env_value = os.environ.get("IPFS_ACCELERATE_ENABLED", "1").lower()
+    env_disabled = env_value in ("0", "false", "no", "disabled")
 
     backend_available = False
     backend_import_error = None
@@ -148,7 +148,9 @@ def __getattr__(name: str):
             return None
         try:
             mod = importlib.import_module(f"{__name__}.distributed_coordinator")
-            globals()["DistributedComputeCoordinator"] = getattr(mod, "DistributedComputeCoordinator", None)
+            globals()["DistributedComputeCoordinator"] = getattr(
+                mod, "DistributedComputeCoordinator", None
+            )
             return globals()[name]
         except Exception as e:
             logger.debug(f"Failed to lazy-import distributed coordinator: {e}")
@@ -179,20 +181,17 @@ def __getattr__(name: str):
 
 __all__ = [
     # Status functions
-    'is_accelerate_available',
-    'get_accelerate_status',
-    
+    "is_accelerate_available",
+    "get_accelerate_status",
     # Core components (may be None if not available)
-    'AccelerateManager',
-    'ComputeBackend',
-    'get_compute_backend',
-    'DistributedComputeCoordinator',
-
+    "AccelerateManager",
+    "ComputeBackend",
+    "get_compute_backend",
+    "DistributedComputeCoordinator",
     # Task delegation helpers
-    'TaskQueue',
-    'QueuedTask',
-    'run_worker',
-    
+    "TaskQueue",
+    "QueuedTask",
+    "run_worker",
     # Status flags
-    'HAVE_ACCELERATE_MANAGER',
+    "HAVE_ACCELERATE_MANAGER",
 ]

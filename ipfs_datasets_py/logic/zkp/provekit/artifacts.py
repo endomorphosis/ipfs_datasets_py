@@ -35,7 +35,9 @@ class ProveKitKeyPair:
     verifier_key_path: str
 
     @classmethod
-    def from_paths(cls, prover_key_path: str | Path, verifier_key_path: str | Path) -> "ProveKitKeyPair":
+    def from_paths(
+        cls, prover_key_path: str | Path, verifier_key_path: str | Path
+    ) -> "ProveKitKeyPair":
         return cls(
             prover_key_path=str(Path(prover_key_path).resolve()),
             verifier_key_path=str(Path(verifier_key_path).resolve()),
@@ -294,8 +296,7 @@ def save_provekit_artifact_manifest(
     out_path = Path(path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
-        json.dumps(manifest.to_dict(), ensure_ascii=True, indent=2, sort_keys=True)
-        + "\n",
+        json.dumps(manifest.to_dict(), ensure_ascii=True, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return out_path
@@ -377,4 +378,3 @@ __all__ = [
     "sha256_directory",
     "sha256_file",
 ]
-

@@ -79,8 +79,7 @@ searcher = LegalWebArchiveSearch()
 
 # Search with archives included
 results = searcher.unified_search(
-    "EPA water pollution regulations California",
-    include_archives=True
+    "EPA water pollution regulations California", include_archives=True
 )
 
 print(f"Current results: {len(results['current_results'])}")
@@ -92,19 +91,16 @@ print(f"Total combined: {len(results['combined_results'])}")
 
 ```python
 # Enable auto-archiving of results
-searcher = LegalWebArchiveSearch(
-    archive_dir="/path/to/archives",
-    auto_archive=True
-)
+searcher = LegalWebArchiveSearch(archive_dir="/path/to/archives", auto_archive=True)
 
 # Results will be automatically archived
 results = searcher.unified_search(
     "OSHA workplace safety requirements",
-    archive_results=True  # Override auto_archive if needed
+    archive_results=True,  # Override auto_archive if needed
 )
 
 # Check archive info
-if results['archive_info']:
+if results["archive_info"]:
     print(f"Archived {results['archive_info']['archived_count']} results")
 ```
 
@@ -117,7 +113,7 @@ historical_results = searcher.search_archives(
     from_date="2018-01-01",
     to_date="2022-12-31",
     domains=["hud.gov", "ca.gov"],  # Specific domains
-    max_results=50
+    max_results=50,
 )
 
 print(f"Found {historical_results['count']} archived documents")
@@ -130,7 +126,7 @@ print(f"Found {historical_results['count']} archived documents")
 epa_results = searcher.search_archives(
     query="clean water act regulations",
     domains=["epa.gov", "regulations.gov"],
-    from_date="2020-01-01"
+    from_date="2020-01-01",
 )
 ```
 
@@ -139,9 +135,7 @@ epa_results = searcher.search_archives(
 ### Via MCP Server
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
-    register_legal_web_archive_tools
-)
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import register_legal_web_archive_tools
 
 # Register tools with MCP server
 register_legal_web_archive_tools(tool_registry)
@@ -220,10 +214,10 @@ The system automatically maps query entities to relevant domains:
 
 ```python
 LegalWebArchiveSearch(
-    api_key=None,              # Brave API key (or use BRAVE_API_KEY env var)
-    knowledge_base_dir=None,   # Dir with legal entity JSONL files
-    archive_dir=None,          # Dir for storing archives
-    auto_archive=False         # Whether to auto-archive results
+    api_key=None,  # Brave API key (or use BRAVE_API_KEY env var)
+    knowledge_base_dir=None,  # Dir with legal entity JSONL files
+    archive_dir=None,  # Dir for storing archives
+    auto_archive=False,  # Whether to auto-archive results
 )
 ```
 
@@ -238,49 +232,40 @@ LegalWebArchiveSearch(
 
 ```python
 {
-    'status': 'success',
-    'query': 'original query',
-    'query_intent': {
-        'agencies': ['EPA'],
-        'jurisdictions': ['federal', 'CA'],
-        'topics': ['water', 'pollution', 'regulations'],
-        'legal_domains': ['environmental'],
-        'scope': 'federal_state',
-        'confidence': 0.85
+    "status": "success",
+    "query": "original query",
+    "query_intent": {
+        "agencies": ["EPA"],
+        "jurisdictions": ["federal", "CA"],
+        "topics": ["water", "pollution", "regulations"],
+        "legal_domains": ["environmental"],
+        "scope": "federal_state",
+        "confidence": 0.85,
     },
-    'current_results': [
+    "current_results": [
+        {"title": "...", "url": "...", "relevance_score": 0.9, "source_type": "current"}
+    ],
+    "archived_results": [
         {
-            'title': '...',
-            'url': '...',
-            'relevance_score': 0.9,
-            'source_type': 'current'
+            "url": "...",
+            "timestamp": "20230115",
+            "status_code": "200",
+            "mime_type": "text/html",
+            "search_domain": "epa.gov",
+            "source": "common_crawl",
+            "source_type": "archived",
         }
     ],
-    'archived_results': [
-        {
-            'url': '...',
-            'timestamp': '20230115',
-            'status_code': '200',
-            'mime_type': 'text/html',
-            'search_domain': 'epa.gov',
-            'source': 'common_crawl',
-            'source_type': 'archived'
-        }
-    ],
-    'combined_results': [...],  # Merged & deduplicated
-    'total_current': 15,
-    'total_archived': 8,
-    'total_combined': 20,
-    'archive_info': {
-        'status': 'success',
-        'archived_count': 5,
-        'archived_items': [...]
+    "combined_results": [...],  # Merged & deduplicated
+    "total_current": 15,
+    "total_archived": 8,
+    "total_combined": 20,
+    "archive_info": {"status": "success", "archived_count": 5, "archived_items": [...]},
+    "metadata": {
+        "timestamp": "2026-02-17T...",
+        "search_sources": ["brave", "common_crawl"],
+        "auto_archived": true,
     },
-    'metadata': {
-        'timestamp': '2026-02-17T...',
-        'search_sources': ['brave', 'common_crawl'],
-        'auto_archived': true
-    }
 }
 ```
 
@@ -288,24 +273,24 @@ LegalWebArchiveSearch(
 
 ```python
 {
-    'status': 'success',
-    'results': [
+    "status": "success",
+    "results": [
         {
-            'url': 'https://epa.gov/...',
-            'timestamp': '20220315120530',
-            'status_code': '200',
-            'mime_type': 'text/html',
-            'digest': 'sha1:...',
-            'length': '45678',
-            'warc_filename': 'crawl-data/...',
-            'warc_offset': '123456',
-            'search_domain': 'epa.gov',
-            'source': 'common_crawl'
+            "url": "https://epa.gov/...",
+            "timestamp": "20220315120530",
+            "status_code": "200",
+            "mime_type": "text/html",
+            "digest": "sha1:...",
+            "length": "45678",
+            "warc_filename": "crawl-data/...",
+            "warc_offset": "123456",
+            "search_domain": "epa.gov",
+            "source": "common_crawl",
         }
     ],
-    'count': 25,
-    'domains_searched': ['epa.gov', 'regulations.gov'],
-    'timestamp': '2026-02-17T...'
+    "count": 25,
+    "domains_searched": ["epa.gov", "regulations.gov"],
+    "timestamp": "2026-02-17T...",
 }
 ```
 
@@ -392,19 +377,15 @@ def test_unified_search():
     # GIVEN
     searcher = LegalWebArchiveSearch()
     query = "EPA water regulations"
-    
+
     # WHEN
-    results = searcher.unified_search(
-        query=query,
-        include_archives=True,
-        max_results=10
-    )
-    
+    results = searcher.unified_search(query=query, include_archives=True, max_results=10)
+
     # THEN
-    assert results['status'] == 'success'
-    assert 'current_results' in results
-    assert 'archived_results' in results
-    assert 'combined_results' in results
+    assert results["status"] == "success"
+    assert "current_results" in results
+    assert "archived_results" in results
+    assert "combined_results" in results
 ```
 
 ## Future Enhancements

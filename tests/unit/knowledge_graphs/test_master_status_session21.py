@@ -11,6 +11,7 @@ Targets (measured before session):
 
 All tests follow GIVEN-WHEN-THEN conventions and require no external services.
 """
+
 import importlib.util
 import re
 import time
@@ -26,16 +27,19 @@ _skip_no_numpy = pytest.mark.skipif(not _numpy_available, reason="numpy not inst
 # cypher/lexer.py – line comments, block comments, floats, escapes, <->, !=
 # ---------------------------------------------------------------------------
 
+
 class TestCypherLexerUncoveredPaths:
     """Tests for previously uncovered cypher/lexer.py paths."""
 
     @pytest.fixture
     def lex(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import CypherLexer
+
         return CypherLexer()
 
     def _token_pairs(self, lex, text):
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize(text)
         return [(t.type, t.value) for t in tokens if t.type != TokenType.EOF]
 
@@ -43,6 +47,7 @@ class TestCypherLexerUncoveredPaths:
     def test_line_comment_skipped(self, lex):
         """GIVEN a query with a // comment WHEN tokenized THEN comment tokens absent."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("MATCH // this is a comment\n(n) RETURN n")
         types = [t.type for t in tokens]
         assert TokenType.MATCH in types
@@ -53,6 +58,7 @@ class TestCypherLexerUncoveredPaths:
     def test_line_comment_at_end_of_line(self, lex):
         """GIVEN query with // mid-line WHEN tokenized THEN tokens before comment present."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("RETURN n // inline comment")
         types = [t.type for t in tokens if t.type != TokenType.EOF]
         assert TokenType.RETURN in types
@@ -62,6 +68,7 @@ class TestCypherLexerUncoveredPaths:
     def test_block_comment_single_line_skipped(self, lex):
         """GIVEN a /* */ comment on one line WHEN tokenized THEN content absent."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("MATCH /* block comment */ (n)")
         types = [t.type for t in tokens if t.type != TokenType.EOF]
         assert TokenType.MATCH in types
@@ -71,6 +78,7 @@ class TestCypherLexerUncoveredPaths:
     def test_block_comment_multi_line_skipped(self, lex):
         """GIVEN a /* */ comment spanning two lines WHEN tokenized THEN newline count preserved."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("MATCH /* line1\nline2 */ (n) RETURN n")
         types = [t.type for t in tokens if t.type != TokenType.EOF]
         assert TokenType.MATCH in types
@@ -80,6 +88,7 @@ class TestCypherLexerUncoveredPaths:
     def test_float_literal_tokenized(self, lex):
         """GIVEN a float literal WHEN tokenized THEN NUMBER token with decimal value."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("RETURN 3.14")
         num_tokens = [t for t in tokens if t.type == TokenType.NUMBER]
         assert len(num_tokens) == 1
@@ -88,6 +97,7 @@ class TestCypherLexerUncoveredPaths:
     def test_float_starting_with_zero(self, lex):
         """GIVEN 0.5 WHEN tokenized THEN NUMBER token value '0.5'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("WHERE x < 0.5")
         num_tokens = [t for t in tokens if t.type == TokenType.NUMBER]
         assert any("." in t.value for t in num_tokens)
@@ -96,6 +106,7 @@ class TestCypherLexerUncoveredPaths:
     def test_escape_newline_in_string(self, lex):
         """GIVEN a string with \\n WHEN tokenized THEN STRING token has newline."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize('RETURN "hello\\nworld"')
         str_tokens = [t for t in tokens if t.type == TokenType.STRING]
         assert len(str_tokens) == 1
@@ -104,6 +115,7 @@ class TestCypherLexerUncoveredPaths:
     def test_escape_tab_in_string(self, lex):
         """GIVEN a string with \\t WHEN tokenized THEN STRING token has tab."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize('RETURN "col1\\tcol2"')
         str_tokens = [t for t in tokens if t.type == TokenType.STRING]
         assert len(str_tokens) == 1
@@ -112,6 +124,7 @@ class TestCypherLexerUncoveredPaths:
     def test_escape_carriage_return_in_string(self, lex):
         """GIVEN a string with \\r WHEN tokenized THEN STRING token has CR."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize('RETURN "line\\rend"')
         str_tokens = [t for t in tokens if t.type == TokenType.STRING]
         assert len(str_tokens) == 1
@@ -121,6 +134,7 @@ class TestCypherLexerUncoveredPaths:
     def test_bidirectional_arrow_token(self, lex):
         """GIVEN MATCH (a)<->(b) WHEN tokenized THEN ARROW_BOTH token present."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("MATCH (a)<->(b)")
         types = [t.type for t in tokens]
         assert TokenType.ARROW_BOTH in types
@@ -131,6 +145,7 @@ class TestCypherLexerUncoveredPaths:
     def test_not_equal_operator_token(self, lex):
         """GIVEN WHERE x != 5 WHEN tokenized THEN NEQ token present."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         tokens = lex.tokenize("WHERE x != 5")
         types = [t.type for t in tokens]
         assert TokenType.NEQ in types
@@ -143,12 +158,14 @@ class TestCypherLexerUncoveredPaths:
 #   confidence modifiers, domain detection
 # ---------------------------------------------------------------------------
 
+
 class TestAdvancedExtractorUncoveredPaths:
     """Tests for previously uncovered extraction/advanced.py paths."""
 
     @pytest.fixture
     def ext(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         return AdvancedKnowledgeExtractor()
 
     # --- regex error in _extract_entities_pass --------------------------------
@@ -171,6 +188,7 @@ class TestAdvancedExtractorUncoveredPaths:
     def test_extract_context_entities_from_relationship_context(self, ext):
         """GIVEN relationships with context WHEN _extract_context_entities called THEN entities from context returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import RelationshipCandidate
+
         rel = RelationshipCandidate(
             subject="Alice",
             predicate="works_at",
@@ -191,9 +209,16 @@ class TestAdvancedExtractorUncoveredPaths:
     def test_find_matching_entity_partial_match(self, ext):
         """GIVEN entity 'John Smith' in list WHEN searching for 'John' THEN partial match found."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import EntityCandidate
+
         entities = [
-            EntityCandidate(text="John Smith", entity_type="person", confidence=0.9,
-                            context="test", start_pos=0, end_pos=10)
+            EntityCandidate(
+                text="John Smith",
+                entity_type="person",
+                confidence=0.9,
+                context="test",
+                start_pos=0,
+                end_pos=10,
+            )
         ]
         result = ext._find_matching_entity("John", entities)
         assert result is not None
@@ -202,9 +227,16 @@ class TestAdvancedExtractorUncoveredPaths:
     def test_find_matching_entity_no_match(self, ext):
         """GIVEN entity 'John Smith' WHEN searching for 'Bob' THEN None returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import EntityCandidate
+
         entities = [
-            EntityCandidate(text="John Smith", entity_type="person", confidence=0.9,
-                            context="test", start_pos=0, end_pos=10)
+            EntityCandidate(
+                text="John Smith",
+                entity_type="person",
+                confidence=0.9,
+                context="test",
+                start_pos=0,
+                end_pos=10,
+            )
         ]
         result = ext._find_matching_entity("Bob", entities)
         assert result is None
@@ -212,9 +244,16 @@ class TestAdvancedExtractorUncoveredPaths:
     def test_find_matching_entity_exact_match(self, ext):
         """GIVEN entity 'Alice' WHEN searching for 'alice' (case-insensitive) THEN match returned."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import EntityCandidate
+
         entities = [
-            EntityCandidate(text="Alice", entity_type="person", confidence=0.9,
-                            context="test", start_pos=0, end_pos=5)
+            EntityCandidate(
+                text="Alice",
+                entity_type="person",
+                confidence=0.9,
+                context="test",
+                start_pos=0,
+                end_pos=5,
+            )
         ]
         result = ext._find_matching_entity("alice", entities)
         assert result is not None
@@ -229,7 +268,9 @@ class TestAdvancedExtractorUncoveredPaths:
         pattern_str = ext.academic_patterns.get("organization", [r"\b([A-Z][a-z]+ Corp)\b"])[0]
         match = re.search(pattern_str, text)
         if match:
-            confidence = ext._calculate_entity_confidence(match.group(0), "organization", match, text)
+            confidence = ext._calculate_entity_confidence(
+                match.group(0), "organization", match, text
+            )
             assert confidence > 0.5  # High modifier should push it up
 
     def test_confidence_low_modifier_decreases_score(self, ext):
@@ -246,21 +287,27 @@ class TestAdvancedExtractorUncoveredPaths:
     # --- analyze_content_domain ----------------------------------------------
     def test_analyze_content_domain_academic(self, ext):
         """GIVEN academic text WHEN analyze_content_domain called THEN academic score highest."""
-        result = ext.analyze_content_domain("research study paper journal university professor hypothesis")
+        result = ext.analyze_content_domain(
+            "research study paper journal university professor hypothesis"
+        )
         assert isinstance(result, dict)
         assert "academic" in result
         assert result["academic"] > 0
 
     def test_analyze_content_domain_technical(self, ext):
         """GIVEN technical text WHEN analyze_content_domain called THEN technical score highest."""
-        result = ext.analyze_content_domain("algorithm implementation system architecture framework performance")
+        result = ext.analyze_content_domain(
+            "algorithm implementation system architecture framework performance"
+        )
         assert isinstance(result, dict)
         assert "technical" in result
         assert result["technical"] > 0
 
     def test_analyze_content_domain_business(self, ext):
         """GIVEN business text WHEN analyze_content_domain called THEN business score present."""
-        result = ext.analyze_content_domain("market revenue strategy management customer product sales")
+        result = ext.analyze_content_domain(
+            "market revenue strategy management customer product sales"
+        )
         assert isinstance(result, dict)
         assert result.get("business", 0) > 0
 
@@ -277,6 +324,7 @@ class TestAdvancedExtractorUncoveredPaths:
 #   upstream/downstream missing, metadata filter, temporal inconsistency
 # ---------------------------------------------------------------------------
 
+
 class TestLineageCoreUncoveredPaths:
     """Tests for previously uncovered lineage/core.py paths."""
 
@@ -284,6 +332,7 @@ class TestLineageCoreUncoveredPaths:
     def lineage_graph(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageGraph
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
+
         g = LineageGraph()
         n1 = LineageNode(node_id="n1", node_type="dataset", timestamp=1000.0)
         n2 = LineageNode(node_id="n2", node_type="dataset", timestamp=2000.0)
@@ -296,14 +345,17 @@ class TestLineageCoreUncoveredPaths:
     @pytest.fixture
     def tracker(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
         return LineageTracker()
 
     # --- backward direction add_link -----------------------------------------
     def test_add_link_backward_direction_creates_reverse_edge(self, lineage_graph):
         """GIVEN direction='backward' link WHEN added THEN edge goes target→source."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageLink
-        link = LineageLink(source_id="n1", target_id="n2",
-                           relationship_type="derived", direction="backward")
+
+        link = LineageLink(
+            source_id="n1", target_id="n2", relationship_type="derived", direction="backward"
+        )
         lineage_graph.add_link(link)
         assert lineage_graph._graph.has_edge("n2", "n1")
         assert not lineage_graph._graph.has_edge("n1", "n2")
@@ -311,8 +363,10 @@ class TestLineageCoreUncoveredPaths:
     def test_add_link_bidirectional_creates_both_edges(self, lineage_graph):
         """GIVEN direction='bidirectional' link WHEN added THEN both edges exist."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageLink
-        link = LineageLink(source_id="n1", target_id="n2",
-                           relationship_type="related", direction="bidirectional")
+
+        link = LineageLink(
+            source_id="n1", target_id="n2", relationship_type="related", direction="bidirectional"
+        )
         lineage_graph.add_link(link)
         assert lineage_graph._graph.has_edge("n1", "n2")
         assert lineage_graph._graph.has_edge("n2", "n1")
@@ -321,6 +375,7 @@ class TestLineageCoreUncoveredPaths:
     def test_get_neighbors_both_direction(self, lineage_graph):
         """GIVEN a node with in and out edges WHEN get_neighbors('both') THEN all neighbors returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageLink
+
         link1 = LineageLink(source_id="n1", target_id="n2", relationship_type="fwd")
         link2 = LineageLink(source_id="n3", target_id="n1", relationship_type="bwd")
         lineage_graph.add_link(link1)
@@ -336,6 +391,7 @@ class TestLineageCoreUncoveredPaths:
     def test_get_neighbors_invalid_direction_raises(self, lineage_graph):
         """GIVEN invalid direction WHEN get_neighbors called THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageLink
+
         link = LineageLink(source_id="n1", target_id="n2", relationship_type="fwd")
         lineage_graph.add_link(link)
         with pytest.raises(ValueError, match="Invalid direction"):
@@ -356,8 +412,10 @@ class TestLineageCoreUncoveredPaths:
     def test_query_metadata_filter_matching(self, tracker):
         """GIVEN node with metadata env=prod WHEN query(metadata={'env':'prod'}) THEN found."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
-        n = LineageNode(node_id="prod_node", node_type="dataset",
-                        metadata={"env": "prod", "owner": "alice"})
+
+        n = LineageNode(
+            node_id="prod_node", node_type="dataset", metadata={"env": "prod", "owner": "alice"}
+        )
         tracker.graph.add_node(n)
         results = tracker.query(metadata={"env": "prod"})
         assert any(r.node_id == "prod_node" for r in results)
@@ -365,6 +423,7 @@ class TestLineageCoreUncoveredPaths:
     def test_query_metadata_filter_no_match(self, tracker):
         """GIVEN node with env=dev WHEN query(metadata={'env':'prod'}) THEN not returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
+
         n = LineageNode(node_id="dev_node", node_type="dataset", metadata={"env": "dev"})
         tracker.graph.add_node(n)
         results = tracker.query(metadata={"env": "prod"})
@@ -374,6 +433,7 @@ class TestLineageCoreUncoveredPaths:
     def test_temporal_consistency_consistent(self, tracker):
         """GIVEN source older than target WHEN _check_temporal_consistency THEN True returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
+
         n1 = LineageNode(node_id="early", node_type="dataset", timestamp=1000.0)
         n2 = LineageNode(node_id="later", node_type="dataset", timestamp=2000.0)
         tracker.graph.add_node(n1)
@@ -384,6 +444,7 @@ class TestLineageCoreUncoveredPaths:
     def test_temporal_consistency_inconsistent_logs_warning(self, tracker):
         """GIVEN target timestamp earlier than source WHEN _check_temporal_consistency THEN False returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
+
         n1 = LineageNode(node_id="newer", node_type="dataset", timestamp=2000.0)
         n2 = LineageNode(node_id="older", node_type="dataset", timestamp=1000.0)
         tracker.graph.add_node(n1)
@@ -402,13 +463,17 @@ class TestLineageCoreUncoveredPaths:
 #   _close errors, _import_schema, unexpected exception
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSImporterUncoveredPaths:
     """Tests for previously uncovered migration/ipfs_importer.py paths."""
 
     def _make_gd(self, nodes=None, rels=None, schema=None):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            NodeData, RelationshipData, GraphData
+            NodeData,
+            RelationshipData,
+            GraphData,
         )
+
         nodes = nodes or [NodeData(id="n1", labels=["Person"])]
         rels = rels or []
         return GraphData(nodes=nodes, relationships=rels, schema=schema)
@@ -417,9 +482,15 @@ class TestIPFSImporterUncoveredPaths:
     def test_validate_duplicate_relationship_id_reported(self):
         """GIVEN two rels with same ID WHEN _validate_graph_data called THEN error reported."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            NodeData, RelationshipData, GraphData
+            NodeData,
+            RelationshipData,
+            GraphData,
         )
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         n1 = NodeData(id="n1", labels=["A"])
         n2 = NodeData(id="n2", labels=["B"])
         r1 = RelationshipData(id="dup", type="KNOWS", start_node="n1", end_node="n2")
@@ -433,9 +504,15 @@ class TestIPFSImporterUncoveredPaths:
     def test_validate_missing_start_node_reported(self):
         """GIVEN relationship referencing absent node WHEN _validate_graph_data THEN error reported."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            NodeData, RelationshipData, GraphData
+            NodeData,
+            RelationshipData,
+            GraphData,
         )
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         n1 = NodeData(id="n1", labels=["A"])
         r1 = RelationshipData(id="r1", type="KNOWS", start_node="ghost", end_node="n1")
         gd = GraphData(nodes=[n1], relationships=[r1])
@@ -447,9 +524,15 @@ class TestIPFSImporterUncoveredPaths:
     def test_import_relationships_skips_missing_node(self):
         """GIVEN node_id_map missing one node WHEN _import_relationships called THEN rel skipped."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            NodeData, RelationshipData, GraphData
+            NodeData,
+            RelationshipData,
+            GraphData,
         )
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         n1 = NodeData(id="n1", labels=["A"])
         n2 = NodeData(id="n2", labels=["B"])
         r1 = RelationshipData(id="r1", type="KNOWS", start_node="n1", end_node="n2")
@@ -464,7 +547,11 @@ class TestIPFSImporterUncoveredPaths:
     # --- _close: session/driver close errors logged, not raised -------------
     def test_close_session_error_logged_not_raised(self):
         """GIVEN session.close() raises WHEN _close called THEN no exception propagated."""
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         importer = IPFSImporter(ImportConfig())
         mock_session = MagicMock()
         mock_session.close.side_effect = RuntimeError("session gone")
@@ -474,7 +561,11 @@ class TestIPFSImporterUncoveredPaths:
 
     def test_close_driver_error_logged_not_raised(self):
         """GIVEN driver.close() raises WHEN _close called THEN no exception propagated."""
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         importer = IPFSImporter(ImportConfig())
         importer._session = None
         mock_driver = MagicMock()
@@ -486,7 +577,11 @@ class TestIPFSImporterUncoveredPaths:
     def test_import_schema_no_schema_returns_none(self):
         """GIVEN graph_data with schema=None WHEN _import_schema called THEN returns immediately."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         gd = GraphData(schema=None)
         importer = IPFSImporter(ImportConfig(graph_data=gd))
         result = importer._import_schema(gd)
@@ -496,20 +591,27 @@ class TestIPFSImporterUncoveredPaths:
     def test_import_schema_with_indexes_and_constraints_no_raise(self):
         """GIVEN schema with indexes+constraints WHEN _import_schema called THEN no exception."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, SchemaData
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
-        schema = SchemaData(
-            indexes=[{"name": "idx_person"}],
-            constraints=[{"name": "c_unique"}]
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
         )
+
+        schema = SchemaData(indexes=[{"name": "idx_person"}], constraints=[{"name": "c_unique"}])
         gd = GraphData(schema=schema)
-        importer = IPFSImporter(ImportConfig(graph_data=gd, create_indexes=True, create_constraints=True))
+        importer = IPFSImporter(
+            ImportConfig(graph_data=gd, create_indexes=True, create_constraints=True)
+        )
         importer._import_schema(gd)  # Must not raise
 
     # --- import_data: unexpected exception path (lines 428-439) -------------
     def test_import_data_unexpected_exception_recorded(self):
         """GIVEN _connect raises RuntimeError WHEN import_data called THEN error in result."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import NodeData, GraphData
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         gd = GraphData(nodes=[NodeData(id="n1", labels=["A"])])
         importer = IPFSImporter(ImportConfig(graph_data=gd))
         with patch.object(importer, "_connect", side_effect=RuntimeError("boom")):
@@ -523,12 +625,14 @@ class TestIPFSImporterUncoveredPaths:
 #   merge None properties, export_to_rdf (rdflib available)
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeGraphUncoveredPaths:
     """Tests for previously uncovered extraction/graph.py paths."""
 
     @pytest.fixture
     def kg(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         return KnowledgeGraph(name="test_rdf")
 
     # --- add_relationship with string source/target IDs (lines 234-245) -----
@@ -597,13 +701,17 @@ class TestKnowledgeGraphUncoveredPaths:
     def test_export_to_rdf_all_property_types(self, kg):
         """GIVEN entity with str/int/float/bool/other properties WHEN export_to_rdf THEN all serialized."""
         rdflib = pytest.importorskip("rdflib")
-        kg.add_entity("Node", "Mixed", properties={
-            "str_val": "hello",
-            "int_val": 42,
-            "float_val": 3.14,
-            "bool_val": True,
-            "list_val": [1, 2, 3],
-        })
+        kg.add_entity(
+            "Node",
+            "Mixed",
+            properties={
+                "str_val": "hello",
+                "int_val": 42,
+                "float_val": 3.14,
+                "bool_val": True,
+                "list_val": [1, 2, 3],
+            },
+        )
         result = kg.export_to_rdf(format="turtle")
         assert result is not None
 
@@ -612,8 +720,18 @@ class TestKnowledgeGraphUncoveredPaths:
         rdflib = pytest.importorskip("rdflib")
         e1 = kg.add_entity("Person", "Dave", properties={"x": 1})
         e2 = kg.add_entity("Company", "Acme", properties={"y": 2})
-        kg.add_relationship("WORKS_AT", source=e1, target=e2,
-                            properties={"since": 2020, "role": "dev", "rate": 50.0, "active": True, "data": {"k": "v"}})
+        kg.add_relationship(
+            "WORKS_AT",
+            source=e1,
+            target=e2,
+            properties={
+                "since": 2020,
+                "role": "dev",
+                "rate": 50.0,
+                "active": True,
+                "data": {"k": "v"},
+            },
+        )
         result = kg.export_to_rdf(format="turtle")
         text = result if isinstance(result, str) else result.decode()
         assert "rdf:Statement" in text or "Statement" in text
@@ -622,6 +740,7 @@ class TestKnowledgeGraphUncoveredPaths:
         """GIVEN rdflib absent WHEN export_to_rdf called THEN error string returned (not raised)."""
         kg.add_entity("X", "y", properties={"k": "v"})
         import sys
+
         original = sys.modules.get("rdflib")
         # Mark rdflib as unavailable in sys.modules
         sys.modules["rdflib"] = None
@@ -646,20 +765,23 @@ class TestKnowledgeGraphUncoveredPaths:
 #   LLM router path, _example_usage
 # ---------------------------------------------------------------------------
 
+
 class TestCrossDocumentReasonerUncoveredPaths:
     """Tests for previously uncovered reasoning/cross_document.py paths."""
 
     @pytest.fixture
     def reasoner(self):
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import CrossDocumentReasoner
+
         return CrossDocumentReasoner()
 
     # --- _MissingUnifiedGraphRAGQueryOptimizer raises ImportError (line 55) --
     def test_missing_optimizer_stub_raises_import_error(self):
         """GIVEN _MissingUnifiedGraphRAGQueryOptimizer stub WHEN attribute accessed THEN ImportError raised."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
-            _MissingUnifiedGraphRAGQueryOptimizer
+            _MissingUnifiedGraphRAGQueryOptimizer,
         )
+
         stub = _MissingUnifiedGraphRAGQueryOptimizer(import_error=None)
         with pytest.raises(ImportError, match="UnifiedGraphRAGQueryOptimizer is unavailable"):
             stub.some_attribute  # type: ignore[attr-defined]
@@ -682,6 +804,7 @@ class TestCrossDocumentReasonerUncoveredPaths:
             CrossDocumentReasoner,
             _MissingUnifiedGraphRAGQueryOptimizer,
         )
+
         with patch.object(mod, "UnifiedGraphRAGQueryOptimizer", None):
             r = CrossDocumentReasoner()
         assert isinstance(r.query_optimizer, _MissingUnifiedGraphRAGQueryOptimizer)
@@ -692,10 +815,9 @@ class TestCrossDocumentReasonerUncoveredPaths:
         """GIVEN docs with numpy vectors WHEN _compute_document_similarity THEN cosine similarity returned."""
         import numpy as np
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import DocumentNode
-        doc1 = DocumentNode(id="d1", content="c1", source="s1",
-                            vector=np.array([1.0, 0.0, 0.0]))
-        doc2 = DocumentNode(id="d2", content="c2", source="s2",
-                            vector=np.array([0.0, 1.0, 0.0]))
+
+        doc1 = DocumentNode(id="d1", content="c1", source="s1", vector=np.array([1.0, 0.0, 0.0]))
+        doc2 = DocumentNode(id="d2", content="c2", source="s2", vector=np.array([0.0, 1.0, 0.0]))
         sim = reasoner._compute_document_similarity(doc1, doc2)
         assert sim == pytest.approx(0.0, abs=1e-6)
 
@@ -704,10 +826,9 @@ class TestCrossDocumentReasonerUncoveredPaths:
         """GIVEN docs with identical direction vectors WHEN computed THEN similarity ≈ 1.0."""
         import numpy as np
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import DocumentNode
-        doc1 = DocumentNode(id="d1", content="c1", source="s1",
-                            vector=np.array([1.0, 1.0, 0.0]))
-        doc2 = DocumentNode(id="d2", content="c2", source="s2",
-                            vector=np.array([1.0, 1.0, 0.0]))
+
+        doc1 = DocumentNode(id="d1", content="c1", source="s1", vector=np.array([1.0, 1.0, 0.0]))
+        doc2 = DocumentNode(id="d2", content="c2", source="s2", vector=np.array([1.0, 1.0, 0.0]))
         sim = reasoner._compute_document_similarity(doc1, doc2)
         assert sim == pytest.approx(1.0, abs=1e-4)
 
@@ -716,10 +837,13 @@ class TestCrossDocumentReasonerUncoveredPaths:
         """GIVEN a zero-norm vector WHEN computed THEN falls back to token similarity (no crash)."""
         import numpy as np
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import DocumentNode
-        doc1 = DocumentNode(id="d1", content="hello world", source="s1",
-                            vector=np.array([0.0, 0.0, 0.0]))  # zero norm
-        doc2 = DocumentNode(id="d2", content="hello world", source="s2",
-                            vector=np.array([0.0, 0.0, 0.0]))
+
+        doc1 = DocumentNode(
+            id="d1", content="hello world", source="s1", vector=np.array([0.0, 0.0, 0.0])
+        )  # zero norm
+        doc2 = DocumentNode(
+            id="d2", content="hello world", source="s2", vector=np.array([0.0, 0.0, 0.0])
+        )
         sim = reasoner._compute_document_similarity(doc1, doc2)
         assert 0.0 <= sim <= 1.0
 
@@ -727,6 +851,7 @@ class TestCrossDocumentReasonerUncoveredPaths:
     def test_compute_document_similarity_empty_content_returns_zero(self, reasoner):
         """GIVEN docs with empty content WHEN _compute_document_similarity THEN 0.0 returned."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import DocumentNode
+
         doc1 = DocumentNode(id="d1", content="", source="s1")
         doc2 = DocumentNode(id="d2", content="", source="s2")
         sim = reasoner._compute_document_similarity(doc1, doc2)
@@ -736,10 +861,20 @@ class TestCrossDocumentReasonerUncoveredPaths:
     def test_reason_across_documents_with_documents_list_dicts(self, reasoner):
         """GIVEN documents= as list of dicts WHEN reason_across_documents THEN input_documents alias used."""
         docs = [
-            {"id": "d1", "content": "IPFS is a protocol", "source": "s1",
-             "relevance_score": 0.9, "entities": ["IPFS"]},
-            {"id": "d2", "content": "Blockchain uses hashing", "source": "s2",
-             "relevance_score": 0.8, "entities": ["Blockchain"]},
+            {
+                "id": "d1",
+                "content": "IPFS is a protocol",
+                "source": "s1",
+                "relevance_score": 0.9,
+                "entities": ["IPFS"],
+            },
+            {
+                "id": "d2",
+                "content": "Blockchain uses hashing",
+                "source": "s2",
+                "relevance_score": 0.8,
+                "entities": ["Blockchain"],
+            },
         ]
         result = reasoner.reason_across_documents(
             query="What is IPFS?",
@@ -754,13 +889,24 @@ class TestCrossDocumentReasonerUncoveredPaths:
         mock_kg = MagicMock()
         mock_kg.get_entity.return_value = None
         docs = [
-            {"id": "d1", "content": "Some text about AI", "source": "s1",
-             "relevance_score": 0.9, "entities": ["AI"]},
-            {"id": "d2", "content": "More text about AI", "source": "s2",
-             "relevance_score": 0.8, "entities": ["AI"]},
+            {
+                "id": "d1",
+                "content": "Some text about AI",
+                "source": "s1",
+                "relevance_score": 0.9,
+                "entities": ["AI"],
+            },
+            {
+                "id": "d2",
+                "content": "More text about AI",
+                "source": "s2",
+                "relevance_score": 0.8,
+                "entities": ["AI"],
+            },
         ]
-        with patch.object(reasoner, "_find_multi_hop_connections",
-                          side_effect=RuntimeError("multi-hop error")):
+        with patch.object(
+            reasoner, "_find_multi_hop_connections", side_effect=RuntimeError("multi-hop error")
+        ):
             result = reasoner.reason_across_documents(
                 query="AI?",
                 input_documents=docs,
@@ -782,7 +928,9 @@ class TestCrossDocumentReasonerUncoveredPaths:
 
         with patch.object(reasoner, "_get_llm_router", return_value=mock_router):
             with patch.object(reasoner, "_generate_llm_answer", return_value=("LLM answer", 0.9)):
-                answer, conf = reasoner._synthesize_answer("test query?", [doc1, doc2], [], [], "moderate")
+                answer, conf = reasoner._synthesize_answer(
+                    "test query?", [doc1, doc2], [], [], "moderate"
+                )
         assert isinstance(answer, str)
         assert 0.0 <= conf <= 1.0
 
@@ -794,8 +942,9 @@ class TestCrossDocumentReasonerUncoveredPaths:
         doc1 = DocumentNode(id="d1", content="test content", source="s1")
 
         with patch.object(reasoner, "_get_llm_router", return_value=mock_router):
-            with patch.object(reasoner, "_generate_llm_answer",
-                              side_effect=RuntimeError("LLM down")):
+            with patch.object(
+                reasoner, "_generate_llm_answer", side_effect=RuntimeError("LLM down")
+            ):
                 answer, conf = reasoner._synthesize_answer("q?", [doc1], [], [], "basic")
         assert isinstance(answer, str)
         # Fallback confidence is 0.75
@@ -805,4 +954,5 @@ class TestCrossDocumentReasonerUncoveredPaths:
     def test_example_usage_function_is_callable(self):
         """GIVEN _example_usage function WHEN inspected THEN it is callable."""
         from ipfs_datasets_py.knowledge_graphs.reasoning import cross_document as cd
+
         assert callable(cd._example_usage)

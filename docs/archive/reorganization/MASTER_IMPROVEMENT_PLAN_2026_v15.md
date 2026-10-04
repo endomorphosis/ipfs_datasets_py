@@ -118,6 +118,7 @@ try:
         get_delegation_manager,
         record_delegation_metrics,
     )
+
     record_delegation_metrics(get_delegation_manager(), self)
 except Exception as _dm_exc:
     logger.debug("delegation metrics unavailable: %s", _dm_exc)

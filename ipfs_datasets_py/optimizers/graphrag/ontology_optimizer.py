@@ -24,14 +24,14 @@ Example:
     ...     OntologyOptimizer,
     ...     OntologyHarness
     ... )
-    >>> 
+    >>>
     >>> optimizer = OntologyOptimizer()
-    >>> 
+    >>>
     >>> # Analyze single batch
     >>> report = optimizer.analyze_batch(session_results)
     >>> print(f"Average: {report.average_score:.2f}")
     >>> print(f"Trend: {report.trend}")
-    >>> 
+    >>>
     >>> # Analyze trends over multiple batches
     >>> trend_report = optimizer.analyze_trends(historical_results)
     >>> print(f"Improvement rate: {trend_report['improvement_rate']:.2%}")
@@ -62,6 +62,7 @@ from ipfs_datasets_py.optimizers.common.path_validator import (
 
 try:
     from opentelemetry import trace  # type: ignore[import-not-found]
+
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover
     trace = None
@@ -71,6 +72,7 @@ try:
     from ipfs_datasets_py.optimizers.optimizer_learning_metrics import (
         OptimizerLearningMetricsCollector,
     )
+
     HAVE_LEARNING_METRICS = True
 except ImportError:  # pragma: no cover
     OptimizerLearningMetricsCollector = None
@@ -83,10 +85,10 @@ logger = logging.getLogger(__name__)
 class OptimizationReport:
     """
     Optimization recommendations from batch analysis.
-    
+
     Provides comprehensive analysis of a batch of ontology generation sessions,
     including scores, trends, and actionable recommendations for improvement.
-    
+
     Attributes:
         average_score: Average quality score across all sessions
         trend: Overall trend ('improving', 'stable', 'degrading')
@@ -96,7 +98,7 @@ class OptimizationReport:
         improvement_rate: Rate of improvement over previous batches
         score_distribution: Distribution of scores across dimensions
         metadata: Additional analysis metadata
-        
+
     Example:
         >>> report = OptimizationReport(
         ...     average_score=0.78,
@@ -105,7 +107,7 @@ class OptimizationReport:
         ... )
         >>> print(f"Quality: {report.average_score:.2f} ({report.trend})")
     """
-    
+
     average_score: float
     trend: str  # 'improving', 'stable', 'degrading'
     recommendations: List[str] = field(default_factory=list)
@@ -114,56 +116,56 @@ class OptimizationReport:
     improvement_rate: float = 0.0
     score_distribution: Dict[str, float] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert report to dictionary."""
         return {
-            'average_score': self.average_score,
-            'trend': self.trend,
-            'recommendations': self.recommendations,
-            'best_score': self.best_ontology.get('score') if self.best_ontology else None,
-            'worst_score': self.worst_ontology.get('score') if self.worst_ontology else None,
-            'improvement_rate': self.improvement_rate,
-            'score_distribution': self.score_distribution,
-            'metadata': self.metadata,
+            "average_score": self.average_score,
+            "trend": self.trend,
+            "recommendations": self.recommendations,
+            "best_score": self.best_ontology.get("score") if self.best_ontology else None,
+            "worst_score": self.worst_ontology.get("score") if self.worst_ontology else None,
+            "improvement_rate": self.improvement_rate,
+            "score_distribution": self.score_distribution,
+            "metadata": self.metadata,
         }
 
 
 class OntologyOptimizer:
     """
     SGD-based ontology optimization engine.
-    
+
     Analyzes results from multiple ontology generation sessions to identify
     patterns, trends, and opportunities for improvement. Uses stochastic
     gradient descent principles to guide iterative optimization.
-    
+
     The optimizer tracks performance across batches and generates actionable
     recommendations for improving ontology quality through parameter tuning,
     strategy adjustment, and prompt refinement.
-    
+
     Inspired by the optimizer from complaint-generator, adapted for ontology
     optimization with focus on multi-dimensional quality metrics.
-    
+
     Example:
         >>> optimizer = OntologyOptimizer()
-        >>> 
+        >>>
         >>> # Run SGD cycles
         >>> for cycle in range(10):
         ...     # Generate batch of ontologies
         ...     results = harness.run_sessions(data_sources, contexts)
-        ...     
+        ...
         ...     # Analyze and optimize
         ...     report = optimizer.analyze_batch(results['sessions'])
-        ...     
+        ...
         ...     # Apply recommendations
         ...     apply_recommendations(report.recommendations)
-        ...     
+        ...
         ...     # Check convergence
         ...     if report.trend == 'stable' and report.average_score > 0.85:
         ...         print(f"Converged after {cycle + 1} cycles")
         ...         break
     """
-    
+
     def __init__(
         self,
         logger: Optional[logging.Logger] = None,
@@ -172,7 +174,7 @@ class OntologyOptimizer:
     ):
         """
         Initialize the ontology optimizer.
-        
+
         Args:
             logger: Optional :class:`logging.Logger` to use instead of the
                 module-level logger. Useful for dependency injection in tests.
@@ -183,6 +185,7 @@ class OntologyOptimizer:
                 collector is created automatically.
         """
         import logging as _logging
+
         self._log = logger or _logging.getLogger(__name__)
         self._history: List[OptimizationReport] = []
         self._tracer = None
@@ -243,7 +246,7 @@ class OntologyOptimizer:
         self._log.info(
             json.dumps(with_schema(redact_payload(summary)), sort_keys=True, default=str)
         )
-    
+
     def analyze_batch(
         self,
         session_results: List[Any],  # List[MediatorState or SessionResult]
@@ -254,11 +257,11 @@ class OntologyOptimizer:
     ) -> OptimizationReport:
         """
         Analyze single batch of ontology generation sessions.
-        
+
         Examines results from a batch of sessions, computing aggregate metrics,
         identifying best/worst performers, and generating recommendations for
         the next optimization cycle.
-        
+
         Args:
             session_results: List of session results to analyze.
             use_parallel: If True, route to ``analyze_batch_parallel``. If None,
@@ -267,17 +270,17 @@ class OntologyOptimizer:
             parallel_threshold: Minimum batch size to auto-enable parallel mode.
             max_workers: Maximum workers for parallel mode.
             json_log_path: Optional JSON output path for parallel mode summary.
-            
+
         Returns:
             OptimizationReport with analysis and recommendations
-            
+
         Example:
             >>> # Run batch of sessions
             >>> results = []
             >>> for data in data_sources:
             ...     state = mediator.run_refinement_cycle(data, context)
             ...     results.append(state)
-            >>> 
+            >>>
             >>> # Analyze
             >>> report = optimizer.analyze_batch(results)
             >>> print(f"Avg: {report.average_score:.2f}")
@@ -299,31 +302,31 @@ class OntologyOptimizer:
         self._log.info(
             "Analyzing batch of sessions",
             extra={
-                'session_count': len(session_results),
-                'batch_id': id(session_results),
-            }
+                "session_count": len(session_results),
+                "batch_id": id(session_results),
+            },
         )
-        
+
         if not session_results:
             self._log.warning(
                 "No session results provided for batch analysis",
                 extra={
-                    'batch_id': id(session_results),
-                    'error_type': 'empty_batch',
-                }
+                    "batch_id": id(session_results),
+                    "error_type": "empty_batch",
+                },
             )
             report = OptimizationReport(
                 average_score=0.0,
-                trend='insufficient_data',
-                recommendations=["Need more sessions to analyze"]
+                trend="insufficient_data",
+                recommendations=["Need more sessions to analyze"],
             )
             self._emit_trace(
                 "ontology_optimizer.analyze_batch",
                 {
-                    'session_count': 0,
-                    'status': 'insufficient_data',
-                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-                }
+                    "session_count": 0,
+                    "status": "insufficient_data",
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+                },
             )
             self._emit_analyze_batch_summary(
                 {
@@ -334,30 +337,28 @@ class OntologyOptimizer:
                 }
             )
             return report
-        
+
         # Extract scores
         scores = []
         for result in session_results:
-            if hasattr(result, 'critic_scores') and result.critic_scores:
+            if hasattr(result, "critic_scores") and result.critic_scores:
                 # MediatorState
                 scores.append(result.critic_scores[-1].overall)
-            elif hasattr(result, 'critic_score') and result.critic_score is not None:
+            elif hasattr(result, "critic_score") and result.critic_score is not None:
                 # SessionResult with valid critic_score
                 scores.append(result.critic_score.overall)
-        
+
         if not scores:
             report = OptimizationReport(
-                average_score=0.0,
-                trend='no_scores',
-                recommendations=["No valid scores found"]
+                average_score=0.0, trend="no_scores", recommendations=["No valid scores found"]
             )
             self._emit_trace(
                 "ontology_optimizer.analyze_batch",
                 {
-                    'session_count': len(session_results),
-                    'status': 'no_scores',
-                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-                }
+                    "session_count": len(session_results),
+                    "status": "no_scores",
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+                },
             )
             self._emit_analyze_batch_summary(
                 {
@@ -368,28 +369,24 @@ class OntologyOptimizer:
                 }
             )
             return report
-        
+
         # Compute statistics
         average_score = sum(scores) / len(scores)
         best_idx = scores.index(max(scores))
         worst_idx = scores.index(min(scores))
-        
+
         # Determine trend
         trend = self._determine_trend(average_score)
-        
+
         # Identify patterns
         patterns = self._identify_patterns(session_results)
-        
+
         # Generate recommendations
-        recommendations = self._generate_recommendations(
-            average_score,
-            scores,
-            patterns
-        )
-        
+        recommendations = self._generate_recommendations(average_score, scores, patterns)
+
         # Compute score distribution
         score_distribution = self._compute_score_distribution(session_results)
-        
+
         # Create report
         report = OptimizationReport(
             average_score=average_score,
@@ -399,49 +396,51 @@ class OntologyOptimizer:
             worst_ontology=self._extract_ontology(session_results[worst_idx]),
             score_distribution=score_distribution,
             metadata={
-                'num_sessions': len(session_results),
-                'score_std': self._compute_std(scores),
-                'score_range': (min(scores), max(scores)),
-            }
+                "num_sessions": len(session_results),
+                "score_std": self._compute_std(scores),
+                "score_range": (min(scores), max(scores)),
+            },
         )
-        
+
         # Add to history
         self._history.append(report)
-        
+
         # Compute improvement rate if we have history
         if len(self._history) >= 2:
-            report.improvement_rate = (
-                report.average_score - self._history[-2].average_score
-            )
-        
+            report.improvement_rate = report.average_score - self._history[-2].average_score
+
         self._log.info(
             "Batch analysis complete",
             extra={
-                'batch_id': id(session_results),
-                'session_count': len(session_results),
-                'average_score': round(average_score, 3),
-                'trend': trend,
-                'recommendation_count': len(recommendations),
-                'score_std': round(self._compute_std(scores), 3),
-                'score_min': round(min(scores), 3),
-                'score_max': round(max(scores), 3),
-            }
+                "batch_id": id(session_results),
+                "session_count": len(session_results),
+                "average_score": round(average_score, 3),
+                "trend": trend,
+                "recommendation_count": len(recommendations),
+                "score_std": round(self._compute_std(scores), 3),
+                "score_min": round(min(scores), 3),
+                "score_max": round(max(scores), 3),
+            },
         )
 
         self._emit_trace(
             "ontology_optimizer.analyze_batch",
             {
-                'session_count': len(session_results),
-                'average_score': round(average_score, 6),
-                'trend': trend,
-                'recommendation_count': len(recommendations),
-                'score_distribution_completeness': report.score_distribution.get('completeness', 0.0),
-                'score_distribution_consistency': report.score_distribution.get('consistency', 0.0),
-                'score_distribution_clarity': report.score_distribution.get('clarity', 0.0),
-                'score_distribution_granularity': report.score_distribution.get('granularity', 0.0),
-                'score_distribution_domain_alignment': report.score_distribution.get('domain_alignment', 0.0),
-                'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-            }
+                "session_count": len(session_results),
+                "average_score": round(average_score, 6),
+                "trend": trend,
+                "recommendation_count": len(recommendations),
+                "score_distribution_completeness": report.score_distribution.get(
+                    "completeness", 0.0
+                ),
+                "score_distribution_consistency": report.score_distribution.get("consistency", 0.0),
+                "score_distribution_clarity": report.score_distribution.get("clarity", 0.0),
+                "score_distribution_granularity": report.score_distribution.get("granularity", 0.0),
+                "score_distribution_domain_alignment": report.score_distribution.get(
+                    "domain_alignment", 0.0
+                ),
+                "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+            },
         )
         self._emit_analyze_batch_summary(
             {
@@ -466,7 +465,11 @@ class OntologyOptimizer:
                     parameters_adjusted={"trend": trend, "average_score": round(average_score, 6)},
                     execution_time=round(duration_s, 4),
                 )
-            except (AttributeError, TypeError, RuntimeError):  # metrics must never block optimization
+            except (
+                AttributeError,
+                TypeError,
+                RuntimeError,
+            ):  # metrics must never block optimization
                 pass
 
         return report
@@ -503,19 +506,19 @@ class OntologyOptimizer:
         self._log.info(
             "Analyzing batch of sessions (parallel)",
             extra={
-                'session_count': len(session_results),
-                'batch_id': id(session_results),
-                'max_workers': max_workers,
-            }
+                "session_count": len(session_results),
+                "batch_id": id(session_results),
+                "max_workers": max_workers,
+            },
         )
 
         if not session_results:
             self._log.warning(
                 "No session results provided for parallel batch analysis",
                 extra={
-                    'batch_id': id(session_results),
-                    'error_type': 'empty_batch',
-                }
+                    "batch_id": id(session_results),
+                    "error_type": "empty_batch",
+                },
             )
             report = OptimizationReport(
                 average_score=0.0,
@@ -525,11 +528,11 @@ class OntologyOptimizer:
             self._emit_trace(
                 "ontology_optimizer.analyze_batch_parallel",
                 {
-                    'session_count': 0,
-                    'status': 'insufficient_data',
-                    'max_workers': max_workers,
-                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-                }
+                    "session_count": 0,
+                    "status": "insufficient_data",
+                    "max_workers": max_workers,
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+                },
             )
             return report
 
@@ -550,11 +553,11 @@ class OntologyOptimizer:
             self._emit_trace(
                 "ontology_optimizer.analyze_batch_parallel",
                 {
-                    'session_count': len(session_results),
-                    'status': 'no_scores',
-                    'max_workers': max_workers,
-                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-                }
+                    "session_count": len(session_results),
+                    "status": "no_scores",
+                    "max_workers": max_workers,
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+                },
             )
             return report
 
@@ -592,34 +595,32 @@ class OntologyOptimizer:
 
         self._history.append(report)
         if len(self._history) >= 2:
-            report.improvement_rate = (
-                report.average_score - self._history[-2].average_score
-            )
+            report.improvement_rate = report.average_score - self._history[-2].average_score
 
         self._log.info(
             "Parallel batch analysis complete",
             extra={
-                'batch_id': id(session_results),
-                'session_count': len(session_results),
-                'average_score': round(average_score, 3),
-                'trend': trend,
-                'recommendation_count': len(recommendations),
-                'score_std': round(self._compute_std(scores), 3),
-                'score_min': round(min(scores), 3),
-                'score_max': round(max(scores), 3),
-                'max_workers': max_workers,
-            }
+                "batch_id": id(session_results),
+                "session_count": len(session_results),
+                "average_score": round(average_score, 3),
+                "trend": trend,
+                "recommendation_count": len(recommendations),
+                "score_std": round(self._compute_std(scores), 3),
+                "score_min": round(min(scores), 3),
+                "score_max": round(max(scores), 3),
+                "max_workers": max_workers,
+            },
         )
         self._emit_trace(
             "ontology_optimizer.analyze_batch_parallel",
             {
-                'session_count': len(session_results),
-                'average_score': round(average_score, 6),
-                'trend': trend,
-                'recommendation_count': len(recommendations),
-                'max_workers': max_workers,
-                'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-            }
+                "session_count": len(session_results),
+                "average_score": round(average_score, 6),
+                "trend": trend,
+                "recommendation_count": len(recommendations),
+                "max_workers": max_workers,
+                "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+            },
         )
 
         # Record learning cycle to metrics collector if available
@@ -633,7 +634,11 @@ class OntologyOptimizer:
                     parameters_adjusted={"trend": trend, "average_score": round(average_score, 6)},
                     execution_time=round(duration_s, 4),
                 )
-            except (AttributeError, TypeError, RuntimeError):  # metrics must never block optimization
+            except (
+                AttributeError,
+                TypeError,
+                RuntimeError,
+            ):  # metrics must never block optimization
                 pass
 
         if json_log_path is not None:
@@ -660,26 +665,23 @@ class OntologyOptimizer:
                     json.dump(_summary, _fh, indent=2)
                 self._log.debug("Wrote batch parallel JSON log to %s", json_log_path)
             except (OSError, PathValidationError) as _exc:
-                self._log.warning(
-                    "Failed to write json_log_path=%s: %s", json_log_path, _exc
-                )
+                self._log.warning("Failed to write json_log_path=%s: %s", json_log_path, _exc)
 
         return report
 
     def analyze_trends(
-        self,
-        historical_results: Optional[List[OptimizationReport]] = None
+        self, historical_results: Optional[List[OptimizationReport]] = None
     ) -> Dict[str, Any]:
         """
         Analyze trends across multiple batches over time.
-        
+
         Examines historical optimization reports to identify long-term trends,
         compute improvement rates, and assess optimization effectiveness.
-        
+
         Args:
             historical_results: Optional list of previous reports. If None,
                 uses internal history.
-                
+
         Returns:
             Dictionary with trend analysis:
                 - 'improvement_rate': Overall rate of improvement
@@ -687,7 +689,7 @@ class OntologyOptimizer:
                 - 'convergence_estimate': Estimated rounds to convergence
                 - 'best_batch': Best performing batch
                 - 'recommendations': Long-term recommendations
-                
+
         Example:
             >>> # After multiple SGD cycles
             >>> trends = optimizer.analyze_trends()
@@ -696,121 +698,117 @@ class OntologyOptimizer:
         """
         operation_start = time.time()
         results = historical_results or self._history
-        
+
         if len(results) < 2:
             self._log.warning(
                 "Insufficient batch history for trend analysis",
                 extra={
-                    'batch_count': len(results),
-                    'error_type': 'insufficient_history',
-                    'required': 2,
-                }
+                    "batch_count": len(results),
+                    "error_type": "insufficient_history",
+                    "required": 2,
+                },
             )
             trend_result = {
-                'improvement_rate': 0.0,
-                'trend': 'insufficient_data',
-                'convergence_estimate': None,
-                'best_batch': None,
-                'recommendations': ["Need more batches to analyze trends"]
+                "improvement_rate": 0.0,
+                "trend": "insufficient_data",
+                "convergence_estimate": None,
+                "best_batch": None,
+                "recommendations": ["Need more batches to analyze trends"],
             }
             self._emit_trace(
                 "ontology_optimizer.analyze_trends",
                 {
-                    'batch_count': len(results),
-                    'trend': 'insufficient_data',
-                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-                }
+                    "batch_count": len(results),
+                    "trend": "insufficient_data",
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+                },
             )
             return trend_result
-        
+
         self._log.info(
             "Analyzing trends across batches",
             extra={
-                'batch_count': len(results),
-                'analysis_id': id(results),
-            }
+                "batch_count": len(results),
+                "analysis_id": id(results),
+            },
         )
-        
+
         # Compute improvement rates
         scores = [r.average_score for r in results]
         overall_improvement = scores[-1] - scores[0]
         avg_improvement_per_batch = overall_improvement / (len(scores) - 1)
-        
+
         # Identify trend
         recent_scores = scores[-3:] if len(scores) >= 3 else scores
         if recent_scores[-1] > recent_scores[0] + 0.05:
-            trend = 'improving'
+            trend = "improving"
         elif recent_scores[-1] < recent_scores[0] - 0.05:
-            trend = 'degrading'
+            trend = "degrading"
         else:
-            trend = 'stable'
-        
+            trend = "stable"
+
         # Find best batch
         best_idx = scores.index(max(scores))
         best_batch = results[best_idx]
-        
+
         # Estimate convergence
         convergence_estimate = None
         if avg_improvement_per_batch > 0 and scores[-1] < 0.85:
             remaining = 0.85 - scores[-1]
             convergence_estimate = int(remaining / avg_improvement_per_batch)
-        
+
         # Generate recommendations
         recommendations = []
-        if trend == 'degrading':
+        if trend == "degrading":
             recommendations.append("Consider reverting to previous configuration")
             recommendations.append("Reduce learning rate or exploration")
-        elif trend == 'stable' and scores[-1] < 0.80:
+        elif trend == "stable" and scores[-1] < 0.80:
             recommendations.append("Try different extraction strategies")
             recommendations.append("Increase model diversity")
-        elif trend == 'improving':
+        elif trend == "improving":
             recommendations.append("Continue current optimization approach")
-        
+
         self._log.info(
             "Trend analysis complete",
             extra={
-                'analysis_id': id(results),
-                'batch_count': len(results),
-                'trend': trend,
-                'improvement_rate': round(avg_improvement_per_batch, 4),
-                'overall_improvement': round(overall_improvement, 3),
-                'current_score': round(scores[-1], 3),
-                'baseline_score': round(scores[0], 3),
-                'convergence_estimate': convergence_estimate,
-                'recommendation_count': len(recommendations),
-            }
+                "analysis_id": id(results),
+                "batch_count": len(results),
+                "trend": trend,
+                "improvement_rate": round(avg_improvement_per_batch, 4),
+                "overall_improvement": round(overall_improvement, 3),
+                "current_score": round(scores[-1], 3),
+                "baseline_score": round(scores[0], 3),
+                "convergence_estimate": convergence_estimate,
+                "recommendation_count": len(recommendations),
+            },
         )
-        
+
         trend_result = {
-            'improvement_rate': avg_improvement_per_batch,
-            'trend': trend,
-            'convergence_estimate': convergence_estimate,
-            'best_batch': best_batch.to_dict(),
-            'recommendations': recommendations,
-            'score_history': scores,
-            'metadata': {
-                'num_batches': len(results),
-                'overall_improvement': overall_improvement,
-            }
+            "improvement_rate": avg_improvement_per_batch,
+            "trend": trend,
+            "convergence_estimate": convergence_estimate,
+            "best_batch": best_batch.to_dict(),
+            "recommendations": recommendations,
+            "score_history": scores,
+            "metadata": {
+                "num_batches": len(results),
+                "overall_improvement": overall_improvement,
+            },
         }
         self._emit_trace(
             "ontology_optimizer.analyze_trends",
             {
-                'batch_count': len(results),
-                'trend': trend,
-                'improvement_rate': round(avg_improvement_per_batch, 6),
-                'overall_improvement': round(overall_improvement, 6),
-                'current_score': round(scores[-1], 6),
-                'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
-            }
+                "batch_count": len(results),
+                "trend": trend,
+                "improvement_rate": round(avg_improvement_per_batch, 6),
+                "overall_improvement": round(overall_improvement, 6),
+                "current_score": round(scores[-1], 6),
+                "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+            },
         )
         return trend_result
-    
 
-    def identify_patterns(
-        self,
-        successful_ontologies: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def identify_patterns(self, successful_ontologies: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Identify common patterns in successful ontologies.
 
@@ -830,8 +828,8 @@ class OntologyOptimizer:
         self._log.info(
             "Identifying ontology patterns",
             extra={
-                'ontology_count': len(successful_ontologies),
-            }
+                "ontology_count": len(successful_ontologies),
+            },
         )
 
         if not successful_ontologies:
@@ -897,21 +895,21 @@ class OntologyOptimizer:
     def generate_recommendations(
         self,
         current_state: Any,  # MediatorState
-        patterns: Dict[str, Any]
+        patterns: Dict[str, Any],
     ) -> List[str]:
         """
         Generate specific recommendations for improvement.
-        
+
         Args:
             current_state: Current mediator state
             patterns: Identified success patterns
-            
+
         Returns:
             List of actionable recommendations
         """
         recommendations = []
 
-        if hasattr(current_state, 'critic_scores') and current_state.critic_scores:
+        if hasattr(current_state, "critic_scores") and current_state.critic_scores:
             latest_score = current_state.critic_scores[-1]
 
             # Dimension-specific recommendations
@@ -948,21 +946,21 @@ class OntologyOptimizer:
             )
 
         return recommendations
-    
+
     def _determine_trend(self, current_score: float) -> str:
         """Determine trend based on score and history."""
         if not self._history:
-            return 'baseline'
-        
+            return "baseline"
+
         prev_score = self._history[-1].average_score
-        
+
         if current_score > prev_score + 0.05:
-            return 'improving'
+            return "improving"
         elif current_score < prev_score - 0.05:
-            return 'degrading'
+            return "degrading"
         else:
-            return 'stable'
-    
+            return "stable"
+
     def _identify_patterns(self, session_results: List[Any]) -> Dict[str, Any]:
         """Identify patterns across session results using counter-based analysis."""
         from collections import Counter
@@ -975,13 +973,19 @@ class OntologyOptimizer:
 
         for result in session_results:
             # Score data
-            if hasattr(result, 'critic_scores') and result.critic_scores:
+            if hasattr(result, "critic_scores") and result.critic_scores:
                 latest = result.critic_scores[-1]
-                if hasattr(latest, 'overall'):
+                if hasattr(latest, "overall"):
                     final_scores.append(latest.overall)
                 # Track weakest dimension per session
                 dim_scores: Dict[str, float] = {}
-                for d in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
+                for d in (
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "domain_alignment",
+                ):
                     raw_val = getattr(latest, d, None)
                     if isinstance(raw_val, (int, float)):
                         dim_scores[d] = float(raw_val)
@@ -990,40 +994,37 @@ class OntologyOptimizer:
                     weakest_dims[weakest] += 1
 
             # Round count
-            if hasattr(result, 'current_round'):
+            if hasattr(result, "current_round"):
                 convergence_rounds.append(result.current_round)
 
             # Entity / rel type distributions
             ontology = self._extract_ontology(result)
-            for ent in ontology.get('entities', []):
-                if isinstance(ent, dict) and ent.get('type'):
-                    entity_types[ent['type']] += 1
-            for rel in ontology.get('relationships', []):
-                if isinstance(rel, dict) and rel.get('type'):
-                    rel_types[rel['type']] += 1
+            for ent in ontology.get("entities", []):
+                if isinstance(ent, dict) and ent.get("type"):
+                    entity_types[ent["type"]] += 1
+            for rel in ontology.get("relationships", []):
+                if isinstance(rel, dict) and rel.get("type"):
+                    rel_types[rel["type"]] += 1
 
         def _avg(lst: Sequence[float | int]) -> float:
             return float(sum(lst) / len(lst)) if lst else 0.0
 
         return {
-            'avg_final_score': round(_avg(final_scores), 4),
-            'avg_convergence_rounds': round(_avg(convergence_rounds), 2),
-            'top_entity_types': [t for t, _ in entity_types.most_common(5)],
-            'top_rel_types': [t for t, _ in rel_types.most_common(5)],
-            'most_common_weakness': weakest_dims.most_common(1)[0][0] if weakest_dims else None,
-            'weakness_distribution': dict(weakest_dims.most_common()),
-            'session_count': len(session_results),
+            "avg_final_score": round(_avg(final_scores), 4),
+            "avg_convergence_rounds": round(_avg(convergence_rounds), 2),
+            "top_entity_types": [t for t, _ in entity_types.most_common(5)],
+            "top_rel_types": [t for t, _ in rel_types.most_common(5)],
+            "most_common_weakness": weakest_dims.most_common(1)[0][0] if weakest_dims else None,
+            "weakness_distribution": dict(weakest_dims.most_common()),
+            "session_count": len(session_results),
         }
-    
+
     def _generate_recommendations(
-        self,
-        average_score: float,
-        scores: List[float],
-        patterns: Dict[str, Any]
+        self, average_score: float, scores: List[float], patterns: Dict[str, Any]
     ) -> List[str]:
         """Generate recommendations based on scores and patterns."""
         recommendations = []
-        
+
         if average_score < 0.6:
             recommendations.append("Consider using hybrid extraction strategy")
             recommendations.append("Increase number of refinement rounds")
@@ -1035,64 +1036,58 @@ class OntologyOptimizer:
             recommendations.append("Enable logic validation")
         else:
             recommendations.append("Maintain current configuration")
-        
+
         # Check variance
         if len(scores) > 1:
             std = self._compute_std(scores)
             if std > 0.15:
                 recommendations.append("High variance detected - stabilize extraction process")
-        
+
         return recommendations
-    
-    def _compute_score_distribution(
-        self,
-        session_results: List[Any]
-    ) -> Dict[str, float]:
+
+    def _compute_score_distribution(self, session_results: List[Any]) -> Dict[str, float]:
         """Compute distribution of scores across dimensions."""
         distribution: Dict[str, List[float]] = {
-            'completeness': [],
-            'consistency': [],
-            'clarity': [],
-            'granularity': [],
-            'domain_alignment': [],
+            "completeness": [],
+            "consistency": [],
+            "clarity": [],
+            "granularity": [],
+            "domain_alignment": [],
         }
-        
+
         for result in session_results:
-            if hasattr(result, 'critic_scores') and result.critic_scores:
+            if hasattr(result, "critic_scores") and result.critic_scores:
                 score = result.critic_scores[-1]
                 for dim in distribution:
                     val = getattr(score, dim, None)
                     if val is not None:
                         distribution[dim].append(val)
-        
+
         # Compute averages
-        return {
-            dim: sum(vals) / len(vals) if vals else 0.0
-            for dim, vals in distribution.items()
-        }
-    
+        return {dim: sum(vals) / len(vals) if vals else 0.0 for dim, vals in distribution.items()}
+
     def _extract_ontology(self, result: Any) -> Dict[str, Any]:
         """Extract ontology and score from result."""
-        if hasattr(result, 'current_ontology'):
+        if hasattr(result, "current_ontology"):
             return {
-                'ontology': result.current_ontology,
-                'score': result.critic_scores[-1].overall if result.critic_scores else 0.0
+                "ontology": result.current_ontology,
+                "score": result.critic_scores[-1].overall if result.critic_scores else 0.0,
             }
-        elif hasattr(result, 'ontology'):
+        elif hasattr(result, "ontology"):
             return {
-                'ontology': result.ontology,
-                'score': result.critic_score.overall if hasattr(result, 'critic_score') else 0.0
+                "ontology": result.ontology,
+                "score": result.critic_score.overall if hasattr(result, "critic_score") else 0.0,
             }
-        return {'ontology': {}, 'score': 0.0}
-    
+        return {"ontology": {}, "score": 0.0}
+
     def _compute_std(self, scores: List[float]) -> float:
         """Compute standard deviation of scores."""
         if len(scores) < 2:
             return 0.0
-        
+
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def get_history_summary(self) -> Dict[str, Any]:
         """Return descriptive statistics over all historical batch reports.
@@ -1131,7 +1126,7 @@ class OntologyOptimizer:
 
         if n > 1:
             variance = sum((s - mean_s) ** 2 for s in scores) / (n - 1)
-            std_s = variance ** 0.5
+            std_s = variance**0.5
         else:
             std_s = 0.0
 
@@ -1238,14 +1233,16 @@ class OntologyOptimizer:
             b = self._history[i + 1]
             delta = round(b.average_score - a.average_score, 6)
             direction = "up" if delta > 0.001 else ("down" if delta < -0.001 else "flat")
-            rows.append({
-                "batch_from": i,
-                "batch_to": i + 1,
-                "score_from": round(a.average_score, 6),
-                "score_to": round(b.average_score, 6),
-                "delta": delta,
-                "direction": direction,
-            })
+            rows.append(
+                {
+                    "batch_from": i,
+                    "batch_to": i + 1,
+                    "score_from": round(a.average_score, 6),
+                    "score_to": round(b.average_score, 6),
+                    "delta": delta,
+                    "direction": direction,
+                }
+            )
         return rows
 
     def score_trend_summary(self) -> str:
@@ -1334,12 +1331,12 @@ class OntologyOptimizer:
         writer = csv.DictWriter(
             output,
             fieldnames=[
-                'batch_index',
-                'average_score',
-                'trend',
-                'improvement_rate',
-                'recommendation_count',
-                'num_sessions',
+                "batch_index",
+                "average_score",
+                "trend",
+                "improvement_rate",
+                "recommendation_count",
+                "num_sessions",
             ],
         )
         writer.writeheader()
@@ -1347,19 +1344,19 @@ class OntologyOptimizer:
         for idx, report in enumerate(self._history, start=1):
             writer.writerow(
                 {
-                    'batch_index': idx,
-                    'average_score': report.average_score,
-                    'trend': report.trend,
-                    'improvement_rate': report.improvement_rate,
-                    'recommendation_count': len(report.recommendations),
-                    'num_sessions': report.metadata.get('num_sessions', 0),
+                    "batch_index": idx,
+                    "average_score": report.average_score,
+                    "trend": report.trend,
+                    "improvement_rate": report.improvement_rate,
+                    "recommendation_count": len(report.recommendations),
+                    "num_sessions": report.metadata.get("num_sessions", 0),
                 }
             )
 
         if filepath:
             base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
             safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
-            with open(safe_path, 'w', newline='') as file_obj:
+            with open(safe_path, "w", newline="") as file_obj:
                 file_obj.write(output.getvalue())
             return None
 
@@ -1547,10 +1544,7 @@ class OntologyOptimizer:
         if len(self._history) < 2:
             return 0.0
         scores = [r.average_score for r in self._history]
-        converged = sum(
-            1 for a, b in zip(scores, scores[1:])
-            if abs(b - a) < threshold
-        )
+        converged = sum(1 for a, b in zip(scores, scores[1:]) if abs(b - a) < threshold)
         return converged / (len(scores) - 1)
 
     @profile_time(slow_threshold_s=0.0)
@@ -1941,9 +1935,7 @@ class OntologyOptimizer:
             >>> optimizer.top_n_scores(3)
             []
         """
-        scores = sorted(
-            (entry.average_score for entry in self._history), reverse=True
-        )
+        scores = sorted((entry.average_score for entry in self._history), reverse=True)
         return scores[:n]
 
     def score_at(self, index: int) -> float:
@@ -2035,6 +2027,7 @@ class OntologyOptimizer:
             raise ValueError("No history to plot; run analyze_batch() first.")
         try:
             import matplotlib
+
             matplotlib.use("Agg")  # non-interactive backend
             import matplotlib.pyplot as _plt
         except ImportError as exc:
@@ -2059,6 +2052,7 @@ class OntologyOptimizer:
             return None
 
         import io, base64
+
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight")
         _plt.close(fig)
@@ -2127,11 +2121,13 @@ class OntologyOptimizer:
             tgt = rel.get("target_id")
             rel_type = rel.get("type")
             if src and tgt and rel_type:
-                g.add((
-                    URIRef(ONT[src]),
-                    URIRef(ONT[rel_type]),
-                    URIRef(ONT[tgt]),
-                ))
+                g.add(
+                    (
+                        URIRef(ONT[src]),
+                        URIRef(ONT[rel_type]),
+                        URIRef(ONT[tgt]),
+                    )
+                )
 
         serialized = str(g.serialize(format=format))
         if filepath:
@@ -2289,10 +2285,7 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         if len(scores) < window:
             return []
-        return [
-            sum(scores[i : i + window]) / window
-            for i in range(len(scores) - window + 1)
-        ]
+        return [sum(scores[i : i + window]) / window for i in range(len(scores) - window + 1)]
 
     def score_quartiles(self) -> tuple[float, float, float]:
         """Return (Q1, Q2, Q3) of history average_scores.
@@ -2454,8 +2447,7 @@ class OntologyOptimizer:
         if len(entries) < 2:
             return 0.0
         diffs = [
-            entries[i + 1].average_score - entries[i].average_score
-            for i in range(len(entries) - 1)
+            entries[i + 1].average_score - entries[i].average_score for i in range(len(entries) - 1)
         ]
         return sum(diffs) / len(diffs)
 
@@ -2593,7 +2585,7 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def count_entries_with_trend(self, trend: str) -> int:
         """Count history entries matching a specific *trend* label.
@@ -2615,6 +2607,7 @@ class OntologyOptimizer:
         if not self._history:
             return "stable"
         from collections import Counter
+
         counts = Counter(getattr(e, "trend", "stable") for e in self._history)
         return counts.most_common(1)[0][0]
 
@@ -2702,6 +2695,7 @@ class OntologyOptimizer:
             fall in the same bin.
         """
         import math
+
         if not self._history:
             return 0.0
         scores = [e.average_score for e in self._history]
@@ -2758,8 +2752,7 @@ class OntologyOptimizer:
         variance = sum((s - mean) ** 2 for s in scores) / n
         if variance == 0:
             return 0.0
-        cov = sum((scores[i] - mean) * (scores[i - lag] - mean)
-                  for i in range(lag, n)) / (n - lag)
+        cov = sum((scores[i] - mean) * (scores[i - lag] - mean) for i in range(lag, n)) / (n - lag)
         return cov / variance
 
     def history_stability(self) -> float:
@@ -2773,6 +2766,7 @@ class OntologyOptimizer:
             Float in (0, 1]; ``0.0`` when history is empty or mean is zero.
         """
         import math
+
         if not self._history:
             return 0.0
         scores = [e.average_score for e in self._history]
@@ -2837,7 +2831,7 @@ class OntologyOptimizer:
             return 0.0
         scores = [e.average_score for e in self._history]
         recent = scores[-window:]
-        prior = scores[-(2 * window):-window]
+        prior = scores[-(2 * window) : -window]
         return sum(recent) / len(recent) - sum(prior) / len(prior)
 
     def score_below_threshold(self, threshold: float = 0.5) -> list[OptimizationReport]:
@@ -2898,7 +2892,6 @@ class OntologyOptimizer:
             List of history entries (up to *n*), highest score first.
         """
         return sorted(self._history, key=lambda e: e.average_score, reverse=True)[:n]
-
 
     def score_streak(self, direction: str = "up") -> int:
         """Return the length of the current consecutive streak.
@@ -2988,13 +2981,12 @@ class OntologyOptimizer:
         var = sum((s - mean) ** 2 for s in scores) / n
         if var == 0.0:
             return 0.0
-        std = var ** 0.5
+        std = var**0.5
         third_moment = sum((s - mean) ** 3 for s in scores) / n
-        g1 = third_moment / (std ** 3)
+        g1 = third_moment / (std**3)
         # Adjusted Fisher-Pearson correction
         adj = (n * (n - 1)) ** 0.5 / (n - 2)
         return float(adj * g1)
-
 
     def score_plateau_length(self, tolerance: float = 0.005) -> int:
         """Return the length of the longest flat-score plateau in history.
@@ -3075,7 +3067,7 @@ class OntologyOptimizer:
         scores = sorted(e.average_score for e in self._history)
         n = len(scores)
         k = int(n * trim)
-        trimmed = scores[k:n - k] if k > 0 else scores
+        trimmed = scores[k : n - k] if k > 0 else scores
         if not trimmed:
             return sum(scores) / n
         return sum(trimmed) / len(trimmed)
@@ -3094,7 +3086,7 @@ class OntologyOptimizer:
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         if variance == 0.0:
             return [0.0] * len(scores)
-        std = variance ** 0.5
+        std = variance**0.5
         return [(s - mean) / std for s in scores]
 
     def score_cumulative_max(self) -> list[float]:
@@ -3192,7 +3184,7 @@ class OntologyOptimizer:
         if variance == 0.0:
             return 0.0
         m4 = sum((s - mean) ** 4 for s in scores) / n
-        return m4 / (variance ** 2) - 3.0
+        return m4 / (variance**2) - 3.0
 
     def score_ewma(self, alpha: float = 0.3) -> float:
         """Return the exponential weighted moving average of history scores.
@@ -3300,6 +3292,7 @@ class OntologyOptimizer:
             Float; 0.0 when fewer than 4 history entries.
         """
         import math
+
         scores = [e.average_score for e in self._history]
         n = len(scores)
         if n < 4:
@@ -3469,7 +3462,6 @@ class OntologyOptimizer:
         recent = self._history[-window:]
         return min(e.average_score for e in recent)
 
-
     def history_std_ratio(self, window: int = 5) -> float:
         """Return std(recent window) / std(full history) as a volatility ratio.
 
@@ -3530,7 +3522,7 @@ class OntologyOptimizer:
         recent_diffs = diffs[-window:]
         result = 0.0
         for i, d in enumerate(reversed(recent_diffs)):
-            result += (alpha ** i) * d
+            result += (alpha**i) * d
         return result
 
     def score_signed_sum(self) -> float:
@@ -3545,7 +3537,6 @@ class OntologyOptimizer:
         if len(scores) < 2:
             return 0.0
         return scores[-1] - scores[0]
-
 
     def score_acceleration(self) -> float:
         """Return the mean second derivative of scores (acceleration).
@@ -3588,8 +3579,7 @@ class OntologyOptimizer:
         variance = sum((d - mean) ** 2 for d in diffs) / len(diffs)
         if variance == 0.0:
             return 0.0
-        return float(variance ** 0.5)
-
+        return float(variance**0.5)
 
     def history_peak_count(self) -> int:
         """Return the number of local maxima in score history.
@@ -3603,8 +3593,9 @@ class OntologyOptimizer:
         n = len(scores)
         if n < 3:
             return 0
-        return sum(1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1])
-
+        return sum(
+            1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1]
+        )
 
     def history_valley_count(self) -> int:
         """Return the number of local minima in score history.
@@ -3618,7 +3609,9 @@ class OntologyOptimizer:
         n = len(scores)
         if n < 3:
             return 0
-        return sum(1 for i in range(1, n - 1) if scores[i] < scores[i - 1] and scores[i] < scores[i + 1])
+        return sum(
+            1 for i in range(1, n - 1) if scores[i] < scores[i - 1] and scores[i] < scores[i + 1]
+        )
 
     def score_trend_correlation(self) -> float:
         """Return Pearson correlation between time index and history scores.
@@ -3641,7 +3634,6 @@ class OntologyOptimizer:
         if di == 0.0 or ds == 0.0:
             return 0.0
         return float(num / (di * ds))
-
 
     def history_weighted_mean(self, weights: list[float] | None = None) -> float:
         """Return weighted mean of average_score over history.
@@ -3682,7 +3674,6 @@ class OntologyOptimizer:
                 break
         return count
 
-
     def history_min(self) -> float:
         """Return the minimum average_score across all history entries.
 
@@ -3716,7 +3707,6 @@ class OntologyOptimizer:
             return 0.0
         recent = self._history[-window:]
         return sum(e.average_score for e in recent) / len(recent)
-
 
     def history_above_mean_count(self) -> int:
         """Return the number of history entries with average_score above the mean.
@@ -3772,7 +3762,6 @@ class OntologyOptimizer:
         rolling = sum(e.average_score for e in recent) / len(recent)
         return sum(1 for e in self._history if e.average_score > rolling)
 
-
     def history_first(self) -> float:
         """Return the average_score of the first history entry.
 
@@ -3808,7 +3797,6 @@ class OntologyOptimizer:
             Float score; 0.0 when history is empty.
         """
         return self.history_last()
-
 
     def history_streak_above(self, threshold: float = 0.7) -> int:
         """Return the length of the current streak of entries scoring above threshold.
@@ -3846,7 +3834,7 @@ class OntologyOptimizer:
         n = len(deltas)
         mean = sum(deltas) / n
         variance = sum((d - mean) ** 2 for d in deltas) / n
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def history_percentile_rank(self, value: float) -> float:
         """Return the percentile rank of *value* within history scores.
@@ -3862,7 +3850,6 @@ class OntologyOptimizer:
         n = len(self._history)
         below = sum(1 for e in self._history if e.average_score < value)
         return (below / n) * 100.0
-
 
     def history_span(self) -> float:
         """Return the difference between max and min average_score in history.
@@ -3884,7 +3871,8 @@ class OntologyOptimizer:
         if len(self._history) < 2:
             return 0.0
         changes = sum(
-            1 for i in range(len(self._history) - 1)
+            1
+            for i in range(len(self._history) - 1)
             if self._history[i + 1].average_score != self._history[i].average_score
         )
         return changes / (len(self._history) - 1)
@@ -3912,7 +3900,6 @@ class OntologyOptimizer:
         if diff < -0.01:
             return "declining"
         return "stable"
-
 
     def history_cumulative_sum(self) -> float:
         """Return the cumulative sum of all average_score values in history.
@@ -3949,12 +3936,14 @@ class OntologyOptimizer:
         n = len(scores)
         mean = sum(scores) / n
         variance = sum((s - mean) ** 2 for s in scores) / n
-        std = variance ** 0.5
+        std = variance**0.5
         if std == 0.0:
             return 0.0
         return float((scores[-1] - mean) / std)
 
-    def history_trimmed_mean(self, trim_fraction: float = 0.1, trim: Optional[float] = None) -> float:  # type: ignore[no-redef]
+    def history_trimmed_mean(
+        self, trim_fraction: float = 0.1, trim: Optional[float] = None
+    ) -> float:  # type: ignore[no-redef]
         """Return trimmed mean of history scores, ignoring extremes.
 
         The trim removes a fraction of scores from both ends of the sorted list.
@@ -3965,10 +3954,10 @@ class OntologyOptimizer:
 
         Returns:
             Float trimmed mean; 0.0 when no history recorded.
-        
+
         Raises:
             ValueError: If trim_fraction not in [0.0, 0.5).
-        
+
         Example:
             >>> opt = OntologyOptimizer()
             >>> opt._history = [OptEntry(avg_score=0.5), OptEntry(avg_score=0.9), OptEntry(avg_score=0.6)]
@@ -3981,17 +3970,17 @@ class OntologyOptimizer:
             return 0.0
         if trim_fraction < 0.0 or trim_fraction >= 0.5:
             raise ValueError("trim_fraction must be in [0.0, 0.5).")
-        
+
         scores = sorted(e.average_score for e in self._history)
         n = len(scores)
         k = int(n * trim_fraction)
-        
+
         # If no trimming occurs or trimming would remove too much, use full mean
         if k == 0 or k * 2 >= n:
             return sum(scores) / n
-        
+
         # Trim k elements from each tail
-        trimmed = scores[k:n - k]
+        trimmed = scores[k : n - k]
         return sum(trimmed) / len(trimmed)
 
     def history_decay_sum(self, decay: float = 0.9) -> float:
@@ -4008,8 +3997,7 @@ class OntologyOptimizer:
         if not self._history:
             return 0.0
         entries = list(reversed(self._history))
-        return sum(e.average_score * (decay ** i) for i, e in enumerate(entries))
-
+        return sum(e.average_score * (decay**i) for i, e in enumerate(entries))
 
     def score_delta_std(self) -> float:
         """Return the standard deviation of consecutive score deltas.
@@ -4026,7 +4014,7 @@ class OntologyOptimizer:
         n = len(deltas)
         mean = sum(deltas) / n
         variance = sum((d - mean) ** 2 for d in deltas) / n
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def history_coefficient_of_variation(self) -> float:
         """Return the coefficient of variation (std / mean) of history scores.
@@ -4041,8 +4029,7 @@ class OntologyOptimizer:
         if mean == 0:
             return 0.0
         variance = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return float(variance ** 0.5 / mean)
-
+        return float(variance**0.5 / mean)
 
     def history_above_threshold_rate(self, threshold: float = 0.7) -> float:
         """Return the fraction of history entries scoring above threshold.
@@ -4066,7 +4053,8 @@ class OntologyOptimizer:
         if len(self._history) < 2:
             return 0.0
         improvements = sum(
-            1 for i in range(len(self._history) - 1)
+            1
+            for i in range(len(self._history) - 1)
             if self._history[i + 1].average_score > self._history[i].average_score
         )
         return improvements / (len(self._history) - 1)
@@ -4082,7 +4070,6 @@ class OntologyOptimizer:
         last = self._history[-1].average_score
         return self.history_percentile_rank(last)
 
-
     def score_z_score(self) -> float:  # type: ignore[no-redef]
         """Return the z-score of the most recent average_score relative to history.
 
@@ -4096,7 +4083,7 @@ class OntologyOptimizer:
         vals = [e.average_score for e in self._history]
         mean = sum(vals) / len(vals)
         variance = sum((v - mean) ** 2 for v in vals) / len(vals)
-        std = variance ** 0.5
+        std = variance**0.5
         if std == 0:
             return 0.0
         return float((vals[-1] - mean) / std)
@@ -4152,7 +4139,7 @@ class OntologyOptimizer:
         n = len(vals)
         q1_idx = n // 4
         q3_idx = (3 * n) // 4
-        iqr_vals = vals[q1_idx:q3_idx + 1]
+        iqr_vals = vals[q1_idx : q3_idx + 1]
         return sum(iqr_vals) / len(iqr_vals) if iqr_vals else 0.0
 
     def score_bimodality_coefficient(self) -> float:
@@ -4170,15 +4157,15 @@ class OntologyOptimizer:
         n = len(vals)
         mean = sum(vals) / n
         diffs = [v - mean for v in vals]
-        var = sum(d ** 2 for d in diffs) / n
+        var = sum(d**2 for d in diffs) / n
         if var == 0:
             return 0.0
-        std = var ** 0.5
-        skew = (sum(d ** 3 for d in diffs) / n) / (std ** 3)
-        kurt = (sum(d ** 4 for d in diffs) / n) / (var ** 2)
+        std = var**0.5
+        skew = (sum(d**3 for d in diffs) / n) / (std**3)
+        kurt = (sum(d**4 for d in diffs) / n) / (var**2)
         if kurt == 0:
             return 0.0
-        bc = (skew ** 2 + 1) / kurt
+        bc = (skew**2 + 1) / kurt
         return float(max(0.0, min(1.0, bc)))
 
     def score_below_threshold_rate(self, threshold: float = 0.5) -> float:
@@ -4382,7 +4369,7 @@ class OntologyOptimizer:
         if mean == 0:
             return 0.0
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return float((var ** 0.5) / mean)
+        return float((var**0.5) / mean)
 
     def score_relative_to_best(self) -> float:
         """Return the latest score as a fraction of the all-time best score.
@@ -4449,7 +4436,7 @@ class OntologyOptimizer:
         vals = [e.average_score for e in self._history]
         mean = sum(vals) / len(vals)
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
-        std = var ** 0.5
+        std = var**0.5
         if std == 0:
             return 0.0
         return float((vals[-1] - mean) / std)
@@ -4577,10 +4564,7 @@ class OntologyOptimizer:
             return 0.0
         n = len(self._history)
         total_weight = n * (n + 1) / 2
-        weighted_sum = sum(
-            (i + 1) * entry.average_score
-            for i, entry in enumerate(self._history)
-        )
+        weighted_sum = sum((i + 1) * entry.average_score for i, entry in enumerate(self._history))
         return weighted_sum / total_weight
 
     def score_mean_top_k(self, k: int = 3) -> float:
@@ -4742,22 +4726,22 @@ class OntologyOptimizer:
         """
         if not self._history:
             return -1
-        
+
         # Find first drop below threshold
         drop_idx = -1
         for i, entry in enumerate(self._history):
             if entry.average_score < threshold:
                 drop_idx = i
                 break
-        
+
         if drop_idx == -1:
             return -1  # Never dropped below threshold
-        
+
         # Find recovery after drop
         for i in range(drop_idx + 1, len(self._history)):
             if self._history[i].average_score >= threshold:
                 return i - drop_idx
-        
+
         return -1  # Never recovered
 
     def score_below_baseline(self, baseline: float = 0.5) -> int:
@@ -4800,29 +4784,28 @@ class OntologyOptimizer:
         """
         if len(self._history) < 3:
             return 0
-        
+
         reversals = 0
         improving = None
-        
+
         for i in range(1, len(self._history)):
             current = self._history[i].average_score
-            previous = self._history[i-1].average_score
+            previous = self._history[i - 1].average_score
             delta = current - previous
-            
+
             if delta > 1e-6:  # Improving
                 current_trend = True
             elif delta < -1e-6:  # Declining
                 current_trend = False
             else:  # Flat
                 continue
-            
+
             if improving is not None and improving != current_trend:
                 reversals += 1
-            
-            improving = current_trend
-        
-        return reversals
 
+            improving = current_trend
+
+        return reversals
 
     def score_geometric_mean(self) -> float:
         """Return the geometric mean of all history ``average_score`` values.
@@ -4868,7 +4851,7 @@ class OntologyOptimizer:
         if mean == 0.0:
             return 0.0
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return float(variance ** 0.5 / mean)
+        return float(variance**0.5 / mean)
 
     def score_relative_improvement(self) -> float:
         """Return the relative improvement from first to last score.
@@ -4932,10 +4915,10 @@ class OntologyOptimizer:
             return []
         result = []
         for i in range(len(scores) - window + 1):
-            chunk = scores[i:i + window]
+            chunk = scores[i : i + window]
             mean = sum(chunk) / window
             variance = sum((v - mean) ** 2 for v in chunk) / window
-            result.append(variance ** 0.5)
+            result.append(variance**0.5)
         return result
 
     def score_skewness(self) -> float:
@@ -4956,8 +4939,8 @@ class OntologyOptimizer:
         variance = sum((s - mean) ** 2 for s in scores) / n
         if variance == 0.0:
             return 0.0
-        std = variance ** 0.5
-        return float(sum((s - mean) ** 3 for s in scores) / (n * std ** 3))
+        std = variance**0.5
+        return float(sum((s - mean) ** 3 for s in scores) / (n * std**3))
 
     def score_entropy(self) -> float:
         """Return the Shannon entropy of history ``average_score`` values.
@@ -5029,16 +5012,16 @@ class OntologyOptimizer:
             >>> for score in [0.65, 0.70, 0.73, 0.78, 0.82]:
             ...     report = OptimizationReport(average_score=score, trend="improving")
             ...     optimizer._history.append(report)
-            >>> 
+            >>>
             >>> slope = optimizer.score_trend_slope()
             >>> print(f"Trend slope: {slope:.4f}")
             Trend slope: 0.0430
-            >>> 
+            >>>
             >>> # Positive slope indicates quality is improving
             >>> if slope > 0.01:
             ...     print("✓ Ontology quality is improving over time")
             ✓ Ontology quality is improving over time
-            >>> 
+            >>>
             >>> # Use with score_trend_intercept() to project future scores
             >>> intercept = optimizer.score_trend_intercept()
             >>> predicted_score_at_cycle_10 = intercept + slope * 10
@@ -5145,12 +5128,11 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         # Compute first differences (velocities)
         deltas = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
-        
+
         # Take last 'window' deltas
         recent_deltas = deltas[-window:]
-        
-        return sum(recent_deltas) / len(recent_deltas)
 
+        return sum(recent_deltas) / len(recent_deltas)
 
     def score_mad(self) -> float:  # type: ignore[no-redef]
         """Return the Mean Absolute Deviation (MAD) of history scores.
@@ -5198,7 +5180,7 @@ class OntologyOptimizer:
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         if variance == 0.0:
             return []
-        std = variance ** 0.5
+        std = variance**0.5
         return [i for i, s in enumerate(scores) if abs((s - mean) / std) > threshold]
 
     def score_bimodality_dip(self) -> float:
@@ -5352,7 +5334,7 @@ class OntologyOptimizer:
         lower = scores[:mid]
         # For even n: upper = scores[mid:]; for odd n: skip the median (middle
         # element at index mid) so both halves have exactly mid elements.
-        upper = scores[mid:] if n % 2 == 0 else scores[mid + 1:]
+        upper = scores[mid:] if n % 2 == 0 else scores[mid + 1 :]
         if not lower or not upper:
             return 0.0
         return sum(abs(u - l) for u, l in zip(upper, lower)) / len(lower)
@@ -5383,13 +5365,11 @@ class OntologyOptimizer:
         if not self._history:
             return 0.0
         if trim_pct < 0.0 or trim_pct >= 50.0:
-            raise ValueError(
-                f"trim_pct must be in [0.0, 50.0), got {trim_pct!r}"
-            )
+            raise ValueError(f"trim_pct must be in [0.0, 50.0), got {trim_pct!r}")
         scores = sorted(e.average_score for e in self._history)
         n = len(scores)
         k = int(n * trim_pct / 100.0)
-        trimmed = scores[k: n - k] if (k < n and n - 2 * k > 0) else scores
+        trimmed = scores[k : n - k] if (k < n and n - 2 * k > 0) else scores
         if not trimmed:
             return 0.0
         return sum(trimmed) / len(trimmed)
@@ -5447,7 +5427,7 @@ class OntologyOptimizer:
         n = len(scores)
         mean = sum(scores) / n
         variance = sum((s - mean) ** 2 for s in scores) / n
-        return variance / (rng ** 2)
+        return variance / (rng**2)
 
     def score_entropy_ratio(self) -> float:
         """Return the normalised Shannon entropy of history scores.
@@ -5522,7 +5502,7 @@ class OntologyOptimizer:
         deltas = []
         for i in range(1, n_total):
             h_prev = _entropy(scores[:i])
-            h_curr = _entropy(scores[:i + 1])
+            h_curr = _entropy(scores[: i + 1])
             deltas.append(abs(h_curr - h_prev))
         return sum(deltas) / len(deltas)
 
@@ -5575,8 +5555,8 @@ class OntologyOptimizer:
     def rolling_correlation(self, lag: int = 1, window: int = 5) -> List[float]:
         """Compute Pearson correlation between lagged score windows.
 
-        Sliding-window correlation between the current score and a lagged 
-        historical score, measured over a specified window size. Useful for 
+        Sliding-window correlation between the current score and a lagged
+        historical score, measured over a specified window size. Useful for
         detecting momentum or mean-reverting patterns in optimization scores.
 
         Args:
@@ -5598,7 +5578,7 @@ class OntologyOptimizer:
             raise ValueError(f"lag must be ≥ 1, got {lag}")
         if window < 2:
             raise ValueError(f"window must be ≥ 2, got {window}")
-        
+
         if not self._history or len(self._history) < lag + window:
             return []
 
@@ -5608,16 +5588,16 @@ class OntologyOptimizer:
         for i in range(lag + window - 1, len(scores)):
             window_current = scores[i - window + 1 : i + 1]
             window_lagged = scores[i - lag - window + 1 : i - lag + 1]
-            
+
             if len(window_current) != window or len(window_lagged) != window:
                 continue
 
             mean_curr = sum(window_current) / window
             mean_lag = sum(window_lagged) / window
-            
+
             sum_sq_curr = sum((x - mean_curr) ** 2 for x in window_current)
             sum_sq_lag = sum((x - mean_lag) ** 2 for x in window_lagged)
-            
+
             if sum_sq_curr == 0 or sum_sq_lag == 0:
                 correlations.append(0.0)
                 continue
@@ -5635,7 +5615,7 @@ class OntologyOptimizer:
         """Estimate the seasonal component as a fraction of variance.
 
         Decomposes the score history into trend and seasonal components using
-        a period-based approach. Returns the fraction of total variance 
+        a period-based approach. Returns the fraction of total variance
         explained by the seasonal (periodic) variation, with values in [0.0, 1.0].
 
         Args:
@@ -5654,29 +5634,29 @@ class OntologyOptimizer:
         """
         if period < 2:
             raise ValueError(f"period must be ≥ 2, got {period}")
-        
+
         if not self._history or len(self._history) < period + 1:
             return 0.0
 
         scores = [e.average_score for e in self._history]
         n = len(scores)
-        
+
         # Compute trend as a simple moving average
         trend = []
         for i in range(period, n):
             window_avg = sum(scores[i - period : i]) / period
             trend.append(window_avg)
-        
+
         # Compute seasonal as detrended signal
         seasonal = [scores[i] - trend[i - period] for i in range(period, n)]
-        
+
         # Variance decomposition
         total_var = sum((s - sum(scores) / n) ** 2 for s in scores) / n
-        seasonal_var = sum(s ** 2 for s in seasonal) / len(seasonal) if seasonal else 0.0
-        
+        seasonal_var = sum(s**2 for s in seasonal) / len(seasonal) if seasonal else 0.0
+
         if total_var == 0:
             return 0.0
-        
+
         return min(1.0, seasonal_var / total_var)
 
     def score_entropy(self) -> float:  # type: ignore[no-redef]
@@ -5695,7 +5675,7 @@ class OntologyOptimizer:
             >>> # Scores: 0.1, 0.1, 0.1 (all same)
             >>> opt.score_entropy()
             0.0  # No randomness
-            
+
             >>> # Scores: 0.1, 0.5, 0.9 (uniform random)
             >>> opt.score_entropy()
             1.585  # ~1.585 entropy (log₂(3))
@@ -5713,6 +5693,7 @@ class OntologyOptimizer:
         n = len(rounded)
         entropy = 0.0
         import math as _math
+
         for count in unique.values():
             prob = count / n
             if prob > 0 and prob < 1.0:
@@ -5736,7 +5717,7 @@ class OntologyOptimizer:
             >>> # Scores: 0.5, 0.5, 0.5 (all same)
             >>> opt.score_concentration()
             1.0  # Perfect concentration
-            
+
             >>> # Scores: 0.1, 0.2, 0.3, 0.4 (uniform)
             >>> opt.score_concentration()
             0.25  # = 4 * (0.25)²
@@ -5774,7 +5755,7 @@ class OntologyOptimizer:
             >>> # Scores: 0.5, 0.5, 0.5 (uniform)
             >>> opt.score_gini_index()
             0.0  # No inequality
-            
+
             >>> # Scores: 0.0, 0.0, 1.0 (unequal)
             >>> opt.score_gini_index()
             0.667  # High inequality
@@ -5819,7 +5800,7 @@ class OntologyOptimizer:
             >>> # Consistently improving scores
             >>> # 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 (first deriv = 0.1, 0.1, ...
             >>> # accel = 0, 0, ... → trend ≈ 0
-            
+
             >>> # Accelerating improvement: 0.1, 0.2, 0.4, 0.8, 1.5
             >>> # first deriv = 0.1, 0.2, 0.4, 0.7 → accel = 0.1, 0.2, 0.3
             >>> # recent_accel = avg(0.2, 0.3) > overall_accel → positive trend
@@ -5844,7 +5825,11 @@ class OntologyOptimizer:
             return 0.0
 
         # Recent acceleration (last 3 or fewer)
-        recent_accel = sum(second_deriv[-3:]) / len(second_deriv[-3:]) if len(second_deriv) >= 3 else overall_accel
+        recent_accel = (
+            sum(second_deriv[-3:]) / len(second_deriv[-3:])
+            if len(second_deriv) >= 3
+            else overall_accel
+        )
 
         # Ratio, clamped to [-2, 2]
         ratio = recent_accel / overall_accel
@@ -5870,7 +5855,7 @@ class OntologyOptimizer:
             >>> # Stable recent performance: 0.75, 0.76, 0.75, 0.76, 0.75
             >>> opt.score_dimension_std()
             0.0045  # Low variation
-            
+
             >>> # Oscillating performance: 0.5, 0.8, 0.4, 0.9, 0.3
             >>> opt.score_dimension_std()
             0.25  # High variation
@@ -5885,7 +5870,7 @@ class OntologyOptimizer:
 
         mean = sum(recent_scores) / len(recent_scores)
         variance = sum((s - mean) ** 2 for s in recent_scores) / len(recent_scores)
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def score_relationship_density(self) -> float:
         """Return the signal-to-noise ratio in recent score trends.
@@ -5910,7 +5895,7 @@ class OntologyOptimizer:
             >>> # Strong monotonic improvement: 0.1, 0.2, 0.3, 0.4, 0.5
             >>> # first_deriv = [0.1, 0.1, 0.1, 0.1]
             >>> # trend_energy = 0.4, noise = 0.4 → density = 1.0
-            
+
             >>> # Oscillating: 0.3, 0.1, 0.4, 0.2, 0.5
             >>> # first_deriv = [-0.2, 0.3, -0.2, 0.3]
             >>> # trend_energy = 0.2, noise = 1.0 → density = 0.2
@@ -5957,7 +5942,7 @@ class OntologyOptimizer:
 
             >>> # Scores: 0.1, 0.5, 0.8, 0.6
             >>> # peak = 0.8, current = 0.6 → ratio = 0.75 (25% drawdown)
-            
+
             >>> # Scores: 0.5, 0.9, 0.3
             >>> # peak = 0.9, current = 0.3 → ratio = 0.333 (67% drawdown)
         """
@@ -6000,7 +5985,7 @@ class OntologyOptimizer:
             >>> # Regular oscillation: 0.5, 0.7, 0.5, 0.7, 0.5, 0.7
             >>> opt.score_cycle_period()
             2.0  # Pattern repeats every 2 steps
-            
+
             >>> # Monotonic: 0.1, 0.2, 0.3, 0.4, 0.5
             >>> opt.score_cycle_period()
             0.0  # No cycle detected
@@ -6026,8 +6011,9 @@ class OntologyOptimizer:
                 break
 
             # Autocorrelation at this lag
-            cov = sum((scores[i] - mean) * (scores[i - lag] - mean)
-                      for i in range(lag, len(scores))) / (len(scores) - lag)
+            cov = sum(
+                (scores[i] - mean) * (scores[i - lag] - mean) for i in range(lag, len(scores))
+            ) / (len(scores) - lag)
             acorr = abs(cov / variance)
 
             if acorr > max_acorr:
@@ -6063,7 +6049,7 @@ class OntologyOptimizer:
             >>> # deltas = [0.1, 0.1, 0.1, 0.1] → autocorr ≈ 1.0
             >>> opt.score_persistence()
             1.0
-            
+
             >>> # Random: 0.1, 0.9, 0.2, 0.8, 0.3
             >>> # deltas = [0.8, -0.7, 0.6, -0.5] → autocorr ≈ 0.0
             >>> opt.score_persistence()
@@ -6088,8 +6074,9 @@ class OntologyOptimizer:
             return 1.0
 
         # Autocorrelation at lag 1
-        cov = sum((deltas[i] - mean_d) * (deltas[i - 1] - mean_d)
-                  for i in range(1, len(deltas))) / (len(deltas) - 1)
+        cov = sum(
+            (deltas[i] - mean_d) * (deltas[i - 1] - mean_d) for i in range(1, len(deltas))
+        ) / (len(deltas) - 1)
         autocorr = cov / variance_d
 
         # Clamp to [0, 1] (negative autocorr indicates persistence in opposite direction)
@@ -6098,5 +6085,6 @@ class OntologyOptimizer:
 
 # Export public API
 __all__ = [
-    'OntologyOptimizer',
-    'OptimizationReport',]
+    "OntologyOptimizer",
+    "OptimizationReport",
+]

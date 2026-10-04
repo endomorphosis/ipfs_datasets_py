@@ -86,7 +86,7 @@ config = MCPDashboardConfig(
     enable_analytics=True,
     enable_rag_query=True,
     enable_investigation=True,
-    enable_real_time_monitoring=True
+    enable_real_time_monitoring=True,
 )
 
 dashboard = MCPDashboard()

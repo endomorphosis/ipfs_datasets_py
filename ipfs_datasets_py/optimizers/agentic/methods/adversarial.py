@@ -30,12 +30,13 @@ from ..patch_control import PatchManager
 @dataclass
 class BenchmarkResult:
     """Results from benchmarking a solution.
-    
+
     Attributes:
         execution_time: Time taken to execute (seconds)
         memory_usage: Memory used (MB)
         correctness_score: Correctness score (0-1)
     """
+
     execution_time: float
     memory_usage: float
     correctness_score: float
@@ -44,13 +45,14 @@ class BenchmarkResult:
 @dataclass
 class Solution:
     """Represents a candidate solution.
-    
+
     Attributes:
         id: Unique identifier for the solution
         code: The solution code
         description: Description of the solution approach
         benchmark_result: Benchmark results (if evaluated)
     """
+
     id: str
     code: str
     description: str
@@ -59,7 +61,7 @@ class Solution:
 
 class AdversarialOptimizer(AgenticOptimizer):
     """Adversarial optimization implementation.
-    
+
     This optimizer generates multiple competing solutions and selects
     the best through comprehensive evaluation:
     1. Analyze code and generate N alternative implementations
@@ -67,7 +69,7 @@ class AdversarialOptimizer(AgenticOptimizer):
     3. Apply adversarial testing (edge cases, stress tests)
     4. Score solutions using weighted multi-criteria evaluation
     5. Select winner and create patch
-    
+
     Example:
         >>> from ipfs_datasets_py.llm_router import LLMRouter
         >>> router = LLMRouter()
@@ -89,7 +91,7 @@ class AdversarialOptimizer(AgenticOptimizer):
         ... )
         >>> result = optimizer.optimize(task)
     """
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -101,7 +103,7 @@ class AdversarialOptimizer(AgenticOptimizer):
         logger: Optional[_logging.Logger] = None,
     ):
         """Initialize adversarial optimizer.
-        
+
         Args:
             agent_id: Unique identifier for this agent
             llm_router: LLM router for text generation
@@ -114,7 +116,7 @@ class AdversarialOptimizer(AgenticOptimizer):
         super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         self.num_solutions = num_solutions
-        
+
         # Default scoring weights if not provided
         self.scoring_weights = scoring_weights or {
             "performance": 0.35,
@@ -123,54 +125,66 @@ class AdversarialOptimizer(AgenticOptimizer):
             "test_coverage": 0.10,
             "security": 0.10,
         }
-        
+
         # Validate weights sum to 1.0
         weight_sum = sum(self.scoring_weights.values())
         if abs(weight_sum - 1.0) > 0.01:
             raise ValueError(f"Scoring weights must sum to 1.0, got {weight_sum}")
-    
+
     def _get_method(self) -> OptimizationMethod:
         """Return the optimization method."""
         return OptimizationMethod.ADVERSARIAL
-    
+
     def optimize(self, task: OptimizationTask) -> OptimizationResult:
         """Perform adversarial optimization.
-        
+
         Args:
             task: The optimization task to perform
-            
+
         Returns:
             OptimizationResult with success status and details
         """
         start_time = time.time()
-        
+
         try:
-            self._log.info("Starting adversarial optimization", extra={
-                'task_id': task.task_id,
-                'agent_id': self.agent_id,
-                'num_solutions': self.num_solutions,
-                'priority': task.priority,
-            })
-            
+            self._log.info(
+                "Starting adversarial optimization",
+                extra={
+                    "task_id": task.task_id,
+                    "agent_id": self.agent_id,
+                    "num_solutions": self.num_solutions,
+                    "priority": task.priority,
+                },
+            )
+
             # Step 1: Analyze target files
             target_analysis = self._analyze_targets(task.target_files)
-            self._log.debug("Analyzed target files", extra={
-                'task_id': task.task_id,
-                'files_analyzed': len(target_analysis.get('files', [])),
-                'functions_found': len(target_analysis.get('functions', [])),
-            })
-            
+            self._log.debug(
+                "Analyzed target files",
+                extra={
+                    "task_id": task.task_id,
+                    "files_analyzed": len(target_analysis.get("files", [])),
+                    "functions_found": len(target_analysis.get("functions", [])),
+                },
+            )
+
             # Step 2: Generate N alternative solutions
             solutions = self._generate_solutions(task, target_analysis)
-            self._log.info("Generated solutions", extra={
-                'task_id': task.task_id,
-                'solutions_generated': len(solutions),
-            })
-            
+            self._log.info(
+                "Generated solutions",
+                extra={
+                    "task_id": task.task_id,
+                    "solutions_generated": len(solutions),
+                },
+            )
+
             if not solutions:
-                self._log.error("No solutions generated", extra={
-                    'task_id': task.task_id,
-                })
+                self._log.error(
+                    "No solutions generated",
+                    extra={
+                        "task_id": task.task_id,
+                    },
+                )
                 return OptimizationResult(
                     task_id=task.task_id,
                     success=False,
@@ -182,55 +196,73 @@ class AdversarialOptimizer(AgenticOptimizer):
                     agent_id=self.agent_id,
                     error_message="Failed to generate solutions",
                 )
-            
+
             # Step 3: Benchmark each solution
             benchmarks = self._benchmark_solutions(solutions, task.target_files)
-            self._log.info("Benchmarked solutions", extra={
-                'task_id': task.task_id,
-                'solutions_benchmarked': len(solutions),
-            })
-            
+            self._log.info(
+                "Benchmarked solutions",
+                extra={
+                    "task_id": task.task_id,
+                    "solutions_benchmarked": len(solutions),
+                },
+            )
+
             # Step 4: Apply adversarial testing
             adversarial_results = self._adversarial_testing(solutions, task)
-            self._log.debug("Adversarial testing completed", extra={
-                'task_id': task.task_id,
-            })
-            
+            self._log.debug(
+                "Adversarial testing completed",
+                extra={
+                    "task_id": task.task_id,
+                },
+            )
+
             # Step 5: Score all solutions
             scores = self._score_solutions(
                 solutions,
                 benchmarks,
                 adversarial_results,
             )
-            self._log.debug("Scored solutions", extra={
-                'task_id': task.task_id,
-                'solutions_scored': len(scores),
-            })
-            
+            self._log.debug(
+                "Scored solutions",
+                extra={
+                    "task_id": task.task_id,
+                    "solutions_scored": len(scores),
+                },
+            )
+
             # Step 6: Select winner
             winner_idx = max(range(len(scores)), key=lambda i: scores[i]["total"])
             winner = solutions[winner_idx]
             winner_score = scores[winner_idx]
-            
-            self._log.info("Selected winner solution", extra={
-                'task_id': task.task_id,
-                'winner_idx': winner_idx,
-                'winner_approach': winner.get('approach', 'unknown'),
-                'winner_score': winner_score.get('total', 0),
-            })
-            
+
+            self._log.info(
+                "Selected winner solution",
+                extra={
+                    "task_id": task.task_id,
+                    "winner_idx": winner_idx,
+                    "winner_approach": winner.get("approach", "unknown"),
+                    "winner_score": winner_score.get("total", 0),
+                },
+            )
+
             # Step 7: Validate winner
             validation = self._validate_solution(winner, task.target_files)
-            self._log.info("Validated winner", extra={
-                'task_id': task.task_id,
-                'validation_passed': validation.passed,
-            })
-            
+            self._log.info(
+                "Validated winner",
+                extra={
+                    "task_id": task.task_id,
+                    "validation_passed": validation.passed,
+                },
+            )
+
             if not validation.passed:
-                self._log.error("Winner validation failed", extra={
-                    'task_id': task.task_id,
-                    'error_count': len(validation.errors),
-                })
+                self._log.error(
+                    "Winner validation failed",
+                    extra={
+                        "task_id": task.task_id,
+                        "error_count": len(validation.errors),
+                    },
+                )
                 return OptimizationResult(
                     task_id=task.task_id,
                     success=False,
@@ -242,19 +274,22 @@ class AdversarialOptimizer(AgenticOptimizer):
                     agent_id=self.agent_id,
                     error_message="Winner solution failed validation",
                 )
-            
+
             # Step 8: Create patch
             patch_path, patch_cid = self._create_patch(winner, task)
-            
+
             execution_time = time.time() - start_time
-            self._log.info("Optimization completed successfully", extra={
-                'task_id': task.task_id,
-                'total_time': execution_time,
-                'patch_path': str(patch_path) if patch_path else None,
-                'patch_cid': patch_cid,
-                'solutions_evaluated': len(solutions),
-            })
-            
+            self._log.info(
+                "Optimization completed successfully",
+                extra={
+                    "task_id": task.task_id,
+                    "total_time": execution_time,
+                    "patch_path": str(patch_path) if patch_path else None,
+                    "patch_cid": patch_cid,
+                    "solutions_evaluated": len(solutions),
+                },
+            )
+
             return OptimizationResult(
                 task_id=task.task_id,
                 success=True,
@@ -271,7 +306,7 @@ class AdversarialOptimizer(AgenticOptimizer):
                 execution_time=execution_time,
                 agent_id=self.agent_id,
             )
-            
+
         except (
             AttributeError,
             OSError,
@@ -281,13 +316,17 @@ class AdversarialOptimizer(AgenticOptimizer):
             KeyError,
         ) as e:
             execution_time = time.time() - start_time
-            self._log.error("Optimization failed", extra={
-                'task_id': task.task_id,
-                'error_type': type(e).__name__,
-                'error_message': str(e),
-                'total_time': execution_time,
-            }, exc_info=True)
-            
+            self._log.error(
+                "Optimization failed",
+                extra={
+                    "task_id": task.task_id,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "total_time": execution_time,
+                },
+                exc_info=True,
+            )
+
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -299,13 +338,13 @@ class AdversarialOptimizer(AgenticOptimizer):
                 agent_id=self.agent_id,
                 error_message=str(e),
             )
-    
+
     def _analyze_targets(self, target_files: List[Path]) -> Dict[str, Any]:
         """Analyze target files to understand current implementation.
-        
+
         Args:
             target_files: List of files to analyze
-            
+
         Returns:
             Dictionary with analysis results
         """
@@ -315,45 +354,49 @@ class AdversarialOptimizer(AgenticOptimizer):
             "functions": [],
             "classes": [],
         }
-        
+
         for file_path in target_files:
             if not file_path.exists():
                 continue
-                
+
             try:
                 # Validate input path
                 base_dir = file_path.parent if file_path.is_absolute() else None
                 safe_path = validate_input_path(str(file_path), must_exist=True, base_dir=base_dir)
-                
-                with open(safe_path, 'r') as f:
+
+                with open(safe_path, "r") as f:
                     content = f.read()
                     tree = ast.parse(content)
-                    
+
                     file_analysis = {
                         "path": str(file_path),
-                        "lines": len(content.split('\n')),
+                        "lines": len(content.split("\n")),
                         "functions": [],
                         "classes": [],
                     }
-                    
+
                     for node in ast.walk(tree):
                         if isinstance(node, ast.FunctionDef):
                             file_analysis["functions"].append(node.name)
-                            analysis["functions"].append({
-                                "name": node.name,
-                                "file": str(file_path),
-                                "lineno": node.lineno,
-                            })
+                            analysis["functions"].append(
+                                {
+                                    "name": node.name,
+                                    "file": str(file_path),
+                                    "lineno": node.lineno,
+                                }
+                            )
                         elif isinstance(node, ast.ClassDef):
                             file_analysis["classes"].append(node.name)
-                            analysis["classes"].append({
-                                "name": node.name,
-                                "file": str(file_path),
-                                "lineno": node.lineno,
-                            })
-                    
+                            analysis["classes"].append(
+                                {
+                                    "name": node.name,
+                                    "file": str(file_path),
+                                    "lineno": node.lineno,
+                                }
+                            )
+
                     analysis["files"].append(file_analysis)
-                    
+
             except (
                 AttributeError,
                 OSError,
@@ -362,41 +405,43 @@ class AdversarialOptimizer(AgenticOptimizer):
                 ValueError,
                 SyntaxError,
             ) as e:
-                analysis["files"].append({
-                    "path": str(file_path),
-                    "error": str(e),
-                })
-        
+                analysis["files"].append(
+                    {
+                        "path": str(file_path),
+                        "error": str(e),
+                    }
+                )
+
         return analysis
-    
+
     def _generate_solutions(
         self,
         task: OptimizationTask,
         analysis: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Generate N alternative solutions.
-        
+
         Args:
             task: Optimization task
             analysis: Target file analysis
-            
+
         Returns:
             List of solution dictionaries
         """
         solutions = []
-        
+
         # Generate different approaches
         approaches = [
             "performance_focused",  # Optimize for speed
-            "memory_optimized",     # Optimize for memory usage
+            "memory_optimized",  # Optimize for memory usage
             "readability_focused",  # Optimize for clarity
             "maintainability_focused",  # Optimize for long-term maintenance
-            "balanced",            # Balance all factors
-        ][:self.num_solutions]
-        
+            "balanced",  # Balance all factors
+        ][: self.num_solutions]
+
         for i, approach in enumerate(approaches):
             prompt = self._build_solution_prompt(task, analysis, approach)
-            
+
             try:
                 # Use LLM to generate solution
                 response = self.llm_router.generate(
@@ -404,7 +449,7 @@ class AdversarialOptimizer(AgenticOptimizer):
                     max_tokens=2000,
                     temperature=0.7 + (i * 0.1),  # Vary temperature for diversity
                 )
-                
+
                 solution = {
                     "id": f"solution-{i}",
                     "approach": approach,
@@ -412,9 +457,9 @@ class AdversarialOptimizer(AgenticOptimizer):
                     "description": self._extract_description(response),
                     "temperature": 0.7 + (i * 0.1),
                 }
-                
+
                 solutions.append(solution)
-                
+
             except (
                 AttributeError,
                 OSError,
@@ -423,16 +468,19 @@ class AdversarialOptimizer(AgenticOptimizer):
                 ValueError,
             ) as e:
                 # Log error but continue with other solutions
-                self._log.error("Error generating solution", extra={
-                    'solution_index': i,
-                    'approach': approach,
-                    'error_type': type(e).__name__,
-                    'error_message': str(e),
-                })
+                self._log.error(
+                    "Error generating solution",
+                    extra={
+                        "solution_index": i,
+                        "approach": approach,
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                    },
+                )
                 continue
-        
+
         return solutions
-    
+
     def _build_solution_prompt(
         self,
         task: OptimizationTask,
@@ -440,12 +488,12 @@ class AdversarialOptimizer(AgenticOptimizer):
         approach: str,
     ) -> str:
         """Build prompt for solution generation.
-        
+
         Args:
             task: Optimization task
             analysis: Target analysis
             approach: Optimization approach
-            
+
         Returns:
             Prompt string
         """
@@ -465,23 +513,23 @@ Requirements:
 5. Follow existing code style
 
 Generate the optimized code with explanation."""
-    
+
     def _format_analysis(self, analysis: Dict[str, Any]) -> str:
         """Format analysis for prompt."""
         lines = []
-        
+
         for file_info in analysis.get("files", []):
             lines.append(f"File: {file_info['path']}")
             lines.append(f"  Lines: {file_info.get('lines', 'N/A')}")
-            
+
             if "functions" in file_info:
                 lines.append(f"  Functions: {', '.join(file_info['functions'])}")
-            
+
             if "classes" in file_info:
                 lines.append(f"  Classes: {', '.join(file_info['classes'])}")
-        
+
         return "\n".join(lines)
-    
+
     def _extract_code(self, response: str) -> str:
         """Extract code from LLM response."""
         # Look for code blocks
@@ -490,46 +538,46 @@ Generate the optimized code with explanation."""
             if len(parts) > 1:
                 code = parts[1].split("```")[0]
                 return code.strip()
-        
+
         # Return full response if no code block found
         return response
-    
+
     def _extract_description(self, response: str) -> str:
         """Extract description from LLM response."""
         # Look for description before code block
         if "```python" in response:
             return response.split("```python")[0].strip()
-        
+
         # Take first 200 chars as description
         return response[:200] + "..." if len(response) > 200 else response
-    
+
     def _benchmark_solutions(
         self,
         solutions: List[Dict[str, Any]],
         target_files: List[Path],
     ) -> List[Dict[str, float]]:
         """Benchmark each solution's performance.
-        
+
         Args:
             solutions: List of solutions to benchmark
             target_files: Original target files
-            
+
         Returns:
             List of benchmark results
         """
         benchmarks = []
-        
+
         for solution in solutions:
             try:
                 # Create temporary file with solution code
                 with tempfile.NamedTemporaryFile(
-                    mode='w',
-                    suffix='.py',
+                    mode="w",
+                    suffix=".py",
                     delete=False,
                 ) as f:
                     f.write(solution["code"])
                     temp_path = Path(f.name)
-                
+
                 # Run basic performance test
                 start = time.time()
                 result = subprocess.run(
@@ -538,16 +586,16 @@ Generate the optimized code with explanation."""
                     timeout=10,
                 )
                 compile_time = time.time() - start
-                
+
                 benchmark = {
                     "compile_time": compile_time,
                     "compile_success": result.returncode == 0,
                     "code_size": len(solution["code"]),
                 }
-                
+
                 # Clean up
                 temp_path.unlink(missing_ok=True)
-                
+
             except (
                 OSError,
                 RuntimeError,
@@ -556,55 +604,55 @@ Generate the optimized code with explanation."""
                 subprocess.SubprocessError,
             ) as e:
                 benchmark = {
-                    "compile_time": float('inf'),
+                    "compile_time": float("inf"),
                     "compile_success": False,
                     "code_size": len(solution["code"]),
                     "error": str(e),
                 }
-            
+
             benchmarks.append(benchmark)
-        
+
         return benchmarks
-    
+
     def _adversarial_testing(
         self,
         solutions: List[Dict[str, Any]],
         task: OptimizationTask,
     ) -> List[Dict[str, Any]]:
         """Apply adversarial testing to solutions.
-        
+
         Args:
             solutions: Solutions to test
             task: Optimization task
-            
+
         Returns:
             List of adversarial test results
         """
         results = []
-        
+
         for solution in solutions:
             result = {
                 "edge_cases_handled": 0,
                 "stress_test_passed": False,
                 "error_handling": False,
             }
-            
+
             # Check for edge case handling
             code = solution["code"]
             if "if" in code and ("None" in code or "[]" in code or "0" in code):
                 result["edge_cases_handled"] = 1
-            
+
             # Check for error handling
             if "try:" in code or "except" in code:
                 result["error_handling"] = True
-            
+
             # Placeholder for actual stress testing
             result["stress_test_passed"] = True
-            
+
             results.append(result)
-        
+
         return results
-    
+
     def _score_solutions(
         self,
         solutions: List[Dict[str, Any]],
@@ -612,55 +660,57 @@ Generate the optimized code with explanation."""
         adversarial_results: List[Dict[str, Any]],
     ) -> List[Dict[str, float]]:
         """Score all solutions using multi-criteria evaluation.
-        
+
         Args:
             solutions: Generated solutions
             benchmarks: Benchmark results
             adversarial_results: Adversarial test results
-            
+
         Returns:
             List of score dictionaries
         """
         scores = []
-        
+
         # Normalize benchmark values
-        compile_times = [b.get("compile_time", float('inf')) for b in benchmarks]
-        max_compile_time = max(t for t in compile_times if t != float('inf'))
-        
+        compile_times = [b.get("compile_time", float("inf")) for b in benchmarks]
+        max_compile_time = max(t for t in compile_times if t != float("inf"))
+
         code_sizes = [len(s["code"]) for s in solutions]
         max_code_size = max(code_sizes) if code_sizes else 1
-        
+
         for i, solution in enumerate(solutions):
             benchmark = benchmarks[i]
             adv_result = adversarial_results[i]
-            
+
             # Calculate individual scores (0-1 range)
             perf_score = self._calculate_performance_score(benchmark, max_compile_time)
             read_score = self._calculate_readability_score(solution)
             maint_score = self._calculate_maintainability_score(solution, adv_result)
             test_score = self._calculate_test_coverage_score(solution)
             sec_score = self._calculate_security_score(solution)
-            
+
             # Calculate weighted total
             total_score = (
-                self.scoring_weights["performance"] * perf_score +
-                self.scoring_weights["readability"] * read_score +
-                self.scoring_weights["maintainability"] * maint_score +
-                self.scoring_weights["test_coverage"] * test_score +
-                self.scoring_weights["security"] * sec_score
+                self.scoring_weights["performance"] * perf_score
+                + self.scoring_weights["readability"] * read_score
+                + self.scoring_weights["maintainability"] * maint_score
+                + self.scoring_weights["test_coverage"] * test_score
+                + self.scoring_weights["security"] * sec_score
             )
-            
-            scores.append({
-                "performance": perf_score,
-                "readability": read_score,
-                "maintainability": maint_score,
-                "test_coverage": test_score,
-                "security": sec_score,
-                "total": total_score,
-            })
-        
+
+            scores.append(
+                {
+                    "performance": perf_score,
+                    "readability": read_score,
+                    "maintainability": maint_score,
+                    "test_coverage": test_score,
+                    "security": sec_score,
+                    "total": total_score,
+                }
+            )
+
         return scores
-    
+
     def _calculate_performance_score(
         self,
         benchmark: Dict[str, float],
@@ -669,38 +719,38 @@ Generate the optimized code with explanation."""
         """Calculate performance score (0-1)."""
         if not benchmark.get("compile_success", False):
             return 0.0
-        
-        compile_time = benchmark.get("compile_time", float('inf'))
-        if compile_time == float('inf'):
+
+        compile_time = benchmark.get("compile_time", float("inf"))
+        if compile_time == float("inf"):
             return 0.0
-        
+
         # Lower compile time = higher score
         return 1.0 - (compile_time / max_compile_time)
-    
+
     def _calculate_readability_score(self, solution: Dict[str, Any]) -> float:
         """Calculate readability score (0-1)."""
         code = solution["code"]
         score = 0.0
-        
+
         # Check for docstrings
         if '"""' in code or "'''" in code:
             score += 0.3
-        
+
         # Check for type hints
         if " -> " in code or ": " in code:
             score += 0.3
-        
+
         # Check for comments
         if "#" in code:
             score += 0.2
-        
+
         # Check for descriptive names (longer than 3 chars)
         words = code.split()
         descriptive = sum(1 for w in words if len(w) > 3)
         score += min(0.2, descriptive / max(len(words), 1))
-        
+
         return min(1.0, score)
-    
+
     def _calculate_maintainability_score(
         self,
         solution: Dict[str, Any],
@@ -708,27 +758,27 @@ Generate the optimized code with explanation."""
     ) -> float:
         """Calculate maintainability score (0-1)."""
         score = 0.0
-        
+
         # Error handling
         if adv_result.get("error_handling", False):
             score += 0.4
-        
+
         # Edge case handling
         score += min(0.3, adv_result.get("edge_cases_handled", 0) * 0.3)
-        
+
         # Code organization (classes/functions)
         code = solution["code"]
         if "class " in code:
             score += 0.15
         if "def " in code:
             score += 0.15
-        
+
         return min(1.0, score)
-    
+
     def _calculate_test_coverage_score(self, solution: Dict[str, Any]) -> float:
         """Calculate test coverage score (0-1)."""
         code = solution["code"]
-        
+
         # Check if test code is included
         if "test_" in code or "Test" in code:
             return 0.8
@@ -736,40 +786,40 @@ Generate the optimized code with explanation."""
             return 0.5
         else:
             return 0.2  # Assume basic coverage
-    
+
     def _calculate_security_score(self, solution: Dict[str, Any]) -> float:
         """Calculate security score (0-1)."""
         code = solution["code"]
         score = 1.0
-        
+
         # Check for common security issues
         if "eval(" in code or "exec(" in code:
             score -= 0.5
-        
+
         if "shell=True" in code:
             score -= 0.3
-        
+
         if "input(" in code and "sanitize" not in code:
             score -= 0.2
-        
+
         return max(0.0, score)
-    
+
     def _validate_solution(
         self,
         solution: Dict[str, Any],
         target_files: List[Path],
     ) -> ValidationResult:
         """Validate the winning solution.
-        
+
         Args:
             solution: Solution to validate
             target_files: Original target files
-            
+
         Returns:
             ValidationResult
         """
         errors = []
-        
+
         # Syntax check
         syntax_ok = True
         try:
@@ -777,27 +827,27 @@ Generate the optimized code with explanation."""
         except SyntaxError as e:
             syntax_ok = False
             errors.append(f"Syntax error: {e}")
-        
+
         # Basic validation
         validation = ValidationResult(
             passed=syntax_ok and len(errors) == 0,
             syntax_check=syntax_ok,
             errors=errors,
         )
-        
+
         return validation
-    
+
     def _create_patch(
         self,
         solution: Dict[str, Any],
         task: OptimizationTask,
     ) -> Tuple[Optional[Path], Optional[str]]:
         """Create patch file for the winning solution.
-        
+
         Args:
             solution: Winning solution
             task: Optimization task
-            
+
         Returns:
             Tuple of (patch_path, patch_cid)
         """
@@ -810,10 +860,10 @@ Generate the optimized code with explanation."""
                 "agent_id": self.agent_id,
                 "method": "adversarial",
             }
-            
+
             # For now, return None - actual patch creation would go here
             return None, None
-            
+
         except (
             AttributeError,
             OSError,
@@ -824,6 +874,7 @@ Generate the optimized code with explanation."""
         ) as e:
             print(f"Error creating patch: {e}")
             return None, None
+
 
 # ============================================================================
 # TEST-FACING COMPATIBILITY SHIM
@@ -854,7 +905,9 @@ class AdversarialOptimizer(AgenticOptimizer):
         change_control: ChangeControlMethod = ChangeControlMethod.PATCH,
         config: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(agent_id=agent_id, llm_router=llm_router, change_control=change_control, config=config)
+        super().__init__(
+            agent_id=agent_id, llm_router=llm_router, change_control=change_control, config=config
+        )
         self.n_solutions = int(n_solutions)
         self.enable_benchmarking = bool(enable_benchmarking)
         self.scoring_weights = scoring_weights or {
@@ -894,7 +947,7 @@ class AdversarialOptimizer(AgenticOptimizer):
 
                 solutions.append(
                     Solution(
-                        id=f"sol-{i+1}",
+                        id=f"sol-{i + 1}",
                         code=sol_code,
                         description=sol_desc,
                         benchmark_result=None,
@@ -981,7 +1034,9 @@ class AdversarialOptimizer(AgenticOptimizer):
             score -= 30.0
         return float(max(0.0, min(100.0, score)))
 
-    def score_solution(self, solution: Solution, baseline_metrics: Dict[str, float]) -> Dict[str, float]:
+    def score_solution(
+        self, solution: Solution, baseline_metrics: Dict[str, float]
+    ) -> Dict[str, float]:
         bench = solution.benchmark_result
         if bench is None:
             # Treat missing benchmarks as neutral-but-correct.

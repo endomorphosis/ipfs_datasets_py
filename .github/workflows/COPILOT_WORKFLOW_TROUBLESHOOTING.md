@@ -134,7 +134,8 @@ gh: unknown command "agent-task" for "gh"
    ```python
    import sys
    import os
-   sys.path.insert(0, os.path.abspath('.'))
+
+   sys.path.insert(0, os.path.abspath("."))
    ```
 
 ### 6. Timeout Issues
@@ -156,7 +157,7 @@ gh: unknown command "agent-task" for "gh"
    result = subprocess.run(
        cmd,
        timeout=60,  # 60 seconds
-       capture_output=True
+       capture_output=True,
    )
    ```
 
@@ -168,7 +169,7 @@ gh: unknown command "agent-task" for "gh"
            break
        except subprocess.TimeoutExpired:
            if attempt < max_retries - 1:
-               time.sleep(2 ** attempt)
+               time.sleep(2**attempt)
    ```
 
 ### 7. Duplicate Processing

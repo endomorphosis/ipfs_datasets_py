@@ -19,14 +19,14 @@ import asyncio
 
 async def demo_p2p_dataset_loading():
     """Load datasets from P2P network."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: P2P Dataset Loading")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🌐 P2P Dataset Loading")
     print("   Load datasets from IPFS and other P2P protocols")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py import DatasetManager
 
 manager = DatasetManager(
@@ -63,21 +63,21 @@ dataset = await manager.load_distributed(
 async for batch in manager.stream_from_ipfs(cid, batch_size=1000):
     print(f"Processing batch: {len(batch)} rows")
     # Process batch...
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_distributed_embedding():
     """Generate embeddings across multiple nodes."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Distributed Embedding Generation")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔢 Distributed Embeddings")
     print("   Scale embedding generation across P2P network")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.ml import DistributedEmbedder
 
 embedder = DistributedEmbedder(
@@ -115,21 +115,21 @@ print(f"Results stored at: {cid}")
 
 # Retrieve from any node
 embeddings_retrieved = await embedder.load_from_ipfs(cid)
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_p2p_vector_search():
     """Distributed vector search across nodes."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: P2P Vector Search")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔍 P2P Vector Search")
     print("   Search vectors across distributed nodes")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.vector_stores import DistributedVectorStore
 
 store = DistributedVectorStore(
@@ -168,21 +168,21 @@ print(f"\\nSearch statistics:")
 print(f"  Total searched: {results.total_searched:,} vectors")
 print(f"  Search time: {results.search_time_ms}ms")
 print(f"  Network latency: {results.network_latency_ms}ms")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_distributed_knowledge_graph():
     """Distributed knowledge graph across IPFS."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Distributed Knowledge Graph")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🕸️  Distributed Knowledge Graph")
     print("   Build and query graphs across P2P network")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.knowledge_graphs import DistributedKnowledgeGraph
 
 graph = DistributedKnowledgeGraph(
@@ -221,21 +221,21 @@ await graph.sync(
     conflict_resolution="latest",
     verify_integrity=True
 )
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_decentralized_compute():
     """Run compute jobs on P2P network."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Decentralized Compute")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⚡ Decentralized Compute")
     print("   Distribute computation across network")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.compute import DecentralizedCompute
 
 compute = DecentralizedCompute(
@@ -282,21 +282,21 @@ print(f"  Cost: {result.actual_cost} tokens")
 
 # Load results
 output_data = await compute.load_output(result.output_cid)
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_p2p_caching():
     """Distributed caching across nodes."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: P2P Caching")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n💾 P2P Caching")
     print("   Cache results across network for faster access")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.caching import DistributedCache
 
 cache = DistributedCache(
@@ -341,21 +341,21 @@ await cache.set(
 
 # Retrieve from cache
 cached_results = await cache.get("popular_query_results")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_resilient_pipeline():
     """Build resilient processing pipeline."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Resilient Distributed Pipeline")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔄 Resilient Pipeline")
     print("   Fault-tolerant distributed data pipeline")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.pipelines import DistributedPipeline
 
 pipeline = DistributedPipeline(
@@ -420,21 +420,21 @@ if result.status == "failed":
     result = await pipeline.resume(
         checkpoint_cid=result.last_checkpoint_cid
     )
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_ipfs_pinning_strategy():
     """Strategic IPFS pinning for availability."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 8: IPFS Pinning Strategy")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📌 Pinning Strategy")
     print("   Ensure data availability across network")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.ipfs import PinningStrategy
 
 strategy = PinningStrategy(
@@ -478,71 +478,71 @@ await strategy.gc_unpinned(
     min_access_count=1,
     dry_run=True  # Preview what would be deleted
 )
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for distributed processing."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR DISTRIBUTED PROCESSING")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. IPFS Setup:")
     print("   - Install and run IPFS daemon locally")
     print("   - Configure for your network (public/private)")
     print("   - Use pinning services for redundancy")
     print("   - Monitor storage usage")
-    
+
     print("\n2. Data Distribution:")
     print("   - Partition large datasets appropriately")
     print("   - Use content-addressing for deduplication")
     print("   - Implement smart caching strategies")
     print("   - Consider geographic distribution")
-    
+
     print("\n3. Compute Distribution:")
     print("   - Balance load across available nodes")
     print("   - Handle node failures gracefully")
     print("   - Implement checkpointing for long jobs")
     print("   - Monitor resource usage")
-    
+
     print("\n4. Network Considerations:")
     print("   - Network latency affects performance")
     print("   - Use local caching when possible")
     print("   - Implement timeout mechanisms")
     print("   - Test with realistic network conditions")
-    
+
     print("\n5. Fault Tolerance:")
     print("   - Replicate critical data")
     print("   - Implement retry logic")
     print("   - Use checksums for verification")
     print("   - Maintain backups")
-    
+
     print("\n6. Scalability:")
     print("   - Design for horizontal scaling")
     print("   - Avoid single points of failure")
     print("   - Use async/await for concurrency")
     print("   - Monitor and optimize bottlenecks")
-    
+
     print("\n7. Security:")
     print("   - Verify content hashes")
     print("   - Use encryption for sensitive data")
     print("   - Implement access control")
     print("   - Audit data access")
-    
+
     print("\n8. Cost Management:")
     print("   - Monitor storage costs")
     print("   - Implement data lifecycle policies")
     print("   - Use spot instances when possible")
     print("   - Cache frequently accessed data")
-    
+
     print("\n9. Production Deployment:")
     print("   - Test thoroughly in staging")
     print("   - Monitor system health")
     print("   - Implement alerting")
     print("   - Document procedures")
-    
+
     print("\n10. Next Steps:")
     print("    - See 06_ipfs_storage.py for IPFS basics")
     print("    - See 09_batch_processing.py for parallel processing")
@@ -550,10 +550,10 @@ def show_tips():
 
 async def main():
     """Run all distributed processing demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - DISTRIBUTED PROCESSING")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_p2p_dataset_loading()
     await demo_distributed_embedding()
     await demo_p2p_vector_search()
@@ -562,12 +562,12 @@ async def main():
     await demo_p2p_caching()
     await demo_resilient_pipeline()
     await demo_ipfs_pinning_strategy()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ DISTRIBUTED PROCESSING EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

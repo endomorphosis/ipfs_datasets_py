@@ -24,12 +24,12 @@ from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
 
 class QueryOptimizerComponentProfiler:
     """Profile individual components of query optimizer."""
-    
+
     def __init__(self, repeat_count: int = 100):
         self.repeat_count = repeat_count
         self.optimizer = UnifiedGraphRAGQueryOptimizer()
         self.results = {}
-        
+
     def create_test_queries(self) -> List[Dict[str, Any]]:
         """Create diverse test queries."""
         return [
@@ -69,19 +69,19 @@ class QueryOptimizerComponentProfiler:
                 "min_similarity": 0.7,
             },
         ]
-    
+
     def profile_cache_key_generation(self) -> Dict[str, Any]:
         """Profile cache key generation step."""
         import hashlib
         import copy
-        
+
         queries = self.create_test_queries()
         times = []
-        
+
         for _ in range(self.repeat_count):
             for query in queries:
                 start = time.perf_counter()
-                
+
                 # Simulate cache key generation
                 key_query = copy.deepcopy(query)
                 if "query_vector" in key_query:
@@ -89,10 +89,10 @@ class QueryOptimizerComponentProfiler:
                 key = hashlib.sha256(
                     json.dumps(key_query, sort_keys=True, default=str).encode("utf-8")
                 ).hexdigest()
-                
+
                 elapsed = (time.perf_counter() - start) * 1000  # ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -101,22 +101,22 @@ class QueryOptimizerComponentProfiler:
             "max_ms": max(times),
             "samples": len(times),
         }
-    
+
     def profile_query_validation(self) -> Dict[str, Any]:
         """Profile query validation step."""
         queries = self.create_test_queries()
         times = []
-        
+
         for _ in range(self.repeat_count):
             for query in queries:
                 start = time.perf_counter()
-                
+
                 # Profile validation only
                 result = self.optimizer._validate_query_parameters(query)
-                
+
                 elapsed = (time.perf_counter() - start) * 1000  # ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -125,25 +125,25 @@ class QueryOptimizerComponentProfiler:
             "max_ms": max(times),
             "samples": len(times),
         }
-    
+
     def profile_graph_type_detection(self) -> Dict[str, Any]:
         """Profile graph type detection step."""
         queries = self.create_test_queries()
         times = []
-        
+
         for _ in range(self.repeat_count):
             for query in queries:
                 start = time.perf_counter()
-                
+
                 # Profile graph type detection
                 try:
                     graph_type = self.optimizer.detect_graph_type(query)
                 except (KeyError, TypeError, ValueError, AttributeError):
                     graph_type = "general"
-                
+
                 elapsed = (time.perf_counter() - start) * 1000  # ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -152,31 +152,31 @@ class QueryOptimizerComponentProfiler:
             "max_ms": max(times),
             "samples": len(times),
         }
-    
+
     def profile_weight_calculation(self) -> Dict[str, Any]:
         """Profile weight calculation and extraction."""
         queries = self.create_test_queries()
         times = []
-        
+
         for _ in range(self.repeat_count):
             for query in queries:
                 start = time.perf_counter()
-                
+
                 # Profile weight calculation
                 weights = {
                     "vector": float(getattr(self.optimizer, "vector_weight", 0.7)),
                     "graph": float(getattr(self.optimizer, "graph_weight", 0.3)),
                 }
-                
+
                 # Normalization check
                 total = weights["vector"] + weights["graph"]
                 if total > 0:
                     weights["vector"] /= total
                     weights["graph"] /= total
-                
+
                 elapsed = (time.perf_counter() - start) * 1000  # ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -185,22 +185,22 @@ class QueryOptimizerComponentProfiler:
             "max_ms": max(times),
             "samples": len(times),
         }
-    
+
     def profile_full_optimize_query(self) -> Dict[str, Any]:
         """Profile the complete optimize_query method."""
         queries = self.create_test_queries()
         times = []
-        
+
         for _ in range(self.repeat_count):
             for query in queries:
                 start = time.perf_counter()
-                
+
                 # Profile full method
                 result = self.optimizer.optimize_query(query)
-                
+
                 elapsed = (time.perf_counter() - start) * 1000  # ms
                 times.append(elapsed)
-        
+
         return {
             "mean_ms": statistics.mean(times),
             "median_ms": statistics.median(times),
@@ -209,7 +209,7 @@ class QueryOptimizerComponentProfiler:
             "max_ms": max(times),
             "samples": len(times),
         }
-    
+
     def profile_all_components(self) -> None:
         """Profile all components and print results."""
         print("=" * 80)
@@ -217,7 +217,7 @@ class QueryOptimizerComponentProfiler:
         print("=" * 80)
         print(f"Repeat count: {self.repeat_count} iterations per component")
         print()
-        
+
         components = [
             ("Cache Key Generation", self.profile_cache_key_generation),
             ("Query Validation", self.profile_query_validation),
@@ -225,46 +225,46 @@ class QueryOptimizerComponentProfiler:
             ("Weight Calculation", self.profile_weight_calculation),
             ("Full optimize_query", self.profile_full_optimize_query),
         ]
-        
+
         for name, profile_func in components:
             print(f"\n{name}:")
             print("-" * 40)
-            
+
             stats = profile_func()
-            
+
             print(f"  Mean:   {stats['mean_ms']:.6f} ms")
             print(f"  Median: {stats['median_ms']:.6f} ms")
             print(f"  StDev:  {stats['stdev_ms']:.6f} ms")
             print(f"  Min:    {stats['min_ms']:.6f} ms")
             print(f"  Max:    {stats['max_ms']:.6f} ms")
             print(f"  Samples: {stats['samples']}")
-            
+
             self.results[name] = stats
-    
+
     def print_component_breakdown(self) -> None:
         """Print breakdown of component costs relative to full method."""
         if "Full optimize_query" not in self.results:
             return
-        
+
         full_time = self.results["Full optimize_query"]["mean_ms"]
-        
+
         print("\n" + "=" * 80)
         print("Component Cost Breakdown (Relative to Full optimize_query)")
         print("=" * 80)
         print(f"Total time: {full_time:.6f} ms\n")
-        
+
         for name, stats in self.results.items():
             if name == "Full optimize_query":
                 continue
-            
+
             component_time = stats["mean_ms"]
             percentage = (component_time / full_time * 100) if full_time > 0 else 0
-            
+
             bar_width = int(percentage / 2)
             bar = "█" * bar_width + "░" * (50 - bar_width)
-            
+
             print(f"{name:30s} {percentage:6.2f}% {bar}")
-        
+
         print("\n" + "=" * 80)
         print("Expected Optimization Targets (from prior analysis):")
         print("=" * 80)
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     profiler = QueryOptimizerComponentProfiler(repeat_count=100)
     profiler.profile_all_components()
     profiler.print_component_breakdown()
-    
+
     print("\n" + "=" * 80)
     print("Optimization Recommendations:")
     print("=" * 80)

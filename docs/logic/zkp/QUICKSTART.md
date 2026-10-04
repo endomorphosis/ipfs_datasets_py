@@ -28,9 +28,9 @@ prover = ZKPProver()
 proof = prover.generate_proof(
     theorem="Socrates is mortal",
     private_axioms=[
-        "Socrates is human",      # This stays PRIVATE
-        "All humans are mortal"   # This stays PRIVATE
-    ]
+        "Socrates is human",  # This stays PRIVATE
+        "All humans are mortal",  # This stays PRIVATE
+    ],
 )
 
 # Step 3: Verify the proof (without seeing the axioms)
@@ -97,8 +97,8 @@ proof = prover.generate_proof(
     private_axioms=[
         "Internal policy A (secret)",
         "Internal policy B (secret)",
-        "Policies A+B satisfy GDPR"
-    ]
+        "Policies A+B satisfy GDPR",
+    ],
 )
 
 # Regulator verifies WITHOUT seeing internal policies
@@ -110,7 +110,7 @@ verifier.verify_proof(proof)  # True
 ```python
 proof = prover.generate_proof(
     theorem="Q",
-    private_axioms=["P", "P -> Q"]  # Modus ponens
+    private_axioms=["P", "P -> Q"],  # Modus ponens
 )
 
 # Anyone can verify the theorem without seeing P or P->Q
@@ -195,6 +195,7 @@ proof_dict = proof.to_dict()
 
 # Reconstruct proof
 from ipfs_datasets_py.logic.zkp import ZKPProof
+
 reconstructed = ZKPProof.from_dict(proof_dict)
 ```
 
@@ -211,7 +212,8 @@ reconstructed = ZKPProof.from_dict(proof_dict)
 ```python
 # To suppress warnings (not recommended)
 import warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='ipfs_datasets_py.logic.zkp')
+
+warnings.filterwarnings("ignore", category=UserWarning, module="ipfs_datasets_py.logic.zkp")
 ```
 
 ### Proof Verification Fails
@@ -259,11 +261,7 @@ prover = ZKPProver()
 
 # Classic syllogism with private premises
 proof = prover.generate_proof(
-    theorem="Socrates is mortal",
-    private_axioms=[
-        "All men are mortal",
-        "Socrates is a man"
-    ]
+    theorem="Socrates is mortal", private_axioms=["All men are mortal", "Socrates is a man"]
 )
 
 verifier = ZKPVerifier()
@@ -277,10 +275,7 @@ print("✓ Syllogism verified without revealing premises!")
 # Prove access rights without revealing which rules apply
 proof = prover.generate_proof(
     theorem="User has admin access",
-    private_axioms=[
-        "User is in admin group",
-        "Admin group has admin access"
-    ]
+    private_axioms=["User is in admin group", "Admin group has admin access"],
 )
 
 # Verifier confirms access without seeing group membership
@@ -292,12 +287,7 @@ assert verifier.verify_proof(proof)
 ```python
 # Prove mathematical theorem with hidden axioms
 proof = prover.generate_proof(
-    theorem="2+2=4",
-    private_axioms=[
-        "Peano axiom 1",
-        "Peano axiom 2",
-        "Definition of addition"
-    ]
+    theorem="2+2=4", private_axioms=["Peano axiom 1", "Peano axiom 2", "Definition of addition"]
 )
 
 assert verifier.verify_proof(proof)

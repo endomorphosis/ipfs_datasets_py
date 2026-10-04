@@ -163,7 +163,7 @@ BooleanCircuit = ZKPCircuit  # Alias for backward compatibility
 # In __all__, add:
 __all__ = [
     # ... existing ...
-    'BooleanCircuit',  # Alias for ZKPCircuit
+    "BooleanCircuit",  # Alias for ZKPCircuit
 ]
 ```
 

@@ -67,8 +67,14 @@ def build_todo_runner_arg_parser(
     )
     parser.add_argument("--dry-run", action="store_true", help="Do not apply accepted task output.")
     parser.add_argument("--watch", action="store_true", help="Run repeatedly without user input.")
-    parser.add_argument("--iterations", type=int, default=env_int("TODO_DAEMON_ITERATIONS", 1, minimum=0))
-    parser.add_argument("--interval", type=float, default=env_float("TODO_DAEMON_INTERVAL_SECONDS", 0.0, minimum=0.0))
+    parser.add_argument(
+        "--iterations", type=int, default=env_int("TODO_DAEMON_ITERATIONS", 1, minimum=0)
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=env_float("TODO_DAEMON_INTERVAL_SECONDS", 0.0, minimum=0.0),
+    )
     parser.add_argument(
         "--heartbeat-seconds",
         type=float,
@@ -105,7 +111,11 @@ def config_from_todo_runner_args(args: argparse.Namespace) -> TodoDaemonRuntimeC
 def todo_daemon_run_summary(proposals: Sequence[Proposal]) -> dict[str, Any]:
     """Return a compact machine-readable summary for a runner invocation."""
 
-    latest = proposals[-1] if proposals else Proposal(summary="No daemon cycles ran.", failure_kind="no_cycles")
+    latest = (
+        proposals[-1]
+        if proposals
+        else Proposal(summary="No daemon cycles ran.", failure_kind="no_cycles")
+    )
     return {
         "iterations": len(proposals),
         "valid": latest.valid,

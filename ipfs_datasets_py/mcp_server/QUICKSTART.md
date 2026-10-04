@@ -164,6 +164,7 @@ pytest tests/mcp/unit/test_hierarchical_tool_manager.py -v
 **Template:**
 ```python
 """Tool: [name] — [one line description]."""
+
 from typing import Any
 from ..exceptions import MCPServerError
 

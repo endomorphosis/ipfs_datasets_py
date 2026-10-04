@@ -55,7 +55,10 @@ def _service(blob_dir: Path) -> WalletService:
 def _save(service: WalletService, wallet_dir: Path, wallet_id: str) -> Path:
     wallet_dir.mkdir(parents=True, exist_ok=True)
     path = _wallet_path(wallet_dir, wallet_id)
-    path.write_text(json.dumps(service.export_wallet_snapshot(wallet_id), sort_keys=True, indent=2), encoding="utf-8")
+    path.write_text(
+        json.dumps(service.export_wallet_snapshot(wallet_id), sort_keys=True, indent=2),
+        encoding="utf-8",
+    )
     return path
 
 
@@ -163,24 +166,32 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--grant-id")
     analyze.add_argument("--output-type", default="summary")
 
-    issue_invocation = subparsers.add_parser("issue-invocation", help="Issue a signed invocation token for a grant")
+    issue_invocation = subparsers.add_parser(
+        "issue-invocation", help="Issue a signed invocation token for a grant"
+    )
     issue_invocation.add_argument("--wallet-id", required=True)
     issue_invocation.add_argument("--document-id", "--record-id", dest="record_id", required=True)
     issue_invocation.add_argument("--grant-id", required=True)
     issue_invocation.add_argument("--actor-did", required=True)
     issue_invocation.add_argument("--key-hex", required=True)
     issue_invocation.add_argument("--ability", required=True)
-    issue_invocation.add_argument("--caveat", action="append", default=[], help="Invocation caveat as KEY=VALUE")
+    issue_invocation.add_argument(
+        "--caveat", action="append", default=[], help="Invocation caveat as KEY=VALUE"
+    )
     issue_invocation.add_argument("--expires-at")
 
-    analyze_invocation = subparsers.add_parser("analyze-invocation", help="Run derived analysis using an invocation token")
+    analyze_invocation = subparsers.add_parser(
+        "analyze-invocation", help="Run derived analysis using an invocation token"
+    )
     analyze_invocation.add_argument("--wallet-id", required=True)
     analyze_invocation.add_argument("--document-id", "--record-id", dest="record_id", required=True)
     analyze_invocation.add_argument("--actor-did", required=True)
     analyze_invocation.add_argument("--key-hex", required=True)
     analyze_invocation.add_argument("--invocation-token", required=True)
 
-    decrypt_invocation = subparsers.add_parser("decrypt-invocation", help="Decrypt a record using an invocation token")
+    decrypt_invocation = subparsers.add_parser(
+        "decrypt-invocation", help="Decrypt a record using an invocation token"
+    )
     decrypt_invocation.add_argument("--wallet-id", required=True)
     decrypt_invocation.add_argument("--document-id", "--record-id", dest="record_id", required=True)
     decrypt_invocation.add_argument("--actor-did", required=True)
@@ -195,7 +206,9 @@ def build_parser() -> argparse.ArgumentParser:
     share.add_argument("--audience-did", required=True)
     share.add_argument("--issuer-key-hex", required=True)
     share.add_argument("--recipient-key-hex", required=True)
-    share.add_argument("--can", dest="ability", choices=["record/analyze", "record/decrypt"], required=True)
+    share.add_argument(
+        "--can", dest="ability", choices=["record/analyze", "record/decrypt"], required=True
+    )
     share.add_argument("--output-type", action="append", default=[])
     share.add_argument("--purpose", default="service_matching")
     share.add_argument("--expires-at")
@@ -203,7 +216,9 @@ def build_parser() -> argparse.ArgumentParser:
     share.add_argument("--issue-invocation", action="store_true")
     share.add_argument("--invocation-expires-at")
 
-    export_grant = subparsers.add_parser("export-grant", help="Grant a delegate bounded encrypted export access")
+    export_grant = subparsers.add_parser(
+        "export-grant", help="Grant a delegate bounded encrypted export access"
+    )
     export_grant.add_argument("--wallet-id", required=True)
     export_grant.add_argument("--record-id", action="append", required=True)
     export_grant.add_argument("--issuer-did", required=True)
@@ -216,7 +231,9 @@ def build_parser() -> argparse.ArgumentParser:
     export_grant.add_argument("--issue-invocation", action="store_true")
     export_grant.add_argument("--invocation-expires-at")
 
-    export_invocation = subparsers.add_parser("export-invocation", help="Issue a signed export invocation token")
+    export_invocation = subparsers.add_parser(
+        "export-invocation", help="Issue a signed export invocation token"
+    )
     export_invocation.add_argument("--wallet-id", required=True)
     export_invocation.add_argument("--grant-id", required=True)
     export_invocation.add_argument("--actor-did", required=True)
@@ -224,7 +241,9 @@ def build_parser() -> argparse.ArgumentParser:
     export_invocation.add_argument("--record-id", action="append", default=[])
     export_invocation.add_argument("--expires-at")
 
-    export_bundle = subparsers.add_parser("export-bundle", help="Create a bounded encrypted wallet export bundle")
+    export_bundle = subparsers.add_parser(
+        "export-bundle", help="Create a bounded encrypted wallet export bundle"
+    )
     export_bundle.add_argument("--wallet-id", required=True)
     export_bundle.add_argument("--actor-did", required=True)
     export_bundle.add_argument("--key-hex")
@@ -235,35 +254,57 @@ def build_parser() -> argparse.ArgumentParser:
     export_bundle.add_argument("--exclude-proofs", action="store_true")
     export_bundle.add_argument("--exclude-derived-artifacts", action="store_true")
 
-    verify_export_bundle = subparsers.add_parser("verify-export-bundle", help="Verify an encrypted export bundle receipt")
+    verify_export_bundle = subparsers.add_parser(
+        "verify-export-bundle", help="Verify an encrypted export bundle receipt"
+    )
     verify_export_bundle.add_argument("--path", type=Path, required=True)
 
-    import_export_bundle = subparsers.add_parser("import-export-bundle", help="Import encrypted descriptors from a verified export bundle")
+    import_export_bundle = subparsers.add_parser(
+        "import-export-bundle", help="Import encrypted descriptors from a verified export bundle"
+    )
     import_export_bundle.add_argument("--path", type=Path, required=True)
 
-    export_storage = subparsers.add_parser("export-bundle-storage", help="Verify encrypted blob availability for an export bundle")
+    export_storage = subparsers.add_parser(
+        "export-bundle-storage", help="Verify encrypted blob availability for an export bundle"
+    )
     export_storage.add_argument("--path", type=Path, required=True)
 
     subparsers.add_parser("ucan-profile", help="Show the wallet UCAN profile contract")
 
-    ucan_fixture = subparsers.add_parser("ucan-conformance-fixture", help="Create a wallet UCAN adapter conformance fixture")
+    ucan_fixture = subparsers.add_parser(
+        "ucan-conformance-fixture", help="Create a wallet UCAN adapter conformance fixture"
+    )
     ucan_fixture.add_argument("--invocation-token", required=True)
-    ucan_fixture.add_argument("--grant-path", type=Path, help="Optional grant JSON to include in the fixture")
+    ucan_fixture.add_argument(
+        "--grant-path", type=Path, help="Optional grant JSON to include in the fixture"
+    )
     ucan_fixture.add_argument("--out", type=Path, help="Optional path to write the fixture JSON")
 
-    validate_ucan_profile = subparsers.add_parser("ucan-validate-profile", help="Validate a wallet UCAN profile payload JSON file")
+    validate_ucan_profile = subparsers.add_parser(
+        "ucan-validate-profile", help="Validate a wallet UCAN profile payload JSON file"
+    )
     validate_ucan_profile.add_argument("--path", type=Path, required=True)
 
-    validate_ucan_fixture = subparsers.add_parser("ucan-validate-fixture", help="Validate a wallet UCAN conformance fixture JSON file")
-    validate_ucan_fixture.add_argument("--path", type=Path, help="Fixture JSON path; omitted validates the built-in reference fixture")
+    validate_ucan_fixture = subparsers.add_parser(
+        "ucan-validate-fixture", help="Validate a wallet UCAN conformance fixture JSON file"
+    )
+    validate_ucan_fixture.add_argument(
+        "--path",
+        type=Path,
+        help="Fixture JSON path; omitted validates the built-in reference fixture",
+    )
 
     access_requests = subparsers.add_parser("access-requests", help="List access requests")
     access_requests.add_argument("--wallet-id", required=True)
-    access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "revoked", "all"], default="pending")
+    access_requests.add_argument(
+        "--status", choices=["pending", "approved", "rejected", "revoked", "all"], default="pending"
+    )
     access_requests.add_argument("--requester-did")
     access_requests.add_argument("--audience-did")
 
-    request_access = subparsers.add_parser("request-access", help="Request access to a wallet record")
+    request_access = subparsers.add_parser(
+        "request-access", help="Request access to a wallet record"
+    )
     request_access.add_argument("--wallet-id", required=True)
     request_access.add_argument("--document-id", "--record-id", dest="record_id", required=True)
     request_access.add_argument("--requester-did", required=True)
@@ -330,18 +371,24 @@ def build_parser() -> argparse.ArgumentParser:
     grant_receipts.add_argument("--audience-did")
     grant_receipts.add_argument("--status", choices=["active", "revoked", "all"], default="all")
 
-    verify_storage = subparsers.add_parser("verify-storage", help="Verify encrypted record storage replicas")
+    verify_storage = subparsers.add_parser(
+        "verify-storage", help="Verify encrypted record storage replicas"
+    )
     verify_storage.add_argument("--wallet-id", required=True)
     verify_storage.add_argument("--document-id", "--record-id", dest="record_id", required=True)
     verify_storage.add_argument("--skip-metadata", action="store_true")
 
-    repair_storage = subparsers.add_parser("repair-storage", help="Repair encrypted record storage replicas")
+    repair_storage = subparsers.add_parser(
+        "repair-storage", help="Repair encrypted record storage replicas"
+    )
     repair_storage.add_argument("--wallet-id", required=True)
     repair_storage.add_argument("--document-id", "--record-id", dest="record_id", required=True)
     repair_storage.add_argument("--actor-did", required=True)
     repair_storage.add_argument("--skip-metadata", action="store_true")
 
-    analytics_template = subparsers.add_parser("analytics-template", help="Register an aggregate analytics template")
+    analytics_template = subparsers.add_parser(
+        "analytics-template", help="Register an aggregate analytics template"
+    )
     analytics_template.add_argument("--wallet-id", required=True)
     analytics_template.add_argument("--template-id", required=True)
     analytics_template.add_argument("--title", required=True)
@@ -353,22 +400,30 @@ def build_parser() -> argparse.ArgumentParser:
     analytics_template.add_argument("--created-by", required=True)
     analytics_template.add_argument("--expires-at")
 
-    analytics_templates = subparsers.add_parser("analytics-templates", help="List active analytics templates")
+    analytics_templates = subparsers.add_parser(
+        "analytics-templates", help="List active analytics templates"
+    )
     analytics_templates.add_argument("--wallet-id", required=True)
     analytics_templates.add_argument("--include-inactive", action="store_true")
 
-    analytics_consent = subparsers.add_parser("analytics-consent", help="Create consent from an analytics template")
+    analytics_consent = subparsers.add_parser(
+        "analytics-consent", help="Create consent from an analytics template"
+    )
     analytics_consent.add_argument("--wallet-id", required=True)
     analytics_consent.add_argument("--actor-did", required=True)
     analytics_consent.add_argument("--template-id", required=True)
     analytics_consent.add_argument("--expires-at")
 
-    analytics_contribute = subparsers.add_parser("analytics-contribute", help="Submit derived analytics fields")
+    analytics_contribute = subparsers.add_parser(
+        "analytics-contribute", help="Submit derived analytics fields"
+    )
     analytics_contribute.add_argument("--wallet-id", required=True)
     analytics_contribute.add_argument("--actor-did", required=True)
     analytics_contribute.add_argument("--consent-id", required=True)
     analytics_contribute.add_argument("--template-id", required=True)
-    analytics_contribute.add_argument("--field", action="append", required=True, help="Derived field as KEY=VALUE")
+    analytics_contribute.add_argument(
+        "--field", action="append", required=True, help="Derived field as KEY=VALUE"
+    )
 
     analytics_count = subparsers.add_parser("analytics-count", help="Run a private aggregate count")
     analytics_count.add_argument("--wallet-id", required=True)
@@ -501,7 +556,15 @@ def main(argv: Optional[list[str]] = None) -> int:
                 governance_policy=governance_policy,
             )
             path = _save(service, args.wallet_dir, wallet.wallet_id)
-            _emit({"status": "ok", "wallet_id": wallet.wallet_id, "manifest_head": wallet.manifest_head, "path": str(path)}, json_output=args.json_output)
+            _emit(
+                {
+                    "status": "ok",
+                    "wallet_id": wallet.wallet_id,
+                    "manifest_head": wallet.manifest_head,
+                    "path": str(path),
+                },
+                json_output=args.json_output,
+            )
             return 0
 
         analytics_commands = {
@@ -541,7 +604,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             service._wallet(args.wallet_id)
             templates = [
                 template.to_dict()
-                for template in service.list_analytics_templates(include_inactive=args.include_inactive)
+                for template in service.list_analytics_templates(
+                    include_inactive=args.include_inactive
+                )
             ]
             _emit({"status": "ok", "templates": templates}, json_output=args.json_output)
             return 0
@@ -588,7 +653,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                 if consent.template_id == args.template_id
             ]
             _save_all(service, args.wallet_dir, participating_wallet_ids or [args.wallet_id])
-            _emit({"status": "ok", **_aggregate_result_summary(result)}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", **_aggregate_result_summary(result)}, json_output=args.json_output
+            )
             return 0
 
         if args.command == "add":
@@ -615,7 +682,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                     "document_id": record.record_id,
                     "record_id": record.record_id,
                     "version_id": record.current_version_id,
-                    "payload_ref": service.versions[record.current_version_id].encrypted_payload_ref.uri,
+                    "payload_ref": service.versions[
+                        record.current_version_id
+                    ].encrypted_payload_ref.uri,
                 },
                 json_output=args.json_output,
             )
@@ -627,7 +696,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 for record in sorted(service.records.values(), key=lambda item: item.record_id)
                 if record.wallet_id == args.wallet_id
             ]
-            _emit({"status": "ok", "wallet_id": args.wallet_id, "records": records}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "wallet_id": args.wallet_id, "records": records},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "decrypt":
@@ -641,7 +713,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_bytes(plaintext)
             _save(service, args.wallet_dir, args.wallet_id)
-            _emit({"status": "ok", "out": str(args.out), "size_bytes": len(plaintext)}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "out": str(args.out), "size_bytes": len(plaintext)},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "analyze":
@@ -704,7 +779,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_bytes(plaintext)
             _save(service, args.wallet_dir, args.wallet_id)
-            _emit({"status": "ok", "out": str(args.out), "size_bytes": len(plaintext)}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "out": str(args.out), "size_bytes": len(plaintext)},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "share":
@@ -872,7 +950,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 requester_did=args.requester_did,
                 audience_did=args.audience_did,
             )
-            _emit({"status": "ok", "wallet_id": args.wallet_id, "requests": requests}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "wallet_id": args.wallet_id, "requests": requests},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "request-access":
@@ -902,7 +983,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
             result: Dict[str, Any] = {"status": "ok", **request.to_dict()}
             if request.invocation_id:
-                result["invocation_token"] = invocation_to_token(service.invocations[request.invocation_id])
+                result["invocation_token"] = invocation_to_token(
+                    service.invocations[request.invocation_id]
+                )
             _save(service, args.wallet_dir, args.wallet_id)
             _emit(result, json_output=args.json_output)
             return 0
@@ -950,7 +1033,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 audience_secret=_key_from_arg(args.recipient_key_hex),
             )
             _save(service, args.wallet_dir, args.wallet_id)
-            _emit({"status": "ok", "grant_id": grant.grant_id, "audience_did": grant.audience_did}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "grant_id": grant.grant_id, "audience_did": grant.audience_did},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "request-approval":
@@ -963,19 +1049,42 @@ def main(argv: Optional[list[str]] = None) -> int:
                 expires_at=args.expires_at,
             )
             _save(service, args.wallet_dir, args.wallet_id)
-            _emit({"status": "ok", "approval_id": request.approval_id, "approval_status": request.status, "threshold": request.threshold}, json_output=args.json_output)
+            _emit(
+                {
+                    "status": "ok",
+                    "approval_id": request.approval_id,
+                    "approval_status": request.status,
+                    "threshold": request.threshold,
+                },
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "approve-approval":
-            request = service.approve_approval(args.wallet_id, approval_id=args.approval_id, approver_did=args.approver_did)
+            request = service.approve_approval(
+                args.wallet_id, approval_id=args.approval_id, approver_did=args.approver_did
+            )
             _save(service, args.wallet_dir, args.wallet_id)
-            _emit({"status": "ok", "approval_id": request.approval_id, "approval_status": request.status, "approved_count": request.approved_count}, json_output=args.json_output)
+            _emit(
+                {
+                    "status": "ok",
+                    "approval_id": request.approval_id,
+                    "approval_status": request.status,
+                    "approved_count": request.approved_count,
+                },
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "revoke":
-            grant = service.revoke_grant(args.wallet_id, actor_did=args.actor_did, grant_id=args.grant_id)
+            grant = service.revoke_grant(
+                args.wallet_id, actor_did=args.actor_did, grant_id=args.grant_id
+            )
             _save(service, args.wallet_dir, args.wallet_id)
-            _emit({"status": "ok", "grant_id": grant.grant_id, "grant_status": grant.status}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "grant_id": grant.grant_id, "grant_status": grant.status},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "grant-receipts":
@@ -988,7 +1097,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                     status=status,
                 )
             ]
-            _emit({"status": "ok", "wallet_id": args.wallet_id, "receipts": receipts}, json_output=args.json_output)
+            _emit(
+                {"status": "ok", "wallet_id": args.wallet_id, "receipts": receipts},
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "verify-storage":
@@ -1014,7 +1126,15 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.command == "audit":
             events = service.get_audit_log(args.wallet_id)
-            _emit({"status": "ok", "wallet_id": args.wallet_id, "event_count": len(events), "audit_head": events[-1].hash_self if events else None}, json_output=args.json_output)
+            _emit(
+                {
+                    "status": "ok",
+                    "wallet_id": args.wallet_id,
+                    "event_count": len(events),
+                    "audit_head": events[-1].hash_self if events else None,
+                },
+                json_output=args.json_output,
+            )
             return 0
 
         raise ValueError(f"unsupported command: {args.command}")

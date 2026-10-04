@@ -50,8 +50,7 @@ from shlex import split as shell_split
 logger = logging.getLogger(__name__)
 DEFAULT_ERGOAI_GIT_URL = "https://github.com/ErgoAI/ErgoEngine.git"
 DEFAULT_ERGOAI_RELEASE_URL = (
-    "https://github.com/ErgoAI/.github/releases/download/"
-    "v3.0_release/ergoAI_3.0.run"
+    "https://github.com/ErgoAI/.github/releases/download/v3.0_release/ergoAI_3.0.run"
 )
 
 
@@ -118,8 +117,10 @@ class PlatformInstallProfile:
     def can_install_system_packages(self) -> bool:
         if self.package_manager is None:
             return False
-        return self.is_root or self.package_manager in {"brew", "conda", "mamba"} or bool(
-            self.sudo_path
+        return (
+            self.is_root
+            or self.package_manager in {"brew", "conda", "mamba"}
+            or bool(self.sudo_path)
         )
 
 
@@ -433,8 +434,7 @@ def _install_ergoai_release(*, strict: bool) -> bool:
         return False
 
     release_url = str(
-        os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_URL")
-        or DEFAULT_ERGOAI_RELEASE_URL
+        os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_URL") or DEFAULT_ERGOAI_RELEASE_URL
     ).strip()
     installer_name = release_url.rstrip("/").rsplit("/", 1)[-1] or "ergoAI.run"
     installer = root / installer_name
@@ -480,11 +480,11 @@ def _clone_or_update_ergoai(*, strict: bool) -> bool:
             print(f"Updating existing ErgoAI checkout at {destination}...")
             _run([git, "-C", str(destination), "pull", "--ff-only"], check=False)
         else:
-            non_placeholder_entries = [
-                path
-                for path in destination.iterdir()
-                if path.name != ".gitkeep"
-            ] if destination.exists() else []
+            non_placeholder_entries = (
+                [path for path in destination.iterdir() if path.name != ".gitkeep"]
+                if destination.exists()
+                else []
+            )
             if non_placeholder_entries:
                 print(
                     f"ErgoAI path exists but is not a git checkout: {destination}\n"
@@ -808,13 +808,19 @@ def ensure_coq(*, yes: bool, strict: bool, allow_sudo: bool = False) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Best-effort installer for Z3/CVC5/Lean/Coq/SymbolicAI/ErgoAI")
+    parser = argparse.ArgumentParser(
+        description="Best-effort installer for Z3/CVC5/Lean/Coq/SymbolicAI/ErgoAI"
+    )
     parser.add_argument("--z3", action="store_true", help="Install/ensure Z3 Python bindings")
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5 Python bindings")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
     parser.add_argument("--coq", action="store_true", help="Install/ensure Coq")
-    parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
-    parser.add_argument("--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI/ErgoEngine")
+    parser.add_argument(
+        "--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI"
+    )
+    parser.add_argument(
+        "--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI/ErgoEngine"
+    )
     parser.add_argument(
         "--allow-sudo",
         action="store_true",

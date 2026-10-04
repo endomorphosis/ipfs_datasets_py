@@ -46,6 +46,7 @@ from ipfs_datasets_py.logic.CEC.native.inference_rules.specialized import (
 # Helper factories
 # ---------------------------------------------------------------------------
 
+
 def make_atom(name: str) -> AtomicFormula:
     """Create a simple zero-arity atomic formula (propositional variable)."""
     return AtomicFormula(Predicate(name, []), [])
@@ -78,16 +79,19 @@ def make_bicond(p, q) -> ConnectiveFormula:
 
 def make_necessary(formula):
     """Create a mock necessary formula (using a simple wrapper object)."""
+
     class NecessaryFormula:
         def __init__(self, content):
-            self.modality = 'necessary'
+            self.modality = "necessary"
             self.content = content
+
     return NecessaryFormula(formula)
 
 
 # ---------------------------------------------------------------------------
 # Modal Rule Tests
 # ---------------------------------------------------------------------------
+
 
 class TestModalRules:
     """Tests for modal logic inference rules."""
@@ -228,6 +232,7 @@ class TestModalRules:
 # ---------------------------------------------------------------------------
 # Resolution Rule Tests
 # ---------------------------------------------------------------------------
+
 
 class TestResolutionRules:
     """Tests for resolution-based inference rules."""
@@ -428,6 +433,7 @@ class TestResolutionRules:
 # ---------------------------------------------------------------------------
 # Specialized Rule Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSpecializedRules:
     """Tests for specialized inference rules."""
@@ -696,15 +702,20 @@ class TestSpecializedRules:
 # __init__ export tests
 # ---------------------------------------------------------------------------
 
+
 class TestInferenceRulesPackageExports:
     """Verify all new rules are exported from the inference_rules package."""
 
     def test_modal_rules_exported(self):
         """All modal rules should be importable from the package."""
         from ipfs_datasets_py.logic.CEC.native.inference_rules import (
-            NecessityElimination, PossibilityIntroduction, NecessityDistribution,
-            PossibilityDuality, NecessityConjunction,
+            NecessityElimination,
+            PossibilityIntroduction,
+            NecessityDistribution,
+            PossibilityDuality,
+            NecessityConjunction,
         )
+
         assert NecessityElimination is not None
         assert PossibilityIntroduction is not None
         assert NecessityDistribution is not None
@@ -714,9 +725,14 @@ class TestInferenceRulesPackageExports:
     def test_resolution_rules_exported(self):
         """All resolution rules should be importable from the package."""
         from ipfs_datasets_py.logic.CEC.native.inference_rules import (
-            ResolutionRule, UnitResolutionRule, FactoringRule,
-            SubsumptionRule, CaseAnalysisRule, ProofByContradictionRule,
+            ResolutionRule,
+            UnitResolutionRule,
+            FactoringRule,
+            SubsumptionRule,
+            CaseAnalysisRule,
+            ProofByContradictionRule,
         )
+
         assert ResolutionRule is not None
         assert UnitResolutionRule is not None
         assert FactoringRule is not None
@@ -727,10 +743,17 @@ class TestInferenceRulesPackageExports:
     def test_specialized_rules_exported(self):
         """All specialized rules should be importable from the package."""
         from ipfs_datasets_py.logic.CEC.native.inference_rules import (
-            BiconditionalIntroduction, BiconditionalElimination,
-            ConstructiveDilemma, DestructiveDilemma, ExportationRule,
-            AbsorptionRule, AdditionRule, TautologyRule, CommutativityConjunction,
+            BiconditionalIntroduction,
+            BiconditionalElimination,
+            ConstructiveDilemma,
+            DestructiveDilemma,
+            ExportationRule,
+            AbsorptionRule,
+            AdditionRule,
+            TautologyRule,
+            CommutativityConjunction,
         )
+
         assert BiconditionalIntroduction is not None
         assert BiconditionalElimination is not None
         assert ConstructiveDilemma is not None
@@ -744,6 +767,7 @@ class TestInferenceRulesPackageExports:
     def test_total_rule_count_in_all(self):
         """The __all__ list should contain all 67 exported rules + base classes."""
         from ipfs_datasets_py.logic.CEC.native.inference_rules import __all__
+
         # base(2) + propositional(10) + temporal(15) + deontic(7) +
         # cognitive(13) + modal(5) + resolution(6) + specialized(9) = 67 + 2 base = 69
         assert len(__all__) >= 60, f"Expected ≥60 items in __all__, got {len(__all__)}"

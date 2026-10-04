@@ -298,7 +298,10 @@ def test_prove_toml_failure_retrieves_sanitized_error_and_cleans_buffers(tmp_pat
     assert str(secret_toml) not in error
     assert "<redacted:provekit-ffi-sensitive>" in error
     assert fake.pk_get_last_error.calls
-    assert fake.freed_buffer_lengths == [len(b"partial"), len(f"could not parse {secret_toml}".encode("utf-8"))]
+    assert fake.freed_buffer_lengths == [
+        len(b"partial"),
+        len(f"could not parse {secret_toml}".encode("utf-8")),
+    ]
 
 
 def test_verify_maps_invalid_proofs_to_false_and_other_errors_to_exception():

@@ -10,6 +10,7 @@ Use this template for 90% of tools. It demonstrates:
 
 Core Principle: All business logic lives in core modules.
 """
+
 from typing import Dict, Any, Optional
 import logging
 
@@ -33,24 +34,24 @@ logger = logging.getLogger(__name__)
 async def your_tool_name(
     required_param: str,
     optional_param: Optional[str] = None,
-    options: Optional[Dict[str, Any]] = None
+    options: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Tool description with detailed documentation.
-    
+
     This is a thin wrapper around YourCoreClass from core modules.
-    
+
     Args:
         required_param: Description of required parameter
         optional_param: Description of optional parameter
         options: Additional options dictionary
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
             - result: The actual result data
             - message: Optional message
-            
+
     Example:
         >>> result = await your_tool_name("value", optional_param="optional")
         >>> print(result["status"])
@@ -59,40 +60,32 @@ async def your_tool_name(
     try:
         # 1. Input validation (if needed beyond type hints)
         if not required_param:
-            return mcp_error_response(
-                "required_param cannot be empty",
-                error_type="validation"
-            )
-        
+            return mcp_error_response("required_param cannot be empty", error_type="validation")
+
         # 2. Initialize core module class/function
         core_instance = YourCoreClass()
-        
+
         # 3. Delegate to core module (THIS IS WHERE THE WORK HAPPENS)
         result = await core_instance.your_method(
-            required_param,
-            optional_param=optional_param,
-            **(options or {})
+            required_param, optional_param=optional_param, **(options or {})
         )
-        
+
         # 4. Format response
         return {
             "status": "success",
             "result": result,
-            "message": "Operation completed successfully"
+            "message": "Operation completed successfully",
         }
-        
+
     except ValueError as e:
         # Handle specific exceptions
         logger.warning(f"Validation error in your_tool_name: {e}")
         return mcp_error_response(str(e), error_type="validation")
-        
+
     except Exception as e:
         # Handle general exceptions
         logger.error(f"Error in your_tool_name: {e}", exc_info=True)
-        return mcp_error_response(
-            f"Failed to execute tool: {str(e)}",
-            error_type="execution"
-        )
+        return mcp_error_response(f"Failed to execute tool: {str(e)}", error_type="execution")
 
 
 # CLI Integration (optional, for CLI-MCP alignment)
@@ -103,9 +96,7 @@ async def cli_your_tool_name(args):
     Demonstrates CLI-MCP alignment.
     """
     return await your_tool_name(
-        required_param=args.required_param,
-        optional_param=args.optional_param,
-        options=vars(args)
+        required_param=args.required_param, optional_param=args.optional_param, options=vars(args)
     )
 
 

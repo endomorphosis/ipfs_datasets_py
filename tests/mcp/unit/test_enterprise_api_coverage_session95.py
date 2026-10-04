@@ -22,6 +22,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 # Setup mocks for heavy dependencies before any import
 # ---------------------------------------------------------------------------
 
+
 def _setup_mocks():
     mock_graphrag = MagicMock()
     mock_graphrag.CompleteGraphRAGSystem = MagicMock()
@@ -50,6 +51,7 @@ from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
 # ---------------------------------------------------------------------------
 # AuthenticationManager — revoke_token and is_token_revoked
 # ---------------------------------------------------------------------------
+
 
 class TestRevokeToken:
     """revoke_token() adds the token to the revocation set."""
@@ -95,6 +97,7 @@ class TestRevokeToken:
         THEN: HTTPException 401 is raised with detail 'Token has been revoked'
         """
         from fastapi import HTTPException
+
         token = self.auth.create_access_token("alice")
         self.auth.revoke_token(token)
         with pytest.raises(HTTPException) as exc_info:
@@ -103,12 +106,10 @@ class TestRevokeToken:
         assert "revoked" in exc_info.value.detail.lower()
 
 
-
-
-
 # ---------------------------------------------------------------------------
 # ProcessingJobManager.process_job — webhook paths in exception handlers
 # ---------------------------------------------------------------------------
+
 
 class TestProcessJobWebhookPaths:
     """process_job() sends webhook notifications in exception handler branches."""
@@ -119,7 +120,9 @@ class TestProcessJobWebhookPaths:
     def _make_request(self, webhook_url: str) -> WebsiteProcessingRequest:
         return WebsiteProcessingRequest(url="https://example.com", notify_webhook=webhook_url)
 
-    async def _submit_and_process_with_error(self, exc_to_raise, webhook_url="https://hook.example.com"):
+    async def _submit_and_process_with_error(
+        self, exc_to_raise, webhook_url="https://hook.example.com"
+    ):
         """Helper: submit a job, then run process_job with a mocked system that raises exc."""
         mgr = self._make_manager()
         req = self._make_request(webhook_url)
@@ -130,15 +133,20 @@ class TestProcessJobWebhookPaths:
 
         send_mock = AsyncMock()
 
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            return_value=mock_system,
-        ), patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteProcessingConfiguration",
-            return_value=MagicMock(),
-        ), patch.object(mgr, "_send_webhook_notification", send_mock), patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
-            AsyncMock(),
+        with (
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
+                return_value=mock_system,
+            ),
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.CompleteProcessingConfiguration",
+                return_value=MagicMock(),
+            ),
+            patch.object(mgr, "_send_webhook_notification", send_mock),
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
+                AsyncMock(),
+            ),
         ):
             await mgr.process_job(job_id, req)
 
@@ -164,9 +172,7 @@ class TestProcessJobWebhookPaths:
         WHEN: process_job() runs
         THEN: _send_webhook_notification is called with 'failed' status
         """
-        mgr, job_id, send_mock = await self._submit_and_process_with_error(
-            ValueError("bad param")
-        )
+        mgr, job_id, send_mock = await self._submit_and_process_with_error(ValueError("bad param"))
         send_mock.assert_called_once_with("https://hook.example.com", job_id, "failed")
         assert "Invalid parameters" in mgr.jobs[job_id]["error_message"]
 
@@ -198,15 +204,19 @@ class TestProcessJobWebhookPaths:
         mock_system = MagicMock()
         mock_system.process_complete_website = AsyncMock(return_value=mock_result)
 
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            return_value=mock_system,
-        ), patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteProcessingConfiguration",
-            return_value=MagicMock(),
-        ), patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
-            AsyncMock(),
+        with (
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
+                return_value=mock_system,
+            ),
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.CompleteProcessingConfiguration",
+                return_value=MagicMock(),
+            ),
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
+                AsyncMock(),
+            ),
         ):
             await mgr.process_job(job_id, req)
 
@@ -230,15 +240,20 @@ class TestProcessJobWebhookPaths:
         )
         send_mock = AsyncMock()
 
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            return_value=mock_system,
-        ), patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteProcessingConfiguration",
-            MagicMock(),
-        ), patch.object(mgr, "_send_webhook_notification", send_mock), patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
-            AsyncMock(),
+        with (
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
+                return_value=mock_system,
+            ),
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.CompleteProcessingConfiguration",
+                MagicMock(),
+            ),
+            patch.object(mgr, "_send_webhook_notification", send_mock),
+            patch(
+                "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
+                AsyncMock(),
+            ),
         ):
             await mgr.process_job(job_id, req)
 
@@ -248,6 +263,7 @@ class TestProcessJobWebhookPaths:
 # ---------------------------------------------------------------------------
 # create_enterprise_api — singleton lazy init (lines 828–843)
 # ---------------------------------------------------------------------------
+
 
 class TestCreateEnterpriseAPISingleton:
     """create_enterprise_api() creates an instance on first call and caches it."""

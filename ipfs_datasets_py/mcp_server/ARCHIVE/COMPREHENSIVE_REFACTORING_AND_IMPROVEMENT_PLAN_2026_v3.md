@@ -236,10 +236,10 @@ mcp.add_tool(tool2)
 # ... 371 more tools
 
 # After: 4 meta-tools providing 99% context reduction
-mcp.add_tool(tools_list_categories)    # List all 50 categories
-mcp.add_tool(tools_list_tools)         # List tools in a category
-mcp.add_tool(tools_get_schema)         # Get tool schema
-mcp.add_tool(tools_dispatch)           # Execute any tool
+mcp.add_tool(tools_list_categories)  # List all 50 categories
+mcp.add_tool(tools_list_tools)  # List tools in a category
+mcp.add_tool(tools_get_schema)  # Get tool schema
+mcp.add_tool(tools_dispatch)  # Execute any tool
 ```
 
 **Benefits:**
@@ -257,6 +257,7 @@ class DatasetLoader:
     def load(self, source: str, **kwargs) -> Dataset:
         """Business logic here"""
         pass
+
 
 # MCP Tool (thin wrapper)
 @tool_metadata(runtime="fastapi")
@@ -281,6 +282,7 @@ async def load_dataset(source: str, **kwargs):
 async def general_tool():
     pass  # Runs in asyncio event loop
 
+
 # Trio Runtime (P2P tools, native libp2p)
 @tool_metadata(runtime="trio")
 async def p2p_tool():
@@ -299,11 +301,15 @@ async def p2p_tool():
 
 try:
     from ipfs_accelerate_py import TaskQueue
+
     HAS_P2P = True
 except ImportError:
     HAS_P2P = False
+
     class TaskQueue:  # Mock
-        def __init__(self): raise NotImplementedError()
+        def __init__(self):
+            raise NotImplementedError()
+
 
 def p2p_tool():
     if not HAS_P2P:
@@ -541,13 +547,16 @@ except Exception:  # Too broad!
 def get_config(key: str) -> dict:  # Can return None!
     pass
 
+
 # Good: Explicit Optional
 def get_config(key: str) -> Optional[dict]:
     pass
 
+
 # Bad: Missing return type
 def process_data(data):  # What does this return?
     pass
+
 
 # Good: Explicit return type
 def process_data(data: dict) -> ProcessResult:
@@ -822,8 +831,9 @@ def test_load_dataset_success(self):
 @pytest.fixture
 def mock_mcp_server():
     """Provides a mocked MCP server instance."""
-    with patch('mcp.server.FastMCP') as mock:
+    with patch("mcp.server.FastMCP") as mock:
         yield mock
+
 
 @pytest.fixture
 def sample_dataset():
@@ -833,11 +843,14 @@ def sample_dataset():
 
 **Parametrized Tests for Multiple Scenarios:**
 ```python
-@pytest.mark.parametrize("source,expected", [
-    ("squad", "success"),
-    ("invalid", "error"),
-    ("", "error"),
-])
+@pytest.mark.parametrize(
+    "source,expected",
+    [
+        ("squad", "success"),
+        ("invalid", "error"),
+        ("", "error"),
+    ],
+)
 def test_load_dataset_scenarios(source, expected):
     result = load_dataset(source)
     assert result.status == expected
@@ -922,6 +935,7 @@ def register_all_tools(self):
     # 115 lines of complex logic
     pass
 
+
 # After: Extracted helpers
 def register_all_tools(self):
     """Register all tools with the MCP server."""
@@ -930,13 +944,16 @@ def register_all_tools(self):
         tools = self._load_category_tools(category)
         self._register_category(category, tools)
 
+
 def _discover_tool_categories(self) -> List[str]:
     """Discover all available tool categories."""
     # 20-30 lines
 
+
 def _load_category_tools(self, category: str) -> List[Tool]:
     """Load all tools in a category."""
     # 30-40 lines
+
 
 def _register_category(self, category: str, tools: List[Tool]):
     """Register a category and its tools."""
@@ -974,8 +991,8 @@ def _register_category(self, category: str, tools: List[Tool]):
            extra={
                "data_type": type(data).__name__,
                "error": str(e),
-               "traceback": traceback.format_exc()
-           }
+               "traceback": traceback.format_exc(),
+           },
        )
        raise
    ```
@@ -1038,7 +1055,8 @@ def function_name(param1: Type1, param2: Type2) -> ReturnType:
    # Bad
    def get_config(key: str) -> dict:  # Can return None!
        pass
-   
+
+
    # Good
    def get_config(key: str) -> Optional[dict]:
        pass
@@ -1049,7 +1067,8 @@ def function_name(param1: Type1, param2: Type2) -> ReturnType:
    # Bad
    def process_data(data):  # What does this return?
        pass
-   
+
+
    # Good
    def process_data(data: dict) -> ProcessResult:
        pass
@@ -1060,10 +1079,14 @@ def function_name(param1: Type1, param2: Type2) -> ReturnType:
    # Bad
    def handle_request(data: Any) -> Any:
        pass
-   
+
+
    # Good
    from typing import Union
+
    RequestData = Union[dict, str, bytes]
+
+
    def handle_request(data: RequestData) -> Response:
        pass
    ```
@@ -1071,13 +1094,15 @@ def function_name(param1: Type1, param2: Type2) -> ReturnType:
 4. **Use TypedDict for structured dictionaries**
    ```python
    from typing import TypedDict
-   
+
+
    class ToolMetadata(TypedDict):
        name: str
        category: str
        description: str
        runtime: str
-   
+
+
    def get_tool_metadata(tool: str) -> ToolMetadata:
        pass
    ```
@@ -1128,9 +1153,11 @@ def function_name(param1: Type1, param2: Type2) -> ReturnType:
 def __init__(self):
     self.tools = self._discover_all_tools()  # Expensive!
 
+
 # Optimized: Load on first access
 def __init__(self):
     self._tools = None  # Lazy load
+
 
 @property
 def tools(self):
@@ -1148,8 +1175,10 @@ def get_tool_schema(tool_name):
     metadata = generate_metadata(tool_name)  # Expensive!
     return metadata
 
+
 # Optimized: Cache generated metadata
 from functools import lru_cache
+
 
 @lru_cache(maxsize=128)
 def get_tool_schema(tool_name):
@@ -1177,6 +1206,7 @@ mcp.add_tools_batch(tools)  # 1 network round-trip
 def discover_tools():
     for category in categories:
         tools = discover_category(category)  # Sequential
+
 
 # Optimized: Parallel discovery
 async def discover_tools():

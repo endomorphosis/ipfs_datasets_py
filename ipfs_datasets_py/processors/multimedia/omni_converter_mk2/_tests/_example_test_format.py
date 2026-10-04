@@ -13,9 +13,9 @@ from monitors import make_error_monitor
 
 def make_mock_resources() -> dict[str, MagicMock]:
     mock_resources = {
-        'logger': MagicMock(spec=Logger),
-        'traceback': MagicMock(),
-        'datetime': MagicMock(),
+        "logger": MagicMock(spec=Logger),
+        "traceback": MagicMock(),
+        "datetime": MagicMock(),
     }
     return mock_resources
 
@@ -51,11 +51,11 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         self.mock_configs.paths = MagicMock()
         self.mock_configs.paths.ROOT_DIR = Path("/test/root")
 
-        #self.mock_configs: dict[str, MagicMock] = make_mock_configs()
+        # self.mock_configs: dict[str, MagicMock] = make_mock_configs()
         self.mock_resources = {
-            'logger': self.mock_logger,
-            'traceback': self.mock_traceback,
-            'datetime': self.mock_datetime
+            "logger": self.mock_logger,
+            "traceback": self.mock_traceback,
+            "datetime": self.mock_datetime,
         }
 
     def test_init_with_valid_resources_and_configs(self):
@@ -94,11 +94,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        invalid_resources = {
-            'traceback': self.mock_traceback,
-            'datetime': self.mock_datetime
-        }
-        
+        invalid_resources = {"traceback": self.mock_traceback, "datetime": self.mock_datetime}
+
         with self.assertRaises(KeyError):
             ErrorMonitor(invalid_resources, self.mock_configs)
 
@@ -108,11 +105,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        invalid_resources = {
-            'logger': self.mock_logger,
-            'datetime': self.mock_datetime
-        }
-        
+        invalid_resources = {"logger": self.mock_logger, "datetime": self.mock_datetime}
+
         with self.assertRaises(KeyError):
             ErrorMonitor(invalid_resources, self.mock_configs)
 
@@ -122,11 +116,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        invalid_resources = {
-            'logger': self.mock_logger,
-            'traceback': self.mock_traceback
-        }
-        
+        invalid_resources = {"logger": self.mock_logger, "traceback": self.mock_traceback}
+
         with self.assertRaises(KeyError):
             ErrorMonitor(invalid_resources, self.mock_configs)
 
@@ -156,7 +147,7 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         """
         invalid_configs = MagicMock()
         del invalid_configs.processing
-        
+
         with self.assertRaises(AttributeError):
             ErrorMonitor(self.mock_resources, invalid_configs)
 
@@ -187,7 +178,7 @@ class TestErrorMonitorInitialization(unittest.TestCase):
             - self._error_types == set()
         """
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
-        
+
         self.assertIs(monitor.configs, self.mock_configs)
         self.assertIs(monitor.resources, self.mock_resources)
         self.assertIs(monitor.traceback, self.mock_traceback)
@@ -204,7 +195,7 @@ class TestErrorHandling(unittest.TestCase):
         self.mock_resources = make_mock_resources()
         self.mock_configs = make_mock_configs()
 
-        self.mock_resources['logger'] = self.mock_logger = MagicMock(spec=Logger)
+        self.mock_resources["logger"] = self.mock_logger = MagicMock(spec=Logger)
 
     def test_handle_error_with_exception_suppress_false(self):
         """
@@ -217,10 +208,10 @@ class TestErrorHandling(unittest.TestCase):
         """
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
         test_error = Exception("test error")
-        
+
         with self.assertRaises(Exception) as context:
             monitor.handle_error(test_error)
-        
+
         self.assertEqual(str(context.exception), "test error")
         self.mock_logger.error.assert_called()
         self.assertEqual(monitor.get_error_count(), 1)
@@ -237,10 +228,10 @@ class TestErrorHandling(unittest.TestCase):
         self.mock_configs.processing.suppress_errors = True
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
         test_error = Exception("test error")
-        
+
         # Should not raise
         monitor.handle_error(test_error)
-        
+
         self.mock_logger.error.assert_called()
         self.assertEqual(monitor.get_error_count(), 1)
 
@@ -254,10 +245,10 @@ class TestErrorHandling(unittest.TestCase):
             - Error count increases by 1
         """
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
-        
+
         # Should not raise regardless of suppress_errors setting
         monitor.handle_error("error message")
-        
+
         self.mock_logger.error.assert_called()
         self.assertEqual(monitor.get_error_count(), 1)
 
@@ -272,15 +263,15 @@ class TestErrorHandling(unittest.TestCase):
         self.mock_configs.processing.suppress_errors = True
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
         test_error = ValueError("test error")
-        context = {'file': 'test.py', 'line': 42}
-        
+        context = {"file": "test.py", "line": 42}
+
         monitor.handle_error(test_error, context)
-        
+
         self.mock_logger.error.assert_called()
         # Verify context was passed to log_error
         call_args = self.mock_logger.error.call_args
-        self.assertIn('test.py', str(call_args))
-        self.assertIn('42', str(call_args))
+        self.assertIn("test.py", str(call_args))
+        self.assertIn("42", str(call_args))
 
     def test_handle_error_with_various_exception_types(self):
         """
@@ -296,21 +287,21 @@ class TestErrorHandling(unittest.TestCase):
         """
         self.mock_configs.processing.suppress_errors = True
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
-        
+
         class CustomException(Exception):
             pass
-        
+
         errors = [
             ValueError("value error"),
             TypeError("type error"),
             CustomException("custom error"),
             KeyError("key error"),
-            ValueError("another value error")  # Second ValueError
+            ValueError("another value error"),  # Second ValueError
         ]
-        
+
         for error in errors:
             monitor.handle_error(error)
-        
+
         self.assertEqual(monitor.get_error_count(), 5)
         self.assertEqual(monitor.get_error_count(ValueError), 2)
         self.assertEqual(monitor.get_error_count(TypeError), 1)
@@ -327,9 +318,9 @@ class TestErrorHandling(unittest.TestCase):
         """
         self.mock_configs.processing.suppress_errors = True
         monitor = ErrorMonitor(self.mock_resources, self.mock_configs)
-        
+
         # Should not raise any errors
         monitor.handle_error(ValueError("test"), context=None)
-        
+
         self.mock_logger.error.assert_called()
         self.assertEqual(monitor.get_error_count(), 1)

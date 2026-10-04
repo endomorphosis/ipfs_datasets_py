@@ -14,7 +14,9 @@ import anyio
 import json
 import tempfile
 from pathlib import Path
+
 sys.path.insert(0, str(Path.cwd()))
+
 
 def test_mcp_server_startup():
     """Test MCP server can start and register tools."""
@@ -26,10 +28,18 @@ def test_mcp_server_startup():
         server = IPFSDatasetsMCPServer()
         server.register_tools()
 
-        dev_tools = [name for name in server.tools.keys() if name in [
-            'test_generator', 'codebase_search', 'documentation_generator',
-            'lint_python_codebase', 'run_comprehensive_tests'
-        ]]
+        dev_tools = [
+            name
+            for name in server.tools.keys()
+            if name
+            in [
+                "test_generator",
+                "codebase_search",
+                "documentation_generator",
+                "lint_python_codebase",
+                "run_comprehensive_tests",
+            ]
+        ]
 
         print(f"   ✓ Server started successfully")
         print(f"   ✓ {len(server.tools)} total tools registered")
@@ -40,6 +50,7 @@ def test_mcp_server_startup():
         print(f"   ✗ Server startup failed: {e}")
         return False, None
 
+
 def test_individual_tools():
     """Test each development tool individually."""
     print("\n🔧 Testing Individual Tools...")
@@ -48,15 +59,12 @@ def test_individual_tools():
 
     # Test 1: Codebase Search
     try:
-        from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
+        from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import (
+            codebase_search,
+        )
 
         result = codebase_search(
-            pattern="def test",
-            path=".",
-            regex=True,
-            extensions="py",
-            max_depth=2,
-            format="text"
+            pattern="def test", path=".", regex=True, extensions="py", max_depth=2, format="text"
         )
 
         success = isinstance(result, str) and "Search Results" in result
@@ -69,18 +77,16 @@ def test_individual_tools():
 
     # Test 2: Test Generator (basic validation)
     try:
-        from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import test_generator
+        from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import (
+            test_generator,
+        )
 
         # Create a simple test spec
         test_spec = {
             "test_class": "TestExample",
             "tests": [
-                {
-                    "name": "test_basic",
-                    "description": "Basic test",
-                    "assertions": ["assert True"]
-                }
-            ]
+                {"name": "test_basic", "description": "Basic test", "assertions": ["assert True"]}
+            ],
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -89,7 +95,7 @@ def test_individual_tools():
                 description="Example test file",
                 test_specification=json.dumps(test_spec),
                 output_dir=tmpdir,
-                harness="pytest"
+                harness="pytest",
             )
 
             success = isinstance(result, dict) and result.get("success", False)
@@ -102,7 +108,9 @@ def test_individual_tools():
 
     # Test 3: Documentation Generator
     try:
-        from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import documentation_generator
+        from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import (
+            documentation_generator,
+        )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a simple Python file to document
@@ -124,11 +132,13 @@ def example_function(x, y):
             result = documentation_generator(
                 input_path=str(test_file),
                 output_path=str(Path(tmpdir) / "docs"),
-                format_type="markdown"
+                format_type="markdown",
             )
 
             success = isinstance(result, dict) and result.get("success", False)
-            print(f"   {'✓' if success else '✗'} Documentation Generator: {'PASS' if success else 'FAIL'}")
+            print(
+                f"   {'✓' if success else '✗'} Documentation Generator: {'PASS' if success else 'FAIL'}"
+            )
             tests.append(success)
 
     except Exception as e:
@@ -137,13 +147,12 @@ def example_function(x, y):
 
     # Test 4: Linting Tools
     try:
-        from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
+        from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import (
+            lint_python_codebase,
+        )
 
         result = lint_python_codebase(
-            path=".",
-            max_depth=1,
-            include_formatting=True,
-            output_format="json"
+            path=".", max_depth=1, include_formatting=True, output_format="json"
         )
 
         success = isinstance(result, str) and ("lint_results" in result or "error" in result)
@@ -156,13 +165,12 @@ def example_function(x, y):
 
     # Test 5: Test Runner
     try:
-        from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import run_comprehensive_tests
+        from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import (
+            run_comprehensive_tests,
+        )
 
         result = run_comprehensive_tests(
-            path=".",
-            max_depth=1,
-            include_coverage=False,
-            output_format="json"
+            path=".", max_depth=1, include_coverage=False, output_format="json"
         )
 
         success = isinstance(result, str) and ("test_results" in result or "error" in result)
@@ -174,6 +182,7 @@ def example_function(x, y):
         tests.append(False)
 
     return tests
+
 
 def test_vscode_compatibility():
     """Test VS Code MCP integration compatibility."""
@@ -187,16 +196,25 @@ def test_vscode_compatibility():
         server.register_tools()
 
         # Verify MCP object has required methods for VS Code
-        mcp_methods = ['add_tool', 'run_stdio_async']
+        mcp_methods = ["add_tool", "run_stdio_async"]
         has_methods = all(hasattr(server.mcp, method) for method in mcp_methods)
 
-        print(f"   {'✓' if has_methods else '✗'} MCP interface compatibility: {'PASS' if has_methods else 'FAIL'}")
+        print(
+            f"   {'✓' if has_methods else '✗'} MCP interface compatibility: {'PASS' if has_methods else 'FAIL'}"
+        )
 
         # Check that all development tools are callable
-        dev_tool_names = ['test_generator', 'codebase_search', 'documentation_generator',
-                         'lint_python_codebase', 'run_comprehensive_tests']
+        dev_tool_names = [
+            "test_generator",
+            "codebase_search",
+            "documentation_generator",
+            "lint_python_codebase",
+            "run_comprehensive_tests",
+        ]
 
-        callable_tools = [name for name in dev_tool_names if name in server.tools and callable(server.tools[name])]
+        callable_tools = [
+            name for name in dev_tool_names if name in server.tools and callable(server.tools[name])
+        ]
 
         print(f"   ✓ Callable tools: {len(callable_tools)}/5")
 
@@ -205,6 +223,7 @@ def test_vscode_compatibility():
     except Exception as e:
         print(f"   ✗ VS Code compatibility test failed: {e}")
         return False
+
 
 def test_performance_metrics():
     """Basic performance validation."""
@@ -216,14 +235,19 @@ def test_performance_metrics():
         # Test import time
         start_time = time.time()
         from ipfs_datasets_py.mcp_server.tools.development_tools import (
-            test_generator, codebase_search, documentation_generator,
-            lint_python_codebase, run_comprehensive_tests
+            test_generator,
+            codebase_search,
+            documentation_generator,
+            lint_python_codebase,
+            run_comprehensive_tests,
         )
+
         import_time = time.time() - start_time
 
         # Test server startup time
         start_time = time.time()
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+
         server = IPFSDatasetsMCPServer()
         server.register_tools()
         startup_time = time.time() - start_time
@@ -235,14 +259,19 @@ def test_performance_metrics():
         import_ok = import_time < 5.0  # Should import in under 5 seconds
         startup_ok = startup_time < 10.0  # Should start in under 10 seconds
 
-        print(f"   {'✓' if import_ok else '✗'} Import performance: {'GOOD' if import_ok else 'SLOW'}")
-        print(f"   {'✓' if startup_ok else '✗'} Startup performance: {'GOOD' if startup_ok else 'SLOW'}")
+        print(
+            f"   {'✓' if import_ok else '✗'} Import performance: {'GOOD' if import_ok else 'SLOW'}"
+        )
+        print(
+            f"   {'✓' if startup_ok else '✗'} Startup performance: {'GOOD' if startup_ok else 'SLOW'}"
+        )
 
         return import_ok and startup_ok
 
     except Exception as e:
         print(f"   ✗ Performance test failed: {e}")
         return False
+
 
 def main():
     """Run all end-to-end tests."""
@@ -268,7 +297,9 @@ def main():
     print("=" * 50)
 
     print(f"🚀 Server Startup:     {'✓ PASS' if server_ok else '✗ FAIL'}")
-    print(f"🔧 Individual Tools:   {'✓ PASS' if tools_ok else '✗ FAIL'} ({sum(tool_results) if tool_results else 0}/5)")
+    print(
+        f"🔧 Individual Tools:   {'✓ PASS' if tools_ok else '✗ FAIL'} ({sum(tool_results) if tool_results else 0}/5)"
+    )
     print(f"🔌 VS Code Compat:     {'✓ PASS' if vscode_ok else '✗ FAIL'}")
     print(f"⚡ Performance:        {'✓ PASS' if perf_ok else '✗ FAIL'}")
 
@@ -284,6 +315,7 @@ def main():
         print("\n⚠️  Some tests failed - review above for details")
 
     return 0 if all_tests_passed else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

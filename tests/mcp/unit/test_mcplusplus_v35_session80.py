@@ -20,13 +20,16 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_merge_result(added: int = 0, conflicts: int = 0, revocations: int = 0):
     from ipfs_datasets_py.mcp_server.ucan_delegation import MergeResult
+
     return MergeResult(added_count=added, conflict_count=conflicts, revocations_copied=revocations)
 
 
 def _make_reload_result(count: int = 4, failed: int = 0):
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
     pin_results = {}
     for i in range(count - failed):
         pin_results[f"p{i}"] = f"Qm{i:040d}"
@@ -37,12 +40,14 @@ def _make_reload_result(count: int = 4, failed: int = 0):
 
 def _make_bus():
     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
     return PubSubBus()
 
 
 # ---------------------------------------------------------------------------
 # 1. MergeResult.__len__
 # ---------------------------------------------------------------------------
+
 
 class TestMergeResultLen:
     def test_len_zero_added(self):
@@ -91,6 +96,7 @@ class TestMergeResultLen:
 # 2. IPFSReloadResult.__len__
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSReloadResultLen:
     def test_len_zero_count(self):
         r = _make_reload_result(count=0, failed=0)
@@ -136,6 +142,7 @@ class TestIPFSReloadResultLen:
 # ---------------------------------------------------------------------------
 # 3. PubSubBus.resubscribe(old, new, topic=None)
 # ---------------------------------------------------------------------------
+
 
 class TestPubSubBusResubscribe:
     def test_resubscribe_single_topic(self):
@@ -243,15 +250,18 @@ class TestPubSubBusResubscribe:
 # 4. ComplianceChecker.oldest_backup_path(path)
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceCheckerOldestBackupPath:
     def test_no_bak_files_returns_none(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             assert ComplianceChecker.oldest_backup_path(p) is None
 
     def test_single_bak_returns_bak(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             bak = p + ".bak"
@@ -261,6 +271,7 @@ class TestComplianceCheckerOldestBackupPath:
 
     def test_two_bak_returns_bak1(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             bak0 = p + ".bak"
@@ -272,6 +283,7 @@ class TestComplianceCheckerOldestBackupPath:
 
     def test_three_bak_returns_bak2(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             for suffix in [".bak", ".bak.1", ".bak.2"]:
@@ -281,15 +293,19 @@ class TestComplianceCheckerOldestBackupPath:
 
     def test_complement_of_newest_backup_path_single(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             bak = p + ".bak"
             open(bak, "w").close()
             # With only one file, newest == oldest
-            assert ComplianceChecker.newest_backup_path(p) == ComplianceChecker.oldest_backup_path(p)
+            assert ComplianceChecker.newest_backup_path(p) == ComplianceChecker.oldest_backup_path(
+                p
+            )
 
     def test_complement_of_newest_backup_path_multiple(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             open(p + ".bak", "w").close()
@@ -302,6 +318,7 @@ class TestComplianceCheckerOldestBackupPath:
 
     def test_returns_string_or_none(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             result = ComplianceChecker.oldest_backup_path(p)
@@ -309,6 +326,7 @@ class TestComplianceCheckerOldestBackupPath:
 
     def test_is_static_method(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "rules.enc")
             # Callable without instance
@@ -319,6 +337,7 @@ class TestComplianceCheckerOldestBackupPath:
 # ---------------------------------------------------------------------------
 # 5. E2E
 # ---------------------------------------------------------------------------
+
 
 class TestE2ESession80:
     def test_len_sum_across_merges(self):
@@ -336,6 +355,7 @@ class TestE2ESession80:
     def test_resubscribe_and_oldest_backup_path(self):
         """resubscribe + oldest_backup_path integration flow."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         bus = _make_bus()
         fired = []
         old_h = lambda t, p: fired.append("old")
@@ -358,6 +378,7 @@ class TestE2ESession80:
     def test_all_four_features_together(self):
         """len, resubscribe, oldest_backup_path work in a combined scenario."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         # MergeResult.__len__
         mr = _make_merge_result(added=3, conflicts=1)
         assert len(mr) == 3

@@ -18,7 +18,7 @@ def html_samples():
         "hello_world": "<html><body><h1>Hello</h1><p>World</p></body></html>",
         "plain": "<html><body><h1>Title</h1><p>Plain text</p></body></html>",
         "content": "<html><body><p>Content</p></body></html>",
-        "test_content": "<html><body><p>Test content</p></body></html>"
+        "test_content": "<html><body><p>Test content</p></body></html>",
     }
 
 
@@ -27,7 +27,7 @@ def metadata_samples():
     """Metadata test samples."""
     return {
         "crawler": {"source": "crawler", "depth": 2},
-        "priority": {"source": "crawler", "priority": "high"}
+        "priority": {"source": "crawler", "priority": "high"},
     }
 
 

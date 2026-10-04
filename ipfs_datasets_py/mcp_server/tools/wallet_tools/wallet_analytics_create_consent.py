@@ -8,7 +8,9 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, load_all, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Create analytics consent from an approved template.")
+@tool_metadata(
+    category="wallet_tools", mcp_description="Create analytics consent from an approved template."
+)
 async def wallet_analytics_create_consent(
     wallet_id: str,
     actor_did: str,

@@ -56,14 +56,18 @@ The scrape_the_law_mk3 submodule has been fully integrated as an MCP tool with c
 
 ### 1. Via Python Import
 ```python
-from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import (
+    ScrapeMunicipalCodesTool,
+)
 
 tool = ScrapeMunicipalCodesTool()
-result = await tool.execute({
-    "jurisdictions": ["Seattle, WA", "Portland, OR"],
-    "provider": "municode",
-    "output_format": "json"
-})
+result = await tool.execute(
+    {
+        "jurisdictions": ["Seattle, WA", "Portland, OR"],
+        "provider": "municode",
+        "output_format": "json",
+    }
+)
 ```
 
 ### 2. Via MCP Server

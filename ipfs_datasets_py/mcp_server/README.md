@@ -108,10 +108,12 @@ Point the extension at `python -m ipfs_datasets_py.mcp_server` using the `stdio`
 import anyio
 from ipfs_datasets_py.mcp_server.client import IPFSDatasetsMCPClient
 
+
 async def main():
     client = IPFSDatasetsMCPClient("http://localhost:5000")
     info = await client.load_dataset("squad")
     print(info)
+
 
 anyio.run(main)
 ```
@@ -128,10 +130,10 @@ Server startup is managed by `ServerContext` (`server_context.py`), which initia
 from ipfs_datasets_py.mcp_server.server_context import create_server_context
 
 with create_server_context() as ctx:
-    tool_manager   = ctx.tool_manager        # HierarchicalToolManager
-    metadata_reg   = ctx.metadata_registry   # ToolMetadataRegistry
-    p2p_services   = ctx.p2p_services        # P2PServiceManager (if enabled)
-    scheduler      = ctx.workflow_scheduler  # WorkflowScheduler (if enabled)
+    tool_manager = ctx.tool_manager  # HierarchicalToolManager
+    metadata_reg = ctx.metadata_registry  # ToolMetadataRegistry
+    p2p_services = ctx.p2p_services  # P2PServiceManager (if enabled)
+    scheduler = ctx.workflow_scheduler  # WorkflowScheduler (if enabled)
 ```
 
 `ServerContext` also accepts cleanup handlers registered at runtime, ensuring every resource (vector stores, workflow schedulers, P2P connections) is properly released on shutdown even when exceptions occur.
@@ -141,10 +143,10 @@ with create_server_context() as ctx:
 `server.py` uses FastMCP and registers **only 4 meta-tools** at startup:
 
 ```python
-mcp.add_tool(tools_list_categories)   # list all 51 category names
-mcp.add_tool(tools_list_tools)        # list tools within a category
-mcp.add_tool(tools_get_schema)        # get parameter schema for a tool
-mcp.add_tool(tools_dispatch)          # execute any tool by name
+mcp.add_tool(tools_list_categories)  # list all 51 category names
+mcp.add_tool(tools_list_tools)  # list tools within a category
+mcp.add_tool(tools_get_schema)  # get parameter schema for a tool
+mcp.add_tool(tools_dispatch)  # execute any tool by name
 ```
 
 Tool modules within the 51 category directories are **lazily imported** the first time a call arrives for that category. This keeps startup time fast and avoids loading heavy dependencies (torch, FFmpeg bindings, etc.) until they are actually needed.
@@ -365,9 +367,9 @@ Construct pipelines with the factory helpers:
 ```python
 from ipfs_datasets_py.mcp_server.dispatch_pipeline import make_default_pipeline, make_full_pipeline
 
-pipeline = make_full_pipeline()          # all stages enabled
-pipeline = make_default_pipeline()       # minimal (compliance + delegation)
-result   = pipeline.run(intent)
+pipeline = make_full_pipeline()  # all stages enabled
+pipeline = make_default_pipeline()  # minimal (compliance + delegation)
+result = pipeline.run(intent)
 ```
 
 ---
@@ -391,7 +393,7 @@ token = DelegationToken(
 )
 
 mgr = DelegationManager()
-cid = mgr.add(token)                                   # → CIDv1 string
+cid = mgr.add(token)  # → CIDv1 string
 
 # Check if an actor can invoke a tool
 evaluator = mgr.get_evaluator()
@@ -444,7 +446,7 @@ frontier = dag.frontier()
 ```python
 from ipfs_datasets_py.mcp_server.policy_audit_log import get_audit_log
 
-log = get_audit_log()    # process-global singleton
+log = get_audit_log()  # process-global singleton
 log.record(policy_cid="bafy…", actor="alice", tool="load_dataset", outcome="allow")
 recent = log.recent(n=50)
 log.export_jsonl("/var/log/mcp_policy.jsonl")
@@ -508,6 +510,7 @@ start_server()
 import anyio
 from ipfs_datasets_py.mcp_server.client import IPFSDatasetsMCPClient
 
+
 async def main():
     client = IPFSDatasetsMCPClient("http://localhost:5000")
 
@@ -523,6 +526,7 @@ async def main():
     # Save result
     await client.save_dataset(processed["dataset_id"], "/output/data.csv", "csv")
 
+
 anyio.run(main)
 ```
 
@@ -532,14 +536,19 @@ For low-level parallel dispatch, use `HierarchicalToolManager` directly:
 import anyio
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
 
+
 async def main():
     manager = HierarchicalToolManager()
 
-    results = await manager.dispatch_parallel([
-        {"category": "dataset_tools",  "tool": "load_dataset",      "params": {"source": "squad"}},
-        {"category": "graph_tools",    "tool": "query_knowledge_graph"},
-        {"category": "vector_tools",   "tool": "search_vector_index", "params": {"query": "AI"}},
-    ], max_concurrent=4)
+    results = await manager.dispatch_parallel(
+        [
+            {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
+            {"category": "graph_tools", "tool": "query_knowledge_graph"},
+            {"category": "vector_tools", "tool": "search_vector_index", "params": {"query": "AI"}},
+        ],
+        max_concurrent=4,
+    )
+
 
 anyio.run(main)
 ```
@@ -562,10 +571,10 @@ manager = P2PServiceManager(
     ],
 )
 
-print(manager.get_capabilities())      # inspect available features
+print(manager.get_capabilities())  # inspect available features
 
-scheduler = manager.get_workflow_scheduler()   # None if unavailable
-registry  = manager.get_peer_registry()        # None if unavailable
+scheduler = manager.get_workflow_scheduler()  # None if unavailable
+registry = manager.get_peer_registry()  # None if unavailable
 ```
 
 The PubSub bus (`mcp_p2p_transport.py`) handles peer communication:

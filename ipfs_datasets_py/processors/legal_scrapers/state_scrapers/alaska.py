@@ -15,22 +15,30 @@ from .registry import StateScraperRegistry
 class AlaskaScraper(BaseStateScraper):
     """Scraper for Alaska state laws from http://www.legis.state.ak.us"""
 
-    _AK_SECTION_RE = re.compile(r"\bSec\.\s*(\d{2}\.\d{2}\.\d{3})\.\s*(.+)", re.IGNORECASE | re.DOTALL)
-    
+    _AK_SECTION_RE = re.compile(
+        r"\bSec\.\s*(\d{2}\.\d{2}\.\d{3})\.\s*(.+)", re.IGNORECASE | re.DOTALL
+    )
+
     def get_base_url(self) -> str:
         """Return the base URL for Alaska's legislative website."""
         return "http://www.legis.state.ak.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Alaska."""
-        return [{
-            "name": "Alaska Statutes",
-            "url": "https://www.akleg.gov/basis/statutes.asp",
-            "type": "Code"
-        }]
-    
-    async def _fetch_statute_chunk(self, sec_start: str, timeout_seconds: int = 8) -> Tuple[str, str]:
-        cache_url = f"https://www.akleg.gov/basis/statutes.asp?media=print&type=fetch&secStart={sec_start}"
+        return [
+            {
+                "name": "Alaska Statutes",
+                "url": "https://www.akleg.gov/basis/statutes.asp",
+                "type": "Code",
+            }
+        ]
+
+    async def _fetch_statute_chunk(
+        self, sec_start: str, timeout_seconds: int = 8
+    ) -> Tuple[str, str]:
+        cache_url = (
+            f"https://www.akleg.gov/basis/statutes.asp?media=print&type=fetch&secStart={sec_start}"
+        )
         cached = await self._load_page_bytes_from_any_cache(cache_url)
         if cached:
             cached_html = cached.decode("cp1252", errors="replace")
@@ -53,12 +61,16 @@ class AlaskaScraper(BaseStateScraper):
                 )
                 if int(response.status_code or 0) != 200:
                     return "", ""
-                return bytes(response.content or b"").decode("cp1252", errors="replace"), str(response.headers.get("LastSec") or "")
+                return bytes(response.content or b"").decode("cp1252", errors="replace"), str(
+                    response.headers.get("LastSec") or ""
+                )
             except Exception:
                 return "", ""
 
         try:
-            html, last_sec = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
+            html, last_sec = await asyncio.wait_for(
+                asyncio.to_thread(_request), timeout=timeout + 1
+            )
         except asyncio.TimeoutError:
             html, last_sec = "", ""
         self._record_fetch_event(provider="requests_direct", success=bool(html))
@@ -80,7 +92,9 @@ class AlaskaScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         for div in soup.select("div.statute"):
             anchors = [a.get("name") for a in div.find_all("a") if a.get("name")]
-            section_anchor = next((str(a) for a in anchors if re.match(r"^\d{2}\.\d{2}\.\d{3}$", str(a))), "")
+            section_anchor = next(
+                (str(a) for a in anchors if re.match(r"^\d{2}\.\d{2}\.\d{3}$", str(a))), ""
+            )
             if not section_anchor:
                 continue
             heading_node = None
@@ -89,7 +103,9 @@ class AlaskaScraper(BaseStateScraper):
                 if anchor and str(anchor.get("name") or "") == section_anchor:
                     heading_node = bold
                     break
-            heading = self._normalize_legal_text(heading_node.get_text(" ", strip=True) if heading_node else "")
+            heading = self._normalize_legal_text(
+                heading_node.get_text(" ", strip=True) if heading_node else ""
+            )
             match = self._AK_SECTION_RE.search(heading)
             if not match:
                 continue
@@ -139,11 +155,11 @@ class AlaskaScraper(BaseStateScraper):
         max_statutes: int | None = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Alaska's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """

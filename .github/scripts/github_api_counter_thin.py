@@ -26,49 +26,41 @@ from ipfs_datasets_py.optimizers.agentic.github_api_unified import (
 
 # Re-export for backward compatibility
 __all__ = [
-    'GitHubAPICounter',
-    'CacheBackend',
-    'CacheEntry',
-    'APICallRecord',
+    "GitHubAPICounter",
+    "CacheBackend",
+    "CacheEntry",
+    "APICallRecord",
 ]
 
 
 def main():
     """Main entry point for CLI usage."""
     import argparse
-    
-    parser = argparse.ArgumentParser(
-        description='GitHub API call counter and cache manager'
-    )
-    parser.add_argument(
-        'action',
-        choices=['report', 'clear', 'stats'],
-        help='Action to perform'
-    )
-    parser.add_argument(
-        '--config',
-        help='Path to cache-config.yml'
-    )
-    
+
+    parser = argparse.ArgumentParser(description="GitHub API call counter and cache manager")
+    parser.add_argument("action", choices=["report", "clear", "stats"], help="Action to perform")
+    parser.add_argument("--config", help="Path to cache-config.yml")
+
     args = parser.parse_args()
-    
+
     # Create counter with config
     config_file = Path(args.config) if args.config else None
     counter = GitHubAPICounter(config_file=config_file)
-    
-    if args.action == 'report':
+
+    if args.action == "report":
         print(counter.report())
-    elif args.action == 'clear':
+    elif args.action == "clear":
         counter.clear()
         print("Cache cleared")
-    elif args.action == 'stats':
+    elif args.action == "stats":
         import json
+
         stats = counter.get_statistics()
         print(json.dumps(stats, indent=2))
-    
+
     # Save metrics
     counter.save_metrics()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

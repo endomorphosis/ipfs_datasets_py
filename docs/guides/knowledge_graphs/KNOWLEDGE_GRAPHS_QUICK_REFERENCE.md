@@ -47,11 +47,14 @@ driver = GraphDatabase.driver("ipfs+embedded://./my_graph")
 
 # Run a query
 with driver.session() as session:
-    result = session.run("""
+    result = session.run(
+        """
         MATCH (n:Person {name: $name})
         RETURN n
-    """, name="Alice")
-    
+    """,
+        name="Alice",
+    )
+
     for record in result:
         print(record["n"])
 
@@ -89,9 +92,11 @@ with session.begin_transaction() as tx:
     tx.run(query2)
     tx.commit()  # Or tx.rollback()
 
+
 # Read/write transactions
 def create_person(tx, name):
     return tx.run("CREATE (p:Person {name: $name}) RETURN p", name=name)
+
 
 with session.write_transaction(create_person, "Alice") as result:
     print(result.single())
@@ -256,11 +261,7 @@ jsonld = {
     "@id": "http://example.com/alice",
     "@type": "Person",
     "name": "Alice Smith",
-    "knows": {
-        "@id": "http://example.com/bob",
-        "@type": "Person",
-        "name": "Bob Jones"
-    }
+    "knows": {"@id": "http://example.com/bob", "@type": "Person", "name": "Bob Jones"},
 }
 
 ipld_graph = translator.jsonld_to_ipld(jsonld)
@@ -278,7 +279,7 @@ recovered_jsonld = translator.ipld_to_jsonld(ipld_graph)
 custom_context = {
     "@vocab": "http://mycompany.com/ontology/",
     "knows": {"@type": "@id"},
-    "birthDate": {"@type": "xsd:date"}
+    "birthDate": {"@type": "xsd:date"},
 }
 
 jsonld = {
@@ -286,7 +287,7 @@ jsonld = {
     "@type": "Employee",
     "name": "Alice",
     "knows": "http://example.com/bob",
-    "birthDate": "1990-01-01"
+    "birthDate": "1990-01-01",
 }
 
 ipld_graph = translator.jsonld_to_ipld(jsonld, context=custom_context)
@@ -314,13 +315,13 @@ from ipfs_datasets_py.knowledge_graphs.migration import Neo4jMigrator
 migrator = Neo4jMigrator(
     neo4j_uri="bolt://localhost:7687",
     neo4j_auth=("neo4j", "password"),
-    ipfs_uri="ipfs://localhost:5001"
+    ipfs_uri="ipfs://localhost:5001",
 )
 
 # 2. Export Neo4j database to CAR file
 migrator.export_to_car(
     output_path="my_graph.car",
-    database="neo4j"  # or None for default
+    database="neo4j",  # or None for default
 )
 
 # 3. Verify export
@@ -333,7 +334,7 @@ print(f"Graph migrated to IPFS: {graph_cid}")
 
 # 5. Validate migration
 validation = migrator.validate_migration(graph_cid)
-if validation['success']:
+if validation["success"]:
     print("✅ Migration successful!")
 else:
     print(f"❌ Migration issues: {validation['errors']}")
@@ -416,11 +417,14 @@ for person in people:
     session.run("CREATE (p:Person $props)", props=person)
 
 # ✅ Fast: Batch insert
-session.run("""
+session.run(
+    """
     UNWIND $people AS person
     CREATE (p:Person)
     SET p = person
-""", people=people)
+""",
+    people=people,
+)
 ```
 
 ### 4. Use Caching
@@ -434,8 +438,8 @@ driver = GraphDatabase.driver(
         enabled=True,
         ttl=3600,  # 1 hour
         max_size=1000,  # 1000 query results
-        strategy="LRU"  # Least Recently Used
-    )
+        strategy="LRU",  # Least Recently Used
+    ),
 )
 ```
 
@@ -447,8 +451,8 @@ driver = GraphDatabase.driver(
     "ipfs://localhost:5001",
     config={
         "query_logging": True,
-        "slow_query_threshold": 1000  # Log queries >1s
-    }
+        "slow_query_threshold": 1000,  # Log queries >1s
+    },
 )
 
 # Get query statistics
@@ -499,7 +503,7 @@ for attempt in range(MAX_RETRIES):
     except TransactionConflict:
         if attempt == MAX_RETRIES - 1:
             raise
-        time.sleep(0.1 * (2 ** attempt))  # Exponential backoff
+        time.sleep(0.1 * (2**attempt))  # Exponential backoff
 ```
 
 #### 3. Query Timeout
@@ -513,7 +517,7 @@ Error: Query exceeded maximum execution time (10s)
 # Increase timeout
 driver = GraphDatabase.driver(
     "ipfs://localhost:5001",
-    config={"query_timeout": 30000}  # 30 seconds
+    config={"query_timeout": 30000},  # 30 seconds
 )
 
 # Or optimize query with LIMIT

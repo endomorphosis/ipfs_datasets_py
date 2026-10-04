@@ -168,8 +168,9 @@ from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
     list_schedules,
     run_schedule_now,
     enable_disable_schedule,
-    remove_schedule
+    remove_schedule,
 )
+
 
 async def main():
     # Create a schedule
@@ -178,22 +179,23 @@ async def main():
         states=["CA"],
         legal_areas=["criminal"],
         interval_hours=24,
-        enabled=True
+        enabled=True,
     )
-    
+
     # List schedules
     result = await list_schedules()
     print(f"Schedules: {result['schedules']}")
-    
+
     # Run immediately
     result = await run_schedule_now("daily_ca")
     print(f"Scraping completed: {result['status']}")
-    
+
     # Disable schedule
     await enable_disable_schedule("daily_ca", enabled=False)
-    
+
     # Remove schedule
     await remove_schedule("daily_ca")
+
 
 anyio.run(main)
 ```

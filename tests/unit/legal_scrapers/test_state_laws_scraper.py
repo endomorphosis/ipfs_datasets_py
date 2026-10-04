@@ -105,35 +105,92 @@ def test_state_laws_scraper_recovery_section_url_edge_cases():
     assert scraper_module.build_state_law_section_url("PA", "12", code_name="23 Pa.C.S.") == ""
 
     assert (
-        scraper_module.build_state_law_section_url("TX", "153.002", code_name="Penal Code", preferred_host="statutes.capitol.texas.gov")
+        scraper_module.build_state_law_section_url(
+            "TX", "153.002", code_name="Penal Code", preferred_host="statutes.capitol.texas.gov"
+        )
         == "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.153.htm#153.002"
     )
 
 
 def test_state_laws_scraper_builds_unknown_backlog_section_urls():
     expected_urls = {
-        ("AL", "13A-6-2", "Ala. Code"): "https://alison.legislature.state.al.us/code-of-alabama?section=13A-6-2",
-        ("AR", "5-13-201", "Ark. Code"): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
+        (
+            "AL",
+            "13A-6-2",
+            "Ala. Code",
+        ): "https://alison.legislature.state.al.us/code-of-alabama?section=13A-6-2",
+        (
+            "AR",
+            "5-13-201",
+            "Ark. Code",
+        ): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
         ("CO", "18-3-204", "Colo. Rev. Stat."): "https://colorado.public.law/statutes/crs_18-3-204",
-        ("CT", "53a-61", "Conn. Gen. Stat."): "https://www.cga.ct.gov/current/pub/chap_952.htm#sec_53a-61",
-        ("DE", "11-601", "Del. Code"): "https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
-        ("GA", "16-5-23", "Ga. Code"): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
-        ("HI", "707-712", "Haw. Rev. Stat."): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
-        ("KY", "508.030", "Ky. Rev. Stat."): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
+        (
+            "CT",
+            "53a-61",
+            "Conn. Gen. Stat.",
+        ): "https://www.cga.ct.gov/current/pub/chap_952.htm#sec_53a-61",
+        (
+            "DE",
+            "11-601",
+            "Del. Code",
+        ): "https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
+        (
+            "GA",
+            "16-5-23",
+            "Ga. Code",
+        ): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
+        (
+            "HI",
+            "707-712",
+            "Haw. Rev. Stat.",
+        ): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
+        (
+            "KY",
+            "508.030",
+            "Ky. Rev. Stat.",
+        ): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
         ("LA", "14:35", "La. Rev. Stat."): "https://legis.la.gov/legis/Law.aspx?d=78452",
-        ("MD", "3-203", "Md. Code"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
-        ("MS", "97-3-7", "Miss. Code"): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
+        (
+            "MD",
+            "3-203",
+            "Md. Code",
+        ): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        (
+            "MS",
+            "97-3-7",
+            "Miss. Code",
+        ): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
         ("NH", "631:2-a", "N.H. Rev. Stat."): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
-        ("NJ", "2C:12-1", "N.J. Stat."): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
-        ("NM", "30-3-4", "N.M. Stat."): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
+        (
+            "NJ",
+            "2C:12-1",
+            "N.J. Stat.",
+        ): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
+        (
+            "NM",
+            "30-3-4",
+            "N.M. Stat.",
+        ): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
         ("ND", "12.1-17-01", "N.D. Cent. Code"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
-        ("OK", "21-644", "Okla. Stat."): "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf",
-        ("TN", "39-13-101", "Tenn. Code"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
+        (
+            "OK",
+            "21-644",
+            "Okla. Stat.",
+        ): "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf",
+        (
+            "TN",
+            "39-13-101",
+            "Tenn. Code",
+        ): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
         ("WY", "6-2-501", "Wyo. Stat."): "https://wyoleg.gov/statutes/compress/title06.pdf",
     }
 
     for (state, section, code_name), expected_url in expected_urls.items():
-        assert scraper_module.build_state_law_section_url(state, section, code_name=code_name) == expected_url
+        assert (
+            scraper_module.build_state_law_section_url(state, section, code_name=code_name)
+            == expected_url
+        )
 
 
 def test_state_laws_scraper_trims_max_statutes_per_state() -> None:
@@ -168,11 +225,14 @@ def test_state_laws_scraper_compacts_streamed_state_result_for_retention() -> No
     assert compact["statute_data"]["statutes"] == []
     assert compact["statute_data"]["statutes_count"] == 2
     assert compact["statute_data"]["streamed_to_state_completion_callback"] is True
-    assert scraper_module._compute_coverage_summary(
-        selected_states=["KY"],
-        scraped_statutes=[compact["statute_data"]],
-        errors=[],
-    )["full_coverage"] is True
+    assert (
+        scraper_module._compute_coverage_summary(
+            selected_states=["KY"],
+            scraped_statutes=[compact["statute_data"]],
+            errors=[],
+        )["full_coverage"]
+        is True
+    )
 
 
 @pytest.mark.asyncio
@@ -243,12 +303,17 @@ async def test_state_laws_scraper_timeout_returns_without_waiting_for_blocked_wo
     assert result["state_code"] == "OR"
     assert result["zero_statute"] is True
     assert "timed out" in str(result["error"])
-    assert result.get("timeout_diagnostics", {}).get("classification") == "timeout_without_partial_checkpoint"
+    assert (
+        result.get("timeout_diagnostics", {}).get("classification")
+        == "timeout_without_partial_checkpoint"
+    )
 
     await asyncio.sleep(0.25)
 
 
-def test_state_laws_scraper_checkpoint_activity_uses_quick_meta_for_large_files(tmp_path, monkeypatch):
+def test_state_laws_scraper_checkpoint_activity_uses_quick_meta_for_large_files(
+    tmp_path, monkeypatch
+):
     checkpoint_dir = tmp_path / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = checkpoint_dir / "STATE-WA-partial.json"
@@ -343,7 +408,9 @@ async def test_state_laws_scraper_timeout_promotes_checkpoint_complete_state(mon
 
 
 @pytest.mark.asyncio
-async def test_state_laws_scraper_timeout_promotes_checkpoint_signal_complete_state(monkeypatch, tmp_path):
+async def test_state_laws_scraper_timeout_promotes_checkpoint_signal_complete_state(
+    monkeypatch, tmp_path
+):
     checkpoint_dir = tmp_path / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = checkpoint_dir / "STATE-MS-partial.json"
@@ -502,7 +569,9 @@ async def test_state_laws_scraper_timeout_promotes_signal_complete_checkpoint_wi
 
 
 @pytest.mark.asyncio
-async def test_state_laws_scraper_timeout_retry_promotes_checkpoint_no_remaining_work(monkeypatch, tmp_path):
+async def test_state_laws_scraper_timeout_retry_promotes_checkpoint_no_remaining_work(
+    monkeypatch, tmp_path
+):
     checkpoint_dir = tmp_path / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = checkpoint_dir / "STATE-MS-partial.json"
@@ -623,7 +692,9 @@ def test_state_laws_scraper_timeout_checkpoint_diagnostics_no_work_remaining(tmp
     assert diag.get("signal_kind") == "codes_progress"
 
 
-def test_state_laws_scraper_timeout_checkpoint_prefers_section_signal_over_unscanned_title(tmp_path, monkeypatch):
+def test_state_laws_scraper_timeout_checkpoint_prefers_section_signal_over_unscanned_title(
+    tmp_path, monkeypatch
+):
     checkpoint_dir = tmp_path / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = checkpoint_dir / "STATE-WA-partial.json"
@@ -726,7 +797,9 @@ async def test_state_laws_scraper_full_corpus_low_quality_is_promoted_to_error(m
             },
         }
 
-    monkeypatch.setattr(scraper_module, "_run_sync_scrape_on_daemon_thread", _fake_run_sync_scrape_on_daemon_thread)
+    monkeypatch.setattr(
+        scraper_module, "_run_sync_scrape_on_daemon_thread", _fake_run_sync_scrape_on_daemon_thread
+    )
 
     result = await scraper_module._scrape_state_with_retries(
         state_code="MS",

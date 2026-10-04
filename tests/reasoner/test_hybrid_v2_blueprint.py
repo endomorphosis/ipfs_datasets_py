@@ -103,7 +103,9 @@ def _first_norm_ref(ir) -> str:
 
 
 def test_parse_cnl_to_ir_obligation_with_temporal() -> None:
-    ir = parse_cnl_to_ir("Data controller shall report breach within 72 hours.", jurisdiction="us/federal")
+    ir = parse_cnl_to_ir(
+        "Data controller shall report breach within 72 hours.", jurisdiction="us/federal"
+    )
 
     assert len(ir.norms) == 1
     norm = next(iter(ir.norms.values()))
@@ -230,7 +232,10 @@ def test_proof_store_eviction_is_deterministic_and_explicit() -> None:
     clear_v2_proof_store()
     try:
         out_a = check_compliance(
-            {"ir": parse_cnl_to_ir("Controller shall report breach within 24 hours."), "events": []},
+            {
+                "ir": parse_cnl_to_ir("Controller shall report breach within 24 hours."),
+                "events": [],
+            },
             {"at": "2026-03-01"},
         )
         out_b = check_compliance(
@@ -280,9 +285,13 @@ def test_parse_cnl_to_ir_means_template_emits_definition_rule() -> None:
 
 
 def test_parse_cnl_to_ir_includes_template_emits_member_rules() -> None:
-    ir = parse_cnl_to_ir("Sensitive data includes health records, financial records, and biometrics.")
+    ir = parse_cnl_to_ir(
+        "Sensitive data includes health records, financial records, and biometrics."
+    )
 
-    members = sorted(r.consequent.args[1] for r in ir.rules.values() if r.consequent.pred == "includes_member")
+    members = sorted(
+        r.consequent.args[1] for r in ir.rules.values() if r.consequent.pred == "includes_member"
+    )
     assert members == ["biometrics", "financial records", "health records"]
 
 
@@ -365,7 +374,11 @@ def test_check_compliance_rejects_invalid_frame_reference() -> None:
 def test_run_v2_pipeline_applies_hooks_and_prover() -> None:
     class _Optimizer:
         def optimize_ir(self, ir):
-            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.0, "optimizer": "noop"}
+            return ir, {
+                "semantic_equivalence_assertion": True,
+                "drift_score": 0.0,
+                "optimizer": "noop",
+            }
 
     class _KG:
         def enrich_ir(self, ir):
@@ -396,7 +409,11 @@ def test_run_v2_pipeline_applies_hooks_and_prover() -> None:
 def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
     class _BadOptimizer:
         def optimize_ir(self, ir):
-            return ir, {"semantic_equivalence_assertion": False, "drift_score": 0.75, "optimizer": "bad"}
+            return ir, {
+                "semantic_equivalence_assertion": False,
+                "drift_score": 0.75,
+                "optimizer": "bad",
+            }
 
     out = run_v2_pipeline(
         "Controller shall report breach within 48 hours.",
@@ -407,10 +424,10 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
     assert out["optimizer_report"]["rejected"] is True
     assert "drift_threshold_exceeded" in out["optimizer_report"]["rejected_reason_codes"]
     assert "semantic_equivalence_assertion" in out["optimizer_report"]["rejected_reason_codes"]
-    assert out["optimizer_report"]["failure_count"] == len(out["optimizer_report"]["rejected_reason_codes"])
+    assert out["optimizer_report"]["failure_count"] == len(
+        out["optimizer_report"]["rejected_reason_codes"]
+    )
     assert out["optimizer_report"]["decision_id"].startswith("opt_")
-
-
 
     def test_run_v2_pipeline_rejects_kg_semantic_mutation() -> None:
         class _MutatingKG:
@@ -428,7 +445,6 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
         assert out["kg_report"]["rejected"] is True
         assert "frame_predicate_changed" in out["kg_report"]["rejected_reason_codes"]
         assert "frame_predicate_changed" in out["kg_report"]["invariant_failures"]
-
 
     def test_run_v2_pipeline_rejects_invalid_prover_envelope_payload() -> None:
         class _BadProver:
@@ -464,10 +480,15 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
         else:
             raise AssertionError("Expected prover envelope validation failure")
 
+
 def test_run_v2_pipeline_accepts_optimizer_on_drift_threshold_boundary() -> None:
     class _EdgeOptimizer:
         def optimize_ir(self, ir):
-            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.05, "optimizer": "edge"}
+            return ir, {
+                "semantic_equivalence_assertion": True,
+                "drift_score": 0.05,
+                "optimizer": "edge",
+            }
 
     out = run_v2_pipeline(
         "Controller shall report breach within 48 hours.",
@@ -485,7 +506,11 @@ def test_run_v2_pipeline_accepts_optimizer_on_drift_threshold_boundary() -> None
 def test_run_v2_pipeline_optimizer_decision_id_is_deterministic() -> None:
     class _EdgeOptimizer:
         def optimize_ir(self, ir):
-            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.05, "optimizer": "edge"}
+            return ir, {
+                "semantic_equivalence_assertion": True,
+                "drift_score": 0.05,
+                "optimizer": "edge",
+            }
 
     out_a = run_v2_pipeline(
         "Controller shall report breach within 48 hours.",
@@ -506,7 +531,11 @@ def test_run_v2_pipeline_rejects_optimizer_modality_mutation() -> None:
         def optimize_ir(self, ir):
             norm = next(iter(ir.norms.values()))
             norm.op = DeonticOpV2.P
-            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.0, "optimizer": "mutating"}
+            return ir, {
+                "semantic_equivalence_assertion": True,
+                "drift_score": 0.0,
+                "optimizer": "mutating",
+            }
 
     out = run_v2_pipeline(
         "Controller shall report breach within 48 hours.",
@@ -524,7 +553,11 @@ def test_run_v2_pipeline_rejects_optimizer_target_frame_mutation() -> None:
         def optimize_ir(self, ir):
             norm = next(iter(ir.norms.values()))
             norm.target_frame_ref = "frm:mutated"
-            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.0, "optimizer": "mutating"}
+            return ir, {
+                "semantic_equivalence_assertion": True,
+                "drift_score": 0.0,
+                "optimizer": "mutating",
+            }
 
     out = run_v2_pipeline(
         "Controller shall report breach within 48 hours.",

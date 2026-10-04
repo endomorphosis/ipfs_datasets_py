@@ -87,6 +87,7 @@ class _CachedLegalIRTrainingTarget:
 class _LegalIRTargetTimeout(RuntimeError):
     """Raised when LegalIR metric target construction exceeds its budget."""
 
+
 _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("conditional_normative", "deontic", "temporal"),
     "conditional_normative": ("deontic",),
@@ -228,10 +229,7 @@ def cross_entropy_distribution_loss(
     target_distribution: Mapping[str, float],
 ) -> float:
     """Return cross entropy against a target label distribution."""
-    total_weight = sum(
-        max(0.0, float(weight))
-        for weight in target_distribution.values()
-    )
+    total_weight = sum(max(0.0, float(weight)) for weight in target_distribution.values())
     if total_weight <= 0.0:
         return 0.0
     loss = 0.0
@@ -244,10 +242,7 @@ def cross_entropy_distribution_loss(
 
 def distribution_entropy_loss(target_distribution: Mapping[str, float]) -> float:
     """Return the entropy floor for a normalized target distribution."""
-    total_weight = sum(
-        max(0.0, float(weight))
-        for weight in target_distribution.values()
-    )
+    total_weight = sum(max(0.0, float(weight)) for weight in target_distribution.values())
     if total_weight <= 0.0:
         return 0.0
     loss = 0.0
@@ -313,8 +308,7 @@ def _low_rank_reconstruct_vector(
         return []
     return [
         sum(
-            float(coefficient)
-            * _implicit_dct_basis_value(component, index, dimension)
+            float(coefficient) * _implicit_dct_basis_value(component, index, dimension)
             for component, coefficient in enumerate(coefficients)
         )
         for index in range(dimension)
@@ -435,12 +429,8 @@ class AutoencoderIntrospection:
             ),
             "legal_ir_component_gaps": dict(sorted(self.legal_ir_component_gaps.items())),
             "legal_ir_losses": dict(sorted(self.legal_ir_losses.items())),
-            "legal_ir_overrepresented_components": list(
-                self.legal_ir_overrepresented_components
-            ),
-            "legal_ir_underrepresented_components": list(
-                self.legal_ir_underrepresented_components
-            ),
+            "legal_ir_overrepresented_components": list(self.legal_ir_overrepresented_components),
+            "legal_ir_underrepresented_components": list(self.legal_ir_underrepresented_components),
             "legal_ir_view_cross_entropy_loss": self.legal_ir_view_cross_entropy_loss,
             "legal_ir_view_entropy_loss": self.legal_ir_view_entropy_loss,
             "legal_ir_view_cross_entropy_excess_loss": (
@@ -449,9 +439,7 @@ class AutoencoderIntrospection:
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "predicted_family": self.predicted_family,
             "predicted_probability": self.predicted_probability,
-            "pipeline_stage_diagnostics": dict(
-                sorted(self.pipeline_stage_diagnostics.items())
-            ),
+            "pipeline_stage_diagnostics": dict(sorted(self.pipeline_stage_diagnostics.items())),
             "pipeline_stage_focus": list(self.pipeline_stage_focus),
             "reconstruction_loss": self.reconstruction_loss,
             "residual_vector": list(self.residual_vector),
@@ -465,12 +453,10 @@ class AutoencoderIntrospection:
             "target_family": self.target_family,
             "target_probability": self.target_probability,
             "top_embedding_contributions": [
-                contribution.to_dict()
-                for contribution in self.top_embedding_contributions
+                contribution.to_dict() for contribution in self.top_embedding_contributions
             ],
             "top_family_contributions": [
-                contribution.to_dict()
-                for contribution in self.top_family_contributions
+                contribution.to_dict() for contribution in self.top_family_contributions
             ],
         }
 
@@ -639,17 +625,23 @@ class ModalAutoencoderTrainingState:
     logic_signature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     round_trip_signal_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     round_trip_signal_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    round_trip_signal_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    round_trip_signal_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
     decompiler_plan_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     decompiler_plan_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     decompiler_plan_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     predicate_argument_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     predicate_argument_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    predicate_argument_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    predicate_argument_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
     feature_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     family_semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
-    family_semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
+    family_semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(
+        default_factory=dict
+    )
     family_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     semantic_slot_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     feature_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
@@ -658,9 +650,15 @@ class ModalAutoencoderTrainingState:
     legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     feature_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    family_semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
-    semantic_slot_legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    family_semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
+    semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(
+        default_factory=dict
+    )
+    semantic_slot_legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
     semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     applied_todo_ids: List[str] = field(default_factory=list)
 
@@ -677,9 +675,7 @@ class ModalAutoencoderTrainingState:
             },
             "compiler_quality_embedding_weights": {
                 slot: list(vector)
-                for slot, vector in sorted(
-                    self.compiler_quality_embedding_weights.items()
-                )
+                for slot, vector in sorted(self.compiler_quality_embedding_weights.items())
             },
             "compiler_quality_family_logits": {
                 slot: dict(sorted(logits.items()))
@@ -687,45 +683,31 @@ class ModalAutoencoderTrainingState:
             },
             "logic_signature_embedding_weights": {
                 signature: list(vector)
-                for signature, vector in sorted(
-                    self.logic_signature_embedding_weights.items()
-                )
+                for signature, vector in sorted(self.logic_signature_embedding_weights.items())
             },
             "logic_signature_family_logits": {
                 signature: dict(sorted(logits.items()))
-                for signature, logits in sorted(
-                    self.logic_signature_family_logits.items()
-                )
+                for signature, logits in sorted(self.logic_signature_family_logits.items())
             },
             "logic_signature_legal_ir_view_logits": {
                 signature: dict(sorted(logits.items()))
-                for signature, logits in sorted(
-                    self.logic_signature_legal_ir_view_logits.items()
-                )
+                for signature, logits in sorted(self.logic_signature_legal_ir_view_logits.items())
             },
             "round_trip_signal_embedding_weights": {
                 signal: list(vector)
-                for signal, vector in sorted(
-                    self.round_trip_signal_embedding_weights.items()
-                )
+                for signal, vector in sorted(self.round_trip_signal_embedding_weights.items())
             },
             "round_trip_signal_family_logits": {
                 signal: dict(sorted(logits.items()))
-                for signal, logits in sorted(
-                    self.round_trip_signal_family_logits.items()
-                )
+                for signal, logits in sorted(self.round_trip_signal_family_logits.items())
             },
             "round_trip_signal_legal_ir_view_logits": {
                 signal: dict(sorted(logits.items()))
-                for signal, logits in sorted(
-                    self.round_trip_signal_legal_ir_view_logits.items()
-                )
+                for signal, logits in sorted(self.round_trip_signal_legal_ir_view_logits.items())
             },
             "decompiler_plan_embedding_weights": {
                 plan: list(vector)
-                for plan, vector in sorted(
-                    self.decompiler_plan_embedding_weights.items()
-                )
+                for plan, vector in sorted(self.decompiler_plan_embedding_weights.items())
             },
             "decompiler_plan_family_logits": {
                 plan: dict(sorted(logits.items()))
@@ -733,21 +715,15 @@ class ModalAutoencoderTrainingState:
             },
             "decompiler_plan_legal_ir_view_logits": {
                 plan: dict(sorted(logits.items()))
-                for plan, logits in sorted(
-                    self.decompiler_plan_legal_ir_view_logits.items()
-                )
+                for plan, logits in sorted(self.decompiler_plan_legal_ir_view_logits.items())
             },
             "predicate_argument_embedding_weights": {
                 signature: list(vector)
-                for signature, vector in sorted(
-                    self.predicate_argument_embedding_weights.items()
-                )
+                for signature, vector in sorted(self.predicate_argument_embedding_weights.items())
             },
             "predicate_argument_family_logits": {
                 signature: dict(sorted(logits.items()))
-                for signature, logits in sorted(
-                    self.predicate_argument_family_logits.items()
-                )
+                for signature, logits in sorted(self.predicate_argument_family_logits.items())
             },
             "predicate_argument_legal_ir_view_logits": {
                 signature: dict(sorted(logits.items()))
@@ -769,9 +745,7 @@ class ModalAutoencoderTrainingState:
             },
             "family_semantic_slot_embedding_weights": {
                 key: list(vector)
-                for key, vector in sorted(
-                    self.family_semantic_slot_embedding_weights.items()
-                )
+                for key, vector in sorted(self.family_semantic_slot_embedding_weights.items())
             },
             "family_semantic_slot_legal_ir_view_embedding_weights": {
                 key: list(vector)
@@ -781,9 +755,7 @@ class ModalAutoencoderTrainingState:
             },
             "family_legal_ir_view_embedding_weights": {
                 key: list(vector)
-                for key, vector in sorted(
-                    self.family_legal_ir_view_embedding_weights.items()
-                )
+                for key, vector in sorted(self.family_legal_ir_view_embedding_weights.items())
             },
             "feature_family_logits": {
                 feature: dict(sorted(logits.items()))
@@ -808,9 +780,7 @@ class ModalAutoencoderTrainingState:
             },
             "family_semantic_slot_legal_ir_view_logits": {
                 key: dict(sorted(logits.items()))
-                for key, logits in sorted(
-                    self.family_semantic_slot_legal_ir_view_logits.items()
-                )
+                for key, logits in sorted(self.family_semantic_slot_legal_ir_view_logits.items())
             },
             "semantic_slot_legal_ir_view_embedding_weights": {
                 key: list(vector)
@@ -820,15 +790,11 @@ class ModalAutoencoderTrainingState:
             },
             "semantic_slot_legal_ir_view_family_logits": {
                 key: dict(sorted(logits.items()))
-                for key, logits in sorted(
-                    self.semantic_slot_legal_ir_view_family_logits.items()
-                )
+                for key, logits in sorted(self.semantic_slot_legal_ir_view_family_logits.items())
             },
             "semantic_slot_legal_ir_view_logits": {
                 slot: dict(sorted(logits.items()))
-                for slot, logits in sorted(
-                    self.semantic_slot_legal_ir_view_logits.items()
-                )
+                for slot, logits in sorted(self.semantic_slot_legal_ir_view_logits.items())
             },
         }
 
@@ -839,12 +805,10 @@ class ModalAutoencoderTrainingState:
         """Return a deep copy suitable for transactional optimizer rollback."""
         copied = self.generalizable_copy()
         copied.decoded_embeddings = {
-            sample_id: list(vector)
-            for sample_id, vector in self.decoded_embeddings.items()
+            sample_id: list(vector) for sample_id, vector in self.decoded_embeddings.items()
         }
         copied.family_logits = {
-            sample_id: dict(logits)
-            for sample_id, logits in self.family_logits.items()
+            sample_id: dict(logits) for sample_id, logits in self.family_logits.items()
         }
         copied.applied_todo_ids = list(self.applied_todo_ids)
         return copied
@@ -953,13 +917,10 @@ class ModalAutoencoderTrainingState:
             per_map[map_name] = {
                 "dense_scalar_count": dense_scalar_count,
                 "dimension_counts": {
-                    str(dimension): count
-                    for dimension, count in sorted(dimensions.items())
+                    str(dimension): count for dimension, count in sorted(dimensions.items())
                 },
                 "entry_count": entry_count,
-                "estimated_low_rank_coefficient_scalar_count": (
-                    coefficient_scalar_count
-                ),
+                "estimated_low_rank_coefficient_scalar_count": (coefficient_scalar_count),
                 "estimated_low_rank_dimension_metadata_scalar_count": (
                     dimension_metadata_scalar_count
                 ),
@@ -1004,12 +965,8 @@ class ModalAutoencoderTrainingState:
             "dense_vector_entry_count": dense_vector_entry_count,
             "dense_vector_scalar_count": dense_vector_scalar_count,
             "estimated_low_rank_basis_scalar_count": 0,
-            "estimated_low_rank_coefficient_scalar_count": (
-                low_rank_coefficient_scalar_count
-            ),
-            "estimated_low_rank_dimension_metadata_scalar_count": (
-                dense_vector_entry_count
-            ),
+            "estimated_low_rank_coefficient_scalar_count": (low_rank_coefficient_scalar_count),
+            "estimated_low_rank_dimension_metadata_scalar_count": (dense_vector_entry_count),
             "estimated_low_rank_total_scalar_count": low_rank_total_scalar_count,
             "estimated_scalar_compression_ratio": round(
                 dense_vector_scalar_count / low_rank_total_scalar_count,
@@ -1179,9 +1136,7 @@ class ModalAutoencoderTrainingState:
                     continue
                 target_mapping[key] = values
                 merged_count += 1
-                merged_map_entry_counts[map_name] = (
-                    merged_map_entry_counts.get(map_name, 0) + 1
-                )
+                merged_map_entry_counts[map_name] = merged_map_entry_counts.get(map_name, 0) + 1
 
         source_vector_count = sum(len(mapping) for mapping in reconstructed.values())
         return {
@@ -1293,23 +1248,15 @@ class ModalAutoencoderTrainingState:
             ),
             "semantic_slot_legal_ir_view_logits": self.semantic_slot_legal_ir_view_logits,
         }
-        vector_entry_counts = {
-            name: len(mapping)
-            for name, mapping in sorted(vector_maps.items())
-        }
+        vector_entry_counts = {name: len(mapping) for name, mapping in sorted(vector_maps.items())}
         nested_logit_entry_counts = {
-            name: len(mapping)
-            for name, mapping in sorted(nested_logit_maps.items())
+            name: len(mapping) for name, mapping in sorted(nested_logit_maps.items())
         }
         vector_scalar_count = sum(
-            len(vector)
-            for mapping in vector_maps.values()
-            for vector in mapping.values()
+            len(vector) for mapping in vector_maps.values() for vector in mapping.values()
         )
         nested_logit_scalar_count = sum(
-            len(logits)
-            for mapping in nested_logit_maps.values()
-            for logits in mapping.values()
+            len(logits) for mapping in nested_logit_maps.values() for logits in mapping.values()
         )
         sample_embedding_scalar_count = sum(
             len(vector) for vector in self.decoded_embeddings.values()
@@ -1324,17 +1271,14 @@ class ModalAutoencoderTrainingState:
             "family_logit_sample_count": len(self.family_logits),
             "feature_embedding_weight_entries": len(self.feature_embedding_weights),
             "feature_family_logit_entries": len(self.feature_family_logits),
-            "feature_legal_ir_view_logit_entries": len(
-                self.feature_legal_ir_view_logits
-            ),
+            "feature_legal_ir_view_logit_entries": len(self.feature_legal_ir_view_logits),
             "flat_legal_ir_view_logit_entries": len(self.legal_ir_view_logits),
             "generalizable_entry_count": self.generalizable_entry_count(),
             "nested_logit_entry_count": sum(nested_logit_entry_counts.values()),
             "nested_logit_entry_counts": nested_logit_entry_counts,
             "nested_logit_scalar_count": nested_logit_scalar_count,
             "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
-            "sample_memory_entry_count": len(self.decoded_embeddings)
-            + len(self.family_logits),
+            "sample_memory_entry_count": len(self.decoded_embeddings) + len(self.family_logits),
             "sample_memory_scalar_count": sample_embedding_scalar_count
             + sample_family_logit_scalar_count,
             "sample_decoded_embedding_scalar_count": sample_embedding_scalar_count,
@@ -1357,8 +1301,7 @@ class ModalAutoencoderTrainingState:
                 for slot, vector in self.compiler_quality_embedding_weights.items()
             },
             compiler_quality_family_logits={
-                slot: dict(logits)
-                for slot, logits in self.compiler_quality_family_logits.items()
+                slot: dict(logits) for slot, logits in self.compiler_quality_family_logits.items()
             },
             logic_signature_embedding_weights={
                 signature: list(vector)
@@ -1389,8 +1332,7 @@ class ModalAutoencoderTrainingState:
                 for plan, vector in self.decompiler_plan_embedding_weights.items()
             },
             decompiler_plan_family_logits={
-                plan: dict(logits)
-                for plan, logits in self.decompiler_plan_family_logits.items()
+                plan: dict(logits) for plan, logits in self.decompiler_plan_family_logits.items()
             },
             decompiler_plan_legal_ir_view_logits={
                 plan: dict(logits)
@@ -1409,12 +1351,10 @@ class ModalAutoencoderTrainingState:
                 for signature, logits in self.predicate_argument_legal_ir_view_logits.items()
             },
             feature_embedding_weights={
-                feature: list(vector)
-                for feature, vector in self.feature_embedding_weights.items()
+                feature: list(vector) for feature, vector in self.feature_embedding_weights.items()
             },
             family_embedding_weights={
-                family: list(vector)
-                for family, vector in self.family_embedding_weights.items()
+                family: list(vector) for family, vector in self.family_embedding_weights.items()
             },
             family_semantic_slot_embedding_weights={
                 key: list(vector)
@@ -1429,16 +1369,13 @@ class ModalAutoencoderTrainingState:
                 for key, vector in self.family_legal_ir_view_embedding_weights.items()
             },
             feature_family_logits={
-                feature: dict(logits)
-                for feature, logits in self.feature_family_logits.items()
+                feature: dict(logits) for feature, logits in self.feature_family_logits.items()
             },
             semantic_slot_embedding_weights={
-                slot: list(vector)
-                for slot, vector in self.semantic_slot_embedding_weights.items()
+                slot: list(vector) for slot, vector in self.semantic_slot_embedding_weights.items()
             },
             semantic_slot_family_logits={
-                slot: dict(logits)
-                for slot, logits in self.semantic_slot_family_logits.items()
+                slot: dict(logits) for slot, logits in self.semantic_slot_family_logits.items()
             },
             family_semantic_slot_legal_ir_view_logits={
                 key: dict(logits)
@@ -1458,12 +1395,10 @@ class ModalAutoencoderTrainingState:
             },
             legal_ir_view_logits=dict(self.legal_ir_view_logits),
             legal_ir_view_embedding_weights={
-                view: list(vector)
-                for view, vector in self.legal_ir_view_embedding_weights.items()
+                view: list(vector) for view, vector in self.legal_ir_view_embedding_weights.items()
             },
             legal_ir_view_family_logits={
-                view: dict(logits)
-                for view, logits in self.legal_ir_view_family_logits.items()
+                view: dict(logits) for view, logits in self.legal_ir_view_family_logits.items()
             },
             feature_legal_ir_view_logits={
                 feature: dict(logits)
@@ -1540,9 +1475,7 @@ class ModalAutoencoderTrainingState:
 
         for feature, vector in other.feature_embedding_weights.items():
             if feature not in self.feature_embedding_weights:
-                self.feature_embedding_weights[feature] = [
-                    float(value) * scale for value in vector
-                ]
+                self.feature_embedding_weights[feature] = [float(value) * scale for value in vector]
                 continue
             current = self.feature_embedding_weights[feature]
             if len(current) != len(vector):
@@ -1552,9 +1485,7 @@ class ModalAutoencoderTrainingState:
 
         for family, vector in other.family_embedding_weights.items():
             if family not in self.family_embedding_weights:
-                self.family_embedding_weights[family] = [
-                    float(value) * scale for value in vector
-                ]
+                self.family_embedding_weights[family] = [float(value) * scale for value in vector]
                 continue
             current = self.family_embedding_weights[family]
             if len(current) != len(vector):
@@ -1637,58 +1568,42 @@ class ModalAutoencoderTrainingState:
         for feature, logits in other.feature_family_logits.items():
             current_logits = self.feature_family_logits.setdefault(feature, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for slot, logits in other.compiler_quality_family_logits.items():
             current_logits = self.compiler_quality_family_logits.setdefault(slot, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for signature, logits in other.logic_signature_family_logits.items():
             current_logits = self.logic_signature_family_logits.setdefault(signature, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for signal, logits in other.round_trip_signal_family_logits.items():
             current_logits = self.round_trip_signal_family_logits.setdefault(signal, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for plan, logits in other.decompiler_plan_family_logits.items():
             current_logits = self.decompiler_plan_family_logits.setdefault(plan, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for signature, logits in other.predicate_argument_family_logits.items():
             current_logits = self.predicate_argument_family_logits.setdefault(signature, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for slot, logits in other.semantic_slot_family_logits.items():
             current_logits = self.semantic_slot_family_logits.setdefault(slot, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for slot, logits in other.semantic_slot_legal_ir_view_logits.items():
             current_logits = self.semantic_slot_legal_ir_view_logits.setdefault(slot, {})
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
         for signature, logits in other.logic_signature_legal_ir_view_logits.items():
             current_logits = self.logic_signature_legal_ir_view_logits.setdefault(
@@ -1696,9 +1611,7 @@ class ModalAutoencoderTrainingState:
                 {},
             )
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
         for signal, logits in other.round_trip_signal_legal_ir_view_logits.items():
             current_logits = self.round_trip_signal_legal_ir_view_logits.setdefault(
@@ -1706,9 +1619,7 @@ class ModalAutoencoderTrainingState:
                 {},
             )
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
         for plan, logits in other.decompiler_plan_legal_ir_view_logits.items():
             current_logits = self.decompiler_plan_legal_ir_view_logits.setdefault(
@@ -1716,9 +1627,7 @@ class ModalAutoencoderTrainingState:
                 {},
             )
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
         for signature, logits in other.predicate_argument_legal_ir_view_logits.items():
             current_logits = self.predicate_argument_legal_ir_view_logits.setdefault(
@@ -1726,9 +1635,7 @@ class ModalAutoencoderTrainingState:
                 {},
             )
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
         for key, logits in other.family_semantic_slot_legal_ir_view_logits.items():
             current_logits = self.family_semantic_slot_legal_ir_view_logits.setdefault(
@@ -1736,16 +1643,12 @@ class ModalAutoencoderTrainingState:
                 {},
             )
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
         for view, logits in other.legal_ir_view_family_logits.items():
             current_logits = self.legal_ir_view_family_logits.setdefault(view, {})
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for key, logits in other.semantic_slot_legal_ir_view_family_logits.items():
             current_logits = self.semantic_slot_legal_ir_view_family_logits.setdefault(
@@ -1753,9 +1656,7 @@ class ModalAutoencoderTrainingState:
                 {},
             )
             for family, value in logits.items():
-                current_logits[family] = current_logits.get(family, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[family] = current_logits.get(family, 0.0) + (float(value) * scale)
 
         for view, value in other.legal_ir_view_logits.items():
             self.legal_ir_view_logits[view] = self.legal_ir_view_logits.get(view, 0.0) + (
@@ -1765,9 +1666,7 @@ class ModalAutoencoderTrainingState:
         for feature, logits in other.feature_legal_ir_view_logits.items():
             current_logits = self.feature_legal_ir_view_logits.setdefault(feature, {})
             for view, value in logits.items():
-                current_logits[view] = current_logits.get(view, 0.0) + (
-                    float(value) * scale
-                )
+                current_logits[view] = current_logits.get(view, 0.0) + (float(value) * scale)
 
     @classmethod
     def average_generalizable(
@@ -1814,9 +1713,7 @@ class ModalAutoencoderTrainingState:
         for state in state_list:
             for slot, vector in state.compiler_quality_embedding_weights.items():
                 if slot not in merged.compiler_quality_embedding_weights:
-                    merged.compiler_quality_embedding_weights[slot] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.compiler_quality_embedding_weights[slot] = [0.0 for _ in vector]
                     compiler_quality_vector_counts[slot] = 0
                 current = merged.compiler_quality_embedding_weights[slot]
                 if len(current) != len(vector):
@@ -1827,9 +1724,7 @@ class ModalAutoencoderTrainingState:
 
             for signature, vector in state.logic_signature_embedding_weights.items():
                 if signature not in merged.logic_signature_embedding_weights:
-                    merged.logic_signature_embedding_weights[signature] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.logic_signature_embedding_weights[signature] = [0.0 for _ in vector]
                     logic_signature_vector_counts[signature] = 0
                 current = merged.logic_signature_embedding_weights[signature]
                 if len(current) != len(vector):
@@ -1840,9 +1735,7 @@ class ModalAutoencoderTrainingState:
 
             for signal, vector in state.round_trip_signal_embedding_weights.items():
                 if signal not in merged.round_trip_signal_embedding_weights:
-                    merged.round_trip_signal_embedding_weights[signal] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.round_trip_signal_embedding_weights[signal] = [0.0 for _ in vector]
                     round_trip_signal_vector_counts[signal] = 0
                 current = merged.round_trip_signal_embedding_weights[signal]
                 if len(current) != len(vector):
@@ -1853,9 +1746,7 @@ class ModalAutoencoderTrainingState:
 
             for plan, vector in state.decompiler_plan_embedding_weights.items():
                 if plan not in merged.decompiler_plan_embedding_weights:
-                    merged.decompiler_plan_embedding_weights[plan] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.decompiler_plan_embedding_weights[plan] = [0.0 for _ in vector]
                     decompiler_plan_vector_counts[plan] = 0
                 current = merged.decompiler_plan_embedding_weights[plan]
                 if len(current) != len(vector):
@@ -1866,9 +1757,7 @@ class ModalAutoencoderTrainingState:
 
             for signature, vector in state.predicate_argument_embedding_weights.items():
                 if signature not in merged.predicate_argument_embedding_weights:
-                    merged.predicate_argument_embedding_weights[signature] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.predicate_argument_embedding_weights[signature] = [0.0 for _ in vector]
                     predicate_argument_vector_counts[signature] = 0
                 current = merged.predicate_argument_embedding_weights[signature]
                 if len(current) != len(vector):
@@ -1912,9 +1801,7 @@ class ModalAutoencoderTrainingState:
 
             for key, vector in state.family_semantic_slot_embedding_weights.items():
                 if key not in merged.family_semantic_slot_embedding_weights:
-                    merged.family_semantic_slot_embedding_weights[key] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.family_semantic_slot_embedding_weights[key] = [0.0 for _ in vector]
                     family_semantic_slot_vector_counts[key] = 0
                 current = merged.family_semantic_slot_embedding_weights[key]
                 if len(current) != len(vector):
@@ -1938,9 +1825,7 @@ class ModalAutoencoderTrainingState:
 
             for key, vector in state.family_legal_ir_view_embedding_weights.items():
                 if key not in merged.family_legal_ir_view_embedding_weights:
-                    merged.family_legal_ir_view_embedding_weights[key] = [
-                        0.0 for _ in vector
-                    ]
+                    merged.family_legal_ir_view_embedding_weights[key] = [0.0 for _ in vector]
                     family_legal_view_vector_counts[key] = 0
                 current = merged.family_legal_ir_view_embedding_weights[key]
                 if len(current) != len(vector):
@@ -2069,8 +1954,7 @@ class ModalAutoencoderTrainingState:
                 for view, value in logits.items():
                     current_logits[view] = current_logits.get(view, 0.0) + float(value)
                     round_trip_signal_legal_view_counts[(signal, view)] = (
-                        round_trip_signal_legal_view_counts.get((signal, view), 0)
-                        + 1
+                        round_trip_signal_legal_view_counts.get((signal, view), 0) + 1
                     )
 
             for plan, logits in state.decompiler_plan_legal_ir_view_logits.items():
@@ -2085,17 +1969,14 @@ class ModalAutoencoderTrainingState:
                     )
 
             for signature, logits in state.predicate_argument_legal_ir_view_logits.items():
-                current_logits = (
-                    merged.predicate_argument_legal_ir_view_logits.setdefault(
-                        signature,
-                        {},
-                    )
+                current_logits = merged.predicate_argument_legal_ir_view_logits.setdefault(
+                    signature,
+                    {},
                 )
                 for view, value in logits.items():
                     current_logits[view] = current_logits.get(view, 0.0) + float(value)
                     predicate_argument_legal_view_counts[(signature, view)] = (
-                        predicate_argument_legal_view_counts.get((signature, view), 0)
-                        + 1
+                        predicate_argument_legal_view_counts.get((signature, view), 0) + 1
                     )
 
             for key, logits in state.family_semantic_slot_legal_ir_view_logits.items():
@@ -2110,9 +1991,9 @@ class ModalAutoencoderTrainingState:
                     )
 
             for view, value in state.legal_ir_view_logits.items():
-                merged.legal_ir_view_logits[view] = (
-                    merged.legal_ir_view_logits.get(view, 0.0) + float(value)
-                )
+                merged.legal_ir_view_logits[view] = merged.legal_ir_view_logits.get(
+                    view, 0.0
+                ) + float(value)
                 legal_view_counts[view] = legal_view_counts.get(view, 0) + 1
 
             for view, logits in state.legal_ir_view_family_logits.items():
@@ -2142,43 +2023,38 @@ class ModalAutoencoderTrainingState:
                 for view, value in logits.items():
                     current_logits[view] = current_logits.get(view, 0.0) + float(value)
                     feature_legal_view_counts[(feature, view)] = (
-                    feature_legal_view_counts.get((feature, view), 0) + 1
-                )
+                        feature_legal_view_counts.get((feature, view), 0) + 1
+                    )
 
         for slot, count in compiler_quality_vector_counts.items():
             if count <= 0:
                 continue
             merged.compiler_quality_embedding_weights[slot] = [
-                value / count
-                for value in merged.compiler_quality_embedding_weights[slot]
+                value / count for value in merged.compiler_quality_embedding_weights[slot]
             ]
         for signature, count in logic_signature_vector_counts.items():
             if count <= 0:
                 continue
             merged.logic_signature_embedding_weights[signature] = [
-                value / count
-                for value in merged.logic_signature_embedding_weights[signature]
+                value / count for value in merged.logic_signature_embedding_weights[signature]
             ]
         for signal, count in round_trip_signal_vector_counts.items():
             if count <= 0:
                 continue
             merged.round_trip_signal_embedding_weights[signal] = [
-                value / count
-                for value in merged.round_trip_signal_embedding_weights[signal]
+                value / count for value in merged.round_trip_signal_embedding_weights[signal]
             ]
         for plan, count in decompiler_plan_vector_counts.items():
             if count <= 0:
                 continue
             merged.decompiler_plan_embedding_weights[plan] = [
-                value / count
-                for value in merged.decompiler_plan_embedding_weights[plan]
+                value / count for value in merged.decompiler_plan_embedding_weights[plan]
             ]
         for signature, count in predicate_argument_vector_counts.items():
             if count <= 0:
                 continue
             merged.predicate_argument_embedding_weights[signature] = [
-                value / count
-                for value in merged.predicate_argument_embedding_weights[signature]
+                value / count for value in merged.predicate_argument_embedding_weights[signature]
             ]
         for feature, count in vector_counts.items():
             if count <= 0:
@@ -2202,8 +2078,7 @@ class ModalAutoencoderTrainingState:
             if count <= 0:
                 continue
             merged.family_semantic_slot_embedding_weights[key] = [
-                value / count
-                for value in merged.family_semantic_slot_embedding_weights[key]
+                value / count for value in merged.family_semantic_slot_embedding_weights[key]
             ]
         for key, count in family_semantic_slot_legal_view_vector_counts.items():
             if count <= 0:
@@ -2216,15 +2091,13 @@ class ModalAutoencoderTrainingState:
             if count <= 0:
                 continue
             merged.family_legal_ir_view_embedding_weights[key] = [
-                value / count
-                for value in merged.family_legal_ir_view_embedding_weights[key]
+                value / count for value in merged.family_legal_ir_view_embedding_weights[key]
             ]
         for key, count in semantic_slot_legal_view_embedding_counts.items():
             if count <= 0:
                 continue
             merged.semantic_slot_legal_ir_view_embedding_weights[key] = [
-                value / count
-                for value in merged.semantic_slot_legal_ir_view_embedding_weights[key]
+                value / count for value in merged.semantic_slot_legal_ir_view_embedding_weights[key]
             ]
         for slot, count in semantic_slot_vector_counts.items():
             if count <= 0:
@@ -2348,15 +2221,11 @@ class ModalAutoencoderTrainingState:
             },
             compiler_quality_embedding_weights={
                 str(slot): [float(value) for value in vector]
-                for slot, vector in dict(
-                    data.get("compiler_quality_embedding_weights", {})
-                ).items()
+                for slot, vector in dict(data.get("compiler_quality_embedding_weights", {})).items()
             },
             compiler_quality_family_logits={
                 str(slot): {str(name): float(value) for name, value in dict(logits).items()}
-                for slot, logits in dict(
-                    data.get("compiler_quality_family_logits", {})
-                ).items()
+                for slot, logits in dict(data.get("compiler_quality_family_logits", {})).items()
             },
             logic_signature_embedding_weights={
                 str(signature): [float(value) for value in vector]
@@ -2365,19 +2234,11 @@ class ModalAutoencoderTrainingState:
                 ).items()
             },
             logic_signature_family_logits={
-                str(signature): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
-                for signature, logits in dict(
-                    data.get("logic_signature_family_logits", {})
-                ).items()
+                str(signature): {str(name): float(value) for name, value in dict(logits).items()}
+                for signature, logits in dict(data.get("logic_signature_family_logits", {})).items()
             },
             logic_signature_legal_ir_view_logits={
-                str(signature): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
+                str(signature): {str(name): float(value) for name, value in dict(logits).items()}
                 for signature, logits in dict(
                     data.get("logic_signature_legal_ir_view_logits", {})
                 ).items()
@@ -2389,43 +2250,25 @@ class ModalAutoencoderTrainingState:
                 ).items()
             },
             round_trip_signal_family_logits={
-                str(signal): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
-                for signal, logits in dict(
-                    data.get("round_trip_signal_family_logits", {})
-                ).items()
+                str(signal): {str(name): float(value) for name, value in dict(logits).items()}
+                for signal, logits in dict(data.get("round_trip_signal_family_logits", {})).items()
             },
             round_trip_signal_legal_ir_view_logits={
-                str(signal): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
+                str(signal): {str(name): float(value) for name, value in dict(logits).items()}
                 for signal, logits in dict(
                     data.get("round_trip_signal_legal_ir_view_logits", {})
                 ).items()
             },
             decompiler_plan_embedding_weights={
                 str(plan): [float(value) for value in vector]
-                for plan, vector in dict(
-                    data.get("decompiler_plan_embedding_weights", {})
-                ).items()
+                for plan, vector in dict(data.get("decompiler_plan_embedding_weights", {})).items()
             },
             decompiler_plan_family_logits={
-                str(plan): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
-                for plan, logits in dict(
-                    data.get("decompiler_plan_family_logits", {})
-                ).items()
+                str(plan): {str(name): float(value) for name, value in dict(logits).items()}
+                for plan, logits in dict(data.get("decompiler_plan_family_logits", {})).items()
             },
             decompiler_plan_legal_ir_view_logits={
-                str(plan): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
+                str(plan): {str(name): float(value) for name, value in dict(logits).items()}
                 for plan, logits in dict(
                     data.get("decompiler_plan_legal_ir_view_logits", {})
                 ).items()
@@ -2437,19 +2280,13 @@ class ModalAutoencoderTrainingState:
                 ).items()
             },
             predicate_argument_family_logits={
-                str(signature): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
+                str(signature): {str(name): float(value) for name, value in dict(logits).items()}
                 for signature, logits in dict(
                     data.get("predicate_argument_family_logits", {})
                 ).items()
             },
             predicate_argument_legal_ir_view_logits={
-                str(signature): {
-                    str(name): float(value)
-                    for name, value in dict(logits).items()
-                }
+                str(signature): {str(name): float(value) for name, value in dict(logits).items()}
                 for signature, logits in dict(
                     data.get("predicate_argument_legal_ir_view_logits", {})
                 ).items()
@@ -2493,27 +2330,19 @@ class ModalAutoencoderTrainingState:
             },
             legal_ir_view_embedding_weights={
                 str(view): [float(value) for value in vector]
-                for view, vector in dict(
-                    data.get("legal_ir_view_embedding_weights", {})
-                ).items()
+                for view, vector in dict(data.get("legal_ir_view_embedding_weights", {})).items()
             },
             legal_ir_view_family_logits={
                 str(view): {str(name): float(value) for name, value in dict(logits).items()}
-                for view, logits in dict(
-                    data.get("legal_ir_view_family_logits", {})
-                ).items()
+                for view, logits in dict(data.get("legal_ir_view_family_logits", {})).items()
             },
             semantic_slot_embedding_weights={
                 str(slot): [float(value) for value in vector]
-                for slot, vector in dict(
-                    data.get("semantic_slot_embedding_weights", {})
-                ).items()
+                for slot, vector in dict(data.get("semantic_slot_embedding_weights", {})).items()
             },
             semantic_slot_family_logits={
                 str(slot): {str(name): float(value) for name, value in dict(logits).items()}
-                for slot, logits in dict(
-                    data.get("semantic_slot_family_logits", {})
-                ).items()
+                for slot, logits in dict(data.get("semantic_slot_family_logits", {})).items()
             },
             family_semantic_slot_legal_ir_view_logits={
                 str(key): {str(name): float(value) for name, value in dict(logits).items()}
@@ -2535,15 +2364,11 @@ class ModalAutoencoderTrainingState:
             },
             semantic_slot_legal_ir_view_logits={
                 str(slot): {str(name): float(value) for name, value in dict(logits).items()}
-                for slot, logits in dict(
-                    data.get("semantic_slot_legal_ir_view_logits", {})
-                ).items()
+                for slot, logits in dict(data.get("semantic_slot_legal_ir_view_logits", {})).items()
             },
             feature_legal_ir_view_logits={
                 str(feature): {str(name): float(value) for name, value in dict(logits).items()}
-                for feature, logits in dict(
-                    data.get("feature_legal_ir_view_logits", {})
-                ).items()
+                for feature, logits in dict(data.get("feature_legal_ir_view_logits", {})).items()
             },
             applied_todo_ids=[str(value) for value in data.get("applied_todo_ids", [])],
         )
@@ -3156,10 +2981,7 @@ class AdaptiveModalAutoencoder:
             probability_maps,
             target_maps,
         )
-        ce_entropy_losses = [
-            distribution_entropy_loss(target)
-            for target in target_maps
-        ]
+        ce_entropy_losses = [distribution_entropy_loss(target) for target in target_maps]
         ce_excess_losses = [
             cross_entropy_excess_distribution_loss(probabilities, target)
             for probabilities, target in zip(probability_maps, target_maps)
@@ -3186,9 +3008,7 @@ class AdaptiveModalAutoencoder:
                     target_view_distribution,
                 )
             )
-            legal_ir_view_entropy_losses.append(
-                distribution_entropy_loss(target_view_distribution)
-            )
+            legal_ir_view_entropy_losses.append(distribution_entropy_loss(target_view_distribution))
             legal_ir_view_excess_losses.append(
                 cross_entropy_excess_distribution_loss(
                     predicted_view_distribution,
@@ -3199,16 +3019,10 @@ class AdaptiveModalAutoencoder:
                 predicted_view_distribution,
                 target_view_distribution,
             ).items():
-                legal_ir_view_family_loss_values.setdefault(name, []).append(
-                    _float_or_zero(value)
-                )
+                legal_ir_view_family_loss_values.setdefault(name, []).append(_float_or_zero(value))
         if legal_ir_view_ce_losses:
-            legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(
-                legal_ir_view_ce_losses
-            )
-            legal_ir_losses["legal_ir_view_entropy_loss"] = _mean(
-                legal_ir_view_entropy_losses
-            )
+            legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(legal_ir_view_ce_losses)
+            legal_ir_losses["legal_ir_view_entropy_loss"] = _mean(legal_ir_view_entropy_losses)
             legal_ir_losses["legal_ir_view_cross_entropy_excess_loss"] = _mean(
                 legal_ir_view_excess_losses
             )
@@ -3234,9 +3048,7 @@ class AdaptiveModalAutoencoder:
             ),
             legal_ir_target_count=legal_ir_payload["target_count"],
             legal_ir_losses=legal_ir_losses,
-            legal_ir_predicted_view_distribution=_mean_distributions(
-                predicted_view_distributions
-            ),
+            legal_ir_predicted_view_distribution=_mean_distributions(predicted_view_distributions),
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
             legal_ir_view_distribution=legal_ir_payload["view_distribution"],
         )
@@ -3252,23 +3064,17 @@ class AdaptiveModalAutoencoder:
             target_view_distribution = target_view_distributions.get(sample.sample_id)
             if target_view_distribution:
                 cached_distribution = {
-                    str(name): float(value)
-                    for name, value in target_view_distribution.items()
+                    str(name): float(value) for name, value in target_view_distribution.items()
                 }
                 self._legal_ir_view_target_cache[sample.sample_id] = cached_distribution
-                self._legal_ir_view_target_cache[
-                    _sample_content_cache_id(sample)
-                ] = cached_distribution
+                self._legal_ir_view_target_cache[_sample_content_cache_id(sample)] = (
+                    cached_distribution
+                )
             target_losses = target_losses_by_sample.get(sample.sample_id)
             if target_losses:
-                cached_losses = {
-                    str(name): float(value)
-                    for name, value in target_losses.items()
-                }
+                cached_losses = {str(name): float(value) for name, value in target_losses.items()}
                 self._legal_ir_loss_target_cache[sample.sample_id] = cached_losses
-                self._legal_ir_loss_target_cache[
-                    _sample_content_cache_id(sample)
-                ] = cached_losses
+                self._legal_ir_loss_target_cache[_sample_content_cache_id(sample)] = cached_losses
             if target_view_distribution or target_losses:
                 cache = self._sample_cache_for(sample)
                 for key in (
@@ -3318,10 +3124,14 @@ class AdaptiveModalAutoencoder:
         logits = self._logits_for(sample, use_sample_memory=use_sample_memory)
         probabilities = _softmax(logits)
         target_family = _target_family(sample)
-        predicted_family = max(
-            probabilities,
-            key=lambda family: (probabilities[family], family),
-        ) if probabilities else ModalLogicFamily.HYBRID.value
+        predicted_family = (
+            max(
+                probabilities,
+                key=lambda family: (probabilities[family], family),
+            )
+            if probabilities
+            else ModalLogicFamily.HYBRID.value
+        )
         target_probability = float(probabilities.get(target_family, 0.0))
         predicted_probability = float(probabilities.get(predicted_family, 0.0))
         other_probabilities = [
@@ -3359,9 +3169,7 @@ class AdaptiveModalAutoencoder:
                 self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
             )
         )
-        source_decompiled_losses = _source_decompiled_text_losses_from_targets(
-            legal_ir_losses
-        )
+        source_decompiled_losses = _source_decompiled_text_losses_from_targets(legal_ir_losses)
         legal_ir_losses.update(source_decompiled_losses)
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
         legal_ir_view_cross_entropy_loss = 0.0
@@ -3378,14 +3186,10 @@ class AdaptiveModalAutoencoder:
                 legal_ir_predicted_view_distribution,
                 legal_ir_view_distribution,
             )
-            legal_ir_view_entropy_loss = distribution_entropy_loss(
-                legal_ir_view_distribution
-            )
-            legal_ir_view_cross_entropy_excess_loss = (
-                cross_entropy_excess_distribution_loss(
-                    legal_ir_predicted_view_distribution,
-                    legal_ir_view_distribution,
-                )
+            legal_ir_view_entropy_loss = distribution_entropy_loss(legal_ir_view_distribution)
+            legal_ir_view_cross_entropy_excess_loss = cross_entropy_excess_distribution_loss(
+                legal_ir_predicted_view_distribution,
+                legal_ir_view_distribution,
             )
             legal_ir_view_family_losses = _legal_ir_view_family_loss_metrics(
                 legal_ir_predicted_view_distribution,
@@ -3419,9 +3223,7 @@ class AdaptiveModalAutoencoder:
             legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
             legal_ir_component_gaps=legal_ir_component_gaps,
         )
-        pipeline_stage_focus = _pipeline_stage_focus_from_diagnostics(
-            pipeline_stage_diagnostics
-        )
+        pipeline_stage_focus = _pipeline_stage_focus_from_diagnostics(pipeline_stage_diagnostics)
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
             target_family=target_family,
@@ -3433,9 +3235,7 @@ class AdaptiveModalAutoencoder:
             cosine_loss=round(max(0.0, 1.0 - embedding_cosine), 12),
             reconstruction_loss=round(embedding_reconstruction, 12),
             source_decompiled_text_embedding_cosine_loss=round(
-                source_decompiled_losses[
-                    "source_decompiled_text_embedding_cosine_loss"
-                ],
+                source_decompiled_losses["source_decompiled_text_embedding_cosine_loss"],
                 12,
             ),
             source_decompiled_text_token_loss=round(
@@ -3447,8 +3247,8 @@ class AdaptiveModalAutoencoder:
             decoded_embedding=[round(float(value), 12) for value in decoded],
             feature_count=len(feature_keys),
             sample_memory_used=use_sample_memory,
-            top_family_contributions=family_contributions[:max(top_k, 0)],
-            top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
+            top_family_contributions=family_contributions[: max(top_k, 0)],
+            top_embedding_contributions=embedding_contributions[: max(top_k, 0)],
             pipeline_stage_diagnostics=pipeline_stage_diagnostics,
             pipeline_stage_focus=pipeline_stage_focus,
             legal_ir_view_cross_entropy_loss=round(legal_ir_view_cross_entropy_loss, 12),
@@ -3543,8 +3343,7 @@ class AdaptiveModalAutoencoder:
                 12,
             )
             for key in sorted(
-                set(legal_ir_target_distribution)
-                | set(legal_ir_predicted_distribution)
+                set(legal_ir_target_distribution) | set(legal_ir_predicted_distribution)
             )
             if abs(
                 float(legal_ir_target_distribution.get(key, 0.0))
@@ -3556,15 +3355,15 @@ class AdaptiveModalAutoencoder:
         feature_groups = {
             "compiler_latent_profile": self._compiler_latent_profile_feature_keys_for(sample),
             "compiler_contract": self._compiler_contract_feature_keys_for(sample),
-            "decompiler_surface_template": self._decompiler_surface_template_feature_keys_for(sample),
+            "decompiler_surface_template": self._decompiler_surface_template_feature_keys_for(
+                sample
+            ),
             "cycle_consistency": self._cycle_consistency_feature_keys_for(sample),
             "logic_view_contract": self._logic_view_contract_feature_keys_for(sample),
         }
         ranked_features = self._rank_guidance_features(
             _unique_preserve_order(
-                feature
-                for features in feature_groups.values()
-                for feature in features
+                feature for features in feature_groups.values() for feature in features
             ),
             top_k=limit,
         )
@@ -3615,12 +3414,10 @@ class AdaptiveModalAutoencoder:
             "sample_memory_used": use_sample_memory,
             "synthesis_focus": list(introspection.synthesis_focus),
             "top_embedding_contributions": [
-                contribution.to_dict()
-                for contribution in introspection.top_embedding_contributions
+                contribution.to_dict() for contribution in introspection.top_embedding_contributions
             ],
             "top_family_contributions": [
-                contribution.to_dict()
-                for contribution in introspection.top_family_contributions
+                contribution.to_dict() for contribution in introspection.top_family_contributions
             ],
         }
 
@@ -3641,11 +3438,7 @@ class AdaptiveModalAutoencoder:
             legal_ir_view_logit_magnitude = _max_abs_mapping(
                 self.state.feature_legal_ir_view_logits.get(feature, {})
             )
-            score = (
-                embedding_weight_norm
-                + family_logit_magnitude
-                + legal_ir_view_logit_magnitude
-            )
+            score = embedding_weight_norm + family_logit_magnitude + legal_ir_view_logit_magnitude
             if score <= 0.0 and not self._is_core_modal_feature_key(feature):
                 continue
             scored.append(
@@ -3692,10 +3485,7 @@ class AdaptiveModalAutoencoder:
             "symbolic_validity_penalty": evaluation.symbolic_validity_penalty,
         }
         metrics.update(
-            {
-                str(name): float(value)
-                for name, value in sorted(evaluation.legal_ir_losses.items())
-            }
+            {str(name): float(value) for name, value in sorted(evaluation.legal_ir_losses.items())}
         )
         feature_signature = self.codex_feature_signature(sample)
         text_hash = _hash_text(sample.normalized_text)
@@ -3756,10 +3546,7 @@ class AdaptiveModalAutoencoder:
         net_benefit = local_loss - max(0.0, float(gate.codex_call_cost))
 
         if cache is not None:
-            if (
-                gate.max_codex_calls is not None
-                and cache.codex_call_count >= gate.max_codex_calls
-            ):
+            if gate.max_codex_calls is not None and cache.codex_call_count >= gate.max_codex_calls:
                 suppressed_reasons.append("codex_call_budget_exhausted")
             if not gate.allow_repeat_signatures:
                 if text_hash in cache.codex_text_hashes:
@@ -3802,10 +3589,7 @@ class AdaptiveModalAutoencoder:
         learning_rate: float = 0.35,
     ) -> List[Dict[str, Any]]:
         """Apply a batch of claimed TODOs as deterministic optimizer updates."""
-        return [
-            self.apply_todo(todo, samples_by_id, learning_rate=learning_rate)
-            for todo in todos
-        ]
+        return [self.apply_todo(todo, samples_by_id, learning_rate=learning_rate) for todo in todos]
 
     def apply_todo(
         self,
@@ -3849,9 +3633,7 @@ class AdaptiveModalAutoencoder:
                 raw_metrics = payload.get("target_metrics")
                 if isinstance(raw_metrics, str):
                     target_metrics.extend(
-                        metric.strip()
-                        for metric in raw_metrics.split(",")
-                        if metric.strip()
+                        metric.strip() for metric in raw_metrics.split(",") if metric.strip()
                     )
                 elif isinstance(raw_metrics, Sequence) and not isinstance(
                     raw_metrics,
@@ -3872,21 +3654,16 @@ class AdaptiveModalAutoencoder:
         sample_ids = [str(value) for value in getattr(todo, "sample_ids", [])]
         changed: List[str] = []
 
-        trainable = (
-            action
-            in {
-                "improve_encoder_decoder_reconstruction",
-                "improve_legal_ir_view_distribution",
-                "improve_modal_family_classifier",
-            }
-            or loss_name
-            in {
-                "cosine_loss",
-                "cross_entropy_loss",
-                "legal_ir_view_cross_entropy_loss",
-                "reconstruction_loss",
-            }
-        )
+        trainable = action in {
+            "improve_encoder_decoder_reconstruction",
+            "improve_legal_ir_view_distribution",
+            "improve_modal_family_classifier",
+        } or loss_name in {
+            "cosine_loss",
+            "cross_entropy_loss",
+            "legal_ir_view_cross_entropy_loss",
+            "reconstruction_loss",
+        }
         if not trainable:
             return {
                 "action": raw_action,
@@ -3910,10 +3687,10 @@ class AdaptiveModalAutoencoder:
             ):
                 if self._nudge_legal_ir_view_logits(sample, learning_rate=learning_rate):
                     changed.append("legal_ir_view_logits")
-            if (
-                action == "improve_encoder_decoder_reconstruction"
-                or loss_name in {"cosine_loss", "reconstruction_loss"}
-            ):
+            if action == "improve_encoder_decoder_reconstruction" or loss_name in {
+                "cosine_loss",
+                "reconstruction_loss",
+            }:
                 self._nudge_decoded_embedding(sample, learning_rate=learning_rate)
                 changed.append("decoded_embedding")
 
@@ -3999,9 +3776,7 @@ class AdaptiveModalAutoencoder:
                 pass
 
         bridge_names = tuple(
-            str(name).strip()
-            for name in legal_ir_bridge_names
-            if str(name).strip()
+            str(name).strip() for name in legal_ir_bridge_names if str(name).strip()
         )
         bridge_sample_cap = (
             None
@@ -4057,8 +3832,7 @@ class AdaptiveModalAutoencoder:
                 f"{stage}_bridge_evaluation",
                 bridge_sample_count=len(bridge_rows),
                 bridge_sample_ids=[
-                    str(getattr(sample, "sample_id", "") or "")
-                    for sample in bridge_rows
+                    str(getattr(sample, "sample_id", "") or "") for sample in bridge_rows
                 ],
                 bridge_text_cap=bridge_text_cap,
                 full_sample_count=len(row_list),
@@ -4113,9 +3887,7 @@ class AdaptiveModalAutoencoder:
         hard_fraction = max(0.0, min(1.0, float(hard_example_fraction)))
         deadband_mode = _projection_deadband_mode(projection_deadband_mode)
         deadband_ce = max(0.0, float(projection_max_ce_deadband or 0.0))
-        deadband_guardrails = _projection_guardrail_names(
-            projection_hard_guardrail_metrics
-        )
+        deadband_guardrails = _projection_guardrail_names(projection_hard_guardrail_metrics)
         projection_deadband_config = {
             "hard_guardrail_metrics": list(deadband_guardrails),
             "max_ce_deadband": deadband_ce,
@@ -4193,7 +3965,9 @@ class AdaptiveModalAutoencoder:
             )
             epoch_before_state = self.state.copy()
             candidate_reports: List[Dict[str, Any]] = []
-            selected: Optional[tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]] = None
+            selected: Optional[
+                tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]
+            ] = None
             emit_progress(
                 "hard_example_selection",
                 epoch=epoch,
@@ -4223,9 +3997,15 @@ class AdaptiveModalAutoencoder:
                     break
                 head_scale = head_learning_rate_scales.get(update_name, 1.0)
                 attempt_reports: List[Dict[str, Any]] = []
-                best_attempt: Optional[tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]] = None
+                best_attempt: Optional[
+                    tuple[
+                        float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState
+                    ]
+                ] = None
                 best_improved_attempt: Optional[
-                    tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]
+                    tuple[
+                        float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState
+                    ]
                 ] = None
                 attempt_tuples: List[
                     tuple[
@@ -4252,9 +4032,7 @@ class AdaptiveModalAutoencoder:
                     emit_progress(
                         "line_search_evaluation",
                         epoch=epoch,
-                        line_search_attempt=int(
-                            attempt_report.get("line_search_attempt", 0) or 0
-                        ),
+                        line_search_attempt=int(attempt_report.get("line_search_attempt", 0) or 0),
                         update=update_name,
                     )
                     after = evaluate_projection_rows(
@@ -4269,19 +4047,14 @@ class AdaptiveModalAutoencoder:
                         max_cross_entropy_regression=max_cross_entropy_regression,
                         max_legal_ir_loss_regression=max_legal_ir_loss_regression,
                     )
-                    objective_delta = (
-                        _evaluation_objective_for_training(
-                            best,
-                            **objective_weights,
-                        )
-                        - _evaluation_objective_for_training(
-                            after,
-                            **objective_weights,
-                        )
+                    objective_delta = _evaluation_objective_for_training(
+                        best,
+                        **objective_weights,
+                    ) - _evaluation_objective_for_training(
+                        after,
+                        **objective_weights,
                     )
-                    strict_improved = bool(
-                        not regressions and objective_delta > 0.0
-                    )
+                    strict_improved = bool(not regressions and objective_delta > 0.0)
                     deadband_decision = _projection_deadband_decision(
                         regressions,
                         objective_delta=objective_delta,
@@ -4290,8 +4063,7 @@ class AdaptiveModalAutoencoder:
                         hard_guardrail_metrics=deadband_guardrails,
                     )
                     improved = bool(
-                        strict_improved
-                        or deadband_decision.get("enforced_accepted", False)
+                        strict_improved or deadband_decision.get("enforced_accepted", False)
                     )
                     attempt_report.update(
                         {
@@ -4306,12 +4078,10 @@ class AdaptiveModalAutoencoder:
                             "cross_entropy_delta": best.cross_entropy_loss
                             - after.cross_entropy_loss,
                             "cross_entropy_excess_delta": (
-                                best.cross_entropy_excess_loss
-                                - after.cross_entropy_excess_loss
+                                best.cross_entropy_excess_loss - after.cross_entropy_excess_loss
                             ),
                             "cosine_similarity_delta": (
-                                after.embedding_cosine_similarity
-                                - best.embedding_cosine_similarity
+                                after.embedding_cosine_similarity - best.embedding_cosine_similarity
                             ),
                             "holdout_evaluated": True,
                             "legal_ir_view_cross_entropy_delta": (
@@ -4398,6 +4168,7 @@ class AdaptiveModalAutoencoder:
                         after,
                         self.state.copy(),
                     )
+
                 for line_search_multiplier in multipliers_to_try:
                     if timed_out():
                         projection_stopped_reason = "projection_timeout"
@@ -4408,8 +4179,7 @@ class AdaptiveModalAutoencoder:
                     ):
                         break
                     is_refinement_attempt = (
-                        float(line_search_multiplier)
-                        in line_search_refinement_multipliers
+                        float(line_search_multiplier) in line_search_refinement_multipliers
                     )
                     effective_learning_rate = (
                         learning_rate * head_scale * float(line_search_multiplier)
@@ -4491,8 +4261,7 @@ class AdaptiveModalAutoencoder:
                                     12,
                                 ),
                                 "objective_delta": round(
-                                    before_prescreen_objective
-                                    - after_prescreen_objective,
+                                    before_prescreen_objective - after_prescreen_objective,
                                     12,
                                 ),
                                 "sample_count": len(update_samples),
@@ -4501,8 +4270,7 @@ class AdaptiveModalAutoencoder:
                     candidate_state = self.state.copy()
                     line_search_attempt_index = len(attempt_reports) + 1
                     defer_holdout_evaluation = bool(
-                        effective_prescreen_mode == "enforce"
-                        and prescreen_before is not None
+                        effective_prescreen_mode == "enforce" and prescreen_before is not None
                     )
                     prescreen_objective_delta = _float_or_zero(
                         prescreen_report.get("objective_delta")
@@ -4510,9 +4278,7 @@ class AdaptiveModalAutoencoder:
                     attempt_report = {
                         "accepted": False,
                         "acceptance_source": (
-                            "prescreen_deferred"
-                            if defer_holdout_evaluation
-                            else "pending"
+                            "prescreen_deferred" if defer_holdout_evaluation else "pending"
                         ),
                         "effective_learning_rate": effective_learning_rate,
                         "hard_example_count": len(update_samples),
@@ -4544,16 +4310,13 @@ class AdaptiveModalAutoencoder:
                         attempt_report=attempt_report,
                         candidate_state=candidate_state,
                     )
-                    objective_delta, attempt_report, after, _candidate_state = (
-                        attempt_tuple
-                    )
+                    objective_delta, attempt_report, after, _candidate_state = attempt_tuple
                     attempt_reports.append(attempt_report)
                     attempt_tuples.append(attempt_tuple)
                     if best_attempt is None or objective_delta > best_attempt[0]:
                         best_attempt = attempt_tuple
                     if attempt_report.get("accepted") and (
-                        best_improved_attempt is None
-                        or objective_delta > best_improved_attempt[0]
+                        best_improved_attempt is None or objective_delta > best_improved_attempt[0]
                     ):
                         best_improved_attempt = attempt_tuple
                     if (
@@ -4584,9 +4347,7 @@ class AdaptiveModalAutoencoder:
                         )
                         if not selected_for_holdout:
                             if not bool(attempt_report.get("holdout_evaluated", False)):
-                                attempt_report["acceptance_source"] = (
-                                    "prescreen_filtered"
-                                )
+                                attempt_report["acceptance_source"] = "prescreen_filtered"
                             continue
                         if bool(attempt_report.get("holdout_evaluated", False)):
                             selected_tuples.append(attempt)
@@ -4603,9 +4364,7 @@ class AdaptiveModalAutoencoder:
                         default=None,
                     )
                     improved_tuples = [
-                        attempt
-                        for attempt in selected_tuples
-                        if bool(attempt[1].get("accepted"))
+                        attempt for attempt in selected_tuples if bool(attempt[1].get("accepted"))
                     ]
                     best_improved_attempt = max(
                         improved_tuples,
@@ -4622,9 +4381,7 @@ class AdaptiveModalAutoencoder:
                         "attempt_reports": attempt_reports,
                         "line_search_attempt_count": len(attempt_reports),
                         "line_search_refinement_attempt_count": sum(
-                            1
-                            for report in attempt_reports
-                            if report.get("line_search_refinement")
+                            1 for report in attempt_reports if report.get("line_search_refinement")
                         ),
                     }
                 )
@@ -4682,9 +4439,7 @@ class AdaptiveModalAutoencoder:
             best_state = self.state.copy()
             accepted_epochs += 1
             selected_report = next(
-                report
-                for report in candidate_reports
-                if report["update"] == update_name
+                report for report in candidate_reports if report["update"] == update_name
             )
             epoch_reports.append(
                 {
@@ -4715,9 +4470,7 @@ class AdaptiveModalAutoencoder:
             "objective_weights": dict(objective_weights),
             "projection_deadband": dict(projection_deadband_config),
             "projection_prescreen": dict(projection_prescreen_config),
-            "projection_prescreen_summary": _projection_prescreen_summary(
-                epoch_reports
-            ),
+            "projection_prescreen_summary": _projection_prescreen_summary(epoch_reports),
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
             "legal_ir_bridge_max_samples": bridge_sample_cap,
@@ -4830,12 +4583,10 @@ class AdaptiveModalAutoencoder:
             sample,
             dimensions=len(base),
         )
-        family_semantic_slot_adjustment = (
-            self._family_semantic_slot_embedding_adjustment(
-                sample,
-                dimensions=len(base),
-                use_sample_memory=use_sample_memory,
-            )
+        family_semantic_slot_adjustment = self._family_semantic_slot_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+            use_sample_memory=use_sample_memory,
         )
         semantic_slot_legal_ir_view_adjustment = (
             self._semantic_slot_legal_ir_view_embedding_adjustment(
@@ -4851,12 +4602,10 @@ class AdaptiveModalAutoencoder:
                 use_sample_memory=use_sample_memory,
             )
         )
-        family_legal_ir_view_adjustment = (
-            self._family_legal_ir_view_embedding_adjustment(
-                sample,
-                dimensions=len(base),
-                use_sample_memory=use_sample_memory,
-            )
+        family_legal_ir_view_adjustment = self._family_legal_ir_view_embedding_adjustment(
+            sample,
+            dimensions=len(base),
+            use_sample_memory=use_sample_memory,
         )
         legal_ir_view_adjustment = self._legal_ir_view_embedding_adjustment(
             sample,
@@ -4934,7 +4683,8 @@ class AdaptiveModalAutoencoder:
         if (
             0.0 < unclamped_step
             and mse_loss(target_point, target_point) <= mse_loss(target_point, projected)
-            and cosine_loss(target_point, target_point) <= cosine_loss(
+            and cosine_loss(target_point, target_point)
+            <= cosine_loss(
                 target_point,
                 projected,
             )
@@ -5182,9 +4932,7 @@ class AdaptiveModalAutoencoder:
             if not triples:
                 bump("quality:frame-logic:empty", 0.5)
 
-        for name, value in sorted(
-            self._compiler_quality_loss_targets_for_sample(sample).items()
-        ):
+        for name, value in sorted(self._compiler_quality_loss_targets_for_sample(sample).items()):
             if value <= 0.0:
                 continue
             loss_name = _feature_atom(name, max_tokens=6)
@@ -5230,9 +4978,9 @@ class AdaptiveModalAutoencoder:
             bump(f"signature:frame-logic-triples:{_count_bucket(len(triples))}", 0.4)
             relation_names = [
                 _feature_atom(relation)
-                for relation in sorted(
-                    getattr(frame_logic, "neo4j_relationship_types", []) or []
-                )[:4]
+                for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[
+                    :4
+                ]
             ]
             for relation in relation_names:
                 if relation:
@@ -5248,9 +4996,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             arguments = list(getattr(formula.predicate, "arguments", []) or [])
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
@@ -5415,9 +5161,7 @@ class AdaptiveModalAutoencoder:
             )
             if not triples:
                 bump("round-trip:frame-logic-empty", 0.75)
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:4]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:4]:
                 relation_atom = _feature_atom(relation)
                 if relation_atom:
                     bump(f"round-trip:kg-relation:{relation_atom}", 0.35)
@@ -5474,9 +5218,7 @@ class AdaptiveModalAutoencoder:
             return [
                 token
                 for token in tokens
-                if len(token) > 2
-                and token not in _STOPWORDS
-                and token not in cue_markers
+                if len(token) > 2 and token not in _STOPWORDS and token not in cue_markers
             ]
 
         cue_index = next(
@@ -5491,17 +5233,14 @@ class AdaptiveModalAutoencoder:
             subject_candidates = role_tokens(raw_tokens[:2])
             predicate_candidates = role_tokens(raw_tokens[1:])
 
-        subject_anchor = (
-            source_anchors.get("subject")
-            or (subject_candidates[-1] if subject_candidates else "")
+        subject_anchor = source_anchors.get("subject") or (
+            subject_candidates[-1] if subject_candidates else ""
         )
-        action_anchor = (
-            source_anchors.get("action")
-            or (predicate_candidates[0] if predicate_candidates else "")
+        action_anchor = source_anchors.get("action") or (
+            predicate_candidates[0] if predicate_candidates else ""
         )
-        object_anchor = (
-            source_anchors.get("object")
-            or (predicate_candidates[1] if len(predicate_candidates) > 1 else "")
+        object_anchor = source_anchors.get("object") or (
+            predicate_candidates[1] if len(predicate_candidates) > 1 else ""
         )
         condition_anchor = source_anchors.get("condition", "")
         exception_anchor = source_anchors.get("exception", "")
@@ -5591,9 +5330,7 @@ class AdaptiveModalAutoencoder:
                 sample.modal_ir,
                 formula,
             )
-            pair_cues = _unique_preserve_order(
-                [*cues, *_formula_autoencoder_cue_names(formula)]
-            )
+            pair_cues = _unique_preserve_order([*cues, *_formula_autoencoder_cue_names(formula)])
             pair_scope_tags = self._source_clause_scope_tags_for(
                 sample,
                 pair_cues,
@@ -5603,9 +5340,10 @@ class AdaptiveModalAutoencoder:
                 pair_scope_tags = [*pair_scope_tags, "conditioned"]
             if exceptions and "excepted" not in pair_scope_tags:
                 pair_scope_tags = [*pair_scope_tags, "excepted"]
-            pair_scope_signature = "+".join(
-                tag for tag in _unique_preserve_order(pair_scope_tags) if tag
-            ) or "unconditioned"
+            pair_scope_signature = (
+                "+".join(tag for tag in _unique_preserve_order(pair_scope_tags) if tag)
+                or "unconditioned"
+            )
             pair_force_tags, pair_polarity_tags = _autoencoder_formula_force_polarity_tags(
                 formula,
                 text=text,
@@ -5712,10 +5450,7 @@ class AdaptiveModalAutoencoder:
                     )
                 if predicate_head:
                     bump(
-                        (
-                            "decompiler-plan:predicate-family-pair:"
-                            f"{predicate_head}:{family_pair}"
-                        ),
+                        (f"decompiler-plan:predicate-family-pair:{predicate_head}:{family_pair}"),
                         0.55,
                     )
                 for force in pair_force_tags[:2]:
@@ -5785,9 +5520,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             arguments = list(getattr(formula.predicate, "arguments", []) or [])
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
@@ -6134,14 +5867,10 @@ class AdaptiveModalAutoencoder:
                 if is_cross_family and source_family != "frame":
                     continue
                 if source_family and is_cross_family:
-                    counts[source_family] = counts.get(source_family, 0.0) + (
-                        weight * 0.10
-                    )
+                    counts[source_family] = counts.get(source_family, 0.0) + (weight * 0.10)
                 if target_family:
                     target_weight = weight if is_cross_family else weight * 0.20
-                    counts[target_family] = (
-                        counts.get(target_family, 0.0) + target_weight
-                    )
+                    counts[target_family] = counts.get(target_family, 0.0) + target_weight
         return _normalized_distribution(counts)
 
     def _is_legal_ir_view_family(self, family: str) -> bool:
@@ -6218,11 +5947,7 @@ class AdaptiveModalAutoencoder:
             for family, value in self.state.feature_legal_ir_view_logits.get(feature, {}).items():
                 family = str(family)
                 if family in logits:
-                    logits[family] += (
-                        float(value)
-                        * self.legal_ir_view_logit_scale
-                        * feature_scale
-                    )
+                    logits[family] += float(value) * self.legal_ir_view_logit_scale * feature_scale
             # Backwards compatibility: older warm-starts stored LegalIR view
             # logits in the modal feature bucket, where the default modal scale
             # is zero.  Read those legal-view entries through the dedicated
@@ -6230,13 +5955,11 @@ class AdaptiveModalAutoencoder:
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 family = str(family)
                 if family in logits and self._is_legal_ir_view_family(family):
-                    logits[family] += (
-                        float(value)
-                        * self.legal_ir_view_logit_scale
-                        * feature_scale
-                    )
+                    logits[family] += float(value) * self.legal_ir_view_logit_scale * feature_scale
         for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
-            for family, value in self.state.semantic_slot_legal_ir_view_logits.get(slot, {}).items():
+            for family, value in self.state.semantic_slot_legal_ir_view_logits.get(
+                slot, {}
+            ).items():
                 family = str(family)
                 if family in logits and self._is_legal_ir_view_family(family):
                     logits[family] += (
@@ -6245,18 +5968,16 @@ class AdaptiveModalAutoencoder:
                         * self.semantic_slot_legal_ir_view_logit_scale
                     )
         if self.logic_signature_legal_ir_view_logit_scale > 0.0:
-            for signature, signature_weight in (
-                self._logic_signature_distribution_for(sample).items()
-            ):
+            for signature, signature_weight in self._logic_signature_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
-                for family, value in (
-                    self.state.logic_signature_legal_ir_view_logits.get(
-                        signature,
-                        {},
-                    ).items()
-                ):
+                for family, value in self.state.logic_signature_legal_ir_view_logits.get(
+                    signature,
+                    {},
+                ).items():
                     family = str(family)
                     if family in logits and self._is_legal_ir_view_family(family):
                         logits[family] += (
@@ -6265,18 +5986,14 @@ class AdaptiveModalAutoencoder:
                             * self.logic_signature_legal_ir_view_logit_scale
                         )
         if self.round_trip_signal_legal_ir_view_logit_scale > 0.0:
-            for signal, signal_weight in (
-                self._round_trip_signal_distribution_for(sample).items()
-            ):
+            for signal, signal_weight in self._round_trip_signal_distribution_for(sample).items():
                 normalized_weight = max(0.0, float(signal_weight))
                 if normalized_weight <= 0.0:
                     continue
-                for family, value in (
-                    self.state.round_trip_signal_legal_ir_view_logits.get(
-                        signal,
-                        {},
-                    ).items()
-                ):
+                for family, value in self.state.round_trip_signal_legal_ir_view_logits.get(
+                    signal,
+                    {},
+                ).items():
                     family = str(family)
                     if family in logits and self._is_legal_ir_view_family(family):
                         logits[family] += (
@@ -6285,18 +6002,14 @@ class AdaptiveModalAutoencoder:
                             * self.round_trip_signal_legal_ir_view_logit_scale
                         )
         if self.decompiler_plan_legal_ir_view_logit_scale > 0.0:
-            for plan, plan_weight in (
-                self._decompiler_plan_distribution_for(sample).items()
-            ):
+            for plan, plan_weight in self._decompiler_plan_distribution_for(sample).items():
                 normalized_weight = max(0.0, float(plan_weight))
                 if normalized_weight <= 0.0:
                     continue
-                for family, value in (
-                    self.state.decompiler_plan_legal_ir_view_logits.get(
-                        plan,
-                        {},
-                    ).items()
-                ):
+                for family, value in self.state.decompiler_plan_legal_ir_view_logits.get(
+                    plan,
+                    {},
+                ).items():
                     family = str(family)
                     if family in logits and self._is_legal_ir_view_family(family):
                         logits[family] += (
@@ -6305,18 +6018,16 @@ class AdaptiveModalAutoencoder:
                             * self.decompiler_plan_legal_ir_view_logit_scale
                         )
         if self.predicate_argument_legal_ir_view_logit_scale > 0.0:
-            for signature, signature_weight in (
-                self._predicate_argument_distribution_for(sample).items()
-            ):
+            for signature, signature_weight in self._predicate_argument_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
-                for family, value in (
-                    self.state.predicate_argument_legal_ir_view_logits.get(
-                        signature,
-                        {},
-                    ).items()
-                ):
+                for family, value in self.state.predicate_argument_legal_ir_view_logits.get(
+                    signature,
+                    {},
+                ).items():
                     family = str(family)
                     if family in logits and self._is_legal_ir_view_family(family):
                         logits[family] += (
@@ -6325,18 +6036,16 @@ class AdaptiveModalAutoencoder:
                             * self.predicate_argument_legal_ir_view_logit_scale
                         )
         if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
-            for key, pair_weight in (
-                self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
-            ):
+            for key, pair_weight in self._family_semantic_slot_distribution_for_legal_ir_view(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(pair_weight))
                 if normalized_weight <= 0.0:
                     continue
-                for family, value in (
-                    self.state.family_semantic_slot_legal_ir_view_logits.get(
-                        key,
-                        {},
-                    ).items()
-                ):
+                for family, value in self.state.family_semantic_slot_legal_ir_view_logits.get(
+                    key,
+                    {},
+                ).items():
                     family = str(family)
                     if family in logits and self._is_legal_ir_view_family(family):
                         logits[family] += (
@@ -6373,9 +6082,7 @@ class AdaptiveModalAutoencoder:
                     family = str(family)
                     if family in logits:
                         logits[family] += (
-                            float(value)
-                            * normalized_weight
-                            * self.legal_ir_view_family_logit_scale
+                            float(value) * normalized_weight * self.legal_ir_view_family_logit_scale
                         )
         if self.semantic_slot_legal_ir_view_family_logit_scale <= 0.0:
             return
@@ -6386,7 +6093,9 @@ class AdaptiveModalAutoencoder:
             normalized_weight = max(0.0, float(pair_weight))
             if normalized_weight <= 0.0:
                 continue
-            for family, value in self.state.semantic_slot_legal_ir_view_family_logits.get(key, {}).items():
+            for family, value in self.state.semantic_slot_legal_ir_view_family_logits.get(
+                key, {}
+            ).items():
                 family = str(family)
                 if family in logits:
                     logits[family] += (
@@ -6410,9 +6119,7 @@ class AdaptiveModalAutoencoder:
                 family = str(family)
                 if family in logits:
                     logits[family] += (
-                        float(value)
-                        * normalized_weight
-                        * self.compiler_quality_family_logit_scale
+                        float(value) * normalized_weight * self.compiler_quality_family_logit_scale
                     )
 
     def _apply_logic_signature_family_logits(
@@ -6426,13 +6133,13 @@ class AdaptiveModalAutoencoder:
             normalized_weight = max(0.0, float(signature_weight))
             if normalized_weight <= 0.0:
                 continue
-            for family, value in self.state.logic_signature_family_logits.get(signature, {}).items():
+            for family, value in self.state.logic_signature_family_logits.get(
+                signature, {}
+            ).items():
                 family = str(family)
                 if family in logits:
                     logits[family] += (
-                        float(value)
-                        * normalized_weight
-                        * self.logic_signature_family_logit_scale
+                        float(value) * normalized_weight * self.logic_signature_family_logit_scale
                     )
 
     def _apply_round_trip_signal_family_logits(
@@ -6450,9 +6157,7 @@ class AdaptiveModalAutoencoder:
                 family = str(family)
                 if family in logits:
                     logits[family] += (
-                        float(value)
-                        * normalized_weight
-                        * self.round_trip_signal_family_logit_scale
+                        float(value) * normalized_weight * self.round_trip_signal_family_logit_scale
                     )
 
     def _apply_decompiler_plan_family_logits(
@@ -6470,9 +6175,7 @@ class AdaptiveModalAutoencoder:
                 family = str(family)
                 if family in logits:
                     logits[family] += (
-                        float(value)
-                        * normalized_weight
-                        * self.decompiler_plan_family_logit_scale
+                        float(value) * normalized_weight * self.decompiler_plan_family_logit_scale
                     )
 
     def _apply_predicate_argument_family_logits(
@@ -6482,15 +6185,15 @@ class AdaptiveModalAutoencoder:
     ) -> None:
         if self.predicate_argument_family_logit_scale <= 0.0:
             return
-        for signature, signature_weight in (
-            self._predicate_argument_distribution_for(sample).items()
-        ):
+        for signature, signature_weight in self._predicate_argument_distribution_for(
+            sample
+        ).items():
             normalized_weight = max(0.0, float(signature_weight))
             if normalized_weight <= 0.0:
                 continue
-            for family, value in (
-                self.state.predicate_argument_family_logits.get(signature, {}).items()
-            ):
+            for family, value in self.state.predicate_argument_family_logits.get(
+                signature, {}
+            ).items():
                 family = str(family)
                 if family in logits:
                     logits[family] += (
@@ -6511,18 +6214,12 @@ class AdaptiveModalAutoencoder:
         for feature in feature_keys:
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 if family in logits:
-                    logits[family] += (
-                        float(value)
-                        * self.feature_family_logit_scale
-                        * feature_scale
-                    )
+                    logits[family] += float(value) * self.feature_family_logit_scale * feature_scale
         for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
             for family, value in self.state.semantic_slot_family_logits.get(slot, {}).items():
                 if family in logits:
                     logits[family] += (
-                        float(value)
-                        * float(slot_weight)
-                        * self.semantic_slot_family_logit_scale
+                        float(value) * float(slot_weight) * self.semantic_slot_family_logit_scale
                     )
         self._apply_compiler_quality_family_logits(sample, logits)
         self._apply_logic_signature_family_logits(sample, logits)
@@ -6548,29 +6245,20 @@ class AdaptiveModalAutoencoder:
         use_sample_memory: bool,
     ) -> Dict[str, float]:
         base = self._base_logits_for(sample)
-        logits = {
-            str(family): float(base.get(str(family), 0.0))
-            for family in families
-        }
+        logits = {str(family): float(base.get(str(family), 0.0)) for family in families}
         feature_keys = self._feature_keys_for(sample)
         feature_scale = 1.0 / self._feature_activity_scale(len(feature_keys))
         for feature in feature_keys:
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 family = str(family)
                 if family in logits:
-                    logits[family] += (
-                        float(value)
-                        * self.feature_family_logit_scale
-                        * feature_scale
-                    )
+                    logits[family] += float(value) * self.feature_family_logit_scale * feature_scale
         for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
             for family, value in self.state.semantic_slot_family_logits.get(slot, {}).items():
                 family = str(family)
                 if family in logits:
                     logits[family] += (
-                        float(value)
-                        * float(slot_weight)
-                        * self.semantic_slot_family_logit_scale
+                        float(value) * float(slot_weight) * self.semantic_slot_family_logit_scale
                     )
         self._apply_compiler_quality_family_logits(sample, logits)
         self._apply_logic_signature_family_logits(sample, logits)
@@ -6593,10 +6281,7 @@ class AdaptiveModalAutoencoder:
         cache = self._sample_cache_for(sample)
         cached = cache.get("base_logits")
         if isinstance(cached, dict):
-            logits = {
-                family: float(cached.get(family, 0.0))
-                for family in self.modal_families
-            }
+            logits = {family: float(cached.get(family, 0.0)) for family in self.modal_families}
             return logits
 
         if self.feature_codec is not None and hasattr(
@@ -6612,10 +6297,7 @@ class AdaptiveModalAutoencoder:
             logits = {family: 0.0 for family in self.modal_families}
         for family in self.modal_families:
             logits.setdefault(family, 0.0)
-        result = {
-            family: float(logits.get(family, 0.0))
-            for family in self.modal_families
-        }
+        result = {family: float(logits.get(family, 0.0)) for family in self.modal_families}
         cache["base_logits"] = dict(result)
         return result
 
@@ -6934,8 +6616,7 @@ class AdaptiveModalAutoencoder:
             for slot in self._semantic_slot_distribution_for(sample).keys()
         )
         keys.extend(
-            f"legal-ir:token:{token}"
-            for token in tokens[:self.max_legal_ir_token_features]
+            f"legal-ir:token:{token}" for token in tokens[: self.max_legal_ir_token_features]
         )
         keys.extend(
             _token_ngram_features(
@@ -7373,9 +7054,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -7402,18 +7081,14 @@ class AdaptiveModalAutoencoder:
                 if predicate_role:
                     add(f"source-action-class-role:{action_class}:{predicate_role}")
                 for predicate_class in predicate_classes[:2]:
-                    add(
-                        f"source-action-class-predicate-class:{action_class}:{predicate_class}"
-                    )
+                    add(f"source-action-class-predicate-class:{action_class}:{predicate_class}")
             for object_class in object_classes[:2]:
                 if family:
                     add(f"source-object-class-family:{object_class}:{family}")
                 if predicate_role:
                     add(f"source-object-class-role:{object_class}:{predicate_role}")
                 for predicate_class in predicate_classes[:2]:
-                    add(
-                        f"source-object-class-predicate-class:{object_class}:{predicate_class}"
-                    )
+                    add(f"source-object-class-predicate-class:{object_class}:{predicate_class}")
             for subject_class in subject_classes[:2]:
                 if family:
                     add(f"source-subject-class-family:{subject_class}:{family}")
@@ -7448,9 +7123,7 @@ class AdaptiveModalAutoencoder:
         else:
             triples = list(getattr(frame_logic, "triples", []) or [])
             add(f"kg-triples:{_count_bucket(len(triples))}")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:6]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:6]:
                 relation_atom = _feature_atom(relation)
                 relation_classes = self._legal_semantic_classes_for(
                     relation_atom,
@@ -7620,17 +7293,13 @@ class AdaptiveModalAutoencoder:
             for action_class in action_classes[:2]:
                 for object_class in object_classes[:2]:
                     for force in force_tags[:2]:
-                        add(
-                            f"deontic-frame:{subject_class}:{action_class}:{object_class}:{force}"
-                        )
+                        add(f"deontic-frame:{subject_class}:{action_class}:{object_class}:{force}")
 
         for formula in list(sample.modal_ir.formulas or [])[:6]:
             family = _feature_atom(formula.operator.family)
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
             condition_state = "yes" if conditions else "no"
@@ -7651,9 +7320,7 @@ class AdaptiveModalAutoencoder:
                         f"force-role-scope:{force}:{family}:{predicate_role}:c{condition_state}:e{exception_state}"
                     )
                 for polarity in polarity_tags:
-                    add(
-                        f"polarity-role:{polarity}:{family}:{predicate_role}"
-                    )
+                    add(f"polarity-role:{polarity}:{family}:{predicate_role}")
             for cue_name in cue_names[:4]:
                 for force in force_tags:
                     add(f"cue-force:{cue_name}:{force}")
@@ -7798,9 +7465,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -7834,9 +7499,7 @@ class AdaptiveModalAutoencoder:
                             )
                 for predicate_class in predicate_classes[:2]:
                     if family:
-                        add(
-                            f"semantic-ir-contract:{action_class}:{predicate_class}:{family}"
-                        )
+                        add(f"semantic-ir-contract:{action_class}:{predicate_class}:{family}")
             for object_class in object_classes[:2]:
                 if family and symbol:
                     add(f"object-ir-contract:{object_class}:{family}:{symbol}")
@@ -7861,9 +7524,7 @@ class AdaptiveModalAutoencoder:
         else:
             triples = list(getattr(frame_logic, "triples", []) or [])
             add(f"kg-contract:triples:{_count_bucket(len(triples))}")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:4]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:4]:
                 relation_atom = _feature_atom(relation)
                 relation_classes = self._legal_semantic_classes_for(
                     relation_atom,
@@ -7946,10 +7607,17 @@ class AdaptiveModalAutoencoder:
 
         ordered_roles = [
             role
-            for role in ("condition", "subject", "force", "polarity", "action", "object", "temporal", "exception")
-            if role == "force"
-            or role == "polarity"
-            or source_anchors.get(role)
+            for role in (
+                "condition",
+                "subject",
+                "force",
+                "polarity",
+                "action",
+                "object",
+                "temporal",
+                "exception",
+            )
+            if role == "force" or role == "polarity" or source_anchors.get(role)
         ]
         add("bias")
         add(f"slot-order:{'>'.join(ordered_roles)}")
@@ -7986,9 +7654,7 @@ class AdaptiveModalAutoencoder:
             family = _feature_atom(formula.operator.family)
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             arguments = list(getattr(formula.predicate, "arguments", []) or [])
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
@@ -8015,9 +7681,7 @@ class AdaptiveModalAutoencoder:
                 if family and symbol:
                     add(f"cue-surface-ir:{cue_name}:{family}:{symbol}:{scope_signature}")
 
-        result = _unique_preserve_order(keys)[
-            : self.max_decompiler_surface_template_features
-        ]
+        result = _unique_preserve_order(keys)[: self.max_decompiler_surface_template_features]
         cache[cache_key] = list(result)
         return result
 
@@ -8102,9 +7766,7 @@ class AdaptiveModalAutoencoder:
             symbol = _feature_atom(formula.operator.symbol)
             label = _feature_atom(formula.operator.label)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -8176,16 +7838,10 @@ class AdaptiveModalAutoencoder:
                     add(f"subject-node:{subject_class}:{family}:{symbol}")
             for condition_class in condition_classes[:2]:
                 if family and symbol and predicate_role:
-                    add(
-                        f"condition-edge:{condition_class}->"
-                        f"{family}:{symbol}:{predicate_role}"
-                    )
+                    add(f"condition-edge:{condition_class}->{family}:{symbol}:{predicate_role}")
             for exception_class in exception_classes[:2]:
                 if family and symbol and predicate_role:
-                    add(
-                        f"exception-edge:{exception_class}->"
-                        f"{family}:{symbol}:{predicate_role}"
-                    )
+                    add(f"exception-edge:{exception_class}->{family}:{symbol}:{predicate_role}")
             if conditions and exceptions and family and symbol:
                 add(f"scope-lattice:condition-exception:{family}:{symbol}")
 
@@ -8194,9 +7850,7 @@ class AdaptiveModalAutoencoder:
         if canonical_nodes:
             sorted_nodes = sorted(set(canonical_nodes))
             add(f"graph-multiset:{'|'.join(sorted_nodes[:4])}")
-            digest = hashlib.sha256(
-                "|".join(sorted_nodes).encode("utf-8")
-            ).hexdigest()[:12]
+            digest = hashlib.sha256("|".join(sorted_nodes).encode("utf-8")).hexdigest()[:12]
             add(f"graph-signature:{digest}")
 
         frame_logic = getattr(sample.modal_ir, "frame_logic", None)
@@ -8283,15 +7937,9 @@ class AdaptiveModalAutoencoder:
                 text,
             )
         )
-        source_has_condition = bool(
-            source_anchors.get("condition") or explicit_condition_scope
-        )
-        source_has_exception = bool(
-            source_anchors.get("exception") or "exception" in cue_names
-        )
-        source_has_temporal = bool(
-            source_anchors.get("temporal") or "temporal" in cue_names
-        )
+        source_has_condition = bool(source_anchors.get("condition") or explicit_condition_scope)
+        source_has_exception = bool(source_anchors.get("exception") or "exception" in cue_names)
+        source_has_temporal = bool(source_anchors.get("temporal") or "temporal" in cue_names)
         keys: List[str] = []
 
         def add(suffix: str) -> None:
@@ -8339,9 +7987,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -8365,10 +8011,7 @@ class AdaptiveModalAutoencoder:
             source_exception_state = "yes" if source_has_exception else "no"
 
             if family and system and symbol:
-                add(
-                    f"operator-cycle:{family}:{system}:{symbol}:"
-                    f"{source_scope}->{compiled_scope}"
-                )
+                add(f"operator-cycle:{family}:{system}:{symbol}:{source_scope}->{compiled_scope}")
                 for force in force_tags[:2]:
                     for polarity in polarity_tags[:2]:
                         add(
@@ -8382,14 +8025,8 @@ class AdaptiveModalAutoencoder:
                             f"{source_scope}:c{condition_state}:e{exception_state}"
                         )
             if family and predicate_role:
-                add(
-                    f"role-cycle:{source_role_signature}:"
-                    f"{family}:{predicate_role}:a{arity_bucket}"
-                )
-                add(
-                    f"scope-cycle:{family}:{predicate_role}:"
-                    f"{source_scope}->{compiled_scope}"
-                )
+                add(f"role-cycle:{source_role_signature}:{family}:{predicate_role}:a{arity_bucket}")
+                add(f"scope-cycle:{family}:{predicate_role}:{source_scope}->{compiled_scope}")
                 add(
                     f"condition-cycle:source-{source_condition_state}:"
                     f"ir-{condition_state}:{family}:{predicate_role}"
@@ -8403,10 +8040,7 @@ class AdaptiveModalAutoencoder:
             if family and symbol and object_class != "none":
                 add(f"object-cycle:{object_class}:{family}:{symbol}:{predicate_role}")
             for predicate_class in predicate_classes[:2]:
-                add(
-                    f"predicate-class-cycle:{action_class}:{predicate_class}:"
-                    f"{family}:{symbol}"
-                )
+                add(f"predicate-class-cycle:{action_class}:{predicate_class}:{family}:{symbol}")
             cue_name = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
             if cue_name and family and symbol:
                 add(f"cue-cycle:{cue_name}:{family}:{symbol}:{predicate_role}")
@@ -8531,9 +8165,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             label = _feature_atom(formula.operator.label)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
@@ -8581,10 +8213,7 @@ class AdaptiveModalAutoencoder:
                         )
             for predicate_class in predicate_classes[:2]:
                 if family and symbol:
-                    add(
-                        f"predicate-prototype:{action_class}:{predicate_class}:"
-                        f"{family}:{symbol}"
-                    )
+                    add(f"predicate-prototype:{action_class}:{predicate_class}:{family}:{symbol}")
                     digest_atoms.append(
                         f"predicate:{action_class}:{predicate_class}:{family}:{symbol}"
                     )
@@ -8601,9 +8230,7 @@ class AdaptiveModalAutoencoder:
         else:
             triples = list(getattr(frame_logic, "triples", []) or [])
             relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
-            kg_shape = (
-                f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
-            )
+            kg_shape = f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
             add(f"kg-prototype:{kg_shape}")
             digest_atoms.append(f"kg:{kg_shape}")
             for relation in sorted(relation_types)[:4]:
@@ -8616,9 +8243,9 @@ class AdaptiveModalAutoencoder:
                     add(f"kg-relation-prototype:{action_class}:{relation_class}")
                     digest_atoms.append(f"kg-relation:{action_class}:{relation_class}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:equivalence-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_equivalence_prototype_features]
         cache[cache_key] = list(result)
@@ -8716,14 +8343,9 @@ class AdaptiveModalAutoencoder:
         add(f"scope-boundary:{scope_state}:{scope_signature}")
         add(f"negation-boundary:{negation_state}:{scope_signature}")
         for force in force_tags[:2]:
-            alternatives = "+".join(
-                value for value in force_palette if value != force
-            )
+            alternatives = "+".join(value for value in force_palette if value != force)
             add(f"force-axis:{force}:vs-{alternatives}")
-            add(
-                f"semantic-force-boundary:{role_signature}:"
-                f"{force}:{scope_signature}"
-            )
+            add(f"semantic-force-boundary:{role_signature}:{force}:{scope_signature}")
             for polarity in polarity_tags[:2]:
                 polarity_alternatives = "+".join(
                     value for value in polarity_palette if value != polarity
@@ -8734,8 +8356,7 @@ class AdaptiveModalAutoencoder:
                     f"{object_class}:{force}:{polarity}:{scope_state}"
                 )
                 add(
-                    f"force-polarity-boundary:{force}:{polarity}:"
-                    f"{negation_state}:{scope_signature}"
+                    f"force-polarity-boundary:{force}:{polarity}:{negation_state}:{scope_signature}"
                 )
 
         for formula in list(sample.modal_ir.formulas or [])[:8]:
@@ -8744,9 +8365,7 @@ class AdaptiveModalAutoencoder:
             symbol = _feature_atom(formula.operator.symbol)
             label = _feature_atom(formula.operator.label)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -8809,14 +8428,9 @@ class AdaptiveModalAutoencoder:
                     role="kg",
                 )
                 for relation_class in relation_classes[:2]:
-                    add(
-                        f"kg-relation-boundary:"
-                        f"{action_class}:{relation_class}:{scope_state}"
-                    )
+                    add(f"kg-relation-boundary:{action_class}:{relation_class}:{scope_state}")
 
-        result = _unique_preserve_order(keys)[
-            : self.max_contrastive_ir_boundary_features
-        ]
+        result = _unique_preserve_order(keys)[: self.max_contrastive_ir_boundary_features]
         cache[cache_key] = list(result)
         return result
 
@@ -8932,9 +8546,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -8960,10 +8572,7 @@ class AdaptiveModalAutoencoder:
                 )
                 for force in force_tags[:2]:
                     for polarity in polarity_tags[:2]:
-                        add(
-                            f"force-operator:{force}:{polarity}:"
-                            f"{family}:{symbol}:{predicate_role}"
-                        )
+                        add(f"force-operator:{force}:{polarity}:{family}:{symbol}:{predicate_role}")
                         add(
                             f"source-ir-rule:{subject_class}:{action_class}:"
                             f"{object_class}:{family}:{symbol}:{predicate_role}"
@@ -9002,10 +8611,11 @@ class AdaptiveModalAutoencoder:
                 if source_has_temporal:
                     add(f"add-temporal-scope:{family}:{predicate_role}")
 
-            if any(
-                tag in {"negative_scope", "restrictive"}
-                for tag in polarity_tags
-            ) and family and symbol:
+            if (
+                any(tag in {"negative_scope", "restrictive"} for tag in polarity_tags)
+                and family
+                and symbol
+            ):
                 add(f"preserve-negation-boundary:negated:{family}:{symbol}")
             elif family and symbol:
                 add(f"preserve-negation-boundary:positive:{family}:{symbol}")
@@ -9024,9 +8634,7 @@ class AdaptiveModalAutoencoder:
         else:
             triples = list(getattr(frame_logic, "triples", []) or [])
             relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
-            kg_shape = (
-                f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
-            )
+            kg_shape = f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
             if not triples and not relation_types:
                 add(f"kg-build-needed:{kg_shape}")
                 add(f"build-frame-logic-kg:{action_class}:{object_class}:{kg_shape}")
@@ -9041,9 +8649,9 @@ class AdaptiveModalAutoencoder:
                 for relation_class in relation_classes[:2]:
                     add(f"kg-relation-repair:{action_class}:{relation_class}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:repair-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_repair_plan_features]
         cache[cache_key] = list(result)
@@ -9129,12 +8737,9 @@ class AdaptiveModalAutoencoder:
         if formulas:
             expected_views.append("modal.ir")
             expected_views.append("external_provers.router")
-        if (
-            families.intersection({"deontic", "conditional_normative"})
-            or any(
-                force in {"obligation", "permission", "prohibition", "normative_action"}
-                for force in force_tags
-            )
+        if families.intersection({"deontic", "conditional_normative"}) or any(
+            force in {"obligation", "permission", "prohibition", "normative_action"}
+            for force in force_tags
         ):
             expected_views.append("deontic_norms")
         if (
@@ -9148,7 +8753,9 @@ class AdaptiveModalAutoencoder:
         if sample.selected_frame or source_anchors or sample.modal_ir.frame_logic:
             expected_views.append("knowledge_graphs.neo4j_compat")
             expected_views.append("modal.frame_logic")
-        view_signature = "+".join(view_atom(view) for view in _unique_preserve_order(expected_views))
+        view_signature = "+".join(
+            view_atom(view) for view in _unique_preserve_order(expected_views)
+        )
 
         add("bias")
         add(f"source-contract:{role_signature}:{source_scope_state}:{scope_signature}")
@@ -9177,9 +8784,7 @@ class AdaptiveModalAutoencoder:
         else:
             triples = list(getattr(frame_logic, "triples", []) or [])
             relation_types = list(getattr(frame_logic, "neo4j_relationship_types", []) or [])
-            kg_shape = (
-                f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
-            )
+            kg_shape = f"t{_count_bucket(len(triples))}:r{_count_bucket(len(relation_types))}"
         add(f"kg-slot:{subject_class}:{action_class}:{object_class}:{kg_shape}")
 
         for force in force_tags[:2]:
@@ -9194,9 +8799,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -9245,9 +8848,9 @@ class AdaptiveModalAutoencoder:
                         f"ir-c{condition_state}:e{exception_state}"
                     )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:contract-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_logic_view_contract_features]
         cache[cache_key] = list(result)
@@ -9276,16 +8879,12 @@ class AdaptiveModalAutoencoder:
                 separators=(",", ":"),
             ).encode("utf-8")
         ).hexdigest()[:16]
-        cache_key = (
-            f"objective_residual_feature_keys:{normalized_prefix}:{target_signature}"
-        )
+        cache_key = f"objective_residual_feature_keys:{normalized_prefix}:{target_signature}"
         cache = self._sample_cache_for(sample)
         cached = cache.get(cache_key)
         if isinstance(cached, list):
             return [str(value) for value in cached]
-        if self.max_objective_residual_features <= 0 or (
-            not losses and not view_distribution
-        ):
+        if self.max_objective_residual_features <= 0 or (not losses and not view_distribution):
             cache[cache_key] = []
             return []
 
@@ -9385,12 +8984,8 @@ class AdaptiveModalAutoencoder:
             view_distribution.items(),
             key=lambda item: (-float(item[1]), str(item[0])),
         )[:8]
-        loss_routes = _unique_preserve_order(
-            route_for_name(name) for name, _value in ranked_losses
-        )
-        view_routes = _unique_preserve_order(
-            route_for_view(view) for view, _value in ranked_views
-        )
+        loss_routes = _unique_preserve_order(route_for_name(name) for name, _value in ranked_losses)
+        view_routes = _unique_preserve_order(route_for_view(view) for view, _value in ranked_views)
         route_signature = "+".join(_unique_preserve_order(loss_routes + view_routes))
         view_signature = "+".join(view_atom(view) for view, _value in ranked_views)
 
@@ -9427,9 +9022,7 @@ class AdaptiveModalAutoencoder:
         for formula in list(sample.modal_ir.formulas or [])[:6]:
             family = _feature_atom(formula.operator.family)
             symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
             shape = (
@@ -9445,9 +9038,9 @@ class AdaptiveModalAutoencoder:
                         f"{view_atom(view)}:{_ratio_bucket(float(value))}"
                     )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:objective-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_objective_residual_features]
         cache[cache_key] = list(result)
@@ -9478,15 +9071,18 @@ class AdaptiveModalAutoencoder:
             role: self._legal_semantic_classes_for(anchor, role=role)
             for role, anchor in source_anchors.items()
         }
-        subject_class = _feature_atom(
-            (role_classes.get("subject") or [source_anchors.get("subject", "")])[0]
-        ) or "none"
-        action_class = _feature_atom(
-            (role_classes.get("action") or [source_anchors.get("action", "")])[0]
-        ) or "none"
-        object_class = _feature_atom(
-            (role_classes.get("object") or [source_anchors.get("object", "")])[0]
-        ) or "none"
+        subject_class = (
+            _feature_atom((role_classes.get("subject") or [source_anchors.get("subject", "")])[0])
+            or "none"
+        )
+        action_class = (
+            _feature_atom((role_classes.get("action") or [source_anchors.get("action", "")])[0])
+            or "none"
+        )
+        object_class = (
+            _feature_atom((role_classes.get("object") or [source_anchors.get("object", "")])[0])
+            or "none"
+        )
         scope_tags = self._source_clause_scope_tags_for(
             sample,
             cue_names,
@@ -9543,9 +9139,7 @@ class AdaptiveModalAutoencoder:
             family = _feature_atom(formula.operator.family)
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
             cue_start = formula.metadata.get("cue_start_char") if formula.metadata else None
             cue_end = formula.metadata.get("cue_end_char") if formula.metadata else None
@@ -9553,7 +9147,9 @@ class AdaptiveModalAutoencoder:
             if cue_start is not None and cue_end is not None:
                 cue_start_int = int(cue_start)
                 cue_end_int = int(cue_end)
-                cue_inside = "inside" if start <= cue_start_int and cue_end_int <= end else "outside"
+                cue_inside = (
+                    "inside" if start <= cue_start_int and cue_end_int <= end else "outside"
+                )
             segment = span_text(start, end)
             role_coverage = role_coverage_for(segment)
 
@@ -9571,8 +9167,7 @@ class AdaptiveModalAutoencoder:
             if cue and family and symbol:
                 add(f"cue-span:{cue}:{family}:{symbol}:{cue_inside}")
                 add(
-                    f"cue-position:{cue}:{_ratio_bucket(start_ratio)}:"
-                    f"{_ratio_bucket(length_ratio)}"
+                    f"cue-position:{cue}:{_ratio_bucket(start_ratio)}:{_ratio_bucket(length_ratio)}"
                 )
             if family and symbol and role_coverage != "none":
                 add(
@@ -9607,9 +9202,9 @@ class AdaptiveModalAutoencoder:
         if overlap_count:
             add(f"span-overlap:{_count_bucket(overlap_count)}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:provenance-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_provenance_alignment_features]
         cache[cache_key] = list(result)
@@ -9708,16 +9303,16 @@ class AdaptiveModalAutoencoder:
             raw_end = int(getattr(formula.provenance, "end_char", raw_start))
             family = _feature_atom(formula.operator.family)
             symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             formula_profiles.append((raw_start, raw_end, family, symbol, predicate_role))
             cue = _feature_atom(formula.metadata.get("cue") if formula.metadata else "")
             if not cue:
                 continue
             cue_start = formula.metadata.get("cue_start_char") if formula.metadata else None
-            start = int(cue_start) if cue_start is not None else int(
-                getattr(formula.provenance, "start_char", 0)
+            start = (
+                int(cue_start)
+                if cue_start is not None
+                else int(getattr(formula.provenance, "start_char", 0))
             )
             cue_events.append(
                 (start, cue, formula_phase(cue, family), family, symbol, predicate_role)
@@ -9736,8 +9331,7 @@ class AdaptiveModalAutoencoder:
             return (nearest[2], nearest[3], nearest[4])
 
         seen_cue_positions = {
-            (start, cue)
-            for start, cue, _phase, _family, _symbol, _predicate_role in cue_events
+            (start, cue) for start, cue, _phase, _family, _symbol, _predicate_role in cue_events
         }
         occupied_text_cue_ranges: List[tuple[int, int]] = []
         text_cue_patterns = (
@@ -9790,9 +9384,7 @@ class AdaptiveModalAutoencoder:
                 ):
                     continue
                 family, symbol, predicate_role = operator_context_for_position(start)
-                cue_events.append(
-                    (start, cue, cue_phase(cue), family, symbol, predicate_role)
-                )
+                cue_events.append((start, cue, cue_phase(cue), family, symbol, predicate_role))
                 seen_cue_positions.add((start, cue))
                 occupied_text_cue_ranges.append((start, end))
         cue_events = sorted(cue_events, key=lambda item: (item[0], item[1], item[3], item[4]))
@@ -9807,13 +9399,8 @@ class AdaptiveModalAutoencoder:
             position = text.find(anchor_atom.replace("_", " "))
             if position >= 0:
                 role_positions.append((position, str(role)))
-        position_by_role = {
-            role: position
-            for position, role in sorted(role_positions)
-        }
-        role_order = "->".join(
-            role for _position, role in sorted(role_positions)
-        ) or "none"
+        position_by_role = {role: position for position, role in sorted(role_positions)}
+        role_order = "->".join(role for _position, role in sorted(role_positions)) or "none"
 
         add("bias")
         add(f"scope:{scope_signature}")
@@ -9834,10 +9421,7 @@ class AdaptiveModalAutoencoder:
             if family and symbol:
                 add(f"cue-operator-flow:{cue}:{family}:{symbol}:{phase}:{predicate_role}")
                 add(f"phase-operator-flow:{phase}:{family}:{symbol}:{predicate_role}")
-                add(
-                    f"operator-phase-flow:{family}:{symbol}:{phase}:"
-                    f"{scope_signature}"
-                )
+                add(f"operator-phase-flow:{family}:{symbol}:{phase}:{scope_signature}")
         action_position = position_by_role.get("action")
         if action_position is not None:
             for scope_role in ("condition", "exception", "temporal"):
@@ -9855,9 +9439,7 @@ class AdaptiveModalAutoencoder:
         for formula in list(sample.modal_ir.formulas or [])[:8]:
             family = _feature_atom(formula.operator.family)
             symbol = _feature_atom(formula.operator.symbol)
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
             shape = (
@@ -9865,18 +9447,15 @@ class AdaptiveModalAutoencoder:
                 f"e{'yes' if exceptions else 'no'}:{predicate_role}"
             )
             if family and symbol:
-                add(
-                    f"operator-discourse:{family}:{symbol}:{shape}:"
-                    f"{phase_sequence}:{role_order}"
-                )
+                add(f"operator-discourse:{family}:{symbol}:{shape}:{phase_sequence}:{role_order}")
                 add(
                     f"decompiler-flow:{role_signature}:{scope_signature}:"
                     f"{family}:{symbol}:{phase_sequence}"
                 )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:flow-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_discourse_flow_features]
         cache[cache_key] = list(result)
@@ -9992,10 +9571,7 @@ class AdaptiveModalAutoencoder:
             exception_state: bool,
         ) -> List[str]:
             routes = ["modal_frame_logic"]
-            if (
-                family in {"deontic", "conditional_normative"}
-                or symbol in {"o", "p", "f"}
-            ):
+            if family in {"deontic", "conditional_normative"} or symbol in {"o", "p", "f"}:
                 routes.append("deontic_norms")
             if (
                 family in {"conditional_normative", "first_order"}
@@ -10034,10 +9610,7 @@ class AdaptiveModalAutoencoder:
         add(f"source-proof-contract:{role_signature}:{scope_signature}")
         for force in force_tags[:2]:
             for polarity in polarity_tags[:2]:
-                add(
-                    f"source-obligation:{force}:{polarity}:"
-                    f"{scope_signature}:{role_signature}"
-                )
+                add(f"source-obligation:{force}:{polarity}:{scope_signature}:{role_signature}")
         if not formulas:
             add(f"route-signature:none:{scope_signature}")
             add(f"todo-route:add_deterministic_parser_rule:{role_signature}:{scope_signature}")
@@ -10047,9 +9620,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -10103,7 +9674,12 @@ class AdaptiveModalAutoencoder:
                         f"todo-route:{repair_route_for(route)}:"
                         f"{route_name}:{goal}:{scope_signature}"
                     )
-                if condition_state or exception_state or source_has_condition or source_has_exception:
+                if (
+                    condition_state
+                    or exception_state
+                    or source_has_condition
+                    or source_has_exception
+                ):
                     add(
                         f"guarded-proof:{goal}:"
                         f"source-c{'yes' if source_has_condition else 'no'}:"
@@ -10119,8 +9695,7 @@ class AdaptiveModalAutoencoder:
                     )
 
         route_signature = "+".join(
-            route_atom(route)
-            for route in _unique_preserve_order(route_signature_parts)
+            route_atom(route) for route in _unique_preserve_order(route_signature_parts)
         )
         goal_signature = "+".join(_unique_preserve_order(goal_signature_parts)) or "none"
         if route_signature:
@@ -10135,9 +9710,9 @@ class AdaptiveModalAutoencoder:
                 f"{route_signature}:{role_signature}:{scope_signature}"
             )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:proof-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_proof_obligation_features]
         cache[cache_key] = list(result)
@@ -10279,9 +9854,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -10319,10 +9892,7 @@ class AdaptiveModalAutoencoder:
                     f"{role_signature}:{scope_signature}"
                 )
                 if system:
-                    add(
-                        f"system-binding:{system}:{family}:{symbol}:"
-                        f"{quantifier}:{predicate_role}"
-                    )
+                    add(f"system-binding:{system}:{family}:{symbol}:{quantifier}:{predicate_role}")
                 for role in ordered_roles:
                     add(
                         f"source-ir-role:{role}:{role_class(role)}:"
@@ -10375,9 +9945,9 @@ class AdaptiveModalAutoencoder:
             f"{role_signature}:{operator_path}:{scope_signature}"
         )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:binding-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_entity_binding_features]
         cache[cache_key] = list(result)
@@ -10453,13 +10023,18 @@ class AdaptiveModalAutoencoder:
             cue_atom = _feature_atom(cue)
             if "notwithstanding" in text or cue_atom == "notwithstanding":
                 return "express-override"
-            if exception_state or source_has_exception or cue_atom in {
-                "except",
-                "exception",
-                "unless",
-                "waiver",
-                "exemption",
-            }:
+            if (
+                exception_state
+                or source_has_exception
+                or cue_atom
+                in {
+                    "except",
+                    "exception",
+                    "unless",
+                    "waiver",
+                    "exemption",
+                }
+            ):
                 return "exception-overrides"
             if cue_atom in {"subject_to", "provided", "provided_that"}:
                 return "proviso-guard"
@@ -10538,9 +10113,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             predicate_classes = self._legal_semantic_classes_for(
                 predicate_head,
@@ -10573,10 +10146,7 @@ class AdaptiveModalAutoencoder:
                     f"{predicate_class}:c{'yes' if condition_state else 'no'}:"
                     f"e{'yes' if exception_state else 'no'}:{scope_signature}"
                 )
-                add(
-                    f"operator-priority:{family}:{symbol}:{priority}:"
-                    f"{role_signature}"
-                )
+                add(f"operator-priority:{family}:{symbol}:{priority}:{role_signature}")
                 if system:
                     add(
                         f"prover-priority-contract:{system}:{family}:{symbol}:"
@@ -10629,9 +10199,9 @@ class AdaptiveModalAutoencoder:
             f"{priority_path}:{role_signature}:{scope_signature}"
         )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:priority-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_defeasible_priority_features]
         cache[cache_key] = list(result)
@@ -10901,15 +10471,21 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(constraints),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
         )
-        constraint_signature = "+".join(
-            f"{kind}:{comparator}:{bucket}:{unit}"
-            for _start, kind, comparator, bucket, unit, _exact in constraints[:8]
-        ) or "none"
+        constraint_signature = (
+            "+".join(
+                f"{kind}:{comparator}:{bucket}:{unit}"
+                for _start, kind, comparator, bucket, unit, _exact in constraints[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-constraints:{role_signature}:{scope_signature}")
@@ -10924,7 +10500,9 @@ class AdaptiveModalAutoencoder:
             add(f"constraint-exact:{kind}:{comparator}:{exact}:{unit}")
             add(f"constraint-role:{kind}:{action_class}:{object_class}:{scope_signature}")
             if kind == "temporal-deadline":
-                add(f"event-calculus-constraint:deadline:{comparator}:{bucket}:{unit}:{action_class}")
+                add(
+                    f"event-calculus-constraint:deadline:{comparator}:{bucket}:{unit}:{action_class}"
+                )
             if kind in {"percentage-threshold", "cardinality-threshold"}:
                 add(f"threshold-constraint:{kind}:{comparator}:{bucket}:{unit}:{object_class}")
             if kind == "monetary-threshold":
@@ -10934,9 +10512,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-constraint:{family}:{symbol}:{predicate_role}:"
@@ -10952,9 +10528,9 @@ class AdaptiveModalAutoencoder:
             f"{constraint_signature}:{role_signature}"
         )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:constraint-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_constraint_grounding_features]
         cache[cache_key] = list(result)
@@ -11079,7 +10655,9 @@ class AdaptiveModalAutoencoder:
 
         def force_class_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
-            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bnot\s+exceed\b", normalized):
+            if re.search(
+                r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bnot\s+exceed\b", normalized
+            ):
                 return "prohibition"
             if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
                 return "obligation"
@@ -11111,9 +10689,7 @@ class AdaptiveModalAutoencoder:
                 return "per_year"
             return "lump_sum"
 
-        formula_events: List[
-            tuple[int, str, str, str, str, str, str, str, str, str, str]
-        ] = []
+        formula_events: List[tuple[int, str, str, str, str, str, str, str, str, str, str]] = []
 
         def add_formula(
             *,
@@ -11206,28 +10782,34 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(formula_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[7]),
         )
-        formula_signature = "+".join(
-            f"{kind}:{left_kind}+{right_kind}->{result_kind}:"
-            f"{force_class}:{polarity}:{rate_unit}"
-            for (
-                _start,
-                kind,
-                left_kind,
-                right_kind,
-                result_kind,
-                force_class,
-                polarity,
-                rate_unit,
-                _left_atom,
-                _right_atom,
-                _result_atom,
-            ) in formula_events[:8]
-        ) or "none"
+        formula_signature = (
+            "+".join(
+                f"{kind}:{left_kind}+{right_kind}->{result_kind}:"
+                f"{force_class}:{polarity}:{rate_unit}"
+                for (
+                    _start,
+                    kind,
+                    left_kind,
+                    right_kind,
+                    result_kind,
+                    force_class,
+                    polarity,
+                    rate_unit,
+                    _left_atom,
+                    _right_atom,
+                    _result_atom,
+                ) in formula_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -11274,28 +10856,16 @@ class AdaptiveModalAutoencoder:
                 f"frame-logic-arithmetic-slot:"
                 f"{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
             )
+            add(f"kg-quantitative-formula-edge:{left_kind}:{kind}:{right_kind}:{result_kind}")
+            add(f"event-calculus-amount-fluent:{kind}:{result_kind}:{polarity}:{rate_unit}")
             add(
-                f"kg-quantitative-formula-edge:"
-                f"{left_kind}:{kind}:{right_kind}:{result_kind}"
+                f"decompiler-formula-slot:{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
             )
-            add(
-                f"event-calculus-amount-fluent:"
-                f"{kind}:{result_kind}:{polarity}:{rate_unit}"
-            )
-            add(
-                f"decompiler-formula-slot:"
-                f"{kind}:{result_kind}:{left_kind}:{right_kind}:{rate_unit}"
-            )
-            add(
-                f"formula-exact:{kind}:"
-                f"{left_atom}+{right_atom}->{result_atom}"
-            )
+            add(f"formula-exact:{kind}:{left_atom}+{right_atom}->{result_atom}")
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-formula:{family}:{symbol}:{predicate_role}:"
@@ -11303,15 +10873,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-formula-plan:{formula_signature}")
-        add(
-            f"operator-formula-plan:{formula_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
+        add(f"operator-formula-plan:{formula_signature}:{role_signature}:{operator_signature}")
         add(f"todo-route:refine_quantitative_formula:{formula_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:formula-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_quantitative_formula_features]
         cache[cache_key] = list(result)
@@ -11582,7 +11149,10 @@ class AdaptiveModalAutoencoder:
         if not definitions:
             for match in bare_definition_pattern.finditer(text):
                 start, end = match.start(), match.end()
-                if any(start < occupied_end and end > occupied_start for occupied_start, occupied_end in occupied_ranges):
+                if any(
+                    start < occupied_end and end > occupied_start
+                    for occupied_start, occupied_end in occupied_ranges
+                ):
                     continue
                 candidate_term = " ".join(content_tokens(match.group("term"), max_tokens=6))
                 if not candidate_term or candidate_term in {"this", "section"}:
@@ -11599,19 +11169,22 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(definitions),
             key=lambda item: (item[0], item[1], item[2], item[6]),
         )
-        definition_signature = "+".join(
-            f"{relation}:{term_class}:{body_class}:{scope_atom}:{body_shape}"
-            for (
-                _start,
-                relation,
-                _term_atom,
-                term_class,
-                body_class,
-                _body_signature,
-                scope_atom,
-                body_shape,
-            ) in definitions[:8]
-        ) or "none"
+        definition_signature = (
+            "+".join(
+                f"{relation}:{term_class}:{body_class}:{scope_atom}:{body_shape}"
+                for (
+                    _start,
+                    relation,
+                    _term_atom,
+                    term_class,
+                    body_class,
+                    _body_signature,
+                    scope_atom,
+                    body_shape,
+                ) in definitions[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
         operator_triples: List[tuple[str, str, str]] = [
             (
@@ -11626,11 +11199,14 @@ class AdaptiveModalAutoencoder:
                 operator_triples.append(("temporal", "f", "definition"))
             else:
                 operator_triples.append(("frame", "frame", "definition"))
-        operator_signature = "->".join(
-            f"{family}:{symbol}"
-            for family, symbol, _predicate_role in operator_triples
-            if family and symbol
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{family}:{symbol}"
+                for family, symbol, _predicate_role in operator_triples
+                if family and symbol
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-definitions:{role_signature}:{scope_signature}")
@@ -11672,14 +11248,11 @@ class AdaptiveModalAutoencoder:
             f"decompiler-definition-plan:{definition_signature}:"
             f"{role_signature}:{operator_signature}"
         )
-        add(
-            f"todo-route:refine_definition_grounding:"
-            f"{definition_signature}:{role_signature}"
-        )
+        add(f"todo-route:refine_definition_grounding:{definition_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:definition-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_definition_grounding_features]
         cache[cache_key] = list(result)
@@ -11830,10 +11403,14 @@ class AdaptiveModalAutoencoder:
             noun_atom = _feature_atom(noun, max_tokens=4)
             for role, anchor in source_anchors.items():
                 anchor_atom = _feature_atom(anchor, max_tokens=4)
-                if noun_atom and anchor_atom and (
-                    noun_atom == anchor_atom
-                    or noun_atom in anchor_atom
-                    or anchor_atom in noun_atom
+                if (
+                    noun_atom
+                    and anchor_atom
+                    and (
+                        noun_atom == anchor_atom
+                        or noun_atom in anchor_atom
+                        or anchor_atom in noun_atom
+                    )
                 ):
                     return str(role)
             if anchor_positions:
@@ -11908,15 +11485,21 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(quantifiers),
             key=lambda item: (item[0], item[1], item[3], item[4]),
         )
-        quantifier_signature = "+".join(
-            f"{kind}:{noun_class}:{role}:{scope}"
-            for _start, kind, _noun, noun_class, role, scope in quantifiers[:8]
-        ) or "none"
+        quantifier_signature = (
+            "+".join(
+                f"{kind}:{noun_class}:{role}:{scope}"
+                for _start, kind, _noun, noun_class, role, scope in quantifiers[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-quantifiers:{role_signature}:{scope_signature}")
@@ -11942,9 +11525,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-quantifier:{family}:{symbol}:{predicate_role}:"
@@ -11955,14 +11536,11 @@ class AdaptiveModalAutoencoder:
             f"decompiler-quantifier-plan:{quantifier_signature}:"
             f"{role_signature}:{operator_signature}"
         )
-        add(
-            f"todo-route:refine_quantifier_scope:"
-            f"{quantifier_signature}:{role_signature}"
-        )
+        add(f"todo-route:refine_quantifier_scope:{quantifier_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:quantifier-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_quantifier_scope_features]
         cache[cache_key] = list(result)
@@ -12084,9 +11662,7 @@ class AdaptiveModalAutoencoder:
         def actor_class_for_position(position: int) -> str:
             left_context = text[max(0, int(position) - 80) : int(position)]
             candidates = [
-                token
-                for token in _TOKEN_RE.findall(left_context)
-                if token in actor_tokens
+                token for token in _TOKEN_RE.findall(left_context) if token in actor_tokens
             ]
             if candidates:
                 return class_for_text(candidates[-1], role="subject")
@@ -12186,16 +11762,12 @@ class AdaptiveModalAutoencoder:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
                 if any(
-                    start < occupied_end
-                    and end > occupied_start
-                    and stage == occupied_stage
+                    start < occupied_end and end > occupied_start and stage == occupied_stage
                     for occupied_start, occupied_end, occupied_stage in occupied_ranges
                 ):
                     continue
                 raw_object = (
-                    match.groupdict().get("object")
-                    or match.groupdict().get("object2")
-                    or stage
+                    match.groupdict().get("object") or match.groupdict().get("object2") or stage
                 )
                 raw_verb = match.groupdict().get("verb") or stage
                 span = text[max(0, start - 48) : min(len(text), end + 64)]
@@ -12224,10 +11796,13 @@ class AdaptiveModalAutoencoder:
         )
         stage_sequence_values = [stage for _start, stage, *_rest in stages[:10]]
         stage_sequence = "->".join(stage_sequence_values) or "none"
-        stage_class_signature = "+".join(
-            f"{stage}:{object_class}"
-            for _start, stage, _actor_class, object_class, _verb, _object_atom in stages[:8]
-        ) or "none"
+        stage_class_signature = (
+            "+".join(
+                f"{stage}:{object_class}"
+                for _start, stage, _actor_class, object_class, _verb, _object_atom in stages[:8]
+            )
+            or "none"
+        )
         lifecycle_kind = (
             "filing_to_decision"
             if "initiate_filing" in stage_sequence_values and "decision" in stage_sequence_values
@@ -12238,10 +11813,13 @@ class AdaptiveModalAutoencoder:
             else "procedure_path"
         )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -12286,9 +11864,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-stage:{family}:{symbol}:{predicate_role}:"
@@ -12301,10 +11877,7 @@ class AdaptiveModalAutoencoder:
             add(f"stage-transition:{left_stage}->{right_stage}:{scope_signature}")
             add(f"event-calculus-transition:{left_stage}->{right_stage}:{lifecycle_kind}")
 
-        add(
-            f"decompiler-lifecycle-plan:{stage_sequence}:"
-            f"{lifecycle_kind}:{role_signature}"
-        )
+        add(f"decompiler-lifecycle-plan:{stage_sequence}:{lifecycle_kind}:{role_signature}")
         add(
             f"operator-lifecycle-plan:{stage_sequence}:"
             f"{lifecycle_kind}:{role_signature}:{operator_signature}"
@@ -12314,9 +11887,9 @@ class AdaptiveModalAutoencoder:
             f"{stage_sequence}:{lifecycle_kind}:{role_signature}"
         )
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:lifecycle-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_procedural_lifecycle_features]
         cache[cache_key] = list(result)
@@ -12557,7 +12130,9 @@ class AdaptiveModalAutoencoder:
         for pattern in trigger_patterns:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_triggers):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_triggers
+                ):
                     continue
                 phrase = match.group(0)
                 triggers.append(
@@ -12575,7 +12150,9 @@ class AdaptiveModalAutoencoder:
         for pattern in remedy_patterns:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_remedies):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_remedies
+                ):
                     continue
                 remedy_text = match.group("remedy")
                 verb = _feature_atom(match.group("verb"), max_tokens=4) or "remedy"
@@ -12602,9 +12179,7 @@ class AdaptiveModalAutoencoder:
                     remedy_object_class = "administrative_sanction"
                 elif remedy_object_class == "enforcement_entity":
                     remedy_object_class = (
-                        "private_party"
-                        if remedy_kind == "injunction"
-                        else "proceeding_or_order"
+                        "private_party" if remedy_kind == "injunction" else "proceeding_or_order"
                     )
                 remedies.append(
                     (
@@ -12626,20 +12201,26 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(remedies),
             key=lambda item: (item[0], item[1], item[2], item[3]),
         )
-        trigger_signature = "+".join(
-            f"{kind}:{target_scope}"
-            for _start, kind, target_scope, _verb in triggers[:4]
-        ) or "none"
-        remedy_signature = "+".join(
-            f"{kind}:{object_class}:{actor_class}:{standard}"
-            for _start, kind, object_class, actor_class, _verb, standard in remedies[:4]
-        ) or "none"
+        trigger_signature = (
+            "+".join(f"{kind}:{target_scope}" for _start, kind, target_scope, _verb in triggers[:4])
+            or "none"
+        )
+        remedy_signature = (
+            "+".join(
+                f"{kind}:{object_class}:{actor_class}:{standard}"
+                for _start, kind, object_class, actor_class, _verb, standard in remedies[:4]
+            )
+            or "none"
+        )
         enforcement_signature = f"{trigger_signature}->{remedy_signature}:{party_class}"
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -12681,9 +12262,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-enforcement:{family}:{symbol}:{predicate_role}:"
@@ -12697,9 +12276,9 @@ class AdaptiveModalAutoencoder:
         )
         add(f"todo-route:refine_enforcement_remedy:{enforcement_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:enforcement-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_enforcement_remedy_features]
         cache[cache_key] = list(result)
@@ -12780,7 +12359,16 @@ class AdaptiveModalAutoencoder:
             ):
                 return "private_party"
             if tokens.intersection(
-                {"secretary", "administrator", "agency", "commission", "department", "board", "director", "officer"}
+                {
+                    "secretary",
+                    "administrator",
+                    "agency",
+                    "commission",
+                    "department",
+                    "board",
+                    "director",
+                    "officer",
+                }
             ):
                 return "government_actor"
             if tokens.intersection({"court", "judge", "tribunal"}):
@@ -12799,11 +12387,19 @@ class AdaptiveModalAutoencoder:
                 return "reason_to_know"
             if re.search(r"\bshould\s+have\s+known\b", normalized):
                 return "constructive_knowledge"
-            if re.search(r"\bwithout\s+(?:knowledge|knowing)\b|\bdoes\s+not\s+know\b|\bnot\s+knowingly\b", normalized):
+            if re.search(
+                r"\bwithout\s+(?:knowledge|knowing)\b|\bdoes\s+not\s+know\b|\bnot\s+knowingly\b",
+                normalized,
+            ):
                 return "lack_of_knowledge"
-            if re.search(r"\bwithout\s+intent\b|\bwithout\s+intending\b|\bnot\s+intentionally\b", normalized):
+            if re.search(
+                r"\bwithout\s+intent\b|\bwithout\s+intending\b|\bnot\s+intentionally\b", normalized
+            ):
                 return "lack_of_intent"
-            if re.search(r"\bknowingly\b|\bknowing\b|\bknows\b|\bknew\b|\bactual\s+knowledge\b|\bhas\s+knowledge\b", normalized):
+            if re.search(
+                r"\bknowingly\b|\bknowing\b|\bknows\b|\bknew\b|\bactual\s+knowledge\b|\bhas\s+knowledge\b",
+                normalized,
+            ):
                 return "knowing"
             if re.search(r"\bwillfully\b|\bwillful\b", normalized):
                 return "willful"
@@ -12821,13 +12417,27 @@ class AdaptiveModalAutoencoder:
                 return "statutory_violation"
             if tokens.intersection({"fail", "fails", "comply", "compliance"}):
                 return "noncompliance"
-            if tokens.intersection({"disclose", "discloses", "disclosure", "publish", "provide", "notice", "record", "records", "information"}):
+            if tokens.intersection(
+                {
+                    "disclose",
+                    "discloses",
+                    "disclosure",
+                    "publish",
+                    "provide",
+                    "notice",
+                    "record",
+                    "records",
+                    "information",
+                }
+            ):
                 return "notice_or_record"
             if tokens.intersection({"file", "files", "submit", "application", "claim", "report"}):
                 return "application_or_proof"
             if tokens.intersection({"pay", "fee", "fees", "payment", "tax", "fine", "penalty"}):
                 return "payment_or_fee"
-            if tokens.intersection({"license", "permit", "approval", "authorization", "certificate"}):
+            if tokens.intersection(
+                {"license", "permit", "approval", "authorization", "certificate"}
+            ):
                 return "authorization_instrument"
             if tokens.intersection({"hearing", "appeal", "action", "order", "proceeding"}):
                 return "proceeding_or_order"
@@ -12841,7 +12451,10 @@ class AdaptiveModalAutoencoder:
 
         def force_class_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
-            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bprohibited\b|\bunlawful\b", normalized):
+            if re.search(
+                r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bprohibited\b|\bunlawful\b",
+                normalized,
+            ):
                 return "prohibition"
             if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
                 return "obligation"
@@ -12856,7 +12469,9 @@ class AdaptiveModalAutoencoder:
 
         def scope_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
-            if re.search(r"\bliable\b|\bpenalty\b|\bfine\b|\bviolation\b|\bviolates?\b", normalized):
+            if re.search(
+                r"\bliable\b|\bpenalty\b|\bfine\b|\bviolation\b|\bviolates?\b", normalized
+            ):
                 return "liability_scope"
             if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bprohibited\b|\bunlawful\b", normalized):
                 return "prohibition_scope"
@@ -12926,7 +12541,9 @@ class AdaptiveModalAutoencoder:
         for pattern in (adverb_pattern, knowledge_pattern, intent_pattern, negated_pattern):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 add_state(
                     start=start,
@@ -12946,8 +12563,7 @@ class AdaptiveModalAutoencoder:
             return []
 
         mental_signature = "+".join(
-            f"{state_kind}:{actor_class}:{target_class}:"
-            f"{force_class}:{polarity}:{state_scope}"
+            f"{state_kind}:{actor_class}:{target_class}:{force_class}:{polarity}:{state_scope}"
             for (
                 _start,
                 state_kind,
@@ -12961,10 +12577,13 @@ class AdaptiveModalAutoencoder:
             ) in state_events[:8]
         )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -13003,14 +12622,8 @@ class AdaptiveModalAutoencoder:
                 f"compiler-mental-state-gate:{state_kind}:"
                 f"{actor_class}:{target_class}:{state_scope}"
             )
-            add(
-                f"frame-logic-mental-slot:"
-                f"{actor_class}:{state_kind}:{target_class}:{state_scope}"
-            )
-            add(
-                f"kg-mental-state-edge:{actor_class}:"
-                f"{state_kind}:{target_class}:{polarity}"
-            )
+            add(f"frame-logic-mental-slot:{actor_class}:{state_kind}:{target_class}:{state_scope}")
+            add(f"kg-mental-state-edge:{actor_class}:{state_kind}:{target_class}:{polarity}")
             add(
                 f"modal-culpability-standard:"
                 f"{state_kind}:{target_class}:{force_class}:{state_scope}"
@@ -13023,9 +12636,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-mental-state:{family}:{symbol}:{predicate_role}:"
@@ -13033,15 +12644,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-mental-state-plan:{mental_signature}")
-        add(
-            f"operator-mental-state-plan:{mental_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
+        add(f"operator-mental-state-plan:{mental_signature}:{role_signature}:{operator_signature}")
         add(f"todo-route:refine_mental_state:{mental_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:mental-state-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_mental_state_features]
         cache[cache_key] = list(result)
@@ -13189,11 +12797,7 @@ class AdaptiveModalAutoencoder:
         current_unit = (
             f"title_{title_atom}-section_{section_prefix}"
             if title_atom and section_prefix
-            else (
-                f"section_{section_prefix}"
-                if section_prefix
-                else "current_unit"
-            )
+            else (f"section_{section_prefix}" if section_prefix else "current_unit")
         )
         references: List[tuple[int, str, str, str, str, str, str]] = []
 
@@ -13268,7 +12872,10 @@ class AdaptiveModalAutoencoder:
 
         for match in direct_ref_pattern.finditer(text):
             start, end = match.start(), match.end()
-            if any(start < occupied_end and end > occupied_start for occupied_start, occupied_end in occupied_ranges):
+            if any(
+                start < occupied_end and end > occupied_start
+                for occupied_start, occupied_end in occupied_ranges
+            ):
                 continue
             add_reference(
                 start=start,
@@ -13282,21 +12889,32 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(references),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
         )
-        reference_signature = "+".join(
-            f"{relation}:{target_family}:{scope_signature}"
-            for _start, relation, target_family, _kind, _target, _trigger, _polarity
-            in references[:8]
-        ) or "none"
-        exact_reference_signature = "+".join(
-            f"{relation}:{kind}:{target}"
-            for _start, relation, _target_family, kind, target, _trigger, _polarity
-            in references[:8]
-        ) or "none"
+        reference_signature = (
+            "+".join(
+                f"{relation}:{target_family}:{scope_signature}"
+                for _start, relation, target_family, _kind, _target, _trigger, _polarity in references[
+                    :8
+                ]
+            )
+            or "none"
+        )
+        exact_reference_signature = (
+            "+".join(
+                f"{relation}:{kind}:{target}"
+                for _start, relation, _target_family, kind, target, _trigger, _polarity in references[
+                    :8
+                ]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-reference:{role_signature}:{scope_signature}")
@@ -13325,9 +12943,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-reference:{family}:{symbol}:{predicate_role}:"
@@ -13335,18 +12951,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-reference-plan:{reference_signature}")
-        add(
-            f"operator-reference-plan:{reference_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
-        add(
-            f"todo-route:refine_reference_dependency_graph:"
-            f"{reference_signature}:{role_signature}"
-        )
+        add(f"operator-reference-plan:{reference_signature}:{role_signature}:{operator_signature}")
+        add(f"todo-route:refine_reference_dependency_graph:{reference_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:reference-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_reference_dependency_features]
         cache[cache_key] = list(result)
@@ -13517,9 +13127,7 @@ class AdaptiveModalAutoencoder:
         )
         strike_pattern = re.compile(r"\bstriking\s+(?P<old>[^.;]{1,140})")
         insert_pattern = re.compile(r"\binserting\s+(?P<new>[^.;]{1,140})")
-        add_pattern = re.compile(
-            r"\badding(?:\s+at\s+the\s+end)?\s+(?P<new>[^.;]{1,160})"
-        )
+        add_pattern = re.compile(r"\badding(?:\s+at\s+the\s+end)?\s+(?P<new>[^.;]{1,160})")
         redesignate_pattern = re.compile(
             r"\bredesignating\s+"
             r"(?P<old>(?:subparagraph|paragraph|subsection|clause|subclause)"
@@ -13643,11 +13251,13 @@ class AdaptiveModalAutoencoder:
             ) in events[:8]
         )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:"
-            f"{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"amendment-count:{_count_bucket(len(events))}")
@@ -13668,18 +13278,9 @@ class AdaptiveModalAutoencoder:
         ) in events[:10]:
             add(f"operation:{op}:{target_class}:{old_class}->{new_class}:{scope}")
             add(f"operation-exact:{op}:{target_kind}:{target_label}:{exact_fragment}")
-            add(
-                f"compiler-amendment-node:"
-                f"{op}:{target_class}:{old_class}->{new_class}:{scope}"
-            )
-            add(
-                f"frame-logic-amendment-slot:"
-                f"{target_class}:{op}:{old_class}:{new_class}:{scope}"
-            )
-            add(
-                f"kg-amendment-edge:"
-                f"{target_class}:{op}:{old_class}->{new_class}:{polarity}"
-            )
+            add(f"compiler-amendment-node:{op}:{target_class}:{old_class}->{new_class}:{scope}")
+            add(f"frame-logic-amendment-slot:{target_class}:{op}:{old_class}:{new_class}:{scope}")
+            add(f"kg-amendment-edge:{target_class}:{op}:{old_class}->{new_class}:{polarity}")
             if op == "redesignate_subdivision":
                 add(f"structural-redesignation:{target_class}:{old_class}->{new_class}")
             if op == "repeal_unit":
@@ -13687,9 +13288,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-amendment:{family}:{symbol}:{predicate_role}:"
@@ -13697,15 +13296,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-amendment-plan:{amendment_signature}")
-        add(
-            f"operator-amendment-plan:{amendment_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
+        add(f"operator-amendment-plan:{amendment_signature}:{role_signature}:{operator_signature}")
         add(f"todo-route:refine_amendment_operation:{amendment_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:amendment-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_amendment_operation_features]
         cache[cache_key] = list(result)
@@ -13805,7 +13401,9 @@ class AdaptiveModalAutoencoder:
                 return "delegation_authority"
             if re.search(r"\bwaiver|waive|exempt|exemption\b", merged):
                 return "waiver_authority"
-            if re.search(r"\bregulation|regulations|rule|rules|prescribe|promulgate|adopt\b", merged):
+            if re.search(
+                r"\bregulation|regulations|rule|rules|prescribe|promulgate|adopt\b", merged
+            ):
                 return "rulemaking_authority"
             if re.search(r"\bpermit|license|approval|approve|grant|issue|certif", merged):
                 return "licensing_authority"
@@ -13817,7 +13415,9 @@ class AdaptiveModalAutoencoder:
 
         def instrument_kind_for(action: str, obj: str, context: str) -> str:
             merged = " ".join((action, obj, context)).lower()
-            if re.search(r"\bregulation|regulations|rule|rules|prescribe|promulgate|adopt\b", merged):
+            if re.search(
+                r"\bregulation|regulations|rule|rules|prescribe|promulgate|adopt\b", merged
+            ):
                 return "rulemaking_instrument"
             if re.search(r"\bwaiver|exemption\b", merged):
                 return "waiver_instrument"
@@ -13851,7 +13451,9 @@ class AdaptiveModalAutoencoder:
             context_text = str(context or "").lower()
             if kind == "preemption_limit":
                 return "preemptive"
-            if re.search(r"\bno\s+\w+\s+may\b|\bmay\s+not\b|\bshall\s+not\b|\bprohibit", context_text):
+            if re.search(
+                r"\bno\s+\w+\s+may\b|\bmay\s+not\b|\bshall\s+not\b|\bprohibit", context_text
+            ):
                 return "limited"
             if re.search(r"\bauthorized\b|\bmay\b|\bhas\s+jurisdiction\b", context_text):
                 return "positive"
@@ -13936,10 +13538,17 @@ class AdaptiveModalAutoencoder:
                 )
             )
 
-        for pattern in (authorized_pattern, jurisdiction_pattern, preemption_pattern, actor_pattern):
+        for pattern in (
+            authorized_pattern,
+            jurisdiction_pattern,
+            preemption_pattern,
+            actor_pattern,
+        ):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 groupdict = match.groupdict()
                 actor = (
@@ -13947,11 +13556,7 @@ class AdaptiveModalAutoencoder:
                     or groupdict.get("subject")
                     or source_anchors.get("subject", "")
                 )
-                action = (
-                    groupdict.get("action")
-                    or groupdict.get("limit_action")
-                    or "authority"
-                )
+                action = groupdict.get("action") or groupdict.get("limit_action") or "authority"
                 obj = groupdict.get("object") or groupdict.get("limit_object") or ""
                 cue = groupdict.get("cue") or action
                 if not actor and not action:
@@ -13975,25 +13580,31 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(authorities),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4]),
         )
-        authority_signature = "+".join(
-            f"{kind}:{actor_class}:{instrument}:{scope}:{polarity}"
-            for (
-                _start,
-                kind,
-                actor_class,
-                instrument,
-                scope,
-                polarity,
-                _cue,
-                _action,
-                _object,
-            ) in authorities[:8]
-        ) or "none"
+        authority_signature = (
+            "+".join(
+                f"{kind}:{actor_class}:{instrument}:{scope}:{polarity}"
+                for (
+                    _start,
+                    kind,
+                    actor_class,
+                    instrument,
+                    scope,
+                    polarity,
+                    _cue,
+                    _action,
+                    _object,
+                ) in authorities[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-authority:{role_signature}:{scope_signature}")
@@ -14030,9 +13641,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-authority:{family}:{symbol}:{predicate_role}:"
@@ -14040,18 +13649,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-authority-plan:{authority_signature}")
-        add(
-            f"operator-authority-plan:{authority_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
-        add(
-            f"todo-route:refine_authority_jurisdiction:"
-            f"{authority_signature}:{role_signature}"
-        )
+        add(f"operator-authority-plan:{authority_signature}:{role_signature}:{operator_signature}")
+        add(f"todo-route:refine_authority_jurisdiction:{authority_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:authority-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_authority_jurisdiction_features]
         cache[cache_key] = list(result)
@@ -14205,7 +13808,10 @@ class AdaptiveModalAutoencoder:
 
         def scope_for(target: str, standard: str, context: str) -> str:
             merged = " ".join((target, standard, context)).lower()
-            if re.search(r"\b(?:waiver|exemption|license|permit|certificate|approval|authorization)\b", merged):
+            if re.search(
+                r"\b(?:waiver|exemption|license|permit|certificate|approval|authorization)\b",
+                merged,
+            ):
                 return "instrument_scope"
             if re.search(r"\b(?:rule|rules|regulation|regulations)\b", merged):
                 return "rulemaking_scope"
@@ -14292,9 +13898,7 @@ class AdaptiveModalAutoencoder:
             rf"(?:the\s+)?(?P<actor>{actor_pattern})\b"
         )
 
-        standard_events: List[
-            tuple[int, str, str, str, str, str, str, str, str, str, str]
-        ] = []
+        standard_events: List[tuple[int, str, str, str, str, str, str, str, str, str, str]] = []
         occupied_ranges: List[tuple[int, int]] = []
 
         def add_standard(
@@ -14344,7 +13948,9 @@ class AdaptiveModalAutoencoder:
         ):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 groupdict = match.groupdict()
                 actor = groupdict.get("actor") or source_anchors.get("subject", "")
@@ -14353,9 +13959,7 @@ class AdaptiveModalAutoencoder:
                 standard_text = groupdict.get("standard")
                 if not standard_text:
                     standard_text = (
-                        "satisfaction"
-                        if default_marker == "satisfaction"
-                        else "discretion"
+                        "satisfaction" if default_marker == "satisfaction" else "discretion"
                     )
                 marker = groupdict.get("marker") or default_marker
                 add_standard(
@@ -14395,10 +13999,13 @@ class AdaptiveModalAutoencoder:
             ) in standard_events[:8]
         )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -14431,40 +14038,23 @@ class AdaptiveModalAutoencoder:
             target_atom,
             standard_atom,
         ) in standard_events[:10]:
-            add(
-                f"standard-edge:{kind}:{actor_class}:"
-                f"{standard_class}:{target_class}:{force_class}"
-            )
+            add(f"standard-edge:{kind}:{actor_class}:{standard_class}:{target_class}:{force_class}")
             add(
                 f"compiler-discretion-gate:{kind}:{actor_class}:"
                 f"{target_class}:{standard_class}:{gate_kind}"
             )
-            add(
-                f"frame-logic-standard-slot:"
-                f"{actor_class}:{standard_class}:{target_class}:{scope}"
-            )
-            add(
-                f"kg-standard-edge:{actor_class}:{kind}:"
-                f"{target_class}:{standard_class}"
-            )
-            add(
-                f"modal-epistemic-standard:{kind}:"
-                f"{standard_class}:{force_class}:{gate_kind}"
-            )
+            add(f"frame-logic-standard-slot:{actor_class}:{standard_class}:{target_class}:{scope}")
+            add(f"kg-standard-edge:{actor_class}:{kind}:{target_class}:{standard_class}")
+            add(f"modal-epistemic-standard:{kind}:{standard_class}:{force_class}:{gate_kind}")
             add(
                 f"decompiler-standard-slot:"
                 f"{kind}:{actor_class}:{standard_class}:{target_class}:{scope}"
             )
-            add(
-                f"standard-exact:{verb_atom}:{target_atom}:"
-                f"{standard_atom}:{actor_class}"
-            )
+            add(f"standard-exact:{verb_atom}:{target_atom}:{standard_atom}:{actor_class}")
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-standard:{family}:{symbol}:{predicate_role}:"
@@ -14472,18 +14062,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-standard-plan:{standard_signature}")
-        add(
-            f"operator-standard-plan:{standard_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
-        add(
-            f"todo-route:refine_discretion_standard:"
-            f"{standard_signature}:{role_signature}"
-        )
+        add(f"operator-standard-plan:{standard_signature}:{role_signature}:{operator_signature}")
+        add(f"todo-route:refine_discretion_standard:{standard_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:standard-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_discretion_standard_features]
         cache[cache_key] = list(result)
@@ -14712,7 +14296,9 @@ class AdaptiveModalAutoencoder:
         ):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 add_validity(
                     start=start,
@@ -14743,25 +14329,31 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(validity_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[5]),
         )
-        validity_signature = "+".join(
-            f"{kind}:{target_class}:{date_kind}:{orientation}:{scope}"
-            for (
-                _start,
-                kind,
-                target_class,
-                date_kind,
-                orientation,
-                scope,
-                _event,
-                _date_atom,
-                _boundary,
-            ) in validity_events[:8]
-        ) or "none"
+        validity_signature = (
+            "+".join(
+                f"{kind}:{target_class}:{date_kind}:{orientation}:{scope}"
+                for (
+                    _start,
+                    kind,
+                    target_class,
+                    date_kind,
+                    orientation,
+                    scope,
+                    _event,
+                    _date_atom,
+                    _boundary,
+                ) in validity_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-validity:{role_signature}:{scope_signature}")
@@ -14802,9 +14394,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-validity:{family}:{symbol}:{predicate_role}:"
@@ -14812,18 +14402,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-validity-plan:{validity_signature}")
-        add(
-            f"operator-validity-plan:{validity_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
-        add(
-            f"todo-route:refine_temporal_validity:"
-            f"{validity_signature}:{role_signature}"
-        )
+        add(f"operator-validity-plan:{validity_signature}:{role_signature}:{operator_signature}")
+        add(f"todo-route:refine_temporal_validity:{validity_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:validity-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_temporal_validity_features]
         cache[cache_key] = list(result)
@@ -14957,7 +14541,11 @@ class AdaptiveModalAutoencoder:
             normalized = " ".join(str(context or "").lower().split())
             if "conclusive" in normalized or "irrebuttable" in normalized:
                 return "conclusive_presumption"
-            if "rebuttable" in normalized or "unless rebutted" in normalized or "may be rebutted" in normalized:
+            if (
+                "rebuttable" in normalized
+                or "unless rebutted" in normalized
+                or "may be rebutted" in normalized
+            ):
                 return "rebuttable_presumption"
             return "presumption"
 
@@ -15042,11 +14630,7 @@ class AdaptiveModalAutoencoder:
             context = text[max(0, start - 80) : min(len(text), end + 96)]
             standard = proof_standard_for(f"{standard_text} {context}")
             actor_class = actor_class_for(holder_text)
-            issue_source = (
-                issue_text
-                if _TOKEN_RE.findall(str(issue_text or ""))
-                else context
-            )
+            issue_source = issue_text if _TOKEN_RE.findall(str(issue_text or "")) else context
             issue_class = issue_class_for(issue_source)
             phase = burden_phase_for(kind, context)
             burden_events.append(
@@ -15072,8 +14656,10 @@ class AdaptiveModalAutoencoder:
             prima_object: str = "",
         ) -> None:
             context = text[max(0, start - 80) : min(len(text), end + 96)]
-            kind = "prima_facie_evidence" if prima_object else presumption_kind_for(
-                f"{kind_text} {context}"
+            kind = (
+                "prima_facie_evidence"
+                if prima_object
+                else presumption_kind_for(f"{kind_text} {context}")
             )
             standard = proof_standard_for(f"{standard_text} {context}")
             if standard == "unspecified_standard" and kind == "prima_facie_evidence":
@@ -15101,7 +14687,9 @@ class AdaptiveModalAutoencoder:
         ):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 add_burden(
                     start=start,
@@ -15116,7 +14704,9 @@ class AdaptiveModalAutoencoder:
         for pattern in (presumption_pattern, rebuttable_presumption_pattern):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 add_presumption(
                     start=start,
@@ -15144,24 +14734,30 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(burden_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        burden_signature = "+".join(
-            f"{kind}:{holder_class}:{issue_class}:{standard}:{phase}"
-            for (
-                _start,
-                kind,
-                holder_class,
-                issue_class,
-                standard,
-                phase,
-                _holder_atom,
-                _issue_atom,
-            ) in burden_events[:8]
-        ) or "none"
+        burden_signature = (
+            "+".join(
+                f"{kind}:{holder_class}:{issue_class}:{standard}:{phase}"
+                for (
+                    _start,
+                    kind,
+                    holder_class,
+                    issue_class,
+                    standard,
+                    phase,
+                    _holder_atom,
+                    _issue_atom,
+                ) in burden_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
 
         add("bias")
         add(f"source-burden:{role_signature}:{scope_signature}")
@@ -15197,9 +14793,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-burden:{family}:{symbol}:{predicate_role}:"
@@ -15207,18 +14801,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-burden-plan:{burden_signature}")
-        add(
-            f"operator-burden-plan:{burden_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
-        add(
-            f"todo-route:refine_evidentiary_burden:"
-            f"{burden_signature}:{role_signature}"
-        )
+        add(f"operator-burden-plan:{burden_signature}:{role_signature}:{operator_signature}")
+        add(f"todo-route:refine_evidentiary_burden:{burden_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:burden-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_evidentiary_burden_features]
         cache[cache_key] = list(result)
@@ -15467,7 +15055,8 @@ class AdaptiveModalAutoencoder:
             if (
                 relation_kind == "privilege_no_right"
                 and holder_class in {"government_actor", "judicial_actor"}
-                and action_class in {"grant_authorization", "deny_or_revoke", "investigate_or_enforce"}
+                and action_class
+                in {"grant_authorization", "deny_or_revoke", "investigate_or_enforce"}
             ):
                 relation_kind = "power_liability"
             counterparty_class = default_counterparty_for(
@@ -15573,7 +15162,9 @@ class AdaptiveModalAutoencoder:
         for pattern, kind, default_polarity in relation_patterns:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 action_text = match.groupdict().get("action") or kind
                 add_relation(
@@ -15591,26 +15182,32 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(relation_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        relation_signature = "+".join(
-            f"{kind}:{holder_class}:{counterparty_class}:{object_class}:"
-            f"{action_class}:{polarity}:{scope}"
-            for (
-                _start,
-                kind,
-                holder_class,
-                counterparty_class,
-                object_class,
-                action_class,
-                polarity,
-                scope,
-                _object_atom,
-            ) in relation_events[:8]
-        ) or "none"
+        relation_signature = (
+            "+".join(
+                f"{kind}:{holder_class}:{counterparty_class}:{object_class}:"
+                f"{action_class}:{polarity}:{scope}"
+                for (
+                    _start,
+                    kind,
+                    holder_class,
+                    counterparty_class,
+                    object_class,
+                    action_class,
+                    polarity,
+                    scope,
+                    _object_atom,
+                ) in relation_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -15662,25 +15259,33 @@ class AdaptiveModalAutoencoder:
             add(f"decompiler-relation-slot:{kind}:{holder_class}:{object_class}:{action_class}")
             add(f"relation-object-exact:{kind}:{object_atom}:{scope}")
             if kind == "right_duty":
-                add(f"claim-right:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+                add(
+                    f"claim-right:{holder_class}:{counterparty_class}:{object_class}:{action_class}"
+                )
             if kind == "duty_right":
                 add(f"legal-duty:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
             if kind == "privilege_no_right":
                 add(f"privilege-liberty:{holder_class}:{object_class}:{action_class}:{polarity}")
             if kind == "power_liability":
-                add(f"legal-power:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+                add(
+                    f"legal-power:{holder_class}:{counterparty_class}:{object_class}:{action_class}"
+                )
             if kind == "liability_power":
-                add(f"legal-liability:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+                add(
+                    f"legal-liability:{holder_class}:{counterparty_class}:{object_class}:{action_class}"
+                )
             if kind == "immunity_disability":
-                add(f"legal-immunity:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+                add(
+                    f"legal-immunity:{holder_class}:{counterparty_class}:{object_class}:{action_class}"
+                )
             if kind == "disability_immunity":
-                add(f"legal-disability:{holder_class}:{counterparty_class}:{object_class}:{action_class}")
+                add(
+                    f"legal-disability:{holder_class}:{counterparty_class}:{object_class}:{action_class}"
+                )
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-relation:{family}:{symbol}:{predicate_role}:"
@@ -15688,15 +15293,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-relation-plan:{relation_signature}")
-        add(
-            f"operator-relation-plan:{relation_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
+        add(f"operator-relation-plan:{relation_signature}:{role_signature}:{operator_signature}")
         add(f"todo-route:refine_legal_relation:{relation_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:relation-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_legal_relation_features]
         cache[cache_key] = list(result)
@@ -15898,9 +15500,7 @@ class AdaptiveModalAutoencoder:
                 return "blocked"
             return "affirmed"
 
-        transition_events: List[
-            tuple[int, str, str, str, str, str, str, str, str, str]
-        ] = []
+        transition_events: List[tuple[int, str, str, str, str, str, str, str, str, str]] = []
         occupied_ranges: List[tuple[int, int]] = []
 
         def add_transition(
@@ -15973,7 +15573,9 @@ class AdaptiveModalAutoencoder:
         ):
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 groups = match.groupdict()
                 object_text = groups.get("object") or groups.get("state") or "status"
@@ -15991,27 +15593,33 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(transition_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        transition_signature = "+".join(
-            f"{status_kind}:{actor_class}:{object_class}:{from_state}->{to_state}:"
-            f"{trigger}:{force_class}:{event_polarity}:{scope}"
-            for (
-                _start,
-                status_kind,
-                actor_class,
-                object_class,
-                from_state,
-                to_state,
-                trigger,
-                force_class,
-                event_polarity,
-                scope,
-            ) in transition_events[:8]
-        ) or "none"
+        transition_signature = (
+            "+".join(
+                f"{status_kind}:{actor_class}:{object_class}:{from_state}->{to_state}:"
+                f"{trigger}:{force_class}:{event_polarity}:{scope}"
+                for (
+                    _start,
+                    status_kind,
+                    actor_class,
+                    object_class,
+                    from_state,
+                    to_state,
+                    trigger,
+                    force_class,
+                    event_polarity,
+                    scope,
+                ) in transition_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -16072,9 +15680,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-status:{family}:{symbol}:{predicate_role}:"
@@ -16082,15 +15688,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-status-plan:{transition_signature}")
-        add(
-            f"operator-status-plan:{transition_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
+        add(f"operator-status-plan:{transition_signature}:{role_signature}:{operator_signature}")
         add(f"todo-route:refine_status_transition:{transition_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:transition-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_status_transition_features]
         cache[cache_key] = list(result)
@@ -16146,15 +15749,21 @@ class AdaptiveModalAutoencoder:
 
         def condition_class_for(value: str) -> str:
             tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
-            if tokens.intersection({"file", "files", "submit", "submits", "application", "claim", "proof"}):
+            if tokens.intersection(
+                {"file", "files", "submit", "submits", "application", "claim", "proof"}
+            ):
                 return "application_or_proof"
             if tokens.intersection({"fee", "payment", "paid", "tax", "fine"}):
                 return "payment_or_fee"
             if tokens.intersection({"notice", "record", "records", "document", "information"}):
                 return "notice_or_record"
-            if tokens.intersection({"timely", "deadline", "date", "days", "period", "before", "after", "within"}):
+            if tokens.intersection(
+                {"timely", "deadline", "date", "days", "period", "before", "after", "within"}
+            ):
                 return "deadline_condition"
-            if tokens.intersection({"eligible", "eligibility", "qualified", "complete", "incomplete"}):
+            if tokens.intersection(
+                {"eligible", "eligibility", "qualified", "complete", "incomplete"}
+            ):
                 return "eligibility_condition"
             if tokens.intersection({"comply", "compliance", "violate", "violation", "breach"}):
                 return "compliance_condition"
@@ -16166,11 +15775,15 @@ class AdaptiveModalAutoencoder:
 
         def consequence_class_for(value: str) -> str:
             tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
-            if tokens.intersection({"approve", "grant", "issue", "authorize", "certify", "license", "permit"}):
+            if tokens.intersection(
+                {"approve", "grant", "issue", "authorize", "certify", "license", "permit"}
+            ):
                 return "grant_authorization"
             if tokens.intersection({"deny", "revoke", "suspend", "terminate", "cancel"}):
                 return "deny_or_revoke"
-            if tokens.intersection({"provide", "publish", "notify", "notice", "disclose", "furnish", "send"}):
+            if tokens.intersection(
+                {"provide", "publish", "notify", "notice", "disclose", "furnish", "send"}
+            ):
                 return "disclose_or_notify"
             if tokens.intersection({"file", "submit", "appeal", "petition", "apply"}):
                 return "submit_or_file"
@@ -16186,7 +15799,9 @@ class AdaptiveModalAutoencoder:
 
         def object_class_for(value: str) -> str:
             tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
-            if tokens.intersection({"license", "permit", "certificate", "approval", "authorization", "waiver"}):
+            if tokens.intersection(
+                {"license", "permit", "certificate", "approval", "authorization", "waiver"}
+            ):
                 return "authorization_instrument"
             if tokens.intersection({"notice", "record", "records", "document", "information"}):
                 return "notice_or_record"
@@ -16200,11 +15815,15 @@ class AdaptiveModalAutoencoder:
 
         def actor_class_for(value: str) -> str:
             tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
-            if tokens.intersection({"agency", "department", "commission", "board", "secretary", "administrator"}):
+            if tokens.intersection(
+                {"agency", "department", "commission", "board", "secretary", "administrator"}
+            ):
                 return "government_actor"
             if tokens.intersection({"court", "judge", "tribunal"}):
                 return "judicial_actor"
-            if tokens.intersection({"applicant", "owner", "person", "party", "claimant", "licensee", "recipient"}):
+            if tokens.intersection(
+                {"applicant", "owner", "person", "party", "claimant", "licensee", "recipient"}
+            ):
                 return "private_party"
             return first_or_none(role_classes.get("subject", [])) or "rule_actor"
 
@@ -16237,7 +15856,9 @@ class AdaptiveModalAutoencoder:
                 return "permission"
             if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
                 return "obligation"
-            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bprohibited\b", normalized):
+            if re.search(
+                r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bprohibited\b", normalized
+            ):
                 return "prohibition"
             return _feature_atom(force_tags[0] if force_tags else "assertive") or "assertive"
 
@@ -16253,7 +15874,9 @@ class AdaptiveModalAutoencoder:
             normalized = " ".join(str(value or "").lower().split())
             if re.search(r"\bthis\s+(?:section|subsection|chapter|subchapter|title)\b", normalized):
                 return "local_statutory_scope"
-            if re.search(r"\b(?:license|permit|certificate|approval|authorization|waiver)\b", normalized):
+            if re.search(
+                r"\b(?:license|permit|certificate|approval|authorization|waiver)\b", normalized
+            ):
                 return "instrument_scope"
             if re.search(r"\b(?:appeal|hearing|action|order|proceeding)\b", normalized):
                 return "procedure_scope"
@@ -16330,7 +15953,9 @@ class AdaptiveModalAutoencoder:
         for pattern, default_marker in patterns:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 marker = match.groupdict().get("marker") or default_marker
                 add_guard(
@@ -16346,28 +15971,34 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(guard_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        guard_signature = "+".join(
-            f"{guard_kind}:{condition_class}->{consequence_class}:"
-            f"{actor_class}:{object_class}:{force_class}:{polarity}:{scope}"
-            for (
-                _start,
-                guard_kind,
-                condition_class,
-                consequence_class,
-                actor_class,
-                object_class,
-                force_class,
-                polarity,
-                scope,
-                _condition_atom,
-                _consequence_atom,
-            ) in guard_events[:8]
-        ) or "none"
+        guard_signature = (
+            "+".join(
+                f"{guard_kind}:{condition_class}->{consequence_class}:"
+                f"{actor_class}:{object_class}:{force_class}:{polarity}:{scope}"
+                for (
+                    _start,
+                    guard_kind,
+                    condition_class,
+                    consequence_class,
+                    actor_class,
+                    object_class,
+                    force_class,
+                    polarity,
+                    scope,
+                    _condition_atom,
+                    _consequence_atom,
+                ) in guard_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -16412,16 +16043,20 @@ class AdaptiveModalAutoencoder:
             )
             add(f"condition-exact:{guard_kind}:{condition_atom}:{condition_class}")
             add(f"consequence-exact:{guard_kind}:{consequence_atom}:{consequence_class}")
-            add(f"event-calculus-precondition:{condition_class}->{consequence_class}:{object_class}")
-            add(f"frame-logic-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{scope}")
+            add(
+                f"event-calculus-precondition:{condition_class}->{consequence_class}:{object_class}"
+            )
+            add(
+                f"frame-logic-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{scope}"
+            )
             add(f"kg-guard-edge:{condition_class}:{guard_kind}:{consequence_class}:{object_class}")
-            add(f"decompiler-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{object_class}")
+            add(
+                f"decompiler-guard-slot:{guard_kind}:{condition_class}:{consequence_class}:{object_class}"
+            )
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-guard:{family}:{symbol}:{predicate_role}:"
@@ -16429,15 +16064,12 @@ class AdaptiveModalAutoencoder:
                     )
 
         add(f"decompiler-guard-plan:{guard_signature}")
-        add(
-            f"operator-guard-plan:{guard_signature}:"
-            f"{role_signature}:{operator_signature}"
-        )
+        add(f"operator-guard-plan:{guard_signature}:{role_signature}:{operator_signature}")
         add(f"todo-route:refine_condition_consequence:{guard_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:guard-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_condition_consequence_features]
         cache[cache_key] = list(result)
@@ -16555,9 +16187,13 @@ class AdaptiveModalAutoencoder:
                 }
             ):
                 return "benefit_participant"
-            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+            if tokens.intersection(
+                {"record", "records", "document", "documents", "information", "notice"}
+            ):
                 return "notice_or_record"
-            if tokens.intersection({"license", "licenses", "permit", "permits", "certificate", "renewal"}):
+            if tokens.intersection(
+                {"license", "licenses", "permit", "permits", "certificate", "renewal"}
+            ):
                 return "authorization_instrument"
             if tokens.intersection({"fee", "fees", "payment", "payments", "tax", "taxes"}):
                 return "payment_or_fee"
@@ -16565,7 +16201,9 @@ class AdaptiveModalAutoencoder:
                 return "regulated_object"
             if tokens.intersection({"agency", "department", "commission", "board"}):
                 return "government_actor"
-            if tokens.intersection({"person", "persons", "individual", "individuals", "party", "parties"}):
+            if tokens.intersection(
+                {"person", "persons", "individual", "individuals", "party", "parties"}
+            ):
                 return "private_party"
             classes: List[str] = []
             for role_name in ("subject", "object", "condition", "kg"):
@@ -16622,9 +16260,13 @@ class AdaptiveModalAutoencoder:
 
         def object_class_for(value: str) -> str:
             tokens = set(_TOKEN_RE.findall(str(value or "").lower()))
-            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+            if tokens.intersection(
+                {"record", "records", "document", "documents", "information", "notice"}
+            ):
                 return "notice_or_record"
-            if tokens.intersection({"license", "permit", "certificate", "renewal", "authorization"}):
+            if tokens.intersection(
+                {"license", "permit", "certificate", "renewal", "authorization"}
+            ):
                 return "authorization_instrument"
             if tokens.intersection({"fee", "payment", "tax", "assessment", "fine"}):
                 return "payment_or_fee"
@@ -16645,7 +16287,9 @@ class AdaptiveModalAutoencoder:
 
         def force_class_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
-            if re.search(r"\bshall\s+not\b|\bdoes\s+not\b|\bnot\s+applicable\b|\bexempt\b", normalized):
+            if re.search(
+                r"\bshall\s+not\b|\bdoes\s+not\b|\bnot\s+applicable\b|\bexempt\b", normalized
+            ):
                 return "exclusion"
             if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
                 return "obligation"
@@ -16670,9 +16314,7 @@ class AdaptiveModalAutoencoder:
             context_text: str = "",
             negative: bool = False,
         ) -> None:
-            combined = " ".join(
-                part for part in (source_text, target_text, context_text) if part
-            )
+            combined = " ".join(part for part in (source_text, target_text, context_text) if part)
             source_scope = source_scope_for(source_text or context_text)
             target_class = target_class_for(target_text)
             domain_class = domain_class_for(combined, target_class)
@@ -16725,9 +16367,7 @@ class AdaptiveModalAutoencoder:
             rf"\bin\s+the\s+case\s+of\s+(?P<target>[^,.;]{{1,120}}),\s*"
             rf"(?P<context>[^.;]{{0,180}}?(?P<source>{source_pattern})[^.;]{{0,120}})"
         )
-        respect_pattern = re.compile(
-            r"\bwith\s+respect\s+to\s+(?P<target>[^.;,]{1,140})"
-        )
+        respect_pattern = re.compile(r"\bwith\s+respect\s+to\s+(?P<target>[^.;,]{1,140})")
 
         for match in purpose_pattern.finditer(text):
             start, end = int(match.start()), int(match.end())
@@ -16807,27 +16447,33 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(applicability_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        applicability_signature = "+".join(
-            f"{scope_kind}:{polarity}:{source_scope}->{target_class}:{domain_class}"
-            for (
-                _start,
-                scope_kind,
-                polarity,
-                source_scope,
-                target_class,
-                domain_class,
-                _actor_class,
-                _object_class,
-                _force_class,
-                _source_atom,
-                _target_atom,
-            ) in applicability_events[:8]
-        ) or "none"
+        applicability_signature = (
+            "+".join(
+                f"{scope_kind}:{polarity}:{source_scope}->{target_class}:{domain_class}"
+                for (
+                    _start,
+                    scope_kind,
+                    polarity,
+                    source_scope,
+                    target_class,
+                    domain_class,
+                    _actor_class,
+                    _object_class,
+                    _force_class,
+                    _source_atom,
+                    _target_atom,
+                ) in applicability_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -16862,26 +16508,16 @@ class AdaptiveModalAutoencoder:
             source_atom,
             target_atom,
         ) in applicability_events[:10]:
-            add(
-                f"scope-edge:{scope_kind}:{source_scope}->{target_class}:"
-                f"{polarity}:{domain_class}"
-            )
+            add(f"scope-edge:{scope_kind}:{source_scope}->{target_class}:{polarity}:{domain_class}")
             add(
                 f"compiler-domain-edge:{source_scope}->{target_class}:"
                 f"{scope_kind}:{polarity}:{domain_class}"
             )
+            add(f"applicability-exact:{scope_kind}:{source_atom}:{target_atom}:{target_class}")
             add(
-                f"applicability-exact:{scope_kind}:{source_atom}:"
-                f"{target_atom}:{target_class}"
+                f"frame-logic-domain-slot:{scope_kind}:{target_class}:{domain_class}:{source_scope}"
             )
-            add(
-                f"frame-logic-domain-slot:{scope_kind}:"
-                f"{target_class}:{domain_class}:{source_scope}"
-            )
-            add(
-                f"kg-applicability-edge:{source_scope}:"
-                f"{scope_kind}:{target_class}:{polarity}"
-            )
+            add(f"kg-applicability-edge:{source_scope}:{scope_kind}:{target_class}:{polarity}")
             add(
                 f"event-calculus-applicability:"
                 f"{scope_kind}:{target_class}:{polarity}:{domain_class}"
@@ -16890,10 +16526,7 @@ class AdaptiveModalAutoencoder:
                 f"decompiler-applicability-slot:"
                 f"{scope_kind}:{target_class}:{source_scope}:{polarity}"
             )
-            add(
-                f"scope-role-binding:{scope_kind}:{actor_class}:"
-                f"{object_class}:{force_class}"
-            )
+            add(f"scope-role-binding:{scope_kind}:{actor_class}:{object_class}:{force_class}")
             if scope_kind == "exclusion_scope":
                 add(
                     f"defeasible-applicability-exception:"
@@ -16902,9 +16535,7 @@ class AdaptiveModalAutoencoder:
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-applicability:{family}:{symbol}:{predicate_role}:"
@@ -16918,9 +16549,9 @@ class AdaptiveModalAutoencoder:
         )
         add(f"todo-route:refine_applicability_scope:{applicability_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:applicability-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_applicability_scope_features]
         cache[cache_key] = list(result)
@@ -17016,15 +16647,21 @@ class AdaptiveModalAutoencoder:
                 }
             ):
                 return "benefit_participant"
-            if tokens.intersection({"person", "persons", "individual", "individuals", "party", "parties"}):
+            if tokens.intersection(
+                {"person", "persons", "individual", "individuals", "party", "parties"}
+            ):
                 return "private_party"
             if tokens.intersection({"agency", "department", "commission", "board", "secretary"}):
                 return "government_actor"
-            if tokens.intersection({"license", "licenses", "permit", "permits", "certificate", "approval"}):
+            if tokens.intersection(
+                {"license", "licenses", "permit", "permits", "certificate", "approval"}
+            ):
                 return "authorization_instrument"
             if tokens.intersection({"application", "claim", "petition", "proof", "filing"}):
                 return "application_or_proof"
-            if tokens.intersection({"record", "records", "document", "documents", "information", "notice"}):
+            if tokens.intersection(
+                {"record", "records", "document", "documents", "information", "notice"}
+            ):
                 return "notice_or_record"
             if tokens.intersection({"fee", "fees", "payment", "payments", "tax", "taxes"}):
                 return "payment_or_fee"
@@ -17131,23 +16768,17 @@ class AdaptiveModalAutoencoder:
                 )
             )
 
-        reference_events: List[
-            tuple[int, str, str, str, str, str, str, str]
-        ] = []
+        reference_events: List[tuple[int, str, str, str, str, str, str, str]] = []
         occupied_ranges: List[tuple[int, int]] = []
 
         def nearest_antecedent(
             reference_start: int,
             referent_class: str,
         ) -> tuple[int, int, str, str] | None:
-            prior_mentions = [
-                mention for mention in mentions if mention[1] <= reference_start
-            ]
+            prior_mentions = [mention for mention in mentions if mention[1] <= reference_start]
             if not prior_mentions:
                 return None
-            same_class = [
-                mention for mention in prior_mentions if mention[2] == referent_class
-            ]
+            same_class = [mention for mention in prior_mentions if mention[2] == referent_class]
             if same_class:
                 return same_class[-1]
             return prior_mentions[-1]
@@ -17172,9 +16803,7 @@ class AdaptiveModalAutoencoder:
             if referent_class == "legal_entity":
                 referent_class = antecedent_class
             identity_state = (
-                "class_preserving"
-                if antecedent_class == referent_class
-                else "bridged_reference"
+                "class_preserving" if antecedent_class == referent_class else "bridged_reference"
             )
             reference_scope = reference_scope_for(antecedent_end, start)
             reference_kind = reference_kind_for(reference_text) or default_kind
@@ -17194,7 +16823,9 @@ class AdaptiveModalAutoencoder:
         for pattern, default_kind in reference_patterns:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 add_reference(
                     start=start,
@@ -17209,25 +16840,30 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(reference_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        coreference_signature = "+".join(
-            f"{kind}:{antecedent_class}->{referent_class}:"
-            f"{reference_scope}:{identity_state}"
-            for (
-                _start,
-                kind,
-                antecedent_class,
-                referent_class,
-                reference_scope,
-                identity_state,
-                _antecedent_atom,
-                _reference_atom,
-            ) in reference_events[:8]
-        ) or "none"
+        coreference_signature = (
+            "+".join(
+                f"{kind}:{antecedent_class}->{referent_class}:{reference_scope}:{identity_state}"
+                for (
+                    _start,
+                    kind,
+                    antecedent_class,
+                    referent_class,
+                    reference_scope,
+                    identity_state,
+                    _antecedent_atom,
+                    _reference_atom,
+                ) in reference_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -17267,10 +16903,7 @@ class AdaptiveModalAutoencoder:
                 f"compiler-variable-binding:{antecedent_class}->{referent_class}:"
                 f"{kind}:{reference_scope}"
             )
-            add(
-                f"frame-logic-same-as:{antecedent_class}:"
-                f"{referent_class}:{kind}:{identity_state}"
-            )
+            add(f"frame-logic-same-as:{antecedent_class}:{referent_class}:{kind}:{identity_state}")
             add(f"kg-coreference-edge:{antecedent_class}:{kind}:{referent_class}")
             add(
                 f"event-calculus-reference-binding:"
@@ -17280,16 +16913,11 @@ class AdaptiveModalAutoencoder:
                 f"decompiler-reference-slot:"
                 f"{kind}:{referent_class}:{reference_scope}:{identity_state}"
             )
-            add(
-                f"coreference-exact:{kind}:"
-                f"{antecedent_atom}->{reference_atom}:{referent_class}"
-            )
+            add(f"coreference-exact:{kind}:{antecedent_atom}->{reference_atom}:{referent_class}")
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-coreference:{family}:{symbol}:{predicate_role}:"
@@ -17303,9 +16931,9 @@ class AdaptiveModalAutoencoder:
         )
         add(f"todo-route:refine_coreference_binding:{coreference_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:coreference-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_coreference_binding_features]
         cache[cache_key] = list(result)
@@ -17362,15 +16990,32 @@ class AdaptiveModalAutoencoder:
         def segment_class_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
             tokens = set(_TOKEN_RE.findall(normalized))
-            if tokens.intersection({"file", "files", "submit", "submits", "application", "claim", "petition", "proof"}):
+            if tokens.intersection(
+                {"file", "files", "submit", "submits", "application", "claim", "petition", "proof"}
+            ):
                 return "application_or_proof"
             if tokens.intersection({"pay", "pays", "fee", "fees", "payment", "tax", "fine"}):
                 return "payment_or_fee"
-            if tokens.intersection({"record", "records", "document", "documents", "report", "reports", "notice", "information"}):
+            if tokens.intersection(
+                {
+                    "record",
+                    "records",
+                    "document",
+                    "documents",
+                    "report",
+                    "reports",
+                    "notice",
+                    "information",
+                }
+            ):
                 return "notice_or_record"
-            if tokens.intersection({"hearing", "appeal", "proceeding", "order", "action", "review"}):
+            if tokens.intersection(
+                {"hearing", "appeal", "proceeding", "order", "action", "review"}
+            ):
                 return "proceeding_or_order"
-            if tokens.intersection({"license", "permit", "certificate", "approval", "authorization", "waiver"}):
+            if tokens.intersection(
+                {"license", "permit", "certificate", "approval", "authorization", "waiver"}
+            ):
                 return "authorization_instrument"
             if tokens.intersection({"maintain", "keep", "retain", "preserve", "comply", "perform"}):
                 return "compliance_action"
@@ -17419,7 +17064,9 @@ class AdaptiveModalAutoencoder:
 
         def force_class_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
-            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bneither\b|\bnor\b", normalized):
+            if re.search(
+                r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bneither\b|\bnor\b", normalized
+            ):
                 return "prohibition"
             if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
                 return "obligation"
@@ -17442,15 +17089,15 @@ class AdaptiveModalAutoencoder:
                 return "condition_scope"
             if re.search(r"\bshall\b|\bmust\b|\bmay\b", normalized):
                 return "modal_scope"
-            if re.search(r"\bany\s+of\s+the\s+following\b|\ball\s+of\s+the\s+following\b", normalized):
+            if re.search(
+                r"\bany\s+of\s+the\s+following\b|\ball\s+of\s+the\s+following\b", normalized
+            ):
                 return "enumeration_scope"
             if segment_class_for(left) == segment_class_for(right):
                 return "same_role_scope"
             return "mixed_role_scope"
 
-        connective_events: List[
-            tuple[int, str, str, str, str, str, str, str, str, str, str]
-        ] = []
+        connective_events: List[tuple[int, str, str, str, str, str, str, str, str, str, str]] = []
         occupied_ranges: List[tuple[int, int]] = []
 
         def add_connective(
@@ -17533,7 +17180,9 @@ class AdaptiveModalAutoencoder:
         for pattern, default_marker in patterns:
             for match in pattern.finditer(text):
                 start, end = int(match.start()), int(match.end())
-                if any(start < old_end and end > old_start for old_start, old_end in occupied_ranges):
+                if any(
+                    start < old_end and end > old_start for old_start, old_end in occupied_ranges
+                ):
                     continue
                 marker = match.groupdict().get("marker") or default_marker
                 if default_marker == "following_list":
@@ -17552,28 +17201,34 @@ class AdaptiveModalAutoencoder:
             _unique_preserve_order(connective_events),
             key=lambda item: (item[0], item[1], item[2], item[3], item[4], item[5]),
         )
-        connective_signature = "+".join(
-            f"{kind}:{left_class}+{right_class}:"
-            f"{force_class}:{polarity}:{connective_scope}:{connective_arity}"
-            for (
-                _start,
-                kind,
-                left_class,
-                right_class,
-                force_class,
-                polarity,
-                connective_scope,
-                connective_arity,
-                _marker_atom,
-                _left_atom,
-                _right_atom,
-            ) in connective_events[:8]
-        ) or "none"
+        connective_signature = (
+            "+".join(
+                f"{kind}:{left_class}+{right_class}:"
+                f"{force_class}:{polarity}:{connective_scope}:{connective_arity}"
+                for (
+                    _start,
+                    kind,
+                    left_class,
+                    right_class,
+                    force_class,
+                    polarity,
+                    connective_scope,
+                    connective_arity,
+                    _marker_atom,
+                    _left_atom,
+                    _right_atom,
+                ) in connective_events[:8]
+            )
+            or "none"
+        )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -17616,32 +17271,18 @@ class AdaptiveModalAutoencoder:
                 f"compiler-boolean-node:{kind}:{left_class}+{right_class}:"
                 f"{connective_scope}:{connective_arity}"
             )
-            add(
-                f"frame-logic-connective-slot:"
-                f"{kind}:{left_class}:{right_class}:{connective_scope}"
-            )
-            add(
-                f"kg-connective-edge:{left_class}:{kind}:{right_class}:"
-                f"{polarity}"
-            )
+            add(f"frame-logic-connective-slot:{kind}:{left_class}:{right_class}:{connective_scope}")
+            add(f"kg-connective-edge:{left_class}:{kind}:{right_class}:{polarity}")
             add(
                 f"event-calculus-connective:"
                 f"{kind}:{left_class}+{right_class}:{force_class}:{polarity}"
             )
-            add(
-                f"decompiler-connective-slot:"
-                f"{kind}:{left_class}:{right_class}:{connective_arity}"
-            )
-            add(
-                f"connective-exact:{marker_atom}:"
-                f"{left_atom}->{right_atom}:{kind}"
-            )
+            add(f"decompiler-connective-slot:{kind}:{left_class}:{right_class}:{connective_arity}")
+            add(f"connective-exact:{marker_atom}:{left_atom}->{right_atom}:{kind}")
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-connective:{family}:{symbol}:{predicate_role}:"
@@ -17650,14 +17291,13 @@ class AdaptiveModalAutoencoder:
 
         add(f"decompiler-connective-plan:{connective_signature}")
         add(
-            f"operator-connective-plan:{connective_signature}:"
-            f"{role_signature}:{operator_signature}"
+            f"operator-connective-plan:{connective_signature}:{role_signature}:{operator_signature}"
         )
         add(f"todo-route:refine_logical_connective:{connective_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:connective-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_logical_connective_features]
         cache[cache_key] = list(result)
@@ -17807,7 +17447,16 @@ class AdaptiveModalAutoencoder:
             ):
                 return "authorization_instrument"
             if tokens.intersection(
-                {"person", "persons", "entity", "entities", "applicant", "licensee", "recipient", "individual"}
+                {
+                    "person",
+                    "persons",
+                    "entity",
+                    "entities",
+                    "applicant",
+                    "licensee",
+                    "recipient",
+                    "individual",
+                }
             ):
                 return "covered_party"
             classes: List[str] = []
@@ -17828,7 +17477,9 @@ class AdaptiveModalAutoencoder:
 
         def force_class_for(value: str) -> str:
             normalized = " ".join(str(value or "").lower().split())
-            if re.search(r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bnone\b", normalized):
+            if re.search(
+                r"\bshall\s+not\b|\bmay\s+not\b|\bmust\s+not\b|\bno\b|\bnone\b", normalized
+            ):
                 return "prohibition"
             if re.search(r"\bshall\b|\bmust\b|\brequired\b", normalized):
                 return "obligation"
@@ -17892,21 +17543,21 @@ class AdaptiveModalAutoencoder:
             r"(?:\s+(?P<join>and|or)\s+(?P<second>\([a-z0-9]{1,4}\)))?"
         )
 
-        enumeration_events: List[
-            tuple[int, str, str, str, str, str, str, str, str, str, str]
-        ] = []
+        enumeration_events: List[tuple[int, str, str, str, str, str, str, str, str, str, str]] = []
         if marker_items:
             levels = _unique_preserve_order(item[2] for item in marker_items)
             level_path = "->".join(levels[:6]) or "enumeration_level"
-            item_signature = "+".join(
-                _unique_preserve_order(item[3] for item in marker_items)[:6]
-            ) or "legal_item"
-            marker_signature = "+".join(
-                _feature_atom(marker_token_for(item[1])) for item in marker_items[:8]
-            ) or "implicit"
-            item_atom_signature = "+".join(
-                _unique_preserve_order(item[4] for item in marker_items)[:6]
-            ) or "item"
+            item_signature = (
+                "+".join(_unique_preserve_order(item[3] for item in marker_items)[:6])
+                or "legal_item"
+            )
+            marker_signature = (
+                "+".join(_feature_atom(marker_token_for(item[1])) for item in marker_items[:8])
+                or "implicit"
+            )
+            item_atom_signature = (
+                "+".join(_unique_preserve_order(item[4] for item in marker_items)[:6]) or "item"
+            )
             enumeration_scope = "list_scope" if following_match else "inline_scope"
             context_start = max(0, marker_items[0][0] - 160)
             context_end = min(len(text), marker_items[-1][0] + 240)
@@ -18000,10 +17651,13 @@ class AdaptiveModalAutoencoder:
             ) in enumeration_events[:8]
         )
         formulas = list(sample.modal_ir.formulas or [])
-        operator_signature = "->".join(
-            f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
-            for formula in formulas[:6]
-        ) or "none"
+        operator_signature = (
+            "->".join(
+                f"{_feature_atom(formula.operator.family)}:{_feature_atom(formula.operator.symbol)}"
+                for formula in formulas[:6]
+            )
+            or "none"
+        )
         subject_class = first_or_none(role_classes.get("subject", []))
         action_class = first_or_none(role_classes.get("action", []))
         object_class = first_or_none(role_classes.get("object", []))
@@ -18044,34 +17698,20 @@ class AdaptiveModalAutoencoder:
                 f"compiler-enumeration-node:{event_kind}:{level_path}:"
                 f"{item_signature}:{quantifier}:{arity}"
             )
-            add(
-                f"frame-logic-enumeration-slot:"
-                f"{level_path}:{item_signature}:{enumeration_scope}"
-            )
-            add(
-                f"kg-enumeration-edge:{event_kind}:{item_signature}:"
-                f"{reference_kind}:{polarity}"
-            )
+            add(f"frame-logic-enumeration-slot:{level_path}:{item_signature}:{enumeration_scope}")
+            add(f"kg-enumeration-edge:{event_kind}:{item_signature}:{reference_kind}:{polarity}")
             add(
                 f"event-calculus-enumeration:"
                 f"{event_kind}:{level_path}:{force_class_for(text)}:{polarity}"
             )
-            add(
-                f"decompiler-enumeration-slot:"
-                f"{level_path}:{item_signature}:{arity}"
-            )
-            add(
-                f"enumeration-exact:{marker_signature}:"
-                f"{item_atom_signature}:{event_kind}"
-            )
+            add(f"decompiler-enumeration-slot:{level_path}:{item_signature}:{arity}")
+            add(f"enumeration-exact:{marker_signature}:{item_atom_signature}:{event_kind}")
             if reference_kind.endswith("_reference"):
                 add(f"reference-target:{reference_kind}:{level_path}:{arity}")
             for formula in formulas[:5]:
                 family = _feature_atom(formula.operator.family)
                 symbol = _feature_atom(formula.operator.symbol)
-                predicate_role = _feature_atom(
-                    getattr(formula.predicate, "role", "") or "none"
-                )
+                predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
                 if family and symbol:
                     add(
                         f"operator-enumeration:{family}:{symbol}:{predicate_role}:"
@@ -18083,14 +17723,11 @@ class AdaptiveModalAutoencoder:
             f"operator-enumeration-plan:{enumeration_signature}:"
             f"{role_signature}:{operator_signature}"
         )
-        add(
-            f"todo-route:refine_enumeration_hierarchy:"
-            f"{enumeration_signature}:{role_signature}"
-        )
+        add(f"todo-route:refine_enumeration_hierarchy:{enumeration_signature}:{role_signature}")
 
-        digest = hashlib.sha256(
-            "|".join(sorted(set(digest_atoms))).encode("utf-8")
-        ).hexdigest()[:16]
+        digest = hashlib.sha256("|".join(sorted(set(digest_atoms))).encode("utf-8")).hexdigest()[
+            :16
+        ]
         keys.insert(1, f"{normalized_prefix}:enumeration-class:{digest}")
         result = _unique_preserve_order(keys)[: self.max_enumeration_hierarchy_features]
         cache[cache_key] = list(result)
@@ -18165,9 +17802,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             arguments = list(getattr(formula.predicate, "arguments", []) or [])
             conditions = list(getattr(formula, "conditions", []) or [])
@@ -18246,9 +17881,7 @@ class AdaptiveModalAutoencoder:
             add(f"frame-logic-triples:{_count_bucket(len(triples))}")
             if not triples:
                 add("frame-logic:empty")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:6]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:6]:
                 relation_atom = _feature_atom(relation)
                 if relation_atom:
                     add(f"kg-relation:{relation_atom}")
@@ -18345,9 +17978,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             predicate_head = predicate_name.split("_", 1)[0] if predicate_name else ""
             arguments = list(getattr(formula.predicate, "arguments", []) or [])
             conditions = list(getattr(formula, "conditions", []) or [])
@@ -18360,9 +17991,7 @@ class AdaptiveModalAutoencoder:
             if family:
                 family_sequence.append(family)
                 add(f"ir-family:{family}")
-                add(
-                    f"ir-shape:{family}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}"
-                )
+                add(f"ir-shape:{family}:a{arity_bucket}:c{condition_bucket}:e{exception_bucket}")
             if predicate_role:
                 add(f"ir-role:{predicate_role}")
             if family and predicate_role:
@@ -18394,13 +18023,9 @@ class AdaptiveModalAutoencoder:
             if subject_anchor and predicate_role:
                 add(f"surface-subject-to-role:{subject_anchor}:{predicate_role}")
             if action_anchor and object_anchor and family and predicate_head:
-                add(
-                    f"compile-path:{action_anchor}->{object_anchor}:{family}:{predicate_head}"
-                )
+                add(f"compile-path:{action_anchor}->{object_anchor}:{family}:{predicate_head}")
             if subject_anchor and action_anchor and predicate_role:
-                add(
-                    f"decompile-path:{subject_anchor}->{action_anchor}:{predicate_role}"
-                )
+                add(f"decompile-path:{subject_anchor}->{action_anchor}:{predicate_role}")
 
             for cue_name in cue_names[:4]:
                 if family:
@@ -18424,24 +18049,18 @@ class AdaptiveModalAutoencoder:
                     add(f"typed-family-pair:{family_pair}")
                 add_typed_family_pair(f"typed-family-pair:{family_pair}")
                 if formula_cue:
-                    add_typed_family_pair(
-                        f"typed-family-pair-cue:{family_pair}:{formula_cue}"
-                    )
+                    add_typed_family_pair(f"typed-family-pair-cue:{family_pair}:{formula_cue}")
                 for cue_name in cue_names[:4]:
                     if family_pair in _AUTOENCODER_PRIORITY_FAMILY_PAIRS:
                         add(f"surface-cue-to-family-pair:{cue_name}:{family_pair}")
-                    add_typed_family_pair(
-                        f"surface-cue-to-family-pair:{cue_name}:{family_pair}"
-                    )
+                    add_typed_family_pair(f"surface-cue-to-family-pair:{cue_name}:{family_pair}")
                     if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
                         add_typed_family_pair(
                             "target-reconstruction-surface-cue-family-pair:"
                             f"{cue_name}:{family_pair}"
                         )
                 for profile in surface_profiles[:4]:
-                    add_typed_family_pair(
-                        f"surface-profile-to-family-pair:{profile}:{family_pair}"
-                    )
+                    add_typed_family_pair(f"surface-profile-to-family-pair:{profile}:{family_pair}")
                     if family_pair in _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS:
                         add_typed_family_pair(
                             "target-reconstruction-surface-profile-family-pair:"
@@ -18461,27 +18080,20 @@ class AdaptiveModalAutoencoder:
                     )
                 if condition_anchor:
                     add_typed_family_pair(
-                        f"surface-condition-to-family-pair:"
-                        f"{condition_anchor}:{family_pair}"
+                        f"surface-condition-to-family-pair:{condition_anchor}:{family_pair}"
                     )
                 if temporal_anchor:
                     add_typed_family_pair(
-                        f"surface-temporal-to-family-pair:"
-                        f"{temporal_anchor}:{family_pair}"
+                        f"surface-temporal-to-family-pair:{temporal_anchor}:{family_pair}"
                     )
                 if exception_anchor:
                     add_typed_family_pair(
-                        f"surface-exception-to-family-pair:"
-                        f"{exception_anchor}:{family_pair}"
+                        f"surface-exception-to-family-pair:{exception_anchor}:{family_pair}"
                     )
             if condition_anchor and family:
-                add(
-                    f"surface-condition-to-family:{condition_anchor}:{family}:c{condition_bucket}"
-                )
+                add(f"surface-condition-to-family:{condition_anchor}:{family}:c{condition_bucket}")
             if exception_anchor and family:
-                add(
-                    f"surface-exception-to-family:{exception_anchor}:{family}:e{exception_bucket}"
-                )
+                add(f"surface-exception-to-family:{exception_anchor}:{family}:e{exception_bucket}")
             if temporal_anchor and family:
                 add(f"surface-temporal-to-family:{temporal_anchor}:{family}")
             if conditions and predicate_role:
@@ -18516,9 +18128,7 @@ class AdaptiveModalAutoencoder:
         else:
             triples = list(getattr(frame_logic, "triples", []) or [])
             add(f"kg-triples:{_count_bucket(len(triples))}")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:6]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:6]:
                 relation_atom = _feature_atom(relation)
                 if relation_atom:
                     add(f"kg-relation:{relation_atom}")
@@ -18550,15 +18160,12 @@ class AdaptiveModalAutoencoder:
             f"{normalized_prefix}:ir-role-shape:",
         )
         core_round_trip_keys = [
-            key
-            for key in unique_keys
-            if str(key).startswith(core_round_trip_prefixes)
+            key for key in unique_keys if str(key).startswith(core_round_trip_prefixes)
         ]
         contract_keys = [
             key
             for key in unique_keys
-            if self._is_reconstruction_contract_feature_key(key)
-            and key not in core_round_trip_keys
+            if self._is_reconstruction_contract_feature_key(key) and key not in core_round_trip_keys
         ]
         generic_keys = [
             key
@@ -18566,9 +18173,9 @@ class AdaptiveModalAutoencoder:
             if key not in core_round_trip_keys
             and not self._is_reconstruction_contract_feature_key(key)
         ]
-        result = _unique_preserve_order(
-            [*core_round_trip_keys, *contract_keys, *generic_keys]
-        )[: self.max_round_trip_bridge_features]
+        result = _unique_preserve_order([*core_round_trip_keys, *contract_keys, *generic_keys])[
+            : self.max_round_trip_bridge_features
+        ]
         cache[cache_key] = list(result)
         return result
 
@@ -18657,9 +18264,7 @@ class AdaptiveModalAutoencoder:
             system = _feature_atom(formula.operator.system)
             symbol = _feature_atom(formula.operator.symbol)
             predicate_name = _feature_atom(getattr(formula.predicate, "name", ""))
-            predicate_role = _feature_atom(
-                getattr(formula.predicate, "role", "") or "none"
-            )
+            predicate_role = _feature_atom(getattr(formula.predicate, "role", "") or "none")
             arguments = list(getattr(formula.predicate, "arguments", []) or [])
             conditions = list(getattr(formula, "conditions", []) or [])
             exceptions = list(getattr(formula, "exceptions", []) or [])
@@ -18671,15 +18276,9 @@ class AdaptiveModalAutoencoder:
             if family:
                 family_sequence.append(family)
                 add(f"ir-family:{family}")
-                add(
-                    f"ir-scope:{family}:condition:{condition_state}:exception:{exception_state}"
-                )
-                add(
-                    f"surface-scope-to-family:{scope_signature}:{family}"
-                )
-                add(
-                    f"surface-role-set-to-family:{role_signature}:{family}"
-                )
+                add(f"ir-scope:{family}:condition:{condition_state}:exception:{exception_state}")
+                add(f"surface-scope-to-family:{scope_signature}:{family}")
+                add(f"surface-role-set-to-family:{role_signature}:{family}")
             if predicate_role:
                 role_sequence.append(predicate_role)
                 add(f"ir-role:{predicate_role}")
@@ -18693,9 +18292,7 @@ class AdaptiveModalAutoencoder:
                 )
             if family and system and symbol:
                 add(f"ir-operator:{family}:{system}:{symbol}")
-                add(
-                    f"surface-scope-to-operator:{scope_signature}:{family}:{symbol}"
-                )
+                add(f"surface-scope-to-operator:{scope_signature}:{family}:{symbol}")
             if predicate_name:
                 add(f"predicate-presence:{predicate_presence}")
                 if family:
@@ -18735,9 +18332,7 @@ class AdaptiveModalAutoencoder:
             )
             if triples:
                 add(f"edge:ir->kg:triples:{_count_bucket(len(triples))}")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:4]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:4]:
                 relation_atom = _feature_atom(relation)
                 if relation_atom:
                     add(f"kg-relation-role:{relation_atom}:{role_signature}")
@@ -18765,16 +18360,12 @@ class AdaptiveModalAutoencoder:
             if selected_frame:
                 keys.append(f"{key_prefix}frame-logic-selected-frame:{selected_frame}")
             triples = list(getattr(frame_logic, "triples", []) or [])
-            keys.append(
-                f"{key_prefix}frame-logic-triple-count-bin:{_count_bucket(len(triples))}"
-            )
+            keys.append(f"{key_prefix}frame-logic-triple-count-bin:{_count_bucket(len(triples))}")
             for label in sorted(getattr(frame_logic, "neo4j_node_labels", []) or [])[:8]:
                 label_atom = _feature_atom(label)
                 if label_atom:
                     keys.append(f"{key_prefix}kg-node-label:{label_atom}")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:8]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:8]:
                 relation_atom = _feature_atom(relation)
                 if relation_atom:
                     keys.append(f"{key_prefix}kg-relation:{relation_atom}")
@@ -18785,9 +18376,7 @@ class AdaptiveModalAutoencoder:
                 if predicate:
                     keys.append(f"{key_prefix}frame-logic-predicate:{predicate}")
                 if subject and predicate:
-                    keys.append(
-                        f"{key_prefix}frame-logic-subject-predicate:{subject}:{predicate}"
-                    )
+                    keys.append(f"{key_prefix}frame-logic-subject-predicate:{subject}:{predicate}")
                 if predicate and object_value:
                     keys.append(
                         f"{key_prefix}frame-logic-predicate-object:{predicate}:{object_value}"
@@ -18816,21 +18405,13 @@ class AdaptiveModalAutoencoder:
             if predicate_role:
                 keys.append(f"{key_prefix}predicate-role:{predicate_role}")
                 keys.append(f"{key_prefix}family-role:{family}:{predicate_role}")
-            keys.append(
-                f"{key_prefix}predicate-arity-bin:{_count_bucket(len(arguments))}"
-            )
-            keys.append(
-                f"{key_prefix}condition-count-bin:{_count_bucket(len(conditions))}"
-            )
-            keys.append(
-                f"{key_prefix}exception-count-bin:{_count_bucket(len(exceptions))}"
-            )
+            keys.append(f"{key_prefix}predicate-arity-bin:{_count_bucket(len(arguments))}")
+            keys.append(f"{key_prefix}condition-count-bin:{_count_bucket(len(conditions))}")
+            keys.append(f"{key_prefix}exception-count-bin:{_count_bucket(len(exceptions))}")
             for argument in arguments[:6]:
                 argument_atom = _feature_atom(argument)
                 if argument_atom and predicate_name:
-                    keys.append(
-                        f"{key_prefix}predicate-argument:{predicate_name}:{argument_atom}"
-                    )
+                    keys.append(f"{key_prefix}predicate-argument:{predicate_name}:{argument_atom}")
             for condition in conditions[:4]:
                 condition_atom = _feature_atom(condition, max_tokens=6)
                 if condition_atom:
@@ -18876,9 +18457,7 @@ class AdaptiveModalAutoencoder:
                 label_atom = _feature_atom(label)
                 if label_atom:
                     bump(f"slot:kg-node-label:{label_atom}")
-            for relation in sorted(
-                getattr(frame_logic, "neo4j_relationship_types", []) or []
-            )[:6]:
+            for relation in sorted(getattr(frame_logic, "neo4j_relationship_types", []) or [])[:6]:
                 relation_atom = _feature_atom(relation)
                 if relation_atom:
                     bump(f"slot:kg-relation:{relation_atom}")
@@ -18969,18 +18548,14 @@ class AdaptiveModalAutoencoder:
             )
             scope_tags = self._source_clause_scope_tags_for(
                 sample,
-                _unique_preserve_order(
-                    [*self._cue_names_for_text(text), *formula_cue_names]
-                ),
+                _unique_preserve_order([*self._cue_names_for_text(text), *formula_cue_names]),
                 self._source_role_anchors_for(sample),
             )
             if conditions and "conditioned" not in scope_tags:
                 scope_tags = [*scope_tags, "conditioned"]
             if exceptions and "excepted" not in scope_tags:
                 scope_tags = [*scope_tags, "excepted"]
-            scope_tags = [
-                tag for tag in scope_tags if tag != "unscoped"
-            ] or ["unconditioned"]
+            scope_tags = [tag for tag in scope_tags if tag != "unscoped"] or ["unconditioned"]
             scope_signature = "+".join(_unique_preserve_order(scope_tags))
             topology_signature = self._autoencoder_clause_topology_signature_for(
                 sample,
@@ -19002,10 +18577,7 @@ class AdaptiveModalAutoencoder:
                 )
                 for formula_cue_name in formula_cue_names:
                     bump(
-                        (
-                            "slot:typed-decompiler-family-pair-cue:"
-                            f"{family_pair}:{formula_cue_name}"
-                        ),
+                        (f"slot:typed-decompiler-family-pair-cue:{family_pair}:{formula_cue_name}"),
                         weight=0.75 * pair_strength,
                     )
                 for source_cue in source_cue_names[:4]:
@@ -19137,10 +18709,7 @@ class AdaptiveModalAutoencoder:
                 bridge_scope = topology_signature or scope_signature
                 for view in _autoencoder_legal_ir_views_for_family_pair(family_pair):
                     bump(
-                        (
-                            "slot:typed-decompiler-family-pair-view-contract:"
-                            f"{family_pair}||{view}"
-                        ),
+                        (f"slot:typed-decompiler-family-pair-view-contract:{family_pair}||{view}"),
                         weight=0.8 * pair_strength,
                     )
                     bump(
@@ -19182,9 +18751,7 @@ class AdaptiveModalAutoencoder:
                             ),
                             weight=0.8 * pair_strength,
                         )
-                        for view in _autoencoder_legal_ir_views_for_family_pair(
-                            family_pair
-                        ):
+                        for view in _autoencoder_legal_ir_views_for_family_pair(family_pair):
                             bump(
                                 (
                                     "slot:typed-decompiler-force-view-family-pair:"
@@ -19219,10 +18786,7 @@ class AdaptiveModalAutoencoder:
         self,
         counts: Mapping[str, float],
     ) -> List[tuple[str, float]]:
-        if (
-            self.semantic_slot_interaction_weight <= 0.0
-            or self.max_semantic_slot_interactions <= 0
-        ):
+        if self.semantic_slot_interaction_weight <= 0.0 or self.max_semantic_slot_interactions <= 0:
             return []
         excluded_prefixes = (
             "slot:bias",
@@ -19266,8 +18830,7 @@ class AdaptiveModalAutoencoder:
             operators = [
                 (slot, max(0.0, float(weight)))
                 for slot, weight in counts.items()
-                if max(0.0, float(weight)) > 0.0
-                and str(slot).startswith("slot:modal-operator:")
+                if max(0.0, float(weight)) > 0.0 and str(slot).startswith("slot:modal-operator:")
             ]
             family_pairs = [
                 (slot, max(0.0, float(weight)))
@@ -19359,9 +18922,8 @@ class AdaptiveModalAutoencoder:
             count += 1
         if self.family_embedding_weight_scale > 0.0 and _observed_family_distribution(sample):
             count += 1
-        if (
-            self.semantic_slot_embedding_weight_scale > 0.0
-            and self._semantic_slot_distribution_for(sample)
+        if self.semantic_slot_embedding_weight_scale > 0.0 and self._semantic_slot_distribution_for(
+            sample
         ):
             count += 1
         if (
@@ -19376,9 +18938,7 @@ class AdaptiveModalAutoencoder:
             count += 1
         if (
             self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0
-            and self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
-                sample
-            )
+            and self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(sample)
         ):
             count += 1
         if (
@@ -19402,9 +18962,8 @@ class AdaptiveModalAutoencoder:
             and self._compiler_quality_slot_distribution_for(sample)
         ):
             count += 1
-        if (
-            self.logic_signature_family_logit_scale > 0.0
-            and self._logic_signature_distribution_for(sample)
+        if self.logic_signature_family_logit_scale > 0.0 and self._logic_signature_distribution_for(
+            sample
         ):
             count += 1
         if (
@@ -19412,9 +18971,8 @@ class AdaptiveModalAutoencoder:
             and self._round_trip_signal_distribution_for(sample)
         ):
             count += 1
-        if (
-            self.decompiler_plan_family_logit_scale > 0.0
-            and self._decompiler_plan_distribution_for(sample)
+        if self.decompiler_plan_family_logit_scale > 0.0 and self._decompiler_plan_distribution_for(
+            sample
         ):
             count += 1
         if (
@@ -19424,9 +18982,8 @@ class AdaptiveModalAutoencoder:
             count += 1
         if self.feature_family_logit_scale > 0.0 and self._feature_keys_for(sample):
             count += 1
-        if (
-            self.semantic_slot_family_logit_scale > 0.0
-            and self._semantic_slot_distribution_for(sample)
+        if self.semantic_slot_family_logit_scale > 0.0 and self._semantic_slot_distribution_for(
+            sample
         ):
             count += 1
         if (
@@ -19521,7 +19078,9 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.logic_signature_embedding_weight_scale > 0.0:
-            for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
+            for signature, signature_weight in self._logic_signature_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19569,9 +19128,9 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.predicate_argument_embedding_weight_scale > 0.0:
-            for signature, signature_weight in (
-                self._predicate_argument_distribution_for(sample).items()
-            ):
+            for signature, signature_weight in self._predicate_argument_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19620,9 +19179,9 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.family_semantic_slot_embedding_weight_scale > 0.0:
-            for key, target_weight in (
-                self._target_family_semantic_slot_distribution_for_sample(sample).items()
-            ):
+            for key, target_weight in self._target_family_semantic_slot_distribution_for_sample(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(target_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19638,17 +19197,16 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
-            for key, target_weight in (
-                self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items()
-            ):
+            for (
+                key,
+                target_weight,
+            ) in self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items():
                 normalized_weight = max(0.0, float(target_weight))
                 if normalized_weight <= 0.0:
                     continue
-                weights = (
-                    self.state.semantic_slot_legal_ir_view_embedding_weights.setdefault(
-                        key,
-                        [0.0 for _ in sample.embedding_vector],
-                    )
+                weights = self.state.semantic_slot_legal_ir_view_embedding_weights.setdefault(
+                    key,
+                    [0.0 for _ in sample.embedding_vector],
                 )
                 if len(weights) != len(sample.embedding_vector):
                     weights[:] = [0.0 for _ in sample.embedding_vector]
@@ -19658,11 +19216,12 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
-            for key, target_weight in (
-                self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
-                    sample
-                ).items()
-            ):
+            for (
+                key,
+                target_weight,
+            ) in self._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(target_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19699,9 +19258,9 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         if self.family_legal_ir_view_embedding_weight_scale > 0.0:
-            for key, target_weight in (
-                self._target_family_legal_ir_view_distribution_for_sample(sample).items()
-            ):
+            for key, target_weight in self._target_family_legal_ir_view_distribution_for_sample(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(target_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19749,9 +19308,7 @@ class AdaptiveModalAutoencoder:
             use_sample_memory=update_sample_memory,
         )
         families = _unique_preserve_order(
-            list(self.modal_families)
-            + list(target_distribution.keys())
-            + list(predicted.keys())
+            list(self.modal_families) + list(target_distribution.keys()) + list(predicted.keys())
         )
         family_update_scale = self._head_update_scale(
             self._active_family_logit_update_head_count(sample),
@@ -19781,7 +19338,9 @@ class AdaptiveModalAutoencoder:
                         2.0 * step * family_update_scale * normalized_weight * gradient
                     )
         if self.logic_signature_family_logit_scale > 0.0:
-            for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
+            for signature, signature_weight in self._logic_signature_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19829,9 +19388,9 @@ class AdaptiveModalAutoencoder:
                         2.0 * step * family_update_scale * normalized_weight * gradient
                     )
         if self.predicate_argument_family_logit_scale > 0.0:
-            for signature, signature_weight in (
-                self._predicate_argument_distribution_for(sample).items()
-            ):
+            for signature, signature_weight in self._predicate_argument_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
@@ -19890,17 +19449,16 @@ class AdaptiveModalAutoencoder:
                     2.0 * step * family_update_scale * normalized_weight * gradient
                 )
         if self.semantic_slot_legal_ir_view_family_logit_scale > 0.0:
-            for key, pair_weight in (
-                self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items()
-            ):
+            for (
+                key,
+                pair_weight,
+            ) in self._target_semantic_slot_legal_ir_view_distribution_for_sample(sample).items():
                 normalized_weight = max(0.0, float(pair_weight))
                 if normalized_weight <= 0.0:
                     continue
-                pair_logits = (
-                    self.state.semantic_slot_legal_ir_view_family_logits.setdefault(
-                        key,
-                        {},
-                    )
+                pair_logits = self.state.semantic_slot_legal_ir_view_family_logits.setdefault(
+                    key,
+                    {},
                 )
                 for family in families:
                     gradient = float(target_distribution.get(family, 0.0)) - float(
@@ -19926,9 +19484,7 @@ class AdaptiveModalAutoencoder:
             target_distribution,
             use_sample_memory=update_sample_memory,
         )
-        families = _unique_preserve_order(
-            list(predicted.keys()) + list(target_distribution.keys())
-        )
+        families = _unique_preserve_order(list(predicted.keys()) + list(target_distribution.keys()))
         legal_view_update_scale = self._head_update_scale(
             self._active_legal_ir_view_logit_update_head_count(sample),
             self.legal_ir_view_head_update_normalization,
@@ -19937,10 +19493,9 @@ class AdaptiveModalAutoencoder:
             gradient = float(target_distribution.get(family, 0.0)) - float(
                 predicted.get(family, 0.0)
             )
-            self.state.legal_ir_view_logits[family] = (
-                self.state.legal_ir_view_logits.get(family, 0.0)
-                + (step * legal_view_update_scale * gradient)
-            )
+            self.state.legal_ir_view_logits[family] = self.state.legal_ir_view_logits.get(
+                family, 0.0
+            ) + (step * legal_view_update_scale * gradient)
         if update_sample_memory:
             logits = self.state.family_logits.setdefault(sample.sample_id, {})
             for family in families:
@@ -19978,17 +19533,15 @@ class AdaptiveModalAutoencoder:
                     2.0 * step * legal_view_update_scale * normalized_weight * gradient
                 )
         if self.logic_signature_legal_ir_view_logit_scale > 0.0:
-            for signature, signature_weight in (
-                self._logic_signature_distribution_for(sample).items()
-            ):
+            for signature, signature_weight in self._logic_signature_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
-                signature_logits = (
-                    self.state.logic_signature_legal_ir_view_logits.setdefault(
-                        signature,
-                        {},
-                    )
+                signature_logits = self.state.logic_signature_legal_ir_view_logits.setdefault(
+                    signature,
+                    {},
                 )
                 for family in families:
                     gradient = float(target_distribution.get(family, 0.0)) - float(
@@ -19998,17 +19551,13 @@ class AdaptiveModalAutoencoder:
                         2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
         if self.round_trip_signal_legal_ir_view_logit_scale > 0.0:
-            for signal, signal_weight in (
-                self._round_trip_signal_distribution_for(sample).items()
-            ):
+            for signal, signal_weight in self._round_trip_signal_distribution_for(sample).items():
                 normalized_weight = max(0.0, float(signal_weight))
                 if normalized_weight <= 0.0:
                     continue
-                signal_logits = (
-                    self.state.round_trip_signal_legal_ir_view_logits.setdefault(
-                        signal,
-                        {},
-                    )
+                signal_logits = self.state.round_trip_signal_legal_ir_view_logits.setdefault(
+                    signal,
+                    {},
                 )
                 for family in families:
                     gradient = float(target_distribution.get(family, 0.0)) - float(
@@ -20018,17 +19567,13 @@ class AdaptiveModalAutoencoder:
                         2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
         if self.decompiler_plan_legal_ir_view_logit_scale > 0.0:
-            for plan, plan_weight in (
-                self._decompiler_plan_distribution_for(sample).items()
-            ):
+            for plan, plan_weight in self._decompiler_plan_distribution_for(sample).items():
                 normalized_weight = max(0.0, float(plan_weight))
                 if normalized_weight <= 0.0:
                     continue
-                plan_logits = (
-                    self.state.decompiler_plan_legal_ir_view_logits.setdefault(
-                        plan,
-                        {},
-                    )
+                plan_logits = self.state.decompiler_plan_legal_ir_view_logits.setdefault(
+                    plan,
+                    {},
                 )
                 for family in families:
                     gradient = float(target_distribution.get(family, 0.0)) - float(
@@ -20038,17 +19583,15 @@ class AdaptiveModalAutoencoder:
                         2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
         if self.predicate_argument_legal_ir_view_logit_scale > 0.0:
-            for signature, signature_weight in (
-                self._predicate_argument_distribution_for(sample).items()
-            ):
+            for signature, signature_weight in self._predicate_argument_distribution_for(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(signature_weight))
                 if normalized_weight <= 0.0:
                     continue
-                signature_logits = (
-                    self.state.predicate_argument_legal_ir_view_logits.setdefault(
-                        signature,
-                        {},
-                    )
+                signature_logits = self.state.predicate_argument_legal_ir_view_logits.setdefault(
+                    signature,
+                    {},
                 )
                 for family in families:
                     gradient = float(target_distribution.get(family, 0.0)) - float(
@@ -20058,17 +19601,15 @@ class AdaptiveModalAutoencoder:
                         2.0 * step * legal_view_update_scale * normalized_weight * gradient
                     )
         if self.family_semantic_slot_legal_ir_view_logit_scale > 0.0:
-            for key, pair_weight in (
-                self._family_semantic_slot_distribution_for_legal_ir_view(sample).items()
-            ):
+            for key, pair_weight in self._family_semantic_slot_distribution_for_legal_ir_view(
+                sample
+            ).items():
                 normalized_weight = max(0.0, float(pair_weight))
                 if normalized_weight <= 0.0:
                     continue
-                pair_logits = (
-                    self.state.family_semantic_slot_legal_ir_view_logits.setdefault(
-                        key,
-                        {},
-                    )
+                pair_logits = self.state.family_semantic_slot_legal_ir_view_logits.setdefault(
+                    key,
+                    {},
                 )
                 for family in families:
                     gradient = float(target_distribution.get(family, 0.0)) - float(
@@ -20102,9 +19643,7 @@ class AdaptiveModalAutoencoder:
             target_distribution,
             use_sample_memory=False,
         )
-        families = _unique_preserve_order(
-            list(predicted.keys()) + list(target_distribution.keys())
-        )
+        families = _unique_preserve_order(list(predicted.keys()) + list(target_distribution.keys()))
         legal_view_update_scale = self._head_update_scale(
             1,
             self.legal_ir_view_head_update_normalization,
@@ -20116,10 +19655,9 @@ class AdaptiveModalAutoencoder:
             )
             if abs(gradient) <= 1.0e-12:
                 continue
-            self.state.legal_ir_view_logits[family] = (
-                self.state.legal_ir_view_logits.get(family, 0.0)
-                + (step * legal_view_update_scale * gradient)
-            )
+            self.state.legal_ir_view_logits[family] = self.state.legal_ir_view_logits.get(
+                family, 0.0
+            ) + (step * legal_view_update_scale * gradient)
             changed = True
         if changed:
             self._invalidate_legal_ir_view_family_candidates()
@@ -20145,9 +19683,7 @@ class AdaptiveModalAutoencoder:
             self.state.decompiler_plan_embedding_weights[plan] = [
                 float(value) * factor for value in vector
             ]
-        for signature, vector in list(
-            self.state.predicate_argument_embedding_weights.items()
-        ):
+        for signature, vector in list(self.state.predicate_argument_embedding_weights.items()):
             self.state.predicate_argument_embedding_weights[signature] = [
                 float(value) * factor for value in vector
             ]
@@ -20163,9 +19699,7 @@ class AdaptiveModalAutoencoder:
             self.state.legal_ir_view_embedding_weights[view] = [
                 float(value) * factor for value in vector
             ]
-        for key, vector in list(
-            self.state.family_semantic_slot_embedding_weights.items()
-        ):
+        for key, vector in list(self.state.family_semantic_slot_embedding_weights.items()):
             self.state.family_semantic_slot_embedding_weights[key] = [
                 float(value) * factor for value in vector
             ]
@@ -20175,15 +19709,11 @@ class AdaptiveModalAutoencoder:
             self.state.family_semantic_slot_legal_ir_view_embedding_weights[key] = [
                 float(value) * factor for value in vector
             ]
-        for key, vector in list(
-            self.state.family_legal_ir_view_embedding_weights.items()
-        ):
+        for key, vector in list(self.state.family_legal_ir_view_embedding_weights.items()):
             self.state.family_legal_ir_view_embedding_weights[key] = [
                 float(value) * factor for value in vector
             ]
-        for key, vector in list(
-            self.state.semantic_slot_legal_ir_view_embedding_weights.items()
-        ):
+        for key, vector in list(self.state.semantic_slot_legal_ir_view_embedding_weights.items()):
             self.state.semantic_slot_legal_ir_view_embedding_weights[key] = [
                 float(value) * factor for value in vector
             ]
@@ -20193,101 +19723,70 @@ class AdaptiveModalAutoencoder:
             ]
         for feature, logits in list(self.state.feature_family_logits.items()):
             self.state.feature_family_logits[feature] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
         for slot, logits in list(self.state.compiler_quality_family_logits.items()):
             self.state.compiler_quality_family_logits[slot] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
         for signature, logits in list(self.state.logic_signature_family_logits.items()):
             self.state.logic_signature_family_logits[signature] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
         for signal, logits in list(self.state.round_trip_signal_family_logits.items()):
             self.state.round_trip_signal_family_logits[signal] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
         for plan, logits in list(self.state.decompiler_plan_family_logits.items()):
             self.state.decompiler_plan_family_logits[plan] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
-        for signature, logits in list(
-            self.state.predicate_argument_family_logits.items()
-        ):
+        for signature, logits in list(self.state.predicate_argument_family_logits.items()):
             self.state.predicate_argument_family_logits[signature] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
         for slot, logits in list(self.state.semantic_slot_family_logits.items()):
             self.state.semantic_slot_family_logits[slot] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
-        for signature, logits in list(
-            self.state.logic_signature_legal_ir_view_logits.items()
-        ):
+        for signature, logits in list(self.state.logic_signature_legal_ir_view_logits.items()):
             self.state.logic_signature_legal_ir_view_logits[signature] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
-        for signal, logits in list(
-            self.state.round_trip_signal_legal_ir_view_logits.items()
-        ):
+        for signal, logits in list(self.state.round_trip_signal_legal_ir_view_logits.items()):
             self.state.round_trip_signal_legal_ir_view_logits[signal] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
-        for plan, logits in list(
-            self.state.decompiler_plan_legal_ir_view_logits.items()
-        ):
+        for plan, logits in list(self.state.decompiler_plan_legal_ir_view_logits.items()):
             self.state.decompiler_plan_legal_ir_view_logits[plan] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
-        for signature, logits in list(
-            self.state.predicate_argument_legal_ir_view_logits.items()
-        ):
+        for signature, logits in list(self.state.predicate_argument_legal_ir_view_logits.items()):
             self.state.predicate_argument_legal_ir_view_logits[signature] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
         for slot, logits in list(self.state.semantic_slot_legal_ir_view_logits.items()):
             self.state.semantic_slot_legal_ir_view_logits[slot] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
         for view, logits in list(self.state.legal_ir_view_family_logits.items()):
             self.state.legal_ir_view_family_logits[view] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
-        for key, logits in list(
-            self.state.semantic_slot_legal_ir_view_family_logits.items()
-        ):
+        for key, logits in list(self.state.semantic_slot_legal_ir_view_family_logits.items()):
             self.state.semantic_slot_legal_ir_view_family_logits[key] = {
-                family: float(value) * factor
-                for family, value in logits.items()
+                family: float(value) * factor for family, value in logits.items()
             }
-        for key, logits in list(
-            self.state.family_semantic_slot_legal_ir_view_logits.items()
-        ):
+        for key, logits in list(self.state.family_semantic_slot_legal_ir_view_logits.items()):
             self.state.family_semantic_slot_legal_ir_view_logits[key] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
         self.state.legal_ir_view_logits = {
-            view: float(value) * factor
-            for view, value in self.state.legal_ir_view_logits.items()
+            view: float(value) * factor for view, value in self.state.legal_ir_view_logits.items()
         }
         for feature, logits in list(self.state.feature_legal_ir_view_logits.items()):
             self.state.feature_legal_ir_view_logits[feature] = {
-                view: float(value) * factor
-                for view, value in logits.items()
+                view: float(value) * factor for view, value in logits.items()
             }
 
     def _compiler_quality_embedding_adjustment(
@@ -20326,9 +19825,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.compiler_quality_embedding_weight_scale
+                    weight * float(value) * self.compiler_quality_embedding_weight_scale
                 )
         return adjustment
 
@@ -20368,9 +19865,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.logic_signature_embedding_weight_scale
+                    weight * float(value) * self.logic_signature_embedding_weight_scale
                 )
         return adjustment
 
@@ -20410,9 +19905,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.round_trip_signal_embedding_weight_scale
+                    weight * float(value) * self.round_trip_signal_embedding_weight_scale
                 )
         return adjustment
 
@@ -20452,9 +19945,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.decompiler_plan_embedding_weight_scale
+                    weight * float(value) * self.decompiler_plan_embedding_weight_scale
                 )
         return adjustment
 
@@ -20468,12 +19959,8 @@ class AdaptiveModalAutoencoder:
             return [0.0 for _ in range(dimensions)]
         weighted_vectors = [
             (float(weight), weights)
-            for signature, weight in self._predicate_argument_distribution_for(
-                sample
-            ).items()
-            for weights in [
-                self.state.predicate_argument_embedding_weights.get(signature)
-            ]
+            for signature, weight in self._predicate_argument_distribution_for(sample).items()
+            for weights in [self.state.predicate_argument_embedding_weights.get(signature)]
             if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
         ]
         if not weighted_vectors:
@@ -20498,9 +19985,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.predicate_argument_embedding_weight_scale
+                    weight * float(value) * self.predicate_argument_embedding_weight_scale
                 )
         return adjustment
 
@@ -20544,9 +20029,7 @@ class AdaptiveModalAutoencoder:
         adjustment = [0.0 for _ in range(dimensions)]
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
-                adjustment[index] += (
-                    weight * float(value) * self.family_embedding_weight_scale
-                )
+                adjustment[index] += weight * float(value) * self.family_embedding_weight_scale
         return adjustment
 
     def _semantic_slot_embedding_adjustment(
@@ -20585,9 +20068,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.semantic_slot_embedding_weight_scale
+                    weight * float(value) * self.semantic_slot_embedding_weight_scale
                 )
         return adjustment
 
@@ -20631,9 +20112,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.family_semantic_slot_embedding_weight_scale
+                    weight * float(value) * self.family_semantic_slot_embedding_weight_scale
                 )
         return adjustment
 
@@ -20677,9 +20156,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.semantic_slot_legal_ir_view_embedding_weight_scale
+                    weight * float(value) * self.semantic_slot_legal_ir_view_embedding_weight_scale
                 )
         return adjustment
 
@@ -20699,9 +20176,7 @@ class AdaptiveModalAutoencoder:
                 use_sample_memory=use_sample_memory,
             ).items()
             for weights in [
-                self.state.family_semantic_slot_legal_ir_view_embedding_weights.get(
-                    key
-                )
+                self.state.family_semantic_slot_legal_ir_view_embedding_weights.get(key)
             ]
             if float(weight) > 0.0 and weights is not None and len(weights) == dimensions
         ]
@@ -20773,9 +20248,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.family_legal_ir_view_embedding_weight_scale
+                    weight * float(value) * self.family_legal_ir_view_embedding_weight_scale
                 )
         return adjustment
 
@@ -20820,9 +20293,7 @@ class AdaptiveModalAutoencoder:
         for weight, vector in weighted_vectors:
             for index, value in enumerate(vector):
                 adjustment[index] += (
-                    weight
-                    * float(value)
-                    * self.legal_ir_view_embedding_weight_scale
+                    weight * float(value) * self.legal_ir_view_embedding_weight_scale
                 )
         return adjustment
 
@@ -20851,9 +20322,7 @@ class AdaptiveModalAutoencoder:
         for weights in vectors:
             for index, value in enumerate(weights):
                 adjustment[index] += (
-                    float(value)
-                    * self.feature_embedding_weight_scale
-                    * feature_scale
+                    float(value) * self.feature_embedding_weight_scale * feature_scale
                 )
         return adjustment
 
@@ -20929,10 +20398,7 @@ class AdaptiveModalAutoencoder:
                 cosine_similarity(target, decoded)
                 for target, decoded in zip(target_vectors, decoded_vectors)
             ],
-            [
-                mse_loss(target, decoded)
-                for target, decoded in zip(target_vectors, decoded_vectors)
-            ],
+            [mse_loss(target, decoded) for target, decoded in zip(target_vectors, decoded_vectors)],
         )
 
     def _cross_entropy_distribution_losses(
@@ -21066,10 +20532,14 @@ class AdaptiveModalAutoencoder:
             return [str(value) for value in cached]
 
         keys: List[str] = []
-        if self.feature_codec is not None and hasattr(
-            self.feature_codec,
-            "feature_keys_for_sample",
-        ) and self.max_codec_feature_keys > 0:
+        if (
+            self.feature_codec is not None
+            and hasattr(
+                self.feature_codec,
+                "feature_keys_for_sample",
+            )
+            and self.max_codec_feature_keys > 0
+        ):
             feature_keys_for_sample = self.feature_codec.feature_keys_for_sample
             try:
                 codec_keys = feature_keys_for_sample(
@@ -21230,7 +20700,7 @@ class AdaptiveModalAutoencoder:
             f"semantic-slot:{slot.removeprefix('slot:')}"
             for slot in self._semantic_slot_distribution_for(sample).keys()
         )
-        keys.extend(f"token:{token}" for token in tokens[:self.max_token_features])
+        keys.extend(f"token:{token}" for token in tokens[: self.max_token_features])
         keys.extend(
             _token_ngram_features(
                 tokens,
@@ -21278,32 +20748,21 @@ class AdaptiveModalAutoencoder:
 
         fallback_set = set(fallback_keys)
         codec_only_keys = [key for key in all_keys if key not in fallback_set]
-        fallback_core_keys = [
-            key for key in fallback_keys if self._is_core_modal_feature_key(key)
-        ]
+        fallback_core_keys = [key for key in fallback_keys if self._is_core_modal_feature_key(key)]
         fallback_priority_keys = [
-            key
-            for key in fallback_core_keys
-            if self._is_priority_modal_feature_key(key)
+            key for key in fallback_core_keys if self._is_priority_modal_feature_key(key)
         ]
         fallback_reconstruction_contract_keys = [
-            key
-            for key in fallback_core_keys
-            if self._is_reconstruction_contract_feature_key(key)
+            key for key in fallback_core_keys if self._is_reconstruction_contract_feature_key(key)
         ]
         fallback_priority_set = set(fallback_priority_keys)
-        fallback_reconstruction_contract_set = set(
-            fallback_reconstruction_contract_keys
-        )
+        fallback_reconstruction_contract_set = set(fallback_reconstruction_contract_keys)
         fallback_structural_keys = [
             key
             for key in fallback_core_keys
-            if key not in fallback_priority_set
-            and key not in fallback_reconstruction_contract_set
+            if key not in fallback_priority_set and key not in fallback_reconstruction_contract_set
         ]
-        fallback_lexical_keys = [
-            key for key in fallback_keys if self._is_lexical_feature_key(key)
-        ]
+        fallback_lexical_keys = [key for key in fallback_keys if self._is_lexical_feature_key(key)]
         fallback_core_set = set(fallback_core_keys)
         fallback_lexical_set = set(fallback_lexical_keys)
         fallback_other_keys = [
@@ -21367,9 +20826,7 @@ class AdaptiveModalAutoencoder:
         all_key_set = set(all_keys)
         core_keys = [
             key
-            for key in _unique_preserve_order(
-                self._legal_ir_view_core_feature_keys_for(sample)
-            )
+            for key in _unique_preserve_order(self._legal_ir_view_core_feature_keys_for(sample))
             if key in all_key_set
         ]
         if not core_keys:
@@ -21378,16 +20835,8 @@ class AdaptiveModalAutoencoder:
             return [(core_keys, step / len(core_keys))]
         core_set = set(core_keys)
         shared_keys = [key for key in all_keys if key not in core_set]
-        shared_structural = [
-            key
-            for key in shared_keys
-            if not self._is_lexical_feature_key(key)
-        ]
-        shared_lexical = [
-            key
-            for key in shared_keys
-            if self._is_lexical_feature_key(key)
-        ]
+        shared_structural = [key for key in shared_keys if not self._is_lexical_feature_key(key)]
+        shared_lexical = [key for key in shared_keys if self._is_lexical_feature_key(key)]
         groups = self._weighted_update_groups(
             step=step,
             groups=[
@@ -21399,11 +20848,7 @@ class AdaptiveModalAutoencoder:
         return groups or [(all_keys, step / len(all_keys))]
 
     def _cue_names_for_text(self, text: str) -> List[str]:
-        return [
-            cue_name
-            for cue_name, pattern in _LEGAL_IR_CUE_PATTERNS
-            if pattern.search(text)
-        ]
+        return [cue_name for cue_name, pattern in _LEGAL_IR_CUE_PATTERNS if pattern.search(text)]
 
     def _is_lexical_feature_key(self, feature: str) -> bool:
         lexical_prefixes = (
@@ -21549,10 +20994,7 @@ class AdaptiveModalAutoencoder:
         clip = float(self.feature_logit_clip)
         if clip <= 0.0:
             return dict(logits)
-        return {
-            name: max(-clip, min(clip, float(value)))
-            for name, value in logits.items()
-        }
+        return {name: max(-clip, min(clip, float(value))) for name, value in logits.items()}
 
     def _weighted_update_groups(
         self,
@@ -21601,11 +21043,7 @@ class AdaptiveModalAutoencoder:
             for family, value in logits.items():
                 if family not in self.modal_families:
                     continue
-                family_value = (
-                    float(value)
-                    * self.feature_family_logit_scale
-                    * feature_scale
-                )
+                family_value = float(value) * self.feature_family_logit_scale * feature_scale
                 contributions.append(
                     AutoencoderFeatureContribution(
                         feature=feature,
@@ -21631,9 +21069,7 @@ class AdaptiveModalAutoencoder:
                 if family not in self.modal_families:
                     continue
                 family_value = (
-                    float(value)
-                    * float(slot_weight)
-                    * self.semantic_slot_family_logit_scale
+                    float(value) * float(slot_weight) * self.semantic_slot_family_logit_scale
                 )
                 contributions.append(
                     AutoencoderFeatureContribution(
@@ -21662,9 +21098,7 @@ class AdaptiveModalAutoencoder:
                 if family not in self.modal_families:
                     continue
                 family_value = (
-                    float(value)
-                    * float(slot_weight)
-                    * self.compiler_quality_family_logit_scale
+                    float(value) * float(slot_weight) * self.compiler_quality_family_logit_scale
                 )
                 contributions.append(
                     AutoencoderFeatureContribution(
@@ -21699,9 +21133,7 @@ class AdaptiveModalAutoencoder:
                 if family not in self.modal_families:
                     continue
                 family_value = (
-                    float(value)
-                    * float(view_weight)
-                    * self.legal_ir_view_family_logit_scale
+                    float(value) * float(view_weight) * self.legal_ir_view_family_logit_scale
                 )
                 contributions.append(
                     AutoencoderFeatureContribution(
@@ -21724,17 +21156,13 @@ class AdaptiveModalAutoencoder:
                         },
                     )
                 )
-        for signature, signature_weight in self._logic_signature_distribution_for(
-            sample
-        ).items():
+        for signature, signature_weight in self._logic_signature_distribution_for(sample).items():
             logits = self.state.logic_signature_family_logits.get(signature, {})
             for family, value in logits.items():
                 if family not in self.modal_families:
                     continue
                 family_value = (
-                    float(value)
-                    * float(signature_weight)
-                    * self.logic_signature_family_logit_scale
+                    float(value) * float(signature_weight) * self.logic_signature_family_logit_scale
                 )
                 contributions.append(
                     AutoencoderFeatureContribution(
@@ -21791,17 +21219,13 @@ class AdaptiveModalAutoencoder:
                         },
                     )
                 )
-        for signal, signal_weight in self._round_trip_signal_distribution_for(
-            sample
-        ).items():
+        for signal, signal_weight in self._round_trip_signal_distribution_for(sample).items():
             logits = self.state.round_trip_signal_family_logits.get(signal, {})
             for family, value in logits.items():
                 if family not in self.modal_families:
                     continue
                 family_value = (
-                    float(value)
-                    * float(signal_weight)
-                    * self.round_trip_signal_family_logit_scale
+                    float(value) * float(signal_weight) * self.round_trip_signal_family_logit_scale
                 )
                 contributions.append(
                     AutoencoderFeatureContribution(
@@ -21864,9 +21288,7 @@ class AdaptiveModalAutoencoder:
                 if family not in self.modal_families:
                     continue
                 family_value = (
-                    float(value)
-                    * float(plan_weight)
-                    * self.decompiler_plan_family_logit_scale
+                    float(value) * float(plan_weight) * self.decompiler_plan_family_logit_scale
                 )
                 contributions.append(
                     AutoencoderFeatureContribution(
@@ -22105,17 +21527,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.family_embedding_weight_scale
+                float(value) * float(probability) * self.family_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=f"modal-family-prototype:{family}",
@@ -22135,17 +21556,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.compiler_quality_embedding_weight_scale
+                float(value) * float(probability) * self.compiler_quality_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=slot,
@@ -22164,24 +21584,21 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
-        for signature, probability in self._logic_signature_distribution_for(
-            sample
-        ).items():
+        for signature, probability in self._logic_signature_distribution_for(sample).items():
             weights = self.state.logic_signature_embedding_weights.get(signature)
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.logic_signature_embedding_weight_scale
+                float(value) * float(probability) * self.logic_signature_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=signature,
@@ -22205,17 +21622,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.round_trip_signal_embedding_weight_scale
+                float(value) * float(probability) * self.round_trip_signal_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=signal,
@@ -22239,17 +21655,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.decompiler_plan_embedding_weight_scale
+                float(value) * float(probability) * self.decompiler_plan_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=plan,
@@ -22268,24 +21683,21 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
-        for signature, probability in self._predicate_argument_distribution_for(
-            sample
-        ).items():
+        for signature, probability in self._predicate_argument_distribution_for(sample).items():
             weights = self.state.predicate_argument_embedding_weights.get(signature)
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.predicate_argument_embedding_weight_scale
+                float(value) * float(probability) * self.predicate_argument_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=signature,
@@ -22312,17 +21724,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.family_semantic_slot_embedding_weight_scale
+                float(value) * float(probability) * self.family_semantic_slot_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=f"family-semantic-slot-prototype:{key}",
@@ -22349,17 +21760,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.legal_ir_view_embedding_weight_scale
+                float(value) * float(probability) * self.legal_ir_view_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=f"legal-ir-view-prototype:{view}",
@@ -22390,11 +21800,12 @@ class AdaptiveModalAutoencoder:
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=f"semantic-slot-legal-ir-view-prototype:{key}",
@@ -22413,15 +21824,11 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
-        for key, probability in (
-            self._family_semantic_slot_legal_ir_view_distribution_for_embedding(
-                sample,
-                use_sample_memory=use_sample_memory,
-            ).items()
-        ):
-            weights = self.state.family_semantic_slot_legal_ir_view_embedding_weights.get(
-                key
-            )
+        for key, probability in self._family_semantic_slot_legal_ir_view_distribution_for_embedding(
+            sample,
+            use_sample_memory=use_sample_memory,
+        ).items():
+            weights = self.state.family_semantic_slot_legal_ir_view_embedding_weights.get(key)
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
@@ -22431,11 +21838,12 @@ class AdaptiveModalAutoencoder:
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=f"family-semantic-slot-legal-ir-view-prototype:{key}",
@@ -22462,17 +21870,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.family_legal_ir_view_embedding_weight_scale
+                float(value) * float(probability) * self.family_legal_ir_view_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=f"family-legal-ir-view-prototype:{key}",
@@ -22496,17 +21903,16 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             scaled_weights = [
-                float(value)
-                * float(probability)
-                * self.semantic_slot_embedding_weight_scale
+                float(value) * float(probability) * self.semantic_slot_embedding_weight_scale
                 for value in weights
             ]
             alignment = sum(
-                float(left) * float(right)
-                for left, right in zip(residual, scaled_weights)
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
             )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=slot,
@@ -22534,9 +21940,13 @@ class AdaptiveModalAutoencoder:
                 float(value) * self.feature_embedding_weight_scale * feature_scale
                 for value in weights
             ]
-            alignment = sum(float(left) * float(right) for left, right in zip(residual, scaled_weights))
+            alignment = sum(
+                float(left) * float(right) for left, right in zip(residual, scaled_weights)
+            )
             weight_norm = _vector_norm(scaled_weights)
-            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            normalized_alignment = (
+                alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            )
             contributions.append(
                 AutoencoderFeatureContribution(
                     feature=feature,
@@ -22550,6 +21960,7 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
+
         def contribution_head_scale(contribution: AutoencoderFeatureContribution) -> float:
             for key, value in contribution.metadata.items():
                 if str(key).endswith("_weight_scale"):
@@ -22685,8 +22096,7 @@ def _pipeline_stage_diagnostics_for_introspection(
 
     formula_count = len(getattr(sample.modal_ir, "formulas", ()) or ())
     component_gap_values = [
-        max(0.0, _float_or_zero(value))
-        for value in dict(legal_ir_component_gaps or {}).values()
+        max(0.0, _float_or_zero(value)) for value in dict(legal_ir_component_gaps or {}).values()
     ]
     return {
         "autoencoder_embedding_cosine_gap": round(
@@ -22731,19 +22141,17 @@ def _pipeline_stage_focus_from_diagnostics(
     focus: List[str] = []
     if bool(diagnostics.get("spacy_parser_missing_formula")):
         focus.append("spacy_parser")
-    if bool(diagnostics.get("modal_family_cue_mismatch")) or _float_or_zero(
-        diagnostics.get("modal_family_target_probability_gap")
-    ) > 0.0:
+    if (
+        bool(diagnostics.get("modal_family_cue_mismatch"))
+        or _float_or_zero(diagnostics.get("modal_family_target_probability_gap")) > 0.0
+    ):
         focus.append("modal_family_registry")
     if _float_or_zero(diagnostics.get("autoencoder_embedding_cosine_gap")) > 0.20:
         focus.append("autoencoder_embedding_head")
     if _float_or_zero(diagnostics.get("ir_decoder_reconstruction_loss")) > 0.05:
         focus.append("typed_ir_decoder")
     if (
-        _float_or_zero(
-            diagnostics.get("source_decompiled_text_embedding_cosine_loss")
-        )
-        > 0.25
+        _float_or_zero(diagnostics.get("source_decompiled_text_embedding_cosine_loss")) > 0.25
         or _float_or_zero(diagnostics.get("source_decompiled_text_token_loss")) > 0.25
     ):
         focus.append("semantic_decompiler")
@@ -22762,9 +22170,7 @@ def _source_decompiled_text_losses_from_targets(
 
     explicit_cosine_loss = losses.get("source_decompiled_text_embedding_cosine_loss")
     source_decompiled_cosine_loss = (
-        _float_or_zero(explicit_cosine_loss)
-        if explicit_cosine_loss is not None
-        else 0.0
+        _float_or_zero(explicit_cosine_loss) if explicit_cosine_loss is not None else 0.0
     )
     if explicit_cosine_loss is None:
         source_decompiled_cosine_similarity = losses.get(
@@ -22782,9 +22188,7 @@ def _source_decompiled_text_losses_from_targets(
                 1.0 - _float_or_zero(source_decompiled_cosine_similarity),
             )
 
-    source_decompiled_token_loss = _float_or_zero(
-        losses.get("source_decompiled_text_token_loss")
-    )
+    source_decompiled_token_loss = _float_or_zero(losses.get("source_decompiled_text_token_loss"))
     if source_decompiled_token_loss <= 0.0:
         source_decompiled_token_loss = _float_or_zero(
             losses.get("structural_text_reconstruction_loss")
@@ -22863,11 +22267,7 @@ def _normalized_distribution(distribution: Mapping[str, float]) -> Dict[str, flo
     total = sum(positive.values())
     if total <= 0.0:
         return {}
-    return {
-        name: value / total
-        for name, value in sorted(positive.items())
-        if value > 0.0
-    }
+    return {name: value / total for name, value in sorted(positive.items()) if value > 0.0}
 
 
 _LEGAL_IR_VIEW_FAMILY_RANK = {
@@ -22888,11 +22288,7 @@ def _legal_ir_view_family_name(view: str) -> str:
     if not normalized:
         return "other"
     compact = normalized.replace("::", ".").replace("/", ".")
-    if (
-        compact.startswith("deontic")
-        or ".deontic" in compact
-        or "norm" in compact
-    ):
+    if compact.startswith("deontic") or ".deontic" in compact or "norm" in compact:
         return "deontic"
     if (
         compact.startswith("modal.frame_logic")
@@ -22968,20 +22364,16 @@ def _legal_ir_view_family_loss_metrics(
     predicted_distribution: Mapping[str, float],
     target_distribution: Mapping[str, float],
 ) -> Dict[str, float]:
-    predicted_family_distribution = _legal_ir_view_family_distribution(
-        predicted_distribution
-    )
+    predicted_family_distribution = _legal_ir_view_family_distribution(predicted_distribution)
     target_family_distribution = _legal_ir_view_family_distribution(target_distribution)
     if not predicted_family_distribution and not target_family_distribution:
         return {}
 
     metrics: Dict[str, float] = {}
     if target_family_distribution:
-        metrics["legal_ir_view_family_cross_entropy_loss"] = (
-            cross_entropy_distribution_loss(
-                predicted_family_distribution,
-                target_family_distribution,
-            )
+        metrics["legal_ir_view_family_cross_entropy_loss"] = cross_entropy_distribution_loss(
+            predicted_family_distribution,
+            target_family_distribution,
         )
         metrics["legal_ir_view_family_entropy_loss"] = distribution_entropy_loss(
             target_family_distribution
@@ -23014,11 +22406,9 @@ def _legal_ir_view_family_loss_metrics(
             predicted_binary,
             target_binary,
         )
-        metrics[f"{prefix}_cross_entropy_excess_loss"] = (
-            cross_entropy_excess_distribution_loss(
-                predicted_binary,
-                target_binary,
-            )
+        metrics[f"{prefix}_cross_entropy_excess_loss"] = cross_entropy_excess_distribution_loss(
+            predicted_binary,
+            target_binary,
         )
         metrics[f"{prefix}_cosine_gap_loss"] = max(
             0.0,
@@ -23060,9 +22450,7 @@ def _triple_distribution(
         return {}
     return _normalized_distribution(
         {
-            key_fn(first_key, second_key, third_key): first_value
-            * second_value
-            * third_value
+            key_fn(first_key, second_key, third_key): first_value * second_value * third_value
             for first_key, first_value in first_distribution.items()
             for second_key, second_value in second_distribution.items()
             for third_key, third_value in third_distribution.items()
@@ -23235,8 +22623,7 @@ def _autoencoder_formula_force_polarity_tags(
     label = _feature_atom(getattr(formula.operator, "label", ""))
     family = _feature_atom(getattr(formula.operator, "family", ""))
     cue_text = " ".join(
-        value.replace("_", " ")
-        for value in _formula_autoencoder_cue_names(formula)
+        value.replace("_", " ") for value in _formula_autoencoder_cue_names(formula)
     ).lower()
     metadata_force = _feature_atom(metadata.get("force", "")).lower()
     metadata_polarity = _feature_atom(
@@ -23438,11 +22825,7 @@ def _legal_ir_target_payload(
             target_hashes[str(sample_id)] = str(document.canonical_hash())
 
     return {
-        "losses": {
-            name: _mean(values)
-            for name, values in sorted(loss_values.items())
-            if values
-        },
+        "losses": {name: _mean(values) for name, values in sorted(loss_values.items()) if values},
         "target_view_distributions_by_sample": dict(
             sorted(target_view_distributions_by_sample.items())
         ),
@@ -23491,9 +22874,7 @@ def _evaluate_legal_ir_multiview_with_timeout(
     previous_timer = signal.setitimer(signal.ITIMER_REAL, 0.0)
 
     def _raise_timeout(signum: int, frame: Any) -> None:
-        raise _LegalIRTargetTimeout(
-            f"LegalIR target construction exceeded {timeout_seconds:.3f}s"
-        )
+        raise _LegalIRTargetTimeout(f"LegalIR target construction exceeded {timeout_seconds:.3f}s")
 
     try:
         signal.signal(signal.SIGALRM, _raise_timeout)
@@ -23544,21 +22925,43 @@ def _legal_ir_timeout_view_distribution(
         scores[view] = scores.get(view, 0.0) + float(weight)
 
     cue_groups = (
-        ("deontic.ir", 0.55, r"\b(?:shall|must|may|required|prohibited|authorized|eligible|entitled)\b"),
-        ("TDFOL.prover", 0.40, r"\b(?:if|unless|provided|subject\s+to|before|after|within|not\s+later\s+than)\b"),
-        ("modal.frame_logic", 0.35, r"\b(?:means|definition|term|section|chapter|subchapter|paragraph)\b"),
-        ("knowledge_graphs.neo4j_compat", 0.30, r"\b(?:secretary|administrator|agency|commission|state|person|contractor)\b"),
-        ("CEC.native", 0.30, r"\b(?:effective|expires?|repealed|transferred|action|event|hearing|notice)\b"),
-        ("external_provers.router", 0.20, r"\b(?:prove|certif(?:y|ies|ied)|determine|finding|report)\b"),
+        (
+            "deontic.ir",
+            0.55,
+            r"\b(?:shall|must|may|required|prohibited|authorized|eligible|entitled)\b",
+        ),
+        (
+            "TDFOL.prover",
+            0.40,
+            r"\b(?:if|unless|provided|subject\s+to|before|after|within|not\s+later\s+than)\b",
+        ),
+        (
+            "modal.frame_logic",
+            0.35,
+            r"\b(?:means|definition|term|section|chapter|subchapter|paragraph)\b",
+        ),
+        (
+            "knowledge_graphs.neo4j_compat",
+            0.30,
+            r"\b(?:secretary|administrator|agency|commission|state|person|contractor)\b",
+        ),
+        (
+            "CEC.native",
+            0.30,
+            r"\b(?:effective|expires?|repealed|transferred|action|event|hearing|notice)\b",
+        ),
+        (
+            "external_provers.router",
+            0.20,
+            r"\b(?:prove|certif(?:y|ies|ied)|determine|finding|report)\b",
+        ),
         ("zkp.circuits", 0.12, r"\b(?:attest|certificate|audit|compliance|verification)\b"),
     )
     for view, weight, pattern in cue_groups:
         if re.search(pattern, text, flags=re.IGNORECASE):
             bump(view, weight)
     for profile in _uscode_surface_profile_tags(text):
-        for view, weight in _uscode_surface_profile_legal_ir_view_weights(
-            profile
-        ).items():
+        for view, weight in _uscode_surface_profile_legal_ir_view_weights(profile).items():
             bump(view, weight)
         for family in _uscode_surface_profile_modal_families(profile):
             for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(family, ()):
@@ -23570,11 +22973,7 @@ def _legal_ir_timeout_view_distribution(
     total = sum(max(0.0, value) for value in scores.values())
     if total <= 0.0:
         return {}
-    return {
-        key: value / total
-        for key, value in sorted(scores.items())
-        if value > 0.0
-    }
+    return {key: value / total for key, value in sorted(scores.items()) if value > 0.0}
 
 
 def _legal_ir_target_is_timeout_fallback(target: Any) -> bool:
@@ -23796,9 +23195,7 @@ def _legal_ir_target_cache_key(
 
 
 def _legal_ir_target_disk_cache_enabled() -> bool:
-    raw = str(
-        os.environ.get(_LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV) or ""
-    ).strip().lower()
+    raw = str(os.environ.get(_LEGAL_IR_TARGET_DISK_CACHE_ENABLED_ENV) or "").strip().lower()
     return raw not in _FALSE_ENV_VALUES
 
 
@@ -23849,11 +23246,7 @@ def _legal_ir_target_code_fingerprint() -> str:
         ]
         tokens: List[str] = []
         for candidate in candidates:
-            paths = (
-                sorted(candidate.rglob("*.py"))
-                if candidate.is_dir()
-                else [candidate]
-            )
+            paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
             for path in paths:
                 try:
                     stat = path.stat()
@@ -23865,9 +23258,7 @@ def _legal_ir_target_code_fingerprint() -> str:
                     relative = path
                 tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
         _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE = (
-            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
-            if tokens
-            else "unknown"
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest() if tokens else "unknown"
         )
         return _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE
 
@@ -23894,21 +23285,13 @@ def _legal_ir_target_disk_cache_path(cache_key: str) -> Optional[Path]:
     if root is None:
         return None
     disk_key = _legal_ir_target_disk_cache_key(cache_key)
-    return (
-        root
-        / _LEGAL_IR_TARGET_DISK_CACHE_KIND
-        / disk_key[:2]
-        / f"{disk_key}.json"
-    )
+    return root / _LEGAL_IR_TARGET_DISK_CACHE_KIND / disk_key[:2] / f"{disk_key}.json"
 
 
 def _numeric_float_mapping(values: Any) -> Dict[str, float]:
     if not isinstance(values, Mapping):
         return {}
-    return {
-        str(name): _float_or_zero(value)
-        for name, value in values.items()
-    }
+    return {str(name): _float_or_zero(value) for name, value in values.items()}
 
 
 def _legal_ir_target_cache_payload(target: Any) -> Optional[Dict[str, Any]]:
@@ -23928,17 +23311,12 @@ def _legal_ir_target_cache_payload(target: Any) -> Optional[Dict[str, Any]]:
     return {
         "accepted": bool(getattr(target, "accepted", False)),
         "adapter_losses": dict(sorted(adapter_losses.items())),
-        "bridge_names": [
-            str(name)
-            for name in list(getattr(target, "bridge_names", ()) or ())
-        ],
+        "bridge_names": [str(name) for name in list(getattr(target, "bridge_names", ()) or ())],
         "document_hash": document_hash,
         "document_id": str(getattr(document, "document_id", "") or ""),
         "document_version": str(getattr(document, "version", "") or ""),
         "losses": _numeric_float_mapping(getattr(target, "losses", {}) or {}),
-        "view_distribution": _numeric_float_mapping(
-            getattr(target, "view_distribution", {}) or {}
-        ),
+        "view_distribution": _numeric_float_mapping(getattr(target, "view_distribution", {}) or {}),
     }
 
 
@@ -23950,10 +23328,7 @@ def _legal_ir_target_cache_payload_is_timeout_fallback(
     return (
         document_hash.startswith("timeout:")
         or document_hash.startswith("timeout-fallback:")
-        or (
-            isinstance(losses, Mapping)
-            and "legal_ir_target_timeout_loss" in losses
-        )
+        or (isinstance(losses, Mapping) and "legal_ir_target_timeout_loss" in losses)
     )
 
 
@@ -23973,9 +23348,7 @@ def _normalise_legal_ir_target_cache_payload(
         "accepted": bool(payload.get("accepted", False)),
         "adapter_losses": dict(sorted(adapter_losses.items())),
         "bridge_names": [
-            str(name)
-            for name in list(payload.get("bridge_names") or ())
-            if str(name)
+            str(name) for name in list(payload.get("bridge_names") or ()) if str(name)
         ],
         "document_hash": document_hash,
         "document_id": str(payload.get("document_id") or ""),
@@ -23995,9 +23368,7 @@ def _write_legal_ir_target_disk_cache_payload(
         return False
     if _legal_ir_target_cache_payload_is_timeout_fallback(normalized_payload):
         return False
-    tmp_path = path.with_name(
-        f".{path.stem}.{os.getpid()}.{threading.get_ident()}.tmp"
-    )
+    tmp_path = path.with_name(f".{path.stem}.{os.getpid()}.{threading.get_ident()}.tmp")
     wrapper = {
         "code_fingerprint": _legal_ir_target_code_fingerprint(),
         "created_at": int(time.time()),
@@ -24041,9 +23412,7 @@ def _legal_ir_target_from_cache_payload(
             adapter_losses[str(name)] = _numeric_float_mapping(losses)
     return _CachedLegalIRTrainingTarget(
         bridge_names=tuple(
-            str(name)
-            for name in list(normalized_payload.get("bridge_names") or ())
-            if str(name)
+            str(name) for name in list(normalized_payload.get("bridge_names") or ()) if str(name)
         ),
         document=_CachedLegalIRDocument(
             document_hash=str(normalized_payload.get("document_hash") or ""),
@@ -24677,9 +24046,7 @@ def _legal_ir_surface_profile_view_distribution(text: str) -> Dict[str, float]:
         scores[view] = scores.get(view, 0.0) + normalized_weight
 
     for profile in _uscode_surface_profile_tags(text):
-        for view, weight in _uscode_surface_profile_legal_ir_view_weights(
-            profile
-        ).items():
+        for view, weight in _uscode_surface_profile_legal_ir_view_weights(profile).items():
             bump(view, weight)
         for family in _uscode_surface_profile_modal_families(profile):
             for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(family, ()):
@@ -24714,7 +24081,7 @@ def _token_ngram_features(
         return []
     values: List[str] = []
     for index in range(0, len(tokens) - n + 1):
-        values.append(f"{prefix}:{'_'.join(tokens[index:index + n])}")
+        values.append(f"{prefix}:{'_'.join(tokens[index : index + n])}")
         if len(values) >= max_ngrams:
             break
     return values
@@ -24854,10 +24221,7 @@ def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
     if not logits:
         return {}
     max_logit = max(float(value) for value in logits.values())
-    exponentials = {
-        name: math.exp(float(value) - max_logit)
-        for name, value in logits.items()
-    }
+    exponentials = {name: math.exp(float(value) - max_logit) for name, value in logits.items()}
     total = sum(exponentials.values())
     if total == 0.0:
         uniform = 1.0 / len(exponentials)
@@ -24884,12 +24248,10 @@ def _resolve_vector_compute_backend(
         return request, "python", None, None
 
     if request == "auto":
-        enable_auto_cuda = str(
-            os.environ.get("IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA", "")
-        ).strip().lower()
-        if enable_auto_cuda in {"1", "true", "yes", "on"} and bool(
-            torch.cuda.is_available()
-        ):
+        enable_auto_cuda = (
+            str(os.environ.get("IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA", "")).strip().lower()
+        )
+        if enable_auto_cuda in {"1", "true", "yes", "on"} and bool(torch.cuda.is_available()):
             return request, "torch_cuda", torch.device("cuda"), torch
         return request, "python", None, None
     if request.startswith("cuda"):
@@ -24948,11 +24310,7 @@ def _mean_distributions(
     for distribution in distributions:
         for name, value in dict(distribution or {}).items():
             values_by_name.setdefault(str(name), []).append(_float_or_zero(value))
-    return {
-        name: _mean(values)
-        for name, values in sorted(values_by_name.items())
-        if values
-    }
+    return {name: _mean(values) for name, values in sorted(values_by_name.items()) if values}
 
 
 def _float_or_zero(value: Any) -> float:
@@ -24985,21 +24343,18 @@ def _evaluation_improved_for_training(
         max_legal_ir_loss_regression=max_legal_ir_loss_regression,
     ):
         return False
-    return (
-        _evaluation_objective_for_training(
-            after,
-            cross_entropy=cross_entropy,
-            reconstruction=reconstruction,
-            cosine_gap=cosine_gap,
-            legal_ir=legal_ir,
-        )
-        < _evaluation_objective_for_training(
-            before,
-            cross_entropy=cross_entropy,
-            reconstruction=reconstruction,
-            cosine_gap=cosine_gap,
-            legal_ir=legal_ir,
-        )
+    return _evaluation_objective_for_training(
+        after,
+        cross_entropy=cross_entropy,
+        reconstruction=reconstruction,
+        cosine_gap=cosine_gap,
+        legal_ir=legal_ir,
+    ) < _evaluation_objective_for_training(
+        before,
+        cross_entropy=cross_entropy,
+        reconstruction=reconstruction,
+        cosine_gap=cosine_gap,
+        legal_ir=legal_ir,
     )
 
 
@@ -25026,14 +24381,8 @@ def _evaluation_objective_for_training(
     return (
         (max(0.0, float(cross_entropy)) * cross_entropy_component)
         + (max(0.0, float(reconstruction)) * evaluation.reconstruction_loss)
-        + (
-            max(0.0, float(cosine_gap))
-            * max(0.0, 1.0 - evaluation.embedding_cosine_similarity)
-        )
-        + (
-            max(0.0, float(legal_ir))
-            * _legal_ir_objective_component(evaluation.legal_ir_losses)
-        )
+        + (max(0.0, float(cosine_gap)) * max(0.0, 1.0 - evaluation.embedding_cosine_similarity))
+        + (max(0.0, float(legal_ir)) * _legal_ir_objective_component(evaluation.legal_ir_losses))
     )
 
 
@@ -25081,9 +24430,7 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
             continue
         if name.endswith("_entropy_loss"):
             continue
-        if name.startswith("legal_ir_view_family_") and name.endswith(
-            "_cross_entropy_loss"
-        ):
+        if name.startswith("legal_ir_view_family_") and name.endswith("_cross_entropy_loss"):
             continue
         if name.startswith("legal_ir_") or name.startswith(
             ("deontic_", "tdfol_", "cec_", "zkp_", "external_prover_")
@@ -25103,9 +24450,7 @@ def _evaluation_regressions_for_training(
 ) -> Dict[str, float]:
     """Return metric regressions that exceed the guarded training tolerances."""
     regressions: Dict[str, float] = {}
-    cosine_regression = (
-        before.embedding_cosine_similarity - after.embedding_cosine_similarity
-    )
+    cosine_regression = before.embedding_cosine_similarity - after.embedding_cosine_similarity
     if cosine_regression > max(0.0, float(max_cosine_regression)):
         regressions["embedding_cosine_similarity"] = cosine_regression
     reconstruction_regression = after.reconstruction_loss - before.reconstruction_loss
@@ -25129,9 +24474,8 @@ def _evaluation_regressions_for_training(
     if cross_entropy_regression > max(0.0, float(max_cross_entropy_regression)):
         regressions["cross_entropy_excess_loss"] = cross_entropy_regression
     for name in sorted(set(before.legal_ir_losses) | set(after.legal_ir_losses)):
-        regression = (
-            float(after.legal_ir_losses.get(name, 0.0))
-            - float(before.legal_ir_losses.get(name, 0.0))
+        regression = float(after.legal_ir_losses.get(name, 0.0)) - float(
+            before.legal_ir_losses.get(name, 0.0)
         )
         if regression > max(0.0, float(max_legal_ir_loss_regression)):
             regressions[f"legal_ir:{name}"] = regression
@@ -25219,11 +24563,8 @@ def _projection_prescreen_summary(
                     unselected_count += 1
                 if bool(attempt.get("holdout_evaluated", True)):
                     evaluated_holdout_count += 1
-                if (
-                    best_prescreen is None
-                    or objective_delta > _float_or_zero(
-                        best_prescreen.get("objective_delta")
-                    )
+                if best_prescreen is None or objective_delta > _float_or_zero(
+                    best_prescreen.get("objective_delta")
                 ):
                     best_prescreen = {
                         "line_search_multiplier": round(
@@ -25232,9 +24573,7 @@ def _projection_prescreen_summary(
                         ),
                         "objective_delta": round(objective_delta, 12),
                         "rank": int(prescreen.get("rank", 0) or 0),
-                        "selected_for_holdout": bool(
-                            prescreen.get("selected_for_holdout", True)
-                        ),
+                        "selected_for_holdout": bool(prescreen.get("selected_for_holdout", True)),
                         "update": str(attempt.get("update") or ""),
                     }
     return {
@@ -25255,11 +24594,7 @@ def _projection_guardrail_names(values: Sequence[str] | str | None) -> tuple[str
         raw_values: Sequence[Any] = values.split(",")
     else:
         raw_values = values
-    normalized = tuple(
-        str(value).strip()
-        for value in raw_values
-        if str(value).strip()
-    )
+    normalized = tuple(str(value).strip() for value in raw_values if str(value).strip())
     return normalized or PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS
 
 
@@ -25290,8 +24625,7 @@ def _projection_deadband_decision(
     for name, raw_value in sorted(dict(regressions).items()):
         value = max(0.0, float(raw_value))
         is_hard_guardrail = any(
-            _projection_metric_matches_guardrail(name, guardrail)
-            for guardrail in guardrails
+            _projection_metric_matches_guardrail(name, guardrail) for guardrail in guardrails
         )
         if (
             normalized_mode != "off"
@@ -25404,15 +24738,11 @@ def _projection_rejection_summary(
                     and (
                         best_deadband_would_accept is None
                         or objective_delta
-                        > _float_or_zero(
-                            best_deadband_would_accept.get("objective_delta")
-                        )
+                        > _float_or_zero(best_deadband_would_accept.get("objective_delta"))
                     )
                 ):
                     best_deadband_would_accept = {
-                        "acceptance_source": str(
-                            attempt.get("acceptance_source") or ""
-                        ),
+                        "acceptance_source": str(attempt.get("acceptance_source") or ""),
                         "cross_entropy_delta": round(
                             _float_or_zero(attempt.get("cross_entropy_delta")),
                             12,
@@ -25448,18 +24778,14 @@ def _projection_rejection_summary(
                             12,
                         ),
                         "legal_ir_view_cross_entropy_delta": round(
-                            _float_or_zero(
-                                attempt.get("legal_ir_view_cross_entropy_delta")
-                            ),
+                            _float_or_zero(attempt.get("legal_ir_view_cross_entropy_delta")),
                             12,
                         ),
                         "line_search_multiplier": round(
                             _float_or_zero(attempt.get("line_search_multiplier")),
                             12,
                         ),
-                        "line_search_refinement": bool(
-                            attempt.get("line_search_refinement")
-                        ),
+                        "line_search_refinement": bool(attempt.get("line_search_refinement")),
                         "objective_delta": round(objective_delta, 12),
                         "pareto_regressions": dict(pareto_regressions)
                         if isinstance(pareto_regressions, Mapping)
@@ -25477,14 +24803,10 @@ def _projection_rejection_summary(
         "projection_deadband": {
             "best_would_accept_attempt": best_deadband_would_accept or {},
             "enforced_accept_count": deadband_enforced_accept_count,
-            "hard_guardrail_blocked_counts": dict(
-                sorted(deadband_hard_guardrail_counts.items())
-            ),
+            "hard_guardrail_blocked_counts": dict(sorted(deadband_hard_guardrail_counts.items())),
             "shadow_would_accept_count": deadband_shadow_would_accept_count,
             "strict_accepted_attempt_count": strict_accepted_attempt_count,
-            "tolerated_regression_counts": dict(
-                sorted(deadband_tolerated_counts.items())
-            ),
+            "tolerated_regression_counts": dict(sorted(deadband_tolerated_counts.items())),
             "would_accept_count": deadband_would_accept_count,
         },
         "pareto_regression_counts": dict(sorted(regression_counts.items())),

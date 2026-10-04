@@ -6,12 +6,14 @@ Methods under test:
   - OntologyGenerator.top_k_entities_by_confidence(result, k)
   - LogicValidator.longest_path(ontology, source)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -26,7 +28,10 @@ def _push_opt(o, avg):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,11 +43,13 @@ def _push_feedback(a, score):
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="Test", text=eid, confidence=confidence)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=[], confidence=1.0, metadata={}, errors=[]
     )
@@ -50,17 +57,20 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_autocorrelation
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryAutocorrelation:
     @pytest.mark.parametrize(
@@ -83,6 +93,7 @@ class TestHistoryAutocorrelation:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_skewness
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackSkewness:
     @pytest.mark.parametrize(
@@ -107,6 +118,7 @@ class TestFeedbackSkewness:
 # OntologyGenerator.top_k_entities_by_confidence
 # ---------------------------------------------------------------------------
 
+
 class TestTopKEntitiesByConfidence:
     @pytest.mark.parametrize(
         "entities,k,expected_len,predicate",
@@ -117,10 +129,17 @@ class TestTopKEntitiesByConfidence:
                 [_make_entity(f"e{i}", confidence=i * 0.1) for i in range(4)],
                 3,
                 3,
-                lambda top: [e.confidence for e in top] == sorted([e.confidence for e in top], reverse=True),
+                lambda top: (
+                    [e.confidence for e in top] == sorted([e.confidence for e in top], reverse=True)
+                ),
             ),
             ([_make_entity("e1", 0.3), _make_entity("e2", 0.7)], 10, 2, None),
-            ([_make_entity("lo", 0.1), _make_entity("hi", 0.9)], 1, 1, lambda top: top[0].id == "hi"),
+            (
+                [_make_entity("lo", 0.1), _make_entity("hi", 0.9)],
+                1,
+                1,
+                lambda top: top[0].id == "hi",
+            ),
         ],
     )
     def test_top_k_entities_by_confidence_scenarios(self, entities, k, expected_len, predicate):
@@ -136,6 +155,7 @@ class TestTopKEntitiesByConfidence:
 # LogicValidator.longest_path
 # ---------------------------------------------------------------------------
 
+
 class TestLongestPath:
     @pytest.mark.parametrize(
         "ontology,source,expected",
@@ -145,7 +165,10 @@ class TestLongestPath:
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "C"},
+                    ],
                 },
                 "A",
                 2,
@@ -165,7 +188,10 @@ class TestLongestPath:
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "A"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "A"},
+                    ],
                 },
                 "A",
                 -1,

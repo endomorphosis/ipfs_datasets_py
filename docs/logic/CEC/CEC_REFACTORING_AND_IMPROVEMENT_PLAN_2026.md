@@ -343,17 +343,17 @@ German, French, and Spanish parsers have **~95% identical implementations** with
 # Identical structure in all 3 parsers:
 class GermanParser(BaseParser):
     def __init__(self):
-        self.patterns = {...}      # Only difference: German vocab
-        
+        self.patterns = {...}  # Only difference: German vocab
+
     def parse_sentence(self, text):  # Identical logic
         ...
-    
+
     def extract_agents(self, text):  # Identical logic
         ...
-    
+
     def extract_actions(self, text):  # Identical logic
         ...
-    
+
     # 30+ identical methods with only vocabulary changes
 ```
 
@@ -365,19 +365,18 @@ class GermanParser(BaseParser):
 # nl/multilingual_parser.py (600 LOC - single file)
 class MultilingualParser(BaseParser):
     """Unified parser supporting multiple languages."""
-    
+
     def __init__(self, language: str = "en"):
         self.language = language
         self.vocab = self._load_vocabulary(language)
         self.patterns = self._load_patterns(language)
-    
+
     def _load_vocabulary(self, lang: str) -> Dict[str, Any]:
         """Load language-specific vocabulary from config."""
         return LANGUAGE_VOCABULARIES[lang]
-    
+
     # All parsing logic once, not three times
-    def parse_sentence(self, text: str) -> Formula:
-        ...
+    def parse_sentence(self, text: str) -> Formula: ...
 ```
 
 **Step 2: Extract Vocabularies to Config**
@@ -571,9 +570,9 @@ Current import structure has several issues:
 ```python
 # Every module should define __all__
 __all__ = [
-    'Formula',
-    'AtomicFormula',
-    'ConnectiveFormula',
+    "Formula",
+    "AtomicFormula",
+    "ConnectiveFormula",
     # ...
 ]
 ```
@@ -603,8 +602,8 @@ from .prover import Prover, ProofResult
 
 __all__ = [
     # Types
-    'Formula',
-    'AtomicFormula',
+    "Formula",
+    "AtomicFormula",
     # ... (explicit list)
 ]
 ```
@@ -625,6 +624,7 @@ from ipfs_datasets_py.logic.CEC.native import Formula
 # provers/__init__.py
 try:
     from .z3_adapter import Z3Adapter
+
     HAS_Z3 = True
 except ImportError:
     HAS_Z3 = False
@@ -632,20 +632,21 @@ except ImportError:
 
 try:
     from .vampire_adapter import VampireAdapter
+
     HAS_VAMPIRE = True
 except ImportError:
     HAS_VAMPIRE = False
     VampireAdapter = None
 
 __all__ = [
-    'HAS_Z3',
-    'HAS_VAMPIRE',
+    "HAS_Z3",
+    "HAS_VAMPIRE",
 ]
 
 if HAS_Z3:
-    __all__.append('Z3Adapter')
+    __all__.append("Z3Adapter")
 if HAS_VAMPIRE:
-    __all__.append('VampireAdapter')
+    __all__.append("VampireAdapter")
 ```
 
 #### Implementation Steps
@@ -691,14 +692,18 @@ class Formula:
     def __str__(self): ...
     def to_string(self): ...  # Duplicates __str__
 
+
 # Others:
 class Term:
     def __str__(self): ...
+
     # No to_string()
+
 
 # Yet others:
 class Operator:
     def to_string(self): ...
+
     # No __str__()
 ```
 
@@ -711,19 +716,20 @@ Create a `Stringifiable` mixin:
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
+
 class Stringifiable(ABC):
     """
     Mixin for classes that need string representation.
-    
+
     Provides consistent __str__, __repr__, and to_string() methods.
     Subclasses only need to implement _to_string_parts().
     """
-    
+
     @abstractmethod
     def _to_string_parts(self) -> Dict[str, Any]:
         """
         Return dict of parts to include in string representation.
-        
+
         Example:
             return {
                 'type': 'AtomicFormula',
@@ -732,21 +738,23 @@ class Stringifiable(ABC):
             }
         """
         pass
-    
+
     def to_string(self, verbose: bool = False) -> str:
         """Generate string representation."""
         parts = self._to_string_parts()
         if verbose:
-            return f"{parts['type']}({', '.join(f'{k}={v}' for k, v in parts.items() if k != 'type')})"
+            return (
+                f"{parts['type']}({', '.join(f'{k}={v}' for k, v in parts.items() if k != 'type')})"
+            )
         else:
             return self._format_simple(parts)
-    
+
     def __str__(self) -> str:
         return self.to_string(verbose=False)
-    
+
     def __repr__(self) -> str:
         return self.to_string(verbose=True)
-    
+
     def _format_simple(self, parts: Dict[str, Any]) -> str:
         """Override for custom simple formatting."""
         return str(parts)
@@ -759,17 +767,18 @@ Usage:
 class AtomicFormula:
     def __str__(self):
         return f"{self.predicate}({', '.join(map(str, self.terms))})"
-    
+
     def to_string(self):
         return self.__str__()
+
 
 # After:
 class AtomicFormula(Stringifiable):
     def _to_string_parts(self):
         return {
-            'type': 'AtomicFormula',
-            'predicate': self.predicate,
-            'terms': self.terms,
+            "type": "AtomicFormula",
+            "predicate": self.predicate,
+            "terms": self.terms,
         }
 ```
 
@@ -810,12 +819,11 @@ Heavy use of `Any` type hints reduces type safety:
 
 ```python
 # Current:
-def apply_rule(self, formulas: List[Any]) -> Any:
-    ...
+def apply_rule(self, formulas: List[Any]) -> Any: ...
+
 
 # Better:
-def apply_rule(self, formulas: List[Formula]) -> List[Formula]:
-    ...
+def apply_rule(self, formulas: List[Formula]) -> List[Formula]: ...
 ```
 
 #### Proposed Solution
@@ -831,17 +839,18 @@ Example:
 from typing import Protocol, TypeVar, List
 from abc import abstractmethod
 
+
 class Formulaic(Protocol):
     """Protocol for formula-like objects."""
-    
+
     @abstractmethod
-    def to_string(self) -> str:
-        ...
+    def to_string(self) -> str: ...
 
-T = TypeVar('T', bound=Formulaic)
 
-def process_formulas(formulas: List[T]) -> List[T]:
-    ...
+T = TypeVar("T", bound=Formulaic)
+
+
+def process_formulas(formulas: List[T]) -> List[T]: ...
 ```
 
 #### Implementation Steps
@@ -934,28 +943,29 @@ Create `BaseProverAdapter` abstract class:
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 
+
 class BaseProverAdapter(ABC):
     """Base class for external theorem prover adapters."""
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self._connection = None
         self._initialize()
-    
+
     @abstractmethod
     def _initialize(self):
         """Initialize prover connection."""
         pass
-    
+
     @abstractmethod
     def prove(self, formula: Formula) -> ProofResult:
         """Prove formula."""
         pass
-    
+
     def _handle_timeout(self, timeout: int):
         """Common timeout handling."""
         ...
-    
+
     def _parse_output(self, output: str) -> ProofResult:
         """Common output parsing."""
         ...
@@ -988,12 +998,13 @@ Use dataclasses for cleaner exceptions:
 ```python
 from dataclasses import dataclass
 
+
 @dataclass
 class ValidationError(Exception):
     message: str
     field: Optional[str] = None
     value: Optional[Any] = None
-    
+
     def __str__(self):
         if self.field:
             return f"Validation failed for {self.field}: {self.message}"
@@ -1023,24 +1034,27 @@ from functools import wraps
 import time
 import tracemalloc
 
+
 def profile_performance(func):
     """Decorator to profile function performance."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         tracemalloc.start()
         start_time = time.perf_counter()
-        
+
         result = func(*args, **kwargs)
-        
+
         end_time = time.perf_counter()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        
+
         print(f"{func.__name__}:")
         print(f"  Time: {end_time - start_time:.4f}s")
         print(f"  Memory: {peak / 1024 / 1024:.2f} MB")
-        
+
         return result
+
     return wrapper
 ```
 

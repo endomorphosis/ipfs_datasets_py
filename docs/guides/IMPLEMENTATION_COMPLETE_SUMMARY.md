@@ -71,12 +71,12 @@ Created 7 MCP tools in `medical_research_mcp_tools.py` (13 KB):
 Added 6 RESTful endpoints to `/mcp_dashboard.py`:
 
 ```python
-POST /api/mcp/medicine/scrape/pubmed
-POST /api/mcp/medicine/scrape/clinical_trials
-POST /api/mcp/medicine/scrape/biochemical
-POST /api/mcp/medicine/theorems/generate
-POST /api/mcp/medicine/theorems/validate
-POST /api/mcp/medicine/scrape/population
+POST / api / mcp / medicine / scrape / pubmed
+POST / api / mcp / medicine / scrape / clinical_trials
+POST / api / mcp / medicine / scrape / biochemical
+POST / api / mcp / medicine / theorems / generate
+POST / api / mcp / medicine / theorems / validate
+POST / api / mcp / medicine / scrape / population
 ```
 
 ### 5. Dashboard UI Enhancement
@@ -191,7 +191,7 @@ Fuzzy Logic:  healthy(person) ∧ eats(tide_pods) → sick(person, 0.95)  [Proba
 TemporalConstraint(
     time_to_effect=timedelta(hours=1),
     duration=timedelta(days=7),
-    time_window=(start_date, end_date)
+    time_window=(start_date, end_date),
 )
 ```
 

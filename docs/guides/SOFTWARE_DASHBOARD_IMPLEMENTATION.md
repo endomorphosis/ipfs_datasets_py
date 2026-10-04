@@ -166,12 +166,15 @@ ipfs_datasets_py/
 ```python
 import requests
 
-response = requests.post('http://localhost:8899/api/mcp/software/ingest_repository', json={
-    "repository_url": "https://github.com/pytorch/pytorch",
-    "include_prs": True,
-    "include_issues": True,
-    "include_workflows": True
-})
+response = requests.post(
+    "http://localhost:8899/api/mcp/software/ingest_repository",
+    json={
+        "repository_url": "https://github.com/pytorch/pytorch",
+        "include_prs": True,
+        "include_issues": True,
+        "include_workflows": True,
+    },
+)
 
 result = response.json()
 print(f"Repository: {result['repository']['name']}")
@@ -181,10 +184,10 @@ print(f"PRs: {len(result['pull_requests'])}")
 
 ### 2. Analyze GitHub Actions
 ```python
-response = requests.post('http://localhost:8899/api/mcp/software/workflow_actions', json={
-    "repository_url": "https://github.com/pytorch/pytorch",
-    "max_runs": 100
-})
+response = requests.post(
+    "http://localhost:8899/api/mcp/software/workflow_actions",
+    json={"repository_url": "https://github.com/pytorch/pytorch", "max_runs": 100},
+)
 
 result = response.json()
 print(f"Success rate: {result['success_rate']}%")
@@ -193,30 +196,33 @@ print(f"Average duration: {result['average_duration']}s")
 
 ### 3. Validate Software Theorem
 ```python
-response = requests.post('http://localhost:8899/api/mcp/software/query_theorems', json={
-    "action": "validate",
-    "theorem_id": "ci_failure_notification",
-    "context": {
-        "ci_failed_count": 5,
-        "notification_sent": False
-    }
-})
+response = requests.post(
+    "http://localhost:8899/api/mcp/software/query_theorems",
+    json={
+        "action": "validate",
+        "theorem_id": "ci_failure_notification",
+        "context": {"ci_failed_count": 5, "notification_sent": False},
+    },
+)
 
 result = response.json()
-if result['theorem_applies']:
+if result["theorem_applies"]:
     print(f"Actions: {result['recommended_actions']}")
 ```
 
 ### 4. Analyze Dependencies
 ```python
-response = requests.post('http://localhost:8899/api/mcp/software/dependency_graph', json={
-    "dependencies": {
-        "packageA": ["packageB", "packageC"],
-        "packageB": ["packageC"],
-        "packageC": []
+response = requests.post(
+    "http://localhost:8899/api/mcp/software/dependency_graph",
+    json={
+        "dependencies": {
+            "packageA": ["packageB", "packageC"],
+            "packageB": ["packageC"],
+            "packageC": [],
+        },
+        "detect_cycles": True,
     },
-    "detect_cycles": True
-})
+)
 
 result = response.json()
 print(f"Cycles: {len(result['cycles'])}")

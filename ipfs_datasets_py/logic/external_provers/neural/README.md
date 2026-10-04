@@ -33,13 +33,10 @@ export ANTHROPIC_API_KEY="your-key"
 ```python
 from ipfs_datasets_py.logic.external_provers.neural import SymbolicAIProverBridge
 
-prover = SymbolicAIProverBridge(
-    confidence_threshold=0.8,
-    enable_cache=True
-)
+prover = SymbolicAIProverBridge(confidence_threshold=0.8, enable_cache=True)
 
 # Prove with neural reasoning
-result = prover.prove(formula, strategy='neural_guided')
+result = prover.prove(formula, strategy="neural_guided")
 
 # Get explanation
 explanation = prover.explain(formula)
@@ -104,7 +101,7 @@ strategies = prover.suggest_proof_strategy(formula)
 prover = SymbolicAIProverBridge(use_symbolic_fallback=True)
 
 # Neural reasoning first
-result = prover.prove(formula, strategy='hybrid')
+result = prover.prove(formula, strategy="hybrid")
 
 # If confidence < 0.8, automatically falls back to symbolic
 if result.fallback_used:
@@ -133,7 +130,7 @@ result2 = prover.prove(formula)  # 0.1ms, $0.00
 ### 1. Neural Guided (Default)
 
 ```python
-result = prover.prove(formula, strategy='neural_guided')
+result = prover.prove(formula, strategy="neural_guided")
 ```
 
 - LLM analyzes formula
@@ -143,7 +140,7 @@ result = prover.prove(formula, strategy='neural_guided')
 ### 2. Pure Neural
 
 ```python
-result = prover.prove(formula, strategy='pure_neural')
+result = prover.prove(formula, strategy="pure_neural")
 ```
 
 - LLM reasoning only
@@ -153,7 +150,7 @@ result = prover.prove(formula, strategy='pure_neural')
 ### 3. Hybrid
 
 ```python
-result = prover.prove(formula, strategy='hybrid')
+result = prover.prove(formula, strategy="hybrid")
 ```
 
 - Neural first, then symbolic
@@ -204,7 +201,7 @@ with monitor.track_proof("symbolicai"):
 
 # Check costs
 stats = monitor.get_stats("symbolicai")
-uncached = stats['cache_misses']
+uncached = stats["cache_misses"]
 cost_estimate = uncached * 0.01  # $0.01 per call
 print(f"Estimated cost: ${cost_estimate:.2f}")
 ```
@@ -214,14 +211,14 @@ print(f"Estimated cost: ${cost_estimate:.2f}")
 ```python
 @dataclass
 class NeuralProofResult:
-    is_valid: bool              # Whether formula is valid
-    confidence: float           # Confidence (0.0-1.0)
-    reasoning: List[str]        # Step-by-step reasoning
-    proof_sketch: str           # Informal proof
-    counterexample: str         # Counterexample if not valid
-    fallback_used: bool         # Whether symbolic was used
-    proof_time: float           # Time in seconds
-    llm_used: str              # LLM engine used
+    is_valid: bool  # Whether formula is valid
+    confidence: float  # Confidence (0.0-1.0)
+    reasoning: List[str]  # Step-by-step reasoning
+    proof_sketch: str  # Informal proof
+    counterexample: str  # Counterexample if not valid
+    fallback_used: bool  # Whether symbolic was used
+    proof_time: float  # Time in seconds
+    llm_used: str  # LLM engine used
 ```
 
 ## Code Reuse

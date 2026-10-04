@@ -90,11 +90,13 @@ result = detect_i18n_clauses("अनिवार्य है", "hi")  # → lis
 
 # 16-language detect_all_languages
 from ipfs_datasets_py.logic.api import detect_all_languages, I18NConflictReport
+
 report: I18NConflictReport = detect_all_languages(text)
 assert len(report.by_language) >= 16  # fr/es/de/en/pt/nl/it/ja/zh/ko/ar/sv/ru/el/tr/hi
 
 # GF246 – full pipeline
 from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import NLUCANPolicyCompiler
+
 report = detect_all_languages(text)
 results = NLUCANPolicyCompiler().compile_batch(
     [sentences] * len(report.by_language),

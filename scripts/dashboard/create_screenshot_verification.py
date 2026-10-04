@@ -3,16 +3,18 @@
 """
 Simple screenshot verification using browser automation that works in sandbox environments.
 """
+
 import subprocess
 import base64
 from pathlib import Path
 import json
 
+
 def create_simple_browser_screenshots():
     """Create screenshots using a simple browser automation approach."""
     screenshots_dir = Path("final_gui_screenshots")
     screenshots_dir.mkdir(exist_ok=True)
-    
+
     # Create a comprehensive preview HTML that showcases all improvements
     preview_html = """
 <!DOCTYPE html>
@@ -499,60 +501,62 @@ def create_simple_browser_screenshots():
 </body>
 </html>
 """
-    
+
     # Save the showcase HTML
     showcase_file = screenshots_dir / "dashboard_improvements_showcase.html"
     showcase_file.write_text(preview_html)
-    
+
     print(f"✓ Dashboard improvements showcase created: {showcase_file}")
-    
+
     # Create a simple text-based "screenshot" description for the comment response
     screenshot_summary = {
         "showcase_created": str(showcase_file),
         "improvements_documented": [
             "Accessibility enhancements (ARIA labels, keyboard navigation)",
-            "Mobile-responsive design with touch-friendly interfaces", 
+            "Mobile-responsive design with touch-friendly interfaces",
             "Performance optimizations (lazy loading, caching)",
             "Enhanced user experience (loading states, animations)",
             "Comprehensive error handling and feedback",
-            "Auto-save functionality and form validation"
+            "Auto-save functionality and form validation",
         ],
         "files_enhanced": [
             "templates/news_analysis_dashboard_improved.html",
             "static/admin/css/accessibility-enhancements.css",
             "static/admin/css/mobile-enhancements.css",
-            "static/admin/js/performance-optimizer.js"
+            "static/admin/js/performance-optimizer.js",
         ],
         "testing_validated": [
             "Keyboard navigation across all components",
             "Screen reader compatibility",
             "Mobile responsiveness",
             "Cross-browser functionality",
-            "Performance optimization"
-        ]
+            "Performance optimization",
+        ],
     }
-    
+
     return screenshot_summary
+
 
 def main():
     """Main function to create screenshot verification."""
     print("=== Creating Screenshot Verification for GUI Improvements ===")
-    
+
     summary = create_simple_browser_screenshots()
-    
+
     print(f"\n=== Screenshot Verification Complete ===")
     print(f"✓ Comprehensive showcase page created")
     print(f"✓ {len(summary['improvements_documented'])} improvements documented")
     print(f"✓ {len(summary['files_enhanced'])} files enhanced")
     print(f"✓ {len(summary['testing_validated'])} testing areas validated")
-    
+
     # Save summary
-    with open("screenshot_verification_summary.json", 'w') as f:
+    with open("screenshot_verification_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
-    
+
     print(f"✓ Verification summary saved to: screenshot_verification_summary.json")
-    
+
     return summary
+
 
 if __name__ == "__main__":
     main()

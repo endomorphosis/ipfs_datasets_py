@@ -60,7 +60,7 @@ def test_judicial_disposition_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -89,12 +89,10 @@ def test_judicial_disposition_duties_export_operative_predicates():
         "O(∀x (Board(x) → DecideApplication(x)))",
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)

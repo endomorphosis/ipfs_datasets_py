@@ -129,12 +129,12 @@ Uses IPFS multiformats (CID v1) for verifiable content addressing:
 ```python
 # Automatic in GitHubAPICache.put()
 validation_fields = {
-    'repo1': {'updatedAt': '2025-11-08T10:00:00Z', 'pushedAt': ...},
-    'repo2': {'updatedAt': '2025-11-08T09:30:00Z', 'pushedAt': ...}
+    "repo1": {"updatedAt": "2025-11-08T10:00:00Z", "pushedAt": ...},
+    "repo2": {"updatedAt": "2025-11-08T09:30:00Z", "pushedAt": ...},
 }
 
 # Hash with IPFS CID
-content_hash = CID('base32', 1, 'raw', multihash.wrap(digest, 'sha2-256'))
+content_hash = CID("base32", 1, "raw", multihash.wrap(digest, "sha2-256"))
 # Result: "bafkreiabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz"
 
 # When peer receives entry:
@@ -174,11 +174,11 @@ from ipfs_accelerate_py.github_cli.cache import get_global_cache
 
 stats = get_global_cache().get_stats()
 print(f"""
-Local hits: {stats['local_hits']}
-Peer hits: {stats['peer_hits']}
-Total hit rate: {stats['hit_rate']:.1%}
-API calls saved: {stats['api_calls_saved']}
-Connected peers: {stats.get('connected_peers', 0)}
+Local hits: {stats["local_hits"]}
+Peer hits: {stats["peer_hits"]}
+Total hit rate: {stats["hit_rate"]:.1%}
+API calls saved: {stats["api_calls_saved"]}
+Connected peers: {stats.get("connected_peers", 0)}
 """)
 ```
 
@@ -212,7 +212,7 @@ cache = configure_cache(
     enable_p2p=True,
     p2p_listen_port=9000,
     p2p_bootstrap_peers=["/ip4/IP/tcp/PORT/p2p/PEERID"],
-    default_ttl=300
+    default_ttl=300,
 )
 ```
 
@@ -362,40 +362,39 @@ print(f'Connected peers: {stats[\"connected_peers\"]}')  # Should be 1
 import pytest
 from ipfs_accelerate_py.github_cli.cache import GitHubAPICache
 
+
 def test_p2p_cache_sharing():
     """Test P2P cache sharing between two instances."""
     # Create cache 1 (bootstrap)
-    cache1 = GitHubAPICache(
-        enable_p2p=True,
-        p2p_listen_port=9000
-    )
-    
+    cache1 = GitHubAPICache(enable_p2p=True, p2p_listen_port=9000)
+
     # Get peer info
     stats1 = cache1.get_stats()
-    peer_id = stats1['peer_id']
-    
+    peer_id = stats1["peer_id"]
+
     # Create cache 2 (connects to cache1)
     cache2 = GitHubAPICache(
         enable_p2p=True,
         p2p_listen_port=9001,
-        p2p_bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9000/p2p/{peer_id}"]
+        p2p_bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9000/p2p/{peer_id}"],
     )
-    
+
     # Put entry in cache1
     cache1.put("test_op", {"data": "test"}, repo="test/repo")
-    
+
     # Wait for broadcast
     import time
+
     time.sleep(1)
-    
+
     # Get from cache2 (should hit peer cache)
     result = cache2.get("test_op", repo="test/repo")
     assert result == {"data": "test"}
-    
+
     # Check stats
     stats2 = cache2.get_stats()
-    assert stats2['peer_hits'] > 0
-    assert stats2['connected_peers'] == 1
+    assert stats2["peer_hits"] > 0
+    assert stats2["connected_peers"] == 1
 ```
 
 ## Security Considerations
@@ -473,6 +472,7 @@ netstat -tlnp | grep 9000
 **Limit cache size:**
 ```python
 from ipfs_accelerate_py.github_cli.cache import configure_cache
+
 cache = configure_cache(max_cache_size=500)  # Default: 1000
 ```
 

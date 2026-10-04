@@ -48,7 +48,11 @@ UPLOAD_TARGETS: dict[str, DatasetUploadTarget] = {
         key="vector",
         local_dir=HF_DATA_DIR / VECTOR_INDEX_DATASET_NAME,
         repo_id=DEFAULT_HF_REPO_IDS["vector"],
-        required_files=("README.md", "dataset_manifest.json", "parquet/mapping/train-00000-of-00001.parquet"),
+        required_files=(
+            "README.md",
+            "dataset_manifest.json",
+            "parquet/mapping/train-00000-of-00001.parquet",
+        ),
     ),
     "bm25": DatasetUploadTarget(
         key="bm25",
@@ -120,7 +124,9 @@ TARGET_ALIASES = {
 }
 
 
-def resolve_targets(names: Iterable[str] | None = None, namespace: str = DEFAULT_HF_NAMESPACE) -> list[DatasetUploadTarget]:
+def resolve_targets(
+    names: Iterable[str] | None = None, namespace: str = DEFAULT_HF_NAMESPACE
+) -> list[DatasetUploadTarget]:
     names = tuple(names or ("all",))
     keys: list[str] = []
     for name in names:
@@ -181,12 +187,19 @@ def upload_dataset(
 ) -> dict[str, Any]:
     manifest = assert_local_upload_ready(target)
     if dry_run:
-        return {"target": target.key, "repo_id": target.repo_id, "local_dir": str(target.local_dir), "dry_run": True}
+        return {
+            "target": target.key,
+            "repo_id": target.repo_id,
+            "local_dir": str(target.local_dir),
+            "dry_run": True,
+        }
 
     from huggingface_hub import HfApi
 
     api = HfApi(token=token)
-    api.create_repo(repo_id=target.repo_id, repo_type="dataset", exist_ok=True, private=private, token=token)
+    api.create_repo(
+        repo_id=target.repo_id, repo_type="dataset", exist_ok=True, private=private, token=token
+    )
     api.upload_folder(
         folder_path=str(target.local_dir),
         repo_id=target.repo_id,
@@ -194,7 +207,12 @@ def upload_dataset(
         commit_message=commit_message or f"Update {target.local_dir.name}",
         token=token,
     )
-    return {"target": target.key, "repo_id": target.repo_id, "records": manifest["records"], "uploaded": True}
+    return {
+        "target": target.key,
+        "repo_id": target.repo_id,
+        "records": manifest["records"],
+        "uploaded": True,
+    }
 
 
 def upload_datasets(
@@ -211,7 +229,9 @@ def upload_datasets(
     ]
 
 
-def verify_remote_dataset(target: DatasetUploadTarget, *, token: str | None = None) -> dict[str, Any]:
+def verify_remote_dataset(
+    target: DatasetUploadTarget, *, token: str | None = None
+) -> dict[str, Any]:
     from huggingface_hub import HfApi, hf_hub_download
 
     api = HfApi(token=token)
@@ -245,4 +265,6 @@ def verify_remote_datasets(
     namespace: str = DEFAULT_HF_NAMESPACE,
     token: str | None = None,
 ) -> list[dict[str, Any]]:
-    return [verify_remote_dataset(target, token=token) for target in resolve_targets(targets, namespace)]
+    return [
+        verify_remote_dataset(target, token=token) for target in resolve_targets(targets, namespace)
+    ]

@@ -1,6 +1,8 @@
 """Batch 314: tests for extracted TraversalHeuristics module."""
 
-from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+    UnifiedGraphRAGQueryOptimizer,
+)
 from ipfs_datasets_py.optimizers.graphrag import TraversalHeuristics
 
 
@@ -64,9 +66,15 @@ def test_unified_optimizer_wrappers_delegate_to_traversal_heuristics() -> None:
     optimizer = UnifiedGraphRAGQueryOptimizer()
 
     query = {"query_text": "Is this related to that?", "traversal": {"max_depth": 2}}
-    assert optimizer._detect_fact_verification_query(query) == TraversalHeuristics.detect_fact_verification_query(query)
-    assert optimizer._detect_exploratory_query(query) == TraversalHeuristics.detect_exploratory_query(query)
-    assert optimizer._estimate_query_complexity(query) == TraversalHeuristics.estimate_query_complexity(query)
-    assert optimizer._detect_entity_types("Who founded the company?") == TraversalHeuristics.detect_entity_types(
+    assert optimizer._detect_fact_verification_query(
+        query
+    ) == TraversalHeuristics.detect_fact_verification_query(query)
+    assert optimizer._detect_exploratory_query(
+        query
+    ) == TraversalHeuristics.detect_exploratory_query(query)
+    assert optimizer._estimate_query_complexity(
+        query
+    ) == TraversalHeuristics.estimate_query_complexity(query)
+    assert optimizer._detect_entity_types(
         "Who founded the company?"
-    )
+    ) == TraversalHeuristics.detect_entity_types("Who founded the company?")

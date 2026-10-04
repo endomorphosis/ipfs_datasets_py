@@ -60,7 +60,7 @@ The optimized codec includes LRU caching to avoid redundant encoding/decoding:
 encoder = OptimizedEncoder(
     use_cache=True,
     cache_size=1000,  # Cache up to 1000 items
-    cache_ttl_seconds=3600  # Cache items for 1 hour
+    cache_ttl_seconds=3600,  # Cache items for 1 hour
 )
 
 # First encoding (slow)
@@ -108,7 +108,7 @@ blocks = storage.get_batch(cids)
 json_objects = [
     {"id": 1, "name": "Object 1"},
     {"id": 2, "name": "Object 2"},
-    {"id": 3, "name": "Object 3"}
+    {"id": 3, "name": "Object 3"},
 ]
 json_cids = storage.store_json_batch(json_objects)
 ```
@@ -121,17 +121,10 @@ Create custom batch processing pipelines:
 from ipfs_datasets_py.ipld import create_batch_processor
 
 # Create processor with custom batch size and parallelism
-processor = create_batch_processor(
-    batch_size=100,
-    max_workers=4,
-    optimize_memory=True
-)
+processor = create_batch_processor(batch_size=100, max_workers=4, optimize_memory=True)
 
 # Process a large dataset in batches
-result = processor.process(
-    data_items=large_dataset,
-    operation=lambda batch: process_batch(batch)
-)
+result = processor.process(data_items=large_dataset, operation=lambda batch: process_batch(batch))
 ```
 
 ## Memory Optimization
@@ -157,17 +150,15 @@ Process IPLD data in a streaming fashion:
 ```python
 from ipfs_datasets_py.ipld.storage import stream_process_ipld
 
+
 # Define processor function
 def process_node(node):
     # Process the node
     return transformed_node
 
+
 # Stream process a large IPLD DAG
-result = stream_process_ipld(
-    root_cid="bafy...",
-    processor=process_node,
-    max_nodes_in_memory=1000
-)
+result = stream_process_ipld(root_cid="bafy...", processor=process_node, max_nodes_in_memory=1000)
 ```
 
 ### Memory-Mapped IPLD
@@ -204,16 +195,10 @@ import multiprocessing
 num_cores = multiprocessing.cpu_count()
 
 # Parallel encode multiple items
-encoded_items = parallel_encode(
-    items=data_items,
-    max_workers=num_cores
-)
+encoded_items = parallel_encode(items=data_items, max_workers=num_cores)
 
 # Parallel decode multiple blocks
-decoded_items = parallel_decode(
-    blocks=encoded_blocks,
-    max_workers=num_cores
-)
+decoded_items = parallel_decode(blocks=encoded_blocks, max_workers=num_cores)
 ```
 
 ### Parallel DAG Processing
@@ -228,9 +213,7 @@ processor = ParallelDAGProcessor(max_workers=4)
 
 # Process DAG in parallel
 result = processor.process_dag(
-    root_cid="bafy...",
-    node_processor=lambda node: process_node(node),
-    collect_results=True
+    root_cid="bafy...", node_processor=lambda node: process_node(node), collect_results=True
 )
 ```
 
@@ -251,15 +234,12 @@ with open("data.car", "wb") as f:
     storage.export_to_car_stream(
         cids=["bafy1...", "bafy2...", "bafy3..."],
         file_obj=f,
-        selector="all"  # Or use a custom selector
+        selector="all",  # Or use a custom selector
     )
 
 # Stream import from CAR file
 with open("data.car", "rb") as f:
-    imported_cids = storage.import_from_car_stream(
-        file_obj=f,
-        verify_blocks=True
-    )
+    imported_cids = storage.import_from_car_stream(file_obj=f, verify_blocks=True)
 ```
 
 ### Selective CAR Export
@@ -270,20 +250,10 @@ Export only specific parts of an IPLD structure:
 from ipfs_datasets_py.ipld.storage import selective_car_export
 
 # Define a selector to export only specific parts
-selector = {
-    "start": "bafy...",
-    "selector": {
-        "path": {
-            "segments": ["field1", "field2"]
-        }
-    }
-}
+selector = {"start": "bafy...", "selector": {"path": {"segments": ["field1", "field2"]}}}
 
 # Export selected parts to CAR file
-root_cid = selective_car_export(
-    selector=selector,
-    output_path="selected_data.car"
-)
+root_cid = selective_car_export(selector=selector, output_path="selected_data.car")
 ```
 
 ### Incremental CAR Building
@@ -311,33 +281,34 @@ builder.close()
 The enhanced data provenance system supports optimized CAR file operations for storing and sharing provenance information:
 
 ```python
-from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager, IPLDProvenanceStorage
+from ipfs_datasets_py.data_provenance_enhanced import (
+    EnhancedProvenanceManager,
+    IPLDProvenanceStorage,
+)
 
 # Initialize provenance manager with IPLD storage
 manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 
 # Record some provenance information
 source_id = manager.record_source(
-    output_id="dataset_1", 
-    source_type="file",
-    description="Original dataset"
+    output_id="dataset_1", source_type="file", description="Original dataset"
 )
 transform_id = manager.record_transformation(
     input_ids=[source_id],
     output_id="processed_dataset",
     transformation_type="normalize",
-    description="Normalize dataset values"
+    description="Normalize dataset values",
 )
 
 # Export provenance data with selective options
 export_stats = manager.export_to_car(
     output_path="provenance.car",
-    include_records=True,       # Include record data
-    include_graph=True,         # Include graph structure
-    selective_record_ids=[      # Optionally specify which records to include
+    include_records=True,  # Include record data
+    include_graph=True,  # Include graph structure
+    selective_record_ids=[  # Optionally specify which records to include
         source_id,
-        transform_id
-    ]
+        transform_id,
+    ],
 )
 
 print(f"Exported {export_stats['record_count']} records to CAR file")
@@ -347,8 +318,8 @@ print(f"Root CID: {export_stats['root_cid']}")
 new_manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 import_stats = new_manager.import_from_car(
     car_path="provenance.car",
-    verify_integrity=True,      # Verify cryptographic integrity
-    skip_existing=True          # Skip records that already exist
+    verify_integrity=True,  # Verify cryptographic integrity
+    skip_existing=True,  # Skip records that already exist
 )
 
 print(f"Imported {import_stats['record_count']} records and {import_stats['edge_count']} edges")
@@ -386,13 +357,13 @@ from ipfs_datasets_py.ipld.storage import IPLDStorage
 # Create storage with optimized hashing
 storage = IPLDStorage(
     default_hash_algorithm="sha2-256",  # Most compatible
-    use_blake3=True  # Faster for large data
+    use_blake3=True,  # Faster for large data
 )
 
 # Store data with specific hash algorithm
 cid = storage.store(
     data=large_data,
-    hash_algorithm="blake3"  # Much faster for large data
+    hash_algorithm="blake3",  # Much faster for large data
 )
 ```
 
@@ -404,25 +375,15 @@ For tabular data, choose appropriate hash column strategies:
 from ipfs_datasets_py.car_conversion import dataset_to_car
 
 # Hash by row ID (good for row-based access)
-root_cid = dataset_to_car(
-    dataset=df,
-    output_path="dataset_by_row.car",
-    hash_columns=["id"]
-)
+root_cid = dataset_to_car(dataset=df, output_path="dataset_by_row.car", hash_columns=["id"])
 
 # Hash by composite key (good for relational data)
 root_cid = dataset_to_car(
-    dataset=df,
-    output_path="dataset_by_composite.car",
-    hash_columns=["category", "timestamp"]
+    dataset=df, output_path="dataset_by_composite.car", hash_columns=["category", "timestamp"]
 )
 
 # Hash by content hash (good for deduplication)
-root_cid = dataset_to_car(
-    dataset=df,
-    output_path="dataset_by_content.car",
-    hash_strategy="content"
-)
+root_cid = dataset_to_car(dataset=df, output_path="dataset_by_content.car", hash_strategy="content")
 ```
 
 ### Content-Based Deduplication
@@ -467,14 +428,14 @@ inefficient_schema = {
                     "fields": {
                         "name": {"type": "string"},
                         "description": {"type": "string"},
-                        "created_at": {"type": "string"}
-                    }
+                        "created_at": {"type": "string"},
+                    },
                 }
-            }
+            },
         },
         "rarely_used_large_field": {"type": "bytes"},
-        "data": {"type": "bytes"}
-    }
+        "data": {"type": "bytes"},
+    },
 }
 
 # Optimized schema (flattened, frequently accessed fields first, optional fields)
@@ -485,8 +446,8 @@ optimized_schema = {
         "name": {"type": "string"},
         "created_at": {"type": "string"},
         "description": {"type": "string", "optional": True},  # Optional field
-        "large_field_ref": {"type": "link", "optional": True}  # CID reference to large data
-    }
+        "large_field_ref": {"type": "link", "optional": True},  # CID reference to large data
+    },
 }
 ```
 
@@ -496,11 +457,7 @@ optimized_schema = {
 from ipfs_datasets_py.ipld.schema import OptimizedSchemaValidator
 
 # Create an optimized schema validator
-validator = OptimizedSchemaValidator(
-    schema=schema,
-    cache_size=1000,
-    use_fast_validation=True
-)
+validator = OptimizedSchemaValidator(schema=schema, cache_size=1000, use_fast_validation=True)
 
 # Validate data with optimized validator (much faster)
 is_valid = validator.validate(data)
@@ -542,7 +499,7 @@ results = benchmark_ipld_operations(
     operation_types=["encode", "decode", "store", "retrieve"],
     data_sizes=[1024, 10240, 102400],  # Different data sizes
     iterations=10,  # Number of iterations for each benchmark
-    warm_up=2  # Warm-up iterations
+    warm_up=2,  # Warm-up iterations
 )
 
 # Print results

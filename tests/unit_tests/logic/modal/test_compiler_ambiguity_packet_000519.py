@@ -21,11 +21,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 
 def _profile_cues(family: ModalLogicFamily) -> set[str]:
     profile = DEFAULT_MODAL_REGISTRY.get_profile(family)
-    return {
-        cue
-        for operator in profile.operators
-        for cue in operator.cue_terms
-    }
+    return {cue for operator in profile.operators for cue in operator.cue_terms}
 
 
 def test_packet_000519_refined_frame_family_pairs_are_registered() -> None:

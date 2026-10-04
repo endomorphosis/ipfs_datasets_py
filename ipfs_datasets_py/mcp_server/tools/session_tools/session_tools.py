@@ -154,15 +154,23 @@ async def manage_session_state(
             session = await manager.update_session(session_id, status="paused")
             if not session:
                 return {"status": "error", "message": "Session not found"}
-            return {"status": "success", "session_id": session_id, "session_status": "paused",
-                    "message": "Session paused successfully"}
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "session_status": "paused",
+                "message": "Session paused successfully",
+            }
 
         if action == "resume":
             session = await manager.update_session(session_id, status="active")
             if not session:
                 return {"status": "error", "message": "Session not found"}
-            return {"status": "success", "session_id": session_id, "session_status": "active",
-                    "message": "Session resumed successfully"}
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "session_status": "active",
+                "message": "Session resumed successfully",
+            }
 
         if action == "extend":
             extend_minutes = kwargs.get("extend_minutes", 60)
@@ -185,8 +193,11 @@ async def manage_session_state(
             deleted = await manager.delete_session(session_id)
             if not deleted:
                 return {"status": "error", "message": "Session not found"}
-            return {"status": "success", "session_id": session_id,
-                    "message": "Session deleted successfully"}
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "message": "Session deleted successfully",
+            }
 
     except Exception as exc:
         logger.error("Session management error: %s", exc)

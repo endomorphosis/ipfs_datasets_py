@@ -23,17 +23,17 @@ The `legal_scrapers` module contains several shared components that are used by 
 from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
     get_keywords,
     register_keywords,
-    get_type_specific_keywords
+    get_type_specific_keywords,
 )
 
 # Get keywords for a category
-keywords = get_keywords('complaint', complaint_type='housing')
+keywords = get_keywords("complaint", complaint_type="housing")
 
 # Register new keywords
-register_keywords('complaint', ['new', 'keywords'], complaint_type='custom')
+register_keywords("complaint", ["new", "keywords"], complaint_type="custom")
 
 # Get only type-specific keywords (no global)
-specific = get_type_specific_keywords('complaint', 'housing')
+specific = get_type_specific_keywords("complaint", "housing")
 ```
 
 **Architecture:**
@@ -52,7 +52,7 @@ specific = get_type_specific_keywords('complaint', 'housing')
 from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
     LegalPatternExtractor,
     register_legal_terms,
-    get_legal_terms
+    get_legal_terms,
 )
 
 # Extract legal provisions
@@ -62,10 +62,7 @@ citations = extractor.extract_citations(text)
 categories = extractor.categorize_complaint_type(text)
 
 # Register custom patterns
-register_legal_terms('custom_category', [
-    r'\b(pattern1)\b',
-    r'\b(pattern2)\b'
-])
+register_legal_terms("custom_category", [r"\b(pattern1)\b", r"\b(pattern2)\b"])
 ```
 
 **Features:**
@@ -85,8 +82,9 @@ register_legal_terms('custom_category', [
 from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis.base import (
     BaseLegalPatternExtractor,
     BaseKeywordRegistry,
-    BaseRiskScorer
+    BaseRiskScorer,
 )
+
 
 # Extend for custom implementations
 class CustomExtractor(BaseLegalPatternExtractor):
@@ -113,7 +111,7 @@ from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
     register_employment_complaint,
     register_civil_rights_complaint,
     # ... 11 more types
-    get_registered_types
+    get_registered_types,
 )
 
 # Get all registered types
@@ -180,12 +178,13 @@ The complaint_analysis module may not be available in all environments:
 ```python
 try:
     from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import get_keywords
+
     HAVE_COMPLAINT_ANALYSIS = True
 except ImportError:
     HAVE_COMPLAINT_ANALYSIS = False
-    
+
 if HAVE_COMPLAINT_ANALYSIS:
-    keywords = get_keywords('complaint', complaint_type='housing')
+    keywords = get_keywords("complaint", complaint_type="housing")
 ```
 
 ### 3. Extend, Don't Modify
@@ -194,7 +193,7 @@ When adding new functionality, extend existing components rather than modifying 
 
 ```python
 # ✅ GOOD: Register new keywords
-register_keywords('complaint', ['custom1', 'custom2'], complaint_type='custom')
+register_keywords("complaint", ["custom1", "custom2"], complaint_type="custom")
 
 # ❌ BAD: Modify internal registry directly
 # (internal implementation may change)
@@ -206,10 +205,10 @@ To avoid false positives in categorization, use type-specific keywords:
 
 ```python
 # Get all keywords (global + type-specific)
-all_keywords = get_keywords('complaint', complaint_type='housing')
+all_keywords = get_keywords("complaint", complaint_type="housing")
 
 # Get only type-specific keywords (more precise)
-specific_keywords = get_type_specific_keywords('complaint', 'housing')
+specific_keywords = get_type_specific_keywords("complaint", "housing")
 ```
 
 ## Integration Examples
@@ -219,39 +218,39 @@ specific_keywords = get_type_specific_keywords('complaint', 'housing')
 ```python
 from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
     get_keywords,
-    get_registered_types
+    get_registered_types,
 )
+
 
 def categorize_query(query: str) -> list:
     """Categorize a query into legal domains."""
     categories = []
     query_lower = query.lower()
-    
+
     # Check all registered types
     for complaint_type in get_registered_types():
-        keywords = get_keywords('complaint', complaint_type=complaint_type)
+        keywords = get_keywords("complaint", complaint_type=complaint_type)
         matches = sum(1 for kw in keywords if kw.lower() in query_lower)
         if matches >= 2:  # Threshold
             categories.append(complaint_type)
-    
+
     return categories
 ```
 
 ### Example 2: Legal Concept Extraction
 
 ```python
-from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
-    LegalPatternExtractor
-)
+from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import LegalPatternExtractor
+
 
 def extract_legal_concepts(text: str) -> dict:
     """Extract legal concepts from text."""
     extractor = LegalPatternExtractor()
-    
+
     return {
-        'provisions': extractor.extract_provisions(text),
-        'citations': extractor.extract_citations(text),
-        'categories': extractor.categorize_complaint_type(text)
+        "provisions": extractor.extract_provisions(text),
+        "citations": extractor.extract_citations(text),
+        "categories": extractor.categorize_complaint_type(text),
     }
 ```
 
@@ -260,19 +259,22 @@ def extract_legal_concepts(text: str) -> dict:
 ```python
 from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
     register_legal_terms,
-    LegalPatternExtractor
+    LegalPatternExtractor,
 )
 
 # Register custom patterns
-register_legal_terms('crypto_law', [
-    r'\b(cryptocurrency|crypto)\b',
-    r'\b(blockchain)\b',
-    r'\b(smart contract)\b',
-    r'\b(defi|decentralized finance)\b',
-])
+register_legal_terms(
+    "crypto_law",
+    [
+        r"\b(cryptocurrency|crypto)\b",
+        r"\b(blockchain)\b",
+        r"\b(smart contract)\b",
+        r"\b(defi|decentralized finance)\b",
+    ],
+)
 
 # Use with extractor
-extractor = LegalPatternExtractor(categories=['crypto_law'])
+extractor = LegalPatternExtractor(categories=["crypto_law"])
 provisions = extractor.extract_provisions(crypto_text)
 ```
 

@@ -149,17 +149,13 @@ extraction/
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Entity,
     Relationship,
-    KnowledgeGraph
+    KnowledgeGraph,
 )
 ```
 
 **New (Recommended):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity,
-    Relationship,
-    KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import Entity, Relationship, KnowledgeGraph
 ```
 
 ---

@@ -4,6 +4,7 @@ All tools return a dict when the P2P scheduler is unavailable (no external
 deps required).  Tests verify the return-type contract and graceful
 degradation path.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -34,6 +35,7 @@ def _run(coro):
 # initialize_p2p_scheduler
 # ---------------------------------------------------------------------------
 
+
 class TestInitializeP2pScheduler:
     def test_returns_dict(self):
         result = _run(initialize_p2p_scheduler())
@@ -56,37 +58,45 @@ class TestInitializeP2pScheduler:
 # schedule_p2p_workflow
 # ---------------------------------------------------------------------------
 
+
 class TestScheduleP2pWorkflow:
     def test_returns_dict(self):
-        result = _run(schedule_p2p_workflow(
-            workflow_id="wf-1",
-            name="Test Workflow",
-            tags=["p2p_eligible"],
-        ))
+        result = _run(
+            schedule_p2p_workflow(
+                workflow_id="wf-1",
+                name="Test Workflow",
+                tags=["p2p_eligible"],
+            )
+        )
         assert isinstance(result, dict)
 
     def test_has_success_or_error_key(self):
-        result = _run(schedule_p2p_workflow(
-            workflow_id="wf-2",
-            name="My Workflow",
-            tags=["code_gen"],
-            priority=2.0,
-        ))
+        result = _run(
+            schedule_p2p_workflow(
+                workflow_id="wf-2",
+                name="My Workflow",
+                tags=["code_gen"],
+                priority=2.0,
+            )
+        )
         assert "success" in result or "error" in result
 
     def test_metadata_accepted(self):
-        result = _run(schedule_p2p_workflow(
-            workflow_id="wf-3",
-            name="Workflow with Metadata",
-            tags=["web_scrape"],
-            metadata={"author": "test"},
-        ))
+        result = _run(
+            schedule_p2p_workflow(
+                workflow_id="wf-3",
+                name="Workflow with Metadata",
+                tags=["web_scrape"],
+                metadata={"author": "test"},
+            )
+        )
         assert isinstance(result, dict)
 
 
 # ---------------------------------------------------------------------------
 # get_next_p2p_workflow
 # ---------------------------------------------------------------------------
+
 
 class TestGetNextP2pWorkflow:
     def test_returns_dict(self):
@@ -101,6 +111,7 @@ class TestGetNextP2pWorkflow:
 # ---------------------------------------------------------------------------
 # Peer management
 # ---------------------------------------------------------------------------
+
 
 class TestP2pPeerManagement:
     def test_add_peer_returns_dict(self):
@@ -119,6 +130,7 @@ class TestP2pPeerManagement:
 # ---------------------------------------------------------------------------
 # Status / utility
 # ---------------------------------------------------------------------------
+
 
 class TestP2pSchedulerStatus:
     def test_returns_dict(self):

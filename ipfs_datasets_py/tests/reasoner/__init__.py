@@ -7,6 +7,7 @@ lightweight stub whose __path__ points at the real source tree, so that
 ``from reasoner.hybrid_v2_blueprint import ...`` in test files resolves to
 the implementation, not this stub directory.
 """
+
 from __future__ import annotations
 
 import importlib

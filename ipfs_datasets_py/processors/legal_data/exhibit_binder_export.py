@@ -74,9 +74,17 @@ def render_binder_title_pdf(
 
     blocks = [
         ("Document", ["Lodged exhibit volume for the above-captioned matter."]),
-        ("Print Set", ["Deduplicated exhibit print set." if lean_mode else "Full exhibit print set."]),
+        (
+            "Print Set",
+            ["Deduplicated exhibit print set." if lean_mode else "Full exhibit print set."],
+        ),
         ("Submitted By", [submitted_by]),
-        ("Contents", ["Exhibit schedule, divider pages, exhibit cover sheets, and underlying exhibit source pages."]),
+        (
+            "Contents",
+            [
+                "Exhibit schedule, divider pages, exhibit cover sheets, and underlying exhibit source pages."
+            ],
+        ),
     ]
     for label, lines in blocks:
         y = draw_labeled_block(pdf, left, y, width - (2 * left), label, lines)
@@ -124,7 +132,9 @@ def convert_markdown_to_binder_pdf(
     if md_path.name.endswith("_tab_cover_page.md"):
         return render_exhibit_tab_from_markdown(md_path, output_path, caption_config=caption_config)
     if md_path.name.endswith("_cover_page.md"):
-        return render_exhibit_cover_from_markdown(md_path, output_path, caption_config=caption_config)
+        return render_exhibit_cover_from_markdown(
+            md_path, output_path, caption_config=caption_config
+        )
 
     out_dir = Path(generated_dir) if generated_dir is not None else output_path.parent
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -166,8 +176,15 @@ def markdown_or_text_to_pdf(source_path: str | Path, output_path: str | Path) ->
     source_path = Path(source_path)
     output_path = Path(output_path)
     if source_path.suffix.lower() == ".md":
-        return convert_markdown_to_binder_pdf(source_path, output_path, generated_dir=output_path.parent)
-    render_text_lines_pdf(output_path, source_path.name, source_path.read_text(errors="replace").splitlines(), footer_label=source_path.stem)
+        return convert_markdown_to_binder_pdf(
+            source_path, output_path, generated_dir=output_path.parent
+        )
+    render_text_lines_pdf(
+        output_path,
+        source_path.name,
+        source_path.read_text(errors="replace").splitlines(),
+        footer_label=source_path.stem,
+    )
     return output_path
 
 
@@ -224,9 +241,15 @@ def source_to_pdf(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if lean_mode and lean_replacements and (family, label) in lean_replacements:
-        return note_pdf(output_path, f"{label} lean cross-reference", lean_replacements[(family, label)])
+        return note_pdf(
+            output_path, f"{label} lean cross-reference", lean_replacements[(family, label)]
+        )
     if not source:
-        return note_pdf(output_path, f"{label} source note", ["No source path was parsed from the exhibit cover page."])
+        return note_pdf(
+            output_path,
+            f"{label} source note",
+            ["No source path was parsed from the exhibit cover page."],
+        )
     if source.startswith("Not yet obtained.") or source.startswith("Reserved:"):
         return note_pdf(
             output_path,

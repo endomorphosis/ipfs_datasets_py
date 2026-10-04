@@ -16,6 +16,7 @@ from pydantic import BaseModel, HttpUrl
 class _ValidateUrl(BaseModel):
     url: HttpUrl
 
+
 def _is_valid_http_url(url: str) -> bool:
     """Validate whether a string is a well-formed HTTP(S) URL.
 
@@ -46,19 +47,20 @@ def _is_valid_http_url(url: str) -> bool:
 
 logger = logging.getLogger(__name__)
 
+
 class WebArchive:
     """Web archive functionality for storing and retrieving web content.
 
     The WebArchive class provides a comprehensive system for archiving web content
     with associated metadata, tracking archived items, and retrieving them by unique
-    identifiers. It maintains an in-memory dictionary of archived items. When a 
-    storage_path is provided (persistence_mode="persistent"), items are persisted 
+    identifiers. It maintains an in-memory dictionary of archived items. When a
+    storage_path is provided (persistence_mode="persistent"), items are persisted
     to the specified storage path; when storage_path is None (persistence_mode="memory_only"),
     items exist only in memory during the session. Each archived item receives a unique
     identifier and timestamp for tracking and retrieval purposes.
 
     Args:
-        storage_path (Optional[str]): Path to the directory where archived content 
+        storage_path (Optional[str]): Path to the directory where archived content
             should be stored to disk. When None, persistence_mode="memory_only".
             When a valid path is provided, persistence_mode="persistent".
 
@@ -67,7 +69,7 @@ class WebArchive:
 
     Example:
         >>> archive = WebArchive(storage_path="/var/cache/web_archives")
-        >>> result = archive.archive_url("https://example.com", 
+        >>> result = archive.archive_url("https://example.com",
         ...                               metadata={"category": "documentation"})
         >>> print(result["archive_id"])
         'archive_1'
@@ -79,19 +81,19 @@ class WebArchive:
     def __init__(self, storage_path: Optional[str] = None) -> None:
         """Initialize web archive with optional storage path.
 
-        Creates a new WebArchive instance with an empty archive dictionary and 
+        Creates a new WebArchive instance with an empty archive dictionary and
         configures the storage location for persistent archiving. Sets persistence_mode
         to "memory_only" when storage_path is None, or "persistent" when a valid path
         is provided. Archives are maintained in memory during the session lifetime
         for memory_only mode.
 
         Args:
-            storage_path (Optional[str]): Filesystem path for persistent storage of 
+            storage_path (Optional[str]): Filesystem path for persistent storage of
                 archived content. Determines persistence_mode parameter.
 
         Attributes set:
             storage_path (Optional[str]): Path to the directory for persistent storage.
-            archived_items (Dict[str, Dict]): Dictionary to hold archived items with 
+            archived_items (Dict[str, Dict]): Dictionary to hold archived items with
                 unique identifiers as keys. Each item contains URL, timestamp, metadata,
                 and status information.
 
@@ -111,30 +113,30 @@ class WebArchive:
 
         Creates an archive entry for the specified URL, generating a unique identifier,
         timestamp, and storing any provided metadata. The archived item is stored in the
-        internal dictionary with archive_status="archived". If archiving fails, an error 
-        status is returned with the exception message. The timestamp represents the 
+        internal dictionary with archive_status="archived". If archiving fails, an error
+        status is returned with the exception message. The timestamp represents the
         original_archive_time and never changes after initial creation.
 
         Args:
             url (str): The complete URL to be archived including protocol.
-            metadata (Optional[Dict]): Additional key-value pairs to store with the 
+            metadata (Optional[Dict]): Additional key-value pairs to store with the
                 archived URL for categorization or tracking.
 
         Returns:
             Dict[str, Any]: Archive operation result with the following structure:
                 When status='success':
                     status (str): Always 'success' for successful operations.
-                    archive_id (str): Unique identifier formatted as 'archive_{n}' where 
+                    archive_id (str): Unique identifier formatted as 'archive_{n}' where
                         n is the sequential archive number.
                 When status='error':
                     status (str): Always 'error' for failed operations.
-                    message (str): Human-readable error description explaining why the 
+                    message (str): Human-readable error description explaining why the
                         archiving operation failed. This field exists ONLY in error responses.
 
         Example:
             >>> archive = WebArchive()
-            >>> result = archive.archive_url("https://docs.python.org", 
-            ...                               metadata={"type": "documentation", 
+            >>> result = archive.archive_url("https://docs.python.org",
+            ...                               metadata={"type": "documentation",
             ...                                        "language": "python"})
             >>> if result["status"] == "success":
             ...     print(f"Archived with ID: {result['archive_id']}")
@@ -156,7 +158,7 @@ class WebArchive:
                 "timestamp": datetime.now().isoformat(),
                 "content": "",  # Placeholder for archived payload/content
                 "metadata": metadata or {},
-                "status": "archived"
+                "status": "archived",
             }
             self.archived_items[archive_id] = archived_item
             return {"status": "success", "archive_id": archive_id}
@@ -169,7 +171,7 @@ class WebArchive:
 
         Looks up an archived item using its unique identifier and returns the complete
         archive record including URL, timestamp (representing original_archive_time that
-        never changes), metadata, and status. If the archive ID does not exist, returns 
+        never changes), metadata, and status. If the archive ID does not exist, returns
         an error status with an appropriate message.
 
         Args:
@@ -182,14 +184,14 @@ class WebArchive:
                     data (Dict[str, Any]): Complete archive record containing:
                         id (str): The archive identifier matching the requested archive_id.
                         url (str): The URL as originally archived (never modified).
-                        timestamp (str): ISO 8601 formatted datetime when the URL was 
+                        timestamp (str): ISO 8601 formatted datetime when the URL was
                             originally archived (timestamp_represents="original_archive_time").
                         metadata (Dict): User-provided metadata dictionary from original archiving.
-                        status (str): Archive status, expected value is 'archived' 
+                        status (str): Archive status, expected value is 'archived'
                             (archive_status_valid_values includes 'archived').
                 When status='error':
                     status (str): Always 'error' for not found archives.
-                    message (str): Error description, expected value 'Archive not found' 
+                    message (str): Error description, expected value 'Archive not found'
                         when the archive_id doesn't exist. This field exists ONLY in error responses.
 
         Example:
@@ -238,6 +240,7 @@ class WebArchive:
             archive_2: https://site2.com (news)
         """
         return list(self.archived_items.values())
+
 
 class WebArchiveProcessor:
     """Processor for web archive operations.
@@ -309,7 +312,7 @@ class WebArchiveProcessor:
                     archive_id (str): Assigned archive identifier formatted as 'archive_{n}'.
                 When individual status='error':
                     status (str): Individual URL archive status 'error'.
-                    message (str): Error description for failed URL. This field exists 
+                    message (str): Error description for failed URL. This field exists
                         ONLY in error responses.
 
         Raises:
@@ -358,7 +361,7 @@ class WebArchiveProcessor:
                 case _:
                     raise ValueError(f"Unexpected status {result['status']} for URL {url}")
             results.append(result)
-        return {"status": success/len(urls), "results": results}
+        return {"status": success / len(urls), "results": results}
 
     def search_archives(self, query: str) -> List[Dict[str, Any]]:
         """Search archived content.
@@ -409,7 +412,7 @@ class WebArchiveProcessor:
             Dict[str, Any]: Text extraction result with the following structure:
                 When status='success':
                     status (str): Always 'success' for successful extraction.
-                    text (str): Extracted plain text with normalized whitespace and 
+                    text (str): Extracted plain text with normalized whitespace and
                         removed HTML markup.
                     length (int): Character count of the extracted text.
                 When status='error':
@@ -440,12 +443,12 @@ class WebArchiveProcessor:
                 return {"status": "error", "message": "html_content must be a string, got None"}
             # Simple HTML text extraction (in a real implementation, you'd use BeautifulSoup)
             # Remove script and style elements
-            text = re.sub(r'<script.*?</script>', '', html_content, flags=re.DOTALL)
-            text = re.sub(r'<style.*?</style>', '', text, flags=re.DOTALL)
+            text = re.sub(r"<script.*?</script>", "", html_content, flags=re.DOTALL)
+            text = re.sub(r"<style.*?</style>", "", text, flags=re.DOTALL)
             # Remove HTML tags
-            text = re.sub(r'<[^>]+>', '', text)
+            text = re.sub(r"<[^>]+>", "", text)
             # Clean up whitespace
-            text = re.sub(r'\s+', ' ', text).strip()
+            text = re.sub(r"\s+", " ", text).strip()
 
             return {"status": "success", "text": text, "length": len(text), "message": ""}
         except Exception as e:
@@ -490,7 +493,7 @@ class WebArchiveProcessor:
                 "html_length": len(html),
                 "text_length": text_result["length"],
                 "metadata": metadata or {},
-                "processed_at": datetime.now().isoformat()
+                "processed_at": datetime.now().isoformat(),
             }
         except Exception as e:
             logger.error(f"Failed to process HTML content: {e}")
@@ -534,14 +537,14 @@ class WebArchiveProcessor:
                     "uri": "https://example.com/page1",
                     "text": "Sample text content from page 1",
                     "content_type": "text/html",
-                    "timestamp": "2024-01-01T00:00:00Z"
+                    "timestamp": "2024-01-01T00:00:00Z",
                 },
                 {
                     "uri": "https://example.com/page2",
                     "text": "Sample text content from page 2",
                     "content_type": "text/html",
-                    "timestamp": "2024-01-01T01:00:00Z"
-                }
+                    "timestamp": "2024-01-01T01:00:00Z",
+                },
             ]
 
             logger.info(f"Extracted text from {len(records)} records in WARC file")
@@ -751,14 +754,14 @@ class WebArchiveProcessor:
                     "source_uri": "https://example.com/page1",
                     "target_uri": "https://example.com/page2",
                     "link_text": "Click here",
-                    "link_type": "href"
+                    "link_type": "href",
                 },
                 {
                     "source_uri": "https://example.com/page1",
                     "target_uri": "https://external-site.com",
                     "link_text": "External link",
-                    "link_type": "href"
-                }
+                    "link_type": "href",
+                },
             ]
 
             logger.info(f"Extracted {len(links)} links from WARC file")
@@ -768,7 +771,12 @@ class WebArchiveProcessor:
             logger.error(f"Failed to extract links from WARC: {e}")
             raise
 
-    def index_warc(self, warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> str:
+    def index_warc(
+        self,
+        warc_path: str,
+        output_path: Optional[str] = None,
+        encryption_key: Optional[str] = None,
+    ) -> str:
         """Create an index for a WARC file.
 
         Generates an index file for efficient random access to WARC records, storing
@@ -777,7 +785,7 @@ class WebArchiveProcessor:
 
         Args:
             warc_path (str): Filesystem path to the WARC file to be indexed.
-            output_path (Optional[str]): Path for the index file, defaults to 
+            output_path (Optional[str]): Path for the index file, defaults to
                 warc_path + '.idx' if not specified.
             encryption_key (Optional[str]): Encryption key for securing the index
                 file if sensitive data protection is required.
@@ -821,19 +829,19 @@ class WebArchiveProcessor:
                         "uri": "https://example.com/page1",
                         "offset": 0,
                         "length": 1024,
-                        "content_type": "text/html"
+                        "content_type": "text/html",
                     },
                     {
                         "uri": "https://example.com/page2",
                         "offset": 1024,
                         "length": 2048,
-                        "content_type": "text/html"
-                    }
-                ]
+                        "content_type": "text/html",
+                    },
+                ],
             }
 
             # Simulate writing index file
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(index_data, f, indent=2)
 
             logger.info(f"Created WARC index: {output_path}")
@@ -843,7 +851,9 @@ class WebArchiveProcessor:
             logger.error(f"Failed to index WARC: {e}")
             raise
 
-    def create_warc(self, urls: List[str], output_path: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
+    def create_warc(
+        self, urls: List[str], output_path: str, metadata: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """Create a WARC file from a list of URLs.
 
         Downloads and archives content from specified URLs into a standard WARC format
@@ -900,7 +910,9 @@ class WebArchiveProcessor:
             logger.error(f"Failed to create WARC: {e}")
             return {"status": "error", "message": str(e)}
 
-    def extract_dataset_from_cdxj(self, cdxj_path: str, output_format: str = "json") -> Dict[str, Any]:
+    def extract_dataset_from_cdxj(
+        self, cdxj_path: str, output_format: str = "json"
+    ) -> Dict[str, Any]:
         """Extract dataset from CDXJ file.
 
         Processes a CDXJ (CDX JSON) index file to extract structured datasets,
@@ -956,15 +968,15 @@ class WebArchiveProcessor:
                         "url": "https://example.com/page1",
                         "timestamp": "20240101000000",
                         "status": "200",
-                        "content_type": "text/html"
+                        "content_type": "text/html",
                     },
                     {
                         "url": "https://example.com/page2",
                         "timestamp": "20240101010000",
                         "status": "200",
-                        "content_type": "text/html"
-                    }
-                ]
+                        "content_type": "text/html",
+                    },
+                ],
             }
 
             logger.info(f"Extracted dataset from CDXJ file: {cdxj_path}")

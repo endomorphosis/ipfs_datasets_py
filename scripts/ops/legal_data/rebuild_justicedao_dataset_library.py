@@ -20,7 +20,9 @@ def _parse_override(values: List[str]) -> Dict[str, List[str] | str]:
     for item in values:
         raw = str(item or "").strip()
         if "=" not in raw:
-            raise ValueError(f"Expected override in corpus_key=/path/to/file.parquet form, got: {raw}")
+            raise ValueError(
+                f"Expected override in corpus_key=/path/to/file.parquet form, got: {raw}"
+            )
         corpus_key, path = raw.split("=", 1)
         key = corpus_key.strip().lower()
         value = path.strip()
@@ -37,7 +39,9 @@ def _parse_override(values: List[str]) -> Dict[str, List[str] | str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Rebuild CID/BM25/KG/vector artifacts for JusticeDAO datasets.")
+    parser = argparse.ArgumentParser(
+        description="Rebuild CID/BM25/KG/vector artifacts for JusticeDAO datasets."
+    )
     parser.add_argument("--corpus-key", action="append", dest="corpus_keys", default=[])
     parser.add_argument("--state", action="append", dest="state_codes", default=[])
     parser.add_argument("--parquet-override", action="append", default=[])
@@ -65,7 +69,9 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
-    overrides = _parse_override(list(args.parquet_override or [])) if args.parquet_override else None
+    overrides = (
+        _parse_override(list(args.parquet_override or [])) if args.parquet_override else None
+    )
     if args.plan_only:
         plan = build_justicedao_rebuild_plan(
             corpus_keys=list(args.corpus_keys or []) or None,
@@ -87,8 +93,12 @@ def main() -> int:
         model_name=(str(args.model_name).strip() or None) if args.model_name is not None else None,
         device=(str(args.device).strip() or None) if args.device is not None else None,
         enable_llm_kg_enrichment=bool(args.enable_llm_kg_enrichment),
-        llm_provider=(str(args.llm_provider).strip() or None) if args.llm_provider is not None else None,
-        llm_model_name=(str(args.llm_model_name).strip() or None) if args.llm_model_name is not None else None,
+        llm_provider=(str(args.llm_provider).strip() or None)
+        if args.llm_provider is not None
+        else None,
+        llm_model_name=(str(args.llm_model_name).strip() or None)
+        if args.llm_model_name is not None
+        else None,
         llm_max_rows=int(args.llm_max_rows or 0),
         llm_max_chars=int(args.llm_max_chars or 700),
         execute_recovery_for_degraded_corpora=bool(args.execute_recovery_for_degraded_corpora),
@@ -99,7 +109,9 @@ def main() -> int:
         hf_token=(str(args.hf_token).strip() or None) if args.hf_token is not None else None,
         include_canonical_parquet=bool(args.include_canonical_parquet),
         max_files_per_corpus=int(args.max_files_per_corpus or 0),
-        output_root=(str(args.output_root).strip() or None) if args.output_root is not None else None,
+        output_root=(str(args.output_root).strip() or None)
+        if args.output_root is not None
+        else None,
     )
 
     payload = justicedao_library_rebuild_result_to_dict(result)

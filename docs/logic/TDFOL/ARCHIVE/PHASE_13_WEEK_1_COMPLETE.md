@@ -36,11 +36,9 @@ All tools follow the ClaudeMCPTool pattern, integrate with existing TDFOL module
 from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_parse_tool import TDFOLParseTool
 
 tool = TDFOLParseTool()
-result = await tool.execute({
-    "formula": "∀x.(Contractor(x) → O(PayTaxes(x)))",
-    "format": "symbolic",
-    "validate": True
-})
+result = await tool.execute(
+    {"formula": "∀x.(Contractor(x) → O(PayTaxes(x)))", "format": "symbolic", "validate": True}
+)
 # Returns: {success: True, parsed_formula: "...", formula_type: "QuantifiedFormula", ...}
 ```
 
@@ -63,13 +61,15 @@ result = await tool.execute({
 from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLProveTool
 
 tool = TDFOLProveTool()
-result = await tool.execute({
-    "formula": "Q(a)",
-    "axioms": ["P(a)", "∀x.(P(x) → Q(x))"],
-    "strategy": "forward",
-    "timeout_ms": 5000,
-    "include_proof_steps": True
-})
+result = await tool.execute(
+    {
+        "formula": "Q(a)",
+        "axioms": ["P(a)", "∀x.(P(x) → Q(x))"],
+        "strategy": "forward",
+        "timeout_ms": 5000,
+        "include_proof_steps": True,
+    }
+)
 # Returns: {success: True, proved: True, status: "proved", method: "forward", proof_steps: [...], ...}
 ```
 
@@ -78,11 +78,13 @@ result = await tool.execute({
 from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLBatchProveTool
 
 tool = TDFOLBatchProveTool()
-result = await tool.execute({
-    "formulas": ["P() → P()", "Q() → Q()", "R() → R()"],
-    "strategy": "auto",
-    "timeout_per_formula_ms": 3000
-})
+result = await tool.execute(
+    {
+        "formulas": ["P() → P()", "Q() → Q()", "R() → R()"],
+        "strategy": "auto",
+        "timeout_per_formula_ms": 3000,
+    }
+)
 # Returns: {success: True, results: [...], total_proved: 3, total_failed: 0, ...}
 ```
 
@@ -107,13 +109,15 @@ result = await tool.execute({
 from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_convert_tool import TDFOLConvertTool
 
 tool = TDFOLConvertTool()
-result = await tool.execute({
-    "formula": "∀x.(P(x) → Q(x))",
-    "source_format": "tdfol",
-    "target_format": "fol",
-    "preserve_semantics": True,
-    "include_metadata": True
-})
+result = await tool.execute(
+    {
+        "formula": "∀x.(P(x) → Q(x))",
+        "source_format": "tdfol",
+        "target_format": "fol",
+        "preserve_semantics": True,
+        "include_metadata": True,
+    }
+)
 # Returns: {success: True, converted_formula: "...", metadata: {lossless: True, ...}, ...}
 ```
 
@@ -213,12 +217,8 @@ class TDFOLToolName(ClaudeMCPTool):
         self.category = "logic_tools"
         self.tags = ["tag1", "tag2"]
         self.version = "1.0.0"
-        self.input_schema = {
-            "type": "object",
-            "properties": {...},
-            "required": [...]
-        }
-    
+        self.input_schema = {"type": "object", "properties": {...}, "required": [...]}
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         # Implementation
         return {...}

@@ -9,12 +9,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Create file handler
-log_file = os.path.join(os.path.dirname(__file__), 'list_tools_in_cli_dir.log')
+log_file = os.path.join(os.path.dirname(__file__), "list_tools_in_cli_dir.log")
 file_handler = logging.FileHandler(log_file)
 file_handler.setLevel(logging.DEBUG)
 
 # Create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 
 # Add handler to logger
@@ -23,13 +23,14 @@ logger.addHandler(file_handler)
 
 def _get_program_name_from(help_output: str) -> str:
     import re
+
     # Extract program name from usage line.
     patterns = [
-        r'usage:\s+(\S+)',  # Standard: "usage: program_name"
-        r'Usage:\s+(\S+)',  # Capitalized: "Usage: program_name"
-        r'^(\S+)\s+\[',     # Program name at start with options
-        r'usage:\s+(\S+\.py)',  # Look for .py files specifically
-        r'usage:\s+.*?(\w+\.py)',  # More flexible .py file matching
+        r"usage:\s+(\S+)",  # Standard: "usage: program_name"
+        r"Usage:\s+(\S+)",  # Capitalized: "Usage: program_name"
+        r"^(\S+)\s+\[",  # Program name at start with options
+        r"usage:\s+(\S+\.py)",  # Look for .py files specifically
+        r"usage:\s+.*?(\w+\.py)",  # More flexible .py file matching
     ]
     program_name = None
     for pattern in patterns:
@@ -45,21 +46,22 @@ def _get_program_name_from(help_output: str) -> str:
 def _get_name_and_help_menu(
     file: Path,
     run_as_module: bool = False,
-    timeout: int = 10 # seconds
-    ) -> tuple[str, str]:
+    timeout: int = 10,  # seconds
+) -> tuple[str, str]:
     import subprocess
-    venv_python = Path.cwd() / '.venv/bin/python' # NOTE This is the server's venv.
-    python_cmd = str(venv_python.resolve()) if venv_python.is_file() else 'python'
+
+    venv_python = Path.cwd() / ".venv/bin/python"  # NOTE This is the server's venv.
+    python_cmd = str(venv_python.resolve()) if venv_python.is_file() else "python"
     cwd = None  # Default to current directory
-    
+
     if run_as_module:
         # Change to the parent directory of the module
         cwd = file.parent
         module_name = file.stem
-        cmd_list = [python_cmd, '-m', module_name, '--help']
+        cmd_list = [python_cmd, "-m", module_name, "--help"]
     else:
         cwd = None  # Use current directory
-        cmd_list = [python_cmd, str(file.resolve()), '--help']
+        cmd_list = [python_cmd, str(file.resolve()), "--help"]
 
     logger.debug(f"Running command: {' '.join(cmd_list)} in {cwd if cwd else 'current directory'}")
     try:
@@ -69,14 +71,16 @@ def _get_name_and_help_menu(
             text=True,
             check=True,
             timeout=timeout,
-            cwd=cwd  # Set working directory
+            cwd=cwd,  # Set working directory
         )
         help_menu = result.stdout.strip()
         return _get_program_name_from(help_menu), help_menu
     except subprocess.CalledProcessError as e:
         raise Exception(f"Error running {file.name} with --help: {e.stderr.strip()}")
     except Exception as e:
-        raise Exception(f"A {type(e).__name__} occurred while getting help menu for {file.name}: {e}") from e
+        raise Exception(
+            f"A {type(e).__name__} occurred while getting help menu for {file.name}: {e}"
+        ) from e
 
 
 def _has_argparse_parser(content: str) -> bool:
@@ -85,27 +89,29 @@ def _has_argparse_parser(content: str) -> bool:
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign):
                 if isinstance(node.value, ast.Call):
-                    if (hasattr(node.value.func, 'attr') and 
-                        node.value.func.attr == 'ArgumentParser'):
+                    if (
+                        hasattr(node.value.func, "attr")
+                        and node.value.func.attr == "ArgumentParser"
+                    ):
                         return True
             # Also check for direct calls without assignment
             elif isinstance(node, ast.Call):
-                if (hasattr(node.func, 'attr') and 
-                    node.func.attr == 'ArgumentParser'):
+                if hasattr(node.func, "attr") and node.func.attr == "ArgumentParser":
                     return True
     except (SyntaxError, AttributeError, TypeError):
         # Return False if AST parsing fails
         return False
     return False
 
+
 def _find_program_entry_point(entrance_dir: Path) -> list[dict]:
     files_list = []
     if entrance_dir.is_file():
         entrance_dir = entrance_dir.parent
-    for file in entrance_dir.rglob('*.py'):
-        if not file.name.startswith('_'):
+    for file in entrance_dir.rglob("*.py"):
+        if not file.name.startswith("_"):
             try:
-                with open(file, 'r', encoding='utf-8') as f:
+                with open(file, "r", encoding="utf-8") as f:
                     content = f.read()
             except Exception as e:
                 logger.error(f"Error reading file {file}: {e}")
@@ -113,10 +119,10 @@ def _find_program_entry_point(entrance_dir: Path) -> list[dict]:
             _dict = {
                 "has_parser": _has_argparse_parser(content),
                 "is_entry": True if 'if __name__ == "__main__":' in content else False,
-                "is_runnable_module": True if file.stem == '__main__' else False,
+                "is_runnable_module": True if file.stem == "__main__" else False,
             }
             if any(_dict.values()):
-                _dict['path'] = file
+                _dict["path"] = file
                 files_list.append(_dict)
     return files_list
 
@@ -139,8 +145,8 @@ def list_tools_in_cli_dir(get_help_menu: bool = True) -> list[dict[str, str]]:
     # Keep this path constrained so we only inspect vetted CLI tool directories.
     tools_dir = Path(__file__).parent.parent
     cli_candidates = [
-        tools_dir / 'cli',
-        tools_dir.parent / 'cli',
+        tools_dir / "cli",
+        tools_dir.parent / "cli",
     ]
     cli_tools_dir = next((p for p in cli_candidates if p.exists() and p.is_dir()), None)
     if cli_tools_dir is None:
@@ -149,15 +155,17 @@ def list_tools_in_cli_dir(get_help_menu: bool = True) -> list[dict[str, str]]:
     python_files = []
 
     for tool_dir in cli_tools_dir.iterdir():
-        if not tool_dir.is_dir() or tool_dir.name.startswith('_') or tool_dir.name.startswith('.'):
+        if not tool_dir.is_dir() or tool_dir.name.startswith("_") or tool_dir.name.startswith("."):
             # Skip non-directory files, hidden directories, and directories starting with an underscore
             continue
-        if '__pycache__' in tool_dir.parts or 'tests' in tool_dir.parts:
+        if "__pycache__" in tool_dir.parts or "tests" in tool_dir.parts:
             continue
         program_name: str = None
         target_path: Path = None
         run_as_module = False
-        help_menu = "Could not get tool to run with --help. Please check the tool's code for errors."
+        help_menu = (
+            "Could not get tool to run with --help. Please check the tool's code for errors."
+        )
         entry_point_candidates = _find_program_entry_point(tool_dir)
         # Check for __main__.py file first
         for entry_point in entry_point_candidates:
@@ -195,11 +203,13 @@ def list_tools_in_cli_dir(get_help_menu: bool = True) -> list[dict[str, str]]:
             name = target_path.stem
 
         file_dict = {
-            'name': program_name if program_name is not None else name,  # Get the name without the .py extension
+            "name": program_name
+            if program_name is not None
+            else name,  # Get the name without the .py extension
         }
         if get_help_menu is True:
-            file_dict['help_menu'] = help_menu
+            file_dict["help_menu"] = help_menu
         python_files.append(file_dict)
     if not python_files:
-        return [] # Sort by name for consistent ordering
-    return sorted(python_files, key=lambda x: x['name'])
+        return []  # Sort by name for consistent ordering
+    return sorted(python_files, key=lambda x: x["name"])

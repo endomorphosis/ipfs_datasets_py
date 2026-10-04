@@ -17,7 +17,7 @@ class TestWebArchiveProcessorInitialization:
         # WHEN WebArchiveProcessor is initialized
         try:
             processor = WebArchiveProcessor()
-            
+
             # THEN expect instance created successfully
             assert processor is not None
             assert isinstance(processor, WebArchiveProcessor)
@@ -35,9 +35,9 @@ class TestWebArchiveProcessorInitialization:
         try:
             # WHEN WebArchiveProcessor is initialized
             processor = WebArchiveProcessor()
-            
+
             # THEN expect archive attribute exists
-            assert hasattr(processor, 'archive')
+            assert hasattr(processor, "archive")
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -51,12 +51,12 @@ class TestWebArchiveProcessorInitialization:
         # GIVEN no arguments
         try:
             from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchive
-            
+
             # WHEN WebArchiveProcessor is initialized
             processor = WebArchiveProcessor()
-            
+
             # THEN expect archive attribute is WebArchive instance
-            assert hasattr(processor, 'archive')
+            assert hasattr(processor, "archive")
             if processor.archive is not None:
                 assert isinstance(processor.archive, WebArchive)
         except ImportError:
@@ -72,11 +72,12 @@ class TestWebArchiveProcessorInitialization:
         # GIVEN WebArchiveProcessor instance
         try:
             from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchive
+
             processor = WebArchiveProcessor()
-            
+
             # WHEN checking archive attribute
             archive = processor.archive
-            
+
             # THEN expect archive attribute is instance of WebArchive
             if archive is not None:
                 assert isinstance(archive, WebArchive)
@@ -93,12 +94,12 @@ class TestWebArchiveProcessorInitialization:
         # GIVEN WebArchiveProcessor instance
         try:
             processor = WebArchiveProcessor()
-            
+
             # WHEN checking archive attribute
-            archive = getattr(processor, 'archive', None)
-            
+            archive = getattr(processor, "archive", None)
+
             # THEN expect archive attribute is accessible
-            assert archive is not None or hasattr(processor, 'archive')
+            assert archive is not None or hasattr(processor, "archive")
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -112,10 +113,10 @@ class TestWebArchiveProcessorInitialization:
         # GIVEN newly initialized WebArchiveProcessor
         try:
             processor = WebArchiveProcessor()
-            
+
             # WHEN checking readiness for operations
-            required_attributes = ['archive']
-            
+            required_attributes = ["archive"]
+
             # THEN expect instance has all required attributes
             for attr in required_attributes:
                 assert hasattr(processor, attr), f"Missing required attribute: {attr}"
@@ -132,16 +133,18 @@ class TestWebArchiveProcessorInitialization:
         # GIVEN newly initialized WebArchiveProcessor
         try:
             processor = WebArchiveProcessor()
-            
+
             # WHEN checking readiness for operations
-            if hasattr(processor, 'archive') and processor.archive is not None:
+            if hasattr(processor, "archive") and processor.archive is not None:
                 archive = processor.archive
-                
+
                 # THEN expect can access embedded WebArchive methods
-                expected_methods = ['archive_url', 'create_warc', 'extract_text_from_html']
+                expected_methods = ["archive_url", "create_warc", "extract_text_from_html"]
                 for method in expected_methods:
                     if hasattr(archive, method):
-                        assert callable(getattr(archive, method)), f"Method {method} is not callable"
+                        assert callable(getattr(archive, method)), (
+                            f"Method {method} is not callable"
+                        )
         except ImportError:
             pytest.skip("WebArchive components not available")
 

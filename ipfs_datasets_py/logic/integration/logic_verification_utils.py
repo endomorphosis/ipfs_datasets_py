@@ -1,4 +1,5 @@
 """Backward-compat shim: re-exports from reasoning.logic_verification_utils."""
+
 from .reasoning.logic_verification_utils import (
     verify_consistency,
     verify_entailment,

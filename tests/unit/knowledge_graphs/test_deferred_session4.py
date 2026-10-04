@@ -19,6 +19,7 @@ import pytest
 # Helpers to build minimal test KGs
 # ---------------------------------------------------------------------------
 
+
 def _make_kg() -> Any:
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
     from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
@@ -79,7 +80,11 @@ class TestSRLFrameFromDict:
 
     def test_to_dict_from_dict_roundtrip(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, SRLFrame, RoleArgument, ROLE_AGENT, ROLE_PATIENT,
+            SRLExtractor,
+            SRLFrame,
+            RoleArgument,
+            ROLE_AGENT,
+            ROLE_PATIENT,
         )
 
         # GIVEN
@@ -137,7 +142,9 @@ class TestSRLFrameFromDict:
 
     def test_from_dict_no_spans(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLFrame, RoleArgument, ROLE_THEME,
+            SRLFrame,
+            RoleArgument,
+            ROLE_THEME,
         )
 
         # GIVEN — argument without span
@@ -224,7 +231,8 @@ class TestSRLTemporalGraph:
         kg = extractor.build_temporal_graph(text)
 
         temporal_rels = [
-            r for r in kg.relationships.values()
+            r
+            for r in kg.relationships.values()
             if r.relationship_type in ("PRECEDES", "FOLLOWS", "OVERLAPS")
         ]
         # Not guaranteed for 2-sentence text with only 1 event per sentence,
@@ -442,11 +450,13 @@ class TestExplainInferences:
         bob = Entity(entity_type="Person", name="Bob")
         kg.add_entity(alice)
         kg.add_entity(bob)
-        kg.add_relationship(Relationship(
-            relationship_type="isSiblingOf",
-            source_entity=alice,
-            target_entity=bob,
-        ))
+        kg.add_relationship(
+            Relationship(
+                relationship_type="isSiblingOf",
+                source_entity=alice,
+                target_entity=bob,
+            )
+        )
 
         reasoner = OntologyReasoner(schema)
         traces = reasoner.explain_inferences(kg)
@@ -482,7 +492,8 @@ class TestDistributedGraphRebalance:
 
     def test_rebalance_returns_distributed_graph(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
 
         kg = _make_large_kg(20)
@@ -494,7 +505,8 @@ class TestDistributedGraphRebalance:
 
     def test_rebalance_preserves_total_nodes(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
 
         kg = _make_large_kg(20)
@@ -506,7 +518,8 @@ class TestDistributedGraphRebalance:
 
     def test_rebalance_round_robin_is_balanced(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
 
         kg = _make_large_kg(20)
@@ -520,7 +533,8 @@ class TestDistributedGraphRebalance:
 
     def test_rebalance_does_not_mutate_original(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
 
         kg = _make_large_kg(20)
@@ -539,7 +553,8 @@ class TestFederatedQueryExecutorExplain:
 
     def test_explain_returns_query_plan(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
 
         kg = _make_large_kg(10)
@@ -553,7 +568,8 @@ class TestFederatedQueryExecutorExplain:
 
     def test_explain_plan_contains_node_counts(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
 
         kg = _make_large_kg(12)
@@ -569,7 +585,8 @@ class TestFederatedQueryExecutorExplain:
 
     def test_explain_plan_to_dict(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
 
         kg = _make_large_kg(6)
@@ -585,7 +602,9 @@ class TestFederatedQueryExecutorExplain:
 
     def test_explain_records_strategy(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor, PartitionStrategy,
+            GraphPartitioner,
+            FederatedQueryExecutor,
+            PartitionStrategy,
         )
 
         kg = _make_large_kg(8)
@@ -603,16 +622,15 @@ class TestFederatedStreamingExecution:
 
     def test_streaming_yields_tuples(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
 
         kg = _make_large_kg(8)
         dist = GraphPartitioner(num_partitions=3).partition(kg)
         executor = FederatedQueryExecutor(dist)
 
-        results = list(executor.execute_cypher_streaming(
-            "MATCH (n:Item) RETURN n.name"
-        ))
+        results = list(executor.execute_cypher_streaming("MATCH (n:Item) RETURN n.name"))
 
         for item in results:
             assert isinstance(item, tuple)
@@ -623,7 +641,8 @@ class TestFederatedStreamingExecution:
 
     def test_streaming_partition_idx_in_range(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
 
         kg = _make_large_kg(12)
@@ -636,7 +655,9 @@ class TestFederatedStreamingExecution:
 
     def test_streaming_dedup_removes_duplicates(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor, PartitionStrategy,
+            GraphPartitioner,
+            FederatedQueryExecutor,
+            PartitionStrategy,
         )
 
         # Use ROUND_ROBIN so we know the distribution; copy_cross_edges=True
@@ -660,7 +681,8 @@ class TestFederatedStreamingExecution:
     def test_streaming_empty_graph(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
 
         kg = KnowledgeGraph(name="empty")

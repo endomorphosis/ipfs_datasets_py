@@ -113,6 +113,7 @@ def _fallback_forall(self, var, condition):
 class RateLimiter:
     pass  # Entire class is stub
 
+
 # security/input_validation.py
 class InputValidator:
     pass  # Entire class is stub

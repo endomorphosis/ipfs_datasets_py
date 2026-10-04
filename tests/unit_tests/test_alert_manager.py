@@ -18,7 +18,7 @@ from ipfs_datasets_py.alerts.rule_engine import RuleEngine
 
 class TestAlertRule:
     """Test AlertRule data class."""
-    
+
     def test_alert_rule_initialization(self):
         """
         GIVEN rule parameters
@@ -28,17 +28,17 @@ class TestAlertRule:
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
+            condition={">": [{"var": "price"}, 100]},
             message_template="Price is {price}",
-            severity="warning"
+            severity="warning",
         )
-        
+
         assert rule.rule_id == "test_rule"
         assert rule.name == "Test Rule"
         assert rule.severity == "warning"
         assert rule.enabled is True
         assert rule.suppression_window == 300
-    
+
     def test_alert_rule_from_dict(self):
         """
         GIVEN a rule dictionary
@@ -46,21 +46,21 @@ class TestAlertRule:
         THEN expect AlertRule instance to be created
         """
         rule_data = {
-            'rule_id': 'test_rule',
-            'name': 'Test Rule',
-            'condition': {'>': [{'var': 'price'}, 100]},
-            'message_template': 'Price is {price}',
-            'severity': 'critical',
-            'enabled': False
+            "rule_id": "test_rule",
+            "name": "Test Rule",
+            "condition": {">": [{"var": "price"}, 100]},
+            "message_template": "Price is {price}",
+            "severity": "critical",
+            "enabled": False,
         }
-        
+
         rule = AlertRule.from_dict(rule_data)
-        
-        assert rule.rule_id == 'test_rule'
-        assert rule.name == 'Test Rule'
-        assert rule.severity == 'critical'
+
+        assert rule.rule_id == "test_rule"
+        assert rule.name == "Test Rule"
+        assert rule.severity == "critical"
         assert rule.enabled is False
-    
+
     def test_alert_rule_to_dict(self):
         """
         GIVEN an AlertRule instance
@@ -70,21 +70,21 @@ class TestAlertRule:
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
-            message_template="Price is {price}"
+            condition={">": [{"var": "price"}, 100]},
+            message_template="Price is {price}",
         )
-        
+
         result = rule.to_dict()
-        
-        assert result['rule_id'] == "test_rule"
-        assert result['name'] == "Test Rule"
-        assert 'condition' in result
-        assert 'message_template' in result
+
+        assert result["rule_id"] == "test_rule"
+        assert result["name"] == "Test Rule"
+        assert "condition" in result
+        assert "message_template" in result
 
 
 class TestAlertManagerInitialization:
     """Test AlertManager initialization."""
-    
+
     def test_init_with_notifier(self):
         """
         GIVEN a Discord notifier
@@ -93,11 +93,11 @@ class TestAlertManagerInitialization:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         assert manager.notifier == mock_notifier
         assert len(manager.rules) == 0
         assert manager.rule_engine is not None
-    
+
     def test_init_with_custom_rule_engine(self):
         """
         GIVEN a custom rule engine
@@ -106,14 +106,11 @@ class TestAlertManagerInitialization:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         custom_engine = RuleEngine()
-        
-        manager = AlertManager(
-            notifier=mock_notifier,
-            rule_engine=custom_engine
-        )
-        
+
+        manager = AlertManager(notifier=mock_notifier, rule_engine=custom_engine)
+
         assert manager.rule_engine == custom_engine
-    
+
     def test_init_with_rules_list(self):
         """
         GIVEN a list of AlertRule objects
@@ -123,21 +120,15 @@ class TestAlertManagerInitialization:
         mock_notifier = Mock(spec=DiscordNotifier)
         rules = [
             AlertRule(
-                rule_id="rule1",
-                name="Rule 1",
-                condition={'>': [1, 0]},
-                message_template="Test"
+                rule_id="rule1", name="Rule 1", condition={">": [1, 0]}, message_template="Test"
             ),
             AlertRule(
-                rule_id="rule2",
-                name="Rule 2",
-                condition={'<': [1, 2]},
-                message_template="Test2"
-            )
+                rule_id="rule2", name="Rule 2", condition={"<": [1, 2]}, message_template="Test2"
+            ),
         ]
-        
+
         manager = AlertManager(notifier=mock_notifier, rules=rules)
-        
+
         assert len(manager.rules) == 2
         assert "rule1" in manager.rules
         assert "rule2" in manager.rules
@@ -145,7 +136,7 @@ class TestAlertManagerInitialization:
 
 class TestAlertManagerRuleManagement:
     """Test rule management methods."""
-    
+
     def test_add_rule(self):
         """
         GIVEN an AlertRule
@@ -154,19 +145,16 @@ class TestAlertManagerRuleManagement:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
-            rule_id="test_rule",
-            name="Test Rule",
-            condition={'>': [1, 0]},
-            message_template="Test"
+            rule_id="test_rule", name="Test Rule", condition={">": [1, 0]}, message_template="Test"
         )
-        
+
         manager.add_rule(rule)
-        
+
         assert "test_rule" in manager.rules
         assert manager.rules["test_rule"] == rule
-    
+
     def test_remove_rule_success(self):
         """
         GIVEN a manager with a rule
@@ -175,20 +163,17 @@ class TestAlertManagerRuleManagement:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
-            rule_id="test_rule",
-            name="Test Rule",
-            condition={'>': [1, 0]},
-            message_template="Test"
+            rule_id="test_rule", name="Test Rule", condition={">": [1, 0]}, message_template="Test"
         )
         manager.add_rule(rule)
-        
+
         result = manager.remove_rule("test_rule")
-        
+
         assert result is True
         assert "test_rule" not in manager.rules
-    
+
     def test_remove_rule_not_found(self):
         """
         GIVEN a manager without a specific rule
@@ -197,11 +182,11 @@ class TestAlertManagerRuleManagement:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         result = manager.remove_rule("nonexistent")
-        
+
         assert result is False
-    
+
     def test_get_rule(self):
         """
         GIVEN a manager with a rule
@@ -210,19 +195,16 @@ class TestAlertManagerRuleManagement:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
-            rule_id="test_rule",
-            name="Test Rule",
-            condition={'>': [1, 0]},
-            message_template="Test"
+            rule_id="test_rule", name="Test Rule", condition={">": [1, 0]}, message_template="Test"
         )
         manager.add_rule(rule)
-        
+
         result = manager.get_rule("test_rule")
-        
+
         assert result == rule
-    
+
     def test_list_rules_all(self):
         """
         GIVEN a manager with multiple rules
@@ -231,29 +213,29 @@ class TestAlertManagerRuleManagement:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule1 = AlertRule(
             rule_id="rule1",
             name="Rule 1",
-            condition={'>': [1, 0]},
+            condition={">": [1, 0]},
             message_template="Test",
-            enabled=True
+            enabled=True,
         )
         rule2 = AlertRule(
             rule_id="rule2",
             name="Rule 2",
-            condition={'<': [1, 2]},
+            condition={"<": [1, 2]},
             message_template="Test2",
-            enabled=False
+            enabled=False,
         )
-        
+
         manager.add_rule(rule1)
         manager.add_rule(rule2)
-        
+
         rules = manager.list_rules()
-        
+
         assert len(rules) == 2
-    
+
     def test_list_rules_enabled_only(self):
         """
         GIVEN a manager with enabled and disabled rules
@@ -262,27 +244,27 @@ class TestAlertManagerRuleManagement:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule1 = AlertRule(
             rule_id="rule1",
             name="Rule 1",
-            condition={'>': [1, 0]},
+            condition={">": [1, 0]},
             message_template="Test",
-            enabled=True
+            enabled=True,
         )
         rule2 = AlertRule(
             rule_id="rule2",
             name="Rule 2",
-            condition={'<': [1, 2]},
+            condition={"<": [1, 2]},
             message_template="Test2",
-            enabled=False
+            enabled=False,
         )
-        
+
         manager.add_rule(rule1)
         manager.add_rule(rule2)
-        
+
         rules = manager.list_rules(enabled_only=True)
-        
+
         assert len(rules) == 1
         assert rules[0].rule_id == "rule1"
 
@@ -290,7 +272,7 @@ class TestAlertManagerRuleManagement:
 @pytest.mark.asyncio
 class TestAlertManagerEvaluation:
     """Test alert evaluation and triggering."""
-    
+
     async def test_evaluate_event_no_match(self):
         """
         GIVEN a rule that doesn't match the event
@@ -299,20 +281,20 @@ class TestAlertManagerEvaluation:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
-            message_template="Price is {price}"
+            condition={">": [{"var": "price"}, 100]},
+            message_template="Price is {price}",
         )
         manager.add_rule(rule)
-        
-        event = {'price': 50}
+
+        event = {"price": 50}
         results = await manager.evaluate_event(event)
-        
+
         assert len(results) == 0
-    
+
     async def test_evaluate_event_match(self):
         """
         GIVEN a rule that matches the event
@@ -320,26 +302,26 @@ class TestAlertManagerEvaluation:
         THEN expect rule to trigger and notification to be sent
         """
         mock_notifier = Mock(spec=DiscordNotifier)
-        mock_notifier.send_message = AsyncMock(return_value={'status': 'success'})
-        
+        mock_notifier.send_message = AsyncMock(return_value={"status": "success"})
+
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
-            message_template="Price is {price}"
+            condition={">": [{"var": "price"}, 100]},
+            message_template="Price is {price}",
         )
         manager.add_rule(rule)
-        
-        event = {'price': 150}
+
+        event = {"price": 150}
         results = await manager.evaluate_event(event)
-        
+
         assert len(results) == 1
-        assert results[0]['status'] == 'triggered'
-        assert results[0]['rule_id'] == 'test_rule'
+        assert results[0]["status"] == "triggered"
+        assert results[0]["rule_id"] == "test_rule"
         mock_notifier.send_message.assert_called_once()
-    
+
     async def test_evaluate_specific_rules(self):
         """
         GIVEN multiple rules and specific rule_ids
@@ -347,33 +329,33 @@ class TestAlertManagerEvaluation:
         THEN expect only specified rules to be evaluated
         """
         mock_notifier = Mock(spec=DiscordNotifier)
-        mock_notifier.send_message = AsyncMock(return_value={'status': 'success'})
-        
+        mock_notifier.send_message = AsyncMock(return_value={"status": "success"})
+
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule1 = AlertRule(
             rule_id="rule1",
             name="Rule 1",
-            condition={'>': [{'var': 'value'}, 50]},
-            message_template="Value is {value}"
+            condition={">": [{"var": "value"}, 50]},
+            message_template="Value is {value}",
         )
         rule2 = AlertRule(
             rule_id="rule2",
             name="Rule 2",
-            condition={'<': [{'var': 'value'}, 100]},
-            message_template="Value is {value}"
+            condition={"<": [{"var": "value"}, 100]},
+            message_template="Value is {value}",
         )
-        
+
         manager.add_rule(rule1)
         manager.add_rule(rule2)
-        
-        event = {'value': 75}
-        results = await manager.evaluate_event(event, rule_ids=['rule1'])
-        
+
+        event = {"value": 75}
+        results = await manager.evaluate_event(event, rule_ids=["rule1"])
+
         # Only rule1 should be evaluated
         assert len(results) == 1
-        assert results[0]['rule_id'] == 'rule1'
-    
+        assert results[0]["rule_id"] == "rule1"
+
     async def test_disabled_rule_not_evaluated(self):
         """
         GIVEN a disabled rule
@@ -382,26 +364,26 @@ class TestAlertManagerEvaluation:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
+            condition={">": [{"var": "price"}, 100]},
             message_template="Price is {price}",
-            enabled=False
+            enabled=False,
         )
         manager.add_rule(rule)
-        
-        event = {'price': 150}
+
+        event = {"price": 150}
         results = await manager.evaluate_event(event)
-        
+
         assert len(results) == 0
 
 
 @pytest.mark.asyncio
 class TestAlertManagerSuppression:
     """Test alert suppression functionality."""
-    
+
     async def test_suppression_prevents_retrigger(self):
         """
         GIVEN a rule with suppression window
@@ -409,32 +391,32 @@ class TestAlertManagerSuppression:
         THEN expect only first trigger to send notification
         """
         mock_notifier = Mock(spec=DiscordNotifier)
-        mock_notifier.send_message = AsyncMock(return_value={'status': 'success'})
-        
+        mock_notifier.send_message = AsyncMock(return_value={"status": "success"})
+
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
+            condition={">": [{"var": "price"}, 100]},
             message_template="Price is {price}",
-            suppression_window=60  # 60 seconds
+            suppression_window=60,  # 60 seconds
         )
         manager.add_rule(rule)
-        
-        event = {'price': 150}
-        
+
+        event = {"price": 150}
+
         # First trigger
         results1 = await manager.evaluate_event(event)
         assert len(results1) == 1
-        
+
         # Second trigger (should be suppressed)
         results2 = await manager.evaluate_event(event)
         assert len(results2) == 0
-        
+
         # Should only call send_message once
         assert mock_notifier.send_message.call_count == 1
-    
+
     async def test_suppression_window_zero(self):
         """
         GIVEN a rule with suppression_window=0
@@ -442,28 +424,28 @@ class TestAlertManagerSuppression:
         THEN expect all triggers to send notifications
         """
         mock_notifier = Mock(spec=DiscordNotifier)
-        mock_notifier.send_message = AsyncMock(return_value={'status': 'success'})
-        
+        mock_notifier.send_message = AsyncMock(return_value={"status": "success"})
+
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [{'var': 'price'}, 100]},
+            condition={">": [{"var": "price"}, 100]},
             message_template="Price is {price}",
-            suppression_window=0  # No suppression
+            suppression_window=0,  # No suppression
         )
         manager.add_rule(rule)
-        
-        event = {'price': 150}
-        
+
+        event = {"price": 150}
+
         # Multiple triggers
         await manager.evaluate_event(event)
         await manager.evaluate_event(event)
-        
+
         # Should call send_message twice
         assert mock_notifier.send_message.call_count == 2
-    
+
     def test_reset_suppression_specific_rule(self):
         """
         GIVEN a manager with suppressed rule
@@ -472,13 +454,13 @@ class TestAlertManagerSuppression:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         manager.last_triggered["test_rule"] = time.time()
-        
+
         manager.reset_suppression("test_rule")
-        
+
         assert "test_rule" not in manager.last_triggered
-    
+
     def test_reset_suppression_all_rules(self):
         """
         GIVEN a manager with multiple suppressed rules
@@ -487,14 +469,14 @@ class TestAlertManagerSuppression:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         manager.last_triggered["rule1"] = time.time()
         manager.last_triggered["rule2"] = time.time()
-        
+
         manager.reset_suppression()
-        
+
         assert len(manager.last_triggered) == 0
-    
+
     def test_get_suppression_status(self):
         """
         GIVEN a manager with rules in various suppression states
@@ -503,30 +485,30 @@ class TestAlertManagerSuppression:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule1 = AlertRule(
             rule_id="rule1",
             name="Rule 1",
-            condition={'>': [1, 0]},
+            condition={">": [1, 0]},
             message_template="Test",
-            suppression_window=300
+            suppression_window=300,
         )
         rule2 = AlertRule(
             rule_id="rule2",
             name="Rule 2",
-            condition={'<': [1, 2]},
+            condition={"<": [1, 2]},
             message_template="Test2",
-            suppression_window=300
+            suppression_window=300,
         )
-        
+
         manager.add_rule(rule1)
         manager.add_rule(rule2)
-        
+
         # Suppress rule1
         manager.last_triggered["rule1"] = time.time()
-        
+
         status = manager.get_suppression_status()
-        
+
         assert "rule1" in status
         assert "rule2" in status
         assert status["rule1"]["suppressed"] is True
@@ -535,7 +517,7 @@ class TestAlertManagerSuppression:
 
 class TestAlertManagerMessageFormatting:
     """Test message template formatting."""
-    
+
     def test_format_message_simple(self):
         """
         GIVEN a simple message template with variables
@@ -544,14 +526,14 @@ class TestAlertManagerMessageFormatting:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         template = "Price is {price} for {symbol}"
-        context = {'price': 150, 'symbol': 'AAPL'}
-        
+        context = {"price": 150, "symbol": "AAPL"}
+
         result = manager._format_message(template, context)
-        
+
         assert result == "Price is 150 for AAPL"
-    
+
     def test_format_message_nested(self):
         """
         GIVEN a message template with nested variables
@@ -560,19 +542,14 @@ class TestAlertManagerMessageFormatting:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         template = "User: {user.name}, Age: {user.age}"
-        context = {
-            'user': {
-                'name': 'John',
-                'age': 30
-            }
-        }
-        
+        context = {"user": {"name": "John", "age": 30}}
+
         result = manager._format_message(template, context)
-        
+
         assert result == "User: John, Age: 30"
-    
+
     def test_format_message_missing_variable(self):
         """
         GIVEN a template with variable not in context
@@ -581,12 +558,12 @@ class TestAlertManagerMessageFormatting:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         template = "Value: {missing}"
         context = {}
-        
+
         result = manager._format_message(template, context)
-        
+
         # Should keep placeholder or handle gracefully
         assert "missing" in result or result == "Value: {missing}"
 
@@ -594,7 +571,7 @@ class TestAlertManagerMessageFormatting:
 @pytest.mark.asyncio
 class TestAlertManagerEmbedCreation:
     """Test embed creation from rule configuration."""
-    
+
     async def test_create_embed_basic(self):
         """
         GIVEN a rule with embed_config
@@ -603,30 +580,28 @@ class TestAlertManagerEmbedCreation:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         rule = AlertRule(
             rule_id="test_rule",
             name="Test Rule",
-            condition={'>': [1, 0]},
+            condition={">": [1, 0]},
             message_template="Test",
             embed_config={
-                'title': 'Alert: {symbol}',
-                'description': 'Price is {price}',
-                'fields': [
-                    {'name': 'Symbol', 'value': '{symbol}', 'inline': True}
-                ]
-            }
+                "title": "Alert: {symbol}",
+                "description": "Price is {price}",
+                "fields": [{"name": "Symbol", "value": "{symbol}", "inline": True}],
+            },
         )
-        
-        context = {'symbol': 'AAPL', 'price': 150}
-        
+
+        context = {"symbol": "AAPL", "price": 150}
+
         embed = manager._create_embed(rule, context)
-        
+
         assert embed is not None
-        assert embed.title == 'Alert: AAPL'
-        assert embed.description == 'Price is 150'
+        assert embed.title == "Alert: AAPL"
+        assert embed.description == "Price is 150"
         assert len(embed.fields) == 1
-    
+
     async def test_create_embed_severity_colors(self):
         """
         GIVEN rules with different severities
@@ -635,19 +610,19 @@ class TestAlertManagerEmbedCreation:
         """
         mock_notifier = Mock(spec=DiscordNotifier)
         manager = AlertManager(notifier=mock_notifier)
-        
+
         # Critical severity
         rule_critical = AlertRule(
             rule_id="critical_rule",
             name="Critical",
-            condition={'>': [1, 0]},
+            condition={">": [1, 0]},
             message_template="Test",
             severity="critical",
-            embed_config={'title': 'Critical Alert'}
+            embed_config={"title": "Critical Alert"},
         )
-        
+
         embed_critical = manager._create_embed(rule_critical, {})
-        assert embed_critical.color == 0xe74c3c  # Red
+        assert embed_critical.color == 0xE74C3C  # Red
 
 
 if __name__ == "__main__":

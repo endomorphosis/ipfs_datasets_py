@@ -97,20 +97,14 @@ def create_embeddings(texts, model_name):
 **Enhanced with Accelerate:**
 ```python
 # ipfs_datasets_py/embeddings/create_embeddings.py
-from ipfs_datasets_py.accelerate_integration import (
-    is_accelerate_available,
-    AccelerateManager
-)
+from ipfs_datasets_py.accelerate_integration import is_accelerate_available, AccelerateManager
+
 
 def create_embeddings(texts, model_name, use_accelerate=True):
     if use_accelerate and is_accelerate_available():
         # Use distributed accelerate compute
         manager = AccelerateManager()
-        return manager.run_inference(
-            model_name=model_name,
-            input_data=texts,
-            task_type="embedding"
-        )
+        return manager.run_inference(model_name=model_name, input_data=texts, task_type="embedding")
     else:
         # Fallback to local compute
         model = AutoModel.from_pretrained(model_name)
@@ -149,10 +143,11 @@ class MultiModelEmbeddingGenerator:
 # Enhanced ML inference with accelerate support
 from ipfs_datasets_py.accelerate_integration import get_compute_backend
 
+
 class MLInferenceEngine:
     def __init__(self, hardware_type=None):
         self.backend = get_compute_backend(hardware_type)
-    
+
     def run_inference(self, model, input_data):
         if self.backend.is_available():
             return self.backend.run_inference(model, input_data)
@@ -169,12 +164,12 @@ class MLInferenceEngine:
 class DatasetManager:
     def __init__(self, enable_accelerate=True):
         self.enable_accelerate = enable_accelerate
-        
+
         if enable_accelerate and is_accelerate_available():
             self.accelerate = AccelerateManager()
-    
+
     def process_dataset(self, dataset, operation):
-        if hasattr(self, 'accelerate'):
+        if hasattr(self, "accelerate"):
             # Use distributed processing
             return self._process_with_accelerate(dataset, operation)
         else:
@@ -225,6 +220,7 @@ def test_accelerate_available():
     status = get_accelerate_status()
     assert isinstance(status, dict)
 
+
 def test_manager_fallback():
     """Test fallback when accelerate unavailable"""
     manager = AccelerateManager()
@@ -237,10 +233,7 @@ def test_manager_fallback():
 # tests/integration/test_accelerate_embeddings.py
 def test_embeddings_with_accelerate():
     """Test embeddings generation with accelerate"""
-    embeddings = create_embeddings(
-        texts=["test"],
-        use_accelerate=True
-    )
+    embeddings = create_embeddings(texts=["test"], use_accelerate=True)
     assert embeddings is not None
 ```
 
@@ -264,17 +257,13 @@ from ipfs_datasets_py.embeddings import create_embeddings
 
 # Automatically uses accelerate if available
 embeddings = create_embeddings(
-    texts=["Hello world", "Machine learning"],
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    texts=["Hello world", "Machine learning"], model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 ```
 
 ### Example 2: Explicit Hardware Selection
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    get_compute_backend,
-    HardwareType
-)
+from ipfs_datasets_py.accelerate_integration import get_compute_backend, HardwareType
 
 # Force GPU usage
 backend = get_compute_backend(HardwareType.CUDA)
@@ -283,9 +272,7 @@ result = backend.run_inference(model, data)
 
 ### Example 3: Distributed Processing
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    DistributedComputeCoordinator
-)
+from ipfs_datasets_py.accelerate_integration import DistributedComputeCoordinator
 
 coordinator = DistributedComputeCoordinator()
 coordinator.initialize()
@@ -295,7 +282,7 @@ task = coordinator.submit_task(
     task_id="embed-001",
     model_name="bert-base-uncased",
     input_data=large_text_corpus,
-    task_type="embedding"
+    task_type="embedding",
 )
 
 # Wait for results
@@ -339,6 +326,7 @@ python run_tests.py
 ```python
 # This still works exactly as before
 from ipfs_datasets_py.embeddings import create_embeddings
+
 embeddings = create_embeddings(texts, model_name)
 ```
 
@@ -355,10 +343,7 @@ result = manager.run_inference(model_name, data)
 ### Check Availability
 
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    is_accelerate_available,
-    get_accelerate_status
-)
+from ipfs_datasets_py.accelerate_integration import is_accelerate_available, get_accelerate_status
 
 if is_accelerate_available():
     print("Using accelerate!")

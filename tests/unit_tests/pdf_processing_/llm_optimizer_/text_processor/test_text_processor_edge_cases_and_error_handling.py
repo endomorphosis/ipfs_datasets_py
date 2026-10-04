@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,15 +30,19 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
 
@@ -94,20 +98,26 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
             - Performance remains acceptable
         """
         # Given
-        long_sentence = ("This is an extremely long sentence that contains many words and goes on for a very long time " * 200) + "."
+        long_sentence = (
+            "This is an extremely long sentence that contains many words and goes on for a very long time "
+            * 200
+        ) + "."
         assert len(long_sentence) > 10000, "Sentence should be longer than 10,000 characters"
-        
+
         # When
         import time
+
         start_time = time.time()
         sentences = processor.split_sentences(long_sentence)
         end_time = time.time()
-        
+
         # Then
         assert len(sentences) == 1, "Should recognize as single sentence"
         assert len(sentences[0]) > 10000, "Sentence content should be preserved"
-        assert sentences[0].endswith("This is an extremely long sentence that contains many words and goes on for a very long time"), "Content should not be truncated"
-        
+        assert sentences[0].endswith(
+            "This is an extremely long sentence that contains many words and goes on for a very long time"
+        ), "Content should not be truncated"
+
         processing_time = end_time - start_time
         assert processing_time < 10.0, f"Should process in reasonable time, took {processing_time}s"
 
@@ -122,11 +132,11 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
         """
         # Given
         punctuation_text = "!@#$%^&*()_+-=[]{}|;':\",./<>?"
-        
+
         # When
         sentences = processor.split_sentences(punctuation_text)
         keywords = processor.extract_keywords(punctuation_text)
-        
+
         # Then
         assert isinstance(sentences, list), "Should return list for sentence splitting"
         assert isinstance(keywords, list), "Should return list for keyword extraction"
@@ -143,17 +153,25 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
         """
         # Given
         whitespace_texts = ["   ", "\t\t\t", "\n\n\n", " \t\n \r ", ""]
-        
+
         for whitespace_text in whitespace_texts:
             # When
             sentences = processor.split_sentences(whitespace_text)
             keywords = processor.extract_keywords(whitespace_text)
-            
+
             # Then
-            assert isinstance(sentences, list), f"Should return list for whitespace text: '{repr(whitespace_text)}'"
-            assert isinstance(keywords, list), f"Should return list for whitespace text: '{repr(whitespace_text)}'"
-            assert len(sentences) == 0, f"Should return empty sentences for whitespace: '{repr(whitespace_text)}'"
-            assert len(keywords) == 0, f"Should return empty keywords for whitespace: '{repr(whitespace_text)}'"
+            assert isinstance(sentences, list), (
+                f"Should return list for whitespace text: '{repr(whitespace_text)}'"
+            )
+            assert isinstance(keywords, list), (
+                f"Should return list for whitespace text: '{repr(whitespace_text)}'"
+            )
+            assert len(sentences) == 0, (
+                f"Should return empty sentences for whitespace: '{repr(whitespace_text)}'"
+            )
+            assert len(keywords) == 0, (
+                f"Should return empty keywords for whitespace: '{repr(whitespace_text)}'"
+            )
 
     def test_text_with_control_characters(self, processor):
         """
@@ -166,20 +184,23 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
         """
         # Given
         control_text = "Machine learning\x00algorithms\x01artificial\x02intelligence\x03"
-        
+
         # When
         sentences = processor.split_sentences(control_text)
         keywords = processor.extract_keywords(control_text)
-        
+
         # Then
         assert isinstance(sentences, list), "Should handle control characters"
         assert isinstance(keywords, list), "Should handle control characters"
-        
+
         # Should extract meaningful content despite control characters
         if len(keywords) > 0:
-            keywords_str = ' '.join(keywords)
-            assert 'machine' in keywords_str or 'learning' in keywords_str or 'artificial' in keywords_str, \
-                   "Should extract meaningful words despite control characters"
+            keywords_str = " ".join(keywords)
+            assert (
+                "machine" in keywords_str
+                or "learning" in keywords_str
+                or "artificial" in keywords_str
+            ), "Should extract meaningful words despite control characters"
 
     def test_mixed_encoding_text(self, processor):
         """
@@ -193,15 +214,15 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
         # Given
         mixed_texts = [
             "Machine learning algorithme données",  # Mixed English/French
-            "Машинное обучение machine learning",   # Mixed Cyrillic/Latin
-            "机器学习 machine learning",            # Mixed Chinese/English
+            "Машинное обучение machine learning",  # Mixed Cyrillic/Latin
+            "机器学习 machine learning",  # Mixed Chinese/English
         ]
-        
+
         for text in mixed_texts:
             # When
             sentences = processor.split_sentences(text)
             keywords = processor.extract_keywords(text)
-            
+
             # Then
             assert isinstance(sentences, list), f"Should handle mixed encoding: {text}"
             assert isinstance(keywords, list), f"Should handle mixed encoding: {text}"
@@ -217,17 +238,18 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
         """
         # Given
         recursive_text = "This sentence refers to this sentence refers to this sentence." * 100
-        
+
         # When
         import time
+
         start_time = time.time()
-        
+
         sentences = processor.split_sentences(recursive_text)
         keywords = processor.extract_keywords(recursive_text, top_k=10)
-        
+
         end_time = time.time()
         processing_time = end_time - start_time
-        
+
         # Then
         assert processing_time < 30.0, f"Should complete in finite time, took {processing_time}s"
         assert isinstance(sentences, list), "Should return valid results"
@@ -245,15 +267,15 @@ class TestTextProcessorEdgeCasesAndErrorHandling:
         # Given - very large text that might cause memory issues
         try:
             huge_text = "machine learning " * 100000  # ~1.5MB of text
-            
+
             # When
             sentences = processor.split_sentences(huge_text)
             keywords = processor.extract_keywords(huge_text, top_k=50)
-            
+
             # Then
             assert isinstance(sentences, list), "Should handle large text if memory allows"
             assert isinstance(keywords, list), "Should handle large text if memory allows"
-            
+
         except MemoryError:
             # Then - if MemoryError occurs, it should be handled gracefully
             assert True, "MemoryError handled appropriately"

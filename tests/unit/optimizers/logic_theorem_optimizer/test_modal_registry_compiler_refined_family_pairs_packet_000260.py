@@ -58,15 +58,6 @@ def test_packet_000260_pairs_are_supported_across_compiler_ambiguity_policies() 
 
 
 def test_packet_000260_pairs_have_family_cue_margin_buffers() -> None:
-    assert (
-        compiler_refined_modal_family_cue_margin_buffer("deontic", "frame")
-        >= 0.0015
-    )
-    assert (
-        compiler_refined_modal_family_cue_margin_buffer("frame", "frame")
-        >= 0.135
-    )
-    assert (
-        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
-        >= 0.135
-    )
+    assert compiler_refined_modal_family_cue_margin_buffer("deontic", "frame") >= 0.0015
+    assert compiler_refined_modal_family_cue_margin_buffer("frame", "frame") >= 0.135
+    assert compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic") >= 0.135

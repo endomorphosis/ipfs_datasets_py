@@ -4,11 +4,13 @@ Test stubs for s3_kit module.
 Feature: S3 Storage Kit
   Amazon S3 and compatible storage operations
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def s3_credentials_and_endpoint():
@@ -101,6 +103,7 @@ def source_and_destination_bucket_details():
 
 
 # Test scenarios
+
 
 def test_initialize_s3_client():
     """
@@ -224,6 +227,7 @@ def test_handle_s3_errors():
 
 
 # Step definitions
+
 
 # Given steps
 @given("S3 credentials and endpoint")
@@ -450,4 +454,3 @@ def the_object_metadata_is_updated():
     """Step: Then the object metadata is updated"""
     # TODO: Implement step
     pass
-

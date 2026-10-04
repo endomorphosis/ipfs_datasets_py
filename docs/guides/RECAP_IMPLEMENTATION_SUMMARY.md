@@ -329,18 +329,11 @@ All scraping operations support resume capability:
 Example:
 ```python
 # First run
-result = await scrape_recap_archive(
-    courts=['ca9'],
-    job_id='my_long_job',
-    max_documents=10000
-)
+result = await scrape_recap_archive(courts=["ca9"], job_id="my_long_job", max_documents=10000)
 
 # If interrupted, resume:
 result = await scrape_recap_archive(
-    courts=['ca9'],
-    job_id='my_long_job',
-    resume=True,
-    max_documents=10000
+    courts=["ca9"], job_id="my_long_job", resume=True, max_documents=10000
 )
 ```
 

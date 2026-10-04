@@ -9,6 +9,7 @@ These benchmarks help detect performance regressions in:
 - Ontology evaluation
 - Serialization operations
 """
+
 from __future__ import annotations
 
 import pytest
@@ -17,24 +18,28 @@ from typing import Any, Dict
 
 class TestOntologyGeneratorBenchmarks:
     """Benchmarks for OntologyGenerator operations."""
-    
+
     @pytest.fixture
     def generator(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         return OntologyGenerator(use_ipfs_accelerate=False)
-    
+
     @pytest.fixture
     def context(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerationContext, DataType, ExtractionStrategy,
+            OntologyGenerationContext,
+            DataType,
+            ExtractionStrategy,
         )
+
         return OntologyGenerationContext(
             data_source="benchmark",
             data_type=DataType.TEXT,
             domain="legal",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
-    
+
     @pytest.fixture
     def small_text(self):
         """Small document (50 words)."""
@@ -43,7 +48,7 @@ class TestOntologyGeneratorBenchmarks:
         The company was founded in 2010 and specializes in software development.
         Carol Williams manages the engineering team. The office is located at 123 Main Street.
         """
-    
+
     @pytest.fixture
     def medium_text(self):
         """Medium document (200 words)."""
@@ -66,7 +71,7 @@ class TestOntologyGeneratorBenchmarks:
         This agreement is governed by the laws of California. Both parties have read and understood
         the terms and agree to be bound by them. Signed on December 15, 2023.
         """
-    
+
     @pytest.fixture
     def large_text(self):
         """Large document (500+ words)."""
@@ -125,96 +130,110 @@ class TestOntologyGeneratorBenchmarks:
         Company a non-exclusive license to use such intellectual property solely in connection
         with the Work Product.
         """
-    
+
     def test_benchmark_extract_entities_small(self, benchmark, generator, context, small_text):
         """Benchmark entity extraction on small document."""
         result = benchmark(generator.extract_entities, small_text, context)
         assert len(result.entities) > 0
-    
+
     def test_benchmark_extract_entities_medium(self, benchmark, generator, context, medium_text):
         """Benchmark entity extraction on medium document."""
         result = benchmark(generator.extract_entities, medium_text, context)
         assert len(result.entities) > 0
-    
+
     def test_benchmark_extract_entities_large(self, benchmark, generator, context, large_text):
         """Benchmark entity extraction on large document."""
         result = benchmark(generator.extract_entities, large_text, context)
         assert len(result.entities) > 0
-    
+
     def test_benchmark_infer_relationships(self, benchmark, generator, context, medium_text):
         """Benchmark relationship inference (extraction includes inference)."""
         result = benchmark(generator.extract_entities, medium_text, context)
         assert len(result.relationships) >= 0  # May be 0 or more depending on text
-    
+
     def test_benchmark_entity_deduplication(self, benchmark, generator):
         """Benchmark entity deduplication on result with duplicates."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            Entity, EntityExtractionResult, Relationship
+            Entity,
+            EntityExtractionResult,
+            Relationship,
         )
-        
+
         # Create result with duplicate entities
         entities = [
             Entity(id="e1", text="Alice Smith", type="Person", confidence=0.9, properties={}),
-            Entity(id="e2", text="alice smith", type="Person", confidence=0.8, properties={}),  # duplicate
+            Entity(
+                id="e2", text="alice smith", type="Person", confidence=0.8, properties={}
+            ),  # duplicate
             Entity(id="e3", text="Acme Corp", type="Organization", confidence=0.95, properties={}),
             Entity(id="e4", text="Bob Jones", type="Person", confidence=0.85, properties={}),
-            Entity(id="e5", text="ACME CORP", type="Organization", confidence=0.9, properties={}),  # duplicate
+            Entity(
+                id="e5", text="ACME CORP", type="Organization", confidence=0.9, properties={}
+            ),  # duplicate
         ]
         relationships = []
         result = EntityExtractionResult(
-            entities=entities, relationships=relationships,
-            confidence=0.85, metadata={}, errors=[]
+            entities=entities, relationships=relationships, confidence=0.85, metadata={}, errors=[]
         )
-        
+
         deduped = benchmark(generator.deduplicate_entities, result)
         assert len(deduped.entities) < len(result.entities)
 
 
 class TestOntologyCriticBenchmarks:
     """Benchmarks for OntologyCritic evaluation operations."""
-    
+
     @pytest.fixture
     def critic(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         return OntologyCritic()
-    
+
     @pytest.fixture
     def context(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerationContext, DataType, ExtractionStrategy,
+            OntologyGenerationContext,
+            DataType,
+            ExtractionStrategy,
         )
+
         return OntologyGenerationContext(
             data_source="benchmark",
             data_type=DataType.TEXT,
             domain="legal",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
-    
-    def test_benchmark_evaluate_small_ontology(self, benchmark, critic, context, ontology_dict_factory):
+
+    def test_benchmark_evaluate_small_ontology(
+        self, benchmark, critic, context, ontology_dict_factory
+    ):
         """Benchmark evaluation of small ontology (10 entities, 5 relationships)."""
         ontology = ontology_dict_factory(entity_count=10, relationship_count=5)
         score = benchmark(critic.evaluate_ontology, ontology, context)
         assert 0.0 <= score.overall <= 1.0
-    
-    def test_benchmark_evaluate_medium_ontology(self, benchmark, critic, context, ontology_dict_factory):
+
+    def test_benchmark_evaluate_medium_ontology(
+        self, benchmark, critic, context, ontology_dict_factory
+    ):
         """Benchmark evaluation of medium ontology (50 entities, 75 relationships)."""
         ontology = ontology_dict_factory(entity_count=50, relationship_count=75)
         score = benchmark(critic.evaluate_ontology, ontology, context)
         assert 0.0 <= score.overall <= 1.0
-    
-    def test_benchmark_evaluate_large_ontology(self, benchmark, critic, context, ontology_dict_factory):
+
+    def test_benchmark_evaluate_large_ontology(
+        self, benchmark, critic, context, ontology_dict_factory
+    ):
         """Benchmark evaluation of large ontology (200 entities, 500 relationships)."""
         ontology = ontology_dict_factory(entity_count=200, relationship_count=500)
         score = benchmark(critic.evaluate_ontology, ontology, context)
         assert 0.0 <= score.overall <= 1.0
-    
+
     def test_benchmark_evaluate_batch(self, benchmark, critic, context, ontology_dict_factory):
         """Benchmark batch evaluation of multiple ontologies."""
         ontologies = [
-            ontology_dict_factory(entity_count=20, relationship_count=30)
-            for _ in range(10)
+            ontology_dict_factory(entity_count=20, relationship_count=30) for _ in range(10)
         ]
-        
+
         result = benchmark(critic.evaluate_batch, ontologies, context)
         assert result["count"] == 10
         assert "mean_overall" in result
@@ -222,14 +241,16 @@ class TestOntologyCriticBenchmarks:
 
 class TestSerializationBenchmarks:
     """Benchmarks for serialization/deserialization operations."""
-    
+
     @pytest.fixture
     def large_result(self):
         """Create a large EntityExtractionResult for benchmarking."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            Entity, EntityExtractionResult, Relationship
+            Entity,
+            EntityExtractionResult,
+            Relationship,
         )
-        
+
         entities = [
             Entity(
                 id=f"e{i}",
@@ -241,7 +262,7 @@ class TestSerializationBenchmarks:
             )
             for i in range(100)
         ]
-        
+
         relationships = [
             Relationship(
                 id=f"r{i}",
@@ -254,7 +275,7 @@ class TestSerializationBenchmarks:
             )
             for i in range(150)
         ]
-        
+
         return EntityExtractionResult(
             entities=entities,
             relationships=relationships,
@@ -262,31 +283,31 @@ class TestSerializationBenchmarks:
             metadata={"source": "benchmark", "version": "1.0"},
             errors=[],
         )
-    
+
     def test_benchmark_to_dict(self, benchmark, large_result):
         """Benchmark EntityExtractionResult.to_dict()."""
         result = benchmark(large_result.to_dict)
         assert isinstance(result, dict)
         assert "entities" in result
-    
+
     def test_benchmark_to_json(self, benchmark, large_result):
         """Benchmark EntityExtractionResult.to_json()."""
         result = benchmark(large_result.to_json)
         assert isinstance(result, str)
         assert len(result) > 0
-    
+
     def test_benchmark_from_dict(self, benchmark, large_result):
         """Benchmark EntityExtractionResult.from_dict()."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
-        
+
         as_dict = large_result.to_dict()
         restored = benchmark(EntityExtractionResult.from_dict, as_dict)
         assert len(restored.entities) == len(large_result.entities)
-    
+
     def test_benchmark_entity_to_dict(self, benchmark):
         """Benchmark Entity.to_dict() serialization."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
-        
+
         entity = Entity(
             id="test123",
             text="Alice Smith",
@@ -295,14 +316,14 @@ class TestSerializationBenchmarks:
             properties={"age": 30, "dept": "Engineering", "title": "Senior Engineer"},
             source_span=(10, 21),
         )
-        
+
         result = benchmark(entity.to_dict)
         assert result["id"] == "test123"
-    
+
     def test_benchmark_relationship_to_dict(self, benchmark):
         """Benchmark Relationship.to_dict() serialization."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
-        
+
         rel = Relationship(
             id="rel123",
             source_id="e1",
@@ -312,6 +333,6 @@ class TestSerializationBenchmarks:
             direction="forward",
             properties={"since": "2020", "role": "manager"},
         )
-        
+
         result = benchmark(rel.to_dict)
         assert result["id"] == "rel123"

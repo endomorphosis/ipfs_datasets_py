@@ -37,6 +37,7 @@ Usage example::
 
 No external dependencies beyond stdlib + sibling logic modules.
 """
+
 from __future__ import annotations
 
 import logging
@@ -73,11 +74,12 @@ class NLUCANCompilerResult:
     metadata:
         Arbitrary pipeline metadata (timing, counts, etc.).
     """
+
     success: bool = False
     input_sentences: List[str] = field(default_factory=list)
-    policy_result: Any = None    # CompilationResult | None
-    bridge_result: Any = None    # BridgeResult | None
-    delegation_evaluator: Any = None   # DelegationEvaluator | None
+    policy_result: Any = None  # CompilationResult | None
+    bridge_result: Any = None  # BridgeResult | None
+    delegation_evaluator: Any = None  # DelegationEvaluator | None
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -212,6 +214,7 @@ class NLUCANPolicyCompiler:
 
     def _stage_nl_to_policy(self, sentences: List[str], policy_id: str):
         from ipfs_datasets_py.logic.CEC.nl.nl_to_policy_compiler import NLToDCECCompiler
+
         compiler = NLToDCECCompiler(
             policy_id=policy_id,
             default_actor=self.default_actor,
@@ -222,9 +225,11 @@ class NLUCANPolicyCompiler:
 
     def _stage_dcec_to_ucan(self, dcec_formulas: List[Any]):
         from ipfs_datasets_py.logic.CEC.nl.dcec_to_ucan_bridge import DCECToUCANBridge
+
         expiry_offset = None
         if self.valid_until is not None:
             import time
+
             expiry_offset = max(0.0, self.valid_until - time.time())
         bridge = DCECToUCANBridge(
             issuer_did=self.issuer_did,
@@ -234,6 +239,7 @@ class NLUCANPolicyCompiler:
 
     def _build_evaluator(self, bridge_result) -> Any:
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationEvaluator
+
         ev = DelegationEvaluator()
         for token in bridge_result.tokens:
             ev.add_token(token)
@@ -265,9 +271,8 @@ class NLUCANPolicyCompiler:
         pid = policy_id or self.policy_id
         if pid is None:
             import hashlib
-            pid = "nl-ucan-" + hashlib.sha256(
-                "\n".join(sentences).encode()
-            ).hexdigest()[:10]
+
+            pid = "nl-ucan-" + hashlib.sha256("\n".join(sentences).encode()).hexdigest()[:10]
 
         overall = NLUCANCompilerResult(input_sentences=list(sentences))
         overall.metadata["policy_id"] = pid
@@ -462,6 +467,7 @@ class NLUCANPolicyCompiler:
 
 
 # ── one-shot convenience wrapper ─────────────────────────────────────────────
+
 
 def compile_nl_to_ucan_policy(
     sentences: List[str],

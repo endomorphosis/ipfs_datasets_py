@@ -43,26 +43,32 @@ except Exception:
 # Optional numpy with graceful fallback
 try:
     import numpy as np
+
     HAVE_NUMPY = True
 except ImportError:
     HAVE_NUMPY = False
+
     # Provide minimal numpy-like functionality
     class MockNumpy:
         @staticmethod
         def array(x):
-            return list(x) if hasattr(x, '__iter__') else [x]
-        @staticmethod  
+            return list(x) if hasattr(x, "__iter__") else [x]
+
+        @staticmethod
         def mean(x):
             return sum(x) / len(x) if x else 0
+
         @staticmethod
         def std(x):
             if not x:
                 return 0
             mean_val = sum(x) / len(x)
             variance = sum((val - mean_val) ** 2 for val in x) / len(x)
-            return variance ** 0.5
+            return variance**0.5
+
         # Mock ndarray type for type hints
         ndarray = list
+
     np = MockNumpy()
 
 try:
@@ -84,7 +90,7 @@ class LLMConfig:
         supports_function_calling: bool = False,
         supports_vision: bool = False,
         supports_tools: bool = False,
-        embedding_dimensions: int = 768
+        embedding_dimensions: int = 768,
     ):
         """
         Initialize LLM configuration.
@@ -121,11 +127,11 @@ class LLMConfig:
             "supports_function_calling": self.supports_function_calling,
             "supports_vision": self.supports_vision,
             "supports_tools": self.supports_tools,
-            "embedding_dimensions": self.embedding_dimensions
+            "embedding_dimensions": self.embedding_dimensions,
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'LLMConfig':
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "LLMConfig":
         """Create config from dictionary."""
         return cls(**config_dict)
 
@@ -137,7 +143,7 @@ class PromptTemplate:
         self,
         template: str,
         input_variables: List[str] = None,
-        partial_variables: Dict[str, str] = None
+        partial_variables: Dict[str, str] = None,
     ):
         """
         Initialize prompt template.
@@ -154,13 +160,12 @@ class PromptTemplate:
         # Extract input variables if not provided
         if not self.input_variables:
             # Find all {variable} patterns in the template
-            pattern = r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}'
+            pattern = r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}"
             self.input_variables = re.findall(pattern, template)
 
             # Remove partial variables
             self.input_variables = [
-                var for var in self.input_variables
-                if var not in self.partial_variables
+                var for var in self.input_variables if var not in self.partial_variables
             ]
 
     def format(self, **kwargs) -> str:
@@ -200,9 +205,7 @@ class LLMInterface:
         """
         self.config = config
 
-    def generate(self,
-                prompt: str,
-                **kwargs) -> Dict[str, Any]:
+    def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """
         Generate text from prompt.
 
@@ -218,10 +221,9 @@ class LLMInterface:
         """
         raise NotImplementedError("Subclasses must implement generate()")
 
-    def generate_with_structured_output(self,
-                                      prompt: str,
-                                      output_schema: Dict[str, Any],
-                                      **kwargs) -> Dict[str, Any]:
+    def generate_with_structured_output(
+        self, prompt: str, output_schema: Dict[str, Any], **kwargs
+    ) -> Dict[str, Any]:
         """
         Generate structured output from prompt.
 
@@ -314,7 +316,7 @@ class MockLLMInterface(LLMInterface):
 
         # Simple vocabulary for token counting
         self._vocab = set()
-        self._word_pattern = re.compile(r'\b\w+\b')
+        self._word_pattern = re.compile(r"\b\w+\b")
 
         # Default responses for different prompt patterns
         self._default_responses = {
@@ -322,7 +324,7 @@ class MockLLMInterface(LLMInterface):
             "explain": "This is an explanation of the concept mentioned.",
             "compare": "Here's a comparison between the items mentioned.",
             "analyze": "Analysis shows several key insights about the topic.",
-            "question": "The answer to your question is based on the available information."
+            "question": "The answer to your question is based on the available information.",
         }
 
         # Response latency simulation (seconds)
@@ -332,7 +334,7 @@ class MockLLMInterface(LLMInterface):
         self._use_embedding_adapter = os.getenv(
             "IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER", ""
         ).strip().lower() in {"1", "true", "yes", "on"}
-        
+
         # Initialize accelerate manager (router-mediated, best-effort)
         self.accelerate_manager = None
         if use_accelerate and callable(_router_get_accelerate_manager):
@@ -347,9 +349,7 @@ class MockLLMInterface(LLMInterface):
         elif use_accelerate:
             print("⚠ Accelerate integration not available, using mock LLM only")
 
-    def generate(self,
-                prompt: str,
-                **kwargs) -> Dict[str, Any]:
+    def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """
         Generate mock text response from prompt.
 
@@ -377,17 +377,16 @@ class MockLLMInterface(LLMInterface):
             "usage": {
                 "prompt_tokens": self.count_tokens(prompt),
                 "completion_tokens": self.count_tokens(response_text),
-                "total_tokens": self.count_tokens(prompt) + self.count_tokens(response_text)
+                "total_tokens": self.count_tokens(prompt) + self.count_tokens(response_text),
             },
             "model": self.config.model_name,
             "id": f"mock-{uuid.uuid4()}",
-            "created": int(time.time())
+            "created": int(time.time()),
         }
 
-    def generate_with_structured_output(self,
-                                      prompt: str,
-                                      output_schema: Dict[str, Any],
-                                      **kwargs) -> Dict[str, Any]:
+    def generate_with_structured_output(
+        self, prompt: str, output_schema: Dict[str, Any], **kwargs
+    ) -> Dict[str, Any]:
         """
         Generate mock structured output from prompt.
 
@@ -540,7 +539,9 @@ class MockLLMInterface(LLMInterface):
 
             # Add details about each detected topic
             for topic in topics[:2]:
-                response += f"Regarding {topic}, the analysis shows it's an important aspect to consider. "
+                response += (
+                    f"Regarding {topic}, the analysis shows it's an important aspect to consider. "
+                )
         else:
             response = base_response
 
@@ -574,15 +575,16 @@ class MockLLMInterface(LLMInterface):
             List of potential topics
         """
         # Look for capitalized phrases as potential topics
-        topic_pattern = r'\b[A-Z][a-z]*(?:\s+[A-Z][a-z]*)*\b'
+        topic_pattern = r"\b[A-Z][a-z]*(?:\s+[A-Z][a-z]*)*\b"
         topics = re.findall(topic_pattern, text)
 
         # Filter out common words and short topics
         filtered_topics = [
-            topic for topic in topics
-            if len(topic) > 3 and topic.lower() not in {
-                "the", "and", "for", "with", "what", "where", "when", "how", "why"
-            }
+            topic
+            for topic in topics
+            if len(topic) > 3
+            and topic.lower()
+            not in {"the", "and", "for", "with", "what", "where", "when", "how", "why"}
         ]
 
         return filtered_topics
@@ -630,8 +632,7 @@ class MockLLMInterface(LLMInterface):
                     result[prop_name] = list(np.random.randint(1, 100, 3))
                 elif items_type == "object":
                     result[prop_name] = [
-                        self._generate_mock_data_for_schema(items_schema)
-                        for _ in range(2)
+                        self._generate_mock_data_for_schema(items_schema) for _ in range(2)
                     ]
 
             elif prop_type == "object":
@@ -655,8 +656,7 @@ class LLMInterfaceFactory:
         if provider != "local":
             return True
         return bool(
-            os.getenv("OPENROUTER_API_KEY")
-            or os.getenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY")
+            os.getenv("OPENROUTER_API_KEY") or os.getenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY")
         )
 
     @staticmethod
@@ -720,7 +720,7 @@ class PromptMetadata:
         author: str = "system",
         created_at: Optional[datetime] = None,
         tags: Optional[List[str]] = None,
-        model_requirements: Optional[Dict[str, Any]] = None
+        model_requirements: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize prompt metadata.
@@ -751,13 +751,15 @@ class PromptMetadata:
             "author": self.author,
             "created_at": self.created_at.isoformat(),
             "tags": self.tags,
-            "model_requirements": self.model_requirements
+            "model_requirements": self.model_requirements,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'PromptMetadata':
+    def from_dict(cls, data: Dict[str, Any]) -> "PromptMetadata":
         """Create metadata from dictionary."""
-        created_at = datetime.fromisoformat(data.get("created_at")) if data.get("created_at") else None
+        created_at = (
+            datetime.fromisoformat(data.get("created_at")) if data.get("created_at") else None
+        )
         return cls(
             name=data.get("name", "unnamed"),
             version=data.get("version", "1.0.0"),
@@ -765,7 +767,7 @@ class PromptMetadata:
             author=data.get("author", "system"),
             created_at=created_at,
             tags=data.get("tags", []),
-            model_requirements=data.get("model_requirements", {})
+            model_requirements=data.get("model_requirements", {}),
         )
 
 
@@ -776,7 +778,7 @@ class TemplateVersion:
         self,
         template: PromptTemplate,
         metadata: PromptMetadata,
-        performance_metrics: Optional[Dict[str, Any]] = None
+        performance_metrics: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize template version.
@@ -802,21 +804,21 @@ class TemplateVersion:
             "template": {
                 "text": self.template.template,
                 "input_variables": self.template.input_variables,
-                "partial_variables": self.template.partial_variables
+                "partial_variables": self.template.partial_variables,
             },
             "metadata": self.metadata.to_dict(),
             "performance_metrics": self.performance_metrics,
-            "hash": self.hash
+            "hash": self.hash,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TemplateVersion':
+    def from_dict(cls, data: Dict[str, Any]) -> "TemplateVersion":
         """Create version from dictionary."""
         template_data = data.get("template", {})
         template = PromptTemplate(
             template=template_data.get("text", ""),
             input_variables=template_data.get("input_variables", []),
-            partial_variables=template_data.get("partial_variables", {})
+            partial_variables=template_data.get("partial_variables", {}),
         )
 
         metadata = PromptMetadata.from_dict(data.get("metadata", {}))
@@ -824,7 +826,7 @@ class TemplateVersion:
         return cls(
             template=template,
             metadata=metadata,
-            performance_metrics=data.get("performance_metrics", {})
+            performance_metrics=data.get("performance_metrics", {}),
         )
 
 
@@ -855,7 +857,7 @@ class PromptLibrary:
         version: str = "1.0.0",
         description: str = "",
         author: str = "system",
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> str:
         """
         Add a new template to the library.
@@ -874,23 +876,14 @@ class PromptLibrary:
             Template identifier
         """
         prompt_template = PromptTemplate(
-            template=template,
-            input_variables=input_variables,
-            partial_variables=partial_variables
+            template=template, input_variables=input_variables, partial_variables=partial_variables
         )
 
         metadata = PromptMetadata(
-            name=name,
-            version=version,
-            description=description,
-            author=author,
-            tags=tags
+            name=name, version=version, description=description, author=author, tags=tags
         )
 
-        template_version = TemplateVersion(
-            template=prompt_template,
-            metadata=metadata
-        )
+        template_version = TemplateVersion(template=prompt_template, metadata=metadata)
 
         # Add to templates
         if name not in self._templates:
@@ -966,7 +959,7 @@ class PromptLibrary:
                     "author": v.metadata.author,
                     "created_at": v.metadata.created_at.isoformat(),
                     "tags": v.metadata.tags,
-                    "hash": v.hash
+                    "hash": v.hash,
                 }
                 for v in versions
             ]
@@ -988,24 +981,21 @@ class PromptLibrary:
         for name, versions in self._templates.items():
             for version in versions:
                 if tag in version.metadata.tags:
-                    result.append({
-                        "name": name,
-                        "version": version.metadata.version,
-                        "description": version.metadata.description,
-                        "author": version.metadata.author,
-                        "created_at": version.metadata.created_at.isoformat(),
-                        "tags": version.metadata.tags,
-                        "hash": version.hash
-                    })
+                    result.append(
+                        {
+                            "name": name,
+                            "version": version.metadata.version,
+                            "description": version.metadata.description,
+                            "author": version.metadata.author,
+                            "created_at": version.metadata.created_at.isoformat(),
+                            "tags": version.metadata.tags,
+                            "hash": version.hash,
+                        }
+                    )
 
         return result
 
-    def update_performance_metrics(
-        self,
-        name: str,
-        version: str,
-        metrics: Dict[str, Any]
-    ) -> None:
+    def update_performance_metrics(self, name: str, version: str, metrics: Dict[str, Any]) -> None:
         """
         Update performance metrics for a template.
 
@@ -1048,7 +1038,7 @@ class PromptLibrary:
             data[name] = [v.to_dict() for v in versions]
 
         # Save to file
-        with open(self._storage_path, 'w') as f:
+        with open(self._storage_path, "w") as f:
             json.dump(data, f, indent=2)
 
     def _load_from_storage(self) -> None:
@@ -1057,7 +1047,7 @@ class PromptLibrary:
             return
 
         try:
-            with open(self._storage_path, 'r') as f:
+            with open(self._storage_path, "r") as f:
                 data = json.load(f)
 
             # Convert dictionary to templates
@@ -1077,11 +1067,7 @@ class PromptLibrary:
 class AdaptivePrompting:
     """Module for dynamically adjusting prompts based on context."""
 
-    def __init__(
-        self,
-        library: PromptLibrary,
-        metrics_tracker: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, library: PromptLibrary, metrics_tracker: Optional[Dict[str, Any]] = None):
         """
         Initialize adaptive prompting module.
 
@@ -1099,7 +1085,7 @@ class AdaptivePrompting:
         name: str,
         condition: Callable[[Dict[str, Any]], bool],
         template_selector: Callable[[Dict[str, Any]], Tuple[str, Optional[str]]],
-        priority: int = 0
+        priority: int = 0,
     ) -> None:
         """
         Add a rule for prompt selection.
@@ -1110,12 +1096,14 @@ class AdaptivePrompting:
             template_selector: Function that selects template and version
             priority: Priority of the rule (higher = more important)
         """
-        self._rules.append({
-            "name": name,
-            "condition": condition,
-            "template_selector": template_selector,
-            "priority": priority
-        })
+        self._rules.append(
+            {
+                "name": name,
+                "condition": condition,
+                "template_selector": template_selector,
+                "priority": priority,
+            }
+        )
 
         # Sort rules by priority (descending)
         self._rules.sort(key=lambda x: x["priority"], reverse=True)
@@ -1130,10 +1118,7 @@ class AdaptivePrompting:
         self._context_features.update(features)
 
     def select_prompt(
-        self,
-        task: str,
-        default_template: str,
-        default_version: Optional[str] = None
+        self, task: str, default_template: str, default_version: Optional[str] = None
     ) -> PromptTemplate:
         """
         Select a prompt template based on context and rules.
@@ -1167,14 +1152,11 @@ class AdaptivePrompting:
             # If default not found, use a simple template
             return PromptTemplate(
                 template=f"Perform the task: {task}. Context: {json.dumps(context)}",
-                input_variables=[]
+                input_variables=[],
             )
 
     def track_performance(
-        self,
-        template_name: str,
-        template_version: str,
-        metrics: Dict[str, Any]
+        self, template_name: str, template_version: str, metrics: Dict[str, Any]
     ) -> None:
         """
         Track performance of a template.
@@ -1194,9 +1176,7 @@ class AdaptivePrompting:
 
         # Update library with aggregated metrics
         aggregated = self._aggregate_metrics(key)
-        self.library.update_performance_metrics(
-            template_name, template_version, aggregated
-        )
+        self.library.update_performance_metrics(template_name, template_version, aggregated)
 
     def _aggregate_metrics(self, key: str) -> Dict[str, Any]:
         """
@@ -1269,7 +1249,7 @@ class GraphRAGPromptTemplates:
             """,
             input_variables=["query", "documents", "connections", "reasoning_depth"],
             description="Template for cross-document reasoning with knowledge graphs",
-            tags=["graphrag", "cross-document", "reasoning"]
+            tags=["graphrag", "cross-document", "reasoning"],
         )
 
         # Template for academic-style cross-document reasoning
@@ -1303,7 +1283,7 @@ class GraphRAGPromptTemplates:
             input_variables=["query", "documents", "connections", "reasoning_depth"],
             version="1.1.0",
             description="Academic-focused template for cross-document reasoning",
-            tags=["graphrag", "cross-document", "reasoning", "academic"]
+            tags=["graphrag", "cross-document", "reasoning", "academic"],
         )
 
         # Template for document evidence chain analysis
@@ -1329,9 +1309,16 @@ class GraphRAGPromptTemplates:
 
             ANALYSIS:
             """,
-            input_variables=["doc1", "doc2", "entity", "entity_type", "doc1_context", "doc2_context"],
+            input_variables=[
+                "doc1",
+                "doc2",
+                "entity",
+                "entity_type",
+                "doc1_context",
+                "doc2_context",
+            ],
             description="Template for analyzing evidence chains between documents",
-            tags=["graphrag", "evidence-chain", "document-connection"]
+            tags=["graphrag", "evidence-chain", "document-connection"],
         )
 
         # Template for knowledge gap identification
@@ -1354,7 +1341,7 @@ class GraphRAGPromptTemplates:
             """,
             input_variables=["entity", "doc1_info", "doc2_info"],
             description="Template for identifying knowledge gaps between documents",
-            tags=["graphrag", "knowledge-gaps", "document-comparison"]
+            tags=["graphrag", "knowledge-gaps", "document-comparison"],
         )
 
         # Template for deep inference generation
@@ -1381,11 +1368,17 @@ class GraphRAGPromptTemplates:
             INFERENCES:
             """,
             input_variables=[
-                "entity_name", "entity_type", "doc1_title", "doc1_info",
-                "doc2_title", "doc2_info", "relation_type", "knowledge_gaps"
+                "entity_name",
+                "entity_type",
+                "doc1_title",
+                "doc1_info",
+                "doc2_title",
+                "doc2_info",
+                "relation_type",
+                "knowledge_gaps",
             ],
             description="Template for generating deep inferences from document connections",
-            tags=["graphrag", "deep-inference", "implications"]
+            tags=["graphrag", "deep-inference", "implications"],
         )
 
         # Template for transitive relationship analysis
@@ -1404,7 +1397,7 @@ class GraphRAGPromptTemplates:
             """,
             input_variables=["relationship_chain"],
             description="Template for analyzing transitive relationships in entity chains",
-            tags=["graphrag", "transitive-relationships", "chain-analysis"]
+            tags=["graphrag", "transitive-relationships", "chain-analysis"],
         )
 
     def CROSS_DOCUMENT_REASONING(self) -> PromptTemplate:

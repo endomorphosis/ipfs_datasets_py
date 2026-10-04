@@ -29,6 +29,7 @@ def __getattr__(name: str) -> Any:
         return importlib.import_module(f"{__name__}.{name}")
     raise AttributeError(name)
 
+
 # --- Engine modules (moved from mcp_server/tools/mcplusplus) ---
 try:
     from .peer_engine import PeerEngine

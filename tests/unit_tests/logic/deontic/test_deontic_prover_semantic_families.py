@@ -72,9 +72,7 @@ def test_prover_semantic_families_match_export_capability_families():
             expected_family: len(LOCAL_PROVER_TARGETS)
         }
         assert coverage["target_semantic_family_consistent"] is True
-        assert coverage["semantic_family_summary"]["semantic_formula_family"] == (
-            expected_family
-        )
+        assert coverage["semantic_family_summary"]["semantic_formula_family"] == (expected_family)
         assert coverage["target_role_matrix_complete"] is True
         assert coverage["target_role_matrix_summary"]["target_roles_by_target"] == {
             "deontic_cec": "event_calculus_state",
@@ -84,9 +82,10 @@ def test_prover_semantic_families_match_export_capability_families():
             "frame_logic": "frame_record",
         }
         assert coverage["coverage_summary"]["target_role_matrix_complete"] is True
-        assert coverage["coverage_summary"]["target_role_matrix_summary"] == coverage[
-            "target_role_matrix_summary"
-        ]
+        assert (
+            coverage["coverage_summary"]["target_role_matrix_summary"]
+            == coverage["target_role_matrix_summary"]
+        )
 
 
 def test_prover_target_role_matrix_covers_local_dialect_roles():
@@ -100,9 +99,7 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
     assert coverage["target_role_matrix_complete"] is True
     assert role_summary["target_role_record_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_role_required_count"] == len(LOCAL_PROVER_TARGETS)
-    assert role_summary["target_role_present_required_count"] == len(
-        LOCAL_PROVER_TARGETS
-    )
+    assert role_summary["target_role_present_required_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_role_complete_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_role_incomplete_count"] == 0
     assert role_summary["target_role_matrix_coverage_rate"] == 1.0
@@ -146,21 +143,15 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
     assert role_summary["target_formal_validation_complete_by_target"] == {
         target: True for target in LOCAL_PROVER_TARGETS
     }
-    assert role_summary["target_formal_validation_complete_count"] == len(
-        LOCAL_PROVER_TARGETS
-    )
+    assert role_summary["target_formal_validation_complete_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_formal_validation_incomplete_count"] == 0
     assert role_summary["target_failed_quality_checks_by_target"] == {
         target: [] for target in LOCAL_PROVER_TARGETS
     }
     assert all(
-        row["formal_validation_complete"] is True
-        for row in role_summary["target_role_matrix"]
+        row["formal_validation_complete"] is True for row in role_summary["target_role_matrix"]
     )
-    assert all(
-        row["failed_quality_checks"] == []
-        for row in role_summary["target_role_matrix"]
-    )
+    assert all(row["failed_quality_checks"] == [] for row in role_summary["target_role_matrix"])
     assert role_summary["expected_target_roles_by_target"] == {
         "deontic_cec": "event_calculus_state",
         "deontic_fol": "deontic_first_order_formula",
@@ -225,19 +216,19 @@ def test_prover_target_role_matrix_reports_role_and_dialect_mismatches():
     assert role_summary["target_syntax_status_distribution"] == {
         "passed": len(LOCAL_PROVER_TARGETS)
     }
-    assert role_summary["target_formal_validation_complete_count"] == len(
-        LOCAL_PROVER_TARGETS
-    )
+    assert role_summary["target_formal_validation_complete_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_semantic_family_distribution"] == {
         "ordinary_duty": len(LOCAL_PROVER_TARGETS)
     }
     assert role_summary["target_roles_by_target"]["fol"] == "frame_record"
     assert role_summary["target_dialect_families_by_target"]["fol"] == "frame_logic"
-    assert "mismatched_target_formula_role:fol:frame_record!=first_order_formula" in (
-        coverage["target_role_matrix_blockers"]
+    assert (
+        "mismatched_target_formula_role:fol:frame_record!=first_order_formula"
+        in (coverage["target_role_matrix_blockers"])
     )
-    assert "mismatched_target_dialect_family:fol:frame_logic!=first_order" in (
-        coverage["target_role_matrix_blockers"]
+    assert (
+        "mismatched_target_dialect_family:fol:frame_logic!=first_order"
+        in (coverage["target_role_matrix_blockers"])
     )
     assert coverage["coverage_summary"]["target_role_matrix_complete"] is False
     assert coverage["coverage_summary"]["target_role_matrix_requires_validation"] is True
@@ -263,9 +254,7 @@ def test_prover_target_role_matrix_reports_duplicate_required_target_records():
 
     assert coverage["target_role_matrix_complete"] is False
     assert coverage["target_role_matrix_requires_validation"] is True
-    assert coverage["target_role_matrix_blockers"] == [
-        "duplicate_target_role_records:fol:2"
-    ]
+    assert coverage["target_role_matrix_blockers"] == ["duplicate_target_role_records:fol:2"]
     assert role_summary["target_role_input_record_count"] == len(LOCAL_PROVER_TARGETS) + 1
     assert role_summary["target_role_record_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_role_unique_target_count"] == len(LOCAL_PROVER_TARGETS)
@@ -273,12 +262,8 @@ def test_prover_target_role_matrix_reports_duplicate_required_target_records():
     assert role_summary["target_role_duplicate_targets"] == ["fol"]
     assert role_summary["duplicate_role_targets"] == ["fol"]
     assert role_summary["target_role_record_count_by_target"]["fol"] == 2
-    assert role_summary["target_role_duplicate_statuses_by_target"] == {
-        "fol": ["passed", "passed"]
-    }
-    assert role_summary["target_role_matrix_status_by_target"]["fol"] == (
-        "duplicate_records"
-    )
+    assert role_summary["target_role_duplicate_statuses_by_target"] == {"fol": ["passed", "passed"]}
+    assert role_summary["target_role_matrix_status_by_target"]["fol"] == ("duplicate_records")
     assert role_summary["target_role_matrix_status_distribution"] == {
         "complete": len(LOCAL_PROVER_TARGETS) - 1,
         "duplicate_records": 1,
@@ -318,15 +303,9 @@ def test_prover_target_role_matrix_reports_duplicate_failed_target_statuses():
     assert coverage["coverage_summary"]["failed_targets"] == ["fol"]
     assert "failed_prover_syntax_target:fol" in coverage["coverage_blockers"]
     assert coverage["target_role_matrix_complete"] is False
-    assert coverage["target_role_matrix_blockers"] == [
-        "duplicate_target_role_records:fol:2"
-    ]
-    assert role_summary["target_role_duplicate_statuses_by_target"] == {
-        "fol": ["passed", "failed"]
-    }
-    assert role_summary["target_role_matrix_status_by_target"]["fol"] == (
-        "duplicate_records"
-    )
+    assert coverage["target_role_matrix_blockers"] == ["duplicate_target_role_records:fol:2"]
+    assert role_summary["target_role_duplicate_statuses_by_target"] == {"fol": ["passed", "failed"]}
+    assert role_summary["target_role_matrix_status_by_target"]["fol"] == ("duplicate_records")
     assert role_summary["target_syntax_status_by_target"]["fol"] == "passed"
     assert role_summary["target_role_matrix_coverage_rate"] == 0.8
     assert role_summary["target_semantic_family_distribution"] == {
@@ -356,9 +335,7 @@ def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
         "complete": len(LOCAL_PROVER_TARGETS)
     }
     assert role_summary["target_formal_validation_complete_count"] == 0
-    assert role_summary["target_formal_validation_incomplete_count"] == len(
-        LOCAL_PROVER_TARGETS
-    )
+    assert role_summary["target_formal_validation_incomplete_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_failed_quality_checks_by_target"] == {
         target: ["formula_proof_ready", "formula_requires_validation"]
         for target in LOCAL_PROVER_TARGETS
@@ -372,13 +349,10 @@ def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
     assert all(row["syntax_valid"] is True for row in matrix.values())
     assert all(row["formal_validation_complete"] is False for row in matrix.values())
     assert all(
-        row["failed_quality_checks"]
-        == ["formula_proof_ready", "formula_requires_validation"]
+        row["failed_quality_checks"] == ["formula_proof_ready", "formula_requires_validation"]
         for row in matrix.values()
     )
-    assert "failed_prover_quality_check:formula_proof_ready" in coverage[
-        "coverage_blockers"
-    ]
+    assert "failed_prover_quality_check:formula_proof_ready" in coverage["coverage_blockers"]
 
 
 def test_prover_semantic_family_slice_preserves_numbered_reference_repair_gate():
@@ -397,6 +371,4 @@ def test_prover_semantic_family_slice_preserves_numbered_reference_repair_gate()
     assert coverage["semantic_formula_families"] == ["ordinary_duty"]
     assert coverage["target_semantic_family_consistent"] is True
     assert coverage["target_role_matrix_complete"] is True
-    assert "failed_prover_quality_check:formula_proof_ready" in coverage[
-        "coverage_blockers"
-    ]
+    assert "failed_prover_quality_check:formula_proof_ready" in coverage["coverage_blockers"]

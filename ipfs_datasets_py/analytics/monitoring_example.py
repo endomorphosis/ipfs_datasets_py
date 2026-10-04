@@ -28,7 +28,7 @@ from ipfs_datasets_py.monitoring import (
     get_metrics_registry,
     log_context,
     monitor_context,
-    timed
+    timed,
 )
 
 
@@ -48,13 +48,13 @@ class ExampleDataProcessor:
         self.logger.info(f"Processing batch {batch_id} with {len(items)} items")
 
         # Start batch operation
-        with monitor_context(operation_name="batch_processing",
-                            batch_id=batch_id,
-                            item_count=len(items)):
-
+        with monitor_context(
+            operation_name="batch_processing", batch_id=batch_id, item_count=len(items)
+        ):
             # Record batch size
-            self.metrics.gauge("batch_size", len(items),
-                              labels={"processor": self.name, "batch_id": batch_id})
+            self.metrics.gauge(
+                "batch_size", len(items), labels={"processor": self.name, "batch_id": batch_id}
+            )
 
             # Process each item
             processed = 0
@@ -80,15 +80,17 @@ class ExampleDataProcessor:
                     errors += 1
                     self.logger.warning(f"Failed to process item {i}: {str(e)}")
                     # Record error metric
-                    self.metrics.increment("processing_errors",
-                                         labels={"processor": self.name, "batch_id": batch_id})
+                    self.metrics.increment(
+                        "processing_errors", labels={"processor": self.name, "batch_id": batch_id}
+                    )
 
             # Update processed count
             self.processed_count += processed
 
             # Record processing metrics
-            self.metrics.increment("items_processed", processed,
-                                  labels={"processor": self.name, "batch_id": batch_id})
+            self.metrics.increment(
+                "items_processed", processed, labels={"processor": self.name, "batch_id": batch_id}
+            )
 
             # Record batch completion
             self.logger.info(f"Completed batch {batch_id}: {processed} processed, {errors} errors")
@@ -101,16 +103,17 @@ class ExampleDataProcessor:
         self.logger.info(f"Async processing batch {batch_id} with {len(items)} items")
 
         # Record batch size
-        self.metrics.gauge("async_batch_size", len(items),
-                         labels={"processor": self.name, "batch_id": batch_id})
+        self.metrics.gauge(
+            "async_batch_size", len(items), labels={"processor": self.name, "batch_id": batch_id}
+        )
 
         # Process items concurrently in chunks
         processed = 0
         chunk_size = max(1, len(items) // 5)
 
         for i in range(0, len(items), chunk_size):
-            chunk = items[i:i+chunk_size]
-            chunk_id = f"{batch_id}_{i//chunk_size}"
+            chunk = items[i : i + chunk_size]
+            chunk_id = f"{batch_id}_{i // chunk_size}"
 
             with log_context(chunk_id=chunk_id):
                 self.logger.debug(f"Processing chunk {chunk_id} with {len(chunk)} items")
@@ -118,27 +121,33 @@ class ExampleDataProcessor:
                 # Wait for all tasks to complete using anyio task group
                 results = []
                 async with anyio.create_task_group() as tg:
+
                     async def collect_result(item, item_id):
                         try:
                             result = await self._process_item_async(item, item_id)
                             results.append(result)
                         except Exception as e:
                             results.append(e)
-                    
+
                     for j, item in enumerate(chunk):
                         tg.start_soon(collect_result, item, f"{chunk_id}_{j}")
 
                 # Count successful results
                 for result in results:
                     if isinstance(result, Exception):
-                        self.metrics.increment("async_processing_errors",
-                                             labels={"processor": self.name, "batch_id": batch_id})
+                        self.metrics.increment(
+                            "async_processing_errors",
+                            labels={"processor": self.name, "batch_id": batch_id},
+                        )
                     else:
                         processed += 1
 
         # Record completion metrics
-        self.metrics.increment("async_items_processed", processed,
-                             labels={"processor": self.name, "batch_id": batch_id})
+        self.metrics.increment(
+            "async_items_processed",
+            processed,
+            labels={"processor": self.name, "batch_id": batch_id},
+        )
 
         self.logger.info(f"Completed async batch {batch_id}: {processed} processed")
         return processed
@@ -163,13 +172,14 @@ class ExampleDataProcessor:
         self.logger.info(f"Generating report for {self.name}")
 
         # Record report generation as an event
-        self.metrics.event("report_generated",
-                         data={"processor": self.name, "timestamp": time.time()})
+        self.metrics.event(
+            "report_generated", data={"processor": self.name, "timestamp": time.time()}
+        )
 
         return {
             "processor": self.name,
             "processed_count": self.processed_count,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
 
@@ -197,7 +207,7 @@ def configure_example_monitoring() -> str:
             rotate_logs=True,
             max_file_size=1_048_576,  # 1MB
             backup_count=3,
-            include_context=True
+            include_context=True,
         ),
         metrics=MetricsConfig(
             enabled=True,
@@ -206,10 +216,8 @@ def configure_example_monitoring() -> str:
             system_metrics=True,
             memory_metrics=True,
             network_metrics=True,
-            global_labels={
-                "application": "monitoring_example"
-            }
-        )
+            global_labels={"application": "monitoring_example"},
+        ),
     )
 
     # Initialize the monitoring system
@@ -280,9 +288,11 @@ def monitoring_example():
                 total_processed += processed
 
                 # Add some random extra metrics
-                metrics.gauge("processing_progress",
-                            total_processed / sum(len(items) for _, items in batches) * 100,
-                            labels={"stage": "batch_processing"})
+                metrics.gauge(
+                    "processing_progress",
+                    total_processed / sum(len(items) for _, items in batches) * 100,
+                    labels={"stage": "batch_processing"},
+                )
 
                 # Simulate thinking
                 time.sleep(0.1)
@@ -314,7 +324,7 @@ def monitoring_example():
             "temp_dir": temp_dir,
             "log_file": log_path,
             "metrics_file": metrics_path,
-            "processed_count": total_processed
+            "processed_count": total_processed,
         }
 
     except Exception as e:

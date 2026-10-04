@@ -28,13 +28,15 @@ class AgenticExtractionConfig:
     min_entity_length: int = 2
     max_confidence: float = 1.0
     custom_rules: List[tuple[str, str]] = field(default_factory=list)
-    stopwords: List[str] = field(default_factory=lambda: [
-        "cookie",
-        "privacy",
-        "terms",
-        "menu",
-        "navigation",
-    ])
+    stopwords: List[str] = field(
+        default_factory=lambda: [
+            "cookie",
+            "privacy",
+            "terms",
+            "menu",
+            "navigation",
+        ]
+    )
     allowed_entity_types: List[str] = field(default_factory=list)
     streaming_threshold_chars: int = 12000
     streaming_chunk_size: int = 1500
@@ -329,7 +331,9 @@ class AgenticScrapeOptimizer:
         except Exception:
             return ""
 
-    def rank_links(self, links: Iterable[Dict[str, Any]], target_terms: Sequence[str]) -> List[Dict[str, Any]]:
+    def rank_links(
+        self, links: Iterable[Dict[str, Any]], target_terms: Sequence[str]
+    ) -> List[Dict[str, Any]]:
         """Rank candidate links for agentic follow-up based on target terms."""
         terms = [term.lower() for term in target_terms if term]
         scored: List[Dict[str, Any]] = []
@@ -411,13 +415,17 @@ class AgenticScrapeOptimizer:
 
         effective_dates: List[str] = []
         for line in text.splitlines():
-            if "effective" in line.lower() and self._collect_pattern_matches(line, self._DATE_PATTERNS):
+            if "effective" in line.lower() and self._collect_pattern_matches(
+                line, self._DATE_PATTERNS
+            ):
                 effective_dates.extend(self._collect_pattern_matches(line, self._DATE_PATTERNS))
 
         parties: List[str] = []
         for line in text.splitlines():
             lowered = line.lower()
-            if any(token in lowered for token in ("plaintiff", "defendant", "petitioner", "respondent")):
+            if any(
+                token in lowered for token in ("plaintiff", "defendant", "petitioner", "respondent")
+            ):
                 parties.append(line.strip())
 
         fields = LegalStructuredFields(
@@ -439,7 +447,15 @@ class AgenticScrapeOptimizer:
         ticker_symbols = [sym for sym in raw_tickers if 1 <= len(sym) <= 5 and sym.isupper()]
 
         accounting_terms: List[str] = []
-        for token in ["revenue", "ebitda", "earnings", "balance sheet", "cash flow", "assets", "liabilities"]:
+        for token in [
+            "revenue",
+            "ebitda",
+            "earnings",
+            "balance sheet",
+            "cash flow",
+            "assets",
+            "liabilities",
+        ]:
             if token in text.lower():
                 accounting_terms.append(token)
 
@@ -461,11 +477,15 @@ class AgenticScrapeOptimizer:
         procedures: List[str] = []
         for line in text.splitlines():
             lowered = line.lower()
-            if any(k in lowered for k in ("diagnosis", "diagnosed", "condition", "disease", "syndrome")):
+            if any(
+                k in lowered for k in ("diagnosis", "diagnosed", "condition", "disease", "syndrome")
+            ):
                 diagnoses.append(line.strip())
             if any(k in lowered for k in ("medication", "prescribed", "tablet", "capsule", "drug")):
                 medications.append(line.strip())
-            if any(k in lowered for k in ("procedure", "surgery", "operation", "therapy", "treatment")):
+            if any(
+                k in lowered for k in ("procedure", "surgery", "operation", "therapy", "treatment")
+            ):
                 procedures.append(line.strip())
 
         fields = MedicalStructuredFields(

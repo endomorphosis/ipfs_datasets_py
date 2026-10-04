@@ -13,7 +13,7 @@ Public API:
 
 Example:
     >>> from ipfs_datasets_py.utils.cli_tools import Copilot
-    >>> 
+    >>>
     >>> copilot = Copilot()
     >>> if copilot.is_installed():
     ...     suggestion = copilot.suggest("list files")
@@ -26,11 +26,13 @@ from .base import BaseCLITool
 # Tool implementations
 from .copilot import Copilot, CopilotCLI, StandaloneCopilot
 
+
 # Placeholders for other tools (minimal stubs)
 class Claude(BaseCLITool):
     """Claude CLI wrapper (stub)."""
+
     tool_name = "claude"
-    
+
     def _verify_installation(self) -> bool:
         """Verify Claude CLI is installed."""
         return self.cli_path is not None and self.cli_path.exists()
@@ -38,8 +40,9 @@ class Claude(BaseCLITool):
 
 class VSCode(BaseCLITool):
     """VS Code CLI wrapper (stub)."""
+
     tool_name = "code"
-    
+
     def _verify_installation(self) -> bool:
         """Verify VS Code CLI is installed."""
         return self.cli_path is not None and self.cli_path.exists()
@@ -47,8 +50,9 @@ class VSCode(BaseCLITool):
 
 class Gemini(BaseCLITool):
     """Gemini CLI wrapper (stub)."""
+
     tool_name = "gemini"
-    
+
     def _verify_installation(self) -> bool:
         """Verify Gemini CLI is installed."""
         return self.cli_path is not None and self.cli_path.exists()
@@ -56,15 +60,13 @@ class Gemini(BaseCLITool):
 
 __all__ = [
     # Base class
-    'BaseCLITool',
-    
+    "BaseCLITool",
     # Implementations
-    'Copilot',
-    'StandaloneCopilot',
-    'Claude',
-    'VSCode',
-    'Gemini',
-    
+    "Copilot",
+    "StandaloneCopilot",
+    "Claude",
+    "VSCode",
+    "Gemini",
     # Backward compatibility
-    'CopilotCLI',
+    "CopilotCLI",
 ]

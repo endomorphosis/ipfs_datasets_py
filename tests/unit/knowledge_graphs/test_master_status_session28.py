@@ -22,46 +22,57 @@ import pytest
 # Helpers – lazy imports so collection works even without optional deps
 # ---------------------------------------------------------------------------
 
+
 def _extractor():
     from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
     return KnowledgeGraphExtractor
 
 
 def _entity():
     from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
     return Entity
 
 
 def _relationship():
     from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
     return Relationship
 
 
 def _kg():
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     return KnowledgeGraph
 
 
 def _srl_types():
     from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-        SRLFrame, RoleArgument, SRLExtractor,
+        SRLFrame,
+        RoleArgument,
+        SRLExtractor,
     )
+
     return SRLFrame, RoleArgument, SRLExtractor
 
 
 def _graph_engine():
     from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
     return GraphEngine
 
 
 def _storage_error():
     from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
     return StorageError
 
 
 # ===========================================================================
 #  A: _parse_rebel_output (lines 398-434)
 # ===========================================================================
+
 
 class TestParseRebelOutput:
     """Tests for KnowledgeGraphExtractor._parse_rebel_output."""
@@ -111,6 +122,7 @@ class TestParseRebelOutput:
 #  B: Transformers NER extraction (lines 135-136, 193-235)
 # ===========================================================================
 
+
 class TestTransformersNER:
     """Tests for KnowledgeGraphExtractor with mocked transformers NER."""
 
@@ -144,27 +156,33 @@ class TestTransformersNER:
 
     def test_given_ner_results_when_extract_entities_then_entities_returned(self):
         """GIVEN transformers NER results WHEN extract_entities THEN returns entities (193-227)."""
-        e = self._make_extractor_with_ner([
-            {"entity": "B-PER", "word": "Alice", "score": 0.92},
-        ])
+        e = self._make_extractor_with_ner(
+            [
+                {"entity": "B-PER", "word": "Alice", "score": 0.92},
+            ]
+        )
         entities = e.extract_entities("Alice works at Acme Corp.")
         assert len(entities) == 1
         assert entities[0].name == "Alice"
 
     def test_given_low_score_ner_result_when_extract_then_filtered_out(self):
         """GIVEN NER result below min_confidence WHEN extract THEN not included."""
-        e = self._make_extractor_with_ner([
-            {"entity": "B-PER", "word": "Alice", "score": 0.10},
-        ])
+        e = self._make_extractor_with_ner(
+            [
+                {"entity": "B-PER", "word": "Alice", "score": 0.10},
+            ]
+        )
         entities = e.extract_entities("Alice works.")
         assert len(entities) == 0
 
     def test_given_duplicate_ner_results_when_extract_then_highest_confidence_wins(self):
         """GIVEN duplicate NER for same word WHEN extract THEN highest-confidence entity kept."""
-        e = self._make_extractor_with_ner([
-            {"entity": "B-PER", "word": "Alice", "score": 0.80},
-            {"entity": "B-ORG", "word": "Alice", "score": 0.92},
-        ])
+        e = self._make_extractor_with_ner(
+            [
+                {"entity": "B-PER", "word": "Alice", "score": 0.80},
+                {"entity": "B-ORG", "word": "Alice", "score": 0.92},
+            ]
+        )
         entities = e.extract_entities("Alice works.")
         # Both refer to "Alice"; entity_groups collapses duplicates
         assert len(entities) == 1
@@ -181,6 +199,7 @@ class TestTransformersNER:
     def test_given_ner_model_raises_unexpected_error_when_extract_then_propagates(self):
         """GIVEN ner_model raises RuntimeError WHEN extract THEN EntityExtractionError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
         e = self._make_extractor_with_ner([])
         e.ner_model.side_effect = RuntimeError("boom")
         with pytest.raises(EntityExtractionError):
@@ -199,6 +218,7 @@ class TestTransformersNER:
 # ===========================================================================
 #  C: Neural relationship extraction (lines 278-394)
 # ===========================================================================
+
 
 class TestNeuralRelationshipExtraction:
     """Tests for _neural_relationship_extraction with mocked re_model."""
@@ -228,9 +248,7 @@ class TestNeuralRelationshipExtraction:
         self.e.re_model = mock_re
         # Relationship creation may raise TypeError (extraction_method not in schema)
         # but the function should return gracefully (caught at line 378)
-        rels = self.e._neural_relationship_extraction(
-            "Alice is CEO of Acme Corp.", self.entity_map
-        )
+        rels = self.e._neural_relationship_extraction("Alice is CEO of Acme Corp.", self.entity_map)
         assert isinstance(rels, list)
 
     def test_given_rebel_model_with_no_triplets_when_extract_then_empty(self):
@@ -286,6 +304,7 @@ class TestNeuralRelationshipExtraction:
     def test_given_re_model_raises_unexpected_error_when_extract_then_relextraction_error(self):
         """GIVEN re_model raises RuntimeError WHEN extract THEN RelationshipExtractionError (383-394)."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import RelationshipExtractionError
+
         mock_re = MagicMock()
         mock_re.task = "text2text-generation"
         mock_re.side_effect = RuntimeError("boom")
@@ -297,6 +316,7 @@ class TestNeuralRelationshipExtraction:
 # ===========================================================================
 #  D: _rule_based_relationship_extraction edge cases (lines 463-495)
 # ===========================================================================
+
 
 class TestRuleBasedRelationshipExtraction:
     """Tests for rule-based extraction edge cases."""
@@ -339,11 +359,11 @@ class TestRuleBasedRelationshipExtraction:
                 raise RuntimeError("unexpected boom")
             return original_finditer(pattern, text, flags)
 
-        self.e.relation_patterns = [
-            {"pattern": "BOOM", "name": "boom", "confidence": 0.7}
-        ]
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction.extractor.re.finditer",
-                   side_effect=boom_finditer):
+        self.e.relation_patterns = [{"pattern": "BOOM", "name": "boom", "confidence": 0.7}]
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction.extractor.re.finditer",
+            side_effect=boom_finditer,
+        ):
             with pytest.raises(RelationshipExtractionError):
                 self.e._rule_based_relationship_extraction("text", self.entity_map)
 
@@ -351,6 +371,7 @@ class TestRuleBasedRelationshipExtraction:
 # ===========================================================================
 #  E: SRL integration paths (lines 877-931)
 # ===========================================================================
+
 
 class TestSRLMergeIntegration:
     """Tests for KnowledgeGraphExtractor._merge_srl_into_kg."""
@@ -449,7 +470,9 @@ class TestSRLMergeIntegration:
         agent_arg = self.RoleArgument(role="Agent", text="Alice", span=None, confidence=0.9)
         patient_arg = self.RoleArgument(role="Patient", text="Bob", span=None, confidence=0.9)
         frame = self.SRLFrame(
-            sentence="Alice did something to Bob", predicate=None, arguments=[agent_arg, patient_arg]
+            sentence="Alice did something to Bob",
+            predicate=None,
+            arguments=[agent_arg, patient_arg],
         )
         self.mock_srl.extract_srl.return_value = [frame]
         self.e._merge_srl_into_kg(self.kg, "Alice did something to Bob", self.entities)
@@ -461,6 +484,7 @@ class TestSRLMergeIntegration:
 # ===========================================================================
 #  F: extract_knowledge_graph with SRL warning (lines 847-851)
 # ===========================================================================
+
 
 class TestExtractKGWithSRL:
     """Tests for extract_knowledge_graph SRL warning path."""
@@ -491,6 +515,7 @@ class TestExtractKGWithSRL:
 #  G: extract_knowledge_graph temperature paths (lines 826-837)
 # ===========================================================================
 
+
 class TestExtractKGTemperature:
     """Tests for temperature-controlled extraction paths."""
 
@@ -500,9 +525,7 @@ class TestExtractKGTemperature:
 
     def test_given_low_structure_temperature_when_extract_then_rel_types_filtered(self):
         """GIVEN structure_temperature=0.1 WHEN extract THEN only common rel_types kept (826-827)."""
-        kg = self.e.extract_knowledge_graph(
-            "Alice works for Acme Corp.", structure_temperature=0.1
-        )
+        kg = self.e.extract_knowledge_graph("Alice works for Acme Corp.", structure_temperature=0.1)
         # All relationships must be of the common types (or there are none)
         common_types = {"is_a", "part_of", "has_part", "related_to", "subfield_of"}
         for rel in kg.relationships.values():
@@ -512,15 +535,14 @@ class TestExtractKGTemperature:
         """GIVEN structure_temperature=0.9, no spaCy WHEN extract THEN complex inference skipped."""
         self.e.nlp = None
         self.e.use_spacy = False
-        kg = self.e.extract_knowledge_graph(
-            "Alice works for Acme Corp.", structure_temperature=0.9
-        )
+        kg = self.e.extract_knowledge_graph("Alice works for Acme Corp.", structure_temperature=0.9)
         assert kg is not None
 
 
 # ===========================================================================
 #  H: extract_enhanced_knowledge_graph chunking (lines 985-1003)
 # ===========================================================================
+
 
 class TestExtractEnhancedKGChunking:
     """Tests for extract_enhanced_knowledge_graph with long text (>2000 chars)."""
@@ -554,6 +576,7 @@ class TestExtractEnhancedKGChunking:
 # ===========================================================================
 #  I: extract_from_documents (lines 1037-1038)
 # ===========================================================================
+
 
 class TestExtractFromDocuments:
     """Tests for extract_from_documents missing text_key path."""
@@ -592,6 +615,7 @@ class TestExtractFromDocuments:
 #  J: enrich_with_types (lines 1093-1102)
 # ===========================================================================
 
+
 class TestEnrichWithTypes:
     """Tests for KnowledgeGraphExtractor.enrich_with_types."""
 
@@ -613,6 +637,7 @@ class TestEnrichWithTypes:
     def test_given_works_for_relationship_when_enrich_then_person_and_org_types(self):
         """GIVEN works_for rel WHEN enrich_with_types THEN src=person, tgt=organization."""
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
         kg, src, tgt = self._make_kg_with_rel("works_for")
         KnowledgeGraphExtractor.enrich_with_types(kg)
         assert src.entity_type == "person"
@@ -621,6 +646,7 @@ class TestEnrichWithTypes:
     def test_given_founded_by_relationship_when_enrich_then_org_and_person_types(self):
         """GIVEN founded_by rel WHEN enrich_with_types THEN src=organization, tgt=person."""
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
         kg, src, tgt = self._make_kg_with_rel("founded_by")
         KnowledgeGraphExtractor.enrich_with_types(kg)
         assert src.entity_type == "organization"
@@ -629,6 +655,7 @@ class TestEnrichWithTypes:
     def test_given_born_in_relationship_when_enrich_then_person_and_location(self):
         """GIVEN born_in rel WHEN enrich_with_types THEN src=person, tgt=location."""
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
         kg, src, tgt = self._make_kg_with_rel("born_in")
         KnowledgeGraphExtractor.enrich_with_types(kg)
         assert src.entity_type == "person"
@@ -637,6 +664,7 @@ class TestEnrichWithTypes:
     def test_given_unknown_rel_type_when_enrich_then_types_unchanged(self):
         """GIVEN unknown relationship type WHEN enrich_with_types THEN entity types unchanged."""
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
         kg, src, tgt = self._make_kg_with_rel("unknown_custom_rel")
         KnowledgeGraphExtractor.enrich_with_types(kg)
         assert src.entity_type == "entity"
@@ -645,13 +673,16 @@ class TestEnrichWithTypes:
     def test_given_non_generic_entity_type_when_enrich_then_type_not_overwritten(self):
         """GIVEN entity already has non-generic type WHEN enrich THEN type not overwritten."""
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
         Entity = _entity()
         Rel = _relationship()
         KG = _kg()
         # Source entity already classified as 'researcher'
         src = Entity(entity_type="researcher", name="Alice", confidence=0.9)
         tgt = Entity(entity_type="entity", name="Acme", confidence=0.9)
-        rel = Rel(relationship_type="works_for", source_entity=src, target_entity=tgt, confidence=0.9)
+        rel = Rel(
+            relationship_type="works_for", source_entity=src, target_entity=tgt, confidence=0.9
+        )
         kg = KG()
         kg.entities[src.entity_id] = src
         kg.entities[tgt.entity_id] = tgt
@@ -663,6 +694,7 @@ class TestEnrichWithTypes:
 # ===========================================================================
 #  K: extract_srl_knowledge_graph (lines 952-956)
 # ===========================================================================
+
 
 class TestExtractSRLKnowledgeGraph:
     """Tests for extract_srl_knowledge_graph."""
@@ -697,6 +729,7 @@ class TestExtractSRLKnowledgeGraph:
 #                                        328-368, 376-415)
 # ===========================================================================
 
+
 class TestGraphEngineWithStorage:
     """Tests for GraphEngine persistence paths using mocked IPLD storage."""
 
@@ -706,13 +739,21 @@ class TestGraphEngineWithStorage:
         mock_storage = MagicMock()
         mock_storage.store.return_value = "bafytest123"
         mock_storage.retrieve_json.return_value = {
-            "id": "node-loaded", "labels": ["Loaded"], "properties": {"x": 1}
+            "id": "node-loaded",
+            "labels": ["Loaded"],
+            "properties": {"x": 1},
         }
         mock_storage.store_graph.return_value = "bafygraph999"
         mock_storage.retrieve_graph.return_value = {
             "nodes": [{"id": "n1", "labels": ["X"], "properties": {}}],
             "relationships": [
-                {"id": "r1", "type": "KNOWS", "start_node": "n1", "end_node": "n1", "properties": {}}
+                {
+                    "id": "r1",
+                    "type": "KNOWS",
+                    "start_node": "n1",
+                    "end_node": "n1",
+                    "properties": {},
+                }
             ],
         }
         engine = GraphEngine(storage_backend=mock_storage)
@@ -848,6 +889,7 @@ class TestGraphEngineWithStorage:
 #  M: Additional GraphEngine edge cases (lines 272, 289, 293, 428, 431)
 # ===========================================================================
 
+
 class TestGraphEngineEdgeCases:
     """Tests for GraphEngine CID-mapping and isinstance-check edge cases."""
 
@@ -858,6 +900,7 @@ class TestGraphEngineEdgeCases:
     def test_given_no_cid_key_when_delete_rel_then_no_error(self):
         """GIVEN rel has no CID entry WHEN delete_relationship THEN deletes cleanly (272)."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Relationship as GRel
+
         rel = self.engine.create_relationship("KNOWS", "n1", "n2")
         rel_id = rel.id
         assert rel_id in self.engine._relationship_cache
@@ -884,4 +927,5 @@ class TestGraphEngineEdgeCases:
         nodes = self.engine.find_nodes()
         for n in nodes:
             from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
             assert isinstance(n, Node)

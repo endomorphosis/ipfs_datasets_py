@@ -159,75 +159,73 @@ def rect_height(rect: Sequence[float]) -> float:
 _I18N_TOKENS: dict[str, list[tuple[str, str]]] = {
     # (token, data_type) pairs for non-English labels
     "signature": [
-        ("firma", "signature"),          # ES/IT
-        ("signature", "signature"),      # FR
-        ("unterschrift", "signature"),   # DE
-        ("assinatura", "signature"),     # PT
+        ("firma", "signature"),  # ES/IT
+        ("signature", "signature"),  # FR
+        ("unterschrift", "signature"),  # DE
+        ("assinatura", "signature"),  # PT
     ],
     "email": [
-        ("correo electrónico", "email"), # ES
-        ("courriel", "email"),           # FR
+        ("correo electrónico", "email"),  # ES
+        ("courriel", "email"),  # FR
         ("e-mail", "email"),
     ],
     "phone": [
-        ("teléfono", "phone"),           # ES
-        ("téléphone", "phone"),          # FR
-        ("telefon", "phone"),            # DE
-        ("telefone", "phone"),           # PT
+        ("teléfono", "phone"),  # ES
+        ("téléphone", "phone"),  # FR
+        ("telefon", "phone"),  # DE
+        ("telefone", "phone"),  # PT
     ],
     "date": [
-        ("fecha", "date"),               # ES
-        ("date", "date"),                # FR
-        ("datum", "date"),               # DE
-        ("data", "date"),                # PT/IT
-        ("naissance", "date"),           # FR (date of birth)
-        ("nacimiento", "date"),          # ES (date of birth)
+        ("fecha", "date"),  # ES
+        ("date", "date"),  # FR
+        ("datum", "date"),  # DE
+        ("data", "date"),  # PT/IT
+        ("naissance", "date"),  # FR (date of birth)
+        ("nacimiento", "date"),  # ES (date of birth)
     ],
     "currency": [
-        ("importe", "currency"),         # ES
-        ("montant", "currency"),         # FR
-        ("betrag", "currency"),          # DE
-        ("valor", "currency"),           # PT/ES
-        ("totale", "currency"),          # IT
-        ("salario", "currency"),         # ES/PT
+        ("importe", "currency"),  # ES
+        ("montant", "currency"),  # FR
+        ("betrag", "currency"),  # DE
+        ("valor", "currency"),  # PT/ES
+        ("totale", "currency"),  # IT
+        ("salario", "currency"),  # ES/PT
     ],
     "postal_code": [
-        ("código postal", "postal_code"), # ES
-        ("code postal", "postal_code"),   # FR
+        ("código postal", "postal_code"),  # ES
+        ("code postal", "postal_code"),  # FR
         ("postleitzahl", "postal_code"),  # DE
-        ("cep", "postal_code"),           # PT
-        ("cap", "postal_code"),           # IT
+        ("cep", "postal_code"),  # PT
+        ("cap", "postal_code"),  # IT
     ],
     "person_name": [
-        ("nombre", "person_name"),        # ES
-        ("nom", "person_name"),           # FR
-        ("name", "person_name"),          # DE (overlaps EN)
-        ("nome", "person_name"),          # IT/PT
-        ("apellido", "person_name"),      # ES (surname)
-        ("prénom", "person_name"),        # FR (first name)
-        ("vorname", "person_name"),       # DE (first name)
-        ("solicitante", "person_name"),   # ES
+        ("nombre", "person_name"),  # ES
+        ("nom", "person_name"),  # FR
+        ("name", "person_name"),  # DE (overlaps EN)
+        ("nome", "person_name"),  # IT/PT
+        ("apellido", "person_name"),  # ES (surname)
+        ("prénom", "person_name"),  # FR (first name)
+        ("vorname", "person_name"),  # DE (first name)
+        ("solicitante", "person_name"),  # ES
     ],
     "address": [
-        ("dirección", "address"),         # ES
-        ("adresse", "address"),           # FR/DE
-        ("endereço", "address"),          # PT
-        ("indirizzo", "address"),         # IT
+        ("dirección", "address"),  # ES
+        ("adresse", "address"),  # FR/DE
+        ("endereço", "address"),  # PT
+        ("indirizzo", "address"),  # IT
     ],
     "place": [
-        ("ciudad", "place"),              # ES
-        ("ville", "place"),               # FR
-        ("stadt", "place"),               # DE
-        ("cidade", "place"),              # PT
-        ("città", "place"),               # IT
+        ("ciudad", "place"),  # ES
+        ("ville", "place"),  # FR
+        ("stadt", "place"),  # DE
+        ("cidade", "place"),  # PT
+        ("città", "place"),  # IT
     ],
 }
 
 # Flattened list for O(n) scan
 _I18N_FLAT: list[tuple[str, str]] = [
-    (token, dtype)
-    for pairs in _I18N_TOKENS.values()
-    for token, dtype in pairs
+    (token, dtype) for pairs in _I18N_TOKENS.values() for token, dtype in pairs
 ]
 
 
@@ -280,7 +278,9 @@ def slugify_field_name(label: str, *, fallback: str = "field") -> str:
     return slug or fallback
 
 
-def estimate_max_chars(rect: Sequence[float], font_size: float = 10.0, *, multiline: bool = False) -> int:
+def estimate_max_chars(
+    rect: Sequence[float], font_size: float = 10.0, *, multiline: bool = False
+) -> int:
     """Estimate a conservative character capacity for a PDF field rectangle."""
 
     width = rect_width(rect)
@@ -309,7 +309,9 @@ def validate_text_for_field(value: Any, field_spec: FormFieldSpec) -> str:
             f"Value for field '{field_spec.name}' is {len(text)} characters, "
             f"but the field allows at most {max_chars} characters."
         )
-    if not field_spec.multiline and _estimate_text_width(text, font_size) > rect_width(field_spec.rect):
+    if not field_spec.multiline and _estimate_text_width(text, font_size) > rect_width(
+        field_spec.rect
+    ):
         raise PDFFormTextOverflowError(
             f"Value for field '{field_spec.name}' does not fit in the field width "
             f"at font size {font_size:g}."
@@ -352,27 +354,53 @@ def build_form_dependency_graph(fields: Sequence[FormFieldSpec]) -> FormDependen
         }
         type_node = f"type:{spec.data_type}"
         nodes.setdefault(type_node, {"kind": "data_type", "data_type": spec.data_type})
-        edges.append(FormDependencyEdge(spec.name, type_node, "expects_type", required=True, confidence=0.95))
+        edges.append(
+            FormDependencyEdge(spec.name, type_node, "expects_type", required=True, confidence=0.95)
+        )
         by_type.setdefault(spec.data_type, []).append(spec)
 
     field_by_name = {field_spec.name: field_spec for field_spec in fields}
     for spec in fields:
         for dependency in spec.dependencies:
             if dependency in field_by_name:
-                edges.append(FormDependencyEdge(spec.name, dependency, "depends_on", required=True, confidence=0.9))
+                edges.append(
+                    FormDependencyEdge(
+                        spec.name, dependency, "depends_on", required=True, confidence=0.9
+                    )
+                )
 
     primary_name = _first_field_name(by_type, "person_name")
     primary_address = _first_field_name(by_type, "address")
     for spec in fields:
         label = spec.label.lower()
         if primary_name and spec.name != primary_name and spec.data_type in {"signature", "date"}:
-            edges.append(FormDependencyEdge(spec.name, primary_name, "depends_on", required=True, confidence=0.7))
-        if primary_address and spec.name != primary_address and spec.data_type in {"place", "state", "postal_code"}:
-            edges.append(FormDependencyEdge(spec.name, primary_address, "depends_on", required=True, confidence=0.7))
+            edges.append(
+                FormDependencyEdge(
+                    spec.name, primary_name, "depends_on", required=True, confidence=0.7
+                )
+            )
+        if (
+            primary_address
+            and spec.name != primary_address
+            and spec.data_type in {"place", "state", "postal_code"}
+        ):
+            edges.append(
+                FormDependencyEdge(
+                    spec.name, primary_address, "depends_on", required=True, confidence=0.7
+                )
+            )
         if "total" in label:
             for amount_field in by_type.get("currency", ()):
                 if amount_field.name != spec.name and "total" not in amount_field.label.lower():
-                    edges.append(FormDependencyEdge(spec.name, amount_field.name, "computed_from", required=False, confidence=0.55))
+                    edges.append(
+                        FormDependencyEdge(
+                            spec.name,
+                            amount_field.name,
+                            "computed_from",
+                            required=False,
+                            confidence=0.55,
+                        )
+                    )
 
     return FormDependencyGraph(nodes=nodes, edges=tuple(_dedupe_edges(edges)))
 
@@ -535,7 +563,9 @@ def convert_pdf_to_fillable(
     with fitz.open(str(input_pdf)) as document:
         for spec in field_specs:
             if spec.page_index < 0 or spec.page_index >= len(document):
-                raise PDFFormFieldError(f"Field '{spec.name}' references missing page {spec.page_index}")
+                raise PDFFormFieldError(
+                    f"Field '{spec.name}' references missing page {spec.page_index}"
+                )
             page = document[spec.page_index]
             widget = fitz.Widget()
             widget.field_name = spec.name
@@ -572,7 +602,9 @@ def fill_pdf_fields(
         widget_names = _document_widget_names(document)
         missing = set(values) - set(field_specs) - widget_names
         if strict and missing:
-            raise PDFFormFieldError(f"Values reference unknown fields: {', '.join(sorted(missing))}")
+            raise PDFFormFieldError(
+                f"Values reference unknown fields: {', '.join(sorted(missing))}"
+            )
 
         filled_widgets: set[str] = set()
         for page_index, page in enumerate(document):
@@ -650,12 +682,16 @@ def _fields_from_widgets(page: Any, page_index: int) -> list[FormFieldSpec]:
         font_size = float(widget.text_fontsize or _font_size_from_rect(rect))
         fields.append(
             FormFieldSpec(
-                name=slugify_field_name(widget.field_name or label, fallback=f"page_{page_index + 1}_field_{index + 1}"),
+                name=slugify_field_name(
+                    widget.field_name or label, fallback=f"page_{page_index + 1}_field_{index + 1}"
+                ),
                 label=label,
                 page_index=page_index,
                 rect=rect,
                 data_type=data_type,
-                max_chars=estimate_max_chars(rect, font_size, multiline=rect_height(rect) > font_size * 1.8),
+                max_chars=estimate_max_chars(
+                    rect, font_size, multiline=rect_height(rect) > font_size * 1.8
+                ),
                 font_size=font_size,
                 multiline=rect_height(rect) > font_size * 1.8,
                 source="acroform",
@@ -665,7 +701,9 @@ def _fields_from_widgets(page: Any, page_index: int) -> list[FormFieldSpec]:
     return fields
 
 
-def _fields_from_underlines(words: Sequence[Mapping[str, Any]], page_index: int) -> list[FormFieldSpec]:
+def _fields_from_underlines(
+    words: Sequence[Mapping[str, Any]], page_index: int
+) -> list[FormFieldSpec]:
     fields: list[FormFieldSpec] = []
     for index, word in enumerate(words):
         text = str(word.get("text", ""))
@@ -730,11 +768,16 @@ def _fields_from_drawings(
             # Radio group or checkbox group
             group_label = _nearby_label(words, group[0]) or f"Option group {group_index + 1}"
             for option_index, rect in enumerate(group):
-                option_label = _nearby_label(words, rect) or f"{group_label} option {option_index + 1}"
+                option_label = (
+                    _nearby_label(words, rect) or f"{group_label} option {option_index + 1}"
+                )
                 font_size = min(12.0, max(7.0, rect_height(rect) * 0.65))
                 fields.append(
                     FormFieldSpec(
-                        name=slugify_field_name(option_label, fallback=f"page_{page_index + 1}_radio_{group_index + 1}_{option_index + 1}"),
+                        name=slugify_field_name(
+                            option_label,
+                            fallback=f"page_{page_index + 1}_radio_{group_index + 1}_{option_index + 1}",
+                        ),
                         label=option_label,
                         page_index=page_index,
                         rect=rect,
@@ -787,29 +830,43 @@ def _cluster_radio_rects(rects: Sequence[Rect]) -> list[list[Rect]]:
     return groups
 
 
-def _fields_from_vlm(raw_fields: Iterable[Mapping[str, Any]], page_index: int) -> list[FormFieldSpec]:
+def _fields_from_vlm(
+    raw_fields: Iterable[Mapping[str, Any]], page_index: int
+) -> list[FormFieldSpec]:
     fields: list[FormFieldSpec] = []
     for index, raw in enumerate(raw_fields or ()):
         label = str(raw.get("label") or raw.get("name") or f"VLM field {index + 1}")
-        rect = normalize_rect(raw.get("rect") or raw.get("bbox") or raw.get("box") or (0, 0, 100, 20))
+        rect = normalize_rect(
+            raw.get("rect") or raw.get("bbox") or raw.get("box") or (0, 0, 100, 20)
+        )
         font_size = float(raw.get("font_size") or _font_size_from_rect(rect))
-        data_type = str(raw.get("data_type") or infer_field_data_type(label, options=raw.get("options") or ()))
+        data_type = str(
+            raw.get("data_type") or infer_field_data_type(label, options=raw.get("options") or ())
+        )
         fields.append(
             FormFieldSpec(
-                name=slugify_field_name(str(raw.get("name") or label), fallback=f"page_{page_index + 1}_vlm_{index + 1}"),
+                name=slugify_field_name(
+                    str(raw.get("name") or label), fallback=f"page_{page_index + 1}_vlm_{index + 1}"
+                ),
                 label=label,
                 page_index=int(raw.get("page_index", page_index)),
                 rect=rect,
                 data_type=data_type,
                 required=bool(raw.get("required", False)),
-                max_chars=int(raw["max_chars"]) if raw.get("max_chars") else estimate_max_chars(rect, font_size),
+                max_chars=int(raw["max_chars"])
+                if raw.get("max_chars")
+                else estimate_max_chars(rect, font_size),
                 font_size=font_size,
                 multiline=bool(raw.get("multiline", rect_height(rect) > font_size * 1.8)),
                 options=tuple(str(option) for option in raw.get("options", ()) or ()),
                 source="vlm",
                 confidence=float(raw.get("confidence", 0.85)),
                 dependencies=tuple(str(item) for item in raw.get("dependencies", ()) or ()),
-                metadata={key: value for key, value in raw.items() if key not in {"name", "label", "rect", "bbox", "box"}},
+                metadata={
+                    key: value
+                    for key, value in raw.items()
+                    if key not in {"name", "label", "rect", "bbox", "box"}
+                },
             )
         )
     return fields
@@ -881,8 +938,14 @@ def _looks_required(label: str) -> bool:
 def _dedupe_fields(fields: Sequence[FormFieldSpec]) -> list[FormFieldSpec]:
     deduped: list[FormFieldSpec] = []
     used_names: dict[str, int] = {}
-    for spec in sorted(fields, key=lambda item: (item.page_index, item.rect[1], item.rect[0], -item.confidence)):
-        if any(_rects_overlap(spec.rect, existing.rect) > 0.85 and spec.page_index == existing.page_index for existing in deduped):
+    for spec in sorted(
+        fields, key=lambda item: (item.page_index, item.rect[1], item.rect[0], -item.confidence)
+    ):
+        if any(
+            _rects_overlap(spec.rect, existing.rect) > 0.85
+            and spec.page_index == existing.page_index
+            for existing in deduped
+        ):
             continue
         count = used_names.get(spec.name, 0)
         used_names[spec.name] = count + 1
@@ -939,7 +1002,9 @@ def _insert_text_in_rect(page: Any, spec: FormFieldSpec, text: str) -> None:
     font_size = float(spec.font_size or 10.0)
     result = page.insert_textbox(rect, text, fontsize=font_size, fontname="helv", align=0)
     if result < 0:
-        raise PDFFormTextOverflowError(f"Value for field '{spec.name}' overflowed the PDF rectangle.")
+        raise PDFFormTextOverflowError(
+            f"Value for field '{spec.name}' overflowed the PDF rectangle."
+        )
 
 
 def _ocr_words_from_provider(
@@ -1053,7 +1118,12 @@ def _parse_xfa_xml(xml_bytes: bytes) -> list[FormFieldSpec]:
 
             # XFA does not reliably encode pixel rects in the XML; use a
             # placeholder rect so the field is still discoverable.
-            placeholder_rect: Rect = (0.0, float(len(fields)) * 20.0, 200.0, float(len(fields)) * 20.0 + 18.0)
+            placeholder_rect: Rect = (
+                0.0,
+                float(len(fields)) * 20.0,
+                200.0,
+                float(len(fields)) * 20.0 + 18.0,
+            )
             fields.append(
                 FormFieldSpec(
                     name=slugify_field_name(name_attr or label, fallback=f"xfa_{len(fields) + 1}"),
@@ -1166,7 +1236,9 @@ def _fields_from_layout_blocks(
         multiline = kind in ("paragraph", "textarea") or rect_height(rect) > font_size * 1.8
         fields.append(
             FormFieldSpec(
-                name=slugify_field_name(label, fallback=f"page_{page_index + 1}_layout_{index + 1}"),
+                name=slugify_field_name(
+                    label, fallback=f"page_{page_index + 1}_layout_{index + 1}"
+                ),
                 label=label,
                 page_index=page_index,
                 rect=rect,

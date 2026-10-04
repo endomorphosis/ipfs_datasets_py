@@ -203,17 +203,17 @@ ipfs_datasets_py/
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Works natively with core formats
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 
 # Text files - pure stdlib
-result = await converter.convert('document.txt')
+result = await converter.convert("document.txt")
 
 # Archives - pure stdlib
-result = await converter.convert('archive.zip', extract_archives=True)
+result = await converter.convert("archive.zip", extract_archives=True)
 
 # Basic office - common libraries
-result = await converter.convert('document.pdf')
-result = await converter.convert('spreadsheet.xlsx')
+result = await converter.convert("document.pdf")
+result = await converter.convert("spreadsheet.xlsx")
 ```
 
 ### Full Features with IPFS and Acceleration
@@ -223,26 +223,23 @@ from ipfs_datasets_py.processors.file_converter import (
     IPFSAcceleratedConverter,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
-    VectorEmbeddingPipeline
+    VectorEmbeddingPipeline,
 )
 
 # Full native implementation with all integrations
 converter = IPFSAcceleratedConverter(
-    enable_ipfs=True,              # Uses ipfs_kit_py
-    enable_acceleration=True,       # Uses ipfs_accelerate_py
-    auto_pin=True
+    enable_ipfs=True,  # Uses ipfs_kit_py
+    enable_acceleration=True,  # Uses ipfs_accelerate_py
+    auto_pin=True,
 )
 
 # Initialize pipelines
 kg_pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
 summary_pipeline = TextSummarizationPipeline()
-vector_pipeline = VectorEmbeddingPipeline(
-    enable_ipfs=True,
-    enable_acceleration=True
-)
+vector_pipeline = VectorEmbeddingPipeline(enable_ipfs=True, enable_acceleration=True)
 
 # Process any format
-file = 'lecture.mp4'  # or any of 57+ formats
+file = "lecture.mp4"  # or any of 57+ formats
 
 # Text extraction with IPFS storage and GPU acceleration
 result = await converter.convert(file)
@@ -266,7 +263,7 @@ print(f"Embeddings: {len(embeddings.embeddings)}")
 print(f"Embedding CID: {embeddings.ipfs_cid}")
 
 # Semantic search
-results = await vector_pipeline.search('machine learning', top_k=5)
+results = await vector_pipeline.search("machine learning", top_k=5)
 for result in results:
     print(f"Score: {result.score}, Text: {result.text[:100]}")
 ```
@@ -276,24 +273,24 @@ for result in results:
 ```python
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 
 # Image without tesseract installed
-result = await converter.convert('diagram.png')
+result = await converter.convert("diagram.png")
 # Result:
 # - text: "" (no OCR)
 # - metadata: {dimensions, format, color_mode, etc.} ✅
 # - success: True ✅
 
 # Audio without whisper installed
-result = await converter.convert('podcast.mp3')
+result = await converter.convert("podcast.mp3")
 # Result:
 # - text: "" (no transcription)
 # - metadata: {duration, bitrate, sample_rate, etc.} ✅
 # - success: True ✅
 
 # Video without ffmpeg installed
-result = await converter.convert('lecture.mp4')
+result = await converter.convert("lecture.mp4")
 # Result:
 # - text: "" (no processing)
 # - metadata: {basic video info} ✅

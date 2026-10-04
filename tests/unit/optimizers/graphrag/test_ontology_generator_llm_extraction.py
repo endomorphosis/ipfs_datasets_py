@@ -174,7 +174,9 @@ def test_extract_hybrid_uses_llm_backend_without_accelerate(monkeypatch) -> None
     generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=lambda prompt: {})
     context = OntologyGenerationContext(data_source="unit-test", data_type="text", domain="general")
 
-    rule_result = EntityExtractionResult(entities=[], relationships=[], confidence=0.5, metadata={"method": "rule"})
+    rule_result = EntityExtractionResult(
+        entities=[], relationships=[], confidence=0.5, metadata={"method": "rule"}
+    )
     llm_result = EntityExtractionResult(
         entities=[Entity(id="e1", type="Person", text="Alice", confidence=0.9)],
         relationships=[],

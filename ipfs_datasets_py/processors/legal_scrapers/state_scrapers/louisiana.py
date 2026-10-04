@@ -34,19 +34,21 @@ class LouisianaScraper(BaseStateScraper):
         "http://web.archive.org/web/20250501064333/https://legis.la.gov/Legis/Law.aspx?d=100124",
         "http://web.archive.org/web/20240809002954/https://legis.la.gov/Legis/Law.aspx?d=100148",
     ]
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Louisiana's legislative website."""
         return "https://legis.la.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Louisiana."""
-        return [{
-            "name": "Louisiana Revised Statutes",
-            "url": f"{self.get_base_url()}/legis/Laws.aspx",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Louisiana Revised Statutes",
+                "url": f"{self.get_base_url()}/legis/Laws.aspx",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -60,7 +62,9 @@ class LouisianaScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
-        skip_live_toc = str(os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "1") or "1").strip().lower() in {
+        skip_live_toc = str(
+            os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "1") or "1"
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
@@ -68,17 +72,25 @@ class LouisianaScraper(BaseStateScraper):
         }
         toc: List[NormalizedStatute] = []
         if skip_live_toc:
-            self.logger.info("Louisiana live TOC discovery skipped (STATE_SCRAPER_LA_SKIP_LIVE_TOC enabled)")
+            self.logger.info(
+                "Louisiana live TOC discovery skipped (STATE_SCRAPER_LA_SKIP_LIVE_TOC enabled)"
+            )
         else:
-            toc = await self._scrape_live_toc_pages(code_name=code_name, max_statutes=return_threshold)
+            toc = await self._scrape_live_toc_pages(
+                code_name=code_name, max_statutes=return_threshold
+            )
         if toc:
             return toc[:limit] if limit is not None else toc
         if not self._full_corpus_enabled() or max_statutes is not None:
-            live = await self._scrape_live_law_pages(code_name=code_name, max_statutes=return_threshold)
+            live = await self._scrape_live_law_pages(
+                code_name=code_name, max_statutes=return_threshold
+            )
             if live:
                 return live
 
-        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=max(10, return_threshold))
+        archival = await self._scrape_archived_law_pages(
+            code_name=code_name, max_statutes=max(10, return_threshold)
+        )
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -100,7 +112,9 @@ class LouisianaScraper(BaseStateScraper):
             return list(archival)
         return []
 
-    async def _scrape_live_toc_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_live_toc_pages(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         title_pages = await self._discover_live_toc_title_pages(limit=max_statutes)
         if not title_pages:
             return []
@@ -112,13 +126,17 @@ class LouisianaScraper(BaseStateScraper):
             discovery_method="live_toc_postback",
         )
 
-    async def _scrape_live_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_live_law_pages(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
         for live_url in [
             "https://legis.la.gov/Legis/Law.aspx?d=100114",
             "https://legis.la.gov/Legis/Law.aspx?d=100115",
         ][: max(1, int(max_statutes or 1))]:
-            law_html = await self._request_text(law_url=live_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
+            law_html = await self._request_text(
+                law_url=live_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12
+            )
             if not law_html:
                 continue
             section_number = self._extract_section_number(law_html)
@@ -144,7 +162,9 @@ class LouisianaScraper(BaseStateScraper):
             )
         return statutes
 
-    async def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_law_pages(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
@@ -157,7 +177,9 @@ class LouisianaScraper(BaseStateScraper):
             if url not in candidate_urls:
                 candidate_urls.append(url)
 
-        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_ARCHIVE_SCAN_HEARTBEAT_EVERY", "") or "").strip()
+        heartbeat_every_raw = str(
+            os.getenv("STATE_SCRAPER_LA_ARCHIVE_SCAN_HEARTBEAT_EVERY", "") or ""
+        ).strip()
         try:
             heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 50
         except Exception:
@@ -249,7 +271,9 @@ class LouisianaScraper(BaseStateScraper):
             max_statutes,
             source_kind,
         )
-        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_SCAN_HEARTBEAT_EVERY", "") or "").strip()
+        heartbeat_every_raw = str(
+            os.getenv("STATE_SCRAPER_LA_SCAN_HEARTBEAT_EVERY", "") or ""
+        ).strip()
         try:
             heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 25
         except Exception:
@@ -365,14 +389,18 @@ class LouisianaScraper(BaseStateScraper):
 
         root_url = f"{self.get_base_url()}/legis/Laws_Toc.aspx?folder=75&level=Parent"
 
-        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_TOC_HEARTBEAT_EVERY", "") or "").strip()
+        heartbeat_every_raw = str(
+            os.getenv("STATE_SCRAPER_LA_TOC_HEARTBEAT_EVERY", "") or ""
+        ).strip()
         try:
             heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 25
         except Exception:
             heartbeat_every = 25
         heartbeat_every = max(5, min(250, heartbeat_every))
 
-        timeout_raw = str(os.getenv("STATE_SCRAPER_LA_TOC_DISCOVERY_TIMEOUT_SECONDS", "") or "").strip()
+        timeout_raw = str(
+            os.getenv("STATE_SCRAPER_LA_TOC_DISCOVERY_TIMEOUT_SECONDS", "") or ""
+        ).strip()
         try:
             discovery_timeout_seconds = float(timeout_raw) if timeout_raw else 600.0
         except Exception:
@@ -406,7 +434,11 @@ class LouisianaScraper(BaseStateScraper):
 
             law_urls: List[str] = []
             seen_laws = set()
-            title_limit = len(event_targets) if self._full_corpus_enabled() and limit >= 1000000 else min(len(event_targets), max(1, limit))
+            title_limit = (
+                len(event_targets)
+                if self._full_corpus_enabled() and limit >= 1000000
+                else min(len(event_targets), max(1, limit))
+            )
             for title_index, target in enumerate(event_targets[:title_limit], start=1):
                 if title_index == 1 or title_index % heartbeat_every == 0:
                     self._write_partial_checkpoint(
@@ -522,7 +554,7 @@ class LouisianaScraper(BaseStateScraper):
                 original = str(row[2]).strip()
                 if not ts or not original:
                     continue
-                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                encoded = urllib.parse.quote(original, safe=":/?=&%.-_")
                 discovered.append(f"http://web.archive.org/web/{ts}/{encoded}")
             return discovered
         except Exception as exc:

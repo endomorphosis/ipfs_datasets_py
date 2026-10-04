@@ -64,7 +64,7 @@ converter = FOLConverter(use_cache=True)
 converter = FOLConverter(
     use_cache=True,
     cache_maxsize=1000,  # Max 1000 entries
-    cache_ttl=3600,      # 1 hour TTL
+    cache_ttl=3600,  # 1 hour TTL
 )
 # Automatic expiration and eviction
 ```

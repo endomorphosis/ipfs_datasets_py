@@ -130,7 +130,9 @@ class USPTOPatentScraper:
 
         return {"_gte": {"patent_date": "2020-01-01"}}
 
-    def search_patents(self, criteria: PatentSearchCriteria, fields: Optional[List[str]] = None) -> List[Patent]:
+    def search_patents(
+        self, criteria: PatentSearchCriteria, fields: Optional[List[str]] = None
+    ) -> List[Patent]:
         self._rate_limit()
         query = self._build_query(criteria)
 
@@ -221,7 +223,9 @@ class USPTOPatentScraper:
             raw_data=data,
         )
 
-    async def search_patents_async(self, criteria: PatentSearchCriteria, fields: Optional[List[str]] = None) -> List[Patent]:
+    async def search_patents_async(
+        self, criteria: PatentSearchCriteria, fields: Optional[List[str]] = None
+    ) -> List[Patent]:
         return await anyio.to_thread.run_sync(self.search_patents, criteria, fields)
 
 
@@ -231,7 +235,12 @@ class PatentDatasetBuilder:
     def __init__(self, scraper: USPTOPatentScraper):
         self.scraper = scraper
 
-    def build_dataset(self, criteria: PatentSearchCriteria, output_format: str = "json", output_path: Optional[Path] = None) -> Dict[str, Any]:
+    def build_dataset(
+        self,
+        criteria: PatentSearchCriteria,
+        output_format: str = "json",
+        output_path: Optional[Path] = None,
+    ) -> Dict[str, Any]:
         logger.info("Building patent dataset with criteria: %s", asdict(criteria))
         patents = self.scraper.search_patents(criteria)
         patents_data = [asdict(patent) for patent in patents]
@@ -268,23 +277,36 @@ class PatentDatasetBuilder:
         logger.info("Built patent dataset with %s patents", len(patents))
         return {"status": "success", "metadata": metadata, "patents": patents_data}
 
-    async def build_dataset_async(self, criteria: PatentSearchCriteria, output_format: str = "json", output_path: Optional[Path] = None) -> Dict[str, Any]:
-        return await anyio.to_thread.run_sync(self.build_dataset, criteria, output_format, output_path)
+    async def build_dataset_async(
+        self,
+        criteria: PatentSearchCriteria,
+        output_format: str = "json",
+        output_path: Optional[Path] = None,
+    ) -> Dict[str, Any]:
+        return await anyio.to_thread.run_sync(
+            self.build_dataset, criteria, output_format, output_path
+        )
 
 
-def search_patents_by_keyword(keywords: List[str], limit: int = 100, rate_limit_delay: float = 1.0) -> List[Patent]:
+def search_patents_by_keyword(
+    keywords: List[str], limit: int = 100, rate_limit_delay: float = 1.0
+) -> List[Patent]:
     scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
     criteria = PatentSearchCriteria(keywords=keywords, limit=limit)
     return scraper.search_patents(criteria)
 
 
-def search_patents_by_inventor(inventor_name: str, limit: int = 100, rate_limit_delay: float = 1.0) -> List[Patent]:
+def search_patents_by_inventor(
+    inventor_name: str, limit: int = 100, rate_limit_delay: float = 1.0
+) -> List[Patent]:
     scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
     criteria = PatentSearchCriteria(inventor_name=inventor_name, limit=limit)
     return scraper.search_patents(criteria)
 
 
-def search_patents_by_assignee(assignee_name: str, limit: int = 100, rate_limit_delay: float = 1.0) -> List[Patent]:
+def search_patents_by_assignee(
+    assignee_name: str, limit: int = 100, rate_limit_delay: float = 1.0
+) -> List[Patent]:
     scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
     criteria = PatentSearchCriteria(assignee_name=assignee_name, limit=limit)
     return scraper.search_patents(criteria)

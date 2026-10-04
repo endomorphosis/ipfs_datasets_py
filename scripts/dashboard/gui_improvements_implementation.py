@@ -11,9 +11,10 @@ and user experience.
 import os
 from pathlib import Path
 
+
 def create_enhanced_dashboard_template():
     """Create an enhanced version of the dashboard with all improvements."""
-    
+
     enhanced_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1056,18 +1057,19 @@ def create_enhanced_dashboard_template():
     </script>
 </body>
 </html>"""
-    
+
     # Create the enhanced template file
     enhanced_file = Path("enhanced_news_analysis_dashboard.html")
-    with open(enhanced_file, 'w', encoding='utf-8') as f:
+    with open(enhanced_file, "w", encoding="utf-8") as f:
         f.write(enhanced_html)
-    
+
     print(f"✓ Created enhanced dashboard template: {enhanced_file}")
     return enhanced_file
 
+
 def create_comparison_showcase():
     """Create a before/after comparison showcase."""
-    
+
     showcase_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1287,20 +1289,21 @@ def create_comparison_showcase():
     </div>
 </body>
 </html>"""
-    
+
     showcase_file = Path("gui_improvements_showcase.html")
-    with open(showcase_file, 'w', encoding='utf-8') as f:
+    with open(showcase_file, "w", encoding="utf-8") as f:
         f.write(showcase_html)
-    
+
     print(f"✓ Created improvements showcase: {showcase_file}")
     return showcase_file
 
+
 if __name__ == "__main__":
     print("🚀 Creating Enhanced GUI Implementation...")
-    
+
     enhanced_dashboard = create_enhanced_dashboard_template()
     showcase = create_comparison_showcase()
-    
+
     print("\n✅ GUI Enhancement Implementation Complete!")
     print(f"Enhanced Dashboard: {enhanced_dashboard}")
     print(f"Improvements Showcase: {showcase}")

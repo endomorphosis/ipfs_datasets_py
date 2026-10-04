@@ -52,21 +52,12 @@ from ipfs_datasets_py.knowledge_graphs.core import GraphEngine, KnowledgeGraph
 engine = GraphEngine()
 
 # Create and store nodes
-alice = engine.create_node(
-    labels=["Person"],
-    properties={"name": "Alice", "age": 30}
-)
-bob = engine.create_node(
-    labels=["Person"],
-    properties={"name": "Bob", "age": 25}
-)
+alice = engine.create_node(labels=["Person"], properties={"name": "Alice", "age": 30})
+bob = engine.create_node(labels=["Person"], properties={"name": "Bob", "age": 25})
 
 # Create relationship
 rel = engine.create_relationship(
-    rel_type="KNOWS",
-    start_node_id=alice.id,
-    end_node_id=bob.id,
-    properties={"since": 2020}
+    rel_type="KNOWS", start_node_id=alice.id, end_node_id=bob.id, properties={"since": 2020}
 )
 
 # Query stored nodes
@@ -116,17 +107,12 @@ driver = GraphDatabase.driver("ipfs://localhost:5001")
 with driver.session() as session:
     # Create nodes
     result = session.run(
-        "CREATE (p:Person {name: $name, age: $age}) RETURN p",
-        name="Alice",
-        age=30
+        "CREATE (p:Person {name: $name, age: $age}) RETURN p", name="Alice", age=30
     )
-    
+
     # Query
-    persons = session.run(
-        "MATCH (p:Person) WHERE p.age > $min_age RETURN p",
-        min_age=25
-    )
-    
+    persons = session.run("MATCH (p:Person) WHERE p.age > $min_age RETURN p", min_age=25)
+
     for record in persons:
         print(record["p"]["name"])
 
@@ -141,11 +127,7 @@ For teams transitioning from Neo4j to IPFS:
 from ipfs_datasets_py.knowledge_graphs.migration import Neo4jExporter
 
 # Step 1: Export from Neo4j
-exporter = Neo4jExporter(
-    uri="bolt://localhost:7687",
-    user="neo4j",
-    password="password"
-)
+exporter = Neo4jExporter(uri="bolt://localhost:7687", user="neo4j", password="password")
 exporter.export_to_json("neo4j_export.json")
 
 # Step 2: Import to IPFS
@@ -159,10 +141,7 @@ print(f"Graph migrated to IPFS: {cid}")
 from ipfs_datasets_py.knowledge_graphs.migration import IntegrityVerifier
 
 verifier = IntegrityVerifier()
-is_valid, errors = verifier.verify(
-    source="neo4j_export.json",
-    target_cid=cid
-)
+is_valid, errors = verifier.verify(source="neo4j_export.json", target_cid=cid)
 assert is_valid, f"Migration errors: {errors}"
 ```
 
@@ -184,11 +163,9 @@ optimizer = OntologyOptimizer()
 ontology = {
     "entities": [
         {"id": "e1", "text": "Alice Smith", "type": "Person"},
-        {"id": "e2", "text": "Acme Corp", "type": "Organization"}
+        {"id": "e2", "text": "Acme Corp", "type": "Organization"},
     ],
-    "relationships": [
-        {"source_id": "e1", "target_id": "e2", "type": "worksAt"}
-    ]
+    "relationships": [{"source_id": "e1", "target_id": "e2", "type": "worksAt"}],
 }
 
 # Export as Turtle (default)
@@ -205,11 +182,7 @@ print(rdf_turtle)
 rdf_nt = optimizer.export_to_rdf(ontology=ontology, format="nt")
 
 # Write to file
-optimizer.export_to_rdf(
-    ontology=ontology,
-    filepath="knowledge_graph.ttl",
-    format="turtle"
-)
+optimizer.export_to_rdf(ontology=ontology, filepath="knowledge_graph.ttl", format="turtle")
 ```
 
 **Supported RDF Formats:**
@@ -271,23 +244,20 @@ ontology = {
     "entities": [
         {"id": "e1", "text": "Alice", "type": "Person"},
         {"id": "e2", "text": "Bob", "type": "Person"},
-        {"id": "e3", "text": "Acme Corp", "type": "Organization"}
+        {"id": "e3", "text": "Acme Corp", "type": "Organization"},
     ],
     "relationships": [
         {"source_id": "e1", "target_id": "e2", "type": "knows"},
         {"source_id": "e1", "target_id": "e3", "type": "worksAt"},
-        {"source_id": "e2", "target_id": "e3", "type": "worksAt"}
-    ]
+        {"source_id": "e2", "target_id": "e3", "type": "worksAt"},
+    ],
 }
 
 # Export to GraphML XML
 graphml = optimizer.export_to_graphml(ontology=ontology)
 
 # Save for Gephi/yEd
-optimizer.export_to_graphml(
-    ontology=ontology,
-    filepath="knowledge_graph.graphml"
-)
+optimizer.export_to_graphml(ontology=ontology, filepath="knowledge_graph.graphml")
 ```
 
 **GraphML Structure:**
@@ -360,11 +330,12 @@ print(f"Avg degree: {sum(dict(G.degree()).values()) / G.number_of_nodes():.2f}")
 
 # Community detection
 import networkx.algorithms.community as nx_comm
+
 communities = nx_comm.greedy_modularity_communities(G.to_undirected())
 print(f"Detected {len(communities)} communities")
 
 # Shortest paths
-path = nx.shortest_path(G, source='e1', target='e3')
+path = nx.shortest_path(G, source="e1", target="e3")
 print(f"Path: {' -> '.join(path)}")
 ```
 
@@ -383,10 +354,7 @@ engine = GraphEngine()
 with TransactionContext(engine) as tx:
     # Create 1000 nodes in single transaction
     for i in range(1000):
-        tx.create_node(
-            labels=["DataPoint"],
-            properties={"index": i, "value": i * 2}
-        )
+        tx.create_node(labels=["DataPoint"], properties={"index": i, "value": i * 2})
     # Commit atomically (or rollback on exception)
 ```
 
@@ -403,19 +371,13 @@ lineage = CrossDocumentLineage()
 lineage.track_entity(
     entity_id="e1",
     document_id="doc_2024_q1",
-    extraction_metadata={
-        "confidence": 0.95,
-        "source_span": (45, 67)
-    }
+    extraction_metadata={"confidence": 0.95, "source_span": (45, 67)},
 )
 
 lineage.track_entity(
     entity_id="e1",
     document_id="doc_2024_q2",
-    extraction_metadata={
-        "confidence": 0.92,
-        "source_span": (102, 125)
-    }
+    extraction_metadata={"confidence": 0.92, "source_span": (102, 125)},
 )
 
 # Query lineage
@@ -464,15 +426,15 @@ for shard_id, cid in cids:
 import ipfshttpclient
 
 ipfs_client = ipfshttpclient.connect(
-    addr='/ip4/127.0.0.1/tcp/5001',
-    timeout=300  # 5 min timeout for large graphs
+    addr="/ip4/127.0.0.1/tcp/5001",
+    timeout=300,  # 5 min timeout for large graphs
 )
 
 # Configure GraphEngine
 engine = GraphEngine(
     ipfs_client=ipfs_client,
     cache_size=1000,  # LRU cache for frequent queries
-    compression=True  # Compress before IPFS storage
+    compression=True,  # Compress before IPFS storage
 )
 ```
 
@@ -508,8 +470,10 @@ for batch_num, batch_ontology in exporter.stream_export(batch_size=5000):
 ```python
 from concurrent.futures import ThreadPoolExecutor
 
+
 def export_shard(shard_data):
     return optimizer.export_to_rdf(ontology=shard_data, format="turtle")
+
 
 with ThreadPoolExecutor(max_workers=4) as executor:
     futures = [executor.submit(export_shard, shard) for shard in shards]
@@ -537,7 +501,7 @@ exporter = Neo4jExporter(
     uri="bolt://localhost:7687",
     user="neo4j",
     password="password",
-    connection_timeout=300  # 5 minutes
+    connection_timeout=300,  # 5 minutes
 )
 ```
 
@@ -547,17 +511,16 @@ exporter = Neo4jExporter(
 # Ensure all IDs are strings (Gephi requirement)
 ontology = {
     "entities": [
-        {"id": str(ent["id"]), "text": ent["text"], "type": ent["type"]}
-        for ent in raw_entities
+        {"id": str(ent["id"]), "text": ent["text"], "type": ent["type"]} for ent in raw_entities
     ],
     "relationships": [
         {
             "source_id": str(rel["source_id"]),
             "target_id": str(rel["target_id"]),
-            "type": rel["type"]
+            "type": rel["type"],
         }
         for rel in raw_relationships
-    ]
+    ],
 }
 ```
 
@@ -585,12 +548,12 @@ ontology = {
     "entities": [
         {"id": "p1", "text": "Graph Neural Networks", "type": "Paper"},
         {"id": "p2", "text": "Semi-Supervised Learning", "type": "Paper"},
-        {"id": "a1", "text": "Kipf, T.", "type": "Author"}
+        {"id": "a1", "text": "Kipf, T.", "type": "Author"},
     ],
     "relationships": [
         {"source_id": "p1", "target_id": "p2", "type": "cites"},
-        {"source_id": "a1", "target_id": "p1", "type": "authored"}
-    ]
+        {"source_id": "a1", "target_id": "p1", "type": "authored"},
+    ],
 }
 
 optimizer = OntologyOptimizer()
@@ -629,20 +592,11 @@ engine = GraphEngine()
 
 # Create entities
 case1 = engine.create_node(
-    labels=["Case"],
-    properties={
-        "name": "Roe v. Wade",
-        "year": 1973,
-        "citation": "410 U.S. 113"
-    }
+    labels=["Case"], properties={"name": "Roe v. Wade", "year": 1973, "citation": "410 U.S. 113"}
 )
 
 statute1 = engine.create_node(
-    labels=["Statute"],
-    properties={
-        "name": "14th Amendment",
-        "section": "Due Process Clause"
-    }
+    labels=["Statute"], properties={"name": "14th Amendment", "section": "Due Process Clause"}
 )
 
 # Create citations
@@ -657,10 +611,7 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
 
 # Convert to ontology format
 kg_data = engine.to_dict()
-ontology = {
-    "entities": kg_data["nodes"],
-    "relationships": kg_data["edges"]
-}
+ontology = {"entities": kg_data["nodes"], "relationships": kg_data["edges"]}
 
 # Export to GraphML for visualization
 optimizer = OntologyOptimizer()
@@ -678,20 +629,18 @@ optimizer = OntologyOptimizer()
 converter = FormatConverter()
 
 # 1. Export ontology from optimizer
-ontology = {
-    "entities": [...],
-    "relationships": [...]
-}
+ontology = {"entities": [...], "relationships": [...]}
 
 # 2. Export to all formats
 formats = {
     "rdf": optimizer.export_to_rdf(ontology, format="turtle"),
     "graphml": optimizer.export_to_graphml(ontology),
-    "json": converter.to_json(ontology)
+    "json": converter.to_json(ontology),
 }
 
 # 3. Save to disk
 import json
+
 for fmt, data in formats.items():
     with open(f"knowledge_graph.{fmt}", "w") as f:
         f.write(data)

@@ -131,27 +131,18 @@ Created `examples/accelerate_integration_demo.py`:
 
 ### Basic Usage
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    AccelerateManager,
-    is_accelerate_available
-)
+from ipfs_datasets_py.accelerate_integration import AccelerateManager, is_accelerate_available
 
 if is_accelerate_available():
     manager = AccelerateManager()
-    result = manager.run_inference(
-        model_name="bert-base-uncased",
-        input_data="Hello world"
-    )
+    result = manager.run_inference(model_name="bert-base-uncased", input_data="Hello world")
 else:
     print("Using local compute")
 ```
 
 ### Hardware Selection
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    get_compute_backend,
-    HardwareType
-)
+from ipfs_datasets_py.accelerate_integration import get_compute_backend, HardwareType
 
 # Auto-detect best hardware
 backend = get_compute_backend()
@@ -162,18 +153,13 @@ backend = get_compute_backend(HardwareType.CUDA)
 
 ### Distributed Processing
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    DistributedComputeCoordinator
-)
+from ipfs_datasets_py.accelerate_integration import DistributedComputeCoordinator
 
 coordinator = DistributedComputeCoordinator()
 coordinator.initialize()
 
 task = coordinator.submit_task(
-    task_id="task-001",
-    model_name="bert-base-uncased",
-    input_data=data,
-    task_type="inference"
+    task_id="task-001", model_name="bert-base-uncased", input_data=data, task_type="inference"
 )
 ```
 
@@ -272,10 +258,7 @@ git submodule update --init ipfs_accelerate_py
 
 ### Check Status
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    is_accelerate_available,
-    get_accelerate_status
-)
+from ipfs_datasets_py.accelerate_integration import is_accelerate_available, get_accelerate_status
 
 print(is_accelerate_available())
 print(get_accelerate_status())

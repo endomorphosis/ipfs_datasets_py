@@ -72,7 +72,7 @@ except Exception:  # pragma: no cover
                     s += float(v) * float(v)
                 except Exception:
                     pass
-            return s ** 0.5
+            return s**0.5
 
     np = _MockNumpy()  # type: ignore
 
@@ -253,7 +253,9 @@ class RoutedLLMInterface(LLMInterface):
                     break
 
                 # Repair prompt with concrete errors.
-                err_text = "\n".join(last_errors) if last_errors else "Invalid JSON or schema mismatch"
+                err_text = (
+                    "\n".join(last_errors) if last_errors else "Invalid JSON or schema mismatch"
+                )
                 repair_prompt = (
                     "Fix the following output so it becomes ONLY valid JSON matching the schema. "
                     "Return ONLY the fixed JSON.\n\n"

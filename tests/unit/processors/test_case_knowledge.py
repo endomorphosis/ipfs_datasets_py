@@ -10,7 +10,12 @@ def test_case_knowledge_gap_analysis_finds_missing_timeline_and_support():
         entities=[
             {"id": "claim_1", "type": "claim", "label": "Breach of contract", "confidence": 0.95},
             {"id": "person_1", "type": "person", "label": "Jane Doe", "confidence": 0.6},
-            {"id": "fact_impact", "type": "fact", "label": "Lost wages", "properties": {"fact_type": "impact"}},
+            {
+                "id": "fact_impact",
+                "type": "fact",
+                "label": "Lost wages",
+                "properties": {"fact_type": "impact"},
+            },
         ],
         relationships=[],
     )
@@ -39,7 +44,12 @@ def test_case_knowledge_summary_reports_graph_statistics():
         ],
         relationships=[
             {"id": "rel_1", "source": "claim_1", "target": "doc_1", "type": "supported_by"},
-            {"id": "rel_2", "source": "claim_1", "target": "fact_timeline", "type": "has_timeline_detail"},
+            {
+                "id": "rel_2",
+                "source": "claim_1",
+                "target": "fact_timeline",
+                "type": "has_timeline_detail",
+            },
         ],
     )
 

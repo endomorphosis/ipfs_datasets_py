@@ -73,7 +73,9 @@ def create_refinement_ui_router(
                     "id": f"alt_{idx}",
                     "action": action,
                     "priority": strategy.get("priority", "low"),
-                    "estimated_impact": max(0.0, float(strategy.get("estimated_impact", 0.0)) * 0.75),
+                    "estimated_impact": max(
+                        0.0, float(strategy.get("estimated_impact", 0.0)) * 0.75
+                    ),
                     "rationale": "Alternative strategy from mediator recommendation.",
                 }
             )
@@ -94,7 +96,9 @@ def create_refinement_ui_router(
                 "changes": 1,
                 "new_entities": 0,
                 "merged_entities": 0,
-                "relationship_changes": 1 if strategy.get("action") == "add_missing_relationships" else 0,
+                "relationship_changes": 1
+                if strategy.get("action") == "add_missing_relationships"
+                else 0,
                 "estimated_property_fixes": missing_properties,
                 "entity_count": len(entities),
                 "relationship_count": len(relationships),
@@ -102,7 +106,9 @@ def create_refinement_ui_router(
         }
 
     @router.post("/api/refinement/{ontology_id}/compare")
-    async def compare_strategies(ontology_id: str, strategies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def compare_strategies(
+        ontology_id: str, strategies: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         _ensure_ontology(store, ontology_id)
         comparison = mediator.compare_strategies(strategies)
         return {"ontology_id": ontology_id, "comparison": comparison}
@@ -136,7 +142,9 @@ def create_refinement_ui_router(
         }
 
     @router.post("/api/refinement/{ontology_id}/apply-batch")
-    async def apply_strategy_batch(ontology_id: str, strategies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def apply_strategy_batch(
+        ontology_id: str, strategies: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         _ensure_ontology(store, ontology_id)
         results: List[Dict[str, Any]] = []
 

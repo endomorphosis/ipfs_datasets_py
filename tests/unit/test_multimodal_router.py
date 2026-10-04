@@ -62,12 +62,16 @@ def test_build_multimodal_messages_embeds_image_paths_as_data_urls(tmp_path: Pat
     assert content[2]["image_url"]["url"].startswith("data:image/png;base64,")
 
 
-def test_generate_multimodal_text_uses_chat_provider_for_image_inputs(monkeypatch, tmp_path: Path) -> None:
+def test_generate_multimodal_text_uses_chat_provider_for_image_inputs(
+    monkeypatch, tmp_path: Path
+) -> None:
     image_path = tmp_path / "workspace.png"
     image_path.write_bytes(b"\x89PNG\r\n\x1a\nfake")
     provider = _FakeChatProvider()
 
-    monkeypatch.setattr(multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider)
+    monkeypatch.setattr(
+        multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider
+    )
 
     result = multimodal_router.generate_multimodal_text(
         "Review this dashboard",
@@ -90,7 +94,9 @@ def test_generate_multimodal_text_falls_back_to_flattened_prompt_for_text_only_p
     image_path.write_bytes(b"\x89PNG\r\n\x1a\nfake")
     provider = _FakeTextProvider()
 
-    monkeypatch.setattr(multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider)
+    monkeypatch.setattr(
+        multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider
+    )
 
     result = multimodal_router.generate_multimodal_text(
         "Review this dashboard",
@@ -114,7 +120,9 @@ def test_generate_multimodal_text_forwards_copilot_trusted_dir_kwargs_to_native_
     image_path.write_bytes(b"\x89PNG\r\n\x1a\nfake")
     provider = _FakeNativeProvider()
 
-    monkeypatch.setattr(multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider)
+    monkeypatch.setattr(
+        multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider
+    )
 
     result = multimodal_router.generate_multimodal_text(
         "Review this dashboard",
@@ -132,10 +140,14 @@ def test_generate_multimodal_text_forwards_copilot_trusted_dir_kwargs_to_native_
     assert call["copilot_allow_all_paths"] is True
 
 
-def test_generate_multimodal_text_fallback_forwards_copilot_kwargs_to_text_provider(monkeypatch) -> None:
+def test_generate_multimodal_text_fallback_forwards_copilot_kwargs_to_text_provider(
+    monkeypatch,
+) -> None:
     provider = _FakeTextProvider()
 
-    monkeypatch.setattr(multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider)
+    monkeypatch.setattr(
+        multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider
+    )
 
     result = multimodal_router.generate_multimodal_text(
         "Review this dashboard",

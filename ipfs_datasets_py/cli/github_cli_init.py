@@ -16,5 +16,5 @@ __all__ = [
     "GitHubAPICache",
     "get_global_cache",
     "configure_cache",
-    "GitHubGraphQL"
+    "GitHubGraphQL",
 ]

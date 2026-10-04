@@ -46,8 +46,12 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
             render_family_divider_pdf,
             source_to_pdf,
         )
-        from ipfs_datasets_py.processors.legal_data.exhibit_binder_manifest import build_exhibit_binder_from_manifest
-        from ipfs_datasets_py.processors.legal_data.full_evidence_binder_manifest import build_full_evidence_binder_from_manifest
+        from ipfs_datasets_py.processors.legal_data.exhibit_binder_manifest import (
+            build_exhibit_binder_from_manifest,
+        )
+        from ipfs_datasets_py.processors.legal_data.full_evidence_binder_manifest import (
+            build_full_evidence_binder_from_manifest,
+        )
         from ipfs_datasets_py.processors.legal_data.legal_pdf_manifest import (
             build_state_court_filing_packet_from_manifest,
             load_json_manifest,
@@ -105,7 +109,11 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
         stderr_buffer = io.StringIO()
         stdout_buffer = io.StringIO()
         try:
-            with warnings.catch_warnings(), contextlib.redirect_stderr(stderr_buffer), contextlib.redirect_stdout(stdout_buffer):
+            with (
+                warnings.catch_warnings(),
+                contextlib.redirect_stderr(stderr_buffer),
+                contextlib.redirect_stdout(stdout_buffer),
+            ):
                 warnings.simplefilter("ignore")
                 _LEGAL_DATA_EXPORTS = _import_exports()
         finally:
@@ -152,29 +160,68 @@ def create_parser() -> argparse.ArgumentParser:
         ],
         required=True,
     )
-    parser.add_argument("--input-path", default="", help="Primary input path for single-file actions.")
-    parser.add_argument("--input-paths", nargs="*", default=[], help="Multiple input paths for batch and merge actions.")
+    parser.add_argument(
+        "--input-path", default="", help="Primary input path for single-file actions."
+    )
+    parser.add_argument(
+        "--input-paths",
+        nargs="*",
+        default=[],
+        help="Multiple input paths for batch and merge actions.",
+    )
     parser.add_argument("--output-path", default="", help="Output file path.")
     parser.add_argument("--output-dir", default="", help="Output directory for batch rendering.")
-    parser.add_argument("--packet-output-path", default="", help="Merged output PDF path for build-court-filing-packet.")
-    parser.add_argument("--manifest-path", default="", help="JSON manifest path for manifest-driven actions.")
-    parser.add_argument("--config-path", default="", help="JSON config path for reusable default builder actions.")
+    parser.add_argument(
+        "--packet-output-path",
+        default="",
+        help="Merged output PDF path for build-court-filing-packet.",
+    )
+    parser.add_argument(
+        "--manifest-path", default="", help="JSON manifest path for manifest-driven actions."
+    )
+    parser.add_argument(
+        "--config-path", default="", help="JSON config path for reusable default builder actions."
+    )
     parser.add_argument("--front-pdf", default="", help="Front sheet PDF for build-exhibit-binder.")
-    parser.add_argument("--table-pdf", default="", help="Optional table-of-exhibits PDF for build-exhibit-binder.")
-    parser.add_argument("--packet-pdfs", nargs="*", default=[], help="Packet PDFs for build-exhibit-binder.")
+    parser.add_argument(
+        "--table-pdf", default="", help="Optional table-of-exhibits PDF for build-exhibit-binder."
+    )
+    parser.add_argument(
+        "--packet-pdfs", nargs="*", default=[], help="Packet PDFs for build-exhibit-binder."
+    )
     parser.add_argument("--family", default="", help="Family label for divider/source rendering.")
-    parser.add_argument("--labels", default="", help="Comma-separated exhibit labels for family divider.")
+    parser.add_argument(
+        "--labels", default="", help="Comma-separated exhibit labels for family divider."
+    )
     parser.add_argument("--label", default="", help="Exhibit/source label.")
-    parser.add_argument("--source", default="", help="Logical source description for convert-source.")
+    parser.add_argument(
+        "--source", default="", help="Logical source description for convert-source."
+    )
     parser.add_argument("--lean-mode", action="store_true", help="Use lean binder title rendering.")
-    parser.add_argument("--contact-block", default="", help="HTML contact block for state-court rendering.")
+    parser.add_argument(
+        "--contact-block", default="", help="HTML contact block for state-court rendering."
+    )
     parser.add_argument("--court-name", default="", help="Court heading for state-court rendering.")
     parser.add_argument("--state-name", default="", help="State heading for state-court rendering.")
-    parser.add_argument("--caption-left", default="", help="Left caption block HTML for state-court rendering.")
-    parser.add_argument("--case-number-line", default="Case No. __________________", help="Default case number line.")
+    parser.add_argument(
+        "--caption-left", default="", help="Left caption block HTML for state-court rendering."
+    )
+    parser.add_argument(
+        "--case-number-line",
+        default="Case No. __________________",
+        help="Default case number line.",
+    )
     parser.add_argument("--filed-date", default="", help="Filed date for signature blocks.")
-    parser.add_argument("--signature-doc-keywords", default="motion,memorandum,response,certificate_of_service", help="Comma-separated signature doc stem keywords.")
-    parser.add_argument("--declaration-doc-keywords", default="declaration", help="Comma-separated declaration doc stem keywords.")
+    parser.add_argument(
+        "--signature-doc-keywords",
+        default="motion,memorandum,response,certificate_of_service",
+        help="Comma-separated signature doc stem keywords.",
+    )
+    parser.add_argument(
+        "--declaration-doc-keywords",
+        default="declaration",
+        help="Comma-separated declaration doc stem keywords.",
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON output.")
     return parser
 
@@ -189,8 +236,16 @@ def _config_from_args(parsed: argparse.Namespace, *, quiet_imports: bool = False
         caption_left_html=str(parsed.caption_left or ""),
         case_number_line=str(parsed.case_number_line or "Case No. __________________"),
         filed_date=str(parsed.filed_date or ""),
-        signature_doc_keywords=tuple(item.strip() for item in str(parsed.signature_doc_keywords or "").split(",") if item.strip()),
-        declaration_doc_keywords=tuple(item.strip() for item in str(parsed.declaration_doc_keywords or "").split(",") if item.strip()),
+        signature_doc_keywords=tuple(
+            item.strip()
+            for item in str(parsed.signature_doc_keywords or "").split(",")
+            if item.strip()
+        ),
+        declaration_doc_keywords=tuple(
+            item.strip()
+            for item in str(parsed.declaration_doc_keywords or "").split(",")
+            if item.strip()
+        ),
     )
 
 
@@ -203,14 +258,19 @@ def _emit(payload: dict[str, object], *, as_json: bool) -> int:
     return 0
 
 
-def _validate_manifest(manifest_path: str | Path, *, action: str, quiet_imports: bool = False) -> dict[str, object]:
+def _validate_manifest(
+    manifest_path: str | Path, *, action: str, quiet_imports: bool = False
+) -> dict[str, object]:
     manifest_path = Path(manifest_path)
     exports = _load_legal_data_exports(quiet=quiet_imports)
     load_json_manifest = exports["load_json_manifest"]
     payload = load_json_manifest(manifest_path)
     if action in {"build-court-filing-packet-from-manifest", "validate-manifest:state-court"}:
         schema_path = _STATE_COURT_PACKET_SCHEMA
-    elif action in {"build-full-evidence-binder-from-manifest", "validate-manifest:full-evidence-binder"}:
+    elif action in {
+        "build-full-evidence-binder-from-manifest",
+        "validate-manifest:full-evidence-binder",
+    }:
         schema_path = _FULL_EVIDENCE_BINDER_SCHEMA
     else:
         schema_path = _EXHIBIT_BINDER_SCHEMA
@@ -250,7 +310,9 @@ def main(args: list[str] | None = None) -> int:
         else:
             validate_action = "validate-manifest:exhibit-binder"
         try:
-            _validate_manifest(parsed.manifest_path, action=validate_action, quiet_imports=quiet_imports)
+            _validate_manifest(
+                parsed.manifest_path, action=validate_action, quiet_imports=quiet_imports
+            )
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
         return _emit(
@@ -266,14 +328,25 @@ def main(args: list[str] | None = None) -> int:
     if action == "render-state-court":
         if not parsed.input_path or not parsed.output_path:
             parser.error("--input-path and --output-path are required.")
-        path = _load_legal_data_exports(quiet=quiet_imports)["render_state_court_markdown_to_pdf"](parsed.input_path, parsed.output_path, config=_config_from_args(parsed, quiet_imports=quiet_imports))
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_state_court_markdown_to_pdf"](
+            parsed.input_path,
+            parsed.output_path,
+            config=_config_from_args(parsed, quiet_imports=quiet_imports),
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-state-court-batch":
         if not parsed.input_paths or not parsed.output_dir:
             parser.error("--input-paths and --output-dir are required.")
-        outputs = _load_legal_data_exports(quiet=quiet_imports)["render_state_court_pdf_batch"](parsed.input_paths, parsed.output_dir, config=_config_from_args(parsed, quiet_imports=quiet_imports))
-        return _emit({"action": action, "output_paths": [str(path) for path in outputs]}, as_json=bool(parsed.json))
+        outputs = _load_legal_data_exports(quiet=quiet_imports)["render_state_court_pdf_batch"](
+            parsed.input_paths,
+            parsed.output_dir,
+            config=_config_from_args(parsed, quiet_imports=quiet_imports),
+        )
+        return _emit(
+            {"action": action, "output_paths": [str(path) for path in outputs]},
+            as_json=bool(parsed.json),
+        )
 
     if action == "build-court-filing-packet":
         if not parsed.input_paths or not parsed.output_dir or not parsed.packet_output_path:
@@ -293,7 +366,9 @@ def main(args: list[str] | None = None) -> int:
             _validate_manifest(parsed.manifest_path, action=action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
-        payload = _load_legal_data_exports(quiet=quiet_imports)["build_state_court_filing_packet_from_manifest"](parsed.manifest_path)
+        payload = _load_legal_data_exports(quiet=quiet_imports)[
+            "build_state_court_filing_packet_from_manifest"
+        ](parsed.manifest_path)
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "build-exhibit-binder-from-manifest":
@@ -303,7 +378,9 @@ def main(args: list[str] | None = None) -> int:
             _validate_manifest(parsed.manifest_path, action=action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
-        payload = _load_legal_data_exports(quiet=quiet_imports)["build_exhibit_binder_from_manifest"](parsed.manifest_path)
+        payload = _load_legal_data_exports(quiet=quiet_imports)[
+            "build_exhibit_binder_from_manifest"
+        ](parsed.manifest_path)
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "build-full-evidence-binder-from-manifest":
@@ -313,82 +390,141 @@ def main(args: list[str] | None = None) -> int:
             _validate_manifest(parsed.manifest_path, action=action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
-        payload = _load_legal_data_exports(quiet=quiet_imports)["build_full_evidence_binder_from_manifest"](parsed.manifest_path, lean_mode=bool(parsed.lean_mode))
+        payload = _load_legal_data_exports(quiet=quiet_imports)[
+            "build_full_evidence_binder_from_manifest"
+        ](parsed.manifest_path, lean_mode=bool(parsed.lean_mode))
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "build-courtstyle-packet-default":
         if parsed.config_path:
-            payload = _load_legal_data_exports(quiet=quiet_imports)["build_courtstyle_packet_from_config"](parsed.config_path)
+            payload = _load_legal_data_exports(quiet=quiet_imports)[
+                "build_courtstyle_packet_from_config"
+            ](parsed.config_path)
             return _emit({"action": action, **payload}, as_json=bool(parsed.json))
         _load_legal_data_exports(quiet=quiet_imports)["build_default_courtstyle_packet"]()
         return _emit({"action": action, "status": "ok"}, as_json=bool(parsed.json))
 
     if action == "build-court-ready-binder-index-default":
         if parsed.config_path:
-            payload = _load_legal_data_exports(quiet=quiet_imports)["build_court_ready_binder_index_from_config"](parsed.config_path)
+            payload = _load_legal_data_exports(quiet=quiet_imports)[
+                "build_court_ready_binder_index_from_config"
+            ](parsed.config_path)
             return _emit({"action": action, **payload}, as_json=bool(parsed.json))
-        output_path = _load_legal_data_exports(quiet=quiet_imports)["build_default_court_ready_binder_index"]()
+        output_path = _load_legal_data_exports(quiet=quiet_imports)[
+            "build_default_court_ready_binder_index"
+        ]()
         return _emit({"action": action, "output_path": str(output_path)}, as_json=bool(parsed.json))
 
     if action == "build-official-form-drafts-default":
         if parsed.config_path:
-            payload = _load_legal_data_exports(quiet=quiet_imports)["build_official_form_drafts_from_config"](parsed.config_path)
+            payload = _load_legal_data_exports(quiet=quiet_imports)[
+                "build_official_form_drafts_from_config"
+            ](parsed.config_path)
             return _emit({"action": action, **payload}, as_json=bool(parsed.json))
-        output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_official_form_drafts"]()
-        return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
+        output_paths = _load_legal_data_exports(quiet=quiet_imports)[
+            "build_default_official_form_drafts"
+        ]()
+        return _emit(
+            {"action": action, "output_paths": [str(path) for path in list(output_paths or [])]},
+            as_json=bool(parsed.json),
+        )
 
     if action == "build-filing-specific-binders-default":
         if parsed.config_path:
-            payload = _load_legal_data_exports(quiet=quiet_imports)["build_filing_specific_binders_from_config"](parsed.config_path)
+            payload = _load_legal_data_exports(quiet=quiet_imports)[
+                "build_filing_specific_binders_from_config"
+            ](parsed.config_path)
             return _emit({"action": action, **payload}, as_json=bool(parsed.json))
-        output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_filing_specific_binders"]()
-        return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
+        output_paths = _load_legal_data_exports(quiet=quiet_imports)[
+            "build_default_filing_specific_binders"
+        ]()
+        return _emit(
+            {"action": action, "output_paths": [str(path) for path in list(output_paths or [])]},
+            as_json=bool(parsed.json),
+        )
 
     if action == "render-exhibit-tab":
-        path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_tab_from_markdown"](parsed.input_path, parsed.output_path)
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_tab_from_markdown"](
+            parsed.input_path, parsed.output_path
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-exhibit-cover":
-        path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_cover_from_markdown"](parsed.input_path, parsed.output_path)
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_cover_from_markdown"](
+            parsed.input_path, parsed.output_path
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-binder-title":
-        path = _load_legal_data_exports(quiet=quiet_imports)["render_binder_title_pdf"](parsed.output_path, lean_mode=bool(parsed.lean_mode))
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_binder_title_pdf"](
+            parsed.output_path, lean_mode=bool(parsed.lean_mode)
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-family-divider":
         labels = [item.strip() for item in str(parsed.labels or "").split(",") if item.strip()]
-        path = _load_legal_data_exports(quiet=quiet_imports)["render_family_divider_pdf"](parsed.output_path, str(parsed.family or ""), labels)
-        return _emit({"action": action, "output_path": str(path), "labels": labels}, as_json=bool(parsed.json))
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_family_divider_pdf"](
+            parsed.output_path, str(parsed.family or ""), labels
+        )
+        return _emit(
+            {"action": action, "output_path": str(path), "labels": labels},
+            as_json=bool(parsed.json),
+        )
 
     if action == "convert-source":
         source = str(parsed.source or parsed.input_path or "")
         if not source or not parsed.output_path or not parsed.label or not parsed.family:
-            parser.error("--source or --input-path, --output-path, --label, and --family are required.")
-        path = _load_legal_data_exports(quiet=quiet_imports)["source_to_pdf"](source, output_path=parsed.output_path, label=parsed.label, family=parsed.family, lean_mode=bool(parsed.lean_mode))
+            parser.error(
+                "--source or --input-path, --output-path, --label, and --family are required."
+            )
+        path = _load_legal_data_exports(quiet=quiet_imports)["source_to_pdf"](
+            source,
+            output_path=parsed.output_path,
+            label=parsed.label,
+            family=parsed.family,
+            lean_mode=bool(parsed.lean_mode),
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "convert-markdown":
         if not parsed.input_path or not parsed.output_path:
             parser.error("--input-path and --output-path are required.")
-        path = _load_legal_data_exports(quiet=quiet_imports)["convert_markdown_to_binder_pdf"](parsed.input_path, parsed.output_path, generated_dir=Path(parsed.output_path).parent)
+        path = _load_legal_data_exports(quiet=quiet_imports)["convert_markdown_to_binder_pdf"](
+            parsed.input_path, parsed.output_path, generated_dir=Path(parsed.output_path).parent
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "merge-pdfs":
         if not parsed.input_paths or not parsed.output_path:
             parser.error("--input-paths and --output-path are required.")
-        path = _load_legal_data_exports(quiet=quiet_imports)["merge_pdfs"](parsed.output_path, parsed.input_paths)
+        path = _load_legal_data_exports(quiet=quiet_imports)["merge_pdfs"](
+            parsed.output_path, parsed.input_paths
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "count-pages":
         if not parsed.input_path:
             parser.error("--input-path is required.")
-        return _emit({"action": action, "input_path": str(parsed.input_path), "page_count": _load_legal_data_exports(quiet=quiet_imports)["pdf_page_count"](parsed.input_path)}, as_json=bool(parsed.json))
+        return _emit(
+            {
+                "action": action,
+                "input_path": str(parsed.input_path),
+                "page_count": _load_legal_data_exports(quiet=quiet_imports)["pdf_page_count"](
+                    parsed.input_path
+                ),
+            },
+            as_json=bool(parsed.json),
+        )
 
     if action == "build-exhibit-binder":
         if not parsed.front_pdf or not parsed.output_path or not parsed.packet_pdfs:
             parser.error("--front-pdf, --packet-pdfs, and --output-path are required.")
-        path = _load_legal_data_exports(quiet=quiet_imports)["build_exhibit_binder"](front_pdf=parsed.front_pdf, table_pdf=(parsed.table_pdf or None), packet_pdfs=parsed.packet_pdfs, output_pdf=parsed.output_path)
+        path = _load_legal_data_exports(quiet=quiet_imports)["build_exhibit_binder"](
+            front_pdf=parsed.front_pdf,
+            table_pdf=(parsed.table_pdf or None),
+            packet_pdfs=parsed.packet_pdfs,
+            output_pdf=parsed.output_path,
+        )
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     parser.error(f"Unsupported action: {action}")

@@ -6,6 +6,7 @@ Municipal Code Scraper Fallback Methods (thin wrapper).
 Business logic lives in
 ``ipfs_datasets_py.processors.legal_scrapers.municipal_scraper_engine``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional

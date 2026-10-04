@@ -22,6 +22,7 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cosine(a, b):
     dot = sum(x * y for x, y in zip(a, b))
     na = math.sqrt(sum(x * x for x in a))
@@ -296,6 +297,7 @@ def test_ergoai_install_attempts_platform_build_dependencies(monkeypatch):
 class TestFLogicFrame:
     def setup_method(self):
         from ipfs_datasets_py.logic.flogic.flogic_types import FLogicFrame
+
         self.FLogicFrame = FLogicFrame
 
     def test_to_ergo_string_no_methods(self):
@@ -336,6 +338,7 @@ class TestFLogicFrame:
 class TestFLogicClass:
     def setup_method(self):
         from ipfs_datasets_py.logic.flogic.flogic_types import FLogicClass
+
         self.FLogicClass = FLogicClass
 
     def test_to_ergo_string_subclass(self):
@@ -365,6 +368,7 @@ class TestFLogicOntology:
             FLogicFrame,
             FLogicOntology,
         )
+
         self.FLogicClass = FLogicClass
         self.FLogicFrame = FLogicFrame
         self.FLogicOntology = FLogicOntology
@@ -377,9 +381,7 @@ class TestFLogicOntology:
         onto = self.FLogicOntology("animals")
         onto.classes.append(self.FLogicClass("Animal"))
         onto.classes.append(self.FLogicClass("Dog", superclasses=["Animal"]))
-        onto.frames.append(
-            self.FLogicFrame("rex", scalar_methods={"name": '"Rex"'}, isa="Dog")
-        )
+        onto.frames.append(self.FLogicFrame("rex", scalar_methods={"name": '"Rex"'}, isa="Dog"))
         onto.rules.append("?X[barks -> true] :- ?X : Dog.")
         prog = onto.to_ergo_program()
         assert "Dog :: Animal." in prog
@@ -398,6 +400,7 @@ class TestFLogicQuery:
             FLogicQuery,
             FLogicStatus,
         )
+
         q = FLogicQuery(goal="?X : Dog")
         assert q.status == FLogicStatus.UNKNOWN
         assert q.bindings == []
@@ -418,6 +421,7 @@ class TestErgoAIWrapperSimulation:
             FLogicOntology,
             FLogicStatus,
         )
+
         self.ErgoAIWrapper = ErgoAIWrapper
         self.FLogicClass = FLogicClass
         self.FLogicFrame = FLogicFrame
@@ -439,9 +443,7 @@ class TestErgoAIWrapperSimulation:
         ergo = self._make_wrapper()
         ergo.add_class(self.FLogicClass("Animal"))
         ergo.add_class(self.FLogicClass("Dog", superclasses=["Animal"]))
-        ergo.add_frame(
-            self.FLogicFrame("rex", scalar_methods={"name": '"Rex"'}, isa="Dog")
-        )
+        ergo.add_frame(self.FLogicFrame("rex", scalar_methods={"name": '"Rex"'}, isa="Dog"))
         stats = ergo.get_statistics()
         assert stats["classes"] == 2
         assert stats["frames"] == 1
@@ -660,9 +662,7 @@ def test_flogic_import_is_quiet():
         warnings.simplefilter("always")
         import ipfs_datasets_py.logic.flogic  # noqa: F401
 
-    ipfs_warns = [
-        w for w in rec if "ipfs_datasets_py" in (getattr(w, "filename", "") or "")
-    ]
+    ipfs_warns = [w for w in rec if "ipfs_datasets_py" in (getattr(w, "filename", "") or "")]
     assert ipfs_warns == [], [str(w.message) for w in ipfs_warns]
 
 

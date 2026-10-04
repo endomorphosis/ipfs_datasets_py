@@ -53,8 +53,10 @@ if TYPE_CHECKING:
 # Depth enum
 # ---------------------------------------------------------------------------
 
+
 class ExplanationDepth(str, enum.Enum):
     """Controls how much detail is included in explanations."""
+
     SURFACE = "surface"
     STANDARD = "standard"
     DEEP = "deep"
@@ -63,6 +65,7 @@ class ExplanationDepth(str, enum.Enum):
 # ---------------------------------------------------------------------------
 # Explanation dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EntityExplanation:
@@ -82,6 +85,7 @@ class EntityExplanation:
         cluster_hint: Informal cluster label if detectable, else "".
         narrative: One-sentence human-readable summary.
     """
+
     entity_id: str
     entity_type: str
     entity_name: str
@@ -129,6 +133,7 @@ class RelationshipExplanation:
         symmetry_note: Non-empty string when the inverse relationship exists.
         narrative: One-sentence human-readable summary.
     """
+
     relationship_id: str
     relationship_type: str
     source_name: str
@@ -171,6 +176,7 @@ class PathExplanation:
         narrative: Multi-line explanation of the path.
         reachable: False when no path was found within max_hops.
     """
+
     start_id: str
     end_id: str
     path_nodes: List[str] = field(default_factory=list)
@@ -199,6 +205,7 @@ class PathExplanation:
 # ---------------------------------------------------------------------------
 # Main explainer
 # ---------------------------------------------------------------------------
+
 
 class QueryExplainer:
     """Produces human-readable explanations for KG entities, relationships,
@@ -252,12 +259,8 @@ class QueryExplainer:
             )
 
         # Collect incident relationships
-        outgoing = [
-            r for r in self._kg.relationships.values() if r.source_id == entity_id
-        ]
-        incoming = [
-            r for r in self._kg.relationships.values() if r.target_id == entity_id
-        ]
+        outgoing = [r for r in self._kg.relationships.values() if r.source_id == entity_id]
+        incoming = [r for r in self._kg.relationships.values() if r.target_id == entity_id]
 
         top_out = [
             (r.relationship_type, self._name(r.target_id))
@@ -351,23 +354,21 @@ class QueryExplainer:
             )
             if reverse_exists:
                 symmetry_note = (
-                    f"The inverse '{tgt_name} -[{rel.relationship_type}]→ {src_name}'"
-                    " also exists."
+                    f"The inverse '{tgt_name} -[{rel.relationship_type}]→ {src_name}' also exists."
                 )
 
         # Context: other paths connecting the same pair
         context_chains: List[str] = []
         if depth == ExplanationDepth.DEEP:
             other_rels = [
-                r for r in self._kg.relationships.values()
+                r
+                for r in self._kg.relationships.values()
                 if r.source_id == rel.source_id
                 and r.target_id == rel.target_id
                 and r.relationship_id != relationship_id
             ]
             for other in other_rels[:3]:
-                context_chains.append(
-                    f"{src_name} -[{other.relationship_type}]→ {tgt_name}"
-                )
+                context_chains.append(f"{src_name} -[{other.relationship_type}]→ {tgt_name}")
 
         narrative = (
             f"{src_name} ({src_type}) -[{rel.relationship_type}]→ "
@@ -429,9 +430,7 @@ class QueryExplainer:
         # Build outgoing adjacency index: source_id → [(rel_type, confidence, target_id)]
         adj: Dict[str, List[Tuple[str, float, str]]] = {}
         for r in self._kg.relationships.values():
-            adj.setdefault(r.source_id, []).append(
-                (r.relationship_type, r.confidence, r.target_id)
-            )
+            adj.setdefault(r.source_id, []).append((r.relationship_type, r.confidence, r.target_id))
 
         while queue:
             nodes, rels, conf = queue.popleft()

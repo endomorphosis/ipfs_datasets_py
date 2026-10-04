@@ -8,7 +8,7 @@ This test suite validates the SecurityMonitor component against several criteria
    - Tests verify validation of file formats against allowed list
    - Tests ensure proper file size limit enforcement
    - Tests validate content sanitization for scripts, active content, and personal data
-   
+
 2. Error Handling Effectiveness
    - Tests verify graceful handling of security violations
    - Tests ensure proper reporting of security issues
@@ -19,6 +19,7 @@ This test suite validates the SecurityMonitor component against several criteria
      preserving the essential information needed for LLM training
    - Tests verify text content is properly sanitized without removing essential information
 """
+
 import copy
 import os
 import unittest
@@ -35,7 +36,7 @@ from configs import configs
 
 from monitors._constants import Constants
 
-resources = { # NOTE: Since these are constants, we can directly use them without mocking.
+resources = {  # NOTE: Since these are constants, we can directly use them without mocking.
     "dangerous_patterns": Constants.SecurityMonitor.DANGEROUS_PATTERNS_REGEX,
     "executable_extensions": Constants.SecurityMonitor.EXECUTABLE_EXTENSIONS,
     "file_size_limits_in_bytes": Constants.SecurityMonitor.FILE_SIZE_LIMITS_IN_BYTES,
@@ -47,6 +48,7 @@ resources = { # NOTE: Since these are constants, we can directly use them withou
     "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS,
 }
 
+
 class TestSecurityManager(unittest.TestCase):
     """Test the SecurityMonitor class."""
 
@@ -54,25 +56,25 @@ class TestSecurityManager(unittest.TestCase):
         """Set up test fixtures."""
         # Create a temp directory for test files
         self.temp_dir = tempfile.mkdtemp()
-        
+
         # Create test files
         self.test_file_path = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.test_file_path, 'w') as f:
+        with open(self.test_file_path, "w") as f:
             f.write("Test content")
-        
+
         self.large_file_path = os.path.join(self.temp_dir, "large_file.txt")
-        with open(self.large_file_path, 'w') as f:
+        with open(self.large_file_path, "w") as f:
             f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
-        
+
         self.executable_file_path = os.path.join(self.temp_dir, "test_script.sh")
-        with open(self.executable_file_path, 'w') as f:
+        with open(self.executable_file_path, "w") as f:
             f.write("#!/bin/sh\necho 'Hello, world!'")
 
         # Make it executable
         os.chmod(self.executable_file_path, 0o755)
 
         # Check if the file is executable
-        if os.name == 'nt':
+        if os.name == "nt":
             pass
         else:
             # On Unix-like systems, we can check if the file is executable
@@ -98,7 +100,10 @@ class TestSecurityManager(unittest.TestCase):
         self._mock_security_result.is_safe.return_value = True
         self._mock_security_result.issues.return_value = []
         self._mock_security_result.risk_level.return_value = "low"
-        self._mock_security_result.metadata.return_value = {"file_path": self.test_file_path, "format": "plain"}
+        self._mock_security_result.metadata.return_value = {
+            "file_path": self.test_file_path,
+            "format": "plain",
+        }
 
         self._mock_resources = {
             **copy.deepcopy(resources),
@@ -112,7 +117,9 @@ class TestSecurityManager(unittest.TestCase):
         }
 
         # Create a security manager
-        self.security_monitor = SecurityMonitor(resources=self._mock_resources, configs=self.mock_configs)
+        self.security_monitor = SecurityMonitor(
+            resources=self._mock_resources, configs=self.mock_configs
+        )
 
     def tearDown(self):
         """Clean up test fixtures."""
@@ -138,46 +145,45 @@ class TestSecurityManager(unittest.TestCase):
         self.assertEqual(len(result.issues), 0)
         self.assertEqual(result.risk_level, "low")
         self.assertEqual(len(result.metadata), 0)
-        
+
         # Create with all arguments
         result = SecurityResult(
             is_safe=False,
             issues=["Issue 1", "Issue 2"],
             risk_level="high",
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 2)
         self.assertEqual(result.risk_level, "high")
         self.assertEqual(result.metadata["key"], "value")
-    
+
     def test_security_result_to_dict(self):
         """Test SecurityResult.to_dict()."""
         result = SecurityResult(
             is_safe=False,
             issues=["Issue 1", "Issue 2"],
             risk_level="high",
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
         result_dict = result.to_dict()
-        
+
         self.assertFalse(result_dict["is_safe"])
         self.assertEqual(len(result_dict["issues"]), 2)
         self.assertEqual(result_dict["risk_level"], "high")
         self.assertEqual(result_dict["metadata"]["key"], "value")
-    
 
     def test_validate_security_normal_file(self):
         """Test validating a normal file."""
         result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
-        debug_logger.debug(f"Security result: {result.to_dict()}") 
-        
+        debug_logger.debug(f"Security result: {result.to_dict()}")
+
         self.assertTrue(result.is_safe)
         self.assertEqual(len(result.issues), 0)
         self.assertEqual(result.risk_level, "low")
         self.assertEqual(result.metadata["file_path"], self.test_file_path)
         self.assertEqual(result.metadata["format"], "plain")
-    
+
     def test_validate_security_large_file(self):
         """Test validating a file that exceeds size limits."""
         result = self.security_monitor.validate_security(self.large_file_path, format_name="plain")
@@ -201,20 +207,22 @@ class TestSecurityManager(unittest.TestCase):
         """Test validating a file that doesn't exist."""
         nonexistent_path = os.path.join(self.temp_dir, "nonexistent.txt")
         result = self.security_monitor.validate_security(nonexistent_path)
-        
+
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
         self.assertIn("does not exist", result.issues[0])
         self.assertEqual(result.risk_level, "high")
-    
+
     def test_validate_security_disallowed_format(self):
         """Test validating a file with a disallowed format."""
         # Set allowed formats
         try:
             self.security_monitor.set_allowed_formats(["html", "pdf"])
-            
-            result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
-            
+
+            result = self.security_monitor.validate_security(
+                self.test_file_path, format_name="plain"
+            )
+
             self.assertFalse(result.is_safe)
             self.assertEqual(len(result.issues), 1)
             self.assertIn("not allowed", result.issues[0])
@@ -226,7 +234,7 @@ class TestSecurityManager(unittest.TestCase):
         """Test checking if a file is safe."""
         # Normal file should be safe
         self.assertTrue(self.security_monitor.is_file_safe(self.test_file_path))
-        
+
         # Executable file should not be safe
         self.assertFalse(self.security_monitor.is_file_safe(self.executable_file_path))
 
@@ -234,11 +242,13 @@ class TestSecurityManager(unittest.TestCase):
         """Test setting security rules."""
         try:
             # Set new rules
-            self.security_monitor.set_security_rules({
-                "reject_executable": False,
-                "remove_scripts": False,
-                "unknown_rule": True  # Should be ignored
-            })
+            self.security_monitor.set_security_rules(
+                {
+                    "reject_executable": False,
+                    "remove_scripts": False,
+                    "unknown_rule": True,  # Should be ignored
+                }
+            )
 
             # Check if rules were updated
             self.assertFalse(self.security_monitor._security_rules["reject_executable"])
@@ -252,27 +262,29 @@ class TestSecurityManager(unittest.TestCase):
         """Test setting allowed formats."""
         # Initially all formats are allowed
         self.assertEqual(len(self.security_monitor.allowed_formats), 0)
-        
+
         # Set allowed formats
         formats = ["html", "pdf", "plain"]
         self.security_monitor.set_allowed_formats(formats)
-        
+
         # Check if formats were updated
         self.assertEqual(len(self.security_monitor.allowed_formats), 3)
         self.assertIn("html", self.security_monitor.allowed_formats)
         self.assertIn("pdf", self.security_monitor.allowed_formats)
         self.assertIn("plain", self.security_monitor.allowed_formats)
-        
+
         # Reset for other tests
         self.security_monitor.set_allowed_formats([])
-    
+
     def test_set_file_size_limits(self):
         """Test setting file size limits."""
         # Set new limits
-        self.security_monitor.set_file_size_limits({
-            "text": 20 * 1024 * 1024,  # 20 MB
-            "new_category": 30 * 1024 * 1024  # 30 MB
-        })
+        self.security_monitor.set_file_size_limits(
+            {
+                "text": 20 * 1024 * 1024,  # 20 MB
+                "new_category": 30 * 1024 * 1024,  # 30 MB
+            }
+        )
 
         # Check if limits were updated
         self.assertEqual(self.security_monitor._file_size_limits["text"], 20 * 1024 * 1024)
@@ -285,15 +297,15 @@ class TestSecurityManager(unittest.TestCase):
         """Test checking if a file is executable."""
         # Test a non-executable file
         self.assertFalse(self.security_monitor._is_executable(self.test_file_path))
-        
+
         # Test an executable file
         self.assertTrue(self.security_monitor._is_executable(self.executable_file_path))
-        
+
         # Test a file with executable extension
         exe_file_path = os.path.join(self.temp_dir, "test.exe")
-        with open(exe_file_path, 'w') as f:
+        with open(exe_file_path, "w") as f:
             f.write("This is not a real executable")
-        
+
         self.assertTrue(self.security_monitor._is_executable(exe_file_path))
 
 

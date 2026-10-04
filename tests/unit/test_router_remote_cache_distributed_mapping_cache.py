@@ -34,7 +34,9 @@ def test_make_ipfs_remote_cache_uses_distributed_mapping_cache_local_only(monkey
 
     # First deps creates and writes remote cache (mapping stored via DistributedGitHubCache to disk).
     deps1 = RouterDeps(ipfs_backend=ipfs_backend)
-    remote1 = make_ipfs_remote_cache(deps=deps1, ipfs_backend=ipfs_backend, ttl_seconds=3600, broadcast=False)
+    remote1 = make_ipfs_remote_cache(
+        deps=deps1, ipfs_backend=ipfs_backend, ttl_seconds=3600, broadcast=False
+    )
     deps1.remote_cache = remote1
 
     provider1 = FakeProvider()

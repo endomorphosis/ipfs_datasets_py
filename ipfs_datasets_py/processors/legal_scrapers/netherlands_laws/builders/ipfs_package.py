@@ -33,8 +33,16 @@ DEFAULT_OUT_DIR = HF_DATA_DIR / IPFS_DATASET_NAME
 
 def coverage_note(run_metadata: dict[str, Any], record_counts: dict[str, int]) -> str:
     max_documents = run_metadata.get("max_documents")
-    parsed = run_metadata.get("output_records_count") or run_metadata.get("documents_parsed") or record_counts.get("laws", 0)
-    discovered = run_metadata.get("total_unique_laws_discovered") or run_metadata.get("unique_laws_discovered") or "unknown"
+    parsed = (
+        run_metadata.get("output_records_count")
+        or run_metadata.get("documents_parsed")
+        or record_counts.get("laws", 0)
+    )
+    discovered = (
+        run_metadata.get("total_unique_laws_discovered")
+        or run_metadata.get("unique_laws_discovered")
+        or "unknown"
+    )
     failed = run_metadata.get("documents_failed", "unknown")
     if max_documents:
         return (
@@ -149,7 +157,9 @@ def article_payload(row: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
-def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+def build_rows(
+    raw_dir: Path | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     raw_dir = raw_dir or DEFAULT_RAW_DIR
     raw_laws = read_jsonl(raw_dir / "netherlands_laws_index_latest.jsonl")
     raw_articles = read_jsonl(raw_dir / "netherlands_laws_articles_index_latest.jsonl")
@@ -393,7 +403,9 @@ def build_ipfs_cid_package(
     raw_dir = raw_dir or DEFAULT_RAW_DIR
     out_dir = out_dir or DEFAULT_OUT_DIR
     laws, articles, cid_index = build_rows(raw_dir)
-    run_metadata = json.loads((raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
+    run_metadata = json.loads(
+        (raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8")
+    )
 
     for rel in [
         "data/laws",

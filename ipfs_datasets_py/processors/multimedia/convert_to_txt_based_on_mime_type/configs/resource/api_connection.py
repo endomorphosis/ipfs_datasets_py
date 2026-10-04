@@ -1,4 +1,3 @@
-
 from typing import Any, TypeVar
 
 
@@ -10,14 +9,14 @@ SupportedProviders = TypeVar("SupportedProviders")
 ModelType = TypeVar("ModelType")
 
 
-
 class ApiConnection(BaseModel):
     """
-    ApiConnection is a base class for making API requests to AI model providers. 
+    ApiConnection is a base class for making API requests to AI model providers.
     It provides methods for sending requests and handling responses.
     NOTE This is primarily to avoid having to deal with a trillion SDKs for different APIs.
     New SDK schemas types can loaded as needed as Pydantic models from JSON files.
     """
+
     client: Any = None
     model: Any = None
     provider: SupportedProviders = None
@@ -35,12 +34,12 @@ class ApiConnection(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
         self.data = {
-            'model': self.model,
-            'max_tokens': self.max_tokens,
+            "model": self.model,
+            "max_tokens": self.max_tokens,
         }
         self.header = {
-            'content-type': 'application/json',
-            'accept': 'application/json',
+            "content-type": "application/json",
+            "accept": "application/json",
         }
 
     @property
@@ -78,4 +77,3 @@ class ApiConnection(BaseModel):
                 response: aiohttp.ClientResponse
                 return await response.json()
             return session.request(*args, **kwargs)
-

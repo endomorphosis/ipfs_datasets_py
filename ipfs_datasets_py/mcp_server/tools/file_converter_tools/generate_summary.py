@@ -8,10 +8,7 @@ from ipfs_datasets_py.processors.file_converter.exports import generate_summary
 from typing import Optional
 
 
-async def generate_summary_tool(
-    input_path: str,
-    llm_model: Optional[str] = None
-) -> dict:
+async def generate_summary_tool(input_path: str, llm_model: Optional[str] = None) -> dict:
     """
     Generate a text summary from a file or URL.
 

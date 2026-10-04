@@ -71,7 +71,9 @@ def build_modal_parser_report(
         if not sample.modal_ir.formulas:
             parser_failures.append(sample.sample_id)
         for formula in sample.modal_ir.formulas:
-            family_counts[formula.operator.family] = family_counts.get(formula.operator.family, 0) + 1
+            family_counts[formula.operator.family] = (
+                family_counts.get(formula.operator.family, 0) + 1
+            )
         if sample.sample_id in expected:
             top1_total += 1
             if sample.selected_frame == expected[sample.sample_id]:

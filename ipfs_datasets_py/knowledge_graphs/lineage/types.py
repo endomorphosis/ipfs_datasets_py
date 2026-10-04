@@ -15,10 +15,10 @@ from dataclasses import dataclass, field, asdict
 class LineageNode:
     """
     Represents a node in the data lineage graph.
-    
+
     A node typically represents a data entity, transformation, or operation
     in the lineage tracking system.
-    
+
     Attributes:
         node_id: Unique identifier for the node
         node_type: Type of node (e.g., 'dataset', 'transformation', 'entity')
@@ -26,7 +26,7 @@ class LineageNode:
         record_type: Optional type of record
         metadata: Additional metadata about the node
         timestamp: Creation timestamp
-    
+
     Example:
         >>> node = LineageNode(
         ...     node_id="node_123",
@@ -34,6 +34,7 @@ class LineageNode:
         ...     metadata={"name": "user_data"}
         ... )
     """
+
     node_id: str
     node_type: str
     entity_id: Optional[str] = None
@@ -50,10 +51,10 @@ class LineageNode:
 class LineageLink:
     """
     Represents a link/edge in the data lineage graph.
-    
+
     A link connects two nodes and represents a relationship between them,
     such as data flow, transformation, or derivation.
-    
+
     Attributes:
         source_id: ID of the source node
         target_id: ID of the target node
@@ -62,7 +63,7 @@ class LineageLink:
         metadata: Additional metadata about the link
         timestamp: Creation timestamp
         direction: Direction of the link ('forward', 'backward', 'bidirectional')
-    
+
     Example:
         >>> link = LineageLink(
         ...     source_id="node_123",
@@ -71,6 +72,7 @@ class LineageLink:
         ...     confidence=0.95
         ... )
     """
+
     source_id: str
     target_id: str
     relationship_type: str
@@ -88,10 +90,10 @@ class LineageLink:
 class LineageDomain:
     """
     Represents a logical domain in the data lineage graph.
-    
+
     Domains group related nodes and help organize lineage information
     across different systems, applications, or workflows.
-    
+
     Attributes:
         domain_id: Unique identifier for the domain
         name: Human-readable name of the domain
@@ -101,7 +103,7 @@ class LineageDomain:
         metadata_schema: Optional validation schema for metadata
         parent_domain_id: Optional parent domain for hierarchical organization
         timestamp: Creation timestamp
-    
+
     Example:
         >>> domain = LineageDomain(
         ...     domain_id="domain_ml",
@@ -109,6 +111,7 @@ class LineageDomain:
         ...     domain_type="workflow"
         ... )
     """
+
     domain_id: str
     name: str
     description: Optional[str] = None
@@ -127,10 +130,10 @@ class LineageDomain:
 class LineageBoundary:
     """
     Represents a boundary between domains in the lineage graph.
-    
+
     Boundaries mark transitions between different systems, organizations,
     or security contexts in the data flow.
-    
+
     Attributes:
         boundary_id: Unique identifier for the boundary
         source_domain_id: ID of the source domain
@@ -139,7 +142,7 @@ class LineageBoundary:
         attributes: Boundary-specific attributes
         constraints: List of constraints applied at this boundary
         timestamp: Creation timestamp
-    
+
     Example:
         >>> boundary = LineageBoundary(
         ...     boundary_id="boundary_123",
@@ -148,6 +151,7 @@ class LineageBoundary:
         ...     boundary_type="api_call"
         ... )
     """
+
     boundary_id: str
     source_domain_id: str
     target_domain_id: str
@@ -165,10 +169,10 @@ class LineageBoundary:
 class LineageTransformationDetail:
     """
     Detailed representation of a transformation operation in lineage tracking.
-    
+
     Provides fine-grained information about data transformations, including
     input/output mappings, parameters, and impact levels.
-    
+
     Attributes:
         detail_id: Unique identifier for this transformation detail
         transformation_id: ID of the parent transformation
@@ -180,7 +184,7 @@ class LineageTransformationDetail:
         confidence: Confidence score for this transformation detail
         metadata: Additional metadata
         timestamp: Creation timestamp
-    
+
     Example:
         >>> detail = LineageTransformationDetail(
         ...     detail_id="detail_123",
@@ -189,6 +193,7 @@ class LineageTransformationDetail:
         ...     parameters={"condition": "age > 18"}
         ... )
     """
+
     detail_id: str
     transformation_id: str  # ID of the parent transformation
     operation_type: str  # e.g., 'filter', 'join', 'aggregate', 'map', etc.
@@ -209,9 +214,9 @@ class LineageTransformationDetail:
 class LineageVersion:
     """
     Represents a version in version-aware lineage tracking.
-    
+
     Tracks different versions of data entities and their evolution over time.
-    
+
     Attributes:
         version_id: Unique identifier for this version
         entity_id: ID of the entity this version belongs to
@@ -220,7 +225,7 @@ class LineageVersion:
         changes: Description of changes in this version
         metadata: Additional version metadata
         timestamp: Creation timestamp
-    
+
     Example:
         >>> version = LineageVersion(
         ...     version_id="v1",
@@ -229,6 +234,7 @@ class LineageVersion:
         ...     changes="Initial version"
         ... )
     """
+
     version_id: str
     entity_id: str
     version_number: str
@@ -246,9 +252,9 @@ class LineageVersion:
 class LineageSubgraph:
     """
     Represents a subgraph extracted from the lineage graph.
-    
+
     Useful for focused analysis on specific parts of the lineage.
-    
+
     Attributes:
         subgraph_id: Unique identifier for this subgraph
         name: Human-readable name of the subgraph
@@ -257,7 +263,7 @@ class LineageSubgraph:
         domain_filter: Optional domain filter applied
         metadata: Additional subgraph metadata
         timestamp: Creation timestamp
-    
+
     Example:
         >>> subgraph = LineageSubgraph(
         ...     subgraph_id="sub_123",
@@ -265,6 +271,7 @@ class LineageSubgraph:
         ...     node_ids=["node_1", "node_2", "node_3"]
         ... )
     """
+
     subgraph_id: str
     name: str
     node_ids: List[str] = field(default_factory=list)

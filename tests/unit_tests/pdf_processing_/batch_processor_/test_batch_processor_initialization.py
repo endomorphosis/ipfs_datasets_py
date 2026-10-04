@@ -11,7 +11,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -24,8 +24,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -46,7 +50,7 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
@@ -54,12 +58,20 @@ from datetime import datetime
 import multiprocessing
 from unittest.mock import Mock, patch
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus, BatchProcessor
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
+    BatchProcessor,
 )
 from ipfs_datasets_py.ipld.storage import IPLDStorage
 from .conftest import (
-    DEFAULT_MAX_WORKERS, DEFAULT_MAX_MEMORY_MB, MIN_MEMORY_MB, MIN_WORKERS,
-    MAX_WORKERS_CUSTOM, MAX_WORKERS_HIGH, MAX_MEMORY_CUSTOM
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_MAX_MEMORY_MB,
+    MIN_MEMORY_MB,
+    MIN_WORKERS,
+    MAX_WORKERS_CUSTOM,
+    MAX_WORKERS_HIGH,
+    MAX_MEMORY_CUSTOM,
 )
 
 
@@ -83,11 +95,8 @@ assert BatchProcessor.get_processing_statistics
 assert BatchProcessor.export_batch_results
 
 import logging
+
 logger = logging.getLogger(__name__)
-
-
-
-
 
 
 class TestBatchProcessorInitialization:
@@ -97,10 +106,10 @@ class TestBatchProcessorInitialization:
     def mock_dependencies(self):
         """Create mock dependencies for BatchProcessor."""
         return {
-            'storage': Mock(),
-            'pdf_processor': Mock(),
-            'llm_optimizer': Mock(),
-            'graphrag_integrator': Mock()
+            "storage": Mock(),
+            "pdf_processor": Mock(),
+            "llm_optimizer": Mock(),
+            "graphrag_integrator": Mock(),
         }
 
     @pytest.fixture
@@ -131,7 +140,7 @@ class TestBatchProcessorInitialization:
         WHEN BatchProcessor is initialized with defaults
         THEN it should use the provided storage instance
         """
-        assert default_processor.storage == mock_dependencies['storage']
+        assert default_processor.storage == mock_dependencies["storage"]
 
     def test_init_default_enable_monitoring(self, default_processor):
         """
@@ -160,10 +169,7 @@ class TestBatchProcessorInitialization:
     @pytest.fixture
     def custom_workers_processor(self, mock_dependencies):
         """Create BatchProcessor with custom max_workers."""
-        return BatchProcessor(
-            max_workers=MAX_WORKERS_CUSTOM,
-            **mock_dependencies
-        )
+        return BatchProcessor(max_workers=MAX_WORKERS_CUSTOM, **mock_dependencies)
 
     def test_init_custom_max_workers(self, custom_workers_processor):
         """
@@ -218,7 +224,9 @@ class TestBatchProcessorInitialization:
     def monitoring_enabled_processor(self, mock_batch_processor_dependencies):
         """Create BatchProcessor with monitoring enabled."""
         with mock_batch_processor_dependencies():
-            with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem') as mock_monitoring:
+            with patch(
+                "ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem"
+            ) as mock_monitoring:
                 mock_monitor = Mock()
                 mock_monitoring.return_value = mock_monitor
                 processor = BatchProcessor(enable_monitoring=True)
@@ -250,7 +258,7 @@ class TestBatchProcessorInitialization:
         THEN it should create and configure audit logging system
         """
         with mock_batch_processor_dependencies():
-            with patch('ipfs_datasets_py.pdf_processing.batch_processor.AuditLogger') as mock_audit:
+            with patch("ipfs_datasets_py.pdf_processing.batch_processor.AuditLogger") as mock_audit:
                 mock_auditor = Mock()
                 mock_audit.return_value = mock_auditor
                 processor = BatchProcessor(enable_audit=True)
@@ -356,8 +364,10 @@ class TestBatchProcessorInitialization:
         THEN it should raise ImportError with descriptive message
         """
         with mock_batch_processor_dependencies():
-            with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem', 
-                      side_effect=ImportError("Missing monitoring deps")):
+            with patch(
+                "ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem",
+                side_effect=ImportError("Missing monitoring deps"),
+            ):
                 with pytest.raises(ImportError) as exc_info:
                     BatchProcessor(enable_monitoring=True)
                 assert "monitoring" in str(exc_info.value).lower()
@@ -368,8 +378,10 @@ class TestBatchProcessorInitialization:
         WHEN BatchProcessor is initialized
         THEN it should raise RuntimeError with storage-specific error details
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage', 
-                  side_effect=RuntimeError("Storage init failed")):
+        with patch(
+            "ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage",
+            side_effect=RuntimeError("Storage init failed"),
+        ):
             with pytest.raises(RuntimeError) as exc_info:
                 BatchProcessor()
             error_msg = str(exc_info.value).lower()
@@ -379,20 +391,22 @@ class TestBatchProcessorInitialization:
     def fully_configured_processor(self, mock_batch_processor_dependencies):
         """Create BatchProcessor with full configuration."""
         custom_storage = Mock(spec=IPLDStorage)
-        
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem') as mock_monitoring:
-            with patch('ipfs_datasets_py.pdf_processing.batch_processor.AuditLogger') as mock_audit:
+
+        with patch(
+            "ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem"
+        ) as mock_monitoring:
+            with patch("ipfs_datasets_py.pdf_processing.batch_processor.AuditLogger") as mock_audit:
                 mock_monitor = Mock()
                 mock_auditor = Mock()
                 mock_monitoring.return_value = mock_monitor
                 mock_audit.return_value = mock_auditor
-                
+
                 processor = BatchProcessor(
                     max_workers=MAX_WORKERS_HIGH,
                     max_memory_mb=MAX_MEMORY_CUSTOM,
                     storage=custom_storage,
                     enable_monitoring=True,
-                    enable_audit=True
+                    enable_audit=True,
                 )
                 return processor, custom_storage, mock_monitor, mock_auditor
 
@@ -467,8 +481,6 @@ class TestBatchProcessorInitialization:
         """
         processor, _, _, _ = fully_configured_processor
         assert processor.worker_pool is None
-
-
 
 
 if __name__ == "__main__":

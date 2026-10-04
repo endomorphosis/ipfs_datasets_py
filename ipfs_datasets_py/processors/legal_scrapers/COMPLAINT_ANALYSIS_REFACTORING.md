@@ -128,8 +128,8 @@ Keep files where they are, but improve documentation and imports:
 ```python
 # In query_processor.py, make dependencies explicit
 from ..complaint_analysis import (
-    get_keywords,          # Shared keyword registry
-    LegalPatternExtractor, # Shared pattern extractor
+    get_keywords,  # Shared keyword registry
+    LegalPatternExtractor,  # Shared pattern extractor
 )
 ```
 
@@ -189,8 +189,8 @@ legal_scrapers/
    ```python
    # Shared components from complaint_analysis
    from ..complaint_analysis import (
-       get_keywords,          # Domain-specific keywords
-       LegalPatternExtractor, # Extract legal terms
+       get_keywords,  # Domain-specific keywords
+       LegalPatternExtractor,  # Extract legal terms
    )
    ```
 
@@ -215,6 +215,7 @@ Use complaint_types registry to improve query categorization:
 ```python
 # In query_processor.py
 from ..common.complaint_types import get_registered_types
+
 
 def _categorize_legal_domain(self, query: str) -> List[str]:
     """Enhanced categorization using complaint_types registry."""

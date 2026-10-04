@@ -6,6 +6,7 @@ rather than the test-package directory.  This conftest lives in a directory
 without __init__.py, so pytest discovers it BEFORE importing any sub-package
 test module.
 """
+
 from __future__ import annotations
 
 import sys

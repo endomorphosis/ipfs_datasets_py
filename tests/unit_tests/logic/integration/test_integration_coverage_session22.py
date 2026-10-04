@@ -17,6 +17,7 @@ Focused on:
   - ipld_logic_storage.py       IPLD paths (105-112, 152, 185, 238, 280, 300-307, 326)
   - integration/__init__.py     enable_symbolicai (80-82)
 """
+
 import asyncio
 import sys
 import tempfile
@@ -28,6 +29,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
 
 def _run(coro):
     """Run async coroutine synchronously in tests."""
@@ -42,13 +44,16 @@ def _run(coro):
 # 1. logic_translation_core — quantifiers + exceptions
 # ---------------------------------------------------------------------------
 
+
 class TestLogicTranslationCoreQuantifiers:
     """GIVEN translators WHEN formula has quantifiers THEN quantifiers appear in output."""
 
     def _make_formula_with_quantifiers(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         return DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
             proposition="act",
@@ -58,7 +63,10 @@ class TestLogicTranslationCoreQuantifiers:
 
     def test_lean_translator_with_quantifiers_covers_lines_191_194(self):
         """GIVEN LeanTranslator WHEN formula has quantifiers THEN lean formula includes forall."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         f = self._make_formula_with_quantifiers()
         t = LeanTranslator()
         result = t.translate_deontic_formula(f)
@@ -67,7 +75,10 @@ class TestLogicTranslationCoreQuantifiers:
 
     def test_coq_translator_with_quantifiers_covers_lines_363_366(self):
         """GIVEN CoqTranslator WHEN formula has quantifiers THEN coq formula includes forall."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import CoqTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            CoqTranslator,
+        )
+
         f = self._make_formula_with_quantifiers()
         t = CoqTranslator()
         result = t.translate_deontic_formula(f)
@@ -76,7 +87,10 @@ class TestLogicTranslationCoreQuantifiers:
 
     def test_smt_translator_with_quantifiers(self):
         """GIVEN SMTTranslator WHEN formula has quantifiers THEN translation succeeds."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import SMTTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            SMTTranslator,
+        )
+
         f = self._make_formula_with_quantifiers()
         t = SMTTranslator()
         result = t.translate_deontic_formula(f)
@@ -88,8 +102,10 @@ class TestLogicTranslationCoreExceptions:
 
     def _make_formula(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         return DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
             proposition="act",
@@ -99,7 +115,10 @@ class TestLogicTranslationCoreExceptions:
 
     def test_lean_translate_exception_covers_lines_215_217(self):
         """GIVEN LeanTranslator._normalize_identifier raises WHEN translate THEN returns failure."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         f = self._make_formula()
         t = LeanTranslator()
         with patch.object(t, "_normalize_identifier", side_effect=RuntimeError("norm err")):
@@ -109,7 +128,10 @@ class TestLogicTranslationCoreExceptions:
     def test_lean_translate_rule_set_exception_covers_lines_241_242(self):
         """GIVEN LeanTranslator.generate_theory_file raises WHEN translate_rule_set THEN failure."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         f = self._make_formula()
         rs = DeonticRuleSet(name="test", formulas=[f])
         t = LeanTranslator()
@@ -120,7 +142,10 @@ class TestLogicTranslationCoreExceptions:
     def test_coq_translate_rule_set_exception_covers_lines_410_411(self):
         """GIVEN CoqTranslator.generate_theory_file raises WHEN translate_rule_set THEN failure."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import CoqTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            CoqTranslator,
+        )
+
         f = self._make_formula()
         rs = DeonticRuleSet(name="test", formulas=[f])
         t = CoqTranslator()
@@ -131,7 +156,10 @@ class TestLogicTranslationCoreExceptions:
     def test_smt_translate_rule_set_exception_covers_lines_576_577(self):
         """GIVEN SMTTranslator.generate_theory_file raises WHEN translate_rule_set THEN failure."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import SMTTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            SMTTranslator,
+        )
+
         f = self._make_formula()
         rs = DeonticRuleSet(name="test", formulas=[f])
         t = SMTTranslator()
@@ -142,9 +170,13 @@ class TestLogicTranslationCoreExceptions:
     def test_lean_validate_unbalanced_parens_covers_line_323(self):
         """GIVEN LeanTranslator WHEN translated has unbalanced parens THEN validation fails."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9)
         t = LeanTranslator()
         ok, errors = t.validate_translation(f, "(incomplete")
@@ -154,9 +186,13 @@ class TestLogicTranslationCoreExceptions:
     def test_lean_validate_invalid_chars_covers_line_327(self):
         """GIVEN LeanTranslator WHEN translated has invalid chars THEN validation fails."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9)
         t = LeanTranslator()
         ok, errors = t.validate_translation(f, "@invalid#chars$here")
@@ -165,13 +201,17 @@ class TestLogicTranslationCoreExceptions:
 
     def test_demonstrate_logic_translation_covers_line_713(self):
         """GIVEN demonstrate_logic_translation WHEN called THEN runs without error."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import demonstrate_logic_translation
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            demonstrate_logic_translation,
+        )
+
         demonstrate_logic_translation()
 
 
 # ---------------------------------------------------------------------------
 # 2. cec_bridge — z3 strategy + exception
 # ---------------------------------------------------------------------------
+
 
 class TestCECBridgeZ3Strategy:
     """GIVEN CECBridge WHEN z3 strategy selected THEN _prove_with_cec_z3 path is taken."""
@@ -248,15 +288,22 @@ class TestCECBridgeZ3Strategy:
 # 3. deontic_query_engine — PROHIBITIONS, temporal, context, conflicts
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticQueryEngineProhibitions:
     """GIVEN engine WHEN NL query contains 'forbidden' THEN PROHIBITIONS path taken."""
 
     def _make_engine(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, DeonticRuleSet, LegalAgent,
-            TemporalCondition, TemporalOperator,
+            DeonticFormula,
+            DeonticOperator,
+            DeonticRuleSet,
+            LegalAgent,
+            TemporalCondition,
+            TemporalOperator,
         )
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
 
         agent = LegalAgent(identifier="emp1", name="Employee", agent_type="person")
         tc = TemporalCondition(operator=TemporalOperator.ALWAYS, condition="always")
@@ -279,6 +326,7 @@ class TestDeonticQueryEngineProhibitions:
     def test_query_by_nl_prohibitions_covers_lines_434_435(self):
         """GIVEN 'forbidden' in query WHEN query_by_natural_language THEN PROHIBITIONS returned."""
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import QueryType
+
         engine, _, _ = self._make_engine()
         result = engine.query_by_natural_language("forbidden information prohibited banned")
         assert result.query_type == QueryType.PROHIBITIONS
@@ -286,10 +334,16 @@ class TestDeonticQueryEngineProhibitions:
     def test_agent_summary_temporal_constraints_covers_line_495(self):
         """GIVEN agent with temporal formulas WHEN get_agent_summary THEN temporal_constraints populated."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, DeonticRuleSet, LegalAgent,
-            TemporalCondition, TemporalOperator,
+            DeonticFormula,
+            DeonticOperator,
+            DeonticRuleSet,
+            LegalAgent,
+            TemporalCondition,
+            TemporalOperator,
         )
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
 
         agent = LegalAgent(identifier="emp1", name="Employee", agent_type="person")
         tc = TemporalCondition(operator=TemporalOperator.ALWAYS, condition="always")
@@ -311,6 +365,7 @@ class TestDeonticQueryEngineProhibitions:
     def test_search_by_keywords_with_operator_filter_covers_line_523(self):
         """GIVEN operator_filter WHEN search_by_keywords THEN uses operator index."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         engine, _, _ = self._make_engine()
         result = engine.search_by_keywords(["secrets"], operator_filter=DeonticOperator.PROHIBITION)
         assert result.total_matches >= 1
@@ -354,48 +409,76 @@ class TestDeonticQueryEngineProhibitions:
 # 4. temporal_deontic_api — date range + temporal scope
 # ---------------------------------------------------------------------------
 
+
 class TestTemporalDeonticAPIDateRange:
     """GIVEN temporal_deontic_api WHEN date parameters provided THEN date range parsed."""
 
     def test_query_theorems_with_start_and_end_date_covers_lines_267_278(self):
         """GIVEN start_date and end_date WHEN query_theorems_from_parameters THEN dates parsed."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
-        result = _run(query_theorems_from_parameters({
-            "start_date": "2024-01-01",
-            "end_date": "2024-12-31",
-        }))
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
+
+        result = _run(
+            query_theorems_from_parameters(
+                {
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-12-31",
+                }
+            )
+        )
         assert isinstance(result, dict)
 
     def test_query_theorems_with_invalid_start_date_covers_line_271(self):
         """GIVEN invalid start_date WHEN query_theorems_from_parameters THEN ValueError silently skipped."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
+
         result = _run(query_theorems_from_parameters({"start_date": "not-a-date"}))
         assert isinstance(result, dict)
 
     def test_query_theorems_with_invalid_end_date_covers_line_278(self):
         """GIVEN invalid end_date WHEN query_theorems_from_parameters THEN ValueError silently skipped."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
+
         result = _run(query_theorems_from_parameters({"end_date": "also-not-a-date"}))
         assert isinstance(result, dict)
 
     def test_add_theorem_with_date_range_covers_lines_178_179(self):
         """GIVEN theorem with dates WHEN add_theorem_from_parameters THEN temporal_scope set."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import add_theorem_from_parameters
-        result = _run(add_theorem_from_parameters({
-            "theorem": "All employees must comply with policy",
-            "source": "test_policy.pdf",
-            "start_date": "2024-01-01",
-            "end_date": "2024-12-31",
-        }))
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            add_theorem_from_parameters,
+        )
+
+        result = _run(
+            add_theorem_from_parameters(
+                {
+                    "theorem": "All employees must comply with policy",
+                    "source": "test_policy.pdf",
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-12-31",
+                }
+            )
+        )
         assert isinstance(result, dict)
 
     def test_bulk_process_caselaw_result_covers_lines_305_307(self):
         """GIVEN valid directories WHEN bulk_process_caselaw_from_parameters THEN result dict returned."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import bulk_process_caselaw_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            bulk_process_caselaw_from_parameters,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = _run(bulk_process_caselaw_from_parameters({
-                "directories": [tmpdir],
-            }))
+            result = _run(
+                bulk_process_caselaw_from_parameters(
+                    {
+                        "directories": [tmpdir],
+                    }
+                )
+            )
         assert isinstance(result, dict)
 
 
@@ -403,12 +486,14 @@ class TestTemporalDeonticAPIDateRange:
 # 5. tdfol_shadowprover_bridge — error paths
 # ---------------------------------------------------------------------------
 
+
 class TestTDFOLShadowProverBridgeErrorPaths:
     """GIVEN TDFOLShadowProverBridge WHEN error conditions THEN correct paths taken."""
 
     def test_init_exception_in_shadow_provers_covers_lines_82_84(self):
         """GIVEN shadow_prover.KProver raises WHEN __init__ THEN available=False."""
         import ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge as sp_mod
+
         original_sp = getattr(sp_mod, "shadow_prover", None)
 
         mock_sp = MagicMock()
@@ -416,7 +501,10 @@ class TestTDFOLShadowProverBridgeErrorPaths:
         sp_mod.shadow_prover = mock_sp
 
         try:
-            from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+            from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+                TDFOLShadowProverBridge,
+            )
+
             bridge = TDFOLShadowProverBridge()
             assert bridge.available is False
         finally:
@@ -425,7 +513,10 @@ class TestTDFOLShadowProverBridgeErrorPaths:
 
     def test_to_target_format_unavailable_covers_lines_117_120(self):
         """GIVEN bridge.available=False WHEN to_target_format THEN ValueError raised."""
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         bridge = TDFOLShadowProverBridge()
         bridge.available = False
         with pytest.raises(ValueError, match="not available"):
@@ -433,7 +524,9 @@ class TestTDFOLShadowProverBridgeErrorPaths:
 
     def test_prove_delegates_to_prove_modal_covers_line_162(self):
         """GIVEN available bridge WHEN prove called THEN prove_modal_formula called (line 162)."""
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
 
         bridge = TDFOLShadowProverBridge()
@@ -451,8 +544,10 @@ class TestTDFOLShadowProverBridgeErrorPaths:
     def test_get_prover_d_logic_covers_line_330(self):
         """GIVEN D logic WHEN _get_prover called THEN k_prover returned."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            ModalLogicType, TDFOLShadowProverBridge,
+            ModalLogicType,
+            TDFOLShadowProverBridge,
         )
+
         bridge = TDFOLShadowProverBridge()
         mock_k = MagicMock(name="k_prover")
         bridge.k_prover = mock_k
@@ -461,8 +556,10 @@ class TestTDFOLShadowProverBridgeErrorPaths:
     def test_get_prover_t_logic_covers_line_332(self):
         """GIVEN T logic WHEN _get_prover called THEN s4_prover returned."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            ModalLogicType, TDFOLShadowProverBridge,
+            ModalLogicType,
+            TDFOLShadowProverBridge,
         )
+
         bridge = TDFOLShadowProverBridge()
         mock_s4 = MagicMock(name="s4_prover")
         bridge.s4_prover = mock_s4
@@ -471,8 +568,10 @@ class TestTDFOLShadowProverBridgeErrorPaths:
     def test_get_prover_default_covers_line_335(self):
         """GIVEN K logic WHEN _get_prover called THEN k_prover returned (default path)."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            ModalLogicType, TDFOLShadowProverBridge,
+            ModalLogicType,
+            TDFOLShadowProverBridge,
         )
+
         bridge = TDFOLShadowProverBridge()
         mock_k = MagicMock(name="k_prover")
         bridge.k_prover = mock_k
@@ -482,6 +581,7 @@ class TestTDFOLShadowProverBridgeErrorPaths:
 # ---------------------------------------------------------------------------
 # 6. external_provers — OSError cleanup + parse exception + registry
 # ---------------------------------------------------------------------------
+
 
 class TestExternalProversOSErrorCleanup:
     """GIVEN external provers WHEN file cleanup raises OSError THEN exception silently ignored."""
@@ -495,8 +595,10 @@ class TestExternalProversOSErrorCleanup:
         mock_proc.stdout = "Satisfiable\n"
         mock_proc.returncode = 0
 
-        with patch("subprocess.run", return_value=mock_proc), \
-             patch("pathlib.Path.unlink", side_effect=OSError("cleanup failed")):
+        with (
+            patch("subprocess.run", return_value=mock_proc),
+            patch("pathlib.Path.unlink", side_effect=OSError("cleanup failed")),
+        ):
             result = vp.prove("P(x)", [])
         assert result.status is not None
 
@@ -509,8 +611,10 @@ class TestExternalProversOSErrorCleanup:
         mock_proc.stdout = "SZS status Satisfiable\n"
         mock_proc.returncode = 0
 
-        with patch("subprocess.run", return_value=mock_proc), \
-             patch("pathlib.Path.unlink", side_effect=OSError("cleanup failed")):
+        with (
+            patch("subprocess.run", return_value=mock_proc),
+            patch("pathlib.Path.unlink", side_effect=OSError("cleanup failed")),
+        ):
             result = ep.prove("P(x)", [])
         assert result.status is not None
 
@@ -556,12 +660,15 @@ class TestExternalProversOSErrorCleanup:
 # 7. base_prover_bridge — validate_formula error path (+ bug fix: logger added)
 # ---------------------------------------------------------------------------
 
+
 class TestBaseBridgeValidateFormula:
     """GIVEN BaseBridge WHEN to_target_format raises THEN validate_formula returns False."""
 
     def test_validate_formula_error_covers_lines_191_194(self):
         """GIVEN to_target_format raises ValueError WHEN validate_formula called THEN returns False."""
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
 
         bridge = TDFOLShadowProverBridge()
         bridge.available = False
@@ -574,11 +681,15 @@ class TestBaseBridgeValidateFormula:
 # 8. ConflictDetector — _semantic_similarity + _conditional_conflict_exists
 # ---------------------------------------------------------------------------
 
+
 class TestConflictDetectorSemantic:
     """GIVEN ConflictDetector WHEN edge inputs THEN correct paths taken."""
 
     def _make_detector(self):
-        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import ConflictDetector
+        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
+            ConflictDetector,
+        )
+
         return ConflictDetector()
 
     def test_semantic_similarity_empty_first_covers_line_136(self):
@@ -619,17 +730,20 @@ class TestConflictDetectorSemantic:
 # 9. _logic_verifier_backends_mixin — SymbolicAI import
 # ---------------------------------------------------------------------------
 
+
 class TestLogicVerifierBackendsMixin:
     """GIVEN _logic_verifier_backends_mixin WHEN SymbolicAI paths invoked THEN correct behavior."""
 
     def test_symbolic_ai_available_flag_covers_line_26(self):
         """GIVEN _logic_verifier_backends_mixin WHEN imported THEN _SYMBOLIC_AI_AVAILABLE flag set."""
         import ipfs_datasets_py.logic.integration.reasoning._logic_verifier_backends_mixin as mod
+
         assert hasattr(mod, "_SYMBOLIC_AI_AVAILABLE")
 
     def test_logic_verifier_check_entailment_fallback(self):
         """GIVEN LogicVerifier without SymbolicAI WHEN check_entailment called THEN fallback used."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         verifier = LogicVerifier()
         result = verifier.check_entailment(["P(x) implies Q(x)", "P(a)"], "Q(a)")
         assert hasattr(result, "entails")
@@ -637,6 +751,7 @@ class TestLogicVerifierBackendsMixin:
     def test_logic_verifier_generate_proof_fallback_covers_line_230(self):
         """GIVEN LogicVerifier with fallback enabled WHEN generate_proof THEN uses fallback."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         verifier = LogicVerifier()
         verifier.fallback_enabled = True
         result = verifier.generate_proof(["P(x) → Q(x)", "P(a)"], "Q(a)")
@@ -647,27 +762,35 @@ class TestLogicVerifierBackendsMixin:
 # 10. proof_execution_engine — _maybe_auto_install paths + coq prover + caching
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEnginePaths:
     """GIVEN ProofExecutionEngine WHEN various code paths invoked THEN correct behavior."""
 
     def test_maybe_auto_install_prover_coq_covers_line_146(self):
         """GIVEN want_coq env var set WHEN _maybe_auto_install_provers called THEN coq arg appended."""
         import os
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import ProofExecutionEngine
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
+            ProofExecutionEngine,
+        )
 
-        with patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None), \
-             patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine.__new__(ProofExecutionEngine)
             engine.available_provers = {"coq": False}  # coq missing
             engine.proof_cache = {}
             engine.enable_caching = False
 
         # Set env vars so want_coq=True and the auto-install flag isn't blocking
-        with patch.dict(os.environ, {
-            "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "1",
-            "IPFS_DATASETS_PY_AUTO_INSTALL_COQ": "1",
-            "IPFS_DATASETS_PY_PROVER_AUTO_INSTALL_RUNNING": "0",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "1",
+                "IPFS_DATASETS_PY_AUTO_INSTALL_COQ": "1",
+                "IPFS_DATASETS_PY_PROVER_AUTO_INSTALL_RUNNING": "0",
+            },
+        ):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
                 engine._maybe_auto_install_provers()
@@ -675,10 +798,14 @@ class TestProofExecutionEnginePaths:
 
     def test_find_executable_path_covers_lines_181_184(self):
         """GIVEN executable in PATH WHEN _find_executable called THEN path returned."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import ProofExecutionEngine
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
+            ProofExecutionEngine,
+        )
 
-        with patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None), \
-             patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine(enable_caching=False)
 
         with patch("shutil.which", return_value="/usr/bin/coq"):
@@ -687,11 +814,15 @@ class TestProofExecutionEnginePaths:
 
     def test_find_executable_candidates_covers_lines_193_196(self):
         """GIVEN not in PATH WHEN _find_executable with extra paths THEN candidate path returned."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import ProofExecutionEngine
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
+            ProofExecutionEngine,
+        )
         from pathlib import Path
 
-        with patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None), \
-             patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine(enable_caching=False)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -704,10 +835,14 @@ class TestProofExecutionEnginePaths:
 
     def test_test_command_true_covers_lines_216_219(self):
         """GIVEN command succeeds WHEN _test_command called THEN returns True."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import ProofExecutionEngine
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
+            ProofExecutionEngine,
+        )
 
-        with patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None), \
-             patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine(enable_caching=False)
 
         mock_result = MagicMock()
@@ -718,12 +853,21 @@ class TestProofExecutionEnginePaths:
 
     def test_prove_deontic_formula_unsupported_prover_covers_line_331(self):
         """GIVEN unknown prover WHEN prove_deontic_formula called THEN UNSUPPORTED result."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import ProofExecutionEngine
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
+            ProofExecutionEngine,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
 
-        with patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None), \
-             patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine(enable_caching=False)
         engine.available_provers = {"unknown_prover": "/usr/bin/unknown"}
 
@@ -741,16 +885,27 @@ class TestProofExecutionEnginePaths:
 
     def test_prove_deontic_caching_covers_lines_340_344(self):
         """GIVEN enable_caching=True WHEN prove_deontic_formula completes THEN result cached."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import ProofExecutionEngine
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
+            ProofExecutionEngine,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
 
-        with patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None), \
-             patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value=None),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine(enable_caching=True)
         engine.available_provers = {"unknown_prover": "/usr/bin/unknown"}
 
-        f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act_for_caching", confidence=0.9)
+        f = DeonticFormula(
+            operator=DeonticOperator.OBLIGATION, proposition="act_for_caching", confidence=0.9
+        )
 
         mock_cache = MagicMock()
         mock_cache.get.return_value = None  # No cache hit, so we proceed to cache put
@@ -773,16 +928,23 @@ class TestProofExecutionEnginePaths:
 # 11. deontic_logic_converter — skip entity/relationship, fallback proposition
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticLogicConverterEdgePaths:
     """GIVEN DeonticLogicConverter WHEN edge cases THEN correct lines covered."""
 
     def _make_converter(self):
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import DeonticLogicConverter
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            DeonticLogicConverter,
+        )
+
         return DeonticLogicConverter()
 
     def test_convert_graph_skips_entity_with_no_text_covers_lines_258_259(self):
         """GIVEN entity with empty text WHEN convert_knowledge_graph_to_logic called THEN entity skipped."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         converter = self._make_converter()
         ctx = ConversionContext(source_document_path="/test/doc.txt")
         mock_entity = MagicMock()
@@ -800,7 +962,10 @@ class TestDeonticLogicConverterEdgePaths:
 
     def test_convert_graph_skips_relationship_with_no_text_covers_line_321(self):
         """GIVEN relationship with empty text WHEN convert called THEN relationship skipped."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         converter = self._make_converter()
         ctx = ConversionContext(source_document_path="/test/doc.txt")
         mock_entity = MagicMock()
@@ -821,8 +986,10 @@ class TestDeonticLogicConverterEdgePaths:
                 return "must comply with policy"
             return ""
 
-        with patch.object(converter, "_extract_entity_text", side_effect=entity_text_side), \
-             patch.object(converter, "_extract_relationship_text", return_value=""):
+        with (
+            patch.object(converter, "_extract_entity_text", side_effect=entity_text_side),
+            patch.object(converter, "_extract_relationship_text", return_value=""),
+        ):
             result = converter.convert_knowledge_graph_to_logic(mock_graph, ctx)
         assert result is not None
 
@@ -833,14 +1000,19 @@ class TestDeonticLogicConverterEdgePaths:
         mock_entity.entity_id = "ent1"
         mock_entity.properties = {}
         # Patch _extract_entity_text to return general text with no legal keywords
-        with patch.object(converter, "_extract_entity_text", return_value="general information only"):
+        with patch.object(
+            converter, "_extract_entity_text", return_value="general information only"
+        ):
             result = converter._extract_proposition_from_entity(mock_entity)
         assert isinstance(result, str)
         assert len(result) > 0
 
     def test_create_agent_from_entity_id_none_when_disabled_covers_line_545(self):
         """GIVEN enable_agent_inference=False WHEN _create_agent_from_entity_id called THEN None returned."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         converter = self._make_converter()
         # enable_agent_inference=False → returns None (line 545)
         ctx = ConversionContext(source_document_path="/test/doc.txt", enable_agent_inference=False)
@@ -849,7 +1021,10 @@ class TestDeonticLogicConverterEdgePaths:
 
     def test_demonstrate_deontic_conversion_covers_lines_720_725(self):
         """GIVEN demonstrate_deontic_conversion WHEN called THEN runs without error."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import demonstrate_deontic_conversion
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            demonstrate_deontic_conversion,
+        )
+
         demonstrate_deontic_conversion()
 
 
@@ -857,11 +1032,13 @@ class TestDeonticLogicConverterEdgePaths:
 # 12. ipld_logic_storage — IPLD paths
 # ---------------------------------------------------------------------------
 
+
 class TestIPLDLogicStorageIPLDPaths:
     """GIVEN LogicIPLDStorage WHEN IPLD is available THEN IPLD paths taken."""
 
     def _setup_ipld_storage(self, tmpdir, init_fail=False):
         import ipfs_datasets_py.logic.integration.caching.ipld_logic_storage as mod
+
         original_available = mod.IPLD_AVAILABLE
 
         mock_block = MagicMock()
@@ -877,6 +1054,7 @@ class TestIPLDLogicStorageIPLDPaths:
         mod.IPLDVectorStore = MagicMock(return_value=MagicMock())
 
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
+
         storage = LogicIPLDStorage(storage_path=tmpdir)
 
         if not init_fail:
@@ -899,22 +1077,35 @@ class TestIPLDLogicStorageIPLDPaths:
 
     def test_store_logic_formula_ipld_covers_lines_152_280(self):
         """GIVEN use_ipld=True WHEN store_logic_formula THEN IPLD CID returned."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage, _, mock_block = self._setup_ipld_storage(tmpdir)
-            f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9)
+            f = DeonticFormula(
+                operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9
+            )
             cid = storage.store_logic_formula(f)
         assert cid == "bafy_test_cid_123"
 
     def test_store_translation_ipld_covers_lines_185_302(self):
         """GIVEN use_ipld=True WHEN store_translation_result THEN IPLD CID returned."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            LogicTranslationTarget, TranslationResult,
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
         )
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LogicTranslationTarget,
+            TranslationResult,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage, _, _ = self._setup_ipld_storage(tmpdir)
-            f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9)
+            f = DeonticFormula(
+                operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9
+            )
             formula_cid = storage.store_logic_formula(f)
             tr = TranslationResult(
                 target=LogicTranslationTarget.LEAN,
@@ -927,33 +1118,52 @@ class TestIPLDLogicStorageIPLDPaths:
 
     def test_store_collection_ipld_covers_lines_238_326(self):
         """GIVEN use_ipld=True WHEN store_logic_collection THEN IPLD CID returned."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage, _, _ = self._setup_ipld_storage(tmpdir)
-            f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9)
+            f = DeonticFormula(
+                operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9
+            )
             ccid = storage.store_logic_collection([f], "test_collection")
         assert ccid is not None
 
     def test_store_in_ipld_exception_fallback_covers_lines_282_283(self):
         """GIVEN block_manager.create_block raises WHEN _store_in_ipld called THEN falls back to filesystem."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage, mock_ipld, _ = self._setup_ipld_storage(tmpdir)
             mock_ipld.create_block.side_effect = Exception("IPLD block failed")
-            f = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="do_x", confidence=0.8)
+            f = DeonticFormula(
+                operator=DeonticOperator.PERMISSION, proposition="do_x", confidence=0.8
+            )
             cid = storage.store_logic_formula(f)
         assert cid is not None
         assert not cid.startswith("bafy")
 
     def test_store_translation_ipld_exception_covers_lines_303_307(self):
         """GIVEN _store_translation_in_ipld raises WHEN called THEN falls back to SHA256."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            LogicTranslationTarget, TranslationResult,
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
         )
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LogicTranslationTarget,
+            TranslationResult,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage, mock_ipld, mock_block = self._setup_ipld_storage(tmpdir)
-            f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9)
+            f = DeonticFormula(
+                operator=DeonticOperator.OBLIGATION, proposition="act", confidence=0.9
+            )
             formula_cid = storage.store_logic_formula(f)
 
             # Reset mock_block.cid for second call, then make it fail
@@ -969,11 +1179,17 @@ class TestIPLDLogicStorageIPLDPaths:
 
     def test_store_collection_ipld_exception_covers_lines_327_331(self):
         """GIVEN _store_collection_in_ipld raises WHEN called THEN falls back to SHA256."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage, mock_ipld, _ = self._setup_ipld_storage(tmpdir)
             mock_ipld.create_block.side_effect = Exception("IPLD block failed for collection")
-            f = DeonticFormula(operator=DeonticOperator.PROHIBITION, proposition="no_act", confidence=0.7)
+            f = DeonticFormula(
+                operator=DeonticOperator.PROHIBITION, proposition="no_act", confidence=0.7
+            )
             ccid = storage.store_logic_collection([f], "fail_collection")
         assert ccid is not None
 
@@ -982,18 +1198,21 @@ class TestIPLDLogicStorageIPLDPaths:
 # 13. integration/__init__.py — enable_symbolicai
 # ---------------------------------------------------------------------------
 
+
 class TestIntegrationInitEnableSymbolicAI:
     """GIVEN integration/__init__.py WHEN enable_symbolicai called THEN correct behavior."""
 
     def test_enable_symbolicai_without_symai_covers_lines_80_82(self):
         """GIVEN symai not installed WHEN enable_symbolicai called THEN returns bool."""
         import ipfs_datasets_py.logic.integration as integration_mod
+
         result = integration_mod.enable_symbolicai()
         assert isinstance(result, bool)
 
     def test_enable_symbolicai_returns_true_when_already_enabled(self):
         """GIVEN SYMBOLIC_AI_AVAILABLE=True WHEN enable_symbolicai called THEN True returned."""
         import ipfs_datasets_py.logic.integration as integration_mod
+
         with patch.object(integration_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = integration_mod.enable_symbolicai()
         assert result is True
@@ -1003,12 +1222,14 @@ class TestIntegrationInitEnableSymbolicAI:
 # 14. caching/proof_cache — line 83
 # ---------------------------------------------------------------------------
 
+
 class TestProofCacheMissLine83:
     """GIVEN ProofCache WHEN result not found THEN returns None."""
 
     def test_proof_cache_get_returns_none_covers_line_83(self):
         """GIVEN ProofCache WHEN key not in cache THEN get returns None."""
         from ipfs_datasets_py.logic.integration.caching.proof_cache import ProofCache
+
         cache = ProofCache()
         result = cache.get("nonexistent_formula_xyz", "nonexistent_prover")
         assert result is None
@@ -1018,12 +1239,14 @@ class TestProofCacheMissLine83:
 # 15. symbolic/__init__.py — ImportError branch lines 15-16, 25-26
 # ---------------------------------------------------------------------------
 
+
 class TestSymbolicInitImportErrors:
     """GIVEN symbolic/__init__.py WHEN ImportError on optional deps THEN flags set."""
 
     def test_symbolic_init_flags_exist(self):
         """GIVEN symbolic/__init__.py WHEN imported THEN flags are set."""
         import ipfs_datasets_py.logic.integration.symbolic as sym_mod
+
         assert sym_mod is not None
 
 
@@ -1031,17 +1254,22 @@ class TestSymbolicInitImportErrors:
 # 16. bridges/tdfol_grammar_bridge — ImportError flags
 # ---------------------------------------------------------------------------
 
+
 class TestTDFOLGrammarBridgeFlags:
     """GIVEN tdfol_grammar_bridge WHEN imported THEN grammar availability flags set."""
 
     def test_grammar_available_flag_exists(self):
         """GIVEN tdfol_grammar_bridge WHEN imported THEN module loads."""
         import ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge as mod
+
         assert mod is not None
 
     def test_tdfol_grammar_bridge_init(self):
         """GIVEN TDFOLGrammarBridge WHEN created THEN available attribute set."""
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         bridge = TDFOLGrammarBridge()
         assert hasattr(bridge, "available")
 
@@ -1050,12 +1278,14 @@ class TestTDFOLGrammarBridgeFlags:
 # 17. converters/__init__.py — ImportError fallback
 # ---------------------------------------------------------------------------
 
+
 class TestConvertersInit:
     """GIVEN converters/__init__.py WHEN imported THEN all exports accessible."""
 
     def test_converters_init_accessible(self):
         """GIVEN converters/__init__.py WHEN imported THEN DeonticLogicConverter accessible."""
         from ipfs_datasets_py.logic.integration import converters
+
         assert converters is not None
 
 
@@ -1063,10 +1293,12 @@ class TestConvertersInit:
 # 18. reasoning/deontological_reasoning_utils — edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestDeontologicalReasoningUtils:
     """GIVEN deontological_reasoning_utils WHEN imported THEN functional."""
 
     def test_utils_module_imports(self):
         """GIVEN deontological_reasoning_utils WHEN imported THEN no error."""
         from ipfs_datasets_py.logic.integration.reasoning import deontological_reasoning_utils
+
         assert deontological_reasoning_utils is not None

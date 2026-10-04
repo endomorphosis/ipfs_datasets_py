@@ -57,18 +57,20 @@ All requested features have been successfully implemented and tested.
 
 ```python
 import asyncio
-from ipfs_datasets_py.mcp_server.tools.web_archive_tools.github_search import search_github_repositories
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools.github_search import (
+    search_github_repositories,
+)
+
 
 async def main():
     result = await search_github_repositories(
-        query="machine-learning language:python stars:>5000",
-        sort="stars",
-        per_page=10
+        query="machine-learning language:python stars:>5000", sort="stars", per_page=10
     )
-    
-    if result['status'] == 'success':
-        for repo in result['results']:
+
+    if result["status"] == "success":
+        for repo in result["results"]:
             print(f"{repo['full_name']}: {repo['stars']} ⭐")
+
 
 asyncio.run(main())
 ```

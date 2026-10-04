@@ -6,6 +6,7 @@ Usage::
 
     from ipfs_datasets_py.processors.multimedia import email_analyze_export
 """
+
 from __future__ import annotations
 
 import json
@@ -30,6 +31,7 @@ async def email_analyze_export(file_path: str) -> Dict[str, Any]:
         threads_with_replies. On failure: status='error', error=<message>.
     """
     try:
+
         def _read_file() -> Any:
             with open(file_path, "r", encoding="utf-8") as fh:
                 return json.load(fh)
@@ -83,9 +85,7 @@ async def email_analyze_export(file_path: str) -> Dict[str, Any]:
             in_reply_to = email.get("in_reply_to", "")
             if in_reply_to:
                 thread_id = in_reply_to
-                threads.setdefault(thread_id, []).append(
-                    email.get("message_id_header", "")
-                )
+                threads.setdefault(thread_id, []).append(email.get("message_id_header", ""))
 
         sender_counts = Counter(senders)
         recipient_counts = Counter(recipients)
@@ -102,25 +102,18 @@ async def email_analyze_export(file_path: str) -> Dict[str, Any]:
             "file_path": file_path,
             "total_emails": len(emails),
             "date_range": date_range,
-            "top_senders": [
-                {"sender": s, "count": c} for s, c in sender_counts.most_common(10)
-            ],
+            "top_senders": [{"sender": s, "count": c} for s, c in sender_counts.most_common(10)],
             "top_recipients": [
-                {"recipient": r, "count": c}
-                for r, c in recipient_counts.most_common(10)
+                {"recipient": r, "count": c} for r, c in recipient_counts.most_common(10)
             ],
             "attachment_stats": {
                 "total_attachments": attachments_count,
                 "total_size_bytes": total_attachment_size,
-                "average_per_email": (
-                    attachments_count / len(emails) if emails else 0
-                ),
+                "average_per_email": (attachments_count / len(emails) if emails else 0),
             },
             "average_body_length": int(avg_length),
             "thread_count": len(threads),
-            "threads_with_replies": len(
-                [t for t in threads.values() if len(t) > 1]
-            ),
+            "threads_with_replies": len([t for t in threads.values() if len(t) > 1]),
         }
 
     except FileNotFoundError:
@@ -157,6 +150,7 @@ async def email_search_export(
         Dict with status, file_path, query, field, match_count, matches.
     """
     try:
+
         def _read_file() -> Any:
             with open(file_path, "r", encoding="utf-8") as fh:
                 return json.load(fh)
@@ -194,9 +188,7 @@ async def email_search_export(
             elif field == "to":
                 match = query_lower in str(email.get("to", "")).lower()
             elif field == "body":
-                body_text = str(email.get("body_text", "")) + str(
-                    email.get("body_html", "")
-                )
+                body_text = str(email.get("body_text", "")) + str(email.get("body_html", ""))
                 match = query_lower in body_text.lower()
 
             if match:

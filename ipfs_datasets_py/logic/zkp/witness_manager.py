@@ -21,14 +21,14 @@ from .legal_theorem_semantics import derive_tdfol_v1_trace
 class WitnessManager:
     """
     Manage ZKP witness generation and validation.
-    
+
     A witness is the private knowledge that proves a theorem without revealing
     the axioms. This class handles:
     - Witness generation from axioms
     - Witness serialization/deserialization
     - Witness validation against statements
     - Commitment verification
-    
+
     Example:
         >>> manager = WitnessManager()
         >>> witness = manager.generate_witness(
@@ -37,11 +37,11 @@ class WitnessManager:
         ... )
         >>> assert manager.validate_witness(witness, expected_axiom_count=2)
     """
-    
+
     def __init__(self):
         """Initialize witness manager."""
         self._witness_cache: Dict[str, Witness] = {}
-    
+
     def generate_witness(
         self,
         axioms: List[str],
@@ -52,25 +52,25 @@ class WitnessManager:
     ) -> Witness:
         """
         Generate a witness that proves knowledge of axioms for a theorem.
-        
+
         The witness is the private input to the ZKP circuit. It consists of:
         - Canonicalized axioms (private)
         - Optional intermediate logical steps
         - Commitment metadata
-        
+
         Args:
             axioms: Private axioms that prove the theorem
             theorem: The theorem to prove (public)
             intermediate_steps: Optional intermediate reasoning steps
             circuit_version: Circuit specification version
             ruleset_id: Ruleset identifier (e.g., "TDFOL_v1")
-        
+
         Returns:
             Witness: The generated witness structure
-        
+
         Raises:
             ValueError: If axioms are empty or invalid
-        
+
         Example:
             >>> witness = manager.generate_witness(
             ...     axioms=["All humans are mortal", "Socrates is human"],
@@ -81,7 +81,7 @@ class WitnessManager:
         """
         if not axioms:
             raise ValueError("Cannot generate witness: axioms cannot be empty")
-        
+
         # Canonicalize axioms for consistency
         canonical_axioms = canonicalize_axioms(axioms)
 
@@ -90,7 +90,7 @@ class WitnessManager:
             axioms_commitment_hex = tdfol_v1_axioms_commitment_hex_v2(canonical_axioms)
         else:
             axioms_commitment_hex = hash_axioms_commitment(canonical_axioms).hex()
-        
+
         # Optionally derive a constraint-friendly trace for semantics circuits.
         #
         # For `circuit_version >= 2` we interpret `TDFOL_v1` as the MVP Horn
@@ -108,13 +108,13 @@ class WitnessManager:
             circuit_version=circuit_version,
             ruleset_id=ruleset_id,
         )
-        
+
         # Cache for quick lookup
         commitment_key = axioms_commitment_hex
         self._witness_cache[commitment_key] = witness
-        
+
         return witness
-    
+
     def validate_witness(
         self,
         witness: Witness,
@@ -123,16 +123,16 @@ class WitnessManager:
     ) -> bool:
         """
         Validate witness structure and properties.
-        
+
         Args:
             witness: The witness to validate
             expected_axiom_count: Expected number of axioms (if known)
             expected_axioms: Expected axiom values (if known). Axioms are
                              compared after canonicalization.
-        
+
         Returns:
             bool: True if witness is valid
-        
+
         Example:
             >>> assert manager.validate_witness(
             ...     witness,
@@ -141,24 +141,24 @@ class WitnessManager:
         """
         try:
             # Check basic structure
-            if not hasattr(witness, 'axioms') or not witness.axioms:
+            if not hasattr(witness, "axioms") or not witness.axioms:
                 return False
-            
-            if not hasattr(witness, 'axioms_commitment_hex'):
+
+            if not hasattr(witness, "axioms_commitment_hex"):
                 return False
-            
+
             # Verify axiom count if provided
             if expected_axiom_count is not None:
                 if len(witness.axioms) != expected_axiom_count:
                     return False
-            
+
             # Verify axioms match expected set if provided
             if expected_axioms is not None:
                 canonical_expected = canonicalize_axioms(expected_axioms)
                 canonical_actual = canonicalize_axioms(witness.axioms)
                 if canonical_expected != canonical_actual:
                     return False
-            
+
             # Verify commitment is consistent
             if witness.circuit_version >= 2 and witness.ruleset_id == "TDFOL_v1":
                 expected = tdfol_v1_axioms_commitment_hex_v2(witness.axioms)
@@ -166,12 +166,12 @@ class WitnessManager:
                 expected = hash_axioms_commitment(witness.axioms).hex()
             if expected != witness.axioms_commitment_hex:
                 return False
-            
+
             return True
-            
+
         except (AttributeError, TypeError, ValueError):
             return False
-    
+
     def create_proof_statement(
         self,
         witness: Witness,
@@ -180,26 +180,26 @@ class WitnessManager:
     ) -> ProofStatement:
         """
         Create a proof statement from a witness and theorem.
-        
+
         The proof statement combines the public statement (theorem, axioms
         commitment) with circuit metadata. This is what gets sent to the
         circuit for verification.
-        
+
         Args:
             witness: The private witness generated from axioms
             theorem: The public theorem to prove
             circuit_id: Identifies which circuit to use
-        
+
         Returns:
             ProofStatement: Combined public statement + circuit metadata
-        
+
         Example:
             >>> proof_stmt = manager.create_proof_statement(witness, "Q")
             >>> assert proof_stmt.statement.theorem_hash is not None
         """
         # Generate theorem hash
         theorem_hash = hash_theorem(theorem)
-        
+
         # Create public statement
         statement = Statement(
             theorem_hash=theorem_hash.hex(),
@@ -207,16 +207,16 @@ class WitnessManager:
             circuit_version=witness.circuit_version,
             ruleset_id=witness.ruleset_id,
         )
-        
+
         # Create proof statement with metadata
         proof_statement = ProofStatement(
             statement=statement,
             circuit_id=circuit_id,
             witness_count=len(witness.axioms),
         )
-        
+
         return proof_statement
-    
+
     def verify_witness_consistency(
         self,
         witness: Witness,
@@ -224,19 +224,19 @@ class WitnessManager:
     ) -> bool:
         """
         Verify that a witness is consistent with a public statement.
-        
+
         This checks that:
         - The witness axioms hash to the statement's axioms_commitment
         - The circuit versions match
         - The ruleset IDs match
-        
+
         Args:
             witness: The private witness
             statement: The public statement from the proof
-        
+
         Returns:
             bool: True if witness is consistent with statement
-        
+
         Example:
             >>> assert manager.verify_witness_consistency(witness, statement)
         """
@@ -246,18 +246,18 @@ class WitnessManager:
 
         except (AttributeError, TypeError, ValueError):
             return False
-    
+
     def clear_cache(self):
         """Clear witness cache."""
         self._witness_cache.clear()
-    
+
     def get_cached_witness(self, commitment_hex: str) -> Optional[Witness]:
         """
         Retrieve a cached witness by its axioms commitment.
-        
+
         Args:
             commitment_hex: Hex-encoded axioms commitment
-        
+
         Returns:
             Witness if found in cache, None otherwise
         """

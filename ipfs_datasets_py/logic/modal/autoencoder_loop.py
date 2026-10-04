@@ -229,9 +229,7 @@ class LegalModalAutoencoderLoop:
         llm_patch_validation: Optional[FrameLogicPatchValidation] = None
         repaired_modal_ir: Optional[ModalIRDocument] = None
         should_call_llm = (
-            self.config.allow_llm_repair
-            if allow_llm_repair is None
-            else bool(allow_llm_repair)
+            self.config.allow_llm_repair if allow_llm_repair is None else bool(allow_llm_repair)
         )
 
         if decision.should_call_codex and should_call_llm:
@@ -444,15 +442,9 @@ def _sample_from_codec_result(
 
 def _codex_cache_from_mapping(data: Mapping[str, Any]) -> CodexCallCache:
     return CodexCallCache(
-        codex_text_hashes={
-            str(value)
-            for value in data.get("codex_text_hashes", [])
-            if str(value)
-        },
+        codex_text_hashes={str(value) for value in data.get("codex_text_hashes", []) if str(value)},
         codex_feature_signature_hashes={
-            str(value)
-            for value in data.get("codex_feature_signature_hashes", [])
-            if str(value)
+            str(value) for value in data.get("codex_feature_signature_hashes", []) if str(value)
         },
         local_success_feature_signature_hashes={
             str(value)
@@ -632,9 +624,7 @@ def _apply_frame_logic_patch(
         selected_frame=modal_ir.frame_logic.selected_frame,
         graph_id=graph_data.metadata.get("graph_id"),
         neo4j_node_labels=graph_schema.node_labels if graph_schema else [],
-        neo4j_relationship_types=graph_schema.relationship_types
-        if graph_schema
-        else [],
+        neo4j_relationship_types=graph_schema.relationship_types if graph_schema else [],
         metadata={
             **modal_ir.frame_logic.metadata,
             "llm_patch_applied": True,

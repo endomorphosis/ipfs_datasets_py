@@ -6,6 +6,7 @@ Test data factory for generating YtDlpWrapper instances and test data.
 Provides methods to create valid baseline data, invalid variations, and edge cases
 for comprehensive testing of the YtDlpWrapper class validation logic.
 """
+
 from typing import Dict, Any, List, Optional, Callable
 from pathlib import Path
 import tempfile
@@ -17,22 +18,22 @@ from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpW
 class YtDlpWrapperTestDataFactory:
     """
     Test data factory for generating YtDlpWrapper instances and test data.
-    
+
     Provides methods to create valid baseline data, invalid variations, and edge cases
     for comprehensive testing of the YtDlpWrapper class validation logic.
-    
+
     Examples:
         >>> # Create a YtDlpWrapper instance for testing
         >>> wrapper = YtDlpWrapperTestDataFactory.create_wrapper_instance()
-        >>> 
+        >>>
         >>> # Get valid video URLs for testing
         >>> urls = YtDlpWrapperTestDataFactory.create_valid_video_urls()
         >>> youtube_url = urls['youtube']  # "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        >>> 
+        >>>
         >>> # Get download options for different scenarios
         >>> options = YtDlpWrapperTestDataFactory.create_download_options()
         >>> audio_only = options['audio_only']  # {"audio_only": True, "audio_codec": "mp3", ...}
-        >>> 
+        >>>
         >>> # Create wrapper with custom settings
         >>> custom_wrapper = YtDlpWrapperTestDataFactory.create_wrapper_instance(
         ...     default_quality="720p",
@@ -44,14 +45,14 @@ class YtDlpWrapperTestDataFactory:
     def create_valid_initialization_data(cls) -> Dict[str, Any]:
         """
         Create valid initialization parameters for YtDlpWrapper.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with valid initialization parameters.
                 Keys:
                 - 'default_output_dir': str - Directory for downloaded files (temp directory)
                 - 'enable_logging': bool - Whether to enable logging (True)
                 - 'default_quality': str - Default video quality setting ("best")
-                
+
         Examples:
             >>> factory = YtDlpWrapperTestDataFactory()
             >>> init_data = factory.create_valid_initialization_data()
@@ -61,42 +62,32 @@ class YtDlpWrapperTestDataFactory:
         return {
             "default_output_dir": tempfile.gettempdir(),
             "enable_logging": True,
-            "default_quality": "best"
+            "default_quality": "best",
         }
 
     @classmethod
     def create_minimal_initialization_data(cls) -> Dict[str, Any]:
         """
         Create minimal initialization parameters for YtDlpWrapper.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with minimal initialization parameters.
                 Keys:
                 - 'default_output_dir': str - Basic output directory (temp directory)
-                
+
         Examples:
             >>> factory = YtDlpWrapperTestDataFactory()
             >>> minimal_data = factory.create_minimal_initialization_data()
             >>> minimal_data['default_output_dir']
             '/tmp'
         """
-        return {
-            "default_output_dir": None,
-            "enable_logging": False,
-            "default_quality": "worst"
-        }
-
-    
-
-
-
-
+        return {"default_output_dir": None, "enable_logging": False, "default_quality": "worst"}
 
     @classmethod
     def create_valid_video_urls(cls) -> Dict[str, str]:
         """
         Create dictionary of valid video URLs for testing.
-        
+
         Returns:
             Dict[str, str]: Dictionary with valid video URLs.
                 Keys:
@@ -113,14 +104,14 @@ class YtDlpWrapperTestDataFactory:
             "vimeo": "https://vimeo.com/123456789",
             "soundcloud": "https://soundcloud.com/artist/track-name",
             "twitch": "https://www.twitch.tv/videos/123456789",
-            "dailymotion": "https://www.dailymotion.com/video/x123456"
+            "dailymotion": "https://www.dailymotion.com/video/x123456",
         }
 
     @classmethod
     def create_invalid_video_urls(cls) -> Dict[str, str]:
         """
         Create dictionary of invalid video URLs for testing.
-        
+
         Returns:
             Dict[str, str]: Dictionary with invalid video URLs.
                 Keys:
@@ -141,14 +132,14 @@ class YtDlpWrapperTestDataFactory:
             "invalid_domain": "https://invalid-domain-that-does-not-exist.com/video",
             "whitespace": "   ",
             "incomplete": "https://",
-            "unsupported_site": "https://example.com/video.mp4"
+            "unsupported_site": "https://example.com/video.mp4",
         }
 
     @classmethod
     def create_playlist_urls(cls) -> Dict[str, str]:
         """
         Create dictionary of playlist URLs for testing.
-        
+
         Returns:
             Dict[str, str]: Dictionary with playlist URLs.
                 Keys:
@@ -163,14 +154,14 @@ class YtDlpWrapperTestDataFactory:
             "soundcloud_set": "https://soundcloud.com/user/sets/playlist-name",
             "vimeo_showcase": "https://vimeo.com/showcase/123456",
             "youtube_channel": "https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw",
-            "youtube_user": "https://www.youtube.com/user/username"
+            "youtube_user": "https://www.youtube.com/user/username",
         }
 
     @classmethod
     def create_download_options(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create different download option combinations.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with download option sets.
                 Keys:
@@ -192,35 +183,19 @@ class YtDlpWrapperTestDataFactory:
                   - 'output_path': str - Custom output path template
         """
         return {
-            "basic": {
-                "quality": "best"
-            },
-            "audio_only": {
-                "audio_only": True,
-                "audio_codec": "mp3",
-                "audio_quality": "192"
-            },
-            "custom_quality": {
-                "quality": "720p",
-                "format_selector": "best[height<=720]"
-            },
-            "extract_info_only": {
-                "extract_info_only": True
-            },
-            "with_subtitles": {
-                "writesubtitles": True,
-                "writeautomaticsub": True
-            },
-            "custom_output": {
-                "output_path": "/custom/path/%(title)s.%(ext)s"
-            }
+            "basic": {"quality": "best"},
+            "audio_only": {"audio_only": True, "audio_codec": "mp3", "audio_quality": "192"},
+            "custom_quality": {"quality": "720p", "format_selector": "best[height<=720]"},
+            "extract_info_only": {"extract_info_only": True},
+            "with_subtitles": {"writesubtitles": True, "writeautomaticsub": True},
+            "custom_output": {"output_path": "/custom/path/%(title)s.%(ext)s"},
         }
 
     @classmethod
     def create_search_queries(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create search query test data.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with search query data.
                 Keys:
@@ -233,33 +208,29 @@ class YtDlpWrapperTestDataFactory:
                 - 'single_result': Dict - Search returning only one result
         """
         return {
-            "basic_youtube": {
-                "query": "python tutorial",
-                "platform": "youtube",
-                "max_results": 10
-            },
+            "basic_youtube": {"query": "python tutorial", "platform": "youtube", "max_results": 10},
             "soundcloud_music": {
                 "query": "ambient electronic music",
                 "platform": "soundcloud",
-                "max_results": 5
+                "max_results": 5,
             },
             "large_result_set": {
                 "query": "machine learning",
                 "platform": "youtube",
-                "max_results": 50
+                "max_results": 50,
             },
             "single_result": {
                 "query": "specific video title",
                 "platform": "youtube",
-                "max_results": 1
-            }
+                "max_results": 1,
+            },
         }
 
     @classmethod
     def create_expected_download_responses(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create expected download response structures.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with expected responses.
                 Keys:
@@ -293,7 +264,7 @@ class YtDlpWrapperTestDataFactory:
                 "url": "https://youtube.com/watch?v=example",
                 "output_path": "/path/to/output/video_title.mp4",
                 "download_id": str(uuid.uuid4()),
-                "info": {}
+                "info": {},
             },
             "successful_info_extraction": {
                 "status": "success",
@@ -303,7 +274,7 @@ class YtDlpWrapperTestDataFactory:
                 "uploader": "Example Channel",
                 "upload_date": "20240101",
                 "view_count": 1000000,
-                "formats": []
+                "formats": [],
             },
             "playlist_download": {
                 "status": "success",
@@ -313,15 +284,15 @@ class YtDlpWrapperTestDataFactory:
                 "downloaded_items": [],
                 "failed_items": [],
                 "total_downloaded": 0,
-                "total_failed": 0
-            }
+                "total_failed": 0,
+            },
         }
 
     @classmethod
     def create_expected_error_responses(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create expected error response structures.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with expected error responses.
                 Keys:
@@ -337,7 +308,7 @@ class YtDlpWrapperTestDataFactory:
                 - 'permission_error': Dict - File system permission error
                   - 'status': str - Error status ("error")
                   - 'error': str - Permission denied message
-                  
+
         Examples:
             >>> factory = YtDlpWrapperTestDataFactory()
             >>> error_responses = factory.create_expected_error_responses()
@@ -345,29 +316,20 @@ class YtDlpWrapperTestDataFactory:
             'error'
         """
         return {
-            "ytdlp_unavailable": {
-                "status": "error",
-                "error": "YT-DLP not available for download"
-            },
-            "invalid_url": {
-                "status": "error",
-                "error": "Invalid URL format"
-            },
-            "download_error": {
-                "status": "error",
-                "error": "Download error: Video unavailable"
-            },
+            "ytdlp_unavailable": {"status": "error", "error": "YT-DLP not available for download"},
+            "invalid_url": {"status": "error", "error": "Invalid URL format"},
+            "download_error": {"status": "error", "error": "Download error: Video unavailable"},
             "permission_error": {
                 "status": "error",
-                "error": "Permission denied for output directory"
-            }
+                "error": "Permission denied for output directory",
+            },
         }
 
     @classmethod
     def create_progress_callback_data(cls) -> Dict[str, Any]:
         """
         Create mock progress callback data.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with progress callback test data.
                 Keys:
@@ -386,7 +348,7 @@ class YtDlpWrapperTestDataFactory:
                 - 'error': Dict - Error state information
                   - 'status': str - Status ("error")
                   - 'error': str - Error message description
-                  
+
         Examples:
             >>> factory = YtDlpWrapperTestDataFactory()
             >>> progress_data = factory.create_progress_callback_data()
@@ -400,25 +362,22 @@ class YtDlpWrapperTestDataFactory:
                 "total_bytes": 10240000,
                 "_percent_str": "10.0%",
                 "_speed_str": "1.2MiB/s",
-                "_eta_str": "00:08"
+                "_eta_str": "00:08",
             },
             "finished": {
                 "status": "finished",
                 "downloaded_bytes": 10240000,
                 "total_bytes": 10240000,
-                "filename": "/path/to/downloaded_file.mp4"
+                "filename": "/path/to/downloaded_file.mp4",
             },
-            "error": {
-                "status": "error",
-                "error": "Network connection failed"
-            }
+            "error": {"status": "error", "error": "Network connection failed"},
         }
 
     @classmethod
     def create_batch_download_data(cls) -> Dict[str, List[str]]:
         """
         Create batch download URL lists for testing.
-        
+
         Returns:
             Dict[str, List[str]]: Dictionary with URL lists for batch testing.
                 Keys:
@@ -432,26 +391,26 @@ class YtDlpWrapperTestDataFactory:
             "small_batch": [
                 "https://youtube.com/watch?v=video1",
                 "https://youtube.com/watch?v=video2",
-                "https://youtube.com/watch?v=video3"
+                "https://youtube.com/watch?v=video3",
             ],
             "mixed_platforms": [
                 "https://youtube.com/watch?v=video1",
                 "https://vimeo.com/123456",
-                "https://soundcloud.com/track"
+                "https://soundcloud.com/track",
             ],
             "large_batch": [f"https://youtube.com/watch?v=video{i}" for i in range(20)],
             "single_url": ["https://youtube.com/watch?v=single"],
-            "empty_batch": []
+            "empty_batch": [],
         }
 
     @classmethod
     def create_wrapper_instance(cls, **overrides) -> YtDlpWrapper:
         """
         Create a YtDlpWrapper instance with optional overrides.
-        
+
         Args:
             **overrides: Parameters to override in the initialization.
-            
+
         Returns:
             YtDlpWrapper: Configured YtDlpWrapper instance.
         """
@@ -463,10 +422,10 @@ class YtDlpWrapperTestDataFactory:
     def create_minimal_wrapper_instance(cls, **overrides) -> YtDlpWrapper:
         """
         Create a minimal YtDlpWrapper instance with optional overrides.
-        
+
         Args:
             **overrides: Parameters to override in the minimal initialization.
-            
+
         Returns:
             YtDlpWrapper: Minimal YtDlpWrapper instance.
         """
@@ -478,25 +437,24 @@ class YtDlpWrapperTestDataFactory:
     def create_mock_progress_callback(cls) -> Callable:
         """
         Create a mock progress callback function for testing.
-        
+
         Returns:
             Callable: Mock progress callback function.
         """
+
         def mock_callback(download_id: str, progress_data: Dict[str, Any]):
             """Mock progress callback that stores call data."""
-            if not hasattr(mock_callback, 'calls'):
+            if not hasattr(mock_callback, "calls"):
                 mock_callback.calls = []
-            mock_callback.calls.append({
-                'download_id': download_id,
-                'progress_data': progress_data
-            })
+            mock_callback.calls.append({"download_id": download_id, "progress_data": progress_data})
+
         return mock_callback
 
     @classmethod
     def create_download_status_data(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create download status tracking data for testing.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with download status data.
                 Keys:
@@ -519,7 +477,7 @@ class YtDlpWrapperTestDataFactory:
                   - 'end_time': float - Failure timestamp
                   - 'output_dir': str - Target directory
                   - 'error': str - Error message
-                  
+
         Examples:
             >>> factory = YtDlpWrapperTestDataFactory()
             >>> status_data = factory.create_download_status_data()
@@ -531,7 +489,7 @@ class YtDlpWrapperTestDataFactory:
                 "url": "https://youtube.com/watch?v=example",
                 "status": "downloading",
                 "start_time": 1234567890.0,
-                "output_dir": "/tmp/downloads"
+                "output_dir": "/tmp/downloads",
             },
             "completed_download": {
                 "url": "https://youtube.com/watch?v=example",
@@ -539,7 +497,7 @@ class YtDlpWrapperTestDataFactory:
                 "start_time": 1234567890.0,
                 "end_time": 1234567950.0,
                 "output_dir": "/tmp/downloads",
-                "result": {"status": "success"}
+                "result": {"status": "success"},
             },
             "failed_download": {
                 "url": "https://youtube.com/watch?v=example",
@@ -547,6 +505,6 @@ class YtDlpWrapperTestDataFactory:
                 "start_time": 1234567890.0,
                 "end_time": 1234567920.0,
                 "output_dir": "/tmp/downloads",
-                "error": "Download failed"
-            }
+                "error": "Download failed",
+            },
         }

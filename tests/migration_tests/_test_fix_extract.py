@@ -1,4 +1,4 @@
-#\!/usr/bin/env python3
+# \!/usr/bin/env python3
 
 import unittest
 import sys
@@ -7,11 +7,11 @@ from collections import defaultdict
 import datetime
 import json
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryStats
 
-class TestRagQueryStats(unittest.TestCase):
 
+class TestRagQueryStats(unittest.TestCase):
     def test_query_stats(self):
         """Test that GraphRAGQueryStats works correctly with cache hits."""
         stats = GraphRAGQueryStats()
@@ -35,6 +35,7 @@ class TestRagQueryStats(unittest.TestCase):
         self.assertEqual(stats.cache_hit_rate, 0.5)
 
         print("Query stats test passed")
+
 
 if __name__ == "__main__":
     unittest.main()

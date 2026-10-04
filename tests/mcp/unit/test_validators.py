@@ -4,6 +4,7 @@ Comprehensive tests for validators module.
 Tests cover input validation, sanitization, model name validation,
 IPFS hash validation, and security checks.
 """
+
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 import hashlib
@@ -14,13 +15,14 @@ import hashlib
 def validator():
     """Create validator instance for testing."""
     from ipfs_datasets_py.mcp_server.validators import EnhancedParameterValidator
+
     return EnhancedParameterValidator()
 
 
 # Test Class 1: Text Input Validation
 class TestTextInputValidation:
     """Test suite for text input validation."""
-    
+
     def test_validate_text_with_valid_input(self, validator):
         """
         GIVEN: Valid text input within length constraints
@@ -29,14 +31,14 @@ class TestTextInputValidation:
         """
         # Arrange
         text = "This is a valid text input"
-        
+
         # Act
         result = validator.validate_text_input(text)
-        
+
         # Assert
         assert result == "This is a valid text input"
-        assert validator.performance_metrics['validations_performed'] >= 1
-    
+        assert validator.performance_metrics["validations_performed"] >= 1
+
     def test_validate_text_with_whitespace(self, validator):
         """
         GIVEN: Text with leading/trailing whitespace
@@ -45,13 +47,13 @@ class TestTextInputValidation:
         """
         # Arrange
         text = "  Text with whitespace  "
-        
+
         # Act
         result = validator.validate_text_input(text)
-        
+
         # Assert
         assert result == "Text with whitespace"
-    
+
     def test_validate_text_exceeds_max_length(self, validator):
         """
         GIVEN: Text exceeding max length
@@ -60,15 +62,16 @@ class TestTextInputValidation:
         """
         # Arrange
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         text = "a" * 10001  # Exceeds default max of 10000
-        
+
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_text_input(text)
-        
+
         assert "must not exceed" in str(exc_info.value)
-        assert validator.performance_metrics['validation_errors'] >= 1
-    
+        assert validator.performance_metrics["validation_errors"] >= 1
+
     def test_validate_text_below_min_length(self, validator):
         """
         GIVEN: Empty or very short text
@@ -77,14 +80,15 @@ class TestTextInputValidation:
         """
         # Arrange
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         text = ""
-        
+
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_text_input(text)
-        
+
         assert "at least" in str(exc_info.value)
-    
+
     def test_validate_text_with_non_string_input(self, validator):
         """
         GIVEN: Non-string input
@@ -93,19 +97,20 @@ class TestTextInputValidation:
         """
         # Arrange
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         text = 12345  # Not a string
-        
+
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_text_input(text)
-        
+
         assert "must be a string" in str(exc_info.value)
 
 
 # Test Class 2: Model Name Validation
 class TestModelNameValidation:
     """Test suite for model name validation."""
-    
+
     def test_validate_model_name_sentence_transformers(self, validator):
         """
         GIVEN: Valid sentence-transformers model name
@@ -114,13 +119,13 @@ class TestModelNameValidation:
         """
         # Arrange
         model_name = "sentence-transformers/all-MiniLM-L6-v2"
-        
+
         # Act
         result = validator.validate_model_name(model_name)
-        
+
         # Assert
         assert result == model_name
-    
+
     def test_validate_model_name_with_caching(self, validator):
         """
         GIVEN: Same model name validated twice
@@ -129,13 +134,13 @@ class TestModelNameValidation:
         """
         # Arrange
         model_name = "sentence-transformers/test-model"
-        
+
         # Act
         result1 = validator.validate_model_name(model_name)
-        cache_hits_before = validator.performance_metrics['cache_hits']
+        cache_hits_before = validator.performance_metrics["cache_hits"]
         result2 = validator.validate_model_name(model_name)
-        cache_hits_after = validator.performance_metrics['cache_hits']
-        
+        cache_hits_after = validator.performance_metrics["cache_hits"]
+
         # Assert
         assert result1 == result2
         assert cache_hits_after > cache_hits_before
@@ -144,7 +149,7 @@ class TestModelNameValidation:
 # Test Class 3: IPFS Hash Validation
 class TestIPFSHashValidation:
     """Test suite for IPFS hash validation."""
-    
+
     def test_validate_ipfs_hash_cidv0(self, validator):
         """
         GIVEN: Valid CIDv0 IPFS hash
@@ -153,13 +158,13 @@ class TestIPFSHashValidation:
         """
         # Arrange
         hash_value = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
-        
+
         # Act
         result = validator.validate_ipfs_hash(hash_value)
-        
+
         # Assert
         assert result == hash_value
-    
+
     def test_validate_ipfs_hash_cidv1(self, validator):
         """
         GIVEN: Valid CIDv1 IPFS hash
@@ -169,13 +174,13 @@ class TestIPFSHashValidation:
         # Arrange
         # Valid CIDv1 format (bafybe...)
         hash_value = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
-        
+
         # Act
         result = validator.validate_ipfs_hash(hash_value)
-        
+
         # Assert
         assert result == hash_value
-    
+
     def test_validate_ipfs_hash_invalid_format(self, validator):
         """
         GIVEN: Invalid IPFS hash format
@@ -184,19 +189,20 @@ class TestIPFSHashValidation:
         """
         # Arrange
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         hash_value = "invalid-hash-format"
-        
+
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_ipfs_hash(hash_value)
-        
+
         assert "Invalid IPFS hash format" in str(exc_info.value)
 
 
 # Test Class 4: Collection Name Validation
 class TestCollectionNameValidation:
     """Test suite for collection name validation."""
-    
+
     def test_validate_collection_name_valid(self, validator):
         """
         GIVEN: Valid collection name (alphanumeric, hyphens, underscores)
@@ -205,13 +211,13 @@ class TestCollectionNameValidation:
         """
         # Arrange
         name = "my_collection-123"
-        
+
         # Act
         result = validator.validate_collection_name(name)
-        
+
         # Assert
         assert result == name
-    
+
     def test_validate_collection_name_with_special_chars(self, validator):
         """
         GIVEN: Collection name with invalid special characters
@@ -220,19 +226,20 @@ class TestCollectionNameValidation:
         """
         # Arrange
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         name = "invalid@collection#name"
-        
+
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_collection_name(name)
-        
+
         assert "alphanumeric" in str(exc_info.value)
 
 
 # Test Class 5: Sanitization Functions
 class TestSanitizationFunctions:
     """Test suite for sanitization functions."""
-    
+
     def test_sanitize_removes_suspicious_patterns(self, validator):
         """
         GIVEN: Text with suspicious patterns
@@ -241,14 +248,14 @@ class TestSanitizationFunctions:
         """
         # Arrange
         text = "SELECT * FROM users WHERE 1=1"
-        
+
         # Act
         result = validator._contains_suspicious_patterns(text)
-        
+
         # Assert
         # Should detect SQL injection patterns
         assert isinstance(result, bool)
-    
+
     def test_sanitize_safe_text(self, validator):
         """
         GIVEN: Safe text without suspicious patterns
@@ -257,10 +264,10 @@ class TestSanitizationFunctions:
         """
         # Arrange
         text = "This is a safe and normal text"
-        
+
         # Act
         result = validator._contains_suspicious_patterns(text)
-        
+
         # Assert
         assert result is False
 
@@ -268,7 +275,7 @@ class TestSanitizationFunctions:
 # Test Class 6: Performance Metrics
 class TestPerformanceMetrics:
     """Test suite for validator performance metrics."""
-    
+
     def test_metrics_track_validations_performed(self, validator):
         """
         GIVEN: Multiple validation operations
@@ -279,10 +286,10 @@ class TestPerformanceMetrics:
         validator.validate_text_input("Test 1")
         validator.validate_text_input("Test 2")
         validator.validate_text_input("Test 3")
-        
+
         # Assert
-        assert validator.performance_metrics['validations_performed'] >= 3
-    
+        assert validator.performance_metrics["validations_performed"] >= 3
+
     def test_metrics_track_validation_errors(self, validator):
         """
         GIVEN: Invalid inputs causing errors
@@ -291,21 +298,22 @@ class TestPerformanceMetrics:
         """
         # Arrange
         from ipfs_datasets_py.mcp_server.validators import ValidationError
-        errors_before = validator.performance_metrics['validation_errors']
-        
+
+        errors_before = validator.performance_metrics["validation_errors"]
+
         # Act
         try:
             validator.validate_text_input("")  # Should fail
         except ValidationError:
             pass
-        
+
         try:
             validator.validate_text_input(None)  # Should fail
         except (ValidationError, AttributeError):
             pass
-        
-        errors_after = validator.performance_metrics['validation_errors']
-        
+
+        errors_after = validator.performance_metrics["validation_errors"]
+
         # Assert
         assert errors_after >= errors_before
 
@@ -313,7 +321,7 @@ class TestPerformanceMetrics:
 # Test Class 7: Cache Key Generation
 class TestCacheKeyGeneration:
     """Test suite for cache key generation."""
-    
+
     def test_cache_key_generation_consistency(self, validator):
         """
         GIVEN: Same value and validation type
@@ -323,15 +331,15 @@ class TestCacheKeyGeneration:
         # Arrange
         value = "test-value"
         validation_type = "model_name"
-        
+
         # Act
         key1 = validator._cache_key(value, validation_type)
         key2 = validator._cache_key(value, validation_type)
-        
+
         # Assert
         assert key1 == key2
         assert validation_type in key1
-    
+
     def test_cache_key_uniqueness(self, validator):
         """
         GIVEN: Different values or validation types
@@ -342,11 +350,11 @@ class TestCacheKeyGeneration:
         value1 = "test-value-1"
         value2 = "test-value-2"
         validation_type = "model_name"
-        
+
         # Act
         key1 = validator._cache_key(value1, validation_type)
         key2 = validator._cache_key(value2, validation_type)
-        
+
         # Assert
         assert key1 != key2
 
@@ -372,6 +380,7 @@ class TestSearchFiltersValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_search_filters(["not", "a", "dict"])
 
@@ -382,6 +391,7 @@ class TestSearchFiltersValidation:
         THEN: Raises ValidationError (complexity limit)
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         big_filters = {f"field{i}": i for i in range(51)}
         with pytest.raises(ValidationError, match="Too many filters"):
             validator.validate_search_filters(big_filters)
@@ -393,6 +403,7 @@ class TestSearchFiltersValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         filters = {"age": {"$where": "bad"}}  # $where is not whitelisted
         with pytest.raises(ValidationError):
             validator.validate_search_filters(filters)
@@ -427,6 +438,7 @@ class TestFilePathValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_file_path("../../etc/passwd")
 
@@ -437,6 +449,7 @@ class TestFilePathValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_file_path("/etc/shadow")
 
@@ -447,11 +460,9 @@ class TestFilePathValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
-            validator.validate_file_path(
-                "upload/virus.exe",
-                allowed_extensions={".txt", ".json"}
-            )
+            validator.validate_file_path("upload/virus.exe", allowed_extensions={".txt", ".json"})
 
     def test_validate_file_path_allowed_extension(self, validator):
         """
@@ -460,8 +471,7 @@ class TestFilePathValidation:
         THEN: Returns path string
         """
         result = validator.validate_file_path(
-            "data/config.json",
-            allowed_extensions={".json", ".yaml"}
+            "data/config.json", allowed_extensions={".json", ".yaml"}
         )
         assert result == "data/config.json"
 
@@ -487,9 +497,9 @@ class TestUrlValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
-            validator.validate_url("ftp://files.example.com",
-                                   allowed_schemes={"http", "https"})
+            validator.validate_url("ftp://files.example.com", allowed_schemes={"http", "https"})
 
     def test_validate_url_javascript_blocked(self, validator):
         """
@@ -498,9 +508,9 @@ class TestUrlValidation:
         THEN: Raises ValidationError (XSS prevention)
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
-            validator.validate_url("javascript:alert('xss')",
-                                   allowed_schemes={"http", "https"})
+            validator.validate_url("javascript:alert('xss')", allowed_schemes={"http", "https"})
 
     def test_validate_url_missing_scheme_raises(self, validator):
         """
@@ -509,6 +519,7 @@ class TestUrlValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError, match="scheme"):
             validator.validate_url("example.com/path")
 
@@ -519,6 +530,7 @@ class TestUrlValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_url(12345)
 
@@ -543,6 +555,7 @@ class TestNumericRangeValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_numeric_range(0, "batch_size", min_val=1)
 
@@ -553,6 +566,7 @@ class TestNumericRangeValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_numeric_range(150, "batch_size", max_val=100)
 
@@ -562,8 +576,9 @@ class TestNumericRangeValidation:
         WHEN: Validating range
         THEN: Returns None without error
         """
-        result = validator.validate_numeric_range(None, "optional_param",
-                                                  min_val=0, allow_none=True)
+        result = validator.validate_numeric_range(
+            None, "optional_param", min_val=0, allow_none=True
+        )
         assert result is None
 
     def test_validate_numeric_non_numeric_raises(self, validator):
@@ -573,6 +588,7 @@ class TestNumericRangeValidation:
         THEN: Raises ValidationError
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         with pytest.raises(ValidationError):
             validator.validate_numeric_range("not_a_number", "param", min_val=0)
 
@@ -600,6 +616,7 @@ class TestJsonSchemaValidation:
         THEN: Either raises ValidationError or returns data (graceful degradation)
         """
         from ipfs_datasets_py.mcp_server.validators import ValidationError
+
         data = "not an object"
         schema = {"type": "object", "required": ["name"]}
         # Should not crash - may raise ValidationError or return data
@@ -634,10 +651,10 @@ class TestClearCache:
         THEN: performance_metrics counters are NOT reset
         """
         validator.validate_text_input("hello")
-        count_before = validator.performance_metrics['validations_performed']
+        count_before = validator.performance_metrics["validations_performed"]
         validator.clear_cache()
         # Metrics should be preserved
-        assert validator.performance_metrics['validations_performed'] == count_before
+        assert validator.performance_metrics["validations_performed"] == count_before
 
 
 # Test Class 14: Get Performance Metrics
@@ -651,11 +668,11 @@ class TestGetPerformanceMetrics:
         THEN: Returns a dict copy; mutations don't affect internal state
         """
         metrics = validator.get_performance_metrics()
-        original_count = metrics['validations_performed']
+        original_count = metrics["validations_performed"]
         # Mutate the returned copy
-        metrics['validations_performed'] = 9999
+        metrics["validations_performed"] = 9999
         # Internal state should be unchanged
-        assert validator.performance_metrics['validations_performed'] == original_count
+        assert validator.performance_metrics["validations_performed"] == original_count
 
     def test_get_performance_metrics_tracks_operations(self, validator):
         """
@@ -663,10 +680,10 @@ class TestGetPerformanceMetrics:
         WHEN: get_performance_metrics() is called
         THEN: Returns updated counters
         """
-        start = validator.get_performance_metrics()['validations_performed']
+        start = validator.get_performance_metrics()["validations_performed"]
         validator.validate_text_input("test one")
         validator.validate_text_input("test two")
-        end = validator.get_performance_metrics()['validations_performed']
+        end = validator.get_performance_metrics()["validations_performed"]
         assert end == start + 2
 
 

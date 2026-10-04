@@ -134,43 +134,44 @@ from .exceptions import TDFOLError
 class YourClass:
     """
     Brief description of class.
-    
+
     Detailed description with use cases.
-    
+
     Attributes:
         field1: Description of field1
         field2: Description of field2
-    
+
     Example:
         >>> obj = YourClass(field1="value", field2=42)
         >>> result = obj.method()
         >>> print(result)
         Expected output
     """
+
     field1: str
     field2: int
-    
+
     def method(self) -> str:
         """
         Brief description of method.
-        
+
         Detailed description of what it does, algorithm, complexity.
-        
+
         Args:
             None (uses self.field1, self.field2)
-        
+
         Returns:
             str: Description of return value
-        
+
         Raises:
             TDFOLError: When something goes wrong
-        
+
         Example:
             >>> obj = YourClass(field1="test", field2=10)
             >>> result = obj.method()
             >>> print(result)
             "test: 10"
-        
+
         Note:
             - Important note 1
             - Important note 2
@@ -261,16 +262,11 @@ class TestYourClass:
 **Type Hints:**
 ```python
 # Good ✅
-def prove(
-    formula: Formula,
-    kb: TDFOLKnowledgeBase,
-    timeout: float = 10.0
-) -> Optional[Proof]:
-    ...
+def prove(formula: Formula, kb: TDFOLKnowledgeBase, timeout: float = 10.0) -> Optional[Proof]: ...
+
 
 # Bad ❌
-def prove(formula, kb, timeout=10.0):
-    ...
+def prove(formula, kb, timeout=10.0): ...
 ```
 
 **Docstrings:**
@@ -279,24 +275,25 @@ def prove(formula, kb, timeout=10.0):
 def parse(text: str) -> Formula:
     """
     Parse TDFOL formula from string.
-    
+
     Supports both symbolic (∀∃∧∨) and ASCII (forall exists and or) notation.
-    
+
     Args:
         text: Formula string to parse
-    
+
     Returns:
         Formula: Parsed TDFOL formula
-    
+
     Raises:
         ParseError: If text is malformed
-    
+
     Example:
         >>> formula = parse("∀x.(P(x) → Q(x))")
         >>> print(formula)
         ∀x.(P(x) → Q(x))
     """
     ...
+
 
 # Bad ❌
 def parse(text: str) -> Formula:
@@ -341,14 +338,15 @@ def test_prove_with_valid_formula(self):
     kb.add_axiom(parse("P(a)"))
     kb.add_axiom(parse("∀x.(P(x) → Q(x))"))
     formula = parse("Q(a)")
-    
+
     # Act (WHEN)
     proof = prove(formula, kb)
-    
+
     # Assert (THEN)
     assert proof is not None
     assert proof.conclusion == formula
     assert len(proof.steps) >= 2
+
 
 # Bad ❌ - No structure
 def test_prove(self):
@@ -382,22 +380,24 @@ def test_prove(self):
 # Caching
 from functools import lru_cache
 
+
 @lru_cache(maxsize=1000)
-def expensive_computation(x: int) -> int:
-    ...
+def expensive_computation(x: int) -> int: ...
+
 
 # Indexing
 class IndexedKnowledgeBase:
     def __init__(self):
         self._predicate_index: Dict[str, List[Formula]] = {}
-    
+
     def get_by_predicate(self, pred_name: str) -> List[Formula]:
         return self._predicate_index.get(pred_name, [])
+
 
 # Lazy evaluation
 @property
 def expensive_property(self) -> ComplexType:
-    if not hasattr(self, '_cached_property'):
+    if not hasattr(self, "_cached_property"):
         self._cached_property = compute_expensive_thing()
     return self._cached_property
 ```
@@ -429,6 +429,7 @@ SPANISH_PATTERNS = [
     # ... 19 more patterns
 ]
 
+
 def parse_spanish(text: str) -> Formula:
     """Parse Spanish legal text to TDFOL"""
     for pattern in SPANISH_PATTERNS:
@@ -457,17 +458,18 @@ from z3 import *
 from ..tdfol_core import Formula, Proof
 from ..tdfol_converter import TDFOLToSMTConverter
 
+
 class Z3Adapter:
     """Adapter for Z3 SMT solver"""
-    
+
     def prove(self, formula: Formula, kb: TDFOLKnowledgeBase) -> Optional[Proof]:
         """
         Prove formula using Z3.
-        
+
         Args:
             formula: Formula to prove
             kb: Knowledge base with axioms
-        
+
         Returns:
             Proof if valid, None otherwise
         """
@@ -475,15 +477,15 @@ class Z3Adapter:
         converter = TDFOLToSMTConverter()
         smt_formula = converter.convert(formula)
         smt_axioms = [converter.convert(ax) for ax in kb.axioms]
-        
+
         # Create Z3 solver
         solver = Solver()
         solver.add(smt_axioms)
         solver.add(Not(smt_formula))  # Prove by contradiction
-        
+
         # Check satisfiability
         result = solver.check()
-        
+
         if result == unsat:
             # Valid! Extract proof
             return self._extract_proof(solver.proof())
@@ -506,17 +508,18 @@ class Z3Adapter:
 ```python
 # proof_tree_visualizer.py
 
+
 class ProofTreeVisualizer:
     """Visualize proof trees in multiple formats"""
-    
+
     def visualize_ascii(self, proof: Proof) -> str:
         """Render proof tree as ASCII art"""
         ...
-    
+
     def export_graphviz(self, proof: Proof, output_path: str) -> None:
         """Export proof tree as PNG/SVG via GraphViz"""
         ...
-    
+
     def interactive_html(self, proof: Proof, output_path: str) -> None:
         """Create interactive HTML visualization"""
         ...

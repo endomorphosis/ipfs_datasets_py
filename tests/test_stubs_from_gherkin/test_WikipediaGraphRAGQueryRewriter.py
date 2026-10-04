@@ -18,13 +18,19 @@ def wikipediagraphragqueryrewriter_instance():
     try:
         instance = WikipediaGraphRAGQueryRewriter()
         if instance is None:
-            raise FixtureError("Failed to create WikipediaGraphRAGQueryRewriter instance: instance is None")
+            raise FixtureError(
+                "Failed to create WikipediaGraphRAGQueryRewriter instance: instance is None"
+            )
         return instance
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture wikipediagraphragqueryrewriter_instance: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture wikipediagraphragqueryrewriter_instance: {e}"
+        ) from e
 
 
-def test_initialize_with_default_configuration_relationship_calculator_is_set(wikipediagraphragqueryrewriter_instance):
+def test_initialize_with_default_configuration_relationship_calculator_is_set(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Initialize with default configuration relationship_calculator is set
 
@@ -37,7 +43,9 @@ def test_initialize_with_default_configuration_relationship_calculator_is_set(wi
     pass
 
 
-def test_initialize_with_default_configuration_domain_patterns_contains_topic_lookup(wikipediagraphragqueryrewriter_instance):
+def test_initialize_with_default_configuration_domain_patterns_contains_topic_lookup(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Initialize with default configuration domain_patterns contains topic_lookup
 
@@ -50,7 +58,9 @@ def test_initialize_with_default_configuration_domain_patterns_contains_topic_lo
     pass
 
 
-def test_initialize_with_default_configuration_domain_patterns_contains_comparison(wikipediagraphragqueryrewriter_instance):
+def test_initialize_with_default_configuration_domain_patterns_contains_comparison(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Initialize with default configuration domain_patterns contains comparison
 
@@ -63,7 +73,9 @@ def test_initialize_with_default_configuration_domain_patterns_contains_comparis
     pass
 
 
-def test_initialize_with_default_configuration_domain_patterns_contains_definition(wikipediagraphragqueryrewriter_instance):
+def test_initialize_with_default_configuration_domain_patterns_contains_definition(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Initialize with default configuration domain_patterns contains definition
 
@@ -76,7 +88,9 @@ def test_initialize_with_default_configuration_domain_patterns_contains_definiti
     pass
 
 
-def test_initialize_with_default_configuration_domain_patterns_contains_cause_effect(wikipediagraphragqueryrewriter_instance):
+def test_initialize_with_default_configuration_domain_patterns_contains_cause_effect(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Initialize with default configuration domain_patterns contains cause_effect
 
@@ -89,7 +103,9 @@ def test_initialize_with_default_configuration_domain_patterns_contains_cause_ef
     pass
 
 
-def test_initialize_with_default_configuration_domain_patterns_contains_list(wikipediagraphragqueryrewriter_instance):
+def test_initialize_with_default_configuration_domain_patterns_contains_list(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Initialize with default configuration domain_patterns contains list
 
@@ -102,7 +118,9 @@ def test_initialize_with_default_configuration_domain_patterns_contains_list(wik
     pass
 
 
-def test_rewrite_query_prioritizes_edge_types_traversal_edge_types_first_item_is_subclass_of(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_prioritizes_edge_types_traversal_edge_types_first_item_is_subclass_of(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query prioritizes edge types traversal edge_types first item is subclass_of
 
@@ -118,7 +136,9 @@ def test_rewrite_query_prioritizes_edge_types_traversal_edge_types_first_item_is
     pass
 
 
-def test_rewrite_query_prioritizes_edge_types_traversal_edge_types_second_item_is_mentions(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_prioritizes_edge_types_traversal_edge_types_second_item_is_mentions(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query prioritizes edge types traversal edge_types second item is mentions
 
@@ -134,7 +154,9 @@ def test_rewrite_query_prioritizes_edge_types_traversal_edge_types_second_item_i
     pass
 
 
-def test_rewrite_query_prioritizes_edge_types_traversal_hierarchical_weight_is_15(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_prioritizes_edge_types_traversal_hierarchical_weight_is_15(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query prioritizes edge types traversal hierarchical_weight is 1.5
 
@@ -150,7 +172,9 @@ def test_rewrite_query_prioritizes_edge_types_traversal_hierarchical_weight_is_1
     pass
 
 
-def test_rewrite_query_with_category_filter_vector_params_categories_contains_physics(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_with_category_filter_vector_params_categories_contains_physics(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query with category filter vector_params categories contains Physics
 
@@ -166,7 +190,9 @@ def test_rewrite_query_with_category_filter_vector_params_categories_contains_ph
     pass
 
 
-def test_rewrite_query_with_category_filter_vector_params_categories_contains_chemistry(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_with_category_filter_vector_params_categories_contains_chemistry(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query with category filter vector_params categories contains Chemistry
 
@@ -182,7 +208,9 @@ def test_rewrite_query_with_category_filter_vector_params_categories_contains_ch
     pass
 
 
-def test_rewrite_query_with_topic_expansion_traversal_expand_topics_is_true(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_with_topic_expansion_traversal_expand_topics_is_true(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query with topic expansion traversal expand_topics is True
 
@@ -199,7 +227,9 @@ def test_rewrite_query_with_topic_expansion_traversal_expand_topics_is_true(wiki
     pass
 
 
-def test_rewrite_query_with_topic_expansion_traversal_topic_expansion_factor_is_15(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_with_topic_expansion_traversal_topic_expansion_factor_is_15(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query with topic expansion traversal topic_expansion_factor is 1.5
 
@@ -216,7 +246,9 @@ def test_rewrite_query_with_topic_expansion_traversal_topic_expansion_factor_is_
     pass
 
 
-def test_detect_topic_lookup_pattern_pattern_type_is_topic_lookup(wikipediagraphragqueryrewriter_instance):
+def test_detect_topic_lookup_pattern_pattern_type_is_topic_lookup(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect topic lookup pattern pattern_type is topic_lookup
 
@@ -232,7 +264,9 @@ def test_detect_topic_lookup_pattern_pattern_type_is_topic_lookup(wikipediagraph
     pass
 
 
-def test_detect_topic_lookup_pattern_entities_contains_quantum_physics(wikipediagraphragqueryrewriter_instance):
+def test_detect_topic_lookup_pattern_entities_contains_quantum_physics(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect topic lookup pattern entities contains quantum physics
 
@@ -248,7 +282,9 @@ def test_detect_topic_lookup_pattern_entities_contains_quantum_physics(wikipedia
     pass
 
 
-def test_detect_comparison_pattern_pattern_type_is_comparison(wikipediagraphragqueryrewriter_instance):
+def test_detect_comparison_pattern_pattern_type_is_comparison(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect comparison pattern pattern_type is comparison
 
@@ -264,7 +300,9 @@ def test_detect_comparison_pattern_pattern_type_is_comparison(wikipediagraphragq
     pass
 
 
-def test_detect_comparison_pattern_entities_contains_classical_physics(wikipediagraphragqueryrewriter_instance):
+def test_detect_comparison_pattern_entities_contains_classical_physics(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect comparison pattern entities contains classical physics
 
@@ -280,7 +318,9 @@ def test_detect_comparison_pattern_entities_contains_classical_physics(wikipedia
     pass
 
 
-def test_detect_comparison_pattern_entities_contains_quantum_physics(wikipediagraphragqueryrewriter_instance):
+def test_detect_comparison_pattern_entities_contains_quantum_physics(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect comparison pattern entities contains quantum physics
 
@@ -296,7 +336,9 @@ def test_detect_comparison_pattern_entities_contains_quantum_physics(wikipediagr
     pass
 
 
-def test_detect_definition_pattern_pattern_type_is_definition(wikipediagraphragqueryrewriter_instance):
+def test_detect_definition_pattern_pattern_type_is_definition(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect definition pattern pattern_type is definition
 
@@ -312,7 +354,9 @@ def test_detect_definition_pattern_pattern_type_is_definition(wikipediagraphragq
     pass
 
 
-def test_detect_definition_pattern_entities_contains_quantum_entanglement(wikipediagraphragqueryrewriter_instance):
+def test_detect_definition_pattern_entities_contains_quantum_entanglement(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect definition pattern entities contains quantum entanglement
 
@@ -328,7 +372,9 @@ def test_detect_definition_pattern_entities_contains_quantum_entanglement(wikipe
     pass
 
 
-def test_detect_cause_effect_pattern_pattern_type_is_cause_effect(wikipediagraphragqueryrewriter_instance):
+def test_detect_cause_effect_pattern_pattern_type_is_cause_effect(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect cause effect pattern pattern_type is cause_effect
 
@@ -344,7 +390,9 @@ def test_detect_cause_effect_pattern_pattern_type_is_cause_effect(wikipediagraph
     pass
 
 
-def test_detect_cause_effect_pattern_entities_contains_global_warming(wikipediagraphragqueryrewriter_instance):
+def test_detect_cause_effect_pattern_entities_contains_global_warming(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect cause effect pattern entities contains global warming
 
@@ -376,7 +424,9 @@ def test_detect_list_pattern_pattern_type_is_list(wikipediagraphragqueryrewriter
     pass
 
 
-def test_detect_list_pattern_entities_contains_quantum_physics_theories(wikipediagraphragqueryrewriter_instance):
+def test_detect_list_pattern_entities_contains_quantum_physics_theories(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Detect list pattern entities contains quantum physics theories
 
@@ -392,7 +442,9 @@ def test_detect_list_pattern_entities_contains_quantum_physics_theories(wikipedi
     pass
 
 
-def test_apply_topic_lookup_optimization_traversal_strategy_is_topic_focused(wikipediagraphragqueryrewriter_instance):
+def test_apply_topic_lookup_optimization_traversal_strategy_is_topic_focused(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply topic lookup optimization traversal strategy is topic_focused
 
@@ -410,7 +462,9 @@ def test_apply_topic_lookup_optimization_traversal_strategy_is_topic_focused(wik
     pass
 
 
-def test_apply_topic_lookup_optimization_traversal_target_entities_contains_quantum_physics(wikipediagraphragqueryrewriter_instance):
+def test_apply_topic_lookup_optimization_traversal_target_entities_contains_quantum_physics(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply topic lookup optimization traversal target_entities contains quantum physics
 
@@ -428,7 +482,9 @@ def test_apply_topic_lookup_optimization_traversal_target_entities_contains_quan
     pass
 
 
-def test_apply_topic_lookup_optimization_traversal_prioritize_relationships_is_true(wikipediagraphragqueryrewriter_instance):
+def test_apply_topic_lookup_optimization_traversal_prioritize_relationships_is_true(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply topic lookup optimization traversal prioritize_relationships is True
 
@@ -446,7 +502,9 @@ def test_apply_topic_lookup_optimization_traversal_prioritize_relationships_is_t
     pass
 
 
-def test_apply_comparison_optimization_traversal_strategy_is_comparison(wikipediagraphragqueryrewriter_instance):
+def test_apply_comparison_optimization_traversal_strategy_is_comparison(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply comparison optimization traversal strategy is comparison
 
@@ -464,7 +522,9 @@ def test_apply_comparison_optimization_traversal_strategy_is_comparison(wikipedi
     pass
 
 
-def test_apply_comparison_optimization_traversal_comparison_entities_contains_both_entities(wikipediagraphragqueryrewriter_instance):
+def test_apply_comparison_optimization_traversal_comparison_entities_contains_both_entities(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply comparison optimization traversal comparison_entities contains both entities
 
@@ -482,7 +542,9 @@ def test_apply_comparison_optimization_traversal_comparison_entities_contains_bo
     pass
 
 
-def test_apply_comparison_optimization_traversal_find_common_categories_is_true(wikipediagraphragqueryrewriter_instance):
+def test_apply_comparison_optimization_traversal_find_common_categories_is_true(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply comparison optimization traversal find_common_categories is True
 
@@ -500,7 +562,9 @@ def test_apply_comparison_optimization_traversal_find_common_categories_is_true(
     pass
 
 
-def test_apply_comparison_optimization_traversal_find_relationships_between_is_true(wikipediagraphragqueryrewriter_instance):
+def test_apply_comparison_optimization_traversal_find_relationships_between_is_true(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply comparison optimization traversal find_relationships_between is True
 
@@ -518,7 +582,9 @@ def test_apply_comparison_optimization_traversal_find_relationships_between_is_t
     pass
 
 
-def test_apply_definition_optimization_traversal_strategy_is_definition(wikipediagraphragqueryrewriter_instance):
+def test_apply_definition_optimization_traversal_strategy_is_definition(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply definition optimization traversal strategy is definition
 
@@ -535,7 +601,9 @@ def test_apply_definition_optimization_traversal_strategy_is_definition(wikipedi
     pass
 
 
-def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_instance_of(wikipediagraphragqueryrewriter_instance):
+def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_instance_of(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply definition optimization traversal prioritize_edge_types contains instance_of
 
@@ -552,7 +620,9 @@ def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_
     pass
 
 
-def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_subclass_of(wikipediagraphragqueryrewriter_instance):
+def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_subclass_of(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply definition optimization traversal prioritize_edge_types contains subclass_of
 
@@ -569,7 +639,9 @@ def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_
     pass
 
 
-def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_defined_as(wikipediagraphragqueryrewriter_instance):
+def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_defined_as(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply definition optimization traversal prioritize_edge_types contains defined_as
 
@@ -586,7 +658,9 @@ def test_apply_definition_optimization_traversal_prioritize_edge_types_contains_
     pass
 
 
-def test_apply_cause_effect_optimization_traversal_strategy_is_causal(wikipediagraphragqueryrewriter_instance):
+def test_apply_cause_effect_optimization_traversal_strategy_is_causal(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply cause effect optimization traversal strategy is causal
 
@@ -603,7 +677,9 @@ def test_apply_cause_effect_optimization_traversal_strategy_is_causal(wikipediag
     pass
 
 
-def test_apply_cause_effect_optimization_traversal_prioritize_edge_types_contains_causes(wikipediagraphragqueryrewriter_instance):
+def test_apply_cause_effect_optimization_traversal_prioritize_edge_types_contains_causes(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply cause effect optimization traversal prioritize_edge_types contains causes
 
@@ -620,7 +696,9 @@ def test_apply_cause_effect_optimization_traversal_prioritize_edge_types_contain
     pass
 
 
-def test_apply_cause_effect_optimization_traversal_prioritize_edge_types_contains_caused_by(wikipediagraphragqueryrewriter_instance):
+def test_apply_cause_effect_optimization_traversal_prioritize_edge_types_contains_caused_by(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply cause effect optimization traversal prioritize_edge_types contains caused_by
 
@@ -637,7 +715,9 @@ def test_apply_cause_effect_optimization_traversal_prioritize_edge_types_contain
     pass
 
 
-def test_apply_list_optimization_traversal_strategy_is_collection(wikipediagraphragqueryrewriter_instance):
+def test_apply_list_optimization_traversal_strategy_is_collection(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply list optimization traversal strategy is collection
 
@@ -655,7 +735,9 @@ def test_apply_list_optimization_traversal_strategy_is_collection(wikipediagraph
     pass
 
 
-def test_apply_list_optimization_traversal_prioritize_edge_types_contains_instance_of(wikipediagraphragqueryrewriter_instance):
+def test_apply_list_optimization_traversal_prioritize_edge_types_contains_instance_of(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply list optimization traversal prioritize_edge_types contains instance_of
 
@@ -673,7 +755,9 @@ def test_apply_list_optimization_traversal_prioritize_edge_types_contains_instan
     pass
 
 
-def test_apply_list_optimization_traversal_collection_target_is_quantum_theories(wikipediagraphragqueryrewriter_instance):
+def test_apply_list_optimization_traversal_collection_target_is_quantum_theories(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Apply list optimization traversal collection_target is quantum theories
 
@@ -691,7 +775,9 @@ def test_apply_list_optimization_traversal_collection_target_is_quantum_theories
     pass
 
 
-def test_rewrite_query_detects_and_applies_pattern_traversal_strategy_is_definition(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_detects_and_applies_pattern_traversal_strategy_is_definition(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query detects and applies pattern traversal strategy is definition
 
@@ -708,7 +794,9 @@ def test_rewrite_query_detects_and_applies_pattern_traversal_strategy_is_definit
     pass
 
 
-def test_rewrite_query_detects_and_applies_pattern_traversal_prioritize_edge_types_contains_instance_of(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_detects_and_applies_pattern_traversal_prioritize_edge_types_contains_instance_of(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query detects and applies pattern traversal prioritize_edge_types contains instance_of
 
@@ -725,7 +813,9 @@ def test_rewrite_query_detects_and_applies_pattern_traversal_prioritize_edge_typ
     pass
 
 
-def test_rewrite_query_detects_and_applies_pattern_edge_types_are_prioritized(wikipediagraphragqueryrewriter_instance):
+def test_rewrite_query_detects_and_applies_pattern_edge_types_are_prioritized(
+    wikipediagraphragqueryrewriter_instance,
+):
     """
     Scenario: Rewrite query detects and applies pattern edge_types are prioritized
 
@@ -740,4 +830,3 @@ def test_rewrite_query_detects_and_applies_pattern_edge_types_are_prioritized(wi
         edge_types are prioritized
     """
     pass
-

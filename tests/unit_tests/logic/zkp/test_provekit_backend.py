@@ -147,4 +147,3 @@ print(json.dumps({
         "provekit_backend_imported": False,
         "provekit_cli_imported": False,
     }
-

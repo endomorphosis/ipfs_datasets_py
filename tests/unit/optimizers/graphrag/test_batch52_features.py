@@ -5,6 +5,7 @@ Covers:
 - OntologyLearningAdapter.get_extraction_hint() with action-success-rate correction
 - OntologyGenerator.extract_entities() structured log (entity_count + strategy)
 """
+
 from __future__ import annotations
 
 import logging
@@ -17,12 +18,14 @@ import pytest
 # OntologyCritic shared cache
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestCriticSharedCache:
     """_SHARED_EVAL_CACHE should persist results across instances."""
 
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         OntologyCritic.clear_shared_cache()
         yield
         OntologyCritic.clear_shared_cache()
@@ -55,16 +58,19 @@ class TestCriticSharedCache:
 
     def test_shared_cache_empty_at_start(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         assert OntologyCritic.shared_cache_size() == 0
 
     def test_evaluate_populates_shared_cache(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         c = OntologyCritic(use_llm=False)
         c.evaluate_ontology(ontology_builder(), self._make_ctx())
         assert OntologyCritic.shared_cache_size() == 1
 
     def test_second_instance_hits_shared_cache(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         ontology = ontology_builder("x")
         ctx = self._make_ctx()
 
@@ -80,6 +86,7 @@ class TestCriticSharedCache:
 
     def test_different_ontologies_cached_separately(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         ctx = self._make_ctx()
         c = OntologyCritic(use_llm=False)
         c.evaluate_ontology(ontology_builder("a"), ctx)
@@ -88,6 +95,7 @@ class TestCriticSharedCache:
 
     def test_clear_shared_cache_resets_to_zero(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         ctx = self._make_ctx()
         c = OntologyCritic(use_llm=False)
         c.evaluate_ontology(ontology_builder(), ctx)
@@ -96,6 +104,7 @@ class TestCriticSharedCache:
 
     def test_source_data_bypasses_shared_cache(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         ctx = self._make_ctx()
         ontology = ontology_builder()
         c = OntologyCritic(use_llm=False)
@@ -105,6 +114,7 @@ class TestCriticSharedCache:
 
     def test_shared_cache_max_cleared_on_overflow(self, monkeypatch, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         monkeypatch.setattr(OntologyCritic, "_SHARED_EVAL_CACHE_MAX", 2)
         ctx = self._make_ctx()
         c = OntologyCritic(use_llm=False)
@@ -120,6 +130,7 @@ class TestCriticSharedCache:
 # OntologyLearningAdapter.get_extraction_hint with action correction
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestGetExtractionHintWithCorrection:
     """get_extraction_hint should factor in per-action success rates."""
 
@@ -128,6 +139,7 @@ class TestGetExtractionHintWithCorrection:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         a = OntologyLearningAdapter(domain="test", base_threshold=0.5)
         a.reset()
         return a
@@ -166,18 +178,19 @@ class TestGetExtractionHintWithCorrection:
 # OntologyGenerator.extract_entities structured log
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExtractEntitiesStructuredLog:
     """extract_entities should emit a structured log with entity_count + strategy."""
 
     @pytest.fixture
     def gen_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen, ctx
 
     def test_log_contains_entity_count(self, gen_ctx, caplog):
@@ -200,6 +213,7 @@ class TestExtractEntitiesStructuredLog:
 
     def test_log_strategy_matches_context(self, gen_ctx, caplog):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionStrategy
+
         gen, ctx = gen_ctx
         # Log should contain whichever strategy the context uses
         strategy_value = ctx.extraction_strategy.value

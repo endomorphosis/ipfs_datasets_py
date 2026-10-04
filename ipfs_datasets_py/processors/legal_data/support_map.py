@@ -220,7 +220,9 @@ class SupportMapBuilder:
                     status=str(payload.get("status") or "alleged"),
                     source_ids=[
                         str(value)
-                        for value in list(payload.get("source_ids") or payload.get("evidence_ids") or [])
+                        for value in list(
+                            payload.get("source_ids") or payload.get("evidence_ids") or []
+                        )
                     ],
                     attributes=dict(payload.get("attributes") or {}),
                 )

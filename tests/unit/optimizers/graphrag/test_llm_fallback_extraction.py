@@ -5,6 +5,7 @@ fallback skipped when threshold=0, fallback skipped when no llm_backend,
 fallback uses rule-based result when LLM confidence is worse,
 and LLM exception swallowing.
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -53,8 +54,10 @@ class TestLLMFallbackTriggered:
         llm_result = _make_extraction_result(confidence=0.8)
         ctx = _make_context(threshold=0.5)
 
-        with patch.object(gen, "_extract_rule_based", return_value=rule_result), \
-             patch.object(gen, "_extract_llm_based", return_value=llm_result) as mock_llm:
+        with (
+            patch.object(gen, "_extract_rule_based", return_value=rule_result),
+            patch.object(gen, "_extract_llm_based", return_value=llm_result) as mock_llm,
+        ):
             result = gen.extract_entities("some text", ctx)
 
         mock_llm.assert_called_once()
@@ -68,8 +71,10 @@ class TestLLMFallbackTriggered:
         llm_result = _make_extraction_result(confidence=0.1)  # worse
         ctx = _make_context(threshold=0.5)
 
-        with patch.object(gen, "_extract_rule_based", return_value=rule_result), \
-             patch.object(gen, "_extract_llm_based", return_value=llm_result):
+        with (
+            patch.object(gen, "_extract_rule_based", return_value=rule_result),
+            patch.object(gen, "_extract_llm_based", return_value=llm_result),
+        ):
             result = gen.extract_entities("some text", ctx)
 
         assert result.confidence == 0.3
@@ -81,8 +86,10 @@ class TestLLMFallbackTriggered:
         rule_result = _make_extraction_result(confidence=0.2)
         ctx = _make_context(threshold=0.5)
 
-        with patch.object(gen, "_extract_rule_based", return_value=rule_result), \
-             patch.object(gen, "_extract_llm_based", side_effect=RuntimeError("LLM unavailable")):
+        with (
+            patch.object(gen, "_extract_rule_based", return_value=rule_result),
+            patch.object(gen, "_extract_llm_based", side_effect=RuntimeError("LLM unavailable")),
+        ):
             result = gen.extract_entities("some text", ctx)
 
         assert result.confidence == 0.2
@@ -98,8 +105,10 @@ class TestLLMFallbackSkipped:
         rule_result = _make_extraction_result(confidence=0.1)  # very low
         ctx = _make_context(threshold=0.0)
 
-        with patch.object(gen, "_extract_rule_based", return_value=rule_result), \
-             patch.object(gen, "_extract_llm_based") as mock_llm:
+        with (
+            patch.object(gen, "_extract_rule_based", return_value=rule_result),
+            patch.object(gen, "_extract_llm_based") as mock_llm,
+        ):
             result = gen.extract_entities("some text", ctx)
 
         mock_llm.assert_not_called()
@@ -111,8 +120,10 @@ class TestLLMFallbackSkipped:
         rule_result = _make_extraction_result(confidence=0.1)
         ctx = _make_context(threshold=0.5)
 
-        with patch.object(gen, "_extract_rule_based", return_value=rule_result), \
-             patch.object(gen, "_extract_llm_based") as mock_llm:
+        with (
+            patch.object(gen, "_extract_rule_based", return_value=rule_result),
+            patch.object(gen, "_extract_llm_based") as mock_llm,
+        ):
             result = gen.extract_entities("some text", ctx)
 
         mock_llm.assert_not_called()
@@ -125,8 +136,10 @@ class TestLLMFallbackSkipped:
         rule_result = _make_extraction_result(confidence=0.9)
         ctx = _make_context(threshold=0.5)
 
-        with patch.object(gen, "_extract_rule_based", return_value=rule_result), \
-             patch.object(gen, "_extract_llm_based") as mock_llm:
+        with (
+            patch.object(gen, "_extract_rule_based", return_value=rule_result),
+            patch.object(gen, "_extract_llm_based") as mock_llm,
+        ):
             result = gen.extract_entities("some text", ctx)
 
         mock_llm.assert_not_called()

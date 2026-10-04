@@ -7,14 +7,18 @@ import os
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Submit a text-generation task to the ipfs_datasets_py task queue")
+    parser = argparse.ArgumentParser(
+        description="Submit a text-generation task to the ipfs_datasets_py task queue"
+    )
     parser.add_argument("prompt")
     parser.add_argument("--model", default=os.environ.get("IPFS_DATASETS_PY_LLM_MODEL", "gpt2"))
     parser.add_argument(
         "--queue",
         default=os.environ.get(
             "IPFS_DATASETS_PY_TASK_QUEUE_PATH",
-            os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"),
+            os.path.join(
+                os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"
+            ),
         ),
     )
     parser.add_argument("--max-new-tokens", type=int, default=128)

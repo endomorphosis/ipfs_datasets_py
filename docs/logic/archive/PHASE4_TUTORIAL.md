@@ -98,7 +98,7 @@ if parse_trees:
 from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     clean_dcec_expression,
-    tokenize_dcec
+    tokenize_dcec,
 )
 
 # Clean expression
@@ -118,10 +118,7 @@ print(f"Parsed: {formula}")
 ### Advanced Parsing
 
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    DCECPrototypeNamespace,
-    parse_dcec_string
-)
+from ipfs_datasets_py.logic.CEC.native import DCECPrototypeNamespace, parse_dcec_string
 
 # Create namespace for custom types
 namespace = DCECPrototypeNamespace()
@@ -141,25 +138,25 @@ formula = parse_dcec_string("believes(alice, P)", namespace)
 
 ```python
 # Logical connectives
-parse_dcec_string("P & Q")          # AND
-parse_dcec_string("P | Q")          # OR
-parse_dcec_string("~P")             # NOT
-parse_dcec_string("P -> Q")         # IMPLIES
-parse_dcec_string("P <-> Q")        # BICONDITIONAL
+parse_dcec_string("P & Q")  # AND
+parse_dcec_string("P | Q")  # OR
+parse_dcec_string("~P")  # NOT
+parse_dcec_string("P -> Q")  # IMPLIES
+parse_dcec_string("P <-> Q")  # BICONDITIONAL
 
 # Deontic operators
-parse_dcec_string("O(P)")           # Obligatory
-parse_dcec_string("P(P)")           # Permitted
-parse_dcec_string("F(P)")           # Forbidden
+parse_dcec_string("O(P)")  # Obligatory
+parse_dcec_string("P(P)")  # Permitted
+parse_dcec_string("F(P)")  # Forbidden
 
 # Temporal operators
-parse_dcec_string("G(P)")           # Always (Globally)
-parse_dcec_string("F(P)")           # Eventually (Finally)
-parse_dcec_string("X(P)")           # Next
+parse_dcec_string("G(P)")  # Always (Globally)
+parse_dcec_string("F(P)")  # Eventually (Finally)
+parse_dcec_string("X(P)")  # Next
 
 # Modal operators
-parse_dcec_string("□P")             # Necessary
-parse_dcec_string("◇P")             # Possible
+parse_dcec_string("□P")  # Necessary
+parse_dcec_string("◇P")  # Possible
 ```
 
 ---
@@ -240,17 +237,19 @@ engine.apply_rule("DeMorgan")
 ```python
 from ipfs_datasets_py.logic.CEC.native import InferenceRule
 
+
 class MyCustomRule(InferenceRule):
     def __init__(self):
         super().__init__("MyRule", "My custom inference rule")
-    
+
     def can_apply(self, formulas):
         # Check if rule can be applied
         return any("P" in str(f) for f in formulas)
-    
+
     def apply(self, formulas):
         # Apply the rule
         return ["Q"]  # Derived formulas
+
 
 # Use custom rule
 engine = InferenceEngine()
@@ -264,10 +263,7 @@ engine.add_rule(MyCustomRule())
 ### Grammar-Based NL Processing
 
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    DCECEnglishGrammar,
-    GrammarEngine
-)
+from ipfs_datasets_py.logic.CEC.native import DCECEnglishGrammar, GrammarEngine
 
 # Create grammar
 grammar = DCECEnglishGrammar()
@@ -281,7 +277,7 @@ sentences = [
     "Bob knows that the door is open",
     "It is forbidden to smoke",
     "Charlie must pay the fine",
-    "If it rains then the ground is wet"
+    "If it rains then the ground is wet",
 ]
 
 for sentence in sentences:
@@ -307,24 +303,16 @@ formula = parse_dcec_string("B(alice, raining)")
 ### Custom Grammar Rules
 
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    GrammarRule,
-    Category,
-    LexicalEntry
-)
+from ipfs_datasets_py.logic.CEC.native import GrammarRule, Category, LexicalEntry
 
 # Add lexical entry
-entry = LexicalEntry(
-    word="happy",
-    category=Category.ADJECTIVE,
-    semantics="happy"
-)
+entry = LexicalEntry(word="happy", category=Category.ADJECTIVE, semantics="happy")
 
 # Add grammar rule
 rule = GrammarRule(
     lhs=Category.SENTENCE,
     rhs=[Category.NOUN, Category.VERB, Category.ADJECTIVE],
-    semantic_action=lambda n, v, a: f"{v}({n}, {a})"
+    semantic_action=lambda n, v, a: f"{v}({n}, {a})",
 )
 ```
 
@@ -452,7 +440,7 @@ from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     InferenceEngine,
     create_prover,
-    ModalLogic
+    ModalLogic,
 )
 
 # Step 1: Parse DCEC
@@ -478,7 +466,7 @@ print(f"Derived Q: {proof.status}")
 from ipfs_datasets_py.logic.CEC.native import (
     DCECEnglishGrammar,
     GrammarEngine,
-    create_cognitive_prover
+    create_cognitive_prover,
 )
 
 # Step 1: Parse natural language
@@ -491,14 +479,14 @@ parse_trees = engine.parse(nl_assumption, grammar)
 if parse_trees:
     # Step 2: Get DCEC formula
     dcec_formula = parse_trees[0].semantics
-    
+
     # Step 3: Prove using cognitive calculus
     prover = create_cognitive_prover()
-    
+
     # K(P) → B(P) (knowledge implies belief)
     # If Alice knows it's raining, she believes it's raining
     proof = prover.prove(f"B(alice, raining)", [dcec_formula])
-    
+
     print(f"Alice believes it's raining: {proof.status}")
 ```
 
@@ -534,7 +522,7 @@ elapsed = time.time() - start
 for formula, status in results:
     print(f"{formula}: {status}")
 print(f"\nTotal time: {elapsed:.3f}s")
-print(f"Average: {elapsed/len(formulas):.3f}s per formula")
+print(f"Average: {elapsed / len(formulas):.3f}s per formula")
 ```
 
 ---
@@ -585,11 +573,13 @@ for assumption in assumptions:
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=1000)
 def cached_prove(formula_str, logic_str):
     prover = create_prover(ModalLogic[logic_str])
     proof = prover.prove(formula_str)
     return proof.status
+
 
 # Subsequent calls with same inputs are cached
 ```

@@ -65,7 +65,9 @@ def test_normalize_ir_temporal_duration_units_to_iso_forms() -> None:
 
 
 def test_normalize_ir_jurisdiction_policy_for_federal_state_agency() -> None:
-    ir = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
     norm = next(iter(ir.norms.values()))
     frame = ir.frames[norm.target_frame_ref]
 

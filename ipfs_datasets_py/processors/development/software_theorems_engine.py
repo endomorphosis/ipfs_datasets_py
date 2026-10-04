@@ -162,8 +162,7 @@ SOFTWARE_THEOREMS: Dict[str, Dict[str, Any]] = {
     "gpu_provisioning": {
         "name": "GPU Provisioning Rule",
         "formula": (
-            "∀w,g: (Predicted_GPU_Need(w) > Available_GPUs(g) → "
-            "Obligatory(Provision_GPU(g)))"
+            "∀w,g: (Predicted_GPU_Need(w) > Available_GPUs(g) → Obligatory(Provision_GPU(g)))"
         ),
         "description": (
             "If predicted GPU needs exceed available resources, provisioning is obligatory"
@@ -183,6 +182,7 @@ SOFTWARE_THEOREMS: Dict[str, Dict[str, Any]] = {
 # ---------------------------------------------------------------------------
 # Business-logic helpers
 # ---------------------------------------------------------------------------
+
 
 def _evaluate_condition(condition: str, context: Dict[str, Any]) -> bool:
     """Evaluate a single condition string against a context dict.
@@ -265,9 +265,9 @@ def validate_against_theorem(
         conditions_failed: List[str] = []
 
         for condition in theorem.get("conditions", []):
-            (conditions_met if _evaluate_condition(condition, context) else conditions_failed).append(
-                condition
-            )
+            (
+                conditions_met if _evaluate_condition(condition, context) else conditions_failed
+            ).append(condition)
 
         theorem_applies = len(conditions_failed) == 0 and bool(conditions_met)
         result: Dict[str, Any] = {
@@ -317,18 +317,22 @@ def apply_theorem_actions(
         results: List[Dict[str, Any]] = []
         for action in actions:
             if dry_run:
-                results.append({
-                    "action": action,
-                    "status": "simulated",
-                    "message": f"Would execute action: {action}",
-                })
+                results.append(
+                    {
+                        "action": action,
+                        "status": "simulated",
+                        "message": f"Would execute action: {action}",
+                    }
+                )
             else:
-                results.append({
-                    "action": action,
-                    "status": "executed",
-                    "message": f"Executed action: {action}",
-                    "executed_at": datetime.utcnow().isoformat(),
-                })
+                results.append(
+                    {
+                        "action": action,
+                        "status": "executed",
+                        "message": f"Executed action: {action}",
+                        "executed_at": datetime.utcnow().isoformat(),
+                    }
+                )
 
         return {
             "success": True,

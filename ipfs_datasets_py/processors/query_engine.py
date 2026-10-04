@@ -65,20 +65,25 @@ def _is_mocked_sentence_transformer(candidate: Any) -> bool:
     class_module_name = getattr(getattr(candidate, "__class__", None), "__module__", "")
     return isinstance(class_module_name, str) and class_module_name.startswith("unittest.mock")
 
+
 # Import dependencies with graceful fallbacks
 try:
     import networkx as nx
+
     HAVE_NETWORKX = True
 except ImportError:
     # Mock NetworkX
     class MockNetworkX:
         Graph = dict
+
         @staticmethod
         def shortest_path(G, source, target):
             return [source, target]
+
         @staticmethod
         def connected_components(G):
             return []
+
     nx = MockNetworkX()
     HAVE_NETWORKX = False
 
@@ -86,30 +91,38 @@ try:
     import nltk
     from nltk import ne_chunk, pos_tag, word_tokenize
     from nltk.chunk import tree2conlltags
+
     HAVE_NLTK = True
 except ImportError:
     # Mock NLTK functions
     def ne_chunk(tagged):
         return tagged
+
     def pos_tag(tokens):
-        return [(token, 'NN') for token in tokens]
+        return [(token, "NN") for token in tokens]
+
     def word_tokenize(text):
         return text.split()
+
     def tree2conlltags(tree):
-        return [(token, tag, 'O') for token, tag in tree]
+        return [(token, tag, "O") for token, tag in tree]
+
     HAVE_NLTK = False
 
 try:
     from sklearn.metrics.pairwise import cosine_similarity
+
     HAVE_SKLEARN = True
 except ImportError:
     # Mock cosine_similarity
     def cosine_similarity(X, Y=None):
         return [[1.0]]
+
     HAVE_SKLEARN = False
 
 try:
     from sentence_transformers import SentenceTransformer
+
     HAVE_SENTENCE_TRANSFORMERS = True
 except ImportError:
     SentenceTransformer = None
@@ -117,6 +130,7 @@ except ImportError:
 
 try:
     import torch
+
     HAVE_TORCH = True
 except ImportError:
     torch = None
@@ -125,7 +139,12 @@ except ImportError:
 from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
 
 try:
-    from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
+    from ipfs_datasets_py.processors.graphrag_integrator import (
+        GraphRAGIntegrator,
+        Entity,
+        Relationship,
+    )
+
     HAVE_GRAPHRAG_INTEGRATOR = True
 except ImportError:
     GraphRAGIntegrator = None
@@ -178,10 +197,8 @@ class _FallbackEmbeddingModel:
 
         return vectors
 
+
 _UNSET = object()
-
-
-
 
 
 # Ensure required NLTK data is available (best-effort, no downloads at import time)
@@ -195,10 +212,10 @@ if HAVE_NLTK:
     except Exception:
         # Preserve prior behavior (warn only) if bootstrap helper isn't available.
         CORPORA = [
-            'tokenizers/punkt',
-            'taggers/averaged_perceptron_tagger',
-            'chunkers/maxent_ne_chunker',
-            'corpora/words',
+            "tokenizers/punkt",
+            "taggers/averaged_perceptron_tagger",
+            "chunkers/maxent_ne_chunker",
+            "corpora/words",
         ]
         for corpus in CORPORA:
             try:
@@ -209,9 +226,10 @@ if HAVE_NLTK:
 
 # ===== TypedDict Definitions for Return Types =====
 
+
 class QueryAnalyticsDict(TypedDict, total=False):
     """Query analytics data structure.
-    
+
     Fields:
         total_queries: Total number of queries processed
         avg_response_time: Average query response time in milliseconds
@@ -221,7 +239,7 @@ class QueryAnalyticsDict(TypedDict, total=False):
         performance_metrics: Performance data
         timestamp: Timestamp of analytics collection
     """
-    
+
     total_queries: int
     avg_response_time: float
     unique_entities: int
@@ -245,7 +263,7 @@ class QueryResult:
         id (str): Unique identifier for the result item.
             Format varies by type (entity_id, chunk_id, document_id, relationship_id).
         type (str): Type of result content.
-            Valid values: 'entity', 'relationship', 'chunk', 'document', 
+            Valid values: 'entity', 'relationship', 'chunk', 'document',
             'cross_document_relationship', 'graph_path'.
         content (str): Main textual content of the result.
             For entities: name, type, and description.
@@ -297,6 +315,7 @@ class QueryResult:
         - Source attribution enables traceability back to original content
         - Results support both single-document and cross-document scenarios
     """
+
     id: str
     type: str  # 'entity', 'relationship', 'chunk', 'document'
     content: str
@@ -304,6 +323,7 @@ class QueryResult:
     source_document: str
     source_chunks: List[str]
     metadata: Dict[str, Any]
+
 
 class QueryResponse(dict):
     """
@@ -365,6 +385,7 @@ class QueryResponse(dict):
         - Metadata provides transparency into query processing for debugging
         - Results are always ordered by relevance score (highest first)
     """
+
     def __init__(
         self,
         query: str,
@@ -491,6 +512,7 @@ class QueryResponse(dict):
             return 1.0
         return float(best)
 
+
 @dataclass
 class SemanticSearchResult:
     """
@@ -546,6 +568,7 @@ class SemanticSearchResult:
         - Related entities provide additional context for understanding results
         - Page numbers help users locate content in original documents
     """
+
     chunk_id: str
     content: str
     similarity_score: float
@@ -553,8 +576,6 @@ class SemanticSearchResult:
     page_number: int
     semantic_types: str
     related_entities: List[str]
-
-
 
 
 # Private Methods:
@@ -638,18 +659,18 @@ class QueryEngine:
             storage=my_storage,
             embedding_model="sentence-transformers/all-MiniLM-L6-v2"
         )
-        
+
         # Execute natural language query
         response = await engine.query(
             "Who are the founders of technology companies?",
             filters={"entity_type": "Person"},
             max_results=10
         )
-        
+
         # Access results and suggestions
         for result in response.results:
             print(f"{result.content} (score: {result.relevance_score})")
-        
+
         # Get system analytics
         analytics = await engine.get_query_analytics()
         print(f"Total queries: {analytics['total_queries']}")
@@ -662,17 +683,18 @@ class QueryEngine:
         - Result caching improves performance for repeated queries
         - All async methods support concurrent execution for better performance
     """
-    
-    def __init__(self, 
-                 graphrag_integrator: Optional[GraphRAGIntegrator] = _UNSET,
-                 storage: Optional[IPLDStorage] = None,
-                 embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
-                 use_real_models: bool = False,
-                 enable_graph_traversal: bool = False,
-                 logger: logging.Logger = logger,
-                 torch_library: Optional[ModuleType] = None,
-                 sentence_transformer_class: Optional[SentenceTransformer] = None
-                 ) -> None:
+
+    def __init__(
+        self,
+        graphrag_integrator: Optional[GraphRAGIntegrator] = _UNSET,
+        storage: Optional[IPLDStorage] = None,
+        embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+        use_real_models: bool = False,
+        enable_graph_traversal: bool = False,
+        logger: logging.Logger = logger,
+        torch_library: Optional[ModuleType] = None,
+        sentence_transformer_class: Optional[SentenceTransformer] = None,
+    ) -> None:
         """
         Initialize the QueryEngine with GraphRAG integration and semantic search capabilities.
 
@@ -716,7 +738,7 @@ class QueryEngine:
         Examples:
             >>> # Basic initialization
             >>> engine = QueryEngine(my_graphrag_integrator)
-            
+
             >>> # With custom storage and embedding model
             >>> engine = QueryEngine(
             ...     graphrag_integrator=my_graphrag,
@@ -781,7 +803,9 @@ class QueryEngine:
         # Initialize embedding model for semantic search.
         # Avoid network downloads by default during unit tests/offline runs, but
         # allow tests to patch SentenceTransformer and assert it is called.
-        if not use_real_models and not _is_mocked_sentence_transformer(self.sentence_transformer_class):
+        if not use_real_models and not _is_mocked_sentence_transformer(
+            self.sentence_transformer_class
+        ):
             self.embedding_model = _FallbackEmbeddingModel(embedding_model)
             self.logger.info(f"Using fallback embedding model: {embedding_model}")
         else:
@@ -795,10 +819,7 @@ class QueryEngine:
                 ) from e
             except Exception as e:
                 message = str(e)
-                if (
-                    "not a valid model identifier" in message
-                    or "not found or invalid" in message
-                ):
+                if "not a valid model identifier" in message or "not found or invalid" in message:
                     # When callers provide a HuggingFace-style identifier and the
                     # model cannot be resolved, preserve the historical behavior of
                     # raising ValueError (tests patch SentenceTransformer to assert
@@ -821,22 +842,22 @@ class QueryEngine:
         # Backwards-compatible alias: a number of tests and integrations refer to
         # the embedding model as "sentence_transformer".
         self.sentence_transformer = self.embedding_model
-        
+
         # Query processing components
         self.query_processors = {
-            'entity_search': self._process_entity_query,
-            'relationship_search': self._process_relationship_query,
-            'semantic_search': self._process_semantic_query,
-            'document_search': self._process_document_query,
-            'cross_document': self._process_cross_document_query,
-            'graph_traversal': self._process_graph_traversal_query
+            "entity_search": self._process_entity_query,
+            "relationship_search": self._process_relationship_query,
+            "semantic_search": self._process_semantic_query,
+            "document_search": self._process_document_query,
+            "cross_document": self._process_cross_document_query,
+            "graph_traversal": self._process_graph_traversal_query,
         }
-        
+
         # Cache for embeddings and frequent queries
         self.classification_embeddings = {}
         self.embedding_cache = {}
         self.query_cache = {}
-        
+
     async def query(
         self,
         query_text: str,
@@ -896,7 +917,7 @@ class QueryEngine:
             >>> # Basic entity search
             >>> response = await engine.query("Who is Bill Gates?")
             >>> print(f"Found {response.total_results} results")
-            
+
             >>> # Relationship search with filtering
             >>> response = await engine.query(
             ...     "founders of companies",
@@ -904,7 +925,7 @@ class QueryEngine:
             ...     filters={"relationship_type": "founded"},
             ...     max_results=10
             ... )
-            
+
             >>> # Semantic search across specific document
             >>> response = await engine.query(
             ...     "artificial intelligence applications",
@@ -934,9 +955,9 @@ class QueryEngine:
 
         if query_type is None:
             if enable_graph_traversal:
-                query_type = 'graph_traversal'
+                query_type = "graph_traversal"
             elif include_cross_document_reasoning:
-                query_type = 'cross_document'
+                query_type = "cross_document"
 
         if max_results <= 0:
             raise ValueError("max_results must be positive")
@@ -945,27 +966,27 @@ class QueryEngine:
             raise TypeError("Filters must be a dictionary")
 
         allowed_query_types = {
-            'entity_search',
-            'relationship_search',
-            'semantic_search',
-            'document_search',
-            'cross_document',
-            'graph_traversal',
+            "entity_search",
+            "relationship_search",
+            "semantic_search",
+            "document_search",
+            "cross_document",
+            "graph_traversal",
         }
         if query_type is not None and query_type not in allowed_query_types:
             raise ValueError("Invalid query type")
 
         start_time = time.monotonic()
-        
+
         # Normalize query
         normalized_query = self._normalize_query(query_text)
-        
+
         # Auto-detect query type if not specified
         if not query_type:
             query_type = self._detect_query_type(normalized_query)
-        
+
         self.logger.info(f"Processing {query_type} query: {normalized_query}")
-        
+
         # Check cache
         cache_key = (
             f"{query_type}:{normalized_query}:{max_results}:"
@@ -987,7 +1008,7 @@ class QueryEngine:
                 suggestions=cached_result.suggestions,
                 metadata=cached_metadata,
             )
-        
+
         # Process query based on type
         if query_type in self.query_processors:
             processor = self.query_processors[query_type]
@@ -1000,15 +1021,13 @@ class QueryEngine:
             results = await processor(normalized_query, filters, max_results)
         else:
             # Fallback to semantic search
-            results = await self._process_semantic_query(
-                normalized_query, filters, max_results
-            )
-        
+            results = await self._process_semantic_query(normalized_query, filters, max_results)
+
         # Generate suggestions
         suggestions = await self._generate_query_suggestions(normalized_query, results)
-        
+
         processing_time = time.monotonic() - start_time
-        
+
         # Build response
         response = QueryResponse(
             query=normalized_query,
@@ -1018,32 +1037,32 @@ class QueryEngine:
             processing_time=processing_time,
             suggestions=suggestions,
             metadata={
-                'normalized_query': normalized_query,
-                'filters_applied': filters,
-                'query_type': query_type,
-                'timestamp': datetime.now().isoformat(),
-                'cache_hit': False,
-                'include_semantic_similarity': include_semantic_similarity,
-            }
+                "normalized_query": normalized_query,
+                "filters_applied": filters,
+                "query_type": query_type,
+                "timestamp": datetime.now().isoformat(),
+                "cache_hit": False,
+                "include_semantic_similarity": include_semantic_similarity,
+            },
         )
 
         if include_semantic_similarity:
             scores = []
             for item in results:
-                if hasattr(item, 'relevance_score'):
-                    scores.append(getattr(item, 'relevance_score'))
+                if hasattr(item, "relevance_score"):
+                    scores.append(getattr(item, "relevance_score"))
                 elif isinstance(item, dict):
-                    score = item.get('relevance_score')
+                    score = item.get("relevance_score")
                     if score is None:
-                        score = item.get('score')
+                        score = item.get("score")
                     if score is not None:
                         scores.append(score)
-            response.metadata['confidence'] = float(sum(scores) / len(scores)) if scores else 0.0
-        
+            response.metadata["confidence"] = float(sum(scores) / len(scores)) if scores else 0.0
+
         # Cache response
         if enable_caching:
             self.query_cache[cache_key] = response
-        
+
         self.logger.info(f"Query processed in {processing_time:.2f}s, {len(results)} results")
         return response
 
@@ -1077,7 +1096,9 @@ class QueryEngine:
         if not text.strip():
             raise ValueError("text cannot be empty")
 
-        model = getattr(self, "sentence_transformer", None) or getattr(self, "embedding_model", None)
+        model = getattr(self, "sentence_transformer", None) or getattr(
+            self, "embedding_model", None
+        )
         if model is None or not hasattr(model, "encode"):
             raise RuntimeError("Embedding model is not available")
 
@@ -1180,7 +1201,7 @@ class QueryEngine:
             return 0.0
 
         return sorted(list(results), key=_score, reverse=True)
-    
+
     def _normalize_query(self, query: str) -> str:
         """
         Normalize query text for consistent processing across all query types.
@@ -1223,30 +1244,46 @@ class QueryEngine:
         # Input validation
         if not isinstance(query, str):
             raise TypeError("Query must be a string")
-        
+
         if not query or not query.strip():
             raise ValueError("Query cannot be empty")
-        
+
         # Convert to lowercase
         normalized = query.lower().strip()
-        
+
         # Remove extra whitespace (including newlines, tabs, etc.)
-        normalized = re.sub(r'\s+', ' ', normalized)
-        
+        normalized = re.sub(r"\s+", " ", normalized)
+
         # Remove common stop words for better matching
         # TODO Should probably skip this step when doing sentence embeddings.
-        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is'}
+        stop_words = {
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "is",
+        }
         words = normalized.split()
         filtered_words = [word for word in words if word not in stop_words]
-        
-        result = ' '.join(filtered_words)
-        
+
+        result = " ".join(filtered_words)
+
         # Check if result is empty after stop word removal
         if not result:
             raise ValueError("Query cannot be empty after normalization")
-        
+
         return result
-    
+
     def _detect_query_type(self, query: str) -> str:
         """
         Auto-detect query type based on linguistic patterns and keyword analysis.
@@ -1299,32 +1336,42 @@ class QueryEngine:
             raise ValueError("query cannot be empty")
 
         # Entity search patterns
-        if any(keyword in query_lower for keyword in ['who', 'what', 'person', 'organization', 'company']):
-            return 'entity_search'
+        if any(
+            keyword in query_lower
+            for keyword in ["who", "what", "person", "organization", "company"]
+        ):
+            return "entity_search"
 
         # Relationship patterns
-        if any(keyword in query_lower for keyword in ['relationship', 'related', 'works for', 'founded']):
-            return 'relationship_search'
+        if any(
+            keyword in query_lower
+            for keyword in ["relationship", "related", "works for", "founded"]
+        ):
+            return "relationship_search"
 
         # Cross-document patterns
-        if any(keyword in query_lower for keyword in ['across documents', 'compare', 'different documents', 'multiple']):
-            return 'cross_document'
+        if any(
+            keyword in query_lower
+            for keyword in ["across documents", "compare", "different documents", "multiple"]
+        ):
+            return "cross_document"
 
         # Graph traversal patterns
-        if any(keyword in query_lower for keyword in ['path', 'connected through', 'how are', 'degree']):
-            return 'graph_traversal'
+        if any(
+            keyword in query_lower for keyword in ["path", "connected through", "how are", "degree"]
+        ):
+            return "graph_traversal"
 
         # Document search patterns
-        if any(keyword in query_lower for keyword in ['document', 'paper', 'article', 'file']):
-            return 'document_search'
+        if any(keyword in query_lower for keyword in ["document", "paper", "article", "file"]):
+            return "document_search"
 
         # Default to semantic search
-        return 'semantic_search'
+        return "semantic_search"
 
-    async def _process_entity_query(self, 
-                                   query: str, 
-                                   filters: Optional[Dict[str, Any]], 
-                                   max_results: int) -> List[QueryResult]:
+    async def _process_entity_query(
+        self, query: str, filters: Optional[Dict[str, Any]], max_results: int
+    ) -> List[QueryResult]:
         """
         Process entity-focused queries using name matching and type filtering.
 
@@ -1358,7 +1405,7 @@ class QueryEngine:
             >>> # Find specific person
             >>> results = await _process_entity_query("bill gates", None, 10)
             >>> print(results[0].content)  # "Bill Gates (Person): Co-founder of Microsoft"
-            
+
             >>> # Filter by entity type
             >>> results = await _process_entity_query(
             ...     "technology companies",
@@ -1376,47 +1423,47 @@ class QueryEngine:
         # Input validation
         if max_results <= 0:
             raise ValueError("max_results must be positive")
-        
+
         if filters is not None and not isinstance(filters, dict):
             raise TypeError("filters must be a dictionary")
-        
+
         # Check GraphRAG data integrity
-        if not hasattr(self.graphrag, 'global_entities') or self.graphrag.global_entities is None:
+        if not hasattr(self.graphrag, "global_entities") or self.graphrag.global_entities is None:
             raise RuntimeError("GraphRAG data is corrupted or inaccessible")
-        
+
         results = []
-        
+
         # Get all entities from GraphRAG
         all_entities = list(self.graphrag.global_entities.values())
-        
+
         # Apply filters
         if filters:
-            if 'entity_type' in filters:
-                all_entities = [e for e in all_entities if e.type == filters['entity_type']]
-            
-            if 'confidence' in filters:
-                min_confidence = filters['confidence']
+            if "entity_type" in filters:
+                all_entities = [e for e in all_entities if e.type == filters["entity_type"]]
+
+            if "confidence" in filters:
+                min_confidence = filters["confidence"]
                 all_entities = [e for e in all_entities if e.confidence >= min_confidence]
-            
-            if 'document_id' in filters:
+
+            if "document_id" in filters:
                 # Filter by document (check if entity appears in document chunks)
                 doc_entities = []
-                target_doc_id = filters['document_id']
+                target_doc_id = filters["document_id"]
                 for entity in all_entities:
                     entity_docs = self._get_entity_documents(entity)
                     if target_doc_id in entity_docs:
                         doc_entities.append(entity)
                 all_entities = doc_entities
-        
+
         # Score entities by query relevance
         scored_entities = []
         query_words = set(query.split())
-        
+
         for entity in all_entities:
             score = 0
             entity_words = set(entity.name.lower().split())
             entity_desc_words = set(entity.description.lower().split())
-            
+
             # Check for exact name match first
             if query.lower() == entity.name.lower():
                 score = 10  # Perfect match gets score of 10 (1.0 after normalization)
@@ -1426,48 +1473,52 @@ class QueryEngine:
                 # Name similarity
                 name_overlap = len(query_words.intersection(entity_words))
                 score += name_overlap * 2
-                
+
                 # Description similarity - exact word matches
                 desc_overlap = len(query_words.intersection(entity_desc_words))
                 score += desc_overlap
-                
+
                 # Partial word matches in description and name
                 for query_word in query_words:
                     # Check partial matches in description words
                     for desc_word in entity_desc_words:
                         if query_word in desc_word or desc_word in query_word:
-                            if len(query_word) > 3 and len(desc_word) > 3:  # Avoid short word false matches
+                            if (
+                                len(query_word) > 3 and len(desc_word) > 3
+                            ):  # Avoid short word false matches
                                 score += 0.5
                         # Handle plurals and word stems
-                        elif (query_word.endswith('s') and query_word[:-1] in desc_word) or \
-                             (desc_word.endswith('s') and desc_word[:-1] in query_word) or \
-                             (query_word[:-2] in desc_word and len(query_word) > 4) or \
-                             (desc_word[:-2] in query_word and len(desc_word) > 4):
+                        elif (
+                            (query_word.endswith("s") and query_word[:-1] in desc_word)
+                            or (desc_word.endswith("s") and desc_word[:-1] in query_word)
+                            or (query_word[:-2] in desc_word and len(query_word) > 4)
+                            or (desc_word[:-2] in query_word and len(desc_word) > 4)
+                        ):
                             score += 0.5
-                    
-                    # Check partial matches in name words  
+
+                    # Check partial matches in name words
                     for name_word in entity_words:
                         if query_word in name_word or name_word in query_word:
                             if len(query_word) > 3 and len(name_word) > 3:
                                 score += 0.5
-                
+
                 # Partial name match bonus
                 if any(word in entity.name.lower() for word in query_words):
                     score += 3
-                
+
                 # Type match
                 if entity.type.lower() in query.lower():
                     score += 1
-                
+
                 # Property matching - check if query matches any property values
-                if hasattr(entity, 'properties') and entity.properties:
+                if hasattr(entity, "properties") and entity.properties:
                     for prop_key, prop_value in entity.properties.items():
                         if isinstance(prop_value, str):
                             prop_words = set(prop_value.lower().split())
                             # Exact property value matches
                             prop_overlap = len(query_words.intersection(prop_words))
                             score += prop_overlap * 1.5  # Property matches are valuable
-                            
+
                             # Partial property matches
                             for query_word in query_words:
                                 for prop_word in prop_words:
@@ -1475,43 +1526,48 @@ class QueryEngine:
                                         if len(query_word) > 3 and len(prop_word) > 3:
                                             score += 0.5
                                     # Handle plurals and word stems in properties
-                                    elif (query_word.endswith('s') and query_word[:-1] in prop_word) or \
-                                         (prop_word.endswith('s') and prop_word[:-1] in query_word) or \
-                                         (query_word[:-2] in prop_word and len(query_word) > 4) or \
-                                         (prop_word[:-2] in query_word and len(prop_word) > 4):
+                                    elif (
+                                        (query_word.endswith("s") and query_word[:-1] in prop_word)
+                                        or (
+                                            prop_word.endswith("s") and prop_word[:-1] in query_word
+                                        )
+                                        or (query_word[:-2] in prop_word and len(query_word) > 4)
+                                        or (prop_word[:-2] in query_word and len(prop_word) > 4)
+                                    ):
                                         score += 0.5
-            
+
             if score > 0:
                 # Cap the maximum score at 10 to ensure normalized score doesn't exceed 1.0
                 score = min(score, 10)
                 scored_entities.append((entity, score))
-        
+
         # Sort and limit results
         scored_entities.sort(key=lambda x: x[1], reverse=True)
-        
+
         for entity, score in scored_entities[:max_results]:
             result = QueryResult(
                 id=entity.id,
-                type='entity',
+                type="entity",
                 content=f"{entity.name} ({entity.type}): {entity.description}",
                 relevance_score=score / 10.0,  # Normalize score
-                source_document='multiple' if len(set(self._get_entity_documents(entity))) > 1 else self._get_entity_documents(entity)[0],
+                source_document="multiple"
+                if len(set(self._get_entity_documents(entity))) > 1
+                else self._get_entity_documents(entity)[0],
                 source_chunks=entity.source_chunks,
                 metadata={
-                    'entity_name': entity.name,
-                    'entity_type': entity.type,
-                    'confidence': entity.confidence,
-                    'properties': entity.properties
-                }
+                    "entity_name": entity.name,
+                    "entity_type": entity.type,
+                    "confidence": entity.confidence,
+                    "properties": entity.properties,
+                },
             )
             results.append(result)
-        
+
         return results
-    
-    async def _process_relationship_query(self, 
-                                        query: str, 
-                                        filters: Optional[Dict[str, Any]], 
-                                        max_results: int) -> List[QueryResult]:
+
+    async def _process_relationship_query(
+        self, query: str, filters: Optional[Dict[str, Any]], max_results: int
+    ) -> List[QueryResult]:
         """
         Process relationship-focused queries analyzing connections between entities.
 
@@ -1547,7 +1603,7 @@ class QueryEngine:
             >>> # Find founding relationships
             >>> results = await _process_relationship_query("founded companies", None, 10)
             >>> print(results[0].content)  # "Bill Gates founded Microsoft"
-            
+
             >>> # Find relationships for specific entity
             >>> results = await _process_relationship_query(
             ...     "microsoft relationships",
@@ -1565,108 +1621,119 @@ class QueryEngine:
         # Input validation
         if max_results <= 0:
             raise ValueError("max_results must be positive")
-        
+
         if filters is not None and not isinstance(filters, dict):
             raise TypeError("filters must be a dictionary")
-        
+
         # Check for corrupted data
         if self.graphrag.knowledge_graphs is None:
             raise RuntimeError("GraphRAG data is corrupted")
-        
+
         results = []
-        
+
         # Get all relationships from all knowledge graphs
         all_relationships = []
         for kg in self.graphrag.knowledge_graphs.values():
             all_relationships.extend(kg.relationships)
-        
+
         # Apply filters
         if filters:
-            if 'relationship_type' in filters:
-                all_relationships = [r for r in all_relationships if r.relationship_type == filters['relationship_type']]
-            if 'entity_id' in filters:
+            if "relationship_type" in filters:
                 all_relationships = [
-                    r for r in all_relationships 
-                    if r.source_entity_id == filters['entity_id'] or r.target_entity_id == filters['entity_id']
+                    r
+                    for r in all_relationships
+                    if r.relationship_type == filters["relationship_type"]
                 ]
-            if 'confidence' in filters:
-                min_confidence = filters['confidence']
+            if "entity_id" in filters:
+                all_relationships = [
+                    r
+                    for r in all_relationships
+                    if r.source_entity_id == filters["entity_id"]
+                    or r.target_entity_id == filters["entity_id"]
+                ]
+            if "confidence" in filters:
+                min_confidence = filters["confidence"]
                 all_relationships = [r for r in all_relationships if r.confidence >= min_confidence]
-        
+
         # Score relationships by query relevance
         scored_relationships = []
         query_words = set(query.split())
-        
+
         for relationship in all_relationships:
             score = 0
-            
+
             # Get entity names for context
             source_entity = self.graphrag.global_entities.get(relationship.source_entity_id)
             target_entity = self.graphrag.global_entities.get(relationship.target_entity_id)
-            
+
             if not source_entity or not target_entity:
                 if not source_entity:
-                    logging.warning(f"Missing source entity {relationship.source_entity_id} for relationship {relationship.id}")
+                    logging.warning(
+                        f"Missing source entity {relationship.source_entity_id} for relationship {relationship.id}"
+                    )
                 if not target_entity:
-                    logging.warning(f"Missing target entity {relationship.target_entity_id} for relationship {relationship.id}")
+                    logging.warning(
+                        f"Missing target entity {relationship.target_entity_id} for relationship {relationship.id}"
+                    )
                 continue
-            
+
             # Relationship type match
-            rel_type_words = set(relationship.relationship_type.replace('_', ' ').split())
+            rel_type_words = set(relationship.relationship_type.replace("_", " ").split())
             type_overlap = len(query_words.intersection(rel_type_words))
             score += type_overlap * 2
-            
+
             # Entity name matches
             source_words = set(source_entity.name.lower().split())
             target_words = set(target_entity.name.lower().split())
-            
+
             source_overlap = len(query_words.intersection(source_words))
             target_overlap = len(query_words.intersection(target_words))
             score += source_overlap + target_overlap
-            
+
             # Description match
             desc_words = set(relationship.description.lower().split())
             desc_overlap = len(query_words.intersection(desc_words))
             score += desc_overlap
-            
+
             if score > 0:
                 scored_relationships.append((relationship, score, source_entity, target_entity))
-        
+
         # Sort and limit results
         scored_relationships.sort(key=lambda x: x[1], reverse=True)
-        
+
         for relationship, score, source_entity, target_entity in scored_relationships[:max_results]:
             result = QueryResult(
                 id=relationship.id,
-                type='relationship',
+                type="relationship",
                 content=f"{source_entity.name} {relationship.relationship_type.replace('_', ' ')} {target_entity.name}",
                 relevance_score=score / 10.0,
-                source_document=self._get_relationship_documents(relationship)[0] if self._get_relationship_documents(relationship) else 'unknown',
+                source_document=self._get_relationship_documents(relationship)[0]
+                if self._get_relationship_documents(relationship)
+                else "unknown",
                 source_chunks=relationship.source_chunks,
                 metadata={
-                    'relationship_type': relationship.relationship_type,
-                    'source_entity': {
-                        'id': source_entity.id,
-                        'name': source_entity.name,
-                        'type': source_entity.type
+                    "relationship_type": relationship.relationship_type,
+                    "source_entity": {
+                        "id": source_entity.id,
+                        "name": source_entity.name,
+                        "type": source_entity.type,
                     },
-                    'target_entity': {
-                        'id': target_entity.id,
-                        'name': target_entity.name,
-                        'type': target_entity.type
+                    "target_entity": {
+                        "id": target_entity.id,
+                        "name": target_entity.name,
+                        "type": target_entity.type,
                     },
-                    'confidence': relationship.confidence,
-                    'properties': relationship.properties
-                }
+                    "confidence": relationship.confidence,
+                    "properties": relationship.properties,
+                },
             )
             results.append(result)
-        
+
         return results
-    
-    async def _process_semantic_query(self,
-                                    query: str,
-                                    filters: Optional[Dict[str, Any]],
-                                    max_results: int) -> List[QueryResult]:
+
+    async def _process_semantic_query(
+        self, query: str, filters: Optional[Dict[str, Any]], max_results: int
+    ) -> List[QueryResult]:
         """
         Process semantic search queries using embedding similarity matching.
 
@@ -1722,15 +1789,15 @@ class QueryEngine:
         # Input validation
         if max_results <= 0:
             raise ValueError("max_results must be positive")
-        
+
         if filters is not None and not isinstance(filters, dict):
             raise TypeError("filters must be a dictionary")
-        
-        if filters and 'min_similarity' in filters:
-            min_sim = filters['min_similarity']
+
+        if filters and "min_similarity" in filters:
+            min_sim = filters["min_similarity"]
             if not isinstance(min_sim, (int, float)) or not (0.0 <= min_sim <= 1.0):
                 raise ValueError("min_similarity must be between 0.0 and 1.0")
-        
+
         if not self.embedding_model:
             raise RuntimeError("No embedding model available for semantic search")
 
@@ -1745,51 +1812,61 @@ class QueryEngine:
                 self.embedding_cache[query] = query_embedding
             except Exception as e:
                 raise RuntimeError(f"Embedding computation failed: {e}")
-        
+
         # Get all chunks from all documents
         all_chunks = []
         for kg in self.graphrag.knowledge_graphs.values():
             for chunk in kg.chunks:
                 if chunk.embedding is not None:
                     all_chunks.append((chunk, kg.document_id))
-        
+
         if not all_chunks:
             self.logger.warning("No chunks with embeddings found for semantic search")
             return []
-        
+
         # Calculate similarities
         chunk_similarities = []
         for chunk, doc_id in all_chunks:
             if chunk.embedding is not None:
                 similarity = cosine_similarity(
-                    query_embedding.reshape(1, -1),
-                    chunk.embedding.reshape(1, -1)
+                    query_embedding.reshape(1, -1), chunk.embedding.reshape(1, -1)
                 )[0][0]
                 chunk_similarities.append((chunk, doc_id, similarity))
-        
+
         # Apply filters
         if filters:
-            if 'document_id' in filters:
-                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if d == filters['document_id']]
-            if 'semantic_types' in filters:
-                target_type = filters['semantic_types']
-                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities 
-                                        if (
-                                            c.semantic_types == target_type or 
-                                            (isinstance(c.semantic_types, (set, list)) 
-                                             and target_type in c.semantic_types)
-                                        )
-                                    ]
-            if 'page_range' in filters:
-                start_page, end_page = filters['page_range']
-                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities 
-                                    if start_page <= c.page_number <= end_page]
-            if 'min_similarity' in filters:
-                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if s >= filters['min_similarity']]
-        
+            if "document_id" in filters:
+                chunk_similarities = [
+                    (c, d, s) for c, d, s in chunk_similarities if d == filters["document_id"]
+                ]
+            if "semantic_types" in filters:
+                target_type = filters["semantic_types"]
+                chunk_similarities = [
+                    (c, d, s)
+                    for c, d, s in chunk_similarities
+                    if (
+                        c.semantic_types == target_type
+                        or (
+                            isinstance(c.semantic_types, (set, list))
+                            and target_type in c.semantic_types
+                        )
+                    )
+                ]
+            if "page_range" in filters:
+                start_page, end_page = filters["page_range"]
+                chunk_similarities = [
+                    (c, d, s)
+                    for c, d, s in chunk_similarities
+                    if start_page <= c.page_number <= end_page
+                ]
+            if "min_similarity" in filters:
+                chunk_similarities = [
+                    (c, d, s) for c, d, s in chunk_similarities if s >= filters["min_similarity"]
+                ]
+
         # Sort by similarity and limit results
         chunk_similarities.sort(key=lambda x: x[2], reverse=True)
-        
+
         for chunk, doc_id, similarity in chunk_similarities[:max_results]:
             # Find related entities
             related_entities = []
@@ -1797,46 +1874,45 @@ class QueryEngine:
                 for entity in self.graphrag.global_entities.values():
                     if chunk.chunk_id in entity.source_chunks:
                         related_entities.append(entity.name)
-            
+
             # Handle content truncation
             content = chunk.content
             truncated = False
             if len(content) > 500:
-                content = content[:500] + '...'
+                content = content[:500] + "..."
                 truncated = True
-            
+
             # Build metadata
             metadata = {
-                'document_id': doc_id,
-                'semantic_types': getattr(chunk, 'semantic_types', 'unknown'),
-                'source_page': getattr(chunk, 'page_number', getattr(chunk, 'source_page', 1)),
-                'token_count': getattr(chunk, 'token_count', len(chunk.content.split())),
-                'related_entities': related_entities,
-                'relationships': getattr(chunk, 'relationships', []),
-                'similarity_score': similarity
+                "document_id": doc_id,
+                "semantic_types": getattr(chunk, "semantic_types", "unknown"),
+                "source_page": getattr(chunk, "page_number", getattr(chunk, "source_page", 1)),
+                "token_count": getattr(chunk, "token_count", len(chunk.content.split())),
+                "related_entities": related_entities,
+                "relationships": getattr(chunk, "relationships", []),
+                "similarity_score": similarity,
             }
-            
+
             # Add full content if truncated
             if truncated:
-                metadata['full_content'] = chunk.content
-            
+                metadata["full_content"] = chunk.content
+
             result = QueryResult(
                 id=chunk.chunk_id,
-                type='chunk',
+                type="chunk",
                 content=content,
                 relevance_score=similarity,
                 source_document=doc_id,
                 source_chunks=[chunk.chunk_id],
-                metadata=metadata
+                metadata=metadata,
             )
             results.append(result)
-        
+
         return results
-    
-    async def _process_document_query(self, 
-                                    query: str, 
-                                    filters: Optional[Dict[str, Any]], 
-                                    max_results: int) -> List[QueryResult]:
+
+    async def _process_document_query(
+        self, query: str, filters: Optional[Dict[str, Any]], max_results: int
+    ) -> List[QueryResult]:
         """
         Process document-level queries analyzing entire documents and their characteristics.
 
@@ -1872,7 +1948,7 @@ class QueryEngine:
             >>> # Find documents about specific topics
             >>> results = await _process_document_query("artificial intelligence papers", None, 5)
             >>> print(results[0].content)  # Document summary with entity counts
-            
+
             >>> # Filter by document characteristics
             >>> results = await _process_document_query(
             ...     "technology documents",
@@ -1890,198 +1966,224 @@ class QueryEngine:
         # Input validation
         if not isinstance(query, str):
             raise TypeError("query must be a string")
-        
+
         if query.strip() == "":
             raise ValueError("query cannot be empty")
-            
+
         if not isinstance(max_results, int) or max_results <= 0:
             raise ValueError("max_results must be positive integer")
-            
+
         if filters is not None and not isinstance(filters, dict):
             raise TypeError("filters must be a dictionary")
-        
+
         results = []
-        
+
         # Get all knowledge graphs (documents)
         try:
             all_documents = list(self.graphrag.knowledge_graphs.values())
         except AttributeError:
             raise RuntimeError("GraphRAG integrator not properly initialized")
-        
+
         # Apply filters
         if filters:
-            if 'document_id' in filters:
-                all_documents = [kg for kg in all_documents if kg.document_id == filters['document_id']]
-            
-            if 'min_entities' in filters:
-                min_entities = filters['min_entities']
+            if "document_id" in filters:
+                all_documents = [
+                    kg for kg in all_documents if kg.document_id == filters["document_id"]
+                ]
+
+            if "min_entities" in filters:
+                min_entities = filters["min_entities"]
                 all_documents = [kg for kg in all_documents if len(kg.entities) >= min_entities]
-            
-            if 'min_relationships' in filters:
-                min_relationships = filters['min_relationships']
-                all_documents = [kg for kg in all_documents if len(kg.relationships) >= min_relationships]
-                
-            if 'creation_date' in filters:
+
+            if "min_relationships" in filters:
+                min_relationships = filters["min_relationships"]
+                all_documents = [
+                    kg for kg in all_documents if len(kg.relationships) >= min_relationships
+                ]
+
+            if "creation_date" in filters:
                 from datetime import datetime
-                filter_date = datetime.strptime(filters['creation_date'], "%Y-%m-%d")
+
+                filter_date = datetime.strptime(filters["creation_date"], "%Y-%m-%d")
                 filtered_docs = []
                 for kg in all_documents:
                     try:
-                        if hasattr(kg, 'metadata') and kg.metadata and 'creation_date' in kg.metadata:
-                            creation_date = datetime.strptime(kg.metadata['creation_date'], "%Y-%m-%d")
+                        if (
+                            hasattr(kg, "metadata")
+                            and kg.metadata
+                            and "creation_date" in kg.metadata
+                        ):
+                            creation_date = datetime.strptime(
+                                kg.metadata["creation_date"], "%Y-%m-%d"
+                            )
                             if creation_date >= filter_date:
                                 filtered_docs.append(kg)
                     except (ValueError, KeyError, TypeError):
                         continue  # Skip documents with invalid or missing dates
                 all_documents = filtered_docs
-        
+
         # Score documents by query relevance
         scored_documents = []
         query_words = set(query.lower().split())
-        
+
         for kg in all_documents:
             try:
                 # Validate knowledge graph structure
-                if not hasattr(kg, 'metadata') or kg.metadata is None:
+                if not hasattr(kg, "metadata") or kg.metadata is None:
                     raise RuntimeError("Corrupted document metadata")
-                
-                if not hasattr(kg, 'entities') or not hasattr(kg, 'relationships'):
+
+                if not hasattr(kg, "entities") or not hasattr(kg, "relationships"):
                     raise AttributeError("Missing required metadata")
-                
+
                 score = 0
-                
+
                 # Title match
-                document_title = kg.metadata.get('document_title', '')
-                if hasattr(kg, 'document_id'):
+                document_title = kg.metadata.get("document_title", "")
+                if hasattr(kg, "document_id"):
                     document_title = document_title or kg.document_id
                 title_words = set(document_title.lower().split())
                 title_overlap = len(query_words.intersection(title_words))
                 score += title_overlap * 3
-                
+
                 # Entity matches
                 entity_matches = 0
-                entities_to_check = kg.entities[:5] if hasattr(kg.entities, '__len__') else kg.entities
+                entities_to_check = (
+                    kg.entities[:5] if hasattr(kg.entities, "__len__") else kg.entities
+                )
                 for entity in entities_to_check:
                     try:
-                        entity_name = getattr(entity, 'name', str(entity))
+                        entity_name = getattr(entity, "name", str(entity))
                         entity_words = set(entity_name.lower().split())
                         if query_words.intersection(entity_words):
                             entity_matches += 1
                     except (AttributeError, TypeError):
                         continue
                 score += entity_matches
-                
+
                 # Content matches (sample chunks)
                 content_matches = 0
-                if hasattr(kg, 'chunks') and kg.chunks:
+                if hasattr(kg, "chunks") and kg.chunks:
                     chunks_to_check = kg.chunks[:10] if len(kg.chunks) > 10 else kg.chunks
                     for chunk in chunks_to_check:
                         try:
-                            chunk_content = getattr(chunk, 'content', str(chunk))
+                            chunk_content = getattr(chunk, "content", str(chunk))
                             chunk_words = set(chunk_content.lower().split())
                             content_overlap = len(query_words.intersection(chunk_words))
                             content_matches += content_overlap
                         except (AttributeError, TypeError):
                             continue
                 score += content_matches * 0.1
-                
+
                 if score > 0:
                     scored_documents.append((kg, score))
-                    
+
             except (RuntimeError, AttributeError) as e:
                 # Re-raise validation errors
                 raise e
             except Exception as e:
                 # Log other errors but continue processing
-                self.logger.warning(f"Error processing document {getattr(kg, 'document_id', 'unknown')}: {e}")
+                self.logger.warning(
+                    f"Error processing document {getattr(kg, 'document_id', 'unknown')}: {e}"
+                )
                 continue
-        
+
         # Sort and limit results
         scored_documents.sort(key=lambda x: x[1], reverse=True)
-        
+
         for kg, score in scored_documents[:max_results]:
             try:
                 # Create document summary
-                document_title = kg.metadata.get('document_title', getattr(kg, 'document_id', 'Unknown Document'))
-                entity_count = len(kg.entities) if hasattr(kg, 'entities') and kg.entities else 0
-                relationship_count = len(kg.relationships) if hasattr(kg, 'relationships') and kg.relationships else 0
-                chunk_count = len(kg.chunks) if hasattr(kg, 'chunks') and kg.chunks else 0
-                
+                document_title = kg.metadata.get(
+                    "document_title", getattr(kg, "document_id", "Unknown Document")
+                )
+                entity_count = len(kg.entities) if hasattr(kg, "entities") and kg.entities else 0
+                relationship_count = (
+                    len(kg.relationships)
+                    if hasattr(kg, "relationships") and kg.relationships
+                    else 0
+                )
+                chunk_count = len(kg.chunks) if hasattr(kg, "chunks") and kg.chunks else 0
+
                 summary = f"Document: {document_title}\n"
                 summary += f"Entities: {entity_count}, Relationships: {relationship_count}, Chunks: {chunk_count}\n"
-                
+
                 # Get key entities (first 5)
                 key_entities = []
-                if hasattr(kg, 'entities') and kg.entities:
+                if hasattr(kg, "entities") and kg.entities:
                     for entity in kg.entities[:5]:
                         try:
-                            entity_name = getattr(entity, 'name', str(entity))
+                            entity_name = getattr(entity, "name", str(entity))
                             key_entities.append(entity_name)
                         except (AttributeError, TypeError):
                             continue
-                
+
                 if key_entities:
                     summary += f"Key entities: {', '.join(key_entities)}"
-                
+
                 # Normalize relevance score based on query length and match types
                 # Calculate max possible score for this query
                 query_word_count = len(query_words)
                 max_title_score = query_word_count * 3  # All words match title
-                max_entity_score = min(5, len(kg.entities)) if hasattr(kg, 'entities') and kg.entities else 0  # Up to 5 entities match
+                max_entity_score = (
+                    min(5, len(kg.entities)) if hasattr(kg, "entities") and kg.entities else 0
+                )  # Up to 5 entities match
                 max_content_score = query_word_count * 2 * 0.1  # Reasonable content matches
-                
+
                 max_possible_score = max_title_score + max_entity_score + max_content_score
                 max_possible_score = max(max_possible_score, 1.0)  # Avoid division by zero
-                
+
                 normalized_score = min(1.0, score / max_possible_score)
-                
+
                 # Build comprehensive metadata
                 metadata = {
-                    'entity_count': entity_count,
-                    'relationship_count': relationship_count,
-                    'key_entities': key_entities,
-                    'processing_date': kg.metadata.get('processing_date', kg.metadata.get('creation_date', 'Unknown')),
-                    'ipld_storage_details': {
-                        'ipld_cid': getattr(kg, 'ipld_cid', None),
-                        'storage_available': self.storage is not None
+                    "entity_count": entity_count,
+                    "relationship_count": relationship_count,
+                    "key_entities": key_entities,
+                    "processing_date": kg.metadata.get(
+                        "processing_date", kg.metadata.get("creation_date", "Unknown")
+                    ),
+                    "ipld_storage_details": {
+                        "ipld_cid": getattr(kg, "ipld_cid", None),
+                        "storage_available": self.storage is not None,
                     },
-                    'document_characteristics': {
-                        'chunk_count': chunk_count,
-                        'content_density': entity_count / max(1, chunk_count),
-                        'relationship_density': relationship_count / max(1, entity_count)
-                    }
+                    "document_characteristics": {
+                        "chunk_count": chunk_count,
+                        "content_density": entity_count / max(1, chunk_count),
+                        "relationship_density": relationship_count / max(1, entity_count),
+                    },
                 }
-                
+
                 # Add additional metadata from knowledge graph
-                if hasattr(kg, 'graph_id'):
-                    metadata['graph_id'] = kg.graph_id
-                if hasattr(kg, 'creation_timestamp'):
-                    metadata['creation_timestamp'] = kg.creation_timestamp
-                
+                if hasattr(kg, "graph_id"):
+                    metadata["graph_id"] = kg.graph_id
+                if hasattr(kg, "creation_timestamp"):
+                    metadata["creation_timestamp"] = kg.creation_timestamp
+
                 # Source chunks (empty for document-level queries)
                 source_chunks = []
-                
+
                 result = QueryResult(
-                    id=getattr(kg, 'document_id', f'doc_{len(results)}'),
-                    type='document',
+                    id=getattr(kg, "document_id", f"doc_{len(results)}"),
+                    type="document",
                     content=summary,
                     relevance_score=normalized_score,
-                    source_document=getattr(kg, 'document_id', f'doc_{len(results)}'),
+                    source_document=getattr(kg, "document_id", f"doc_{len(results)}"),
                     source_chunks=source_chunks,
-                    metadata=metadata
+                    metadata=metadata,
                 )
                 results.append(result)
-                
+
             except Exception as e:
-                self.logger.warning(f"Error creating result for document {getattr(kg, 'document_id', 'unknown')}: {e}")
+                self.logger.warning(
+                    f"Error creating result for document {getattr(kg, 'document_id', 'unknown')}: {e}"
+                )
                 continue
-        
+
         return results
-    
-    async def _process_cross_document_query(self, 
-                                          query: str, 
-                                          filters: Optional[Dict[str, Any]], 
-                                          max_results: int) -> List[QueryResult]:
+
+    async def _process_cross_document_query(
+        self, query: str, filters: Optional[Dict[str, Any]], max_results: int
+    ) -> List[QueryResult]:
         """
         Process cross-document analysis queries examining relationships spanning multiple documents.
 
@@ -2119,7 +2221,7 @@ class QueryEngine:
             >>> # Find cross-document entity connections
             >>> results = await _process_cross_document_query("companies across documents", None, 10)
             >>> print(results[0].content)  # "Microsoft (doc1) founded GitHub (doc2)"
-            
+
             >>> # Filter by relationship type
             >>> results = await _process_cross_document_query(
             ...     "acquisitions multiple documents",
@@ -2135,29 +2237,32 @@ class QueryEngine:
             - Missing entities are logged and skipped rather than causing failures
         """
         results = []
-        
+
         # Get cross-document relationships
         cross_relationships = self.graphrag.cross_document_relationships
-        
+
         if not cross_relationships:
             self.logger.info("No cross-document relationships found")
             return results
-        
+
         # Score cross-document relationships
         scored_relationships = []
         query_words = set(query.split())
-        
+
         for cross_rel in cross_relationships:
             # Apply filters first
             if filters:
                 # Filter by relationship type
-                if "relationship_type" in filters and cross_rel.relationship_type != filters["relationship_type"]:
+                if (
+                    "relationship_type" in filters
+                    and cross_rel.relationship_type != filters["relationship_type"]
+                ):
                     self.logger.warning(
                         f"Skipping cross-document relationship {cross_rel.id} due to type mismatch: "
                         f"{cross_rel.relationship_type} != {filters['relationship_type']}"
                     )
                     continue
-                    
+
                 # Filter by confidence
                 if "min_confidence" in filters and cross_rel.confidence < filters["min_confidence"]:
                     self.logger.warning(
@@ -2165,7 +2270,7 @@ class QueryEngine:
                         f"{cross_rel.confidence} < {filters['min_confidence']}"
                     )
                     continue
-                    
+
                 # Filter by source/target documents (extract from chunks)
                 source_docs = set()
                 target_docs = set()
@@ -2174,43 +2279,43 @@ class QueryEngine:
                         doc_id = chunk.split("_chunk_")[0]
                         source_docs.add(doc_id)
                         target_docs.add(doc_id)
-                
+
                 if "source_document" in filters:
                     if filters["source_document"] not in source_docs:
                         continue
-                        
+
                 if "target_document" in filters:
                     if filters["target_document"] not in target_docs:
                         continue
-            
+
             score = 0
-            
+
             # Get entities
             source_entity = self.graphrag.global_entities.get(cross_rel.source_entity_id)
             target_entity = self.graphrag.global_entities.get(cross_rel.target_entity_id)
-            
+
             if not source_entity or not target_entity:
                 continue
-            
+
             # Entity name matches
             source_words = set(source_entity.name.lower().split())
             target_words = set(target_entity.name.lower().split())
-            
+
             source_overlap = len(query_words.intersection(source_words))
             target_overlap = len(query_words.intersection(target_words))
             score += source_overlap + target_overlap
-            
+
             # Relationship type match
-            rel_type_words = set(cross_rel.relationship_type.replace('_', ' ').split())
+            rel_type_words = set(cross_rel.relationship_type.replace("_", " ").split())
             type_overlap = len(query_words.intersection(rel_type_words))
             score += type_overlap * 2
-            
+
             if score > 0:
                 scored_relationships.append((cross_rel, score, source_entity, target_entity))
-        
+
         # Sort and limit results
         scored_relationships.sort(key=lambda x: x[1], reverse=True)
-        
+
         for cross_rel, score, source_entity, target_entity in scored_relationships[:max_results]:
             # Extract document IDs from source chunks
             source_docs = set()
@@ -2218,53 +2323,66 @@ class QueryEngine:
             for chunk in cross_rel.source_chunks:
                 if "_chunk_" in chunk:
                     doc_id = chunk.split("_chunk_")[0]
-                    if doc_id in source_entity.source_chunks[0] if source_entity.source_chunks else False:
+                    if (
+                        doc_id in source_entity.source_chunks[0]
+                        if source_entity.source_chunks
+                        else False
+                    ):
                         source_docs.add(doc_id)
-                    elif doc_id in target_entity.source_chunks[0] if target_entity.source_chunks else False:
+                    elif (
+                        doc_id in target_entity.source_chunks[0]
+                        if target_entity.source_chunks
+                        else False
+                    ):
                         target_docs.add(doc_id)
                     else:
                         source_docs.add(doc_id)  # fallback to source
-            
+
             source_doc = list(source_docs)[0] if source_docs else "unknown"
-            target_doc = list(target_docs)[0] if target_docs else list(source_docs)[0] if source_docs else "unknown"
-            
+            target_doc = (
+                list(target_docs)[0]
+                if target_docs
+                else list(source_docs)[0]
+                if source_docs
+                else "unknown"
+            )
+
             content = f"Cross-document: {source_entity.name} ({source_doc}) "
             content += f"{cross_rel.relationship_type.replace('_', ' ')} "
             content += f"{target_entity.name} ({target_doc})"
-            
+
             result = QueryResult(
                 id=cross_rel.id,
-                type='cross_document_relationship',
+                type="cross_document_relationship",
                 content=content,
                 relevance_score=score / 10.0,
                 source_document="multiple",
                 source_chunks=cross_rel.source_chunks,
                 metadata={
-                    'relationship_type': cross_rel.relationship_type,
-                    'source_document': source_doc,
-                    'target_document': target_doc,
-                    'source_entity': {
-                        'id': source_entity.id,
-                        'name': source_entity.name,
-                        'type': source_entity.type
+                    "relationship_type": cross_rel.relationship_type,
+                    "source_document": source_doc,
+                    "target_document": target_doc,
+                    "source_entity": {
+                        "id": source_entity.id,
+                        "name": source_entity.name,
+                        "type": source_entity.type,
                     },
-                    'target_entity': {
-                        'id': target_entity.id,
-                        'name': target_entity.name,
-                        'type': target_entity.type
+                    "target_entity": {
+                        "id": target_entity.id,
+                        "name": target_entity.name,
+                        "type": target_entity.type,
                     },
-                    'confidence': cross_rel.confidence,
-                    'evidence_chunks': cross_rel.source_chunks
-                }
+                    "confidence": cross_rel.confidence,
+                    "evidence_chunks": cross_rel.source_chunks,
+                },
             )
             results.append(result)
-        
+
         return results
-    
-    async def _process_graph_traversal_query(self, 
-                                           query: str, 
-                                           filters: Optional[Dict[str, Any]], 
-                                           max_results: int) -> List[QueryResult]:
+
+    async def _process_graph_traversal_query(
+        self, query: str, filters: Optional[Dict[str, Any]], max_results: int
+    ) -> List[QueryResult]:
         """
         Process graph traversal queries for path-finding and connection analysis.
 
@@ -2303,7 +2421,7 @@ class QueryEngine:
             >>> # Find connection path
             >>> results = await _process_graph_traversal_query("path Bill Gates Microsoft", None, 5)
             >>> print(results[0].content)  # "Path: Bill Gates → founded → Microsoft"
-            
+
             >>> # Limited path length
             >>> results = await _process_graph_traversal_query(
             ...     "connection John Smith Apple",
@@ -2321,115 +2439,124 @@ class QueryEngine:
         # Input validation
         if not isinstance(query, str) or not query.strip():
             raise ValueError("Query must be a non-empty string")
-        
+
         if not isinstance(max_results, int) or max_results <= 0:
             raise ValueError("max_results must be a positive integer")
-        
+
         if filters is not None and not isinstance(filters, dict):
             raise TypeError("Filters must be a dictionary or None")
-        
+
         results = []
-        
+
         # Extract entity names from query for path finding
         entity_names = self._extract_entity_names_from_query(query)
-        
+
         if len(entity_names) < 2:
             self.logger.info("Need at least 2 entities for graph traversal")
             return results
-        
+
         # Validate graph availability
-        if not hasattr(self.graphrag, 'global_graph') or self.graphrag.global_graph is None:
+        if not hasattr(self.graphrag, "global_graph") or self.graphrag.global_graph is None:
             raise RuntimeError("NetworkX graph is not available or corrupted")
-        
+
         # Find entities in graph - improved logic
         start_entities = []
         end_entities = []
-        
+
         # Split entity names more intelligently
         mid_point = len(entity_names) // 2
         start_names = entity_names[:mid_point] if mid_point > 0 else entity_names[:1]
         end_names = entity_names[mid_point:] if mid_point > 0 else entity_names[1:]
-        
+
         # Find start entities
         for entity in self.graphrag.global_entities.values():
             for name in start_names:
                 if name.lower() in entity.name.lower():
                     start_entities.append(entity)
                     break
-        
-        # Find end entities  
+
+        # Find end entities
         for entity in self.graphrag.global_entities.values():
             for name in end_names:
                 if name.lower() in entity.name.lower():
                     end_entities.append(entity)
                     break
-        
+
         if not start_entities or not end_entities:
             self.logger.info("Could not find entities for graph traversal")
             return results
-        
+
         # Apply filters if provided
-        max_path_length = filters.get('max_path_length') if filters else None
-        entity_types_filter = filters.get('entity_types') if filters else None
-        relationship_types_filter = filters.get('relationship_types') if filters else None
-        min_confidence = filters.get('min_confidence') if filters else None
-        
+        max_path_length = filters.get("max_path_length") if filters else None
+        entity_types_filter = filters.get("entity_types") if filters else None
+        relationship_types_filter = filters.get("relationship_types") if filters else None
+        min_confidence = filters.get("min_confidence") if filters else None
+
         # Find paths between entities
         for start_entity in start_entities[:3]:  # Limit to first 3
             for end_entity in end_entities[:3]:
                 if start_entity.id == end_entity.id:
                     continue
-                
+
                 try:
                     # Find shortest path
                     path = nx.shortest_path(
-                        self.graphrag.global_graph,
-                        source=start_entity.id,
-                        target=end_entity.id
+                        self.graphrag.global_graph, source=start_entity.id, target=end_entity.id
                     )
-                    
+
                     if len(path) > 1:
                         # Apply max_path_length filter
                         if max_path_length and len(path) > max_path_length:
                             continue
-                        
+
                         # Build path with entities and relationships
                         path_entities = []
                         path_relationships = []
                         entity_types_in_path = []
                         relationship_types_in_path = []
-                        
+
                         for i, entity_id in enumerate(path):
                             entity = self.graphrag.global_entities.get(entity_id)
                             if entity:
                                 path_entities.append(entity.name)
                                 entity_types_in_path.append(entity.type)
-                                
+
                                 # Apply entity type filter
                                 if entity_types_filter and entity.type not in entity_types_filter:
                                     break  # Skip this path
-                                
+
                                 # Get relationship to next entity
                                 if i < len(path) - 1:
                                     next_entity_id = path[i + 1]
-                                    edge_data = self.graphrag.global_graph.get_edge_data(entity_id, next_entity_id, {})
-                                    relationship = edge_data.get('relationship', 'connected')
-                                    confidence = edge_data.get('confidence', 1.0)
-                                    
+                                    edge_data = self.graphrag.global_graph.get_edge_data(
+                                        entity_id, next_entity_id, {}
+                                    )
+                                    relationship = edge_data.get("relationship", "connected")
+                                    confidence = edge_data.get("confidence", 1.0)
+
                                     # Apply relationship type filter
-                                    if relationship_types_filter and relationship not in relationship_types_filter:
+                                    if (
+                                        relationship_types_filter
+                                        and relationship not in relationship_types_filter
+                                    ):
                                         break  # Skip this path
-                                    
+
                                     # Apply confidence filter
                                     if min_confidence and confidence < min_confidence:
                                         break  # Skip this path
-                                    
-                                    path_relationships.append({
-                                        'type': relationship,
-                                        'confidence': confidence,
-                                        'from': entity.name,
-                                        'to': self.graphrag.global_entities.get(next_entity_id, {}).name if self.graphrag.global_entities.get(next_entity_id) else next_entity_id
-                                    })
+
+                                    path_relationships.append(
+                                        {
+                                            "type": relationship,
+                                            "confidence": confidence,
+                                            "from": entity.name,
+                                            "to": self.graphrag.global_entities.get(
+                                                next_entity_id, {}
+                                            ).name
+                                            if self.graphrag.global_entities.get(next_entity_id)
+                                            else next_entity_id,
+                                        }
+                                    )
                                     relationship_types_in_path.append(relationship)
                         else:
                             # Path passed all filters, create formatted description
@@ -2438,37 +2565,37 @@ class QueryEngine:
                                 path_parts.append(entity_name)
                                 if i < len(path_relationships):
                                     path_parts.append("→")
-                                    path_parts.append(path_relationships[i]['type'])
+                                    path_parts.append(path_relationships[i]["type"])
                                     path_parts.append("→")
-                            
+
                             if path_parts and path_parts[-1] == "→":
                                 path_parts = path_parts[:-1]  # Remove trailing arrow
-                            
+
                             path_description = " ".join(path_parts)
-                            
+
                             # Calculate path relevance (inverse of length, normalized)
                             relevance = 1.0 / len(path) if len(path) > 0 else 0.0
                             relevance = min(1.0, max(0.0, relevance))  # Ensure 0.0-1.0 range
-                            
+
                             result = QueryResult(
                                 id=f"path_{start_entity.id}_{end_entity.id}",
-                                type='graph_path',
+                                type="graph_path",
                                 content=f"Path: {path_description}",
                                 relevance_score=relevance,
-                                source_document='multiple',
+                                source_document="multiple",
                                 source_chunks=[],  # Paths don't have specific chunks
                                 metadata={
-                                    'path_length': len(path),
-                                    'path_entities': path,
-                                    'path_relationships': path_relationships,
-                                    'start_entity': start_entity.name,
-                                    'end_entity': end_entity.name,
-                                    'entity_types_in_path': entity_types_in_path,
-                                    'relationship_types_in_path': relationship_types_in_path
-                                }
+                                    "path_length": len(path),
+                                    "path_entities": path,
+                                    "path_relationships": path_relationships,
+                                    "start_entity": start_entity.name,
+                                    "end_entity": end_entity.name,
+                                    "entity_types_in_path": entity_types_in_path,
+                                    "relationship_types_in_path": relationship_types_in_path,
+                                },
                             )
                             results.append(result)
-                
+
                 except nx.NetworkXNoPath:
                     # No path found
                     continue
@@ -2478,12 +2605,12 @@ class QueryEngine:
                 except Exception as e:
                     self.logger.warning(f"Error finding path: {e}")
                     continue
-        
+
         # Sort by relevance (path length)
         results.sort(key=lambda x: x.relevance_score, reverse=True)
-        
+
         return results[:max_results]
-    
+
     def _extract_entity_names_from_query(self, query: str, min_chars: int = 2) -> List[str]:
         """
         Extract potential entity names from query text using NLTK NER and POS tagging.
@@ -2496,7 +2623,7 @@ class QueryEngine:
 
         Args:
             query (str): Query string that may contain entity names.
-                Can be normalized or raw query text. 
+                Can be normalized or raw query text.
             min_chars (int): Minimum character length for valid entity names.
                 Defaults to 3 characters to filter out short words.
 
@@ -2548,7 +2675,9 @@ class QueryEngine:
             entities = ne_chunk(pos_tags, binary=False)
             print(f"NER tree: {entities}")
         except LookupError as e:
-            self.logger.warning(f"NLTK resources unavailable for NER; falling back to heuristic extraction: {e}")
+            self.logger.warning(
+                f"NLTK resources unavailable for NER; falling back to heuristic extraction: {e}"
+            )
 
             def _fallback_entities(text: str) -> List[str]:
                 # Capture multi-word capitalized phrases and acronyms
@@ -2561,10 +2690,10 @@ class QueryEngine:
 
         # Extract entities from NER tree
         entity_names = []
-        
+
         # Convert tree to IOB tags for easier processing
         iob_tags = tree2conlltags(entities)
-        
+
         current_entity = []
         current_label = None
 
@@ -2576,51 +2705,53 @@ class QueryEngine:
             # - The whole query is just a number (e.g. '42', '12345252562667', '3.14')
             # - They are not standalone question words (e.g. 'What is 42')
             pass
-        
+
         for word, pos, ner in iob_tags:
-            if ner.startswith('B-'):  # Beginning of entity
+            if ner.startswith("B-"):  # Beginning of entity
                 # Save previous entity if exists
                 if current_entity:
                     print(f"Beginning entity: {current_entity} with label {current_label}")
-                    entity_names.append(' '.join(current_entity))
+                    entity_names.append(" ".join(current_entity))
                 # Start new entity
                 current_entity = [word]
                 current_label = ner[2:]
-            elif ner.startswith('I-') and current_entity:  # Inside entity
+            elif ner.startswith("I-") and current_entity:  # Inside entity
                 print(f"Inside entity: {current_entity} with label {current_label}")
                 current_entity.append(word)
             else:  # Outside entity
                 # Save previous entity if exists
                 print(f"Outside entity: {current_entity} with label {current_label}")
                 if current_entity:
-                    entity_names.append(' '.join(current_entity))
+                    entity_names.append(" ".join(current_entity))
                 current_entity = []
                 current_label = None
-        
+
         # Don't forget the last entity
         if current_entity:
-            entity_names.append(' '.join(current_entity))
-        
+            entity_names.append(" ".join(current_entity))
+
         print(f"Found entities from NER: {entity_names}")
-        
+
         # Also find proper nouns that might not be caught by NER
         proper_nouns = []
         current_noun_phrase = []
 
         def _join_and_add(current_noun_phrase, entity_names, proper_nouns):
             if current_noun_phrase and len(current_noun_phrase) >= 1:
-                noun_phrase = ' '.join(current_noun_phrase)
+                noun_phrase = " ".join(current_noun_phrase)
                 print(f"Found proper noun phrase: {noun_phrase}")
                 # Only add if not already found by NER and meets criteria
-                if (noun_phrase not in entity_names and 
-                    len(noun_phrase) >= 3 and
-                    not self._is_question_word(noun_phrase)):
+                if (
+                    noun_phrase not in entity_names
+                    and len(noun_phrase) >= 3
+                    and not self._is_question_word(noun_phrase)
+                ):
                     proper_nouns.append(noun_phrase)
 
         for word, pos in pos_tags:
             # If & is in the word, and it immediately follows an upper case letter,
             # treat it as a potential proper noun phrase. ex AT&T, Johnson & Johnson
-            if word == '&' and current_noun_phrase:
+            if word == "&" and current_noun_phrase:
                 # Check if previous word ended with uppercase letter
                 if current_noun_phrase and current_noun_phrase[-1][-1].isupper():
                     current_noun_phrase.append(word)
@@ -2628,11 +2759,11 @@ class QueryEngine:
                     # Finish current phrase if it exists
                     _join_and_add(current_noun_phrase, entity_names, proper_nouns)
                     current_noun_phrase = []
-            elif word == '&' and not current_noun_phrase:
+            elif word == "&" and not current_noun_phrase:
                 # Skip standalone & symbols
                 continue
 
-            if pos in ['NNP', 'NNPS']:  # Proper nouns
+            if pos in ["NNP", "NNPS"]:  # Proper nouns
                 current_noun_phrase.append(word)
             else:
                 _join_and_add(current_noun_phrase, entity_names, proper_nouns)
@@ -2643,7 +2774,7 @@ class QueryEngine:
 
         # Combine NER results with proper noun detection
         all_entities = entity_names + proper_nouns
-        
+
         # Remove duplicates while preserving order
         seen = set()
         unique_entities = []
@@ -2659,7 +2790,7 @@ class QueryEngine:
             if entity not in seen:
                 seen.add(entity)
                 unique_entities.append(entity)
-        
+
         # Filter out obvious non-entities
         filtered_entities = []
         for entity in unique_entities:
@@ -2674,7 +2805,7 @@ class QueryEngine:
             entity: str
 
             # Remove leading articles
-            for idx, char in [(2, 'a '), (3, 'an ')]:
+            for idx, char in [(2, "a "), (3, "an ")]:
                 if entity.lower().startswith(char):
                     entity = entity[idx:].strip()
 
@@ -2683,23 +2814,59 @@ class QueryEngine:
                 final_entities.append(entity)
         filtered_entities = final_entities
 
-
-
         end_time = time.time()
         print(f"Entity extraction took {end_time - start_time:.2f} seconds")
         return filtered_entities
-    
+
     def _is_question_word(self, word: str) -> bool:
         """Helper method to check if a word is a common question word or stop word."""
         question_words = {
-            'who', 'what', 'when', 'where', 'why', 'how', 'which', 'whose',
-            'can', 'could', 'would', 'should', 'will', 'may', 'might',
-            'is', 'are', 'was', 'were', 'been', 'being', 'have', 'has', 'had',
-            'do', 'does', 'did', 'the', 'and', 'or', 'but', 'a', 'an', 'this',
-            'that', 'these', 'those', 'from', 'to', 'in', 'on', 'at', 'for'
+            "who",
+            "what",
+            "when",
+            "where",
+            "why",
+            "how",
+            "which",
+            "whose",
+            "can",
+            "could",
+            "would",
+            "should",
+            "will",
+            "may",
+            "might",
+            "is",
+            "are",
+            "was",
+            "were",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "the",
+            "and",
+            "or",
+            "but",
+            "a",
+            "an",
+            "this",
+            "that",
+            "these",
+            "those",
+            "from",
+            "to",
+            "in",
+            "on",
+            "at",
+            "for",
         }
         return word in question_words
-    
+
     def _get_entity_documents(self, entity: Entity) -> List[str]:
         """
         Retrieve document IDs where a specific entity appears in the knowledge base.
@@ -2741,22 +2908,22 @@ class QueryEngine:
             - Performance scales with number of documents and chunks
         """
         # Duck-typed attribute checking (tests frequently use mocks)
-        if not hasattr(entity, 'source_chunks'):
-            return ['unknown']
-        
+        if not hasattr(entity, "source_chunks"):
+            return ["unknown"]
+
         # Knowledge graph accessibility checking
         if self.graphrag is None or self.graphrag.knowledge_graphs is None:
             raise RuntimeError("knowledge graph data is inaccessible")
-        
+
         documents = []
         try:
             for kg in self.graphrag.knowledge_graphs.values():
                 print(f"Checking knowledge graph {kg.document_id} for entity {entity.name}")
-                
+
                 # Check if knowledge graph data is corrupted
-                if not hasattr(kg, 'document_chunks') or kg.document_chunks is None:
+                if not hasattr(kg, "document_chunks") or kg.document_chunks is None:
                     raise RuntimeError("knowledge graph data is corrupted")
-                
+
                 # Check if any of the entity's source chunks are in this knowledge graph's documents
                 for doc_id, chunks in kg.document_chunks.items():
                     if any(chunk in entity.source_chunks for chunk in chunks):
@@ -2768,9 +2935,9 @@ class QueryEngine:
                     print(f"Entity {entity.name} not found in document {kg.document_id}")
         except (AttributeError, TypeError) as e:
             raise RuntimeError(f"knowledge graph data is corrupted: {e}")
-        
-        return documents if documents else ['unknown']
-    
+
+        return documents if documents else ["unknown"]
+
     def _get_relationship_documents(self, relationship: Relationship) -> List[str]:
         """
         Retrieve document IDs where a specific relationship appears in the knowledge base.
@@ -2814,40 +2981,42 @@ class QueryEngine:
         # Type and attribute validation
         if relationship is None:
             raise TypeError("Relationship cannot be None")
-        
+
         # Check if it's a proper Relationship instance by checking for expected attributes
-        if not hasattr(relationship, 'source_chunks'):
+        if not hasattr(relationship, "source_chunks"):
             # If it's not None but doesn't have source_chunks, it's the wrong type
-            if not isinstance(relationship, type(relationship)) or isinstance(relationship, (str, int, float, list, dict)):
+            if not isinstance(relationship, type(relationship)) or isinstance(
+                relationship, (str, int, float, list, dict)
+            ):
                 raise TypeError(f"Expected Relationship object, got {type(relationship).__name__}")
             raise AttributeError("Relationship must have source_chunks attribute")
-        
-        if not hasattr(self.graphrag, 'knowledge_graphs'):
+
+        if not hasattr(self.graphrag, "knowledge_graphs"):
             raise RuntimeError("GraphRAG integrator knowledge graphs are inaccessible")
-        
+
         if self.graphrag.knowledge_graphs is None:
             raise RuntimeError("Knowledge graphs data is corrupted or inaccessible")
-        
+
         documents = []
-        
+
         # Handle both dict and list structures for knowledge_graphs
         knowledge_graphs = (
-            self.graphrag.knowledge_graphs.values() 
-            if hasattr(self.graphrag.knowledge_graphs, 'values') 
+            self.graphrag.knowledge_graphs.values()
+            if hasattr(self.graphrag.knowledge_graphs, "values")
             else self.graphrag.knowledge_graphs
         )
-        
+
         for kg in knowledge_graphs:
             if kg.documents is None:
                 raise RuntimeError("Knowledge graph documents data is corrupted")
-            
+
             # Check each document in the knowledge graph
             for doc_id, doc_data in kg.documents.items():
                 doc_chunks = doc_data.get("chunks", [])
                 # Check if any relationship source chunks match document chunks
                 if any(chunk_id in relationship.source_chunks for chunk_id in doc_chunks):
                     documents.append(doc_id)
-        
+
         # Remove duplicates while preserving order
         unique_documents = []
         seen = set()
@@ -2855,14 +3024,15 @@ class QueryEngine:
             if doc_id not in seen:
                 unique_documents.append(doc_id)
                 seen.add(doc_id)
-        
-        return unique_documents if unique_documents else ['unknown']
-    
-    async def _generate_query_suggestions(self, 
-                                        query: str, # FIXME Currently unused.
-                                        results: List[QueryResult],
-                                        suggestion_limit: int = 5
-                                        ) -> List[str]:
+
+        return unique_documents if unique_documents else ["unknown"]
+
+    async def _generate_query_suggestions(
+        self,
+        query: str,  # FIXME Currently unused.
+        results: List[QueryResult],
+        suggestion_limit: int = 5,
+    ) -> List[str]:
         """
         Generate intelligent follow-up query suggestions based on result content and patterns.
 
@@ -2892,7 +3062,7 @@ class QueryEngine:
             >>> results = [entity_result_gates, entity_result_microsoft]
             >>> suggestions = await _generate_query_suggestions("Bill Gates", results)
             >>> print(suggestions)
-            ['What is Bill Gates?', 'What are the relationships of Bill Gates?', 
+            ['What is Bill Gates?', 'What are the relationships of Bill Gates?',
              'What is Microsoft?', 'Find all founded relationships']
 
         Notes:
@@ -2904,43 +3074,43 @@ class QueryEngine:
         """
         suggestions = []
         topk = suggestion_limit
-        
+
         # Entity-based suggestions
         entities_mentioned = set()
         for result in results[:topk]:  # Top 5 results
-            if 'entity_name' in result.metadata:
-                entities_mentioned.add(result.metadata['entity_name'])
-            if 'source_entity' in result.metadata:
-                entities_mentioned.add(result.metadata['source_entity']['name'])
-            if 'target_entity' in result.metadata:
-                entities_mentioned.add(result.metadata['target_entity']['name'])
-        
+            if "entity_name" in result.metadata:
+                entities_mentioned.add(result.metadata["entity_name"])
+            if "source_entity" in result.metadata:
+                entities_mentioned.add(result.metadata["source_entity"]["name"])
+            if "target_entity" in result.metadata:
+                entities_mentioned.add(result.metadata["target_entity"]["name"])
+
         # Suggest related entity queries
         for entity in list(entities_mentioned)[:3]:
             suggestions.append(f"What is {entity}?")
             suggestions.append(f"What are the relationships of {entity}?")
-        
+
         # Document-based suggestions
         documents_mentioned = set()
         for result in results[:topk]:
-            if result.source_document != 'multiple' and result.source_document != 'unknown':
+            if result.source_document != "multiple" and result.source_document != "unknown":
                 documents_mentioned.add(result.source_document)
-        
+
         if len(documents_mentioned) > 1:
             suggestions.append("Compare these documents")
             suggestions.append("Find cross-document relationships")
-        
+
         # Type-based suggestions
         types_mentioned = set()
         for result in results[:topk]:
-            if 'relationship_type' in result.metadata:
-                types_mentioned.add(result.metadata['relationship_type'])
-        
+            if "relationship_type" in result.metadata:
+                types_mentioned.add(result.metadata["relationship_type"])
+
         for rel_type in list(types_mentioned)[:2]:
             suggestions.append(f"Find all {rel_type.replace('_', ' ')} relationships")
-        
+
         return suggestions[:topk]  # Limit to 5 suggestions
-    
+
     async def get_query_analytics(self) -> QueryAnalyticsDict:
         """
         Retrieve comprehensive analytics about query patterns, performance, and system usage.
@@ -2991,8 +3161,8 @@ class QueryEngine:
             - Used for performance monitoring and system optimization decisions
         """
         if not self.query_cache:
-            return {'message': 'No query data available'}
-        
+            return {"message": "No query data available"}
+
         # Analyze query patterns
         query_types = {}
         total_processing_time = 0
@@ -3009,12 +3179,12 @@ class QueryEngine:
 
         avg_processing_time = total_processing_time / len(self.query_cache)
         avg_results = sum(result_counts) / len(result_counts) if result_counts else 0
-        
+
         return {
-            'total_queries': len(self.query_cache),
-            'query_types': query_types,
-            'average_processing_time': avg_processing_time,
-            'average_results_per_query': avg_results,
-            'cache_size': len(self.query_cache),
-            'embedding_cache_size': len(self.embedding_cache)
+            "total_queries": len(self.query_cache),
+            "query_types": query_types,
+            "average_processing_time": avg_processing_time,
+            "average_results_per_query": avg_results,
+            "cache_size": len(self.query_cache),
+            "embedding_cache_size": len(self.embedding_cache),
         }

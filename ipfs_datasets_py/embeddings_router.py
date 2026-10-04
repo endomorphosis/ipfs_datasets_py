@@ -99,7 +99,12 @@ def get_accelerate_status() -> dict:
     except Exception:
         backend_available = False
 
-    return {"available": backend_available, "enabled": True, "env_disabled": False, "env_var": env_value}
+    return {
+        "available": backend_available,
+        "enabled": True,
+        "env_disabled": False,
+        "env_var": env_value,
+    }
 
 
 def _truthy(value: Optional[str]) -> bool:
@@ -149,7 +154,9 @@ def get_embedding_progress() -> Dict[str, str]:
     return dict(_LAST_EMBEDDING_PROGRESS)
 
 
-def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs: Dict[str, object]) -> str:
+def _effective_model_key(
+    *, provider_key: str, model_name: Optional[str], kwargs: Dict[str, object]
+) -> str:
     """Best-effort model identifier for caching.
 
     Embeddings callers sometimes pass model via kwargs (e.g. ``model=...``), and
@@ -200,7 +207,9 @@ def _response_cache_key(
     kwargs: Dict[str, object],
 ) -> str:
     provider_key = (provider or "auto").strip().lower()
-    model_key = _effective_model_key(provider_key=provider_key, model_name=model_name, kwargs=kwargs)
+    model_key = _effective_model_key(
+        provider_key=provider_key, model_name=model_name, kwargs=kwargs
+    )
     device_key = (device or "").strip().lower()
 
     strategy = _response_cache_key_strategy()
@@ -391,7 +400,10 @@ def _hf_embeddings_discovery_limit(*, kwargs: dict[str, object]) -> int:
 def _hf_embeddings_discovery_tags(*, kwargs: dict[str, object]) -> list[str]:
     raw = kwargs.get("hf_embeddings_discovery_tags")
     if raw is None:
-        raw = os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_TAGS", "feature-extraction,sentence-similarity")
+        raw = os.getenv(
+            "IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_TAGS",
+            "feature-extraction,sentence-similarity",
+        )
     text = str(raw or "").strip()
     if not text:
         return ["feature-extraction", "sentence-similarity"]
@@ -433,7 +445,9 @@ def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
     if not api_key:
         return None
 
-    base_url = os.getenv("IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
+    base_url = os.getenv(
+        "IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+    ).rstrip("/")
 
     class _OpenRouterEmbeddingsProvider:
         def embed_texts(
@@ -463,8 +477,16 @@ def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                    **({"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")} if os.getenv("OPENROUTER_HTTP_REFERER") else {}),
-                    **({"X-Title": os.getenv("OPENROUTER_APP_TITLE")} if os.getenv("OPENROUTER_APP_TITLE") else {}),
+                    **(
+                        {"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")}
+                        if os.getenv("OPENROUTER_HTTP_REFERER")
+                        else {}
+                    ),
+                    **(
+                        {"X-Title": os.getenv("OPENROUTER_APP_TITLE")}
+                        if os.getenv("OPENROUTER_APP_TITLE")
+                        else {}
+                    ),
                     **({"X-HF-Bill-To": bill_to} if bill_to else {}),
                 },
             )
@@ -567,8 +589,14 @@ def _get_hf_inference_api_provider() -> Optional[EmbeddingsProvider]:
             timeout = float(kwargs.get("timeout", 120))
             wait_for_model_raw = kwargs.get("wait_for_model", True)
             use_cache_raw = kwargs.get("use_cache", True)
-            wait_for_model = _truthy(wait_for_model_raw) if isinstance(wait_for_model_raw, str) else bool(wait_for_model_raw)
-            use_cache = _truthy(use_cache_raw) if isinstance(use_cache_raw, str) else bool(use_cache_raw)
+            wait_for_model = (
+                _truthy(wait_for_model_raw)
+                if isinstance(wait_for_model_raw, str)
+                else bool(wait_for_model_raw)
+            )
+            use_cache = (
+                _truthy(use_cache_raw) if isinstance(use_cache_raw, str) else bool(use_cache_raw)
+            )
 
             payload: dict[str, object] = {
                 "inputs": inputs,
@@ -603,7 +631,9 @@ def _get_hf_inference_api_provider() -> Optional[EmbeddingsProvider]:
                     raw = response.read().decode("utf-8", errors="replace")
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
-                raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
+                raise RuntimeError(
+                    f"HF Inference API HTTP {exc.code}: {detail or exc.reason}"
+                ) from exc
             except Exception as exc:
                 raise RuntimeError(f"HF Inference API request failed: {exc}") from exc
 
@@ -852,7 +882,9 @@ def get_embeddings_provider(
         cached = resolved_deps.get_cached(deps_key)
         if cached is not None:
             return cached
-        return resolved_deps.set_cached(deps_key, _resolve_provider_uncached(provider, deps=resolved_deps))
+        return resolved_deps.set_cached(
+            deps_key, _resolve_provider_uncached(provider, deps=resolved_deps)
+        )
 
     return _resolve_provider_cached(provider, _provider_cache_key())
 
@@ -887,7 +919,9 @@ def embed_texts(
                     kwargs=dict(kwargs),
                 )
                 getter = getattr(resolved_deps, "get_cached_or_remote", None)
-                cached = getter(cache_key) if callable(getter) else resolved_deps.get_cached(cache_key)
+                cached = (
+                    getter(cache_key) if callable(getter) else resolved_deps.get_cached(cache_key)
+                )
                 if isinstance(cached, list) and all(isinstance(x, (int, float)) for x in cached):
                     cached_vectors[idx] = [float(x) for x in cached]
                 else:
@@ -898,7 +932,9 @@ def embed_texts(
                 return [v if v is not None else [] for v in cached_vectors]
 
             backend = provider_instance or get_embeddings_provider(provider, deps=resolved_deps)
-            generated = backend.embed_texts(missing_texts, model_name=model_name, device=device, **kwargs)
+            generated = backend.embed_texts(
+                missing_texts, model_name=model_name, device=device, **kwargs
+            )
             for out_idx, vec in enumerate(generated):
                 input_idx = missing_indices[out_idx]
                 cached_vectors[input_idx] = vec
@@ -925,7 +961,12 @@ def embed_texts(
     backend = provider_instance or get_embeddings_provider(provider, deps=resolved_deps)
     effective_provider_name = _effective_embeddings_provider_name(provider)
 
-    def _cache_vectors(texts_for_cache: list[str], vectors_for_cache: list[list[float]], *, used_model_name: Optional[str]) -> None:
+    def _cache_vectors(
+        texts_for_cache: list[str],
+        vectors_for_cache: list[list[float]],
+        *,
+        used_model_name: Optional[str],
+    ) -> None:
         if not (_response_cache_enabled() and texts_for_cache):
             return
         for text, vec in zip(texts_for_cache, vectors_for_cache):
@@ -950,7 +991,9 @@ def embed_texts(
         _cache_vectors(inputs, result, used_model_name=model_name)
         return result
     except Exception as initial_exc:
-        if _is_hf_inference_provider_name(effective_provider_name) and _is_hf_embedding_compatibility_error(initial_exc):
+        if _is_hf_inference_provider_name(
+            effective_provider_name
+        ) and _is_hf_embedding_compatibility_error(initial_exc):
             attempted = set()
             if model_name is not None and str(model_name).strip():
                 attempted.add(str(model_name).strip())
@@ -963,7 +1006,9 @@ def embed_texts(
                     continue
                 attempted.add(fallback_model)
                 try:
-                    result = backend.embed_texts(inputs, model_name=fallback_model, device=device, **kwargs)
+                    result = backend.embed_texts(
+                        inputs, model_name=fallback_model, device=device, **kwargs
+                    )
                     _cache_vectors(inputs, result, used_model_name=fallback_model)
                     return result
                 except Exception:
@@ -971,7 +1016,9 @@ def embed_texts(
 
         # If an optional provider fails, fall back to local adapter.
         if provider is None and backend is not _get_local_adapter_provider(deps=resolved_deps):
-            result = _get_local_adapter_provider(deps=resolved_deps).embed_texts(inputs, model_name=model_name, device=device)
+            result = _get_local_adapter_provider(deps=resolved_deps).embed_texts(
+                inputs, model_name=model_name, device=device
+            )
             _cache_vectors(inputs, result, used_model_name=model_name)
             return result
         raise

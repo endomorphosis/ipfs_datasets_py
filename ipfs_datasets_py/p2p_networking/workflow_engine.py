@@ -4,6 +4,7 @@ Workflow Engine — core P2P workflow scheduling operations.
 Business logic extracted from mcplusplus_workflow_tools.py (744 lines → thin wrapper).
 All methods can be imported and used independently of the MCP layer.
 """
+
 from __future__ import annotations
 
 import logging
@@ -19,6 +20,7 @@ try:
         get_capabilities,
         workflow_scheduler as wf_module,
     )
+
     MCPLUSPLUS_AVAILABLE: bool = get_capabilities().get("workflow_scheduler_available", False)
 except (ImportError, ModuleNotFoundError):
     MCPLUSPLUS_AVAILABLE = False
@@ -28,6 +30,7 @@ except (ImportError, ModuleNotFoundError):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _unavailable(wf_id: Optional[str] = None) -> Dict[str, Any]:
     """Standard response when MCP++ workflow scheduler is not available."""
@@ -56,6 +59,7 @@ def _validate_id(workflow_id: str) -> Optional[Dict[str, Any]]:
 # WorkflowEngine
 # ---------------------------------------------------------------------------
 
+
 class WorkflowEngine:
     """Core workflow operations, independent of MCP tool layer."""
 
@@ -71,7 +75,10 @@ class WorkflowEngine:
     ) -> Dict[str, Any]:
         """Submit a workflow to the P2P network for distributed execution."""
         if not workflow_id or not name or not steps:
-            return {"success": False, "error": "Missing required parameters: workflow_id, name, or steps"}
+            return {
+                "success": False,
+                "error": "Missing required parameters: workflow_id, name, or steps",
+            }
 
         for step in steps:
             if "step_id" not in step or "action" not in step:
@@ -131,7 +138,11 @@ class WorkflowEngine:
             scheduler = wf_module.get_scheduler()
             status_data = await scheduler.get_workflow_status(workflow_id)
             if not status_data:
-                return {"success": False, "workflow_id": workflow_id, "error": f"Workflow {workflow_id} not found"}
+                return {
+                    "success": False,
+                    "workflow_id": workflow_id,
+                    "error": f"Workflow {workflow_id} not found",
+                }
 
             result: Dict[str, Any] = {
                 "success": True,
@@ -164,11 +175,17 @@ class WorkflowEngine:
             return err
 
         if not MCPLUSPLUS_AVAILABLE or wf_module is None:
-            return {"success": False, "workflow_id": workflow_id, "error": "MCP++ not available — cannot cancel workflow"}
+            return {
+                "success": False,
+                "workflow_id": workflow_id,
+                "error": "MCP++ not available — cannot cancel workflow",
+            }
 
         try:
             scheduler = wf_module.get_scheduler()
-            result = await scheduler.cancel_workflow(workflow_id=workflow_id, reason=reason, force=force)
+            result = await scheduler.cancel_workflow(
+                workflow_id=workflow_id, reason=reason, force=force
+            )
             return {
                 "success": True,
                 "workflow_id": workflow_id,
@@ -207,7 +224,11 @@ class WorkflowEngine:
         try:
             scheduler = wf_module.get_scheduler()
             workflows = await scheduler.list_workflows(
-                status=status_filter, peer_id=peer_filter, tags=tag_filter, limit=limit, offset=offset
+                status=status_filter,
+                peer_id=peer_filter,
+                tags=tag_filter,
+                limit=limit,
+                offset=offset,
             )
             return {
                 "success": True,
@@ -218,7 +239,13 @@ class WorkflowEngine:
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error listing workflows via MCP++: %s", e)
-            return {**_error(e), "workflows": [], "total_count": 0, "returned_count": 0, "has_more": False}
+            return {
+                **_error(e),
+                "workflows": [],
+                "total_count": 0,
+                "returned_count": 0,
+                "has_more": False,
+            }
 
     async def get_dependencies(
         self,
@@ -231,7 +258,10 @@ class WorkflowEngine:
             return err
 
         if fmt not in ("json", "dot", "mermaid"):
-            return {"success": False, "error": f"Invalid format: {fmt}. Must be one of: json, dot, mermaid"}
+            return {
+                "success": False,
+                "error": f"Invalid format: {fmt}. Must be one of: json, dot, mermaid",
+            }
 
         if not MCPLUSPLUS_AVAILABLE or wf_module is None:
             return _unavailable(workflow_id)
@@ -240,7 +270,11 @@ class WorkflowEngine:
             scheduler = wf_module.get_scheduler()
             dag_data = await scheduler.get_workflow_dag(workflow_id, format=fmt)
             if not dag_data:
-                return {"success": False, "workflow_id": workflow_id, "error": f"Workflow {workflow_id} not found or has no dependency data"}
+                return {
+                    "success": False,
+                    "workflow_id": workflow_id,
+                    "error": f"Workflow {workflow_id} not found or has no dependency data",
+                }
             return {
                 "success": True,
                 "workflow_id": workflow_id,
@@ -273,7 +307,11 @@ class WorkflowEngine:
                 workflow_id=workflow_id, include_outputs=include_outputs, include_logs=include_logs
             )
             if not result_data:
-                return {"success": False, "workflow_id": workflow_id, "error": f"Workflow {workflow_id} not found or not yet completed"}
+                return {
+                    "success": False,
+                    "workflow_id": workflow_id,
+                    "error": f"Workflow {workflow_id} not found or not yet completed",
+                }
             response: Dict[str, Any] = {
                 "success": True,
                 "workflow_id": workflow_id,

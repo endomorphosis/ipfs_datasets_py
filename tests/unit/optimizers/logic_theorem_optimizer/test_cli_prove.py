@@ -3,6 +3,7 @@
 Tests that the `prove` command works end-to-end on a trivial theorem.
 Uses monkeypatching to avoid requiring z3 to be installed.
 """
+
 from __future__ import annotations
 
 import json
@@ -43,40 +44,58 @@ class TestCmdProve:
         monkeypatch.setattr(_cw, "LogicTheoremOptimizer", _mock_optimizer_class())
 
     def test_prove_trivial_theorem_returns_zero(self, cli):
-        code = cli.run([
-            "prove",
-            "--theorem", "All men are mortal",
-            "--goal", "Socrates is mortal",
-            "--premises", "Socrates is a man",
-        ])
+        code = cli.run(
+            [
+                "prove",
+                "--theorem",
+                "All men are mortal",
+                "--goal",
+                "Socrates is mortal",
+                "--premises",
+                "Socrates is a man",
+            ]
+        )
         assert code == 0
 
     def test_prove_prints_theorem(self, cli, capsys):
-        cli.run([
-            "prove",
-            "--theorem", "All men are mortal",
-            "--goal", "Socrates is mortal",
-        ])
+        cli.run(
+            [
+                "prove",
+                "--theorem",
+                "All men are mortal",
+                "--goal",
+                "Socrates is mortal",
+            ]
+        )
         out = capsys.readouterr().out
         assert "All men are mortal" in out
 
     def test_prove_prints_goal(self, cli, capsys):
-        cli.run([
-            "prove",
-            "--theorem", "All cats have tails",
-            "--goal", "Tom has a tail",
-        ])
+        cli.run(
+            [
+                "prove",
+                "--theorem",
+                "All cats have tails",
+                "--goal",
+                "Tom has a tail",
+            ]
+        )
         out = capsys.readouterr().out
         assert "Tom has a tail" in out
 
     def test_prove_outputs_json_on_success(self, cli, tmp_path):
         out_path = tmp_path / "proof.json"
-        code = cli.run([
-            "prove",
-            "--theorem", "P implies Q",
-            "--goal", "Q",
-            "--output", str(out_path),
-        ])
+        code = cli.run(
+            [
+                "prove",
+                "--theorem",
+                "P implies Q",
+                "--goal",
+                "Q",
+                "--output",
+                str(out_path),
+            ]
+        )
         assert code == 0
         assert out_path.exists()
         payload = json.loads(out_path.read_text())
@@ -104,11 +123,15 @@ class TestCmdProve:
         mock_cls.return_value = instance
         monkeypatch.setattr(_cw, "LogicTheoremOptimizer", mock_cls)
 
-        code = cli.run([
-            "prove",
-            "--theorem", "False theorem",
-            "--goal", "Impossible conclusion",
-        ])
+        code = cli.run(
+            [
+                "prove",
+                "--theorem",
+                "False theorem",
+                "--goal",
+                "Impossible conclusion",
+            ]
+        )
         assert code != 0
 
     def test_prove_from_json_file(self, cli, tmp_path):
@@ -125,13 +148,19 @@ class TestCmdProve:
 
     def test_prove_writes_tdfol_output_json(self, cli, tmp_path):
         tdfol_path = tmp_path / "proof_tdfol.json"
-        code = cli.run([
-            "prove",
-            "--theorem", "A implies B",
-            "--goal", "B",
-            "--premises", "A",
-            "--tdfol-output", str(tdfol_path),
-        ])
+        code = cli.run(
+            [
+                "prove",
+                "--theorem",
+                "A implies B",
+                "--goal",
+                "B",
+                "--premises",
+                "A",
+                "--tdfol-output",
+                str(tdfol_path),
+            ]
+        )
         assert code == 0
         assert tdfol_path.exists()
 
@@ -152,11 +181,15 @@ class TestCmdProve:
         mock_cls.return_value = instance
         monkeypatch.setattr(_cw, "LogicTheoremOptimizer", mock_cls)
 
-        code = cli.run([
-            "prove",
-            "--theorem", "P implies Q",
-            "--goal", "Q",
-        ])
+        code = cli.run(
+            [
+                "prove",
+                "--theorem",
+                "P implies Q",
+                "--goal",
+                "Q",
+            ]
+        )
         assert code == 1
 
         out = capsys.readouterr().out

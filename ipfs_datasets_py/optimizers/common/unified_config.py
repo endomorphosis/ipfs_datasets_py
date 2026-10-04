@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional, Set, Tuple
 
 class DomainType(Enum):
     """Supported optimization domains."""
+
     GRAPHRAG = "graphrag"
     LOGIC = "logic"
     AGENTIC = "agentic"
@@ -53,29 +54,33 @@ _BACKEND_CONFIG_SOURCE_ALIASES: Dict[str, Tuple[str, ...]] = {
 @dataclass
 class BaseConfig:
     """Base configuration allowing field extension."""
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
         from dataclasses import asdict
+
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "BaseConfig":
         """Create config from dictionary."""
         from dataclasses import fields
+
         field_names = {f.name for f in fields(cls)}
         filtered = {k: v for k, v in data.items() if k in field_names}
         return cls(**filtered)
-    
+
     def merge(self, other: "BaseConfig") -> "BaseConfig":
         """Merge two configs, other's values override self's."""
         from dataclasses import replace
+
         return replace(self, **other.to_dict())
 
 
 @dataclass
 class GraphRAGConfig(BaseConfig):
     """Configuration specific to GraphRAG optimizer."""
+
     extraction_strategy: str = "heuristic"  # heuristic, llm, hybrid
     confidence_threshold: float = 0.5
     relationship_inference: str = "heuristic"  # heuristic, llm, hybrid
@@ -85,11 +90,11 @@ class GraphRAGConfig(BaseConfig):
     max_relationship_types: int = 100
     enable_semantic_deduplication: bool = False
     deduplication_threshold: float = 0.8
-    
+
     def __post_init__(self) -> None:
         if self.domain_specific_rules is None:
             self.domain_specific_rules = set()
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         return (
@@ -102,6 +107,7 @@ class GraphRAGConfig(BaseConfig):
 @dataclass
 class LogicConfig(BaseConfig):
     """Configuration specific to logic theorem optimizer."""
+
     formula_format: str = "tdfol"  # tdfol, first-order, horn
     prover_backend: str = "z3"  # z3, vampire, eprover
     proof_timeout_ms: int = 5000
@@ -111,7 +117,7 @@ class LogicConfig(BaseConfig):
     enable_conflict_resolution: bool = True
     enable_knowledge_graph_integration: bool = True
     enable_rag_integration: bool = True
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         return (
@@ -125,6 +131,7 @@ class LogicConfig(BaseConfig):
 @dataclass
 class AgenticConfig(BaseConfig):
     """Configuration specific to agentic optimizer."""
+
     mode: str = "autonomous"  # autonomous, supervised, interactive
     decision_threshold: float = 0.8
     enable_chaos_testing: bool = False
@@ -133,7 +140,7 @@ class AgenticConfig(BaseConfig):
     required_approvals: int = 1
     enable_logging: bool = True
     log_level: str = "INFO"
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         return (
@@ -147,7 +154,7 @@ class AgenticConfig(BaseConfig):
 @dataclass
 class UnifiedOptimizerConfig(BaseConfig):
     """Master configuration that combines all domain-specific configs."""
-    
+
     # Core settings
     domain: DomainType = DomainType.HYBRID
     strategy: str = "sgd"
@@ -159,18 +166,18 @@ class UnifiedOptimizerConfig(BaseConfig):
     validation_enabled: bool = True
     metrics_enabled: bool = True
     seed: Optional[int] = None
-    
+
     # Domain-specific configs
     graphrag_config: Optional[GraphRAGConfig] = None
     logic_config: Optional[LogicConfig] = None
     agentic_config: Optional[AgenticConfig] = None
-    
+
     # Feature flags
     enable_prometheus: bool = True
     enable_opentelemetry: bool = False
     enable_caching: bool = True
     cache_size_mb: int = 100
-    
+
     def __post_init__(self) -> None:
         """Initialize domain-specific configs if not provided."""
         if self.graphrag_config is None:
@@ -179,7 +186,7 @@ class UnifiedOptimizerConfig(BaseConfig):
             self.logic_config = LogicConfig()
         if self.agentic_config is None:
             self.agentic_config = AgenticConfig()
-    
+
     def get_domain_config(self, domain: DomainType) -> BaseConfig:
         """Get the configuration for a specific domain."""
         if domain == DomainType.GRAPHRAG:
@@ -193,7 +200,7 @@ class UnifiedOptimizerConfig(BaseConfig):
             return self.agentic_config
         else:
             raise ValueError(f"Unknown domain: {domain}")
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         return (
@@ -207,25 +214,26 @@ class UnifiedOptimizerConfig(BaseConfig):
 @dataclass
 class BaseContext:
     """Base context for optimization sessions."""
-    
+
     session_id: str
     domain: DomainType
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert context to dictionary."""
         from dataclasses import asdict
+
         return asdict(self)
-    
+
     def get_metadata(self, key: str, default: Any = None) -> Any:
         """Get metadata value by key."""
         return self.metadata.get(key, default)
-    
+
     def set_metadata(self, key: str, value: Any) -> None:
         """Set metadata value."""
         self.metadata[key] = value
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         return (
@@ -238,11 +246,12 @@ class BaseContext:
 @dataclass
 class GraphRAGContext(BaseContext):
     """Context specific to GraphRAG optimization."""
+
     input_text: Optional[str] = None
     input_documents: Optional[Dict[str, Any]] = None
     extraction_context: Optional[Dict[str, Any]] = None
     ontology_domain: Optional[str] = None
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         doc_count = len(self.input_documents) if self.input_documents else 0
@@ -257,10 +266,11 @@ class GraphRAGContext(BaseContext):
 @dataclass
 class LogicContext(BaseContext):
     """Context specific to logic optimization."""
+
     formulas: Optional[Dict[str, str]] = None
     theory: Optional[Dict[str, Any]] = None
     proof_objectives: Optional[Dict[str, str]] = None
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         formula_count = len(self.formulas) if self.formulas else 0
@@ -274,10 +284,11 @@ class LogicContext(BaseContext):
 @dataclass
 class AgenticContext(BaseContext):
     """Context specific to agentic optimization."""
+
     action_history: Dict[str, int] = field(default_factory=dict)
     decision_log: Dict[str, str] = field(default_factory=dict)
     approval_status: Dict[str, bool] = field(default_factory=dict)
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
         action_count = sum(self.action_history.values()) if self.action_history else 0
@@ -288,11 +299,7 @@ class AgenticContext(BaseContext):
         )
 
 
-def create_context(
-    session_id: str,
-    domain: DomainType,
-    **kwargs: Any
-) -> BaseContext:
+def create_context(session_id: str, domain: DomainType, **kwargs: Any) -> BaseContext:
     """Factory function to create appropriate context based on domain."""
     if domain == DomainType.GRAPHRAG:
         return GraphRAGContext(session_id=session_id, domain=domain, **kwargs)
@@ -415,9 +422,7 @@ def backend_config_from_constructor_kwargs(
             timeout_seconds=float(cfg["timeout_seconds"])
             if isinstance(cfg.get("timeout_seconds"), (int, float))
             else 20.0,
-            max_retries=int(cfg["max_retries"])
-            if isinstance(cfg.get("max_retries"), int)
-            else 2,
+            max_retries=int(cfg["max_retries"]) if isinstance(cfg.get("max_retries"), int) else 2,
             circuit_failure_threshold=int(cfg["circuit_failure_threshold"])
             if isinstance(cfg.get("circuit_failure_threshold"), int)
             else 5,
@@ -453,9 +458,7 @@ def backend_config_from_constructor_kwargs(
             timeout_seconds=float(cfg["timeout_seconds"])
             if isinstance(cfg.get("timeout_seconds"), (int, float))
             else 30.0,
-            max_retries=int(cfg["max_retries"])
-            if isinstance(cfg.get("max_retries"), int)
-            else 2,
+            max_retries=int(cfg["max_retries"]) if isinstance(cfg.get("max_retries"), int) else 2,
             circuit_failure_threshold=int(cfg["circuit_failure_threshold"])
             if isinstance(cfg.get("circuit_failure_threshold"), int)
             else 5,

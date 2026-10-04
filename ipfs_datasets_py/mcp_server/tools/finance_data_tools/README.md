@@ -36,11 +36,7 @@ from finance_data_tools.stock_scrapers import fetch_stock_data
 
 # Fetch stock data
 result = fetch_stock_data(
-    symbol="AAPL",
-    start_date="2024-01-01",
-    end_date="2024-01-31",
-    interval="1d",
-    source="yahoo"
+    symbol="AAPL", start_date="2024-01-01", end_date="2024-01-31", interval="1d", source="yahoo"
 )
 ```
 
@@ -66,7 +62,7 @@ result = fetch_financial_news(
     start_date="2024-01-01",
     end_date="2024-01-31",
     sources="ap,reuters,bloomberg",
-    max_articles=100
+    max_articles=100,
 )
 ```
 
@@ -160,27 +156,17 @@ All modules provide MCP-compatible tool functions that can be called through the
 ### Example 1: Track Stock Split
 
 ```python
-from finance_data_tools import (
-    fetch_stock_data,
-    fetch_corporate_actions,
-    apply_financial_theorem
-)
+from finance_data_tools import fetch_stock_data, fetch_corporate_actions, apply_financial_theorem
 import json
 
 # 1. Fetch corporate actions
 actions = fetch_corporate_actions(
-    symbol="AAPL",
-    start_date="2020-08-01",
-    end_date="2020-09-01",
-    source="yahoo"
+    symbol="AAPL", start_date="2020-08-01", end_date="2020-09-01", source="yahoo"
 )
 
 # 2. Fetch price data around split
 price_data = fetch_stock_data(
-    symbol="AAPL",
-    start_date="2020-08-28",
-    end_date="2020-09-02",
-    interval="1d"
+    symbol="AAPL", start_date="2020-08-28", end_date="2020-09-02", interval="1d"
 )
 
 # 3. Apply stock split theorem
@@ -188,11 +174,9 @@ result = apply_financial_theorem(
     theorem_id="fin_001",
     symbol="AAPL",
     event_date="2020-08-31",
-    event_data=json.dumps({
-        "split_ratio": 4,
-        "pre_split_price": 499.23,
-        "post_split_price": 124.81
-    })
+    event_data=json.dumps(
+        {"split_ratio": 4, "pre_split_price": 499.23, "post_split_price": 124.81}
+    ),
 )
 
 print(result)
@@ -208,14 +192,11 @@ merger_news = fetch_financial_news(
     topic="merger acquisition",
     start_date="2024-01-01",
     end_date="2024-01-31",
-    sources="reuters,bloomberg"
+    sources="reuters,bloomberg",
 )
 
 # Search archive for historical context
-archive_result = search_archive_news(
-    url="https://www.reuters.com/some-article",
-    date="2020-01-15"
-)
+archive_result = search_archive_news(url="https://www.reuters.com/some-article", date="2020-01-15")
 ```
 
 ### Example 3: Theorem Validation
@@ -227,9 +208,7 @@ from finance_data_tools import FinancialTheoremLibrary
 library = FinancialTheoremLibrary()
 
 # Get all dividend theorems
-dividend_theorems = library.get_theorems_by_event_type(
-    FinancialEventType.DIVIDEND
-)
+dividend_theorems = library.get_theorems_by_event_type(FinancialEventType.DIVIDEND)
 
 # Apply to validate against historical data
 for theorem in dividend_theorems:

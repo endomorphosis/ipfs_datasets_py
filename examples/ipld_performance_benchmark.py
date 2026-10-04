@@ -32,8 +32,11 @@ sys.path.append(parent_dir)
 # Import required modules
 from ipfs_datasets_py.ipld.storage import IPLDStorage
 from ipfs_datasets_py.ipld.optimized_codec import (
-    OptimizedEncoder, OptimizedDecoder, BatchProcessor,
-    create_batch_processor, PBNode
+    OptimizedEncoder,
+    OptimizedDecoder,
+    BatchProcessor,
+    create_batch_processor,
+    PBNode,
 )
 
 
@@ -48,11 +51,7 @@ def create_test_data(size: str) -> Tuple[List[Dict], List[bytes]]:
         Tuple of (json_objects, binary_data)
     """
     # Define sizes
-    sizes = {
-        "small": 100,
-        "medium": 1000,
-        "large": 10000
-    }
+    sizes = {"small": 100, "medium": 1000, "large": 10000}
 
     count = sizes.get(size, 100)
     print(f"Creating test data with {count} items...")
@@ -72,10 +71,10 @@ def create_test_data(size: str) -> Tuple[List[Dict], List[bytes]]:
                 "attributes": {
                     "width": random.randint(100, 4000),
                     "height": random.randint(100, 4000),
-                    "color": f"#{random.randint(0, 0xFFFFFF):06x}"
-                }
+                    "color": f"#{random.randint(0, 0xFFFFFF):06x}",
+                },
             },
-            "content": "x" * random.randint(100, 1000)  # Random content length
+            "content": "x" * random.randint(100, 1000),  # Random content length
         }
         json_objects.append(obj)
 
@@ -125,7 +124,9 @@ def benchmark_json_encoding(storage: IPLDStorage, json_objects: List[Dict]) -> T
     return standard_time, batch_time
 
 
-def benchmark_binary_encoding(storage: IPLDStorage, binary_data: List[bytes]) -> Tuple[float, float]:
+def benchmark_binary_encoding(
+    storage: IPLDStorage, binary_data: List[bytes]
+) -> Tuple[float, float]:
     """
     Benchmark binary data encoding using standard and batch methods.
 
@@ -197,7 +198,9 @@ def benchmark_retrieval(storage: IPLDStorage, cids: List[str]) -> Tuple[float, f
     return standard_time, batch_time
 
 
-def benchmark_car_operations(storage: IPLDStorage, cids: List[str]) -> Tuple[float, float, float, float]:
+def benchmark_car_operations(
+    storage: IPLDStorage, cids: List[str]
+) -> Tuple[float, float, float, float]:
     """
     Benchmark CAR file export/import using standard and streaming methods.
 
@@ -224,7 +227,7 @@ def benchmark_car_operations(storage: IPLDStorage, cids: List[str]) -> Tuple[flo
 
     # Streaming export
     start_time = time.time()
-    with open(stream_car_path, 'wb') as f:
+    with open(stream_car_path, "wb") as f:
         storage.export_to_car_stream(cids, f)
     stream_export_time = time.time() - start_time
 
@@ -243,7 +246,7 @@ def benchmark_car_operations(storage: IPLDStorage, cids: List[str]) -> Tuple[flo
 
     # Streaming import
     start_time = time.time()
-    with open(stream_car_path, 'rb') as f:
+    with open(stream_car_path, "rb") as f:
         stream_import_storage.import_from_car_stream(f)
     stream_import_time = time.time() - start_time
 
@@ -252,6 +255,7 @@ def benchmark_car_operations(storage: IPLDStorage, cids: List[str]) -> Tuple[flo
     # Clean up
     try:
         import shutil
+
         shutil.rmtree(temp_dir)
     except:
         print(f"Failed to remove temp directory: {temp_dir}")
@@ -336,7 +340,9 @@ def benchmark_optimized_codec(binary_data: List[bytes]) -> Dict[str, float]:
     if cache_encoder.stats:
         cache_hits = cache_encoder.stats.cache_hits
         cache_misses = cache_encoder.stats.cache_misses
-        cache_hit_rate = cache_hits / (cache_hits + cache_misses) if (cache_hits + cache_misses) > 0 else 0
+        cache_hit_rate = (
+            cache_hits / (cache_hits + cache_misses) if (cache_hits + cache_misses) > 0 else 0
+        )
         print(f"Cache hit rate: {cache_hit_rate:.2%}")
 
     # Return results
@@ -345,7 +351,7 @@ def benchmark_optimized_codec(binary_data: List[bytes]) -> Dict[str, float]:
         "optimized_encode_time": optimized_encode_time,
         "standard_decode_time": standard_decode_time,
         "optimized_decode_time": optimized_decode_time,
-        "cache_encode_time": cache_encode_time
+        "cache_encode_time": cache_encode_time,
     }
 
 
@@ -374,7 +380,7 @@ def run_full_benchmark(size: str) -> Dict[str, Any]:
     results["json_encoding"] = {
         "standard_time": standard_json_time,
         "batch_time": batch_json_time,
-        "improvement": standard_json_time / batch_json_time if batch_json_time > 0 else 0
+        "improvement": standard_json_time / batch_json_time if batch_json_time > 0 else 0,
     }
 
     # Binary encoding benchmark
@@ -382,7 +388,7 @@ def run_full_benchmark(size: str) -> Dict[str, Any]:
     results["binary_encoding"] = {
         "standard_time": standard_binary_time,
         "batch_time": batch_binary_time,
-        "improvement": standard_binary_time / batch_binary_time if batch_binary_time > 0 else 0
+        "improvement": standard_binary_time / batch_binary_time if batch_binary_time > 0 else 0,
     }
 
     # Store data for retrieval benchmark
@@ -394,12 +400,14 @@ def run_full_benchmark(size: str) -> Dict[str, Any]:
     results["retrieval"] = {
         "standard_time": standard_retrieval_time,
         "batch_time": batch_retrieval_time,
-        "improvement": standard_retrieval_time / batch_retrieval_time if batch_retrieval_time > 0 else 0
+        "improvement": standard_retrieval_time / batch_retrieval_time
+        if batch_retrieval_time > 0
+        else 0,
     }
 
     # CAR operations benchmark
     # Use a subset of CIDs for larger datasets to keep benchmark reasonable
-    car_cids = cids[:min(len(cids), 100)]
+    car_cids = cids[: min(len(cids), 100)]
     standard_export_time, stream_export_time, standard_import_time, stream_import_time = (
         benchmark_car_operations(storage, car_cids)
     )
@@ -408,8 +416,12 @@ def run_full_benchmark(size: str) -> Dict[str, Any]:
         "stream_export_time": stream_export_time,
         "standard_import_time": standard_import_time,
         "stream_import_time": stream_import_time,
-        "export_improvement": standard_export_time / stream_export_time if stream_export_time > 0 else 0,
-        "import_improvement": standard_import_time / stream_import_time if stream_import_time > 0 else 0
+        "export_improvement": standard_export_time / stream_export_time
+        if stream_export_time > 0
+        else 0,
+        "import_improvement": standard_import_time / stream_import_time
+        if stream_import_time > 0
+        else 0,
     }
 
     # Optimized codec benchmark
@@ -417,16 +429,19 @@ def run_full_benchmark(size: str) -> Dict[str, Any]:
     results["codec"] = codec_results
     results["codec"]["encode_improvement"] = (
         codec_results["standard_encode_time"] / codec_results["optimized_encode_time"]
-        if codec_results["optimized_encode_time"] > 0 else 0
+        if codec_results["optimized_encode_time"] > 0
+        else 0
     )
     results["codec"]["decode_improvement"] = (
         codec_results["standard_decode_time"] / codec_results["optimized_decode_time"]
-        if codec_results["optimized_decode_time"] > 0 else 0
+        if codec_results["optimized_decode_time"] > 0
+        else 0
     )
 
     # Clean up
     try:
         import shutil
+
         shutil.rmtree(temp_dir)
     except:
         print(f"Failed to remove temp directory: {temp_dir}")
@@ -478,13 +493,13 @@ def print_results(results: Dict[str, Any]) -> None:
 
     print("\nOverall Improvement:")
     improvements = [
-        results['json_encoding']['improvement'],
-        results['binary_encoding']['improvement'],
-        results['retrieval']['improvement'],
-        results['car_operations']['export_improvement'],
-        results['car_operations']['import_improvement'],
-        results['codec']['encode_improvement'],
-        results['codec']['decode_improvement']
+        results["json_encoding"]["improvement"],
+        results["binary_encoding"]["improvement"],
+        results["retrieval"]["improvement"],
+        results["car_operations"]["export_improvement"],
+        results["car_operations"]["import_improvement"],
+        results["codec"]["encode_improvement"],
+        results["codec"]["decode_improvement"],
     ]
     avg_improvement = sum(improvements) / len(improvements)
     print(f"  Average: {avg_improvement:.2f}x")
@@ -492,9 +507,13 @@ def print_results(results: Dict[str, Any]) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='IPLD Performance Benchmark')
-    parser.add_argument('--size', choices=['small', 'medium', 'large'], default='small',
-                      help='Size of the test dataset (default: small)')
+    parser = argparse.ArgumentParser(description="IPLD Performance Benchmark")
+    parser.add_argument(
+        "--size",
+        choices=["small", "medium", "large"],
+        default="small",
+        help="Size of the test dataset (default: small)",
+    )
 
     args = parser.parse_args()
 
@@ -510,7 +529,7 @@ if __name__ == "__main__":
 
     # Save results to file
     result_file = f"ipld_benchmark_{args.size}_{int(time.time())}.json"
-    with open(result_file, 'w') as f:
+    with open(result_file, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\nDetailed results saved to {result_file}")

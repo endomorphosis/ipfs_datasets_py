@@ -11,6 +11,7 @@ import shutil
 
 try:
     from pydantic import BaseModel, Field, NonNegativeFloat
+
     HAVE_PYDANTIC = True
 except ImportError:
     BaseModel = object
@@ -20,6 +21,7 @@ except ImportError:
 
 try:
     import openai
+
     HAVE_OPENAI = True
 except ImportError:
     openai = None
@@ -30,8 +32,9 @@ try:
     from ipfs_datasets_py.ml.accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
-        get_accelerate_status
+        get_accelerate_status,
     )
+
     HAVE_ACCELERATE = True
 except ImportError:
     HAVE_ACCELERATE = False
@@ -84,40 +87,41 @@ WIKIPEDIA_CLASSIFICATIONS = {
     "Science and technology",
     "Society",
     "Sports",
-    "World"
+    "World",
 }
 
 
 class ClassificationResult(BaseModel):
     """Result of entity classification."""
+
     entity: str
     category: str
     confidence: NonNegativeFloat = Field(le=1.0)
 
 
 async def _classify_with_openai_llm(
-        prompt: str, 
-        system_prompt: str, 
-        client, # openai.AsyncOpenAI when available
-        num_categories: int, 
-        model: str = "gpt-4.1-2025-04-14",
-        log_threshold: float = 0.05,
-        timeout: float = 30.0,
-    ):
+    prompt: str,
+    system_prompt: str,
+    client,  # openai.AsyncOpenAI when available
+    num_categories: int,
+    model: str = "gpt-4.1-2025-04-14",
+    log_threshold: float = 0.05,
+    timeout: float = 30.0,
+):
 
-    temperature = 0.0 
+    temperature = 0.0
     logprobs = True
     max_tokens = 1  # We only want the next token, not a full response
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
     try:
         response = await client.chat.completions.create(
-            logprobs=logprobs, 
-            top_logprobs=num_categories, 
-            model=model, 
+            logprobs=logprobs,
+            top_logprobs=num_categories,
+            model=model,
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
-            timeout=timeout
+            timeout=timeout,
         )
     except Exception as e:
         # Handle OpenAI-specific exceptions if available
@@ -137,7 +141,7 @@ async def _classify_with_openai_llm(
         for top_logprob in response.choices[0].logprobs.content[0].top_logprobs
         if top_logprob.logprob > log_threshold
     ]
-    #print(f"_classify_with_openai_llm filtered token probabilities: {filtered_token_prob_tuples}")
+    # print(f"_classify_with_openai_llm filtered token probabilities: {filtered_token_prob_tuples}")
     return filtered_token_prob_tuples
 
 
@@ -238,7 +242,9 @@ class _CodexChatCompletionsCompat:
                 choices=[
                     _CompatChoice(
                         message=_CompatMessage(content=""),
-                        logprobs=_CompatLogProbs(content=[_CompatLogProbsContentItem(top_logprobs=[])]),
+                        logprobs=_CompatLogProbs(
+                            content=[_CompatLogProbsContentItem(top_logprobs=[])]
+                        ),
                     )
                 ]
             )
@@ -248,7 +254,9 @@ class _CodexChatCompletionsCompat:
             choices=[
                 _CompatChoice(
                     message=_CompatMessage(content=output),
-                    logprobs=_CompatLogProbs(content=[_CompatLogProbsContentItem(top_logprobs=[top])]),
+                    logprobs=_CompatLogProbs(
+                        content=[_CompatLogProbsContentItem(top_logprobs=[top])]
+                    ),
                 )
             ]
         )
@@ -294,11 +302,7 @@ async def _classify_with_codex_exec_llm(
 
     # Codex CLI runs inside a git repo by default; keep sandboxing conservative.
     # It prints progress to stderr and only the final message to stdout.
-    task = (
-        f"{system_prompt}\n\n"
-        f"{prompt}\n\n"
-        "Return ONLY the category name, with no extra text."
-    )
+    task = f"{system_prompt}\n\n{prompt}\n\nReturn ONLY the category name, with no extra text."
 
     env = os.environ.copy()
     if client.api_key:
@@ -323,14 +327,14 @@ async def _run_task_with_limit(task: Callable):
 
 
 async def _classify_with_transformers_llm(
-    prompt: str, 
-    system_prompt: str, 
-    client, # OpenAI client when available 
-    num_categories: int, 
+    prompt: str,
+    system_prompt: str,
+    client,  # OpenAI client when available
+    num_categories: int,
     model: str = "gpt-4.1-2025-04-14",
     log_threshold: float = 0.05,
     timeout: float = 30.0,
-    ) -> list[tuple[str, float]] | list:
+) -> list[tuple[str, float]] | list:
     raise NotImplementedError(
         "Transformers-based classification is not yet implemented. "
         "Please use OpenAI's API for classification."
@@ -356,20 +360,20 @@ import anyio
 
 async def classify_with_llm(
     *,
-    text: str, 
+    text: str,
     classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
     client: Any = None,
-    model: str = "gpt-4.1-nano-2025-04-14", # "gpt-4.1-2025-04-14",
+    model: str = "gpt-4.1-nano-2025-04-14",  # "gpt-4.1-2025-04-14",
     retries: Optional[int] = 3,
-    timeout = 30.0,  # seconds
-    threshold: float = 0.05, # i.e. statistical significance threshold
+    timeout=30.0,  # seconds
+    threshold: float = 0.05,  # i.e. statistical significance threshold
     logger: logging.Logger = logger,
-    llm_func: Callable = _classify_with_openai_llm
-    ) -> list[ClassificationResult] | list:
+    llm_func: Callable = _classify_with_openai_llm,
+) -> list[ClassificationResult] | list:
     """
     Classify text into predefined categories using OpenAI's LLM.
 
-    This function uses a transformer-based LLM to classify an arbitrary 
+    This function uses a transformer-based LLM to classify an arbitrary
     English-language text into one or more arbitrary categories from a predefined set.
 
     Args:
@@ -379,10 +383,10 @@ async def classify_with_llm(
             router-backed OpenAI-compat async client from `ipfs_datasets_py.llm_router`.
         model (str): The OpenAI model to use for classification. Defaults to "gpt-4o".
         retries (Optional[int]): Number of retries to refine classification. Defaults to 3.
-        threshold (float): Probability threshold for including a classification. 
+        threshold (float): Probability threshold for including a classification.
             Defaults to 0.05 (e.g. the statistical definition of an outlier)
         logger (logging.Logger): Logger instance for logging messages. Defaults to the module logger.
-    
+
     Returns:
         list[ClassificationResult] | list: List of ClassificationResult objects if classifications found.
             ClassificationResult is a pydantic base model with the following fields:
@@ -437,14 +441,16 @@ async def classify_with_llm(
         for attempt in range(max_attempts):
             num_categories = len(winnowed_categories)
             if num_categories <= 0:
-                raise ValueError(f"Invalid number of categories: {num_categories}. Must be a positive integer.")
+                raise ValueError(
+                    f"Invalid number of categories: {num_categories}. Must be a positive integer."
+                )
 
             num_categories = min(num_categories, 20)  # Limit to 20 categories for OpenAI API
 
             try:
                 filtered_token_prob_tuples = await llm_func(
                     prompt=prompt_template.format(
-                        categories=', '.join(list(winnowed_categories)),
+                        categories=", ".join(list(winnowed_categories)),
                         text=text,
                     ),
                     system_prompt=system_prompt,
@@ -453,10 +459,10 @@ async def classify_with_llm(
                     model=model,
                     timeout=timeout,
                     log_threshold=log_threshold,
-                ) 
+                )
 
                 print(f"Filtered token probabilities: {filtered_token_prob_tuples}")
-                #logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
+                # logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
 
             except ConnectionError as e:
                 print(f"Connection error on attempt {attempt}: {e}")
@@ -504,27 +510,29 @@ async def classify_with_llm(
                     # If we only have one category, return it as a single result
                     cat_log_prob_tuple = potential_outputs.pop()
                     category, log_prob = cat_log_prob_tuple
-                    return [ClassificationResult(entity=text, category=category, confidence=math.exp(log_prob))]
+                    return [
+                        ClassificationResult(
+                            entity=text, category=category, confidence=math.exp(log_prob)
+                        )
+                    ]
                 case _:
                     # Return multiple results if we've exhausted all attempts
                     if attempt == max_attempts - 1:
                         return sorted(
                             [
                                 ClassificationResult(
-                                    entity=text, 
-                                    category=cat, 
-                                    confidence=math.exp(log_prob)
-                                ) 
+                                    entity=text, category=cat, confidence=math.exp(log_prob)
+                                )
                                 for cat, log_prob in potential_outputs
                                 if log_prob >= log_threshold
                             ],
                             key=lambda x: x.confidence,
-                            reverse=True
+                            reverse=True,
                         )
                     else:
                         winnowed_categories = new_cats
                         continue
-    
+
     # This should never be reached due to the loop structure, but keeping for safety
     logger.warning(f"No classifications found after {max_attempts} attempts for text: {text}")
     return []

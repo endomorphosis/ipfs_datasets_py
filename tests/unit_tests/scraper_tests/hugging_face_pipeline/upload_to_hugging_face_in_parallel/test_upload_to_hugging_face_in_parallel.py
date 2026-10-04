@@ -2,7 +2,6 @@
 # import pytest
 
 
-
 # class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
 #     """Files upload successfully when API is available"""
 
@@ -16,17 +15,17 @@
 #         uploader = output_directory_10_parquet_files["uploader"]
 #         output_dir = output_directory_10_parquet_files["output_dir"]
 #         target_name = output_directory_10_parquet_files["target_name"]
-        
+
 #         expected_uploaded = 2  # 2 folders
 #         expected_failed = 0
 #         expected_retried = 0
 #         expected_result = {"uploaded": expected_uploaded, "failed": expected_failed, "retried": expected_retried}
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name
 #         )
-        
+
 #         assert result == expected_result, f"expected {expected_result}, got {result}"
 
 
@@ -66,7 +65,7 @@
 #         target_name = output_directory_mixed_files["target_name"]
 #         file_pattern = output_directory_mixed_files["file_pattern"]
 #         expected_uploaded = 1  # Still 1 folder uploaded
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name,
@@ -91,15 +90,15 @@
 #         target_name = output_directory_20_files["target_name"]
 #         max_concurrency_value = output_directory_20_files["max_concurrency"]
 #         expected_wait_calls = 1
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name,
 #             max_concurrency=max_concurrency_value
 #         )
-        
+
 #         actual_wait_calls = uploader.rate_limiter.wait_for_token.call_count
-        
+
 #         assert actual_wait_calls >= expected_wait_calls, f"expected {expected_wait_calls}, got {actual_wait_calls}"
 
 
@@ -116,7 +115,7 @@
 #         max_concurrency_value = output_directory_20_files["max_concurrency"]
 #         folder_count = output_directory_20_files["folder_count"]
 #         expected_uploaded = folder_count  # 4 folders containing 20 files total
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name,
@@ -144,12 +143,12 @@
 #         expected_failed = 0
 #         expected_retried = 1
 #         expected_result = {"uploaded": expected_uploaded, "failed": expected_failed, "retried": expected_retried}
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name
 #         )
-        
+
 #         assert result == expected_result, f"expected {expected_result}, got {result}"
 
 #     @pytest.mark.asyncio
@@ -167,12 +166,12 @@
 #         expected_failed = 1  # 1 folder failed
 #         expected_retried = 3
 #         expected_result = {"uploaded": expected_uploaded, "failed": expected_failed, "retried": expected_retried}
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name
 #         )
-        
+
 #         assert result == expected_result, f"expected {expected_result}, got {result}"
 
 
@@ -192,15 +191,15 @@
 #         # target_name = output_directory_100_files["target_name"]
 #         # max_concurrency_value = output_directory_100_files["max_concurrency"]
 #         # expected_max_concurrent = max_concurrency_value
-        
+
 #         # result = await uploader.upload_to_hugging_face_in_parallel(
 #         #     output_dir=output_dir,
 #         #     target_dir_name=target_name,
 #         #     max_concurrency=max_concurrency_value
 #         # )
-        
+
 #         # actual_max_concurrent = max_concurrency_value
-        
+
 #         # assert actual_max_concurrent == expected_max_concurrent, f"expected {expected_max_concurrent}, got {actual_max_concurrent}"
 
 #     @pytest.mark.asyncio
@@ -216,7 +215,7 @@
 #         max_concurrency_value = output_directory_100_files["max_concurrency"]
 #         folder_count = output_directory_100_files["folder_count"]
 #         expected_uploaded = folder_count  # 20 folders containing 100 files total
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name,
@@ -293,15 +292,16 @@
 #         expected_retried = output_directory_mixed_results["expected_retried"]
 
 #         expected_result = {"uploaded": expected_uploaded, "failed": expected_failed, "retried": expected_retried}
-        
+
 #         result = await uploader.upload_to_hugging_face_in_parallel(
 #             output_dir=output_dir,
 #             target_dir_name=target_name
 #         )
-        
+
 #         assert result == expected_result, f"expected {expected_result}, got {result}"
 
 """Test upload files to HuggingFace in parallel."""
+
 import pytest
 
 
@@ -309,7 +309,9 @@ class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
     """Files upload successfully when API is available"""
 
     @pytest.mark.asyncio
-    async def test_when_uploading_files_then_returns_correct_upload_count(self, output_directory_10_parquet_files):
+    async def test_when_uploading_files_then_returns_correct_upload_count(
+        self, output_directory_10_parquet_files
+    ):
         """
         GIVEN an output directory with 2 folders containing 10 parquet files total
         WHEN upload_to_hugging_face_in_parallel is called
@@ -323,15 +325,18 @@ class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected uploaded={expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected uploaded={expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_uploading_files_then_returns_zero_failed_count(self, output_directory_10_parquet_files):
+    async def test_when_uploading_files_then_returns_zero_failed_count(
+        self, output_directory_10_parquet_files
+    ):
         """
         GIVEN an output directory with 2 folders and API succeeds for all uploads
         WHEN upload_to_hugging_face_in_parallel is called
@@ -345,15 +350,18 @@ class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["failed"] == expected_failed, f"expected failed={expected_failed}, got {result['failed']}"
+        assert result["failed"] == expected_failed, (
+            f"expected failed={expected_failed}, got {result['failed']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_uploading_files_then_returns_zero_retry_count(self, output_directory_10_parquet_files):
+    async def test_when_uploading_files_then_returns_zero_retry_count(
+        self, output_directory_10_parquet_files
+    ):
         """
         GIVEN an output directory with 2 folders and API succeeds on first attempt
         WHEN upload_to_hugging_face_in_parallel is called
@@ -367,15 +375,18 @@ class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["retried"] == expected_retried, f"expected retried={expected_retried}, got {result['retried']}"
+        assert result["retried"] == expected_retried, (
+            f"expected retried={expected_retried}, got {result['retried']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_uploading_files_then_calls_upload_folder_correct_number_of_times(self, output_directory_10_parquet_files):
+    async def test_when_uploading_files_then_calls_upload_folder_correct_number_of_times(
+        self, output_directory_10_parquet_files
+    ):
         """
         GIVEN an output directory with 2 folders containing parquet files
         WHEN upload_to_hugging_face_in_parallel is called
@@ -389,16 +400,19 @@ class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
 
         # Act
         await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
         actual_call_count = uploader.api.upload_folder.call_count
-        assert actual_call_count == expected_call_count, f"expected {expected_call_count} calls, got {actual_call_count}"
+        assert actual_call_count == expected_call_count, (
+            f"expected {expected_call_count} calls, got {actual_call_count}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_uploading_files_then_calls_upload_folder_with_correct_repo_id(self, output_directory_10_parquet_files):
+    async def test_when_uploading_files_then_calls_upload_folder_with_correct_repo_id(
+        self, output_directory_10_parquet_files
+    ):
         """
         GIVEN an output directory with 2 folders and repo_id "test-repo"
         WHEN upload_to_hugging_face_in_parallel is called
@@ -412,21 +426,24 @@ class TestFilesUploadSuccessfullyWhenAPIIsAvailable:
 
         # Act
         await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
         for call_args in uploader.api.upload_folder.call_args_list:
             actual_repo_id = call_args.kwargs.get("repo_id")
-            assert actual_repo_id == expected_repo_id, f"expected repo_id={expected_repo_id}, got {actual_repo_id}"
+            assert actual_repo_id == expected_repo_id, (
+                f"expected repo_id={expected_repo_id}, got {actual_repo_id}"
+            )
 
 
 class TestFilePatternFiltersDetermineWhichFilesUpload:
     """File pattern filters determine which files upload"""
 
     @pytest.mark.asyncio
-    async def test_when_filtering_by_parquet_then_uploads_only_parquet_folders(self, output_directory_mixed_files):
+    async def test_when_filtering_by_parquet_then_uploads_only_parquet_folders(
+        self, output_directory_mixed_files
+    ):
         """
         GIVEN an output directory with 1 folder containing 5 parquet and 3 json files
         WHEN upload_to_hugging_face_in_parallel is called with file_path_ending ".parquet"
@@ -441,16 +458,18 @@ class TestFilePatternFiltersDetermineWhichFilesUpload:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name,
-            file_path_ending=file_pattern
+            output_dir=output_dir, target_dir_name=target_name, file_path_ending=file_pattern
         )
 
         # Assert
-        assert result["uploaded"] == expected_count, f"expected {expected_count}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_count, (
+            f"expected {expected_count}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_filtering_by_parquet_then_calls_upload_folder_with_parquet_pattern(self, output_directory_mixed_files):
+    async def test_when_filtering_by_parquet_then_calls_upload_folder_with_parquet_pattern(
+        self, output_directory_mixed_files
+    ):
         """
         GIVEN an output directory with mixed file types and filter ".parquet"
         WHEN upload_to_hugging_face_in_parallel is called
@@ -464,22 +483,24 @@ class TestFilePatternFiltersDetermineWhichFilesUpload:
 
         # Act
         await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name,
-            file_path_ending=file_pattern
+            output_dir=output_dir, target_dir_name=target_name, file_path_ending=file_pattern
         )
 
         # Assert
         for call_args in uploader.api.upload_folder.call_args_list:
             delete_patterns = call_args.kwargs.get("delete_patterns", "")
-            assert "*.parquet" in delete_patterns, f"expected '*.parquet' in delete_patterns, got {delete_patterns}"
+            assert "*.parquet" in delete_patterns, (
+                f"expected '*.parquet' in delete_patterns, got {delete_patterns}"
+            )
 
 
 class TestRateLimiterControlsUploadTiming:
     """Rate limiter controls upload timing"""
 
     @pytest.mark.asyncio
-    async def test_when_uploading_folders_then_waits_for_token_before_each_upload(self, output_directory_20_files):
+    async def test_when_uploading_folders_then_waits_for_token_before_each_upload(
+        self, output_directory_20_files
+    ):
         """
         GIVEN an output directory with 4 folders
         WHEN upload_to_hugging_face_in_parallel is called
@@ -497,15 +518,19 @@ class TestRateLimiterControlsUploadTiming:
         await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            max_concurrency=max_concurrency_value
+            max_concurrency=max_concurrency_value,
         )
 
         # Assert
         actual_calls = uploader.rate_limiter.wait_for_token.call_count
-        assert actual_calls >= expected_min_calls, f"expected at least {expected_min_calls} wait calls, got {actual_calls}"
+        assert actual_calls >= expected_min_calls, (
+            f"expected at least {expected_min_calls} wait calls, got {actual_calls}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_uploading_folders_then_completes_all_uploads(self, output_directory_20_files):
+    async def test_when_uploading_folders_then_completes_all_uploads(
+        self, output_directory_20_files
+    ):
         """
         GIVEN an output directory with 4 folders and rate limiting enabled
         WHEN upload_to_hugging_face_in_parallel is called
@@ -523,18 +548,22 @@ class TestRateLimiterControlsUploadTiming:
         result = await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            max_concurrency=max_concurrency_value
+            max_concurrency=max_concurrency_value,
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
 
 class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
     """Failed uploads retry until success or max retries"""
 
     @pytest.mark.asyncio
-    async def test_when_api_fails_once_then_returns_uploaded_count_of_one(self, api_fails_then_succeeds):
+    async def test_when_api_fails_once_then_returns_uploaded_count_of_one(
+        self, api_fails_then_succeeds
+    ):
         """
         GIVEN API that fails on first attempt then succeeds
         WHEN upload_to_hugging_face_in_parallel is called
@@ -548,15 +577,18 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_api_fails_once_then_returns_failed_count_of_zero(self, api_fails_then_succeeds):
+    async def test_when_api_fails_once_then_returns_failed_count_of_zero(
+        self, api_fails_then_succeeds
+    ):
         """
         GIVEN API that fails on first attempt then succeeds
         WHEN upload_to_hugging_face_in_parallel is called
@@ -570,15 +602,18 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["failed"] == expected_failed, f"expected {expected_failed}, got {result['failed']}"
+        assert result["failed"] == expected_failed, (
+            f"expected {expected_failed}, got {result['failed']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_api_fails_once_then_returns_retry_count_of_one(self, api_fails_then_succeeds):
+    async def test_when_api_fails_once_then_returns_retry_count_of_one(
+        self, api_fails_then_succeeds
+    ):
         """
         GIVEN API that fails on first attempt then succeeds
         WHEN upload_to_hugging_face_in_parallel is called
@@ -592,15 +627,18 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["retried"] == expected_retried, f"expected {expected_retried}, got {result['retried']}"
+        assert result["retried"] == expected_retried, (
+            f"expected {expected_retried}, got {result['retried']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_api_fails_once_then_calls_upload_folder_twice(self, api_fails_then_succeeds):
+    async def test_when_api_fails_once_then_calls_upload_folder_twice(
+        self, api_fails_then_succeeds
+    ):
         """
         GIVEN API that fails on first attempt then succeeds
         WHEN upload_to_hugging_face_in_parallel is called
@@ -614,16 +652,19 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
         actual_call_count = uploader.api.upload_folder.call_count
-        assert actual_call_count == expected_call_count, f"expected {expected_call_count} calls, got {actual_call_count}"
+        assert actual_call_count == expected_call_count, (
+            f"expected {expected_call_count} calls, got {actual_call_count}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_api_always_fails_then_returns_uploaded_count_of_zero(self, api_always_fails):
+    async def test_when_api_always_fails_then_returns_uploaded_count_of_zero(
+        self, api_always_fails
+    ):
         """
         GIVEN API that always fails and max_retries is 3
         WHEN upload_to_hugging_face_in_parallel is called
@@ -637,12 +678,13 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
     async def test_when_api_always_fails_then_returns_failed_count_of_one(self, api_always_fails):
@@ -659,12 +701,13 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["failed"] == expected_failed, f"expected {expected_failed}, got {result['failed']}"
+        assert result["failed"] == expected_failed, (
+            f"expected {expected_failed}, got {result['failed']}"
+        )
 
     @pytest.mark.asyncio
     async def test_when_api_always_fails_then_returns_retry_count_of_three(self, api_always_fails):
@@ -682,15 +725,18 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["retried"] == expected_retried, f"expected {expected_retried}, got {result['retried']}"
+        assert result["retried"] == expected_retried, (
+            f"expected {expected_retried}, got {result['retried']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_api_always_fails_then_calls_upload_folder_three_times(self, api_always_fails):
+    async def test_when_api_always_fails_then_calls_upload_folder_three_times(
+        self, api_always_fails
+    ):
         """
         GIVEN API that always fails and max_retries is 3
         WHEN upload_to_hugging_face_in_parallel is called
@@ -705,20 +751,23 @@ class TestFailedUploadsRetryUntilSuccessOrMaxRetries:
 
         # Act
         await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
         actual_call_count = uploader.api.upload_folder.call_count
-        assert actual_call_count == expected_call_count, f"expected {expected_call_count} calls, got {actual_call_count}"
+        assert actual_call_count == expected_call_count, (
+            f"expected {expected_call_count} calls, got {actual_call_count}"
+        )
 
 
 class TestMaxConcurrencyLimitsParallelUploads:
     """Max concurrency limits parallel uploads"""
 
     @pytest.mark.asyncio
-    async def test_when_max_concurrency_set_then_completes_all_uploads(self, output_directory_100_files):
+    async def test_when_max_concurrency_set_then_completes_all_uploads(
+        self, output_directory_100_files
+    ):
         """
         GIVEN an output directory with 20 folders and max_concurrency of 5
         WHEN upload_to_hugging_face_in_parallel is called
@@ -736,14 +785,18 @@ class TestMaxConcurrencyLimitsParallelUploads:
         result = await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            max_concurrency=max_concurrency_value
+            max_concurrency=max_concurrency_value,
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_max_concurrency_set_then_calls_upload_folder_correct_times(self, output_directory_100_files):
+    async def test_when_max_concurrency_set_then_calls_upload_folder_correct_times(
+        self, output_directory_100_files
+    ):
         """
         GIVEN an output directory with 20 folders and max_concurrency of 5
         WHEN upload_to_hugging_face_in_parallel is called
@@ -761,19 +814,23 @@ class TestMaxConcurrencyLimitsParallelUploads:
         await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            max_concurrency=max_concurrency_value
+            max_concurrency=max_concurrency_value,
         )
 
         # Assert
         actual_call_count = uploader.api.upload_folder.call_count
-        assert actual_call_count == expected_call_count, f"expected {expected_call_count} calls, got {actual_call_count}"
+        assert actual_call_count == expected_call_count, (
+            f"expected {expected_call_count} calls, got {actual_call_count}"
+        )
 
 
 class TestUploadModeDeterminesGranularity:
     """Upload mode determines granularity"""
 
     @pytest.mark.asyncio
-    async def test_when_upload_piecemeal_true_then_returns_file_count(self, output_directory_with_folders):
+    async def test_when_upload_piecemeal_true_then_returns_file_count(
+        self, output_directory_with_folders
+    ):
         """
         GIVEN upload_piecemeal is True and directory has 8 files
         WHEN upload_to_hugging_face_in_parallel is called
@@ -790,14 +847,18 @@ class TestUploadModeDeterminesGranularity:
         result = await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            upload_piecemeal=upload_piecemeal_value
+            upload_piecemeal=upload_piecemeal_value,
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_upload_piecemeal_false_then_returns_folder_count(self, output_directory_with_folders):
+    async def test_when_upload_piecemeal_false_then_returns_folder_count(
+        self, output_directory_with_folders
+    ):
         """
         GIVEN upload_piecemeal is False and directory has 2 folders
         WHEN upload_to_hugging_face_in_parallel is called
@@ -814,14 +875,18 @@ class TestUploadModeDeterminesGranularity:
         result = await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            upload_piecemeal=upload_piecemeal_value
+            upload_piecemeal=upload_piecemeal_value,
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_upload_piecemeal_false_then_calls_upload_folder(self, output_directory_with_folders):
+    async def test_when_upload_piecemeal_false_then_calls_upload_folder(
+        self, output_directory_with_folders
+    ):
         """
         GIVEN upload_piecemeal is False and directory has 2 folders
         WHEN upload_to_hugging_face_in_parallel is called
@@ -839,19 +904,23 @@ class TestUploadModeDeterminesGranularity:
         await uploader.upload_to_hugging_face_in_parallel(
             output_dir=output_dir,
             target_dir_name=target_name,
-            upload_piecemeal=upload_piecemeal_value
+            upload_piecemeal=upload_piecemeal_value,
         )
 
         # Assert
         actual_call_count = uploader.api.upload_folder.call_count
-        assert actual_call_count == expected_call_count, f"expected {expected_call_count} calls, got {actual_call_count}"
+        assert actual_call_count == expected_call_count, (
+            f"expected {expected_call_count} calls, got {actual_call_count}"
+        )
 
 
 class TestReturnValueProvidesUploadStatistics:
     """Return value provides upload statistics"""
 
     @pytest.mark.asyncio
-    async def test_when_mixed_results_then_returns_correct_uploaded_count(self, output_directory_mixed_results):
+    async def test_when_mixed_results_then_returns_correct_uploaded_count(
+        self, output_directory_mixed_results
+    ):
         """
         GIVEN 4 folders where 3 succeed and 1 fails
         WHEN upload_to_hugging_face_in_parallel is called
@@ -865,15 +934,18 @@ class TestReturnValueProvidesUploadStatistics:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["uploaded"] == expected_uploaded, f"expected {expected_uploaded}, got {result['uploaded']}"
+        assert result["uploaded"] == expected_uploaded, (
+            f"expected {expected_uploaded}, got {result['uploaded']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_mixed_results_then_returns_correct_failed_count(self, output_directory_mixed_results):
+    async def test_when_mixed_results_then_returns_correct_failed_count(
+        self, output_directory_mixed_results
+    ):
         """
         GIVEN 4 folders where 3 succeed and 1 fails
         WHEN upload_to_hugging_face_in_parallel is called
@@ -887,15 +959,18 @@ class TestReturnValueProvidesUploadStatistics:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["failed"] == expected_failed, f"expected {expected_failed}, got {result['failed']}"
+        assert result["failed"] == expected_failed, (
+            f"expected {expected_failed}, got {result['failed']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_mixed_results_then_returns_correct_retry_count(self, output_directory_mixed_results):
+    async def test_when_mixed_results_then_returns_correct_retry_count(
+        self, output_directory_mixed_results
+    ):
         """
         GIVEN 4 folders where 1 retries once and 1 retries twice before failing
         WHEN upload_to_hugging_face_in_parallel is called
@@ -909,9 +984,10 @@ class TestReturnValueProvidesUploadStatistics:
 
         # Act
         result = await uploader.upload_to_hugging_face_in_parallel(
-            output_dir=output_dir,
-            target_dir_name=target_name
+            output_dir=output_dir, target_dir_name=target_name
         )
 
         # Assert
-        assert result["retried"] == expected_retried, f"expected {expected_retried}, got {result['retried']}"
+        assert result["retried"] == expected_retried, (
+            f"expected {expected_retried}, got {result['retried']}"
+        )

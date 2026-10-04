@@ -17,12 +17,14 @@ Targets previously-uncovered ipld.py lines:
 Also covers:
   - extraction/_entity_helpers.py:117 (short-name < 2 chars filter)
 """
+
 import sys
 import os
 import json
 import warnings
 import importlib
 import pytest
+
 np = pytest.importorskip("numpy")
 from unittest.mock import MagicMock, patch
 
@@ -30,6 +32,7 @@ from unittest.mock import MagicMock, patch
 # ---------------------------------------------------------------------------
 # Helpers: load ipld.py with mocked storage deps (same recipe as session 41)
 # ---------------------------------------------------------------------------
+
 
 def _load_ipld_module():
     mock_storage_mod = MagicMock()
@@ -119,6 +122,7 @@ def _build_kg(name="test"):
 # Helper: make a vector result mock
 # ---------------------------------------------------------------------------
 
+
 def _vr(entity_id, score=0.9):
     vr = MagicMock()
     vr.metadata = {"entity_id": entity_id}
@@ -129,6 +133,7 @@ def _vr(entity_id, score=0.9):
 # ---------------------------------------------------------------------------
 # vector_augmented_query – seed phase: confidence filter (line 663)
 # ---------------------------------------------------------------------------
+
 
 class TestVAQSeedConfidenceFilter:
     """GIVEN seed entity confidence < min_confidence WHEN queried THEN entity excluded (line 663)."""
@@ -153,6 +158,7 @@ class TestVAQSeedConfidenceFilter:
 # ---------------------------------------------------------------------------
 # vector_augmented_query – seed phase: top_k break (line 684)
 # ---------------------------------------------------------------------------
+
 
 class TestVAQTopKBreak:
     """GIVEN top_k=1 AND two seed entities WHEN queried THEN only 1 result (line 684)."""
@@ -180,6 +186,7 @@ class TestVAQTopKBreak:
 # vector_augmented_query – hop: rel_type constraint mismatch (line 711)
 # ---------------------------------------------------------------------------
 
+
 class TestVAQConstraintRelTypeMismatch:
     """GIVEN constraint type=FRIEND AND rel type=KNOWS WHEN traversal THEN rel excluded (line 711)."""
 
@@ -206,6 +213,7 @@ class TestVAQConstraintRelTypeMismatch:
 # ---------------------------------------------------------------------------
 # vector_augmented_query – hop: direction=outgoing filter (line 715)
 # ---------------------------------------------------------------------------
+
 
 class TestVAQConstraintDirectionOutgoing:
     """GIVEN constraint direction=outgoing AND rel is incoming THEN rel excluded (line 715)."""
@@ -235,6 +243,7 @@ class TestVAQConstraintDirectionOutgoing:
 # vector_augmented_query – hop: direction=incoming filter (line 717)
 # ---------------------------------------------------------------------------
 
+
 class TestVAQConstraintDirectionIncoming:
     """GIVEN constraint direction=incoming AND rel is outgoing THEN rel excluded (line 717)."""
 
@@ -263,6 +272,7 @@ class TestVAQConstraintDirectionIncoming:
 # vector_augmented_query – hop: target entity low confidence (line 732)
 # ---------------------------------------------------------------------------
 
+
 class TestVAQHopTargetLowConfidence:
     """GIVEN target entity confidence 0.1 AND min_confidence=0.5 WHEN hop THEN target excluded (732)."""
 
@@ -289,6 +299,7 @@ class TestVAQHopTargetLowConfidence:
 # ---------------------------------------------------------------------------
 # cross_document_reasoning – entity in common_entities missing from kg (line 865)
 # ---------------------------------------------------------------------------
+
 
 class TestCrossDocReasoningEntityMissing:
     """GIVEN ghost entity_id in common_entities but not in entities dict THEN skipped (line 865)."""
@@ -329,6 +340,7 @@ class TestCrossDocReasoningEntityMissing:
 # traverse_from_entities_with_depths – string IDs (line 1035)
 # ---------------------------------------------------------------------------
 
+
 class TestTraverseStringIDs:
     """GIVEN plain string entity IDs WHEN traverse_from_entities_with_depths THEN works (line 1035)."""
 
@@ -345,6 +357,7 @@ class TestTraverseStringIDs:
 # ---------------------------------------------------------------------------
 # _get_connected_entities – depth > max_hops continue (line 1122)
 # ---------------------------------------------------------------------------
+
 
 class TestVAQAlreadyVisitedTarget:
     """GIVEN diamond graph where target is already visited during hop THEN line 732 hit."""
@@ -373,6 +386,7 @@ class TestVAQAlreadyVisitedTarget:
         assert "av1" in ids
         assert "av2" in ids
         assert "av3" in ids  # av3 still in results (added in hop=1, not hop=2)
+
     """GIVEN max_hops=0 WHEN _get_connected_entities THEN direct neighbors included but not queued.
 
     Note: line 1122 (`if depth > max_hops: continue`) is dead code because the code
@@ -418,6 +432,7 @@ class TestVAQAlreadyVisitedTarget:
 # from_car – empty roots raises ValueError (lines 1429-1436)
 # ---------------------------------------------------------------------------
 
+
 class TestFromCarEmptyRoots:
     """GIVEN from_car decodes CAR with empty roots THEN ValueError raised (lines 1429-1430)."""
 
@@ -427,8 +442,10 @@ class TestFromCarEmptyRoots:
         with open(dummy, "wb") as f:
             f.write(b"dummy car data")
 
-        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
-             patch.object(_IPLD, "ipld_car") as mock_car:
+        with (
+            patch.object(_IPLD, "HAVE_IPLD_CAR", True),
+            patch.object(_IPLD, "ipld_car") as mock_car,
+        ):
             mock_car.decode.return_value = ([], [])  # empty roots
             with pytest.raises(ValueError, match="no roots"):
                 IPLDKnowledgeGraph.from_car(dummy)
@@ -444,8 +461,10 @@ class TestFromCarEmptyRoots:
             f.write(b"dummy car data")
 
         root_cid = "Qmroot999"
-        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
-             patch.object(_IPLD, "ipld_car") as mock_car:
+        with (
+            patch.object(_IPLD, "HAVE_IPLD_CAR", True),
+            patch.object(_IPLD, "ipld_car") as mock_car,
+        ):
             # Provide blocks as a dict so .items() works (code expects dict, real lib returns list)
             mock_car.decode.return_value = ([root_cid], {root_cid: b"block_data"})
             with patch.object(IPLDKnowledgeGraph, "from_cid", return_value=MagicMock()) as fc:
@@ -457,6 +476,7 @@ class TestFromCarEmptyRoots:
 # ---------------------------------------------------------------------------
 # from_car – HAVE_IPLD_CAR=False raises ImportError (line 1414)
 # ---------------------------------------------------------------------------
+
 
 class TestFromCarNoIpldCar:
     """GIVEN HAVE_IPLD_CAR=False WHEN from_car called THEN ImportError."""
@@ -474,6 +494,7 @@ class TestFromCarNoIpldCar:
 # export_to_car – full path (lines 1262-1294)
 # ---------------------------------------------------------------------------
 
+
 class TestExportToCar:
     """GIVEN export_to_car called with mocked ipld_car THEN car bytes written to file."""
 
@@ -483,8 +504,10 @@ class TestExportToCar:
         e = kg.add_entity(entity_type="person", name="Eve", entity_id="ev1", confidence=1.0)
 
         output = str(tmp_path / "out.car")
-        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
-             patch.object(_IPLD, "ipld_car") as mock_car:
+        with (
+            patch.object(_IPLD, "HAVE_IPLD_CAR", True),
+            patch.object(_IPLD, "ipld_car") as mock_car,
+        ):
             mock_car.encode.return_value = b"CAR_BYTES"
             root_cid = kg.export_to_car(output)
 
@@ -500,8 +523,10 @@ class TestExportToCar:
         kg.add_relationship("KNOWS", source=e1, target=e2)
 
         output = str(tmp_path / "out2.car")
-        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
-             patch.object(_IPLD, "ipld_car") as mock_car:
+        with (
+            patch.object(_IPLD, "HAVE_IPLD_CAR", True),
+            patch.object(_IPLD, "ipld_car") as mock_car,
+        ):
             mock_car.encode.return_value = b"CAR_WITH_RELS"
             root_cid = kg.export_to_car(output)
 
@@ -522,6 +547,7 @@ class TestExportToCar:
 # extraction/_entity_helpers.py:117 – short-name filter (len < 2)
 # ---------------------------------------------------------------------------
 
+
 class TestEntityHelpersShortName:
     """GIVEN text with 1-char entity matches WHEN extracted THEN short names excluded (line 117)."""
 
@@ -530,6 +556,7 @@ class TestEntityHelpersShortName:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _rule_based_entity_extraction,
         )
+
         text = "Mr. X was here today and Ms. Y went there."
         entities = _rule_based_entity_extraction(text)
         names = [e.name for e in entities]

@@ -62,7 +62,13 @@ class Groth16Backend:
     _DEFAULT_CIRCUIT_ID: str = "knowledge_of_axioms"
 
     def _enabled(self) -> bool:
-        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip().lower() not in {"0", "false", "no", "off", ""}
+        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip().lower() not in {
+            "0",
+            "false",
+            "no",
+            "off",
+            "",
+        }
 
     def _ffi(self):
         # Import lazily to keep imports quiet and lightweight.
@@ -70,7 +76,9 @@ class Groth16Backend:
 
         return Groth16FFIBackend(binary_path=self.binary_path, timeout_seconds=self.timeout_seconds)
 
-    def generate_proof(self, theorem: str, private_axioms: list[str], metadata: dict[str, Any]) -> ZKPProof:
+    def generate_proof(
+        self, theorem: str, private_axioms: list[str], metadata: dict[str, Any]
+    ) -> ZKPProof:
         if not self._enabled():
             raise ZKPError(
                 "Groth16 backend is disabled by default. "
@@ -129,8 +137,14 @@ class Groth16Backend:
 
         try:
             proof = self._ffi().generate_proof(json.dumps(witness), seed=seed)
-            public_inputs = proof.public_inputs if isinstance(getattr(proof, "public_inputs", None), dict) else {}
-            metadata_out = proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
+            public_inputs = (
+                proof.public_inputs
+                if isinstance(getattr(proof, "public_inputs", None), dict)
+                else {}
+            )
+            metadata_out = (
+                proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
+            )
             guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
             if guidance_ref and isinstance(public_inputs, dict):
                 public_inputs.setdefault("compiler_guidance_ref", guidance_ref)
@@ -202,7 +216,6 @@ class Groth16Backend:
             return self._ffi().verify_proof(proof_json)
         except Exception as e:
             raise ZKPError(f"Groth16 proof verification failed: {e}")
-    
 
     def setup(self, version: int = 1, *, seed: Optional[int] = None) -> dict[str, Any]:
         """Run trusted setup for the given circuit version.

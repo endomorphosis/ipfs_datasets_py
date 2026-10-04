@@ -156,7 +156,9 @@ def _deep_update(base: dict[str, Any], updates: Mapping[str, Any]) -> dict[str, 
     return base
 
 
-def merge_email_authority_enrichment_catalog(override: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def merge_email_authority_enrichment_catalog(
+    override: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     catalog = deepcopy(DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG)
     if override:
         _deep_update(catalog, override)

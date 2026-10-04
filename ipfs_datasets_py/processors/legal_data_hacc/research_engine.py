@@ -52,7 +52,9 @@ try:
         ANCHOR_SECTION_PATTERNS as CG_ANCHOR_SECTION_PATTERNS,
         _classify_anchor_sections as classify_anchor_sections,
     )
-    from complaint_phases.intake_case_file import _build_temporal_context as build_shared_temporal_context
+    from complaint_phases.intake_case_file import (
+        _build_temporal_context as build_shared_temporal_context,
+    )
     from complaint_phases.intake_case_file import build_timeline_consistency_summary
     from mediator.integrations.contracts import NormalizedRetrievalRecord
     from mediator.integrations.retrieval_orchestrator import RetrievalOrchestrator
@@ -96,7 +98,12 @@ except Exception as exc:  # pragma: no cover - exercised through fallback behavi
             "final decision",
             "written notice",
         ),
-        "reasonable_accommodation": ("reasonable accommodation", "person with a disability", "disability", "accommodation"),
+        "reasonable_accommodation": (
+            "reasonable accommodation",
+            "person with a disability",
+            "disability",
+            "accommodation",
+        ),
         "adverse_action": (
             "termination",
             "termination decision",
@@ -108,7 +115,13 @@ except Exception as exc:  # pragma: no cover - exercised through fallback behavi
             "discontinued",
             "notice of adverse action",
         ),
-        "selection_criteria": ("selection", "screening", "criteria", "evaluation", "prioritization"),
+        "selection_criteria": (
+            "selection",
+            "screening",
+            "criteria",
+            "evaluation",
+            "prioritization",
+        ),
     }
 
     def classify_anchor_sections(snippet: str) -> List[str]:
@@ -255,9 +268,14 @@ _MONTH_PATTERN = (
 )
 _TIMELINE_DATE_PATTERNS = (
     re.compile(r"\b(?P<year>20\d{2}|19\d{2})-(?P<month>\d{2})-(?P<day>\d{2})\b"),
-    re.compile(rf"\b(?P<month_name>{_MONTH_PATTERN})\s+(?P<day>\d{{1,2}}),\s+(?P<year>20\d{{2}}|19\d{{2}})\b", re.IGNORECASE),
+    re.compile(
+        rf"\b(?P<month_name>{_MONTH_PATTERN})\s+(?P<day>\d{{1,2}}),\s+(?P<year>20\d{{2}}|19\d{{2}})\b",
+        re.IGNORECASE,
+    ),
     re.compile(r"\b(?P<month>\d{1,2})/(?P<day>\d{1,2})/(?P<year>20\d{2}|19\d{2})\b"),
-    re.compile(rf"\b(?P<month_name>{_MONTH_PATTERN})\s+(?P<year>20\d{{2}}|19\d{{2}})\b", re.IGNORECASE),
+    re.compile(
+        rf"\b(?P<month_name>{_MONTH_PATTERN})\s+(?P<year>20\d{{2}}|19\d{{2}})\b", re.IGNORECASE
+    ),
 )
 _MONTH_NAME_TO_NUMBER = {
     "jan": "01",
@@ -528,7 +546,9 @@ def _metadata_query_citation_key(item: Dict[str, Any]) -> str:
 
 
 def _is_mismatched_uscode_releasepoint(item: Dict[str, Any]) -> bool:
-    authority_source = _clean_text(str(item.get("authority_source") or item.get("source") or "")).lower()
+    authority_source = _clean_text(
+        str(item.get("authority_source") or item.get("source") or "")
+    ).lower()
     url = _clean_text(str(item.get("url") or "")).lower()
     if authority_source != "us_code":
         return False
@@ -544,7 +564,12 @@ def _normalize_guidance_citation(*, title: str, domain: str) -> str:
     if not cleaned_title:
         return ""
     normalized = re.sub(r"^PDF", "", cleaned_title, flags=re.IGNORECASE).strip(" -|")
-    normalized = re.sub(r"\s*-\s*(HUD(?:\.gov)?|HUD Exchange|HUDExchange(?:\.info)?)$", "", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(
+        r"\s*-\s*(HUD(?:\.gov)?|HUD Exchange|HUDExchange(?:\.info)?)$",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
     normalized = re.sub(r"\s*-\s*[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", "", normalized)
     normalized = _clean_text(normalized)
     if not normalized:
@@ -614,7 +639,9 @@ def _is_relevant_prompt_web_research_item(item: Dict[str, Any]) -> bool:
         return False
     if ".edu/" in url and not _external_research_has_housing_context(text):
         return False
-    return _external_research_has_housing_context(text) and _external_research_has_procedural_context(text)
+    return _external_research_has_housing_context(
+        text
+    ) and _external_research_has_procedural_context(text)
 
 
 def _is_relevant_prompt_legal_research_item(item: Dict[str, Any]) -> bool:
@@ -671,10 +698,14 @@ def _normalize_prompt_legal_display_text(value: str) -> str:
     if not cleaned:
         return ""
     cleaned = re.sub(r"--+$", "", cleaned).strip(" .,-")
-    cfr_match = re.fullmatch(r"(\d+)\s+C\.?F\.?R\.?\s*(?:§\s*)?([\d.()a-zA-Z-]+)", cleaned, re.IGNORECASE)
+    cfr_match = re.fullmatch(
+        r"(\d+)\s+C\.?F\.?R\.?\s*(?:§\s*)?([\d.()a-zA-Z-]+)", cleaned, re.IGNORECASE
+    )
     if cfr_match:
         return f"{cfr_match.group(1)} C.F.R. {cfr_match.group(2)}".strip(" .,-")
-    usc_match = re.fullmatch(r"(\d+)\s+U\.?S\.?C\.?\s*(?:§\s*)?([\d.()a-zA-Z-]+)", cleaned, re.IGNORECASE)
+    usc_match = re.fullmatch(
+        r"(\d+)\s+U\.?S\.?C\.?\s*(?:§\s*)?([\d.()a-zA-Z-]+)", cleaned, re.IGNORECASE
+    )
     if usc_match:
         return f"{usc_match.group(1)} U.S.C. {usc_match.group(2)}".strip(" .,-")
     return cleaned
@@ -703,12 +734,27 @@ def _prompt_legal_research_display_text(item: Dict[str, Any]) -> str:
     lowered_url = url.lower()
     cfr_title_match = re.search(r"/(?:title-|text/)(\d+)", lowered_url)
     cfr_section_match = re.search(r"/(?:section-|text/\d+/)([\d.()a-z-]+)", lowered_url)
-    if cfr_title_match and cfr_section_match and any(candidate in domain for candidate in ("ecfr.gov", "law.cornell.edu")):
-        return _normalize_prompt_legal_display_text(f"{cfr_title_match.group(1)} C.F.R. {cfr_section_match.group(1)}")
+    if (
+        cfr_title_match
+        and cfr_section_match
+        and any(candidate in domain for candidate in ("ecfr.gov", "law.cornell.edu"))
+    ):
+        return _normalize_prompt_legal_display_text(
+            f"{cfr_title_match.group(1)} C.F.R. {cfr_section_match.group(1)}"
+        )
     cfr_part_match = re.search(r"/part-([\d.()a-z-]+)", lowered_url)
-    if cfr_title_match and cfr_part_match and any(candidate in domain for candidate in ("ecfr.gov", "law.cornell.edu")):
-        return _normalize_prompt_legal_display_text(f"{cfr_title_match.group(1)} C.F.R. Part {cfr_part_match.group(1)}")
-    if any(candidate in domain for candidate in ("hud.gov", "hudexchange.info", "justice.gov")) and title:
+    if (
+        cfr_title_match
+        and cfr_part_match
+        and any(candidate in domain for candidate in ("ecfr.gov", "law.cornell.edu"))
+    ):
+        return _normalize_prompt_legal_display_text(
+            f"{cfr_title_match.group(1)} C.F.R. Part {cfr_part_match.group(1)}"
+        )
+    if (
+        any(candidate in domain for candidate in ("hud.gov", "hudexchange.info", "justice.gov"))
+        and title
+    ):
         normalized_guidance = _normalize_guidance_citation(title=title, domain=domain)
         if normalized_guidance:
             return normalized_guidance
@@ -782,7 +828,9 @@ def _semantic_tokens(value: str) -> set[str]:
     }
     return {
         normalized
-        for normalized in (_semantic_token(token) for token in re.findall(r"[a-z0-9]+", value.lower()))
+        for normalized in (
+            _semantic_token(token) for token in re.findall(r"[a-z0-9]+", value.lower())
+        )
         if normalized and normalized not in stopwords
     }
 
@@ -926,7 +974,9 @@ def _safe_json_load(path: Path) -> Dict[str, Any]:
 
 
 def _stable_identifier(prefix: str, *parts: Any) -> str:
-    digest = hashlib.sha1("|".join(str(part or "") for part in parts).encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha1("|".join(str(part or "") for part in parts).encode("utf-8")).hexdigest()[
+        :12
+    ]
     return f"{prefix}:{digest}"
 
 
@@ -945,7 +995,9 @@ def _normalize_timeline_date(match: re.Match[str]) -> tuple[str, str]:
     return (year, "year") if year else ("", "")
 
 
-def _build_fallback_note(*, requested_mode: str, vector_status: str = "", vector_error: str = "") -> str:
+def _build_fallback_note(
+    *, requested_mode: str, vector_status: str = "", vector_error: str = ""
+) -> str:
     normalized_requested = _clean_text(requested_mode) or "hybrid"
     normalized_status = _clean_text(vector_status) or "unavailable"
     normalized_error = _clean_text(vector_error)
@@ -971,7 +1023,9 @@ def _summarize_vector_errors(errors: Sequence[Dict[str, Any]] | None) -> str:
     return "; ".join(fragments)
 
 
-def _summarize_search_payload(payload: Any, *, requested_mode: str, use_vector: bool) -> Dict[str, Any]:
+def _summarize_search_payload(
+    payload: Any, *, requested_mode: str, use_vector: bool
+) -> Dict[str, Any]:
     if not isinstance(payload, dict):
         return {
             "requested_search_mode": str(requested_mode or "auto"),
@@ -1029,8 +1083,12 @@ class CorpusDocument:
         self.text_lower = self.text.lower()
         self.title_tokens = _semantic_tokens(self.title)
         self.text_tokens = _semantic_tokens(self.text)
-        self.entity_tokens = _semantic_tokens(" ".join(str(entity.get("name") or "") for entity in self.entities))
-        self.rule_tokens = _semantic_tokens(" ".join(str(rule.get("text") or "") for rule in self.rules))
+        self.entity_tokens = _semantic_tokens(
+            " ".join(str(entity.get("name") or "") for entity in self.entities)
+        )
+        self.rule_tokens = _semantic_tokens(
+            " ".join(str(rule.get("text") or "") for rule in self.rules)
+        )
 
     def summary(self) -> Dict[str, Any]:
         return {
@@ -1056,14 +1114,19 @@ class HACCResearchEngine:
         knowledge_graph_dir: Optional[Path | str] = None,
     ) -> None:
         self.repo_root = Path(repo_root or REPO_ROOT).resolve()
-        self.parsed_dir = Path(parsed_dir or (self.repo_root / "research_results/documents/parsed")).resolve()
+        self.parsed_dir = Path(
+            parsed_dir or (self.repo_root / "research_results/documents/parsed")
+        ).resolve()
         self.parse_manifest_path = Path(
-            parse_manifest_path or (self.repo_root / "research_results/documents/parse_manifest.json")
+            parse_manifest_path
+            or (self.repo_root / "research_results/documents/parse_manifest.json")
         ).resolve()
         self.knowledge_graph_dir = Path(
             knowledge_graph_dir or (self.repo_root / "hacc_website/knowledge_graph")
         ).resolve()
-        self.repository_ingest_dir = (self.repo_root / "research_results/documents/repository_ingest").resolve()
+        self.repository_ingest_dir = (
+            self.repo_root / "research_results/documents/repository_ingest"
+        ).resolve()
         self.default_embedding_dir = (self.knowledge_graph_dir / "embeddings").resolve()
         self.default_index_dir = (self.repo_root / "research_results/search_indexes").resolve()
         self.default_index_path = self.default_index_dir / "hacc_corpus.summary.json"
@@ -1077,7 +1140,9 @@ class HACCResearchEngine:
         except Exception:
             return None
 
-    def _build_retrieval_query_context(self, query_text: str, *, claim_type: str = "") -> Dict[str, Any]:
+    def _build_retrieval_query_context(
+        self, query_text: str, *, claim_type: str = ""
+    ) -> Dict[str, Any]:
         orchestrator = self._retrieval_orchestrator()
         if orchestrator is None:
             return {}
@@ -1095,7 +1160,9 @@ class HACCResearchEngine:
         except Exception:
             return {}
 
-    def _external_research_query_plan(self, query_text: str, *, claim_type: str = "") -> Dict[str, Any]:
+    def _external_research_query_plan(
+        self, query_text: str, *, claim_type: str = ""
+    ) -> Dict[str, Any]:
         normalized_query = _clean_text(query_text)
         normalized_claim_type = str(claim_type or "").strip().lower()
         query_context = _json_safe(
@@ -1138,7 +1205,11 @@ class HACCResearchEngine:
         legal_queries = _dedupe_queries(
             [
                 normalized_query,
-                *[str(hint).strip() for hint in list(hints.get("legal") or []) if str(hint).strip()],
+                *[
+                    str(hint).strip()
+                    for hint in list(hints.get("legal") or [])
+                    if str(hint).strip()
+                ],
                 f"{claim_label} {normalized_query}" if claim_label else "",
                 *query_variants,
                 *[
@@ -1157,13 +1228,18 @@ class HACCResearchEngine:
         normalized_claim_type = str(claim_type or "").strip().lower()
         return [
             str(item).strip().lower()
-            for item in list(EXTERNAL_RESEARCH_DOMAIN_FILTERS_BY_CLAIM.get(normalized_claim_type) or [])
+            for item in list(
+                EXTERNAL_RESEARCH_DOMAIN_FILTERS_BY_CLAIM.get(normalized_claim_type) or []
+            )
             if str(item).strip()
         ]
 
     def _default_claim_type_for_query(self, query_text: str) -> str:
         lowered_query = _clean_text(query_text).lower()
-        if any(token in lowered_query for token in ("housing", "tenant", "voucher", "hud", "public housing")):
+        if any(
+            token in lowered_query
+            for token in ("housing", "tenant", "voucher", "hud", "public housing")
+        ):
             return "housing_discrimination"
         return ""
 
@@ -1178,8 +1254,14 @@ class HACCResearchEngine:
             variants.append(citation)
 
         lowered_query = cleaned_query.lower()
-        has_housing_context = any(token in lowered_query for token in ("housing", "tenant", "voucher", "participant", "hud"))
-        has_procedure_context = any(token in lowered_query for token in ("grievance", "hearing", "appeal", "notice", "informal review"))
+        has_housing_context = any(
+            token in lowered_query
+            for token in ("housing", "tenant", "voucher", "participant", "hud")
+        )
+        has_procedure_context = any(
+            token in lowered_query
+            for token in ("grievance", "hearing", "appeal", "notice", "informal review")
+        )
         has_retaliation_context = "retaliation" in lowered_query
 
         if has_housing_context and has_procedure_context:
@@ -1229,7 +1311,9 @@ class HACCResearchEngine:
                 {
                     "query": str(payload.get("query") or "").strip(),
                     "status": str(payload.get("status") or ""),
-                    "result_count": int(payload.get("result_count", len(list(payload.get(result_key) or []))) or 0),
+                    "result_count": int(
+                        payload.get("result_count", len(list(payload.get(result_key) or []))) or 0
+                    ),
                     "error": str(payload.get("error") or "").strip(),
                 }
             )
@@ -1257,7 +1341,13 @@ class HACCResearchEngine:
                 integration_status = dict(payload.get("integration_status") or {})
                 break
 
-        status = "success" if aggregated_results else "error" if any(attempt.get("error") for attempt in attempts) else "success"
+        status = (
+            "success"
+            if aggregated_results
+            else "error"
+            if any(attempt.get("error") for attempt in attempts)
+            else "success"
+        )
         return {
             "status": status,
             "result_count": len(aggregated_results),
@@ -1280,7 +1370,9 @@ class HACCResearchEngine:
                 continue
             url = str(item.get("url") or "").strip()
             domain = _normalize_domain(url)
-            if not domain or not any(candidate in domain for candidate in _EXTERNAL_RESEARCH_LEGAL_FALLBACK_DOMAINS):
+            if not domain or not any(
+                candidate in domain for candidate in _EXTERNAL_RESEARCH_LEGAL_FALLBACK_DOMAINS
+            ):
                 continue
             key = url.lower() or str(item.get("title") or "").strip().lower()
             if not key or key in seen:
@@ -1303,14 +1395,18 @@ class HACCResearchEngine:
                 citation = title
             if not citation and domain.endswith("ecfr.gov"):
                 citation = title
-            if not citation and any(candidate in domain for candidate in ("hud.gov", "hudexchange.info", "justice.gov")):
+            if not citation and any(
+                candidate in domain for candidate in ("hud.gov", "hudexchange.info", "justice.gov")
+            ):
                 citation = _normalize_guidance_citation(title=title, domain=domain)
             promoted_results.append(
                 {
                     "title": title,
                     "citation": citation,
                     "url": url,
-                    "summary": str(item.get("description") or item.get("content") or item.get("summary") or "").strip(),
+                    "summary": str(
+                        item.get("description") or item.get("content") or item.get("summary") or ""
+                    ).strip(),
                     "authority_source": authority_source,
                     "source_domain": domain,
                     "promoted_from": "web_discovery",
@@ -1362,7 +1458,11 @@ class HACCResearchEngine:
             for item in list(promoted_payload.get("results") or []):
                 if not isinstance(item, dict):
                     continue
-                dedupe_key = str(item.get("citation") or item.get("title") or item.get("url") or "").strip().lower()
+                dedupe_key = (
+                    str(item.get("citation") or item.get("title") or item.get("url") or "")
+                    .strip()
+                    .lower()
+                )
                 if not dedupe_key or dedupe_key in seen:
                     continue
                 seen.add(dedupe_key)
@@ -1420,7 +1520,9 @@ class HACCResearchEngine:
             query=query_text,
             title=str(item.get("title") or ""),
             url=str(item.get("source_path") or ""),
-            citation=str(metadata.get("relative_path") or item.get("source_path") or item.get("title") or ""),
+            citation=str(
+                metadata.get("relative_path") or item.get("source_path") or item.get("title") or ""
+            ),
             snippet=str(item.get("snippet") or ""),
             content=str(item.get("snippet") or ""),
             score=float(item.get("score", 0.0) or 0.0),
@@ -1459,8 +1561,12 @@ class HACCResearchEngine:
             return list(items)[:max_results], query_context, {}
 
         try:
-            ranked_records = orchestrator.merge_and_rank(records, max_results=max_results, query_context=query_context)
-            support_bundle = dict(orchestrator.build_support_bundle(ranked_records, max_items_per_bucket=5) or {})
+            ranked_records = orchestrator.merge_and_rank(
+                records, max_results=max_results, query_context=query_context
+            )
+            support_bundle = dict(
+                orchestrator.build_support_bundle(ranked_records, max_items_per_bucket=5) or {}
+            )
         except Exception:
             return list(items)[:max_results], query_context, {}
 
@@ -1474,7 +1580,13 @@ class HACCResearchEngine:
             item = dict(record_map.get(key) or {})
             if not item:
                 continue
-            item["score"] = round(float((record.metadata or {}).get("orchestrator_composite_score", record.score) or record.score), 6)
+            item["score"] = round(
+                float(
+                    (record.metadata or {}).get("orchestrator_composite_score", record.score)
+                    or record.score
+                ),
+                6,
+            )
             item["metadata"] = dict(record.metadata or {})
             reranked.append(item)
 
@@ -1533,7 +1645,9 @@ class HACCResearchEngine:
                     "document_count": len(documents),
                     "source_counts": self._source_counts(documents),
                 }
-                manifest_output_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+                manifest_output_path.write_text(
+                    json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
+                )
                 payload["manifest_path"] = str(manifest_output_path)
         return payload
 
@@ -1573,7 +1687,9 @@ class HACCResearchEngine:
     ) -> Dict[str, Any]:
         candidate_indexes = self._resolve_vector_indexes(index_name=index_name, index_dir=index_dir)
         for candidate in candidate_indexes:
-            manifest_path = Path(candidate["index_dir"]) / f"{candidate['index_name']}.manifest.json"
+            manifest_path = (
+                Path(candidate["index_dir"]) / f"{candidate['index_name']}.manifest.json"
+            )
             if manifest_path.exists():
                 return {
                     "status": "existing",
@@ -1588,7 +1704,9 @@ class HACCResearchEngine:
                 "status": "unavailable",
                 "index_name": index_name,
                 "index_dir": str(Path(index_dir or self.default_index_dir).resolve()),
-                "error": INTEGRATION_IMPORT_ERROR or VECTOR_STORE_ERROR or "vector index adapter unavailable",
+                "error": INTEGRATION_IMPORT_ERROR
+                or VECTOR_STORE_ERROR
+                or "vector index adapter unavailable",
                 "integration_status": self._integration_status(),
             }
 
@@ -1615,7 +1733,9 @@ class HACCResearchEngine:
 
         if auto_build_index and not vector_ready:
             index_status = self.ensure_vector_index(index_name=index_name, index_dir=index_dir)
-            vector_ready = self._has_preferred_vector_index(index_name=index_name, index_dir=index_dir)
+            vector_ready = self._has_preferred_vector_index(
+                index_name=index_name, index_dir=index_dir
+            )
 
         if vector_ready:
             payload = self.hybrid_search(
@@ -1773,7 +1893,9 @@ class HACCResearchEngine:
 
             for item in list(payload.get("results", []) or []):
                 enriched = dict(item)
-                metadata = enriched.get("metadata") if isinstance(enriched.get("metadata"), dict) else {}
+                metadata = (
+                    enriched.get("metadata") if isinstance(enriched.get("metadata"), dict) else {}
+                )
                 metadata = dict(metadata)
                 metadata.setdefault("vector_index_name", candidate["index_name"])
                 metadata.setdefault("vector_index_dir", candidate["index_dir"])
@@ -1790,7 +1912,15 @@ class HACCResearchEngine:
             )
         )
 
-        status = "success" if aggregated_results else "unavailable" if all(value == "unavailable" for value in statuses) else "error" if errors else "success"
+        status = (
+            "success"
+            if aggregated_results
+            else "unavailable"
+            if all(value == "unavailable" for value in statuses)
+            else "error"
+            if errors
+            else "success"
+        )
         error_summary = _summarize_vector_errors(errors)
         return {
             "status": status,
@@ -1850,8 +1980,12 @@ class HACCResearchEngine:
             vector_score = float(item.get("score", 0.0) or 0.0)
             if doc_id in merged:
                 merged_item = merged[doc_id]
-                merged_item["vector_score"] = max(float(merged_item.get("vector_score", 0.0) or 0.0), vector_score)
-                merged_item["score"] = float(merged_item.get("lexical_score", 0.0) or 0.0) + (vector_score * 25.0)
+                merged_item["vector_score"] = max(
+                    float(merged_item.get("vector_score", 0.0) or 0.0), vector_score
+                )
+                merged_item["score"] = float(merged_item.get("lexical_score", 0.0) or 0.0) + (
+                    vector_score * 25.0
+                )
                 if "vector" not in merged_item["search_modes"]:
                     merged_item["search_modes"].append("vector")
             else:
@@ -1870,7 +2004,10 @@ class HACCResearchEngine:
                     "search_modes": ["vector"],
                 }
 
-        ranked = sorted(merged.values(), key=lambda item: (-float(item.get("score", 0.0)), item.get("title", "")))
+        ranked = sorted(
+            merged.values(),
+            key=lambda item: (-float(item.get("score", 0.0)), item.get("title", "")),
+        )
         reranked, query_context, support_bundle = self._rerank_result_items(
             ranked,
             query_text=_clean_text(query),
@@ -1931,7 +2068,9 @@ class HACCResearchEngine:
                     "score": round(score, 4),
                     "source_type": document.source_type,
                     "source_path": document.source_path,
-                    "snippet": self._extract_snippet(query_text, query_tokens, document, matched_rules),
+                    "snippet": self._extract_snippet(
+                        query_text, query_tokens, document, matched_rules
+                    ),
                     "matched_rules": matched_rules[:3],
                     "matched_entities": matched_entities[:5],
                     "metadata": dict(document.metadata),
@@ -1952,7 +2091,9 @@ class HACCResearchEngine:
             for label in list(metadata.get("anchor_sections") or []):
                 label_text = str(label or "").strip()
                 if label_text:
-                    anchor_section_counts[label_text] = int(anchor_section_counts.get(label_text, 0) or 0) + 1
+                    anchor_section_counts[label_text] = (
+                        int(anchor_section_counts.get(label_text, 0) or 0) + 1
+                    )
         reranked_results, query_context, support_bundle = self._rerank_result_items(
             ranked_results,
             query_text=query_text,
@@ -1970,7 +2111,9 @@ class HACCResearchEngine:
             for label in list(metadata.get("anchor_sections") or []):
                 label_text = str(label or "").strip()
                 if label_text:
-                    anchor_section_counts[label_text] = int(anchor_section_counts.get(label_text, 0) or 0) + 1
+                    anchor_section_counts[label_text] = (
+                        int(anchor_section_counts.get(label_text, 0) or 0) + 1
+                    )
         return {
             "status": "success",
             "query": query_text,
@@ -2011,7 +2154,9 @@ class HACCResearchEngine:
 
         normalized_filters = self._normalize_domain_filters(domain_filter)
         if normalized_filters:
-            results = [item for item in results if self._matches_domain_filter(item, normalized_filters)]
+            results = [
+                item for item in results if self._matches_domain_filter(item, normalized_filters)
+            ]
 
         if scrape and scrape_web_content is not None:
             for item in results[: min(len(results), 5)]:
@@ -2107,7 +2252,9 @@ class HACCResearchEngine:
                 "status": "unavailable",
                 "query": query_text,
                 "results": [],
-                "error": LEGAL_SCRAPERS_ERROR or INTEGRATION_IMPORT_ERROR or "legal scraper adapter unavailable",
+                "error": LEGAL_SCRAPERS_ERROR
+                or INTEGRATION_IMPORT_ERROR
+                or "legal scraper adapter unavailable",
                 "integration_status": self._integration_status(),
             }
 
@@ -2134,13 +2281,26 @@ class HACCResearchEngine:
                     continue
                 try:
                     source_results = func(candidate_query, **kwargs)
-                except Exception as exc:  # pragma: no cover - exercised through degraded integrations
-                    errors.append({"source": source_name, "query": candidate_query, "error": str(exc)})
-                    attempts.append({"source": source_name, "query": candidate_query, "result_count": 0, "error": str(exc)})
+                except (
+                    Exception
+                ) as exc:  # pragma: no cover - exercised through degraded integrations
+                    errors.append(
+                        {"source": source_name, "query": candidate_query, "error": str(exc)}
+                    )
+                    attempts.append(
+                        {
+                            "source": source_name,
+                            "query": candidate_query,
+                            "result_count": 0,
+                            "error": str(exc),
+                        }
+                    )
                     continue
                 added = 0
                 for item in list(source_results or []):
-                    citation = str(item.get("citation") or item.get("title") or item.get("url") or "").strip()
+                    citation = str(
+                        item.get("citation") or item.get("title") or item.get("url") or ""
+                    ).strip()
                     dedupe_key = f"{source_name}:{citation.lower()}"
                     if not citation or dedupe_key in seen_keys:
                         continue
@@ -2158,7 +2318,14 @@ class HACCResearchEngine:
                     added += 1
                     if len(results) >= collected_result_limit:
                         break
-                attempts.append({"source": source_name, "query": candidate_query, "result_count": added, "error": ""})
+                attempts.append(
+                    {
+                        "source": source_name,
+                        "query": candidate_query,
+                        "result_count": added,
+                        "error": "",
+                    }
+                )
                 if len(results) >= collected_result_limit:
                     break
             if len(results) >= collected_result_limit and len(results) > before_count:
@@ -2172,7 +2339,9 @@ class HACCResearchEngine:
             for item in list(web_fallback_payload.get("results") or []):
                 if not isinstance(item, dict):
                     continue
-                citation = str(item.get("citation") or item.get("title") or item.get("url") or "").strip()
+                citation = str(
+                    item.get("citation") or item.get("title") or item.get("url") or ""
+                ).strip()
                 dedupe_key = f"web_legal_search:{citation.lower()}"
                 if not citation or dedupe_key in seen_keys:
                     continue
@@ -2180,7 +2349,9 @@ class HACCResearchEngine:
                 results.append(dict(item))
             attempts.extend(list(web_fallback_payload.get("attempts") or []))
 
-        ranking_claim_type = str(claim_type or "").strip().lower() or self._default_claim_type_for_query(query_text)
+        ranking_claim_type = str(
+            claim_type or ""
+        ).strip().lower() or self._default_claim_type_for_query(query_text)
         ranked_payload = self._rank_external_research_payload(
             {
                 "status": "success" if results else "error" if errors else "success",
@@ -2195,14 +2366,16 @@ class HACCResearchEngine:
             result_kind="legal",
             max_results=max_results,
         )
-        ranked_payload.update({
-            "status": "success" if results else "error" if errors else "success",
-            "query": query_text,
-            "queries": query_variants,
-            "errors": errors,
-            "attempts": attempts,
-            "integration_status": self._integration_status(),
-        })
+        ranked_payload.update(
+            {
+                "status": "success" if results else "error" if errors else "success",
+                "query": query_text,
+                "queries": query_variants,
+                "errors": errors,
+                "attempts": attempts,
+                "integration_status": self._integration_status(),
+            }
+        )
         return ranked_payload
 
     def research(
@@ -2237,16 +2410,20 @@ class HACCResearchEngine:
             domain_filter=domain_filter,
             scrape=scrape,
         )
-        legal_payload = self.discover_legal_authorities(
-            query_text,
-            max_results=legal_max_results,
-        ) if include_legal else {
-            "status": "disabled",
-            "query": query_text,
-            "results": [],
-            "result_count": 0,
-            "integration_status": self._integration_status(),
-        }
+        legal_payload = (
+            self.discover_legal_authorities(
+                query_text,
+                max_results=legal_max_results,
+            )
+            if include_legal
+            else {
+                "status": "disabled",
+                "query": query_text,
+                "results": [],
+                "result_count": 0,
+                "integration_status": self._integration_status(),
+            }
+        )
         grounding_summary = self._build_research_grounding_summary(
             query_text=query_text,
             local_payload=local_payload,
@@ -2281,13 +2458,17 @@ class HACCResearchEngine:
                 use_vector=bool(use_vector),
             ),
             "local_chronology_summary": {
-                "chronology_ready_result_count": int(local_payload.get("chronology_ready_result_count", 0) or 0),
+                "chronology_ready_result_count": int(
+                    local_payload.get("chronology_ready_result_count", 0) or 0
+                ),
                 "anchor_section_counts": dict(local_payload.get("anchor_section_counts") or {}),
             },
             "research_grounding_summary": grounding_summary,
             "seeded_discovery_plan": dict(grounding_summary.get("seeded_discovery_plan") or {}),
             "research_action_queue": research_action_queue,
-            "recommended_next_action": dict(research_action_queue[0]) if research_action_queue else {},
+            "recommended_next_action": dict(research_action_queue[0])
+            if research_action_queue
+            else {},
             "local_search": local_payload,
             "web_discovery": web_payload,
             "legal_discovery": legal_payload,
@@ -2311,11 +2492,13 @@ class HACCResearchEngine:
             use_vector=use_vector,
         )
         search_results = list(search_payload.get("results", []) or [])
-        reranked_search_results, grounding_query_context, grounding_support_bundle = self._rerank_result_items(
-            search_results,
-            query_text=query_text,
-            claim_type=str(claim_type or "").strip() or "housing_discrimination",
-            max_results=max(top_k * 5, top_k),
+        reranked_search_results, grounding_query_context, grounding_support_bundle = (
+            self._rerank_result_items(
+                search_results,
+                query_text=query_text,
+                claim_type=str(claim_type or "").strip() or "housing_discrimination",
+                max_results=max(top_k * 5, top_k),
+            )
         )
         if reranked_search_results:
             search_payload["results"] = reranked_search_results
@@ -2453,8 +2636,12 @@ class HACCResearchEngine:
                     "stored_evidence": [],
                     "support_summary": {},
                     "synthetic_prompts": grounding_bundle.get("synthetic_prompts", {}),
-                    "retrieval_support_bundle": grounding_bundle.get("retrieval_support_bundle", {}),
-                    "external_research_bundle": grounding_bundle.get("external_research_bundle", {}),
+                    "retrieval_support_bundle": grounding_bundle.get(
+                        "retrieval_support_bundle", {}
+                    ),
+                    "external_research_bundle": grounding_bundle.get(
+                        "external_research_bundle", {}
+                    ),
                     "query_context": grounding_bundle.get("query_context", {}),
                     "database_paths": {},
                     "integration_status": self._integration_status(),
@@ -2542,13 +2729,17 @@ class HACCResearchEngine:
         )
         summarize_claim_support = getattr(mediator, "summarize_claim_support", None)
         support_summary = (
-            summarize_claim_support(str(user_id or "hacc-grounding"), str(claim_type or "").strip() or None)
+            summarize_claim_support(
+                str(user_id or "hacc-grounding"), str(claim_type or "").strip() or None
+            )
             if callable(summarize_claim_support)
             else {}
         )
         evidence_analysis = {}
         evidence_analysis_hook = getattr(mediator, "evidence_analysis", None)
-        analyze_evidence_for_claim = getattr(evidence_analysis_hook, "analyze_evidence_for_claim", None)
+        analyze_evidence_for_claim = getattr(
+            evidence_analysis_hook, "analyze_evidence_for_claim", None
+        )
         if not callable(analyze_evidence_for_claim):
             analyze_evidence_for_claim = getattr(mediator, "analyze_evidence_for_claim", None)
         if callable(analyze_evidence_for_claim):
@@ -2575,8 +2766,12 @@ class HACCResearchEngine:
             "uploads": uploads,
             "errors": errors,
             "stored_evidence": stored_evidence,
-            "support_summary": support_summary if isinstance(support_summary, dict) else {"value": support_summary},
-            "evidence_analysis": evidence_analysis if isinstance(evidence_analysis, dict) else {"value": evidence_analysis},
+            "support_summary": support_summary
+            if isinstance(support_summary, dict)
+            else {"value": support_summary},
+            "evidence_analysis": evidence_analysis
+            if isinstance(evidence_analysis, dict)
+            else {"value": evidence_analysis},
             "mediator_evidence_packets": grounding_bundle.get("mediator_evidence_packets", []),
             "synthetic_prompts": grounding_bundle.get("synthetic_prompts", {}),
             "retrieval_support_bundle": grounding_bundle.get("retrieval_support_bundle", {}),
@@ -2633,22 +2828,44 @@ class HACCResearchEngine:
             "top_documents": [
                 str(item.get("title") or item.get("relative_path") or item.get("source_path") or "")
                 for item in upload_candidates
-                if str(item.get("title") or item.get("relative_path") or item.get("source_path") or "").strip()
+                if str(
+                    item.get("title") or item.get("relative_path") or item.get("source_path") or ""
+                ).strip()
             ],
             "anchor_sections": list(grounding_overview.get("anchor_sections") or []),
-            "chronology_ready_result_count": int(local_payload.get("chronology_ready_result_count", 0) or 0),
+            "chronology_ready_result_count": int(
+                local_payload.get("chronology_ready_result_count", 0) or 0
+            ),
             "timeline_anchor_count": int(chronology_analysis.get("timeline_anchor_count", 0) or 0),
             "blocker_objectives": list(grounding_signals.get("blocker_objectives") or []),
             "extraction_targets": list(grounding_signals.get("extraction_targets") or []),
-            "workflow_phase_priorities": list(grounding_signals.get("workflow_phase_priorities") or []),
-            "evidence_upload_form_seed": dict(synthetic_prompts.get("evidence_upload_form_seed") or {}),
-            "production_evidence_intake_steps": list(synthetic_prompts.get("production_evidence_intake_steps") or []),
-            "mediator_upload_checklist": list(synthetic_prompts.get("mediator_upload_checklist") or []),
-            "document_generation_checklist": list(synthetic_prompts.get("document_generation_checklist") or []),
-            "court_complaint_synthesis_prompt": str(synthetic_prompts.get("court_complaint_synthesis_prompt") or ""),
-            "evidence_upload_simulation_prompt": str(synthetic_prompts.get("evidence_upload_simulation_prompt") or ""),
-            "claim_support_temporal_handoff": dict(grounding_signals.get("claim_support_temporal_handoff") or {}),
-            "document_generation_handoff": dict(grounding_signals.get("document_generation_handoff") or {}),
+            "workflow_phase_priorities": list(
+                grounding_signals.get("workflow_phase_priorities") or []
+            ),
+            "evidence_upload_form_seed": dict(
+                synthetic_prompts.get("evidence_upload_form_seed") or {}
+            ),
+            "production_evidence_intake_steps": list(
+                synthetic_prompts.get("production_evidence_intake_steps") or []
+            ),
+            "mediator_upload_checklist": list(
+                synthetic_prompts.get("mediator_upload_checklist") or []
+            ),
+            "document_generation_checklist": list(
+                synthetic_prompts.get("document_generation_checklist") or []
+            ),
+            "court_complaint_synthesis_prompt": str(
+                synthetic_prompts.get("court_complaint_synthesis_prompt") or ""
+            ),
+            "evidence_upload_simulation_prompt": str(
+                synthetic_prompts.get("evidence_upload_simulation_prompt") or ""
+            ),
+            "claim_support_temporal_handoff": dict(
+                grounding_signals.get("claim_support_temporal_handoff") or {}
+            ),
+            "document_generation_handoff": dict(
+                grounding_signals.get("document_generation_handoff") or {}
+            ),
             "drafting_readiness": dict(grounding_signals.get("drafting_readiness") or {}),
             "retrieval_support_bundle": dict(local_payload.get("support_bundle") or {}),
             "seeded_discovery_plan": seeded_discovery_plan,
@@ -2668,9 +2885,11 @@ class HACCResearchEngine:
             "appeal_rights": '"appeal rights" OR "informal review" OR "written notice"',
             "reasonable_accommodation": '"reasonable accommodation" OR disability OR accommodation',
             "adverse_action": '"adverse action" OR termination OR denial OR "notice of adverse action"',
-            "selection_criteria": 'selection OR screening OR criteria OR evaluation',
+            "selection_criteria": "selection OR screening OR criteria OR evaluation",
         }
-        resolved_anchor_sections = [str(item).strip() for item in anchor_sections if str(item).strip()]
+        resolved_anchor_sections = [
+            str(item).strip() for item in anchor_sections if str(item).strip()
+        ]
         query_lines: List[str] = []
         for label in resolved_anchor_sections[:4]:
             hint = section_query_hints.get(label, label.replace("_", " "))
@@ -2679,7 +2898,9 @@ class HACCResearchEngine:
             query_lines.append(f'site:hacc.example "{query_text}" policy notice hearing')
 
         timeline_anchor_count = int(chronology_analysis.get("timeline_anchor_count", 0) or 0)
-        unresolved_temporal_issue_count = int(chronology_analysis.get("unresolved_temporal_issue_count", 0) or 0)
+        unresolved_temporal_issue_count = int(
+            chronology_analysis.get("unresolved_temporal_issue_count", 0) or 0
+        )
         recommended_domains = self._dedupe_preserve_order(
             [
                 urlparse(str(item.get("url") or "")).netloc.lower()
@@ -2695,7 +2916,9 @@ class HACCResearchEngine:
             "has_legal_results": bool(list(legal_payload.get("results") or [])),
             "timeline_anchor_count": timeline_anchor_count,
             "unresolved_temporal_issue_count": unresolved_temporal_issue_count,
-            "priority": "chronology_first" if unresolved_temporal_issue_count else "upload_and_graph",
+            "priority": "chronology_first"
+            if unresolved_temporal_issue_count
+            else "upload_and_graph",
         }
 
     def _build_research_action_queue(
@@ -2707,7 +2930,9 @@ class HACCResearchEngine:
         legal_payload: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         action_queue: List[Dict[str, Any]] = []
-        upload_ready_candidate_count = int(grounding_summary.get("upload_ready_candidate_count", 0) or 0)
+        upload_ready_candidate_count = int(
+            grounding_summary.get("upload_ready_candidate_count", 0) or 0
+        )
         recommended_upload_paths = [
             str(item).strip()
             for item in list(grounding_summary.get("recommended_upload_paths") or [])
@@ -2730,12 +2955,9 @@ class HACCResearchEngine:
                 }
             )
 
-        if (
-            int(seeded_discovery_plan.get("unresolved_temporal_issue_count", 0) or 0) > 0
-            and (
-                upload_ready_candidate_count > 0
-                or int(grounding_summary.get("timeline_anchor_count", 0) or 0) > 0
-            )
+        if int(seeded_discovery_plan.get("unresolved_temporal_issue_count", 0) or 0) > 0 and (
+            upload_ready_candidate_count > 0
+            or int(grounding_summary.get("timeline_anchor_count", 0) or 0) > 0
         ):
             action_queue.append(
                 {
@@ -2756,7 +2978,9 @@ class HACCResearchEngine:
                     "priority": 85,
                     "description": "Expand discovery with complaint-aware seeded CommonCrawl/IPFS queries.",
                     "seeded_queries": list(seeded_discovery_plan.get("queries") or [])[:5],
-                    "recommended_domains": list(seeded_discovery_plan.get("recommended_domains") or [])[:8],
+                    "recommended_domains": list(
+                        seeded_discovery_plan.get("recommended_domains") or []
+                    )[:8],
                 }
             )
 
@@ -2810,7 +3034,9 @@ class HACCResearchEngine:
         ]
         available_candidates: List[Dict[str, str]] = []
         for candidate in preferred_candidates:
-            manifest_path = Path(candidate["index_dir"]) / f"{candidate['index_name']}.manifest.json"
+            manifest_path = (
+                Path(candidate["index_dir"]) / f"{candidate['index_name']}.manifest.json"
+            )
             if manifest_path.exists():
                 available_candidates.append(candidate)
 
@@ -2826,7 +3052,9 @@ class HACCResearchEngine:
             return False
         candidates = self._resolve_vector_indexes(index_name=index_name, index_dir=index_dir)
         for candidate in candidates:
-            manifest_path = Path(candidate["index_dir"]) / f"{candidate['index_name']}.manifest.json"
+            manifest_path = (
+                Path(candidate["index_dir"]) / f"{candidate['index_name']}.manifest.json"
+            )
             if manifest_path.exists():
                 return True
         return False
@@ -2851,9 +3079,13 @@ class HACCResearchEngine:
             text = text_path.read_text(encoding="utf-8", errors="ignore")
             metadata_path = text_path.with_suffix(".json")
             sidecar = _safe_json_load(metadata_path) if metadata_path.exists() else {}
-            title = self._infer_title(text, fallback=Path(str(entry.get("pdf_path") or text_path)).stem)
+            title = self._infer_title(
+                text, fallback=Path(str(entry.get("pdf_path") or text_path)).stem
+            )
             source_id = text_path.stem
-            graph_payload = self._extract_graph_payload(text=text, source_id=source_id, title=title, source_path=text_path)
+            graph_payload = self._extract_graph_payload(
+                text=text, source_id=source_id, title=title, source_path=text_path
+            )
             chronology_metadata = self._build_document_chronology_metadata(
                 text,
                 title=title,
@@ -2926,9 +3158,15 @@ class HACCResearchEngine:
         if not _clean_text(text):
             return None
 
-        parse_payload = ingest_payload.get("parse") if isinstance(ingest_payload.get("parse"), dict) else {}
-        parse_metadata = parse_payload.get("metadata") if isinstance(parse_payload.get("metadata"), dict) else {}
-        parse_summary = parse_payload.get("summary") if isinstance(parse_payload.get("summary"), dict) else {}
+        parse_payload = (
+            ingest_payload.get("parse") if isinstance(ingest_payload.get("parse"), dict) else {}
+        )
+        parse_metadata = (
+            parse_payload.get("metadata") if isinstance(parse_payload.get("metadata"), dict) else {}
+        )
+        parse_summary = (
+            parse_payload.get("summary") if isinstance(parse_payload.get("summary"), dict) else {}
+        )
         if not parse_summary:
             parse_summary = {
                 "status": "success" if _clean_text(text) else "empty",
@@ -2938,7 +3176,9 @@ class HACCResearchEngine:
             }
         title = self._infer_title(text, fallback=relative_path.stem.replace("_", " "))
         source_id = f"repo::{relative_path.as_posix()}"
-        graph_payload = self._extract_graph_payload(text=text, source_id=source_id, title=title, source_path=path)
+        graph_payload = self._extract_graph_payload(
+            text=text, source_id=source_id, title=title, source_path=path
+        )
         rule_like_facts = self._graph_facts_to_rule_like_records(graph_payload)
         chronology_metadata = self._build_document_chronology_metadata(
             text,
@@ -2951,7 +3191,11 @@ class HACCResearchEngine:
         except OSError:
             size_bytes = len(text.encode("utf-8", errors="ignore"))
 
-        quality_payload = parse_metadata.get("parse_quality") if isinstance(parse_metadata.get("parse_quality"), dict) else {}
+        quality_payload = (
+            parse_metadata.get("parse_quality")
+            if isinstance(parse_metadata.get("parse_quality"), dict)
+            else {}
+        )
         return CorpusDocument(
             document_id=source_id,
             title=title,
@@ -2965,9 +3209,17 @@ class HACCResearchEngine:
                 "graph_status": graph_payload.get("status", "unavailable"),
                 "graph_entity_count": len(graph_payload.get("entities", []) or []),
                 "graph_relationship_count": len(graph_payload.get("relationships", []) or []),
-                "document_ingest_status": str(ingest_payload.get("status") or ("success" if text else "empty")),
-                "content_type": str(ingest_payload.get("content_type") or parse_metadata.get("mime_type") or ""),
-                "extraction_method": str(ingest_payload.get("extraction_method") or parse_metadata.get("extraction_method") or ""),
+                "document_ingest_status": str(
+                    ingest_payload.get("status") or ("success" if text else "empty")
+                ),
+                "content_type": str(
+                    ingest_payload.get("content_type") or parse_metadata.get("mime_type") or ""
+                ),
+                "extraction_method": str(
+                    ingest_payload.get("extraction_method")
+                    or parse_metadata.get("extraction_method")
+                    or ""
+                ),
                 "parse_status": str(parse_payload.get("status") or ""),
                 "parse_summary": dict(parse_summary),
                 "parse_metadata": dict(parse_metadata),
@@ -3021,7 +3273,9 @@ class HACCResearchEngine:
             return True
         return False
 
-    def _select_uploadable_results(self, payload: Dict[str, Any], *, top_k: int) -> List[Dict[str, Any]]:
+    def _select_uploadable_results(
+        self, payload: Dict[str, Any], *, top_k: int
+    ) -> List[Dict[str, Any]]:
         candidates: List[Dict[str, Any]] = []
         seen_paths: set[str] = set()
         query_text = _clean_text(str(payload.get("query") or ""))
@@ -3054,7 +3308,9 @@ class HACCResearchEngine:
                     "matched_entities": list(item.get("matched_entities") or []),
                     "parse_summary": dict((item.get("metadata") or {}).get("parse_summary") or {}),
                     "graph_status": str((item.get("metadata") or {}).get("graph_status") or ""),
-                    "selection_priority": self._upload_candidate_priority_score(item, query_text=query_text),
+                    "selection_priority": self._upload_candidate_priority_score(
+                        item, query_text=query_text
+                    ),
                 }
             )
         source_rank = {
@@ -3100,7 +3356,9 @@ class HACCResearchEngine:
         anchor_sections = self._candidate_anchor_sections(item)
 
         cue_hits = sum(1 for cue in _CASE_EVIDENCE_PRIORITY_CUES if cue in combined_text)
-        procedural_hits = sum(1 for cue in _UPLOAD_CANDIDATE_PROCEDURAL_TERMS if cue in combined_text)
+        procedural_hits = sum(
+            1 for cue in _UPLOAD_CANDIDATE_PROCEDURAL_TERMS if cue in combined_text
+        )
         action_hits = sum(1 for cue in _CASE_TIMELINE_ACTION_CUES if cue in combined_text)
         party_hits = sum(1 for cue in _CASE_TIMELINE_PARTY_CUES if cue in combined_text)
         hacc_hits = combined_text.count("hacc")
@@ -3117,27 +3375,49 @@ class HACCResearchEngine:
         if hacc_hits:
             priority += min(2.5, hacc_hits * 0.75)
 
-        chronology_summary = dict((item.get("chronology_summary") or (item.get("metadata") or {}).get("chronology_summary") or {}))
+        chronology_summary = dict(
+            (
+                item.get("chronology_summary")
+                or (item.get("metadata") or {}).get("chronology_summary")
+                or {}
+            )
+        )
         if int(chronology_summary.get("timeline_anchor_count", 0) or 0) > 0:
             priority += 1.5
 
         title_lower = str(item.get("title") or "").strip().lower()
-        if any(term in title_lower for term in ("policy", "plan", "program")) and not cue_hits and not action_hits:
+        if (
+            any(term in title_lower for term in ("policy", "plan", "program"))
+            and not cue_hits
+            and not action_hits
+        ):
             priority -= 1.0
         if any(marker in combined_text for marker in _UPLOAD_CANDIDATE_NOISE_MARKERS):
             priority -= 8.0
-        relative_path_lower = str(item.get("relative_path") or item.get("source_path") or "").strip().lower()
+        relative_path_lower = (
+            str(item.get("relative_path") or item.get("source_path") or "").strip().lower()
+        )
         if source_type == "repository_evidence":
-            if any(term in relative_path_lower for term in _UPLOAD_CANDIDATE_DOCUMENTATION_PATH_TERMS):
+            if any(
+                term in relative_path_lower for term in _UPLOAD_CANDIDATE_DOCUMENTATION_PATH_TERMS
+            ):
                 priority -= 4.5
             if any(marker in combined_text for marker in _UPLOAD_CANDIDATE_DOCUMENTATION_MARKERS):
                 priority -= 6.0
             if any(term in title_lower for term in _UPLOAD_CANDIDATE_ANALYSIS_TITLE_TERMS):
                 priority -= 6.0
-            root_level_repo_file = "/" not in relative_path_lower and relative_path_lower.endswith((".md", ".txt", ".html", ".htm", ".json"))
-            if root_level_repo_file and any(term in relative_path_lower for term in _UPLOAD_CANDIDATE_REPOSITORY_SUMMARY_PATH_TERMS):
+            root_level_repo_file = "/" not in relative_path_lower and relative_path_lower.endswith(
+                (".md", ".txt", ".html", ".htm", ".json")
+            )
+            if root_level_repo_file and any(
+                term in relative_path_lower
+                for term in _UPLOAD_CANDIDATE_REPOSITORY_SUMMARY_PATH_TERMS
+            ):
                 priority -= 5.0
-        elif any(term in title_lower for term in _UPLOAD_CANDIDATE_ANALYSIS_TITLE_TERMS) and not anchor_sections:
+        elif (
+            any(term in title_lower for term in _UPLOAD_CANDIDATE_ANALYSIS_TITLE_TERMS)
+            and not anchor_sections
+        ):
             priority -= 5.0
         if not hacc_hits and not anchor_sections:
             priority -= 2.5
@@ -3151,8 +3431,12 @@ class HACCResearchEngine:
     def _prepare_mediator_submission(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
         source_path = str(candidate.get("source_path") or "").strip()
         path = Path(source_path)
-        original_content_type = str((candidate.get("metadata") or {}).get("content_type") or _detect_content_type(path))
-        upload_filename = path.name or str(candidate.get("title") or "evidence").strip() or "evidence"
+        original_content_type = str(
+            (candidate.get("metadata") or {}).get("content_type") or _detect_content_type(path)
+        )
+        upload_filename = (
+            path.name or str(candidate.get("title") or "evidence").strip() or "evidence"
+        )
         extracted_text = self._resolve_candidate_upload_text(candidate)
 
         if original_content_type == "application/pdf" and _clean_text(extracted_text):
@@ -3267,7 +3551,9 @@ class HACCResearchEngine:
         external_research_bundle = dict(external_research_bundle or {})
         temporal_handoff = dict(grounding_signals.get("claim_support_temporal_handoff") or {})
         drafting_readiness = dict(grounding_signals.get("drafting_readiness") or {})
-        document_generation_handoff = dict(grounding_signals.get("document_generation_handoff") or {})
+        document_generation_handoff = dict(
+            grounding_signals.get("document_generation_handoff") or {}
+        )
         web_discovery = dict(external_research_bundle.get("web_discovery") or {})
         legal_authorities = dict(external_research_bundle.get("legal_authorities") or {})
         prompt_web_titles = _ordered_unique_strings(
@@ -3284,22 +3570,37 @@ class HACCResearchEngine:
                 if isinstance(item, dict) and _is_relevant_prompt_legal_research_item(item)
             ]
         )[:3]
-        blocker_objectives = [str(item) for item in list(grounding_signals.get("blocker_objectives") or []) if str(item)]
-        extraction_targets = [str(item) for item in list(grounding_signals.get("extraction_targets") or []) if str(item)]
+        blocker_objectives = [
+            str(item)
+            for item in list(grounding_signals.get("blocker_objectives") or [])
+            if str(item)
+        ]
+        extraction_targets = [
+            str(item)
+            for item in list(grounding_signals.get("extraction_targets") or [])
+            if str(item)
+        ]
         workflow_phase_priorities = [
             str(item)
-            for item in list(grounding_signals.get("workflow_phase_priorities") or GROUNDING_WORKFLOW_PHASE_PRIORITIES)
+            for item in list(
+                grounding_signals.get("workflow_phase_priorities")
+                or GROUNDING_WORKFLOW_PHASE_PRIORITIES
+            )
             if str(item)
         ]
         upload_prompts: List[Dict[str, Any]] = []
         upload_questions: List[str] = []
         evidence_titles: List[str] = []
         for index, candidate in enumerate(upload_candidates, 1):
-            title = str(candidate.get("title") or candidate.get("relative_path") or f"evidence_{index}")
+            title = str(
+                candidate.get("title") or candidate.get("relative_path") or f"evidence_{index}"
+            )
             snippet = _clean_text(str(candidate.get("snippet") or ""))
             anchor_sections = self._candidate_anchor_sections(candidate)
             evidence_titles.append(title)
-            anchor_note = f" Anchor sections: {', '.join(anchor_sections)}." if anchor_sections else ""
+            anchor_note = (
+                f" Anchor sections: {', '.join(anchor_sections)}." if anchor_sections else ""
+            )
             upload_questions.append(
                 f"Upload {title} and identify the date, sender or author, recipients, and the exact fact it proves for '{query_text}'.{anchor_note}"
             )
@@ -3320,23 +3621,39 @@ class HACCResearchEngine:
                 }
             )
 
-        anchor_sections = [str(item) for item in list(grounding_overview.get("anchor_sections") or []) if str(item)]
+        anchor_sections = [
+            str(item) for item in list(grounding_overview.get("anchor_sections") or []) if str(item)
+        ]
         anchor_passages = list(grounding_overview.get("anchor_passages") or [])
         evidence_summary = str(grounding_overview.get("evidence_summary") or "").strip()
-        anchor_note = f" Prioritize these anchor sections: {', '.join(anchor_sections)}." if anchor_sections else ""
+        anchor_note = (
+            f" Prioritize these anchor sections: {', '.join(anchor_sections)}."
+            if anchor_sections
+            else ""
+        )
         external_research_note = ""
         if prompt_web_titles:
-            external_research_note += f" Review these web evidence leads: {', '.join(prompt_web_titles)}."
+            external_research_note += (
+                f" Review these web evidence leads: {', '.join(prompt_web_titles)}."
+            )
         if prompt_legal_titles:
-            external_research_note += f" Review these legal or caselaw authorities: {', '.join(prompt_legal_titles)}."
+            external_research_note += (
+                f" Review these legal or caselaw authorities: {', '.join(prompt_legal_titles)}."
+            )
         chronology_note = ""
         chronology_summary = dict(chronology_analysis.get("chronology_summary") or {})
-        timeline_consistency_summary = dict(chronology_analysis.get("timeline_consistency_summary") or {})
-        unresolved_temporal_issue_count = int(temporal_handoff.get("unresolved_temporal_issue_count", 0) or 0)
+        timeline_consistency_summary = dict(
+            chronology_analysis.get("timeline_consistency_summary") or {}
+        )
+        unresolved_temporal_issue_count = int(
+            temporal_handoff.get("unresolved_temporal_issue_count", 0) or 0
+        )
         chronology_task_count = int(temporal_handoff.get("chronology_task_count", 0) or 0)
         if unresolved_temporal_issue_count or chronology_task_count:
             chronology_note = " Treat chronology as incomplete until uploaded evidence or testimony supplies dates, actor sequence, and decision-response timing."
-        if timeline_consistency_summary and not bool(timeline_consistency_summary.get("partial_order_ready")):
+        if timeline_consistency_summary and not bool(
+            timeline_consistency_summary.get("partial_order_ready")
+        ):
             chronology_note += " Keep chronology-sensitive allegations provisional until ordering and anchor consistency are resolved."
         chatbot_prompt = (
             f"Ground the complaint chatbot in the uploaded repository evidence for '{query_text}'. "
@@ -3410,7 +3727,11 @@ class HACCResearchEngine:
             f"Use the uploaded materials ({', '.join(evidence_titles) if evidence_titles else 'uploaded evidence'}) to anchor the questions, "
             "and ask for the following details in plain language:\n- "
             + "\n- ".join(intake_questions)
-            + (f"\n- Anchor the intake to these policy sections: {', '.join(anchor_sections)}" if anchor_sections else "")
+            + (
+                f"\n- Anchor the intake to these policy sections: {', '.join(anchor_sections)}"
+                if anchor_sections
+                else ""
+            )
         )
         selected_upload_candidates = [
             {
@@ -3424,7 +3745,9 @@ class HACCResearchEngine:
         ]
         return {
             "evidence_upload_prompts": upload_prompts,
-            "evidence_upload_prompt": upload_prompts[0]["text"] if upload_prompts else production_prompt,
+            "evidence_upload_prompt": upload_prompts[0]["text"]
+            if upload_prompts
+            else production_prompt,
             "evidence_upload_questions": upload_questions,
             "complaint_chatbot_prompt": chatbot_prompt,
             "mediator_evaluation_prompt": mediator_prompt,
@@ -3440,7 +3763,9 @@ class HACCResearchEngine:
                 "claim_type": str(claim_type or "").strip() or "housing_discrimination",
                 "grounding_query": query_text,
                 "anchor_sections": anchor_sections,
-                "timeline_anchor_count": int(chronology_summary.get("timeline_anchor_count", 0) or 0),
+                "timeline_anchor_count": int(
+                    chronology_summary.get("timeline_anchor_count", 0) or 0
+                ),
                 "recommended_files": evidence_titles[:5],
                 "selected_upload_candidates": selected_upload_candidates,
                 "blocker_objectives": blocker_objectives,
@@ -3492,7 +3817,15 @@ class HACCResearchEngine:
                 scrape=False,
             )
             web_attempts.append(filtered_payload)
-            if int(filtered_payload.get("result_count", len(list(filtered_payload.get("results") or []))) or 0) <= 0:
+            if (
+                int(
+                    filtered_payload.get(
+                        "result_count", len(list(filtered_payload.get("results") or []))
+                    )
+                    or 0
+                )
+                <= 0
+            ):
                 web_attempts.append(
                     self.discover(candidate_query, max_results=max_results, scrape=False)
                 )
@@ -3547,15 +3880,19 @@ class HACCResearchEngine:
                 result_kind="legal",
                 max_results=max_results,
             )
-        web_payload.update({
-            "query": query_text,
-            "queries": web_queries,
-            "preferred_domain_filter": preferred_web_domains,
-        })
-        legal_payload.update({
-            "query": query_text,
-            "queries": legal_queries,
-        })
+        web_payload.update(
+            {
+                "query": query_text,
+                "queries": web_queries,
+                "preferred_domain_filter": preferred_web_domains,
+            }
+        )
+        legal_payload.update(
+            {
+                "query": query_text,
+                "queries": legal_queries,
+            }
+        )
         top_web_titles = [
             str(item.get("title") or item.get("url") or "").strip()
             for item in list(web_payload.get("results") or [])[:max_results]
@@ -3573,8 +3910,14 @@ class HACCResearchEngine:
             "web_discovery": web_payload,
             "legal_authorities": legal_payload,
             "summary": {
-                "web_result_count": int(web_payload.get("result_count", len(list(web_payload.get("results") or []))) or 0),
-                "legal_result_count": int(legal_payload.get("result_count", len(list(legal_payload.get("results") or []))) or 0),
+                "web_result_count": int(
+                    web_payload.get("result_count", len(list(web_payload.get("results") or [])))
+                    or 0
+                ),
+                "legal_result_count": int(
+                    legal_payload.get("result_count", len(list(legal_payload.get("results") or [])))
+                    or 0
+                ),
                 "top_web_titles": top_web_titles,
                 "top_legal_titles": top_legal_titles,
             },
@@ -3602,13 +3945,14 @@ class HACCResearchEngine:
                 )
             )
         ranked_results = [
-            item for item in ranked_results
-            if not bool(item.get("research_relevance_blocked"))
+            item for item in ranked_results if not bool(item.get("research_relevance_blocked"))
         ]
         ranked_results.sort(
             key=lambda item: (
                 -float(item.get("research_priority_score", 0.0) or 0.0),
-                _clean_text(str(item.get("title") or item.get("citation") or item.get("url") or "")),
+                _clean_text(
+                    str(item.get("title") or item.get("citation") or item.get("url") or "")
+                ),
             )
         )
         ranked_payload = dict(payload or {})
@@ -3624,7 +3968,9 @@ class HACCResearchEngine:
         claim_type: str,
         result_kind: str,
     ) -> Dict[str, Any]:
-        claim_hints = dict(EXTERNAL_RESEARCH_HINTS_BY_CLAIM.get(str(claim_type or "").strip().lower()) or {})
+        claim_hints = dict(
+            EXTERNAL_RESEARCH_HINTS_BY_CLAIM.get(str(claim_type or "").strip().lower()) or {}
+        )
         preferred_domains = self._preferred_external_web_domains(claim_type)
         evidence_text = " ".join(
             fragment
@@ -3642,11 +3988,14 @@ class HACCResearchEngine:
         evidence_tokens = _semantic_tokens(evidence_text)
         query_tokens = _semantic_tokens(query_text)
         chronology_hits = sorted(
-            token for token in _CHRONOLOGY_QUERY_TOKENS
-            if token in evidence_tokens
+            token for token in _CHRONOLOGY_QUERY_TOKENS if token in evidence_tokens
         )
-        claim_hint_tokens = _semantic_tokens(" ".join(str(value) for value in list(claim_hints.get(result_kind) or [])))
-        matched_claim_tokens = sorted(token for token in claim_hint_tokens if token in evidence_tokens)
+        claim_hint_tokens = _semantic_tokens(
+            " ".join(str(value) for value in list(claim_hints.get(result_kind) or []))
+        )
+        matched_claim_tokens = sorted(
+            token for token in claim_hint_tokens if token in evidence_tokens
+        )
         matched_query_tokens = sorted(token for token in query_tokens if token in evidence_tokens)
         housing_context = _external_research_has_housing_context(evidence_text)
         procedural_context = _external_research_has_procedural_context(evidence_text)
@@ -3662,7 +4011,9 @@ class HACCResearchEngine:
         if matched_query_tokens:
             reasons.append(f"matched query terms: {', '.join(matched_query_tokens[:6])}")
         if matched_claim_tokens:
-            reasons.append(f"matched {result_kind} claim hints: {', '.join(matched_claim_tokens[:6])}")
+            reasons.append(
+                f"matched {result_kind} claim hints: {', '.join(matched_claim_tokens[:6])}"
+            )
         if chronology_hits:
             reasons.append(f"contains chronology cues: {', '.join(chronology_hits[:6])}")
 
@@ -3693,11 +4044,19 @@ class HACCResearchEngine:
             )
             housing_context = _external_research_has_housing_context(legal_relevance_text)
             procedural_context = _external_research_has_procedural_context(legal_relevance_text)
-            strong_procedural_fit = _external_research_has_strong_procedural_fit(legal_relevance_text)
+            strong_procedural_fit = _external_research_has_strong_procedural_fit(
+                legal_relevance_text
+            )
             grievance_process_fit = _external_research_has_grievance_process_fit(evidence_text)
-            strong_legal_citation = _external_research_has_strong_legal_citation(legal_relevance_text)
+            strong_legal_citation = _external_research_has_strong_legal_citation(
+                legal_relevance_text
+            )
             mismatched_uscode_releasepoint = _is_mismatched_uscode_releasepoint(item)
-            federal_register_like = authority_source == "federal_register" or "govinfo.gov" in domain or "federalregister.gov" in domain
+            federal_register_like = (
+                authority_source == "federal_register"
+                or "govinfo.gov" in domain
+                or "federalregister.gov" in domain
+            )
             opaque_identifier = _is_opaque_external_research_identifier(citation_text)
             housing_legal_hits = [
                 term
@@ -3724,7 +4083,9 @@ class HACCResearchEngine:
             if authority_source in {"ecfr", "us_code", "recap", "caselaw", "court_opinion"}:
                 score += 5.0
                 reasons.append("primary legal source")
-            if any(token in source_text for token in ("u.s.c.", "c.f.r.", "hud", "court", "appeal")):
+            if any(
+                token in source_text for token in ("u.s.c.", "c.f.r.", "hud", "court", "appeal")
+            ):
                 score += 2.0
             if housing_context:
                 score += 1.5
@@ -3735,8 +4096,14 @@ class HACCResearchEngine:
             if grievance_process_fit:
                 score += 6.0
                 reasons.append("grievance-process authority")
-            if domain and any(candidate in domain for candidate in preferred_domains) and not (
-                federal_register_like and opaque_identifier and not (housing_context and procedural_context)
+            if (
+                domain
+                and any(candidate in domain for candidate in preferred_domains)
+                and not (
+                    federal_register_like
+                    and opaque_identifier
+                    and not (housing_context and procedural_context)
+                )
             ):
                 score += 3.5
                 reasons.append(f"preferred housing domain: {domain}")
@@ -3757,7 +4124,9 @@ class HACCResearchEngine:
                 reasons.append("promoted web guidance below primary legal authority")
             if mismatched_uscode_releasepoint:
                 score -= 14.0
-                reasons.append("broad us code releasepoint mismatched to targeted grievance citation")
+                reasons.append(
+                    "broad us code releasepoint mismatched to targeted grievance citation"
+                )
                 blocked = True
             if "u.s.c." in citation_lower and not housing_legal_hits:
                 score -= 2.5
@@ -3765,22 +4134,36 @@ class HACCResearchEngine:
             if "34 u.s.c." in citation_lower and not housing_legal_hits:
                 score -= 3.0
                 reasons.append("generic retaliation statute")
-            if "uscode.house.gov" in domain and "prelimusc" in url.lower() and not grievance_process_fit:
+            if (
+                "uscode.house.gov" in domain
+                and "prelimusc" in url.lower()
+                and not grievance_process_fit
+            ):
                 score -= 12.0
                 reasons.append("broad us code releasepoint without grievance-process fit")
                 blocked = True
             if "retaliation" in source_text and not grievance_process_fit:
                 score -= 3.5
                 reasons.append("retaliation authority without grievance-process fit")
-            if federal_register_like and opaque_identifier and not (housing_context and strong_procedural_fit):
+            if (
+                federal_register_like
+                and opaque_identifier
+                and not (housing_context and strong_procedural_fit)
+            ):
                 score -= 10.0
                 reasons.append("generic federal register item without grievance-process fit")
                 blocked = True
-            elif federal_register_like and not strong_legal_citation and not (housing_context and strong_procedural_fit):
+            elif (
+                federal_register_like
+                and not strong_legal_citation
+                and not (housing_context and strong_procedural_fit)
+            ):
                 score -= 8.0
                 reasons.append("federal register-like item without grievance-process fit")
                 blocked = True
-            elif federal_register_like and not (housing_context or procedural_context or strong_legal_citation):
+            elif federal_register_like and not (
+                housing_context or procedural_context or strong_legal_citation
+            ):
                 score -= 6.0
                 reasons.append("federal register item without complaint-specific fit")
                 blocked = True
@@ -3796,7 +4179,13 @@ class HACCResearchEngine:
                 "/housing-discrimination-complaint",
                 "civil rights division",
             )
-            if any(marker in source_text or marker in url.lower() for marker in complaint_filing_markers) and not grievance_process_fit:
+            if (
+                any(
+                    marker in source_text or marker in url.lower()
+                    for marker in complaint_filing_markers
+                )
+                and not grievance_process_fit
+            ):
                 score -= 6.0
                 reasons.append("complaint-filing page without grievance-process fit")
                 blocked = True
@@ -3805,7 +4194,10 @@ class HACCResearchEngine:
                 reasons.append("contains evidence-priority cues")
             domain = _normalize_domain(url)
             legal_fallback_domain = bool(
-                domain and any(candidate in domain for candidate in _EXTERNAL_RESEARCH_LEGAL_FALLBACK_DOMAINS)
+                domain
+                and any(
+                    candidate in domain for candidate in _EXTERNAL_RESEARCH_LEGAL_FALLBACK_DOMAINS
+                )
             )
             if domain and any(candidate in domain for candidate in preferred_domains):
                 score += 3.5
@@ -3816,7 +4208,9 @@ class HACCResearchEngine:
             if legal_fallback_domain and strong_legal_citation:
                 score += 4.0
                 reasons.append("legal fallback domain with strong citation")
-            if domain and any(noise_domain in domain for noise_domain in EXTERNAL_RESEARCH_WEB_NOISE_DOMAINS):
+            if domain and any(
+                noise_domain in domain for noise_domain in EXTERNAL_RESEARCH_WEB_NOISE_DOMAINS
+            ):
                 score -= 4.0
                 reasons.append(f"generic reference domain: {domain}")
             if any(term in source_text for term in EXTERNAL_RESEARCH_EMPLOYMENT_NOISE_TERMS):
@@ -3828,7 +4222,11 @@ class HACCResearchEngine:
             if grievance_process_fit:
                 score += 4.5
                 reasons.append("grievance-process web support")
-            if domain.endswith(".edu") and not housing_context and not (legal_fallback_domain and strong_legal_citation):
+            if (
+                domain.endswith(".edu")
+                and not housing_context
+                and not (legal_fallback_domain and strong_legal_citation)
+            ):
                 score -= 6.0
                 reasons.append("educational grievance page without housing context")
                 blocked = True
@@ -3888,14 +4286,18 @@ class HACCResearchEngine:
                 resolved.append(label_text)
         return resolved
 
-    def _build_grounding_overview(self, upload_candidates: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    def _build_grounding_overview(
+        self, upload_candidates: Sequence[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         anchor_passages: List[Dict[str, Any]] = []
         seen_titles: set[tuple[str, str]] = set()
         for candidate in upload_candidates:
             anchor_text = self._best_candidate_anchor_text(candidate)
             if not anchor_text:
                 continue
-            title = str(candidate.get("title") or candidate.get("relative_path") or "Grounding evidence")
+            title = str(
+                candidate.get("title") or candidate.get("relative_path") or "Grounding evidence"
+            )
             source_path = str(candidate.get("source_path") or "")
             key = (title.lower(), source_path.lower())
             if key in seen_titles:
@@ -3918,7 +4320,9 @@ class HACCResearchEngine:
                     seen_sections.add(label_text)
                     anchor_sections.append(label_text)
         evidence_summary = " ".join(
-            snippet for snippet in [str(item.get("snippet") or "").strip() for item in anchor_passages[:2]] if snippet
+            snippet
+            for snippet in [str(item.get("snippet") or "").strip() for item in anchor_passages[:2]]
+            if snippet
         )
         return {
             "evidence_summary": evidence_summary,
@@ -3942,7 +4346,9 @@ class HACCResearchEngine:
                 if label and label not in seen_sections:
                     seen_sections.add(label)
                     section_labels.append(label)
-            title = str(candidate.get("title") or candidate.get("relative_path") or "evidence").strip()
+            title = str(
+                candidate.get("title") or candidate.get("relative_path") or "evidence"
+            ).strip()
             source_path = str(candidate.get("source_path") or "").strip()
             source_type = str(candidate.get("source_type") or "").strip().lower()
             candidate_texts = [self._best_candidate_anchor_text(candidate)]
@@ -3963,21 +4369,33 @@ class HACCResearchEngine:
 
         issue_families = [
             family
-            for family in (TIMELINE_ISSUE_FAMILY_BY_SECTION.get(label, "") for label in section_labels)
+            for family in (
+                TIMELINE_ISSUE_FAMILY_BY_SECTION.get(label, "") for label in section_labels
+            )
             if family
         ]
-        timeline_consistency_summary = self._build_grounding_timeline_consistency_summary(timeline_anchors)
+        timeline_consistency_summary = self._build_grounding_timeline_consistency_summary(
+            timeline_anchors
+        )
         temporal_proof_objectives = self._dedupe_preserve_order(
             objective
             for label in section_labels
             for objective in ANCHOR_SECTION_TEMPORAL_PROOF_OBJECTIVES.get(label, ())
         )
-        chronology_sensitive = bool(set(section_labels).intersection({"grievance_hearing", "appeal_rights", "adverse_action"}))
+        chronology_sensitive = bool(
+            set(section_labels).intersection(
+                {"grievance_hearing", "appeal_rights", "adverse_action"}
+            )
+        )
         unresolved_temporal_issue_count = 0
         chronology_task_count = 0
-        issue_labels = self._dedupe_preserve_order(issue_families or (["timeline_anchors"] if chronology_sensitive else []))
+        issue_labels = self._dedupe_preserve_order(
+            issue_families or (["timeline_anchors"] if chronology_sensitive else [])
+        )
         if chronology_sensitive and len(timeline_anchors) < 2:
-            unresolved_temporal_issue_count = max(1, len(issue_labels) or len(temporal_proof_objectives) or 1)
+            unresolved_temporal_issue_count = max(
+                1, len(issue_labels) or len(temporal_proof_objectives) or 1
+            )
             chronology_task_count = max(1, len(temporal_proof_objectives) or len(issue_labels))
         if timeline_consistency_summary:
             if not bool(timeline_consistency_summary.get("partial_order_ready")):
@@ -3992,8 +4410,18 @@ class HACCResearchEngine:
             _stable_identifier("timeline-issue", claim_type, query_text, label)
             for label in issue_labels
         ]
-        bundle_id = _stable_identifier("temporal-proof-bundle", claim_type, query_text, len(timeline_anchors), len(issue_labels))
-        fact_ids = [str(anchor.get("fact_id") or "") for anchor in timeline_anchors if str(anchor.get("fact_id") or "")]
+        bundle_id = _stable_identifier(
+            "temporal-proof-bundle",
+            claim_type,
+            query_text,
+            len(timeline_anchors),
+            len(issue_labels),
+        )
+        fact_ids = [
+            str(anchor.get("fact_id") or "")
+            for anchor in timeline_anchors
+            if str(anchor.get("fact_id") or "")
+        ]
         chronology_summary = self._summarize_chronology_anchors(timeline_anchors)
         return {
             "status": "ready" if not unresolved_temporal_issue_count else "warning",
@@ -4004,7 +4432,9 @@ class HACCResearchEngine:
             "issue_families": issue_labels,
             "chronology_task_count": chronology_task_count,
             "unresolved_temporal_issue_count": unresolved_temporal_issue_count,
-            "resolved_temporal_issue_count": 0 if unresolved_temporal_issue_count else len(timeline_anchors),
+            "resolved_temporal_issue_count": 0
+            if unresolved_temporal_issue_count
+            else len(timeline_anchors),
             "unresolved_temporal_issue_ids": temporal_issue_ids[:unresolved_temporal_issue_count],
             "temporal_issue_ids": temporal_issue_ids,
             "temporal_proof_bundle_ids": [bundle_id],
@@ -4051,7 +4481,9 @@ class HACCResearchEngine:
                     seen_keys.add(dedupe_key)
                     anchors.append(
                         {
-                            "fact_id": _stable_identifier("fact", title, source_path, claim_type, normalized_date, anchor_text),
+                            "fact_id": _stable_identifier(
+                                "fact", title, source_path, claim_type, normalized_date, anchor_text
+                            ),
                             "anchor_text": anchor_text,
                             "sentence": sentence[:320],
                             "start_date": normalized_date,
@@ -4081,7 +4513,9 @@ class HACCResearchEngine:
             anchor_text = _clean_text(match.group(0))
             return [
                 {
-                    "fact_id": _stable_identifier("fact", title, source_path, claim_type, normalized_date, anchor_text),
+                    "fact_id": _stable_identifier(
+                        "fact", title, source_path, claim_type, normalized_date, anchor_text
+                    ),
                     "anchor_text": anchor_text,
                     "sentence": _clean_text(text[:320]),
                     "start_date": normalized_date,
@@ -4127,7 +4561,9 @@ class HACCResearchEngine:
             ]
             if not start_date and not relative_markers:
                 continue
-            anchor_text = str(temporal_context.get("matched_text") or temporal_context.get("raw_text") or sentence).strip()
+            anchor_text = str(
+                temporal_context.get("matched_text") or temporal_context.get("raw_text") or sentence
+            ).strip()
             dedupe_key = (start_date or "", "|".join(relative_markers), sentence.lower())
             if dedupe_key in seen_keys:
                 continue
@@ -4171,7 +4607,9 @@ class HACCResearchEngine:
                 {
                     "fact_id": fact_id,
                     "fact_type": "timeline",
-                    "description": str(anchor_dict.get("sentence") or anchor_dict.get("anchor_text") or ""),
+                    "description": str(
+                        anchor_dict.get("sentence") or anchor_dict.get("anchor_text") or ""
+                    ),
                     "temporal_context": {
                         "start_date": str(anchor_dict.get("start_date") or ""),
                         "end_date": str(anchor_dict.get("end_date") or ""),
@@ -4183,7 +4621,12 @@ class HACCResearchEngine:
                 }
             )
         try:
-            return dict(build_timeline_consistency_summary(canonical_facts, list(timeline_anchors or []), []) or {})
+            return dict(
+                build_timeline_consistency_summary(
+                    canonical_facts, list(timeline_anchors or []), []
+                )
+                or {}
+            )
         except Exception:
             return {}
 
@@ -4204,7 +4647,9 @@ class HACCResearchEngine:
             return True
         if not has_case_action_cue and not has_party_cue:
             return True
-        if ("table of contents" in normalized or "chapter " in normalized) and not has_case_action_cue:
+        if (
+            "table of contents" in normalized or "chapter " in normalized
+        ) and not has_case_action_cue:
             return True
         if has_case_event_cue and has_party_cue:
             return False
@@ -4231,7 +4676,9 @@ class HACCResearchEngine:
         grounding_overview: Dict[str, Any],
         chronology_analysis: Dict[str, Any],
     ) -> Dict[str, Any]:
-        anchor_sections = [str(item) for item in list(grounding_overview.get("anchor_sections") or []) if str(item)]
+        anchor_sections = [
+            str(item) for item in list(grounding_overview.get("anchor_sections") or []) if str(item)
+        ]
         blocker_objectives = self._dedupe_preserve_order(
             objective
             for label in anchor_sections
@@ -4242,44 +4689,66 @@ class HACCResearchEngine:
             for label in anchor_sections
             for target in ANCHOR_SECTION_EXTRACTION_TARGETS.get(label, ())
         )
-        if chronology_analysis.get("timeline_anchor_count") and "timeline_anchors" not in extraction_targets:
+        if (
+            chronology_analysis.get("timeline_anchor_count")
+            and "timeline_anchors" not in extraction_targets
+        ):
             extraction_targets.append("timeline_anchors")
         if not extraction_targets:
             extraction_targets = ["timeline_anchors", "actor_role_mapping", "claim_support_mapping"]
         if "claim_support_mapping" not in extraction_targets:
             extraction_targets.append("claim_support_mapping")
-        if chronology_analysis.get("unresolved_temporal_issue_count") and "exact_dates" not in blocker_objectives:
+        if (
+            chronology_analysis.get("unresolved_temporal_issue_count")
+            and "exact_dates" not in blocker_objectives
+        ):
             blocker_objectives.insert(0, "exact_dates")
 
         timeline_anchor_count = int(chronology_analysis.get("timeline_anchor_count", 0) or 0)
-        unresolved_temporal_issue_count = int(chronology_analysis.get("unresolved_temporal_issue_count", 0) or 0)
+        unresolved_temporal_issue_count = int(
+            chronology_analysis.get("unresolved_temporal_issue_count", 0) or 0
+        )
         chronology_task_count = int(chronology_analysis.get("chronology_task_count", 0) or 0)
-        timeline_consistency_summary = dict(chronology_analysis.get("timeline_consistency_summary") or {})
+        timeline_consistency_summary = dict(
+            chronology_analysis.get("timeline_consistency_summary") or {}
+        )
         coverage = 0.82 if upload_candidates else 0.55
         if timeline_anchor_count:
             coverage += 0.12
         if unresolved_temporal_issue_count:
             coverage -= min(0.12, 0.04 * unresolved_temporal_issue_count)
         coverage = max(0.0, min(1.0, coverage))
-        phase_status = "ready" if upload_candidates and not unresolved_temporal_issue_count else "warning" if upload_candidates else "blocked"
+        phase_status = (
+            "ready"
+            if upload_candidates and not unresolved_temporal_issue_count
+            else "warning"
+            if upload_candidates
+            else "blocked"
+        )
         blockers: List[str] = []
         unresolved_factual_gaps: List[str] = []
         unresolved_legal_gaps: List[str] = []
         if not upload_candidates:
             blockers.append("uploaded_evidence_missing")
-            unresolved_factual_gaps.append("Upload case-specific notices, emails, grievance requests, or other records before drafting.")
+            unresolved_factual_gaps.append(
+                "Upload case-specific notices, emails, grievance requests, or other records before drafting."
+            )
         if unresolved_temporal_issue_count:
             blockers.extend(["graph_analysis_not_ready", "document_generation_not_ready"])
             unresolved_factual_gaps.append(
                 "Case chronology remains incomplete; uploaded evidence or testimony still needs exact dates, response timing, and event order."
             )
-        if timeline_consistency_summary and not bool(timeline_consistency_summary.get("partial_order_ready")):
+        if timeline_consistency_summary and not bool(
+            timeline_consistency_summary.get("partial_order_ready")
+        ):
             blockers.append("chronology_partial_order_not_ready")
             unresolved_factual_gaps.append(
                 "Chronology anchors still need ordering cleanup before complaint allegations should rely on them."
             )
         if anchor_sections:
-            unresolved_legal_gaps.append(f"Map uploaded evidence into supported policy anchors: {', '.join(anchor_sections)}.")
+            unresolved_legal_gaps.append(
+                f"Map uploaded evidence into supported policy anchors: {', '.join(anchor_sections)}."
+            )
 
         summary_lines = [
             f"Repository-grounded evidence summary for '{query_text}': {str(grounding_overview.get('evidence_summary') or '').strip()}".strip(),
@@ -4303,8 +4772,16 @@ class HACCResearchEngine:
 
         support_trace_rows = []
         artifact_support_rows = []
-        canonical_fact_ids = [str(item) for item in list(chronology_analysis.get("temporal_fact_ids") or []) if str(item)]
-        for passage in [dict(item) for item in list(grounding_overview.get("anchor_passages") or []) if isinstance(item, dict)][:6]:
+        canonical_fact_ids = [
+            str(item)
+            for item in list(chronology_analysis.get("temporal_fact_ids") or [])
+            if str(item)
+        ]
+        for passage in [
+            dict(item)
+            for item in list(grounding_overview.get("anchor_passages") or [])
+            if isinstance(item, dict)
+        ][:6]:
             row = {
                 "title": str(passage.get("title") or "anchor evidence"),
                 "source_path": str(passage.get("source_path") or ""),
@@ -4324,14 +4801,22 @@ class HACCResearchEngine:
             "claim_element_id": _stable_identifier("claim-element", claim_type, query_text),
             "chronology_task_count": chronology_task_count,
             "unresolved_temporal_issue_count": unresolved_temporal_issue_count,
-            "resolved_temporal_issue_count": int(chronology_analysis.get("resolved_temporal_issue_count", 0) or 0),
-            "unresolved_temporal_issue_ids": list(chronology_analysis.get("unresolved_temporal_issue_ids") or []),
+            "resolved_temporal_issue_count": int(
+                chronology_analysis.get("resolved_temporal_issue_count", 0) or 0
+            ),
+            "unresolved_temporal_issue_ids": list(
+                chronology_analysis.get("unresolved_temporal_issue_ids") or []
+            ),
             "temporal_issue_ids": list(chronology_analysis.get("temporal_issue_ids") or []),
             "event_ids": list(chronology_analysis.get("event_ids") or []),
             "temporal_fact_ids": list(chronology_analysis.get("temporal_fact_ids") or []),
             "temporal_relation_ids": list(chronology_analysis.get("temporal_relation_ids") or []),
-            "temporal_proof_bundle_ids": list(chronology_analysis.get("temporal_proof_bundle_ids") or []),
-            "temporal_proof_objectives": list(chronology_analysis.get("temporal_proof_objectives") or []),
+            "temporal_proof_bundle_ids": list(
+                chronology_analysis.get("temporal_proof_bundle_ids") or []
+            ),
+            "temporal_proof_objectives": list(
+                chronology_analysis.get("temporal_proof_objectives") or []
+            ),
             "timeline_anchors": list(chronology_analysis.get("timeline_anchors") or []),
         }
         document_generation_handoff = {
@@ -4351,7 +4836,10 @@ class HACCResearchEngine:
         graph_completeness_signals = {
             "graph_complete": bool(upload_candidates)
             and (timeline_anchor_count > 0 or unresolved_temporal_issue_count == 0)
-            and (not timeline_consistency_summary or bool(timeline_consistency_summary.get("partial_order_ready"))),
+            and (
+                not timeline_consistency_summary
+                or bool(timeline_consistency_summary.get("partial_order_ready"))
+            ),
             "timeline_anchor_count": timeline_anchor_count,
             "chronology_issue_count": unresolved_temporal_issue_count,
             "chronology_task_count": chronology_task_count,
@@ -4393,13 +4881,17 @@ class HACCResearchEngine:
             ordered.append(text)
         return ordered
 
-    def _graph_facts_to_rule_like_records(self, graph_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _graph_facts_to_rule_like_records(
+        self, graph_payload: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         rule_like_records: List[Dict[str, Any]] = []
         for entity in list(graph_payload.get("entities", []) or []):
             entity_type = str(entity.get("type") or entity.get("entity_type") or "")
             if entity_type != "fact":
                 continue
-            attributes = entity.get("attributes") if isinstance(entity.get("attributes"), dict) else {}
+            attributes = (
+                entity.get("attributes") if isinstance(entity.get("attributes"), dict) else {}
+            )
             fact_text = _clean_text(str(attributes.get("text") or entity.get("name") or ""))
             if not fact_text:
                 continue
@@ -4423,7 +4915,9 @@ class HACCResearchEngine:
             payload = _safe_json_load(json_path)
             text = str(payload.get("text") or "")
             document_metadata = payload.get("document") or {}
-            title = str(document_metadata.get("title") or self._infer_title(text, fallback=json_path.stem))
+            title = str(
+                document_metadata.get("title") or self._infer_title(text, fallback=json_path.stem)
+            )
             source_path = str(document_metadata.get("source_path") or json_path)
             chronology_metadata = self._build_document_chronology_metadata(
                 text,
@@ -4453,7 +4947,9 @@ class HACCResearchEngine:
             )
         return documents
 
-    def _extract_graph_payload(self, *, text: str, source_id: str, title: str, source_path: Path) -> Dict[str, Any]:
+    def _extract_graph_payload(
+        self, *, text: str, source_id: str, title: str, source_path: Path
+    ) -> Dict[str, Any]:
         if extract_graph_from_text is None:
             return {
                 "status": "unavailable",
@@ -4469,7 +4965,11 @@ class HACCResearchEngine:
                 "source_path": str(source_path),
             },
         )
-        return payload if isinstance(payload, dict) else {"status": "error", "entities": [], "relationships": []}
+        return (
+            payload
+            if isinstance(payload, dict)
+            else {"status": "error", "entities": [], "relationships": []}
+        )
 
     def _infer_title(self, text: str, *, fallback: str) -> str:
         for line in str(text or "").splitlines():
@@ -4547,9 +5047,17 @@ class HACCResearchEngine:
         if document.source_type == "knowledge_graph":
             score += 0.5
 
-        chronology_summary = document.metadata.get("chronology_summary") if isinstance(document.metadata, dict) else {}
-        chronology_anchor_count = int((chronology_summary or {}).get("timeline_anchor_count", 0) or 0)
-        chronology_relative_marker_count = int((chronology_summary or {}).get("relative_marker_count", 0) or 0)
+        chronology_summary = (
+            document.metadata.get("chronology_summary")
+            if isinstance(document.metadata, dict)
+            else {}
+        )
+        chronology_anchor_count = int(
+            (chronology_summary or {}).get("timeline_anchor_count", 0) or 0
+        )
+        chronology_relative_marker_count = int(
+            (chronology_summary or {}).get("relative_marker_count", 0) or 0
+        )
         chronology_query_tokens = {
             "date",
             "dates",
@@ -4637,9 +5145,17 @@ class HACCResearchEngine:
 
     def _summarize_chronology_anchors(self, anchors: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
         normalized_anchors = [dict(item) for item in list(anchors or []) if isinstance(item, dict)]
-        exact_date_count = sum(1 for anchor in normalized_anchors if str(anchor.get("start_date") or "").strip())
+        exact_date_count = sum(
+            1 for anchor in normalized_anchors if str(anchor.get("start_date") or "").strip()
+        )
         relative_marker_count = sum(
-            len([marker for marker in list(anchor.get("relative_markers") or []) if str(marker or "").strip()])
+            len(
+                [
+                    marker
+                    for marker in list(anchor.get("relative_markers") or [])
+                    if str(marker or "").strip()
+                ]
+            )
             for anchor in normalized_anchors
         )
         anchor_preview = [
@@ -4647,7 +5163,9 @@ class HACCResearchEngine:
                 "fact_id": str(anchor.get("fact_id") or "").strip(),
                 "start_date": str(anchor.get("start_date") or "").strip(),
                 "anchor_text": str(anchor.get("anchor_text") or "").strip(),
-                "relative_markers": [str(item) for item in list(anchor.get("relative_markers") or []) if str(item)],
+                "relative_markers": [
+                    str(item) for item in list(anchor.get("relative_markers") or []) if str(item)
+                ],
             }
             for anchor in normalized_anchors[:3]
         ]
@@ -4759,10 +5277,13 @@ class HACCResearchEngine:
             "complaint_generator_root": str(COMPLAINT_GENERATOR_ROOT),
             "adapter_available": INTEGRATION_IMPORT_ERROR is None,
             "degraded_reason": INTEGRATION_IMPORT_ERROR,
-            "preferred_vector_indexes": self._resolve_vector_indexes(index_name="hacc_corpus", index_dir=None),
+            "preferred_vector_indexes": self._resolve_vector_indexes(
+                index_name="hacc_corpus", index_dir=None
+            ),
             "capability_report": capability_report,
             "capabilities": {
-                "discovery_available": search_multi_engine_web is not None or search_brave_web is not None,
+                "discovery_available": search_multi_engine_web is not None
+                or search_brave_web is not None,
                 "seeded_commoncrawl_available": discover_seeded_commoncrawl is not None,
                 "legal_discovery_available": bool(LEGAL_SCRAPERS_AVAILABLE),
                 "scrape_available": scrape_web_content is not None,
@@ -4770,9 +5291,15 @@ class HACCResearchEngine:
                 "documents_available": bool(DOCUMENTS_AVAILABLE),
                 "vector_available": bool(VECTOR_STORE_AVAILABLE),
                 "embeddings_available": bool(EMBEDDINGS_AVAILABLE),
-                "documents_degraded_reason": str(DOCUMENTS_ERROR) if (not DOCUMENTS_AVAILABLE and DOCUMENTS_ERROR is not None) else None,
-                "vector_degraded_reason": str(VECTOR_STORE_ERROR) if (not VECTOR_STORE_AVAILABLE and VECTOR_STORE_ERROR is not None) else None,
-                "legal_degraded_reason": str(LEGAL_SCRAPERS_ERROR) if (not LEGAL_SCRAPERS_AVAILABLE and LEGAL_SCRAPERS_ERROR is not None) else None,
+                "documents_degraded_reason": str(DOCUMENTS_ERROR)
+                if (not DOCUMENTS_AVAILABLE and DOCUMENTS_ERROR is not None)
+                else None,
+                "vector_degraded_reason": str(VECTOR_STORE_ERROR)
+                if (not VECTOR_STORE_AVAILABLE and VECTOR_STORE_ERROR is not None)
+                else None,
+                "legal_degraded_reason": str(LEGAL_SCRAPERS_ERROR)
+                if (not LEGAL_SCRAPERS_AVAILABLE and LEGAL_SCRAPERS_ERROR is not None)
+                else None,
             },
         }
 
@@ -4821,7 +5348,9 @@ class HACCResearchEngine:
         if not normalized_filters:
             return True
         metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
-        domain = str(metadata.get("domain") or _normalize_domain(str(item.get("url") or ""))).lower()
+        domain = str(
+            metadata.get("domain") or _normalize_domain(str(item.get("url") or ""))
+        ).lower()
         return any(candidate in domain for candidate in normalized_filters)
 
 
@@ -4829,21 +5358,27 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="HACC research and search engine")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    build_index = subparsers.add_parser("build-index", help="Build a searchable HACC corpus summary index")
+    build_index = subparsers.add_parser(
+        "build-index", help="Build a searchable HACC corpus summary index"
+    )
     build_index.add_argument(
         "--output",
         default=str(REPO_ROOT / "research_results/search_indexes/hacc_corpus.summary.json"),
         help="Path to write the index summary JSON",
     )
 
-    build_vector_index = subparsers.add_parser("build-vector-index", help="Build a vector index for the HACC corpus")
+    build_vector_index = subparsers.add_parser(
+        "build-vector-index", help="Build a vector index for the HACC corpus"
+    )
     build_vector_index.add_argument(
         "--output-dir",
         default=str(REPO_ROOT / "research_results/search_indexes"),
         help="Directory where vector index artifacts should be written",
     )
     build_vector_index.add_argument("--index-name", default="hacc_corpus", help="Vector index name")
-    build_vector_index.add_argument("--batch-size", type=int, default=32, help="Embedding batch size")
+    build_vector_index.add_argument(
+        "--batch-size", type=int, default=32, help="Embedding batch size"
+    )
 
     search = subparsers.add_parser("search", help="Search the local HACC corpus")
     search.add_argument("query", help="Search query")
@@ -4861,54 +5396,117 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Search strategy. 'package' uses complaint-generator/ipfs_datasets search first and falls back to lexical search.",
     )
     search.add_argument("--use-vector", action="store_true", help="Blend lexical and vector search")
-    search.add_argument("--index-dir", default=str(REPO_ROOT / "research_results/search_indexes"), help="Vector index directory")
+    search.add_argument(
+        "--index-dir",
+        default=str(REPO_ROOT / "research_results/search_indexes"),
+        help="Vector index directory",
+    )
     search.add_argument("--index-name", default="hacc_corpus", help="Vector index name")
 
-    vector_search = subparsers.add_parser("vector-search", help="Search the local HACC vector index")
+    vector_search = subparsers.add_parser(
+        "vector-search", help="Search the local HACC vector index"
+    )
     vector_search.add_argument("query", help="Search query")
-    vector_search.add_argument("--top-k", type=int, default=10, help="Maximum number of vector results")
-    vector_search.add_argument("--index-dir", default=str(REPO_ROOT / "research_results/search_indexes"), help="Vector index directory")
+    vector_search.add_argument(
+        "--top-k", type=int, default=10, help="Maximum number of vector results"
+    )
+    vector_search.add_argument(
+        "--index-dir",
+        default=str(REPO_ROOT / "research_results/search_indexes"),
+        help="Vector index directory",
+    )
     vector_search.add_argument("--index-name", default="hacc_corpus", help="Vector index name")
 
-    discover = subparsers.add_parser("discover", help="Run web discovery through the ipfs_datasets adapter")
+    discover = subparsers.add_parser(
+        "discover", help="Run web discovery through the ipfs_datasets adapter"
+    )
     discover.add_argument("query", help="Discovery query")
     discover.add_argument("--max-results", type=int, default=10, help="Maximum number of results")
-    discover.add_argument("--engine", action="append", default=[], help="Preferred search engine (repeatable)")
-    discover.add_argument("--domain", action="append", default=[], help="Domain substring filter (repeatable)")
-    discover.add_argument("--scrape", action="store_true", help="Scrape the top few discovered URLs")
+    discover.add_argument(
+        "--engine", action="append", default=[], help="Preferred search engine (repeatable)"
+    )
+    discover.add_argument(
+        "--domain", action="append", default=[], help="Domain substring filter (repeatable)"
+    )
+    discover.add_argument(
+        "--scrape", action="store_true", help="Scrape the top few discovered URLs"
+    )
 
-    seeded_commoncrawl = subparsers.add_parser("seeded-commoncrawl", help="Run shared seeded Common Crawl discovery")
-    seeded_commoncrawl.add_argument("--queries-file", required=True, help="Path to a seeded-query text file")
-    seeded_commoncrawl.add_argument("--cc-limit", type=int, default=1000, help="Maximum Common Crawl rows per site")
-    seeded_commoncrawl.add_argument("--top-per-site", type=int, default=50, help="Top scored URLs to keep per site")
-    seeded_commoncrawl.add_argument("--fetch-top", type=int, default=0, help="Fetch and preview the top N URLs per site")
-    seeded_commoncrawl.add_argument("--sleep-seconds", type=float, default=0.5, help="Delay between site queries")
+    seeded_commoncrawl = subparsers.add_parser(
+        "seeded-commoncrawl", help="Run shared seeded Common Crawl discovery"
+    )
+    seeded_commoncrawl.add_argument(
+        "--queries-file", required=True, help="Path to a seeded-query text file"
+    )
+    seeded_commoncrawl.add_argument(
+        "--cc-limit", type=int, default=1000, help="Maximum Common Crawl rows per site"
+    )
+    seeded_commoncrawl.add_argument(
+        "--top-per-site", type=int, default=50, help="Top scored URLs to keep per site"
+    )
+    seeded_commoncrawl.add_argument(
+        "--fetch-top", type=int, default=0, help="Fetch and preview the top N URLs per site"
+    )
+    seeded_commoncrawl.add_argument(
+        "--sleep-seconds", type=float, default=0.5, help="Delay between site queries"
+    )
 
-    discover_legal = subparsers.add_parser("discover-legal", help="Search shared legal authority sources")
+    discover_legal = subparsers.add_parser(
+        "discover-legal", help="Search shared legal authority sources"
+    )
     discover_legal.add_argument("query", help="Legal discovery query")
-    discover_legal.add_argument("--max-results", type=int, default=10, help="Maximum number of legal results")
+    discover_legal.add_argument(
+        "--max-results", type=int, default=10, help="Maximum number of legal results"
+    )
     discover_legal.add_argument("--title", help="Optional U.S. Code title filter")
     discover_legal.add_argument("--court", help="Optional RECAP court filter")
-    discover_legal.add_argument("--start-date", help="Optional Federal Register start date (YYYY-MM-DD)")
-    discover_legal.add_argument("--end-date", help="Optional Federal Register end date (YYYY-MM-DD)")
+    discover_legal.add_argument(
+        "--start-date", help="Optional Federal Register start date (YYYY-MM-DD)"
+    )
+    discover_legal.add_argument(
+        "--end-date", help="Optional Federal Register end date (YYYY-MM-DD)"
+    )
 
     research = subparsers.add_parser("research", help="Run local search plus web discovery")
     research.add_argument("query", help="Research query")
     research.add_argument("--top-k", type=int, default=10, help="Maximum number of local results")
-    research.add_argument("--max-results", type=int, default=10, help="Maximum number of web results")
+    research.add_argument(
+        "--max-results", type=int, default=10, help="Maximum number of web results"
+    )
     research.add_argument(
         "--search-mode",
         choices=["auto", "lexical", "hybrid", "vector", "package"],
         default="package",
         help="Local search strategy. 'package' uses complaint-generator/ipfs_datasets search first and falls back to lexical search.",
     )
-    research.add_argument("--engine", action="append", default=[], help="Preferred search engine (repeatable)")
-    research.add_argument("--domain", action="append", default=[], help="Domain substring filter (repeatable)")
-    research.add_argument("--scrape", action="store_true", help="Scrape the top few discovered URLs")
-    research.add_argument("--use-vector", action="store_true", help="Blend lexical and vector search for local results")
-    research.add_argument("--no-legal", action="store_true", help="Disable shared legal authority discovery")
-    research.add_argument("--legal-max-results", type=int, default=10, help="Maximum number of legal authority results")
-    research.add_argument("--index-dir", default=str(REPO_ROOT / "research_results/search_indexes"), help="Vector index directory")
+    research.add_argument(
+        "--engine", action="append", default=[], help="Preferred search engine (repeatable)"
+    )
+    research.add_argument(
+        "--domain", action="append", default=[], help="Domain substring filter (repeatable)"
+    )
+    research.add_argument(
+        "--scrape", action="store_true", help="Scrape the top few discovered URLs"
+    )
+    research.add_argument(
+        "--use-vector",
+        action="store_true",
+        help="Blend lexical and vector search for local results",
+    )
+    research.add_argument(
+        "--no-legal", action="store_true", help="Disable shared legal authority discovery"
+    )
+    research.add_argument(
+        "--legal-max-results",
+        type=int,
+        default=10,
+        help="Maximum number of legal authority results",
+    )
+    research.add_argument(
+        "--index-dir",
+        default=str(REPO_ROOT / "research_results/search_indexes"),
+        help="Vector index directory",
+    )
     research.add_argument("--index-name", default="hacc_corpus", help="Vector index name")
 
     grounding = subparsers.add_parser(
@@ -4916,7 +5514,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Build repository-grounded evidence candidates and synthetic upload prompts",
     )
     grounding.add_argument("query", help="Grounding query")
-    grounding.add_argument("--top-k", type=int, default=5, help="Maximum number of upload candidates")
+    grounding.add_argument(
+        "--top-k", type=int, default=5, help="Maximum number of upload candidates"
+    )
     grounding.add_argument(
         "--claim-type",
         default="housing_discrimination",
@@ -4928,28 +5528,38 @@ def _build_parser() -> argparse.ArgumentParser:
         default="package",
         help="Search strategy used to build the grounding bundle",
     )
-    grounding.add_argument("--use-vector", action="store_true", help="Blend lexical and vector search when supported")
+    grounding.add_argument(
+        "--use-vector", action="store_true", help="Blend lexical and vector search when supported"
+    )
 
     simulate_upload = subparsers.add_parser(
         "simulate-upload",
         help="Upload repository evidence into the complaint-generator mediator and summarize evaluation",
     )
     simulate_upload.add_argument("query", help="Grounding query")
-    simulate_upload.add_argument("--top-k", type=int, default=5, help="Maximum number of upload candidates")
+    simulate_upload.add_argument(
+        "--top-k", type=int, default=5, help="Maximum number of upload candidates"
+    )
     simulate_upload.add_argument(
         "--claim-type",
         default="housing_discrimination",
         help="Claim type to assign to uploaded evidence",
     )
-    simulate_upload.add_argument("--user-id", default="hacc-grounding", help="Mediator user id for the simulated upload")
+    simulate_upload.add_argument(
+        "--user-id", default="hacc-grounding", help="Mediator user id for the simulated upload"
+    )
     simulate_upload.add_argument(
         "--search-mode",
         choices=["auto", "lexical", "hybrid", "vector", "package"],
         default="package",
         help="Search strategy used to choose upload candidates",
     )
-    simulate_upload.add_argument("--use-vector", action="store_true", help="Blend lexical and vector search when supported")
-    simulate_upload.add_argument("--db-dir", default=None, help="Optional directory for mediator DuckDB artifacts")
+    simulate_upload.add_argument(
+        "--use-vector", action="store_true", help="Blend lexical and vector search when supported"
+    )
+    simulate_upload.add_argument(
+        "--db-dir", default=None, help="Optional directory for mediator DuckDB artifacts"
+    )
 
     return parser
 

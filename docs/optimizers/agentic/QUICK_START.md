@@ -82,9 +82,9 @@ else:
 from ipfs_datasets_py.optimizers.agentic import OptimizationStrategy
 
 strategies = [
-    OptimizationStrategy.ADVERSARIAL,    # Adversarial learning
-    OptimizationStrategy.ACTOR_CRITIC,   # Actor-critic approach
-    OptimizationStrategy.CHAOS,          # Chaos-based exploration
+    OptimizationStrategy.ADVERSARIAL,  # Adversarial learning
+    OptimizationStrategy.ACTOR_CRITIC,  # Actor-critic approach
+    OptimizationStrategy.CHAOS,  # Chaos-based exploration
 ]
 
 for strategy in strategies:
@@ -125,18 +125,18 @@ best_code = code
 
 for cycle in range(5):
     result = optimizer.run_session(best_code)
-    
-    if result['score'] > best_score:
-        best_score = result['score']
-        best_code = result['optimized_code']
-        
-        print(f"Cycle {cycle+1}: Improved to {best_score:.2f} ✓")
+
+    if result["score"] > best_score:
+        best_score = result["score"]
+        best_code = result["optimized_code"]
+
+        print(f"Cycle {cycle + 1}: Improved to {best_score:.2f} ✓")
     else:
-        print(f"Cycle {cycle+1}: No improvement {result['score']:.2f}")
-    
+        print(f"Cycle {cycle + 1}: No improvement {result['score']:.2f}")
+
     # Check convergence
     if best_score >= config.target_score:
-        print(f"Converged at cycle {cycle+1}!")
+        print(f"Converged at cycle {cycle + 1}!")
         break
 ```
 
@@ -166,9 +166,7 @@ logger = logging.getLogger(__name__)
 
 # Optimizer accepts optional logger for DI
 optimizer = AgenticOptimizer(
-    config=config,
-    strategy=OptimizationStrategy.ACTOR_CRITIC,
-    logger=logger
+    config=config, strategy=OptimizationStrategy.ACTOR_CRITIC, logger=logger
 )
 
 # Monitor optimization progress

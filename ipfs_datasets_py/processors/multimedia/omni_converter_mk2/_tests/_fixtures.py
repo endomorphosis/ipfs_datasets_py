@@ -1,5 +1,6 @@
 from typing import Any
 
+
 def _fixture_dict() -> dict[str, Any]:
     """
     Create a fixture dictionary for testing.
@@ -32,5 +33,6 @@ def _fixture_dict() -> dict[str, Any]:
         "file_validator": make_file_validator,
         "content_extractor_object": ContentExtractor,
     }
+
 
 fixtures = _fixture_dict()

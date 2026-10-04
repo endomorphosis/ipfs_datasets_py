@@ -2,6 +2,7 @@
 
 Covers issues #1164 (V3 IR Schema + ID Validator) and #1170 (Optimizer Drift Gate).
 """
+
 from __future__ import annotations
 
 import copy
@@ -11,30 +12,59 @@ import pytest
 
 # Path is set up by the layered conftest.py files (root, tests/, and this directory)
 from reasoner.hybrid_v2_blueprint import (
-    LegalIRV2, parse_cnl_to_ir_with_diagnostics, parse_cnl_to_ir,
-    compile_ir_to_dcec, compile_ir_to_temporal_deontic_fol,
-    normalize_ir, validate_ir_v2_contract, validate_v2_canonical_id_registry,
-    CNLParseError, run_v2_pipeline_with_defaults, generate_cnl_from_ir,
-    build_v2_compiler_parity_report, check_compliance, find_violations,
-    explain_proof, clear_v2_proof_store, IRContractValidationError,
-    IDRegistryValidationError, DefaultOptimizerHookV2, DefaultKGHookV2,
-    RegistryProverHookV2, run_v2_pipeline, CanonicalIdV2, TemporalRelationV2,
-    TemporalExprV2, TemporalConstraintV2, FrameV2, FrameKindV2, NormV2,
-    DeonticOpV2, EntityV2, SourceRefV2, RuleV2,
+    LegalIRV2,
+    parse_cnl_to_ir_with_diagnostics,
+    parse_cnl_to_ir,
+    compile_ir_to_dcec,
+    compile_ir_to_temporal_deontic_fol,
+    normalize_ir,
+    validate_ir_v2_contract,
+    validate_v2_canonical_id_registry,
+    CNLParseError,
+    run_v2_pipeline_with_defaults,
+    generate_cnl_from_ir,
+    build_v2_compiler_parity_report,
+    check_compliance,
+    find_violations,
+    explain_proof,
+    clear_v2_proof_store,
+    IRContractValidationError,
+    IDRegistryValidationError,
+    DefaultOptimizerHookV2,
+    DefaultKGHookV2,
+    RegistryProverHookV2,
+    run_v2_pipeline,
+    CanonicalIdV2,
+    TemporalRelationV2,
+    TemporalExprV2,
+    TemporalConstraintV2,
+    FrameV2,
+    FrameKindV2,
+    NormV2,
+    DeonticOpV2,
+    EntityV2,
+    SourceRefV2,
+    RuleV2,
 )
 from reasoner.serialization import (
-    validate_v3_ir_payload, map_v2_payload_to_v3, deterministic_v3_canonical_id,
-    SUPPORTED_V3_IR_VERSION, SUPPORTED_V3_CNL_VERSION,
-    proof_to_dict, proof_from_dict,
+    validate_v3_ir_payload,
+    map_v2_payload_to_v3,
+    deterministic_v3_canonical_id,
+    SUPPORTED_V3_IR_VERSION,
+    SUPPORTED_V3_CNL_VERSION,
+    proof_to_dict,
+    proof_from_dict,
 )
 from reasoner.optimizer_policy import (
-    build_optimizer_acceptance_decision, build_optimizer_chain_plan,
+    build_optimizer_acceptance_decision,
+    build_optimizer_chain_plan,
 )
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def parsed_ir():
@@ -55,6 +85,7 @@ def v3_payload(parsed_ir):
 # ---------------------------------------------------------------------------
 # TestV3IRSchema (#1164)
 # ---------------------------------------------------------------------------
+
 
 class TestV3IRSchema:
     def test_v3_validator_accepts_valid_payload(self, v3_payload):
@@ -131,6 +162,7 @@ class TestV3IRSchema:
 # TestV2ContractValidation
 # ---------------------------------------------------------------------------
 
+
 class TestV2ContractValidation:
     def test_validate_ir_v2_contract_passes_for_parsed_ir(self, parsed_ir):
         # GIVEN a properly parsed IR
@@ -162,6 +194,7 @@ class TestV2ContractValidation:
 # ---------------------------------------------------------------------------
 # TestOptimizerDriftGate (#1170)
 # ---------------------------------------------------------------------------
+
 
 class ModalityMutatingOptimizer:
     """Test optimizer that changes O->P on all norms (should be rejected)."""
@@ -257,7 +290,13 @@ class TestOptimizerDriftGate:
         )
         opt = result["optimizer_report"]
         # THEN all required fields are present
-        for field in ("applied", "rejected", "rejected_reason_codes", "failure_count", "decision_id"):
+        for field in (
+            "applied",
+            "rejected",
+            "rejected_reason_codes",
+            "failure_count",
+            "decision_id",
+        ):
             assert field in opt, f"Missing field: {field}"
 
 
@@ -286,4 +325,7 @@ class TestProverTemporalMetadata:
         dcec_payload = prover_report["dcec"]["certificate"]["payload"]
         tdfol_payload = prover_report["tdfol"]["certificate"]["payload"]
         assert dcec_payload["theorem_export_metadata"] == prover_report["theorem_export_metadata"]
-        assert tdfol_payload["claim_support_temporal_handoff"] == prover_report["claim_support_temporal_handoff"]
+        assert (
+            tdfol_payload["claim_support_temporal_handoff"]
+            == prover_report["claim_support_temporal_handoff"]
+        )

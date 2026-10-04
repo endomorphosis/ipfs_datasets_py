@@ -4,9 +4,10 @@ Test suite for utils/class_to_typeddict_converter/read_python_file.py converted 
 This module contains comprehensive tests for the read_python_file function
 following the red-green-refactor methodology.
 
-NOTE: Original tests were commented out. This is a skeleton conversion 
+NOTE: Original tests were commented out. This is a skeleton conversion
 that can be expanded when the implementation is ready.
 """
+
 import pytest
 import tempfile
 import os
@@ -26,6 +27,7 @@ def temp_dir():
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
     import shutil
+
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -42,17 +44,18 @@ class TestReadPythonFile:
     def test_read_existing_file_with_string_path(self, temp_dir, test_content):
         """
         Test reading an existing file with string path.
-        
+
         Verifies:
         - File content is returned exactly as written
         - String path is handled correctly
         """
         # Create temporary file with known content
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, 
-                                       dir=temp_dir, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False, dir=temp_dir, encoding="utf-8"
+        ) as f:
             f.write(test_content)
             temp_file_path = f.name
-        
+
         try:
             result = read_python_file(temp_file_path)
             assert result == test_content
@@ -62,17 +65,18 @@ class TestReadPythonFile:
     def test_read_existing_file_with_path_object(self, temp_dir, test_content):
         """
         Test reading an existing file with Path object.
-        
+
         Verifies:
         - Path object input is handled correctly
         - Content matches string path result
         """
         # Create temporary file with known content
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False,
-                                       dir=temp_dir, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False, dir=temp_dir, encoding="utf-8"
+        ) as f:
             f.write(test_content)
             temp_file_path = Path(f.name)
-        
+
         try:
             result = read_python_file(temp_file_path)
             assert result == test_content
@@ -82,18 +86,19 @@ class TestReadPythonFile:
     def test_read_file_with_utf8_encoding(self, temp_dir):
         """
         Test reading file with UTF-8 encoding.
-        
+
         Verifies:
         - UTF-8 characters are correctly decoded
         - No encoding errors occur
         """
         utf8_content = "# Тест файл\nclass TestClass:\n    '''Тестовый класс'''\n    pass\n"
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False,
-                                       dir=temp_dir, encoding='utf-8') as f:
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False, dir=temp_dir, encoding="utf-8"
+        ) as f:
             f.write(utf8_content)
             temp_file_path = f.name
-        
+
         try:
             result = read_python_file(temp_file_path)
             assert result == utf8_content
@@ -103,34 +108,35 @@ class TestReadPythonFile:
     def test_read_nonexistent_file(self):
         """
         Test reading a non-existent file.
-        
+
         Verifies:
         - FileNotFoundError is raised
         - Error message is appropriate
         """
         nonexistent_path = "/path/that/does/not/exist.py"
-        
+
         with pytest.raises(FileNotFoundError):
             read_python_file(nonexistent_path)
 
     def test_read_file_permission_denied(self, temp_dir, test_content):
         """
         Test reading a file without read permissions.
-        
+
         Verifies:
         - PermissionError is raised when file cannot be read
         - Error handling is appropriate
         """
         # Create file and remove read permissions
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False,
-                                       dir=temp_dir, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False, dir=temp_dir, encoding="utf-8"
+        ) as f:
             f.write(test_content)
             temp_file_path = f.name
-        
+
         try:
             # Remove read permissions
             os.chmod(temp_file_path, 0o000)
-            
+
             with pytest.raises(PermissionError):
                 read_python_file(temp_file_path)
         finally:
@@ -140,10 +146,12 @@ class TestReadPythonFile:
 
 
 # Placeholder test class for when the implementation is ready
-@pytest.mark.skip(reason="read_python_file tests converted from commented unittest - implementation pending")
+@pytest.mark.skip(
+    reason="read_python_file tests converted from commented unittest - implementation pending"
+)
 class TestReadPythonFilePlaceholder:
     """Placeholder for read_python_file tests that will be implemented later."""
-    
+
     def test_placeholder(self):
         """Placeholder test to mark this conversion as complete."""
         assert True  # This will pass but indicates work pending

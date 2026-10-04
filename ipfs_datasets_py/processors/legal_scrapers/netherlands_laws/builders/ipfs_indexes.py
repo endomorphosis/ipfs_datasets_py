@@ -12,7 +12,14 @@ from typing import Any
 
 from ipfs_datasets_py.utils.cid_utils import cid_for_obj
 
-from .common import file_cid, file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from .common import (
+    file_cid,
+    file_manifest_entry,
+    read_jsonl,
+    write_json,
+    write_jsonl,
+    write_parquet,
+)
 from ..paths import (
     BM25_INDEX_DATASET_NAME,
     DEFAULT_HF_REPO_IDS,
@@ -101,7 +108,9 @@ def load_source_run_metadata(source_dir: Path | None = None) -> dict[str, Any]:
         return {}
 
 
-def _write_dataset_card(out_dir: Path, title: str, repo_id: str, configs: list[str], body: str) -> None:
+def _write_dataset_card(
+    out_dir: Path, title: str, repo_id: str, configs: list[str], body: str
+) -> None:
     config_yaml = "\n".join(
         [
             f"- config_name: {config}\n  data_files:\n  - split: train\n    path: parquet/{config}/*.parquet"
@@ -174,11 +183,17 @@ def _write_manifest(
     }
     if extra:
         manifest["index_metadata"] = extra
-    for path in sorted(p for p in out_dir.rglob("*") if p.is_file() and p.name != "dataset_manifest.json"):
+    for path in sorted(
+        p for p in out_dir.rglob("*") if p.is_file() and p.name != "dataset_manifest.json"
+    ):
         rel = path.relative_to(out_dir).as_posix()
         records = None
         for key, count in record_counts.items():
-            if f"/{key}/" in f"/{rel}/" or rel.startswith(f"parquet/{key}/") or rel.startswith(f"data/{key}/"):
+            if (
+                f"/{key}/" in f"/{rel}/"
+                or rel.startswith(f"parquet/{key}/")
+                or rel.startswith(f"data/{key}/")
+            ):
                 records = count
                 break
         manifest["files"][rel] = file_manifest_entry(path, records)
@@ -286,7 +301,9 @@ def build_vector_index(
         ),
     )
     _write_gitattributes(out_dir)
-    _write_manifest(out_dir, VECTOR_INDEX_DATASET_NAME, repo_id, {"mapping": len(mapping_rows)}, extra=metadata)
+    _write_manifest(
+        out_dir, VECTOR_INDEX_DATASET_NAME, repo_id, {"mapping": len(mapping_rows)}, extra=metadata
+    )
     return out_dir
 
 
@@ -306,7 +323,9 @@ def build_bm25_index(
     row_by_cid: dict[str, dict[str, Any]] = {}
 
     for row in corpus:
-        text = f"{row.get('title') or ''} {row.get('citation') or ''} {row.get('text') or ''}".strip()
+        text = (
+            f"{row.get('title') or ''} {row.get('citation') or ''} {row.get('text') or ''}".strip()
+        )
         source_cid = row["source_cid"]
         tokens = tokenise(text)
         term_counts = Counter(tokens)
@@ -366,7 +385,13 @@ def build_bm25_index(
                     "bm25_term_score": score,
                 }
             )
-        row = {"term": term, "doc_freq": df, "idf": idf, "postings_count": len(postings), "postings": postings}
+        row = {
+            "term": term,
+            "doc_freq": df,
+            "idf": idf,
+            "postings_count": len(postings),
+            "postings": postings,
+        }
         row["term_row_cid"] = cid_for_obj(row)
         term_rows.append(row)
 
@@ -408,7 +433,13 @@ def build_bm25_index(
         ),
     )
     _write_gitattributes(out_dir)
-    _write_manifest(out_dir, BM25_INDEX_DATASET_NAME, repo_id, {"documents": len(doc_rows), "terms": len(term_rows)}, extra=metadata)
+    _write_manifest(
+        out_dir,
+        BM25_INDEX_DATASET_NAME,
+        repo_id,
+        {"documents": len(doc_rows), "terms": len(term_rows)},
+        extra=metadata,
+    )
     return out_dir
 
 
@@ -538,7 +569,11 @@ def build_knowledge_graph(
             graph_edges.append(edge)
 
     for law in laws:
-        children = [{"@id": article["content_address"]} for article in articles if article["law_identifier"] == law["law_identifier"]]
+        children = [
+            {"@id": article["content_address"]}
+            for article in articles
+            if article["law_identifier"] == law["law_identifier"]
+        ]
         if children:
             for obj in jsonld_graph:
                 if obj["@id"] == law["content_address"]:
@@ -549,7 +584,9 @@ def build_knowledge_graph(
     write_jsonl(out_dir / "data/nodes/ipfs_netherlands_laws_kg_nodes.jsonl", graph_nodes)
     write_jsonl(out_dir / "data/edges/ipfs_netherlands_laws_kg_edges.jsonl", graph_edges)
     (out_dir / "data/graph").mkdir(parents=True, exist_ok=True)
-    (out_dir / "data/graph/ipfs_netherlands_laws_kg.jsonld").write_text(json.dumps(jsonld_doc, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_dir / "data/graph/ipfs_netherlands_laws_kg.jsonld").write_text(
+        json.dumps(jsonld_doc, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     write_parquet(out_dir / "parquet/nodes/train-00000-of-00001.parquet", graph_nodes)
     write_parquet(out_dir / "parquet/edges/train-00000-of-00001.parquet", graph_edges)
     metadata = {
@@ -586,7 +623,13 @@ def build_knowledge_graph(
         ),
     )
     _write_gitattributes(out_dir)
-    _write_manifest(out_dir, KNOWLEDGE_GRAPH_DATASET_NAME, repo_id, {"nodes": len(graph_nodes), "edges": len(graph_edges)}, extra=metadata)
+    _write_manifest(
+        out_dir,
+        KNOWLEDGE_GRAPH_DATASET_NAME,
+        repo_id,
+        {"nodes": len(graph_nodes), "edges": len(graph_edges)},
+        extra=metadata,
+    )
     return out_dir
 
 

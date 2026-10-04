@@ -5,7 +5,7 @@ from batch_processor.batch_processor_factory import (
 )
 
 __all__ = [
-    'make_batch_processor',
-    'BatchProcessor',
-    'BatchResult',
+    "make_batch_processor",
+    "BatchProcessor",
+    "BatchResult",
 ]

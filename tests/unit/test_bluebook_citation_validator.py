@@ -45,6 +45,7 @@ from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_validator.data
 # Helpers
 # ===========================================================================
 
+
 def _make_db(result=None):
     """Return a minimal mock database connection."""
     db = MagicMock()
@@ -58,6 +59,7 @@ def _empty_df():
     """Return a minimal pandas-like object with .to_dict()."""
     try:
         import pandas as pd
+
         return pd.DataFrame({"state_code": [], "counts": []})
     except ImportError:
         mock = MagicMock()
@@ -68,6 +70,7 @@ def _empty_df():
 # ===========================================================================
 # check_format tests
 # ===========================================================================
+
 
 class TestCheckFormat:
     """Tests for :func:`check_format` (Bluebook Rule 12.9)."""
@@ -136,6 +139,7 @@ class TestCheckFormat:
 # check_geography tests
 # ===========================================================================
 
+
 class TestCheckGeography:
     """Tests for :func:`check_geography`."""
 
@@ -196,6 +200,7 @@ class TestCheckGeography:
 # check_code_type tests
 # ===========================================================================
 
+
 class TestCheckCodeType:
     """Tests for :func:`check_code_type`."""
 
@@ -253,6 +258,7 @@ class TestCheckCodeType:
 # check_section tests
 # ===========================================================================
 
+
 class TestCheckSection:
     """Tests for :func:`check_section`."""
 
@@ -299,6 +305,7 @@ class TestCheckSection:
 # ===========================================================================
 # check_date tests
 # ===========================================================================
+
 
 class TestCheckDate:
     """Tests for :func:`check_date`."""
@@ -365,6 +372,7 @@ class TestCheckDate:
 # StratifiedSampler._calculate_sample_sizes tests
 # ===========================================================================
 
+
 class TestCalculateSampleSizes:
     """Tests for :meth:`StratifiedSampler._calculate_sample_sizes`."""
 
@@ -405,6 +413,7 @@ class TestCalculateSampleSizes:
 # ===========================================================================
 # ConfusionMatrixStats tests
 # ===========================================================================
+
 
 class TestConfusionMatrixStats:
     """Tests for :class:`ConfusionMatrixStats`."""
@@ -457,6 +466,7 @@ class TestConfusionMatrixStats:
 # ValidatorConfig tests
 # ===========================================================================
 
+
 class TestValidatorConfig:
     """Tests for :class:`ValidatorConfig`."""
 
@@ -478,6 +488,7 @@ class TestValidatorConfig:
 
     def test_path_coercion_from_string(self):
         from pathlib import Path
+
         c = ValidatorConfig(citation_dir="/tmp/cites")
         assert isinstance(c.citation_dir, Path)
 
@@ -497,6 +508,7 @@ class TestValidatorConfig:
 # make_cid tests
 # ===========================================================================
 
+
 class TestMakeCid:
     def test_returns_32_char_hex(self):
         result = make_cid("hello world")
@@ -513,6 +525,7 @@ class TestMakeCid:
 # ===========================================================================
 # calculate_accuracy_statistics tests
 # ===========================================================================
+
 
 class TestCalculateAccuracyStatistics:
     def test_basic(self):
@@ -534,6 +547,7 @@ class TestCalculateAccuracyStatistics:
 # ===========================================================================
 # ExtrapolateToFullDataset tests
 # ===========================================================================
+
 
 class TestExtrapolateToFullDataset:
     def _run(self, tp=80, fp=0, tn=120, fn=0):
@@ -573,6 +587,7 @@ class TestExtrapolateToFullDataset:
 # ===========================================================================
 # Deprecation shim test
 # ===========================================================================
+
 
 class TestDeprecationShim:
     def test_import_raises_deprecation_warning(self):

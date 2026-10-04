@@ -59,9 +59,7 @@ class PeerRegistryWrapper:
             self.available = False
 
     async def discover_peers(
-        self,
-        max_peers: int = 50,
-        timeout: float = 30.0
+        self, max_peers: int = 50, timeout: float = 30.0
     ) -> List[Dict[str, Any]]:
         """Discover peers on the P2P network.
 
@@ -89,11 +87,7 @@ class PeerRegistryWrapper:
             logger.error(f"Failed to discover peers: {e}")
             return []
 
-    async def connect_to_peer(
-        self,
-        peer_id: str,
-        multiaddr: str
-    ) -> bool:
+    async def connect_to_peer(self, peer_id: str, multiaddr: str) -> bool:
         """Connect to a specific peer.
 
         Args:
@@ -193,9 +187,7 @@ class PeerRegistryWrapper:
             logger.info(f"Added bootstrap node: {multiaddr}")
 
 
-def create_peer_registry(
-    bootstrap_nodes: Optional[List[str]] = None
-) -> PeerRegistryWrapper:
+def create_peer_registry(bootstrap_nodes: Optional[List[str]] = None) -> PeerRegistryWrapper:
     """Create a peer registry wrapper instance.
 
     Args:

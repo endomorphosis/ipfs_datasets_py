@@ -2,6 +2,7 @@
 
 Benchmarks the parse/compile/prover/explain phases of the V2 reasoner pipeline.
 """
+
 from __future__ import annotations
 
 import sys
@@ -44,9 +45,7 @@ def _percentile(sorted_values: List[float], pct: float) -> float:
     return sorted_values[lower] * (1.0 - frac) + sorted_values[upper] * frac
 
 
-def run_benchmark(
-    sentences: Optional[List[str]] = None, *, iterations: int = 10
-) -> Dict[str, Any]:
+def run_benchmark(sentences: Optional[List[str]] = None, *, iterations: int = 10) -> Dict[str, Any]:
     """Run benchmark for all phases; return per-phase p50/p95/p99 latencies in ms.
 
     Parameters

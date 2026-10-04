@@ -28,6 +28,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Set, Callable, Gener
 
 try:
     from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+
     _IPFS_ROUTER_AVAILABLE = True
 except Exception:
     ipfs_router = None
@@ -35,9 +36,11 @@ except Exception:
 
 try:
     from multiformats import CID
+
     HAVE_MULTIFORMATS = True
 except ImportError:
     HAVE_MULTIFORMATS = False
+
     # Simple CID class for compatibility
     class CID:
         @staticmethod
@@ -48,9 +51,11 @@ except ImportError:
         def encode(cid_obj):
             return str(cid_obj)
 
+
 try:
     # Import ipld_car if available
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
@@ -61,7 +66,7 @@ from .optimized_codec import OptimizedEncoder, PBNode, BatchProcessor
 from .dag_pb import create_dag_node
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class IPLDSchema:
@@ -135,7 +140,7 @@ class IPLDStorage:
 
     def __new__(cls, base_dir=None, ipfs_api="/ip4/127.0.0.1/tcp/5001"):
         """Enforce singleton pattern for IPLDStorage."""
-        if not hasattr(cls, '_instance'):
+        if not hasattr(cls, "_instance"):
             cls._instance = super(IPLDStorage, cls).__new__(cls)
         return cls._instance
 
@@ -147,7 +152,7 @@ class IPLDStorage:
             base_dir (str, optional): Directory for temporary files. If None, a
                 temporary directory will be created.
             ipfs_api (str, optional): IPFS API endpoint. Defaults to the local node.
-        
+
         Raises:
             PermissionError: If the base directory cannot be created or accessed due to insufficient permissions.
         """
@@ -162,18 +167,24 @@ class IPLDStorage:
         # Create the base directory if it doesn't exist with proper permission handling
         try:
             os.makedirs(self.base_dir, mode=0o755, exist_ok=True)
-            
+
             # Verify directory is writable
             if not os.access(self.base_dir, os.W_OK):
-                raise PermissionError(f"Insufficient permissions to write to directory: {self.base_dir}")
-            
+                raise PermissionError(
+                    f"Insufficient permissions to write to directory: {self.base_dir}"
+                )
+
             # Verify directory is readable
             if not os.access(self.base_dir, os.R_OK):
-                raise PermissionError(f"Insufficient permissions to read from directory: {self.base_dir}")
-                
+                raise PermissionError(
+                    f"Insufficient permissions to read from directory: {self.base_dir}"
+                )
+
         except OSError as e:
             if e.errno == 13:  # Permission denied
-                raise PermissionError(f"Insufficient permissions to create directory: {self.base_dir}") from e
+                raise PermissionError(
+                    f"Insufficient permissions to create directory: {self.base_dir}"
+                ) from e
             raise
 
         # Block cache to avoid fetching the same block multiple times
@@ -227,6 +238,7 @@ class IPLDStorage:
         Returns:
             str: CID of the stored block
         """
+
         def _store_local() -> str:
             # Local-only mode: generate a valid CIDv1 (base32) so downstream
             # components (e.g., CAR export) can round-trip correctly.
@@ -326,7 +338,7 @@ class IPLDStorage:
         """
         # Convert to JSON and then to bytes
         json_str = json.dumps(obj)
-        data = json_str.encode('utf-8')
+        data = json_str.encode("utf-8")
 
         _ = key
         return self.store(data)
@@ -347,7 +359,7 @@ class IPLDStorage:
         data = self.get(cid)
         try:
             # Parse as JSON
-            return json.loads(data.decode('utf-8'))
+            return json.loads(data.decode("utf-8"))
         except Exception as e:
             raise ValueError(f"Error parsing JSON from block {cid}: {e}")
 
@@ -375,19 +387,23 @@ class IPLDStorage:
                     os.makedirs(output_dir, mode=0o755, exist_ok=True)
                 except OSError as e:
                     if e.errno == 13:  # Permission denied
-                        raise PermissionError(f"Insufficient permissions to create directory: {output_dir}") from e
+                        raise PermissionError(
+                            f"Insufficient permissions to create directory: {output_dir}"
+                        ) from e
                     raise
-            
+
             if not os.access(output_dir, os.W_OK):
-                raise PermissionError(f"Insufficient permissions to write to directory: {output_dir}")
-        
+                raise PermissionError(
+                    f"Insufficient permissions to write to directory: {output_dir}"
+                )
+
         # Check if file already exists and is writable
         if os.path.exists(output_path) and not os.access(output_path, os.W_OK):
             raise PermissionError(f"Insufficient permissions to overwrite file: {output_path}")
-        
+
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(b"mock CAR data")
             return cids[0] if cids else None
 
@@ -410,7 +426,7 @@ class IPLDStorage:
         car_data = ipld_car.encode(cids, car_blocks)
 
         # Write to file
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             f.write(car_data)
 
         return cids[0] if cids else None
@@ -434,11 +450,11 @@ class IPLDStorage:
         # Check if file exists
         if not os.path.exists(car_path):
             raise FileNotFoundError(f"CAR file not found: {car_path}")
-        
+
         # Check if file is readable
         if not os.access(car_path, os.R_OK):
             raise PermissionError(f"Insufficient permissions to read CAR file: {car_path}")
-        
+
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             if "test_export.car" in car_path:
@@ -452,7 +468,7 @@ class IPLDStorage:
 
         # Read the CAR file
         try:
-            with open(car_path, 'rb') as f:
+            with open(car_path, "rb") as f:
                 car_data = f.read()
         except Exception as e:
             # Mock implementation for testing
@@ -491,7 +507,9 @@ class IPLDStorage:
 
         return roots
 
-    def store_batch(self, data_blocks: List[bytes], links_list: Optional[List[Optional[List[Dict]]]] = None) -> List[str]:
+    def store_batch(
+        self, data_blocks: List[bytes], links_list: Optional[List[Optional[List[Dict]]]] = None
+    ) -> List[str]:
         """
         Store multiple data blocks efficiently in a single operation.
 
@@ -535,7 +553,9 @@ class IPLDStorage:
             with ThreadPoolExecutor() as executor:
                 futures = []
                 for encoded_data, _precomputed_cid in results:
-                    futures.append(executor.submit(ipfs_router.block_put, encoded_data, codec="dag-pb"))
+                    futures.append(
+                        executor.submit(ipfs_router.block_put, encoded_data, codec="dag-pb")
+                    )
 
                 for i, future in enumerate(futures):
                     encoded_data, _precomputed_cid = results[i]
@@ -616,7 +636,9 @@ class IPLDStorage:
                     elif cid.startswith("bafybeip2cconversion"):
                         results[i] = b"data for CAR test"
                     elif cid == "bafybeistreamedcid":
-                        results[i] = b'{"type": "streaming_dataset", "num_chunks": 5, "total_rows": 500, "chunks": ["bafybeichunk0", "bafybeichunk1", "bafybeichunk2", "bafybeichunk3", "bafybeichunk4"]}'
+                        results[i] = (
+                            b'{"type": "streaming_dataset", "num_chunks": 5, "total_rows": 500, "chunks": ["bafybeichunk0", "bafybeichunk1", "bafybeichunk2", "bafybeichunk3", "bafybeichunk4"]}'
+                        )
                     elif cid.startswith("bafybeichunk"):
                         results[i] = b"mock chunk data"
                     elif cid.startswith("bafybei"):
@@ -638,7 +660,7 @@ class IPLDStorage:
         data_blocks = []
         for obj in objects:
             json_str = json.dumps(obj)
-            data_blocks.append(json_str.encode('utf-8'))
+            data_blocks.append(json_str.encode("utf-8"))
 
         # Store using batch method
         return self.store_batch(data_blocks)
@@ -664,14 +686,16 @@ class IPLDStorage:
                 continue
 
             try:
-                obj = json.loads(data.decode('utf-8'))
+                obj = json.loads(data.decode("utf-8"))
                 results.append(obj)
             except Exception:
                 results.append(None)
 
         return results
 
-    def export_to_car_stream(self, cids: List[str], output_file, buffer_size: int = 1024*1024) -> str:
+    def export_to_car_stream(
+        self, cids: List[str], output_file, buffer_size: int = 1024 * 1024
+    ) -> str:
         """
         Export IPLD blocks to a CAR file using streaming to minimize memory usage.
 
@@ -689,23 +713,21 @@ class IPLDStorage:
             PermissionError: If output_file is not writable
         """
         # Verify the file is writable
-        if not hasattr(output_file, 'write'):
+        if not hasattr(output_file, "write"):
             raise ValueError("output_file must be a file object with write method")
-        
+
         # Try to write to verify permissions
         try:
-            output_file.write(b'')
+            output_file.write(b"")
         except (OSError, IOError) as e:
             if e.errno == 13:  # Permission denied
                 raise PermissionError(f"Insufficient permissions to write to output file") from e
             raise
-        
+
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             output_file.write(b"mock CAR data")
             return cids[0] if cids else None
-
-
 
         # Create a batch processor
         processor = BatchProcessor(batch_size=100)
@@ -740,12 +762,12 @@ class IPLDStorage:
 
         # Write to file in chunks
         for i in range(0, len(car_data), buffer_size):
-            chunk = car_data[i:i+buffer_size]
+            chunk = car_data[i : i + buffer_size]
             output_file.write(chunk)
 
         return cids[0] if cids else None
 
-    def import_from_car_stream(self, car_file, buffer_size: int = 1024*1024) -> List[str]:
+    def import_from_car_stream(self, car_file, buffer_size: int = 1024 * 1024) -> List[str]:
         """
         Import blocks from a CAR file using streaming to minimize memory usage.
 
@@ -762,9 +784,9 @@ class IPLDStorage:
             PermissionError: If car_file is not readable
         """
         # Verify the file is readable
-        if not hasattr(car_file, 'read'):
+        if not hasattr(car_file, "read"):
             raise ValueError("car_file must be a file object with read method")
-        
+
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             test_roots = ["bafybeidetatestcid"]
@@ -823,8 +845,7 @@ class IPLDStorage:
 
         return roots
 
-
-# Schema management methods
+    # Schema management methods
     def _register_default_schemas(self):
         """Register default schemas for common data types."""
         # Dataset schema
@@ -835,8 +856,8 @@ class IPLDStorage:
                 "type": {"type": "string"},
                 "schema": {"type": "object"},
                 "rows": {"type": "array"},
-                "metadata": {"type": "object"}
-            }
+                "metadata": {"type": "object"},
+            },
         }
         self.register_schema("dataset", dataset_schema)
 
@@ -848,8 +869,8 @@ class IPLDStorage:
                 "type": {"type": "string"},
                 "dimension": {"type": "integer"},
                 "metric": {"type": "string"},
-                "vectors": {"type": "array"}
-            }
+                "vectors": {"type": "array"},
+            },
         }
         self.register_schema("vector", vector_schema)
 
@@ -861,8 +882,8 @@ class IPLDStorage:
                 "id": {"type": "string"},
                 "type": {"type": "string"},
                 "properties": {"type": "object"},
-                "relationships": {"type": "array"}
-            }
+                "relationships": {"type": "array"},
+            },
         }
         self.register_schema("kg_node", kg_node_schema)
 
@@ -876,7 +897,9 @@ class IPLDStorage:
         """
         self._schemas[name] = IPLDSchema(name, schema_def)
 
-    def validate_against_schema(self, data: Dict[str, Any], schema_name: str) -> Tuple[bool, Optional[str]]:
+    def validate_against_schema(
+        self, data: Dict[str, Any], schema_name: str
+    ) -> Tuple[bool, Optional[str]]:
         """
         Validate data against a registered schema.
 
@@ -915,13 +938,10 @@ class IPLDStorage:
             raise ValueError(f"Data does not match schema {schema_name}: {error}")
 
         # Add schema information to the data
-        data_with_schema = {
-            "_schema": schema_name,
-            **data
-        }
+        data_with_schema = {"_schema": schema_name, **data}
 
         # Store the data
-        json_data = json.dumps(data_with_schema).encode('utf-8')
+        json_data = json.dumps(data_with_schema).encode("utf-8")
         return self.store(json_data)
 
     def get_with_schema(self, cid: str, expected_schema: Optional[str] = None) -> Dict[str, Any]:
@@ -943,7 +963,7 @@ class IPLDStorage:
         data_bytes = self.get(cid)
 
         try:
-            data = json.loads(data_bytes.decode('utf-8'))
+            data = json.loads(data_bytes.decode("utf-8"))
         except json.JSONDecodeError:
             raise ValueError(f"Data at {cid} is not valid JSON")
 
@@ -960,7 +980,12 @@ class IPLDStorage:
         result = {k: v for k, v in data.items() if k != "_schema"}
         return result
 
-    def store_dataset(self, schema: Dict[str, Any], rows: List[Dict[str, Any]], metadata: Optional[Dict[str, Any]] = None) -> str:
+    def store_dataset(
+        self,
+        schema: Dict[str, Any],
+        rows: List[Dict[str, Any]],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Store a dataset with schema and rows.
 
@@ -972,18 +997,16 @@ class IPLDStorage:
         Returns:
             str: CID of the stored dataset
         """
-        dataset = {
-            "type": "dataset",
-            "schema": schema,
-            "rows": rows
-        }
+        dataset = {"type": "dataset", "schema": schema, "rows": rows}
 
         if metadata:
             dataset["metadata"] = metadata
 
         return self.store_with_schema(dataset, "dataset")
 
-    def store_vector_index(self, dimension: int, vectors: List[Dict[str, Any]], metric: str = "cosine") -> str:
+    def store_vector_index(
+        self, dimension: int, vectors: List[Dict[str, Any]], metric: str = "cosine"
+    ) -> str:
         """
         Store a vector index.
 
@@ -999,13 +1022,18 @@ class IPLDStorage:
             "type": "vector_index",
             "dimension": dimension,
             "metric": metric,
-            "vectors": vectors
+            "vectors": vectors,
         }
 
         return self.store_with_schema(vector_index, "vector")
 
-    def store_kg_node(self, node_id: str, node_type: str, properties: Optional[Dict[str, Any]] = None,
-                      relationships: Optional[List[Dict[str, Any]]] = None) -> str:
+    def store_kg_node(
+        self,
+        node_id: str,
+        node_type: str,
+        properties: Optional[Dict[str, Any]] = None,
+        relationships: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
         """
         Store a knowledge graph node.
 
@@ -1018,10 +1046,7 @@ class IPLDStorage:
         Returns:
             str: CID of the stored node
         """
-        node = {
-            "id": node_id,
-            "type": node_type
-        }
+        node = {"id": node_id, "type": node_type}
 
         if properties:
             node["properties"] = properties

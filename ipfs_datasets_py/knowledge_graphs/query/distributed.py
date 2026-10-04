@@ -281,8 +281,7 @@ class GraphPartitioner:
 
         # Build empty partition graphs
         partitions: List[Any] = [
-            KnowledgeGraph(name=f"partition_{i}")
-            for i in range(self.num_partitions)
+            KnowledgeGraph(name=f"partition_{i}") for i in range(self.num_partitions)
         ]
 
         # Populate entities
@@ -292,7 +291,9 @@ class GraphPartitioner:
             # Deep-copy to avoid shared mutation
             entity_copy = copy.deepcopy(entity)
             partition.entities[entity_copy.entity_id] = entity_copy
-            partition.entity_types.setdefault(entity_copy.entity_type, set()).add(entity_copy.entity_id)
+            partition.entity_types.setdefault(entity_copy.entity_type, set()).add(
+                entity_copy.entity_id
+            )
             partition.entity_names.setdefault(entity_copy.name, set()).add(entity_copy.entity_id)
 
         # Populate relationships
@@ -311,15 +312,15 @@ class GraphPartitioner:
                 partition = partitions[p_idx]
                 rel_copy = copy.deepcopy(rel)
                 partition.relationships[rel_copy.relationship_id] = rel_copy
-                partition.relationship_types.setdefault(
-                    rel_copy.relationship_type, set()
-                ).add(rel_copy.relationship_id)
-                partition.entity_relationships.setdefault(
-                    rel.source_id, set()
-                ).add(rel_copy.relationship_id)
-                partition.entity_relationships.setdefault(
-                    rel.target_id, set()
-                ).add(rel_copy.relationship_id)
+                partition.relationship_types.setdefault(rel_copy.relationship_type, set()).add(
+                    rel_copy.relationship_id
+                )
+                partition.entity_relationships.setdefault(rel.source_id, set()).add(
+                    rel_copy.relationship_id
+                )
+                partition.entity_relationships.setdefault(rel.target_id, set()).add(
+                    rel_copy.relationship_id
+                )
 
         return DistributedGraph(
             partitions=partitions,
@@ -335,17 +336,11 @@ class GraphPartitioner:
         """Return a mapping of ``node_id → partition_index``."""
         n = self.num_partitions
         if self.strategy == PartitionStrategy.HASH:
-            return {
-                nid: int(hashlib.sha1(nid.encode()).hexdigest(), 16) % n
-                for nid in node_ids
-            }
+            return {nid: int(hashlib.sha1(nid.encode()).hexdigest(), 16) % n for nid in node_ids}
         elif self.strategy == PartitionStrategy.RANGE:
             sorted_ids = sorted(node_ids)
             chunk = max(1, len(sorted_ids) // n)
-            return {
-                nid: min(i // chunk, n - 1)
-                for i, nid in enumerate(sorted_ids)
-            }
+            return {nid: min(i // chunk, n - 1) for i, nid in enumerate(sorted_ids)}
         elif self.strategy == PartitionStrategy.ROUND_ROBIN:
             return {nid: i % n for i, nid in enumerate(node_ids)}
         else:
@@ -496,14 +491,10 @@ class FederatedQueryExecutor:
 
         for i, partition_kg in enumerate(self.distributed_graph.partitions):
             try:
-                partition_records = self._execute_on_partition(
-                    partition_kg, query, params or {}
-                )
+                partition_records = self._execute_on_partition(partition_kg, query, params or {})
                 partition_results.append(partition_records)
             except Exception as exc:
-                logger.warning(
-                    "Federated query error on partition %d: %s", i, exc
-                )
+                logger.warning("Federated query error on partition %d: %s", i, exc)
                 errors[i] = str(exc)
                 partition_results.append([])
 
@@ -518,7 +509,9 @@ class FederatedQueryExecutor:
         )
 
     def execute_cypher_parallel(
-        self, query: str, params: Optional[Dict[str, Any]] = None,
+        self,
+        query: str,
+        params: Optional[Dict[str, Any]] = None,
         max_workers: int = 4,
     ) -> FederatedQueryResult:
         """Execute a Cypher query across partitions using a thread pool.
@@ -555,9 +548,7 @@ class FederatedQueryExecutor:
                     idx, records = future.result()
                     partition_results[idx] = records
                 except Exception as exc:
-                    logger.warning(
-                        "Federated parallel query error on partition %d: %s", i, exc
-                    )
+                    logger.warning("Federated parallel query error on partition %d: %s", i, exc)
                     errors[i] = str(exc)
                     partition_results[i] = []
 
@@ -629,9 +620,7 @@ class FederatedQueryExecutor:
                 return i
         return None
 
-    def explain_query(
-        self, query: str, params: Optional[Dict[str, Any]] = None
-    ) -> QueryPlan:
+    def explain_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> QueryPlan:
         """Return an estimated query plan without executing the query.
 
         Provides a high-level breakdown of how the query will fan out across
@@ -645,9 +634,7 @@ class FederatedQueryExecutor:
         Returns:
             :class:`QueryPlan` with per-partition estimates.
         """
-        total_edges = sum(
-            len(p.relationships) for p in self.distributed_graph.partitions
-        )
+        total_edges = sum(len(p.relationships) for p in self.distributed_graph.partitions)
         partition_plans = [
             PartitionQueryPlan(
                 partition_id=i,
@@ -692,9 +679,7 @@ class FederatedQueryExecutor:
             try:
                 records = self._execute_on_partition(partition_kg, query, params or {})
             except Exception as exc:
-                logger.warning(
-                    "Streaming query error on partition %d: %s", i, exc
-                )
+                logger.warning("Streaming query error on partition %d: %s", i, exc)
                 continue
 
             for record in records:
@@ -715,7 +700,10 @@ class FederatedQueryExecutor:
         """Run *query* on a single partition KG and return list of record dicts."""
         from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
-        from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node, Relationship as CompatRel
+        from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import (
+            Node,
+            Relationship as CompatRel,
+        )
 
         # Build an in-memory GraphEngine populated from the partition KG
         engine = GraphEngine(storage_backend=None)
@@ -752,9 +740,7 @@ class FederatedQueryExecutor:
             return []
         return _normalise_result(result)
 
-    def _merge_results(
-        self, partition_results: List[List[Dict[str, Any]]]
-    ) -> List[Dict[str, Any]]:
+    def _merge_results(self, partition_results: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
         """Flatten partition results and optionally deduplicate."""
         all_records: List[Dict[str, Any]] = []
         seen: Set[str] = set()
@@ -797,19 +783,15 @@ class _KGBackend:
         results = list(self._kg.entities.values())
         if labels:
             results = [
-                e for e in results
+                e
+                for e in results
                 if e.entity_type in labels
-                or e.entity_type in (
-                    set(e.properties.get("inferred_types", [])) if e.properties else set()
-                )
+                or e.entity_type
+                in (set(e.properties.get("inferred_types", [])) if e.properties else set())
             ]
         if properties:
             results = [
-                e for e in results
-                if all(
-                    e.properties.get(k) == v
-                    for k, v in properties.items()
-                )
+                e for e in results if all(e.properties.get(k) == v for k, v in properties.items())
             ]
         if limit is not None:
             results = results[:limit]

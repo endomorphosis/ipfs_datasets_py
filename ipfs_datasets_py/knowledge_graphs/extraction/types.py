@@ -16,6 +16,7 @@ from collections import defaultdict
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
 try:
     from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+
     HAVE_TRACER = True
 except ImportError:
     WikipediaKnowledgeGraphTracer = None
@@ -26,8 +27,9 @@ try:
     from ipfs_datasets_py.ml.accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
-        get_accelerate_status
+        get_accelerate_status,
     )
+
     HAVE_ACCELERATE = True
 except ImportError:
     HAVE_ACCELERATE = False
@@ -51,39 +53,35 @@ MAX_CONFIDENCE = 1.0
 
 __all__ = [
     # Core types
-    'EntityID',
-    'RelationshipID',
-    'EntityType',
-    'RelationshipType',
-    
+    "EntityID",
+    "RelationshipID",
+    "EntityType",
+    "RelationshipType",
     # Constants
-    'DEFAULT_CONFIDENCE',
-    'MIN_CONFIDENCE',
-    'MAX_CONFIDENCE',
-    
+    "DEFAULT_CONFIDENCE",
+    "MIN_CONFIDENCE",
+    "MAX_CONFIDENCE",
     # Feature flags
-    'HAVE_TRACER',
-    'HAVE_ACCELERATE',
-    
+    "HAVE_TRACER",
+    "HAVE_ACCELERATE",
     # Optional imports
-    'WikipediaKnowledgeGraphTracer',
-    'AccelerateManager',
-    'is_accelerate_available',
-    'get_accelerate_status',
-    
+    "WikipediaKnowledgeGraphTracer",
+    "AccelerateManager",
+    "is_accelerate_available",
+    "get_accelerate_status",
     # Standard library
-    're',
-    'uuid',
-    'json',
-    'requests',
-    'dataclass',
-    'field',
-    'Dict',
-    'List',
-    'Any',
-    'Set',
-    'Optional',
-    'Tuple',
-    'Union',
-    'defaultdict',
+    "re",
+    "uuid",
+    "json",
+    "requests",
+    "dataclass",
+    "field",
+    "Dict",
+    "List",
+    "Any",
+    "Set",
+    "Optional",
+    "Tuple",
+    "Union",
+    "defaultdict",
 ]

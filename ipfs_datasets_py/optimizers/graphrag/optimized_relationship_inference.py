@@ -2,7 +2,7 @@
 Optimized infer_relationships() implementation with caching and pre-compilation.
 
 This module demonstrates Priority 1 performance optimizations:
-1. Pre-compile verb patterns at class initialization 
+1. Pre-compile verb patterns at class initialization
 2. Cache entity position lookups (avoid repeated .find() calls)
 3. Build position index for proximity checks
 4. Use index-based spatial lookup instead of full O(N²) scan
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EntityPosition:
     """Cache for entity position information."""
+
     entity_id: str
     entity_text: str
     entity_text_lower: str
@@ -60,8 +61,12 @@ class OptimizedRelationshipInference:
                 (r"(\w+)\s+(?:connects?|connected\s+to)\s+(\w+)", "connects_to"),
             ]
             # Compile all patterns and cache at class level
-            cls._compiled_verb_patterns = [(re.compile(pat, re.IGNORECASE), rel_type) for pat, rel_type in patterns]
-            logger.debug(f"Compiled {len(cls._compiled_verb_patterns)} verb patterns at class level")
+            cls._compiled_verb_patterns = [
+                (re.compile(pat, re.IGNORECASE), rel_type) for pat, rel_type in patterns
+            ]
+            logger.debug(
+                f"Compiled {len(cls._compiled_verb_patterns)} verb patterns at class level"
+            )
 
         return cls._compiled_verb_patterns
 
@@ -71,50 +76,62 @@ class OptimizedRelationshipInference:
         if cls._type_inference_rules is None:
             cls._type_inference_rules = [
                 {
-                    'condition': lambda e1_type, e2_type: 'person' in e1_type and 'organization' in e2_type,
-                    'type': 'works_for',
-                    'base_confidence': 0.70,
-                    'distance_threshold': 100,
+                    "condition": lambda e1_type, e2_type: (
+                        "person" in e1_type and "organization" in e2_type
+                    ),
+                    "type": "works_for",
+                    "base_confidence": 0.70,
+                    "distance_threshold": 100,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: 'organization' in e1_type and 'person' in e2_type,
-                    'type': 'employs',
-                    'base_confidence': 0.70,
-                    'distance_threshold': 100,
+                    "condition": lambda e1_type, e2_type: (
+                        "organization" in e1_type and "person" in e2_type
+                    ),
+                    "type": "employs",
+                    "base_confidence": 0.70,
+                    "distance_threshold": 100,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: 'person' in e1_type and 'location' in e2_type,
-                    'type': 'located_in',
-                    'base_confidence': 0.65,
-                    'distance_threshold': 150,
+                    "condition": lambda e1_type, e2_type: (
+                        "person" in e1_type and "location" in e2_type
+                    ),
+                    "type": "located_in",
+                    "base_confidence": 0.65,
+                    "distance_threshold": 150,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: 'event' in e1_type and 'location' in e2_type,
-                    'type': 'occurred_in',
-                    'base_confidence': 0.70,
-                    'distance_threshold': 150,
+                    "condition": lambda e1_type, e2_type: (
+                        "event" in e1_type and "location" in e2_type
+                    ),
+                    "type": "occurred_in",
+                    "base_confidence": 0.70,
+                    "distance_threshold": 150,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: 'person' in e1_type and 'person' in e2_type,
-                    'type': 'related_to',
-                    'base_confidence': 0.55,
-                    'distance_threshold': 200,
+                    "condition": lambda e1_type, e2_type: (
+                        "person" in e1_type and "person" in e2_type
+                    ),
+                    "type": "related_to",
+                    "base_confidence": 0.55,
+                    "distance_threshold": 200,
                 },
             ]
 
         return cls._type_inference_rules
 
-    def build_entity_position_index(self, entities: List[Any], text: str) -> Dict[str, EntityPosition]:
+    def build_entity_position_index(
+        self, entities: List[Any], text: str
+    ) -> Dict[str, EntityPosition]:
         """
         Build index of entity positions in text (cache entity position lookups).
-        
+
         Instead of calling text.find(entity.text) repeatedly for each entity pair,
         build this index once and reuse positions.
-        
+
         Args:
             entities: List of entities to index
             text: Source text to search in
-            
+
         Returns:
             Dict mapping entity_id -> EntityPosition with cached position
         """
@@ -127,7 +144,7 @@ class OptimizedRelationshipInference:
             position = text_lower.find(entity_text_lower)
 
             if position >= 0:
-                entity_type = getattr(entity, 'type', 'unknown').lower()
+                entity_type = getattr(entity, "type", "unknown").lower()
                 position_index[entity.id] = EntityPosition(
                     entity_id=entity.id,
                     entity_text=entity_text,
@@ -149,11 +166,11 @@ class OptimizedRelationshipInference:
         1. Pre-build entity position index (avoid repeated .find() calls)
         2. Use compiled verb patterns (avoid recompilation)
         3. Index-based spatial lookup for co-occurrence
-        
+
         Args:
             entities: List of entities
             text: Source text
-            
+
         Returns:
             List of inferred relationships as dicts
         """
@@ -200,28 +217,30 @@ class OptimizedRelationshipInference:
                     # Calculate type confidence based on relationship type
                     type_confidence = self._calculate_type_confidence(rel_type)
 
-                    relationships.append({
-                        'id': _make_rel_id(),
-                        'source_id': src_id,
-                        'target_id': tgt_id,
-                        'type': rel_type,
-                        'confidence': 0.65,
-                        'direction': 'subject_to_object',
-                        'properties': {
-                            'type_confidence': type_confidence,
-                            'type_method': 'verb_frame',
-                        },
-                    })
+                    relationships.append(
+                        {
+                            "id": _make_rel_id(),
+                            "source_id": src_id,
+                            "target_id": tgt_id,
+                            "type": rel_type,
+                            "confidence": 0.65,
+                            "direction": "subject_to_object",
+                            "properties": {
+                                "type_confidence": type_confidence,
+                                "type_method": "verb_frame",
+                            },
+                        }
+                    )
 
         # --- PHASE 2: Sliding-window co-occurrence with position index ---
         # **OPTIMIZATION 3**: Index-based spatial lookup
-        linked: Set[Tuple[str, str]] = {(r['source_id'], r['target_id']) for r in relationships}
+        linked: Set[Tuple[str, str]] = {(r["source_id"], r["target_id"]) for r in relationships}
 
         for i, e1_id in enumerate([e.id for e in indexed_entities]):
             e1_pos = position_index[e1_id].position
             e1_type = position_index[e1_id].entity_type
 
-            for e2_id in [e.id for e in indexed_entities[i + 1:]]:
+            for e2_id in [e.id for e in indexed_entities[i + 1 :]]:
                 if (e1_id, e2_id) in linked or (e2_id, e1_id) in linked:
                     continue
 
@@ -237,36 +256,38 @@ class OptimizedRelationshipInference:
                         confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
 
                     # Infer relationship type using cached rules
-                    inferred_type = 'related_to'
+                    inferred_type = "related_to"
                     type_confidence = 0.50
 
                     type_inference_rules = self._get_type_inference_rules()
                     for rule in type_inference_rules:
-                        if rule['condition'](e1_type, e2_type):
-                            inferred_type = rule['type']
-                            if distance < rule['distance_threshold']:
-                                type_confidence = rule['base_confidence']
+                        if rule["condition"](e1_type, e2_type):
+                            inferred_type = rule["type"]
+                            if distance < rule["distance_threshold"]:
+                                type_confidence = rule["base_confidence"]
                             else:
-                                type_confidence = rule['base_confidence'] - 0.15
+                                type_confidence = rule["base_confidence"] - 0.15
                             break
 
                     if distance > 150:
                         type_confidence *= 0.8
 
-                    relationships.append({
-                        'id': _make_rel_id(),
-                        'source_id': e1_id,
-                        'target_id': e2_id,
-                        'type': inferred_type,
-                        'confidence': confidence,
-                        'direction': 'undirected',
-                        'properties': {
-                            'type_confidence': type_confidence,
-                            'type_method': 'cooccurrence',
-                            'source_entity_type': e1_type,
-                            'target_entity_type': e2_type,
-                        },
-                    })
+                    relationships.append(
+                        {
+                            "id": _make_rel_id(),
+                            "source_id": e1_id,
+                            "target_id": e2_id,
+                            "type": inferred_type,
+                            "confidence": confidence,
+                            "direction": "undirected",
+                            "properties": {
+                                "type_confidence": type_confidence,
+                                "type_method": "cooccurrence",
+                                "source_entity_type": e1_type,
+                                "target_entity_type": e2_type,
+                            },
+                        }
+                    )
                     linked.add((e1_id, e2_id))
 
         logger.info(f"Inferred {len(relationships)} relationships (position-index optimized)")
@@ -276,16 +297,16 @@ class OptimizedRelationshipInference:
     def _calculate_type_confidence(rel_type: str) -> float:
         """Calculate type confidence based on relationship type specificity."""
         confidence_map = {
-            'obligates': 0.85,
-            'owns': 0.80,
-            'employs': 0.80,
-            'manages': 0.80,
-            'causes': 0.75,
-            'is_a': 0.75,
-            'part_of': 0.72,
-            'depends_on': 0.70,
-            'connects_to': 0.68,
-            'related_to': 0.65,
+            "obligates": 0.85,
+            "owns": 0.80,
+            "employs": 0.80,
+            "manages": 0.80,
+            "causes": 0.75,
+            "is_a": 0.75,
+            "part_of": 0.72,
+            "depends_on": 0.70,
+            "connects_to": 0.68,
+            "related_to": 0.65,
         }
         return confidence_map.get(rel_type, 0.65)
 
@@ -327,10 +348,14 @@ def benchmark_optimization() -> None:
     relationships = optimizer.infer_relationships_optimized(entities, sample_text)
     elapsed = time.time() - start
 
-    print(f"✓ Optimized version: {len(relationships)} relationships inferred in {elapsed*1000:.2f}ms")
+    print(
+        f"✓ Optimized version: {len(relationships)} relationships inferred in {elapsed * 1000:.2f}ms"
+    )
     print("\nSample relationships:")
     for i, rel in enumerate(relationships[:5]):
-        print(f"  {i+1}. {rel['source_id']} -> {rel['target_id']} ({rel['type']}, confidence={rel['confidence']:.2f})")
+        print(
+            f"  {i + 1}. {rel['source_id']} -> {rel['target_id']} ({rel['type']}, confidence={rel['confidence']:.2f})"
+        )
 
 
 if __name__ == "__main__":

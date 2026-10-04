@@ -4,15 +4,18 @@ from logger import logger as _logger
 
 import resource
 
+
 class _classproperty:
     """Helper decorator to turn class methods into properties."""
+
     def __init__(self, func):
         self.func = func
-    
+
     def __get__(self, instance, owner):
         return self.func(owner)
 
-class ExternalPrograms: # TODO Figure out how to run the program checks in parallel.
+
+class ExternalPrograms:  # TODO Figure out how to run the program checks in parallel.
     """Check the availability of external programs.
 
     NOTE: As these programs are entirely external, this class does not provide access to them.
@@ -28,6 +31,7 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
         libreoffice (bool): Whether LibreOffice is available.
         audacity (bool): Whether Audacity is available (optional, TODO: check for CLI).
     """
+
     _EXTERNAL_PROGRAMS = {
         "ffmpeg": False,  # ffmpeg for video processing
         "ffprobe": False,  # ffprobe for video metadata extraction
@@ -47,23 +51,29 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
     def check_for_external_programs(cls) -> None:
         """
         Check if external programs are available.
-        
+
         This method checks the availability of various external programs by attempting to run them
         with the '--help' option. If the program is found and runs successfully, it is marked as available.
         If it fails or is not found, it is marked as unavailable.
         """
         for program, _ in cls._EXTERNAL_PROGRAMS.items():
             available = False
-            try: # TODO Every CLI program should have a --help option, but this should be confirmed. 
-                _ = _sub.run([program, "--help"], check=True, stdout=_sub.DEVNULL, stderr=_sub.DEVNULL)
+            try:  # TODO Every CLI program should have a --help option, but this should be confirmed.
+                _ = _sub.run(
+                    [program, "--help"], check=True, stdout=_sub.DEVNULL, stderr=_sub.DEVNULL
+                )
                 available = True
                 _logger.info(f" ✓ '{program}' is available")
             except _sub.CalledProcessError:
-                _logger.warning(f"✗ '{program}' is available but returned an error when run with --help.")
+                _logger.warning(
+                    f"✗ '{program}' is available but returned an error when run with --help."
+                )
             except FileNotFoundError:
                 _logger.warning(f"✗ '{program}' is not available, functionality will be limited")
             except Exception as e:
-                _logger.warning(f"✗ Unexpected {type(e).__name__} checking '{program}' availability: {e}")
+                _logger.warning(
+                    f"✗ Unexpected {type(e).__name__} checking '{program}' availability: {e}"
+                )
             finally:
                 cls._EXTERNAL_PROGRAMS[program] = available
                 continue
@@ -118,12 +128,12 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
     @classmethod
     def get(cls, name: str, default: bool = False) -> bool:
         """Get a external program by name with a default value.
-        
+
         Args:
             name (str): The name of the external program.
             default (bool): The default value to return if the external program is not found.
                 Defaults to False.
-        
+
         Returns:
             The external program if found, otherwise the default value.
         """
@@ -132,28 +142,33 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
     @classmethod
     def keys(cls) -> list[str]:
         """Get a list of all external program names.
-        
+
         Returns:
             A list of external program names.
         """
         return [
-            name for name in dir(cls) 
-            if not name.startswith('_') # Check if it's not a private attribute
-            and hasattr(_classproperty, name) # Check for class properties decorator
+            name
+            for name in dir(cls)
+            if not name.startswith("_")  # Check if it's not a private attribute
+            and hasattr(_classproperty, name)  # Check for class properties decorator
         ]
 
     @classmethod
     def items(cls) -> list[tuple[str, bool]]:
         """
         Get a list of all dependencies as (name, dependency) tuples.
-        
+
         Returns:
             A list of tuples containing dependency names and their corresponding objects.
         """
         return [
-            (name, getattr(cls, name)) # Check if the attribute exists. The second part of each tuple must be a boolean
+            (
+                name,
+                getattr(cls, name),
+            )  # Check if the attribute exists. The second part of each tuple must be a boolean
             for name in cls.keys()
         ]
+
 
 def _test_for_non_critical_external_programs() -> None:
     """
@@ -174,6 +189,7 @@ def _test_for_non_critical_external_programs() -> None:
         to start without waiting for all dependencies to be fully loaded.
     """
     ExternalPrograms.check_for_external_programs()
+
 
 _load_thread = _threading.Thread(target=_test_for_non_critical_external_programs, daemon=True)
 _load_thread.start()

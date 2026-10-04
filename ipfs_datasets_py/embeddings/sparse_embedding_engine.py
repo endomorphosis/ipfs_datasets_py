@@ -80,7 +80,7 @@ class MockSparseEmbeddingService:
         values = np.random.exponential(0.5, num_terms)
 
         if normalize:
-            norm = float(np.sqrt(np.sum(values ** 2)))
+            norm = float(np.sqrt(np.sum(values**2)))
             if norm > 0:
                 values = values / norm
 
@@ -125,9 +125,9 @@ class MockSparseEmbeddingService:
             )
             total_terms.update(embedding.indices)
 
-        avg_sparsity = float(
-            np.mean([d["embedding"].sparsity for d in indexed_docs])
-        ) if indexed_docs else 0.0
+        avg_sparsity = (
+            float(np.mean([d["embedding"].sparsity for d in indexed_docs])) if indexed_docs else 0.0
+        )
 
         collection_stats: Dict[str, Any] = {
             "document_count": len(indexed_docs),
@@ -192,8 +192,7 @@ class MockSparseEmbeddingService:
                         "term_overlap": len(intersection),
                         "query_terms": len(query_indices),
                         "doc_terms": len(doc_indices),
-                        "jaccard_similarity": len(intersection)
-                        / len(query_indices | doc_indices),
+                        "jaccard_similarity": len(intersection) / len(query_indices | doc_indices),
                     },
                     "metadata": doc.get("metadata", {}),
                     "embedding_stats": {

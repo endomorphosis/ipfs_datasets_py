@@ -1,6 +1,6 @@
 """Tests for OntologyCritic shared cache persistence methods.
 
-This module tests the save_shared_cache() and load_shared_cache() methods that  
+This module tests the save_shared_cache() and load_shared_cache() methods that
 allow the class-level evaluation cache to persist across Python process restarts.
 """
 
@@ -29,7 +29,7 @@ class TestOntologyCriticCachePersistence:
 
     def test_save_empty_cache(self):
         """Test saving an empty cache."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
 
         try:
@@ -37,7 +37,7 @@ class TestOntologyCriticCachePersistence:
 
             # Verify file was created and contains empty object
             assert os.path.exists(filepath)
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 data = json.load(f)
             assert data == {}
         finally:
@@ -58,13 +58,13 @@ class TestOntologyCriticCachePersistence:
         cache_key = "test_key_123"
         OntologyCritic._SHARED_EVAL_CACHE[cache_key] = score
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
 
         try:
             # Save
             OntologyCritic.save_shared_cache(filepath)
-            
+
             # Clear cache
             OntologyCritic.clear_shared_cache()
             assert OntologyCritic.shared_cache_size() == 0
@@ -100,17 +100,17 @@ class TestOntologyCriticCachePersistence:
             )
             OntologyCritic._SHARED_EVAL_CACHE[f"key_{i}"] = score
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
 
         try:
             # Save
             OntologyCritic.save_shared_cache(filepath)
-            
+
             # Clear and reload
             original_keys = set(OntologyCritic._SHARED_EVAL_CACHE.keys())
             OntologyCritic.clear_shared_cache()
-            
+
             count = OntologyCritic.load_shared_cache(filepath)
             assert count == 10
             assert OntologyCritic.shared_cache_size() == 10
@@ -126,19 +126,27 @@ class TestOntologyCriticCachePersistence:
         """Test loading cache in merge mode preserves existing entries."""
         # Start with some entries
         score1 = CriticScore(
-            completeness=0.8, consistency=0.8, clarity=0.8,
-            granularity=0.8, relationship_coherence=0.8, domain_alignment=0.8
+            completeness=0.8,
+            consistency=0.8,
+            clarity=0.8,
+            granularity=0.8,
+            relationship_coherence=0.8,
+            domain_alignment=0.8,
         )
         OntologyCritic._SHARED_EVAL_CACHE["existing_key"] = score1
 
         # Create a cache file with different entries
         score2 = CriticScore(
-            completeness=0.9, consistency=0.9, clarity=0.9,
-            granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
         )
         saved_cache = {"new_key": score2.to_dict()}
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
             json.dump(saved_cache, f)
 
@@ -159,19 +167,27 @@ class TestOntologyCriticCachePersistence:
         """Test loading cache without merge clears existing entries."""
         # Start with some entries
         score1 = CriticScore(
-            completeness=0.8, consistency=0.8, clarity=0.8,
-            granularity=0.8, relationship_coherence=0.8, domain_alignment=0.8
+            completeness=0.8,
+            consistency=0.8,
+            clarity=0.8,
+            granularity=0.8,
+            relationship_coherence=0.8,
+            domain_alignment=0.8,
         )
         OntologyCritic._SHARED_EVAL_CACHE["existing_key"] = score1
 
         # Create a cache file with different entries
         score2 = CriticScore(
-            completeness=0.9, consistency=0.9, clarity=0.9,
-            granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
         )
         saved_cache = {"new_key": score2.to_dict()}
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
             json.dump(saved_cache, f)
 
@@ -195,7 +211,7 @@ class TestOntologyCriticCachePersistence:
 
     def test_load_invalid_json(self):
         """Test loading invalid JSON raises JSONDecodeError."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
             f.write("invalid json {{{")
 
@@ -208,7 +224,7 @@ class TestOntologyCriticCachePersistence:
 
     def test_load_invalid_format(self):
         """Test loading non-dict JSON raises ValueError."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
             json.dump(["array", "not", "dict"], f)
 
@@ -223,7 +239,7 @@ class TestOntologyCriticCachePersistence:
         """Test that save_shared_cache creates parent directories if needed."""
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join(tmpdir, "nested", "dir", "cache.json")
-            
+
             # Directory doesn't exist yet
             assert not os.path.exists(os.path.dirname(filepath))
 
@@ -240,11 +256,11 @@ class TestOntologyCriticCachePersistence:
             granularity=0.85,
             relationship_coherence=0.80,
             domain_alignment=0.88,
-            metadata={"domain": "legal", "timestamp": "2024-01-01"}
+            metadata={"domain": "legal", "timestamp": "2024-01-01"},
         )
         OntologyCritic._SHARED_EVAL_CACHE["with_metadata"] = score
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
 
         try:
@@ -269,11 +285,11 @@ class TestOntologyCriticCachePersistence:
             domain_alignment=0.88,
             strengths=["Well structured", "Clear relationships"],
             weaknesses=["Missing some entities"],
-            recommendations=["Add more entity types", "Improve coverage"]
+            recommendations=["Add more entity types", "Improve coverage"],
         )
         OntologyCritic._SHARED_EVAL_CACHE["with_feedback"] = score
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
 
         try:
@@ -293,16 +309,20 @@ class TestOntologyCriticCachePersistence:
         """Test that loading skips invalid cache entries but continues."""
         # Create cache file with mix of valid and invalid entries
         valid_score = CriticScore(
-            completeness=0.8, consistency=0.9, clarity=0.75,
-            granularity=0.85, relationship_coherence=0.80, domain_alignment=0.88
+            completeness=0.8,
+            consistency=0.9,
+            clarity=0.75,
+            granularity=0.85,
+            relationship_coherence=0.80,
+            domain_alignment=0.88,
         )
         cache_data = {
             "valid_key": valid_score.to_dict(),
             "invalid_key": "not_a_dict",  # String instead of dict - will fail
-            "another_valid": valid_score.to_dict()
+            "another_valid": valid_score.to_dict(),
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
             json.dump(cache_data, f)
 
@@ -331,13 +351,13 @@ class TestOntologyCriticCachePersistence:
             )
             OntologyCritic._SHARED_EVAL_CACHE[f"entry_{i}"] = score
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             filepath = f.name
 
         try:
             OntologyCritic.save_shared_cache(filepath)
             OntologyCritic.clear_shared_cache()
-            
+
             count = OntologyCritic.load_shared_cache(filepath)
             assert count == 256
             assert OntologyCritic.shared_cache_size() == 256

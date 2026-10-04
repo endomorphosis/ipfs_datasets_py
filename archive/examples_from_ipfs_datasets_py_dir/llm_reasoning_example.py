@@ -27,7 +27,7 @@ sys.path.append(parent_dir)
 from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
-    ReasoningTrace
+    ReasoningTrace,
 )
 
 
@@ -38,6 +38,7 @@ def llm_reasoning_example():
 
     # Create a temporary directory for the example
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -50,7 +51,7 @@ def llm_reasoning_example():
 
     trace = tracer.create_trace(
         query="What is the relationship between climate change and biodiversity loss?",
-        metadata={"domain": "environmental science", "priority": "high"}
+        metadata={"domain": "environmental science", "priority": "high"},
     )
 
     print(f"Created trace with ID: {trace.trace_id}")
@@ -65,18 +66,18 @@ def llm_reasoning_example():
         {
             "id": "doc1",
             "content": "Climate change affects ecosystems through increasing temperatures, changing precipitation patterns, and extreme weather events. These changes can lead to habitat loss and fragmentation.",
-            "relevance": 0.92
+            "relevance": 0.92,
         },
         {
             "id": "doc2",
             "content": "Biodiversity loss accelerates as species fail to adapt to rapidly changing environmental conditions. Many species face extinction risks due to climate-related changes to their habitats.",
-            "relevance": 0.88
+            "relevance": 0.88,
         },
         {
             "id": "doc3",
             "content": "The relationship between climate change and biodiversity is bidirectional. Healthy ecosystems with high biodiversity can help mitigate climate change by sequestering carbon.",
-            "relevance": 0.95
-        }
+            "relevance": 0.95,
+        },
     ]
 
     doc_nodes = []
@@ -85,7 +86,7 @@ def llm_reasoning_example():
             trace=trace,
             document_content=doc["content"],
             document_id=doc["id"],
-            relevance_score=doc["relevance"]
+            relevance_score=doc["relevance"],
         )
         doc_nodes.append(doc_node_id)
         print(f"Added document {doc['id']} to trace (node ID: {doc_node_id})")
@@ -99,7 +100,7 @@ def llm_reasoning_example():
         {"name": "Climate Change", "id": "entity1", "type": "Phenomenon", "relevance": 0.98},
         {"name": "Biodiversity Loss", "id": "entity2", "type": "Phenomenon", "relevance": 0.97},
         {"name": "Habitat Fragmentation", "id": "entity3", "type": "Process", "relevance": 0.85},
-        {"name": "Carbon Sequestration", "id": "entity4", "type": "Process", "relevance": 0.82}
+        {"name": "Carbon Sequestration", "id": "entity4", "type": "Process", "relevance": 0.82},
     ]
 
     entity_nodes = []
@@ -109,7 +110,7 @@ def llm_reasoning_example():
             entity_name=entity["name"],
             entity_id=entity["id"],
             entity_type=entity["type"],
-            relevance_score=entity["relevance"]
+            relevance_score=entity["relevance"],
         )
         entity_nodes.append(entity_node_id)
         print(f"Added entity {entity['name']} to trace (node ID: {entity_node_id})")
@@ -122,7 +123,7 @@ def llm_reasoning_example():
     relationships = [
         {"source": 0, "target": 1, "type": "causes", "confidence": 0.9},
         {"source": 0, "target": 2, "type": "causes", "confidence": 0.87},
-        {"source": 3, "target": 0, "type": "mitigates", "confidence": 0.85}
+        {"source": 3, "target": 0, "type": "mitigates", "confidence": 0.85},
     ]
 
     for rel in relationships:
@@ -133,9 +134,11 @@ def llm_reasoning_example():
             source_node_id=source_id,
             target_node_id=target_id,
             relationship_type=rel["type"],
-            confidence=rel["confidence"]
+            confidence=rel["confidence"],
         )
-        print(f"Added relationship: {entities[rel['source']]['name']} {rel['type']} {entities[rel['target']]['name']}")
+        print(
+            f"Added relationship: {entities[rel['source']]['name']} {rel['type']} {entities[rel['target']]['name']}"
+        )
 
     # Step 5: Record evidence
     print("\nStep 5: Recording evidence")
@@ -146,18 +149,18 @@ def llm_reasoning_example():
         {
             "text": "Climate change causes habitat loss and fragmentation",
             "source": 0,
-            "confidence": 0.92
+            "confidence": 0.92,
         },
         {
             "text": "Species face extinction risks due to climate-related habitat changes",
             "source": 1,
-            "confidence": 0.9
+            "confidence": 0.9,
         },
         {
             "text": "Biodiversity helps mitigate climate change through carbon sequestration",
             "source": 2,
-            "confidence": 0.94
-        }
+            "confidence": 0.94,
+        },
     ]
 
     evidence_nodes = []
@@ -166,7 +169,7 @@ def llm_reasoning_example():
             trace=trace,
             evidence_text=evidence["text"],
             source_node_id=doc_nodes[evidence["source"]],
-            confidence=evidence["confidence"]
+            confidence=evidence["confidence"],
         )
         evidence_nodes.append(evidence_node_id)
         print(f"Added evidence: {evidence['text']}")
@@ -180,13 +183,13 @@ def llm_reasoning_example():
         {
             "text": "Climate change directly contributes to biodiversity loss through ecosystem disruption",
             "sources": [0, 1],
-            "confidence": 0.91
+            "confidence": 0.91,
         },
         {
             "text": "There is a feedback loop where biodiversity loss can accelerate climate change",
             "sources": [2],
-            "confidence": 0.85
-        }
+            "confidence": 0.85,
+        },
     ]
 
     inference_nodes = []
@@ -196,7 +199,7 @@ def llm_reasoning_example():
             trace=trace,
             inference_text=inference["text"],
             source_node_ids=source_nodes,
-            confidence=inference["confidence"]
+            confidence=inference["confidence"],
         )
         inference_nodes.append(inference_node_id)
         print(f"Added inference: {inference['text']}")
@@ -210,7 +213,7 @@ def llm_reasoning_example():
         trace=trace,
         conclusion_text="Climate change and biodiversity loss are interconnected in a bidirectional relationship, creating both positive and negative feedback loops. Climate change accelerates biodiversity loss through habitat changes, while biodiversity loss can exacerbate climate change by reducing carbon sequestration capacity.",
         supporting_node_ids=inference_nodes,
-        confidence=0.9
+        confidence=0.9,
     )
 
     print(f"Added conclusion (node ID: {conclusion_node_id})")
@@ -241,11 +244,7 @@ def llm_reasoning_example():
 
     # Export a visualization in D3.js format
     visualization_path = os.path.join(temp_dir, "reasoning_visualization.json")
-    tracer.export_visualization(
-        trace=trace,
-        output_format="d3",
-        output_file=visualization_path
-    )
+    tracer.export_visualization(trace=trace, output_format="d3", output_file=visualization_path)
 
     print(f"Visualization exported to: {visualization_path}")
 

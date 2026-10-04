@@ -5,14 +5,14 @@ Migration Examples for Unified Web Scraper
 This script shows how to migrate from existing scraping code to the unified scraper.
 """
 
-print("="*80)
+print("=" * 80)
 print("UNIFIED WEB SCRAPER - Migration Examples")
-print("="*80)
+print("=" * 80)
 
 # Example 1: Migrating from BeautifulSoup + Requests
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 1: Migrating from BeautifulSoup + Requests")
-print("="*80)
+print("=" * 80)
 
 print("\n### Before (manual implementation):")
 print("""
@@ -44,7 +44,7 @@ print(f"Method used: {result.method_used.value}")
 print("\n### Running unified scraper version:")
 try:
     from ipfs_datasets_py import scrape_url
-    
+
     result = scrape_url("http://example.com")
     if result.success:
         print(f"✓ Title: {result.title}")
@@ -58,9 +58,9 @@ except Exception as e:
 
 
 # Example 2: Migrating from Playwright
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 2: Migrating from Playwright")
-print("="*80)
+print("=" * 80)
 
 print("\n### Before (manual Playwright):")
 print("""
@@ -92,9 +92,9 @@ result = scrape_url("https://example.com")
 
 
 # Example 3: Migrating MCP Tools
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 3: Migrating MCP Tools")
-print("="*80)
+print("=" * 80)
 
 print("\n### Before (separate MCP tool implementations):")
 print("""
@@ -128,9 +128,9 @@ result = await scrape_url_tool(
 
 
 # Example 4: Migrating CLI Usage
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 4: Migrating CLI Usage")
-print("="*80)
+print("=" * 80)
 
 print("\n### Before (no dedicated CLI):")
 print("""
@@ -160,12 +160,13 @@ python -m ipfs_datasets_py.scraper_cli check-methods
 
 print("\n### Running CLI check-methods:")
 import subprocess
+
 try:
     result = subprocess.run(
         ["python", "-m", "ipfs_datasets_py.scraper_cli", "check-methods"],
         capture_output=True,
         text=True,
-        timeout=10
+        timeout=10,
     )
     print(result.stdout)
 except Exception as e:
@@ -173,9 +174,9 @@ except Exception as e:
 
 
 # Example 5: Batch Processing
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 5: Batch Processing Multiple URLs")
-print("="*80)
+print("=" * 80)
 
 print("\n### Before (manual loop with error handling):")
 print("""
@@ -216,10 +217,10 @@ for result in results:
 print("\n### Running batch scraping:")
 try:
     from ipfs_datasets_py import scrape_urls
-    
+
     urls = ["http://example.com", "http://example.org"]
     results = scrape_urls(urls)
-    
+
     for result in results:
         if result.success:
             print(f"✓ {result.url} - {result.method_used.value} - {len(result.content)} chars")
@@ -230,9 +231,9 @@ except Exception as e:
 
 
 # Summary
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("SUMMARY: Benefits of Unified Scraper")
-print("="*80)
+print("=" * 80)
 
 print("""
 1. ✅ Automatic Fallback
@@ -260,9 +261,9 @@ print("""
    - Works even when some libraries are missing
 """)
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("To get started:")
-print("="*80)
+print("=" * 80)
 print("""
 # Install dependencies
 pip install requests beautifulsoup4

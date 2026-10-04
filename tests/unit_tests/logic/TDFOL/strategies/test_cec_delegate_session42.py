@@ -8,6 +8,7 @@ Coverage focuses on:
 - Lines 82-84: CECDelegateStrategy.__init__ when _try_load_cec_prover returns True
   but InferenceEngine() constructor raises an exception — cec_engine set to None.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -34,8 +35,10 @@ class TestCECDelegateEngineInitException:
         mock_engine_class = MagicMock(side_effect=RuntimeError("engine init failed"))
 
         # Patch both the function and the module-level InferenceEngine variable
-        with patch.object(cec_mod, "_try_load_cec_prover", return_value=True), \
-             patch.object(cec_mod, "InferenceEngine", mock_engine_class):
+        with (
+            patch.object(cec_mod, "_try_load_cec_prover", return_value=True),
+            patch.object(cec_mod, "InferenceEngine", mock_engine_class),
+        ):
             strat = CECDelegateStrategy()
 
         assert strat.cec_engine is None
@@ -53,8 +56,10 @@ class TestCECDelegateEngineInitException:
 
         mock_engine_class = MagicMock(side_effect=ValueError("bad engine config"))
 
-        with patch.object(cec_mod, "_try_load_cec_prover", return_value=True), \
-             patch.object(cec_mod, "InferenceEngine", mock_engine_class):
+        with (
+            patch.object(cec_mod, "_try_load_cec_prover", return_value=True),
+            patch.object(cec_mod, "InferenceEngine", mock_engine_class),
+        ):
             strat = CECDelegateStrategy()
 
         assert strat.cec_engine is None
@@ -71,8 +76,10 @@ class TestCECDelegateEngineInitException:
 
         mock_engine_class = MagicMock()
 
-        with patch.object(cec_mod, "_try_load_cec_prover", return_value=False), \
-             patch.object(cec_mod, "InferenceEngine", mock_engine_class):
+        with (
+            patch.object(cec_mod, "_try_load_cec_prover", return_value=False),
+            patch.object(cec_mod, "InferenceEngine", mock_engine_class),
+        ):
             strat = CECDelegateStrategy()
 
         # InferenceEngine should NOT have been called

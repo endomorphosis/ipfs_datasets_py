@@ -5,6 +5,7 @@ Test the Web Archive MCP tools existence and structure.
 This script checks if the required web archive tools exist and have the
 correct structure without attempting to import them.
 """
+
 import os
 import sys
 import ast
@@ -17,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 print("\nChecking Web Archive MCP Tools")
 print("=" * 40)
 
+
 def check_web_archive_tools():
     """Check all web archive tools."""
     # Define tool names to check
@@ -26,7 +28,7 @@ def check_web_archive_tools():
         "extract_dataset_from_cdxj",
         "extract_text_from_warc",
         "extract_links_from_warc",
-        "extract_metadata_from_warc"
+        "extract_metadata_from_warc",
     ]
 
     # Get the tools directory path
@@ -76,7 +78,11 @@ def check_web_archive_tools():
                     # Check for import of WebArchiveProcessor
                     imports_processor = False
                     for subnode in ast.walk(tree):
-                        if isinstance(subnode, ast.ImportFrom) and subnode.module and "web_archive_utils" in subnode.module:
+                        if (
+                            isinstance(subnode, ast.ImportFrom)
+                            and subnode.module
+                            and "web_archive_utils" in subnode.module
+                        ):
                             imports_processor = True
                             print(f"✓ Imports from web_archive_utils")
 
@@ -110,6 +116,7 @@ def check_web_archive_tools():
 
     return status_counts["valid"] == len(tools)
 
+
 # Test paths
 test_dir = Path("/tmp/mcp_web_archive_test")
 url = "https://example.com"
@@ -132,7 +139,9 @@ if __name__ == "__main__":
     # Import the tools
     try:
         # Import the main test function from test_web_archive_mcp_tools.py
-        from tests.migration_tests._test_web_archive_mcp_tools import test_web_archive_tools as run_web_archive_mcp_tests
+        from tests.migration_tests._test_web_archive_mcp_tools import (
+            test_web_archive_tools as run_web_archive_mcp_tests,
+        )
 
         print("\nRunning web_archive_mcp_tools tests...")
         # The test_web_archive_mcp_tools function is async, so it needs to be awaited.
@@ -149,5 +158,6 @@ if __name__ == "__main__":
 
     # Clean up
     import shutil
+
     shutil.rmtree(test_dir)
     print(f"✓ Cleaned up test directory: {test_dir}")

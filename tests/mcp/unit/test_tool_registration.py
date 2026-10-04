@@ -5,6 +5,7 @@ Classes/functions: MCPToolRegistry, register_all_migrated_tools,
                    create_and_register_all_tools
 Pure sync helper module.
 """
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -15,12 +16,14 @@ from unittest.mock import MagicMock, patch
 class TestMCPToolRegistry:
     def test_empty_registry(self):
         from ipfs_datasets_py.mcp_server.tools.tool_registration import MCPToolRegistry
+
         registry = MCPToolRegistry()
         assert registry.tools == {}
         assert registry.categories == {}
 
     def test_register_errors_empty(self):
         from ipfs_datasets_py.mcp_server.tools.tool_registration import MCPToolRegistry
+
         registry = MCPToolRegistry()
         assert isinstance(registry.registration_errors, list)
         assert len(registry.registration_errors) == 0
@@ -77,16 +80,23 @@ class TestCreateAndRegisterAllTools:
             MCPToolRegistry,
             create_and_register_all_tools,
         )
+
         registry = create_and_register_all_tools()
         assert isinstance(registry, MCPToolRegistry)
 
     def test_registry_tools_is_dict(self):
-        from ipfs_datasets_py.mcp_server.tools.tool_registration import create_and_register_all_tools
+        from ipfs_datasets_py.mcp_server.tools.tool_registration import (
+            create_and_register_all_tools,
+        )
+
         registry = create_and_register_all_tools()
         assert isinstance(registry.tools, dict)
 
     def test_registry_categories_is_dict(self):
-        from ipfs_datasets_py.mcp_server.tools.tool_registration import create_and_register_all_tools
+        from ipfs_datasets_py.mcp_server.tools.tool_registration import (
+            create_and_register_all_tools,
+        )
+
         registry = create_and_register_all_tools()
         assert isinstance(registry.categories, dict)
 
@@ -100,6 +110,7 @@ class TestRegisterAllMigratedTools:
             MCPToolRegistry,
             register_all_migrated_tools,
         )
+
         registry = MCPToolRegistry()
         result = register_all_migrated_tools(registry)
         assert isinstance(result, dict)
@@ -110,6 +121,7 @@ class TestRegisterAllMigratedTools:
             MCPToolRegistry,
             register_all_migrated_tools,
         )
+
         registry = MCPToolRegistry()
         stats = register_all_migrated_tools(registry)
         # Must be a dict; keys can vary by impl

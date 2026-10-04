@@ -13,14 +13,21 @@ from typing import Dict, Any, Optional
 
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, SecurityPolicy, AccessControlEntry, DataClassification,
-    DataEncryptionConfig, AccessDecision, SecuritySession, security_operation
+    EnhancedSecurityManager,
+    SecurityPolicy,
+    AccessControlEntry,
+    DataClassification,
+    DataEncryptionConfig,
+    AccessDecision,
+    SecuritySession,
+    security_operation,
 )
 
 
 # Set up logging
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Get the security manager
@@ -42,15 +49,15 @@ def setup_security_environment():
                 "type": "access_time",
                 "allowed_hours": {"start": 8, "end": 18},
                 "severity": "medium",
-                "description": "Restricts access to business hours"
+                "description": "Restricts access to business hours",
             },
             {
                 "type": "data_volume",
                 "threshold_bytes": 50 * 1024 * 1024,  # 50MB
                 "severity": "high",
-                "description": "Alerts on large data operations"
-            }
-        ]
+                "description": "Alerts on large data operations",
+            },
+        ],
     )
 
     security_manager.add_security_policy(data_access_policy)
@@ -62,7 +69,7 @@ def setup_security_environment():
         "financial_reports": DataClassification.RESTRICTED,
         "product_documentation": DataClassification.INTERNAL,
         "marketing_materials": DataClassification.PUBLIC,
-        "encryption_keys": DataClassification.CRITICAL
+        "encryption_keys": DataClassification.CRITICAL,
     }
 
     for resource_id, classification in resources_to_classify.items():
@@ -76,7 +83,7 @@ def setup_security_environment():
         resource_type="*",
         principal_id="admin_user",
         principal_type="user",
-        permissions=["read", "write", "update", "delete", "admin"]
+        permissions=["read", "write", "update", "delete", "admin"],
     )
     security_manager.add_access_control_entry(admin_ace)
 
@@ -86,7 +93,7 @@ def setup_security_environment():
         resource_type="document",
         principal_id="regular_user",
         principal_type="user",
-        permissions=["read"]
+        permissions=["read"],
     )
     security_manager.add_access_control_entry(user_ace)
 
@@ -97,9 +104,7 @@ def setup_security_environment():
         principal_id="data_analyst",
         principal_type="user",
         permissions=["read"],
-        conditions={
-            "time_range": {"start": "08:00:00", "end": "18:00:00"}
-        }
+        conditions={"time_range": {"start": "08:00:00", "end": "18:00:00"}},
     )
     security_manager.add_access_control_entry(analyst_ace)
 
@@ -107,18 +112,12 @@ def setup_security_environment():
 
     # 4. Set up encryption configurations
     customer_data_encryption = DataEncryptionConfig(
-        enabled=True,
-        key_id="customer_data_key",
-        algorithm="AES-256-GCM",
-        key_rotation_days=30
+        enabled=True, key_id="customer_data_key", algorithm="AES-256-GCM", key_rotation_days=30
     )
     security_manager.add_encryption_config("customer_data", customer_data_encryption)
 
     financial_encryption = DataEncryptionConfig(
-        enabled=True,
-        key_id="financial_key",
-        algorithm="AES-256-GCM",
-        key_rotation_days=15
+        enabled=True, key_id="financial_key", algorithm="AES-256-GCM", key_rotation_days=15
     )
     security_manager.add_encryption_config("financial_reports", financial_encryption)
 
@@ -127,7 +126,9 @@ def setup_security_environment():
     return "Security environment configured successfully"
 
 
-@security_operation(user_id_arg="user_id", resource_id_arg="resource_id", action="access_sensitive_data")
+@security_operation(
+    user_id_arg="user_id", resource_id_arg="resource_id", action="access_sensitive_data"
+)
 def access_sensitive_data(user_id: str, resource_id: str, operation: str) -> Dict[str, Any]:
     """
     Access sensitive data with security controls.
@@ -153,7 +154,9 @@ def access_sensitive_data(user_id: str, resource_id: str, operation: str) -> Dic
     decision = security_manager.check_access(user_id, resource_id, operation)
 
     if decision != AccessDecision.ALLOW:
-        logger.warning(f"Access decision for {user_id} to {operation} {resource_id}: {decision.name}")
+        logger.warning(
+            f"Access decision for {user_id} to {operation} {resource_id}: {decision.name}"
+        )
         if decision == AccessDecision.DENY:
             raise PermissionError(f"Access denied for {user_id} to {operation} {resource_id}")
         elif decision == AccessDecision.ELEVATE:
@@ -172,7 +175,7 @@ def access_sensitive_data(user_id: str, resource_id: str, operation: str) -> Dic
         "operation": operation,
         "timestamp": datetime.datetime.utcnow().isoformat(),
         "classification": classification.name,
-        "user": user_id
+        "user": user_id,
     }
 
     return result
@@ -188,9 +191,7 @@ def demonstrate_security_features():
     # 2. Demonstrate successful access
     try:
         result = access_sensitive_data(
-            user_id="admin_user",
-            resource_id="product_documentation",
-            operation="read"
+            user_id="admin_user", resource_id="product_documentation", operation="read"
         )
         logger.info(f"Access result: {result}")
     except Exception as e:
@@ -199,9 +200,7 @@ def demonstrate_security_features():
     # 3. Demonstrate access denial
     try:
         result = access_sensitive_data(
-            user_id="regular_user",
-            resource_id="financial_reports",
-            operation="read"
+            user_id="regular_user", resource_id="financial_reports", operation="read"
         )
         logger.info(f"Access result: {result}")
     except Exception as e:
@@ -209,9 +208,7 @@ def demonstrate_security_features():
 
     # 4. Demonstrate security sessions
     with SecuritySession(
-        user_id="data_analyst",
-        resource_id="customer_data",
-        action="analyze_data"
+        user_id="data_analyst", resource_id="customer_data", action="analyze_data"
     ) as session:
         try:
             # Set context for the session
@@ -232,14 +229,14 @@ def demonstrate_security_features():
     # Create an audit event that would trigger the data volume policy
     large_data_event = AuditEvent(
         event_id="test_large_data",
-        timestamp=datetime.datetime.utcnow().isoformat() + 'Z',
+        timestamp=datetime.datetime.utcnow().isoformat() + "Z",
         level=AuditLevel.INFO,
         category=AuditCategory.DATA_ACCESS,
         action="download",
         user="regular_user",
         resource_id="product_documentation",
         resource_type="document",
-        details={"data_size_bytes": 75 * 1024 * 1024}  # 75MB (exceeds policy)
+        details={"data_size_bytes": 75 * 1024 * 1024},  # 75MB (exceeds policy)
     )
 
     # Process the event to trigger policy checks

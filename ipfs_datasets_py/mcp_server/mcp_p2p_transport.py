@@ -312,8 +312,7 @@ class LengthPrefixFramer:
         (length,) = struct.unpack(self._HEADER_FORMAT, header_bytes)
         if length > self.max_frame_bytes:
             raise FrameTooBigError(
-                f"Declared frame size {length} bytes exceeds "
-                f"max_frame_bytes={self.max_frame_bytes}"
+                f"Declared frame size {length} bytes exceeds max_frame_bytes={self.max_frame_bytes}"
             )
         return length
 
@@ -353,7 +352,9 @@ class LengthPrefixFramer:
                 raise
             return MCPMessage(payload=payload, message_id=message_id)
 
-    def decode(self, frame_bytes: bytes, message_id: int | str | None = None) -> Union[MCPMessage, tuple[bytes, bytes]]:
+    def decode(
+        self, frame_bytes: bytes, message_id: int | str | None = None
+    ) -> Union[MCPMessage, tuple[bytes, bytes]]:
         """Decode a complete length-prefixed frame.
 
         Parameters
@@ -635,7 +636,9 @@ class PubSubBus:
         self._next_sid: int = 1
         self._sid_map: Dict[int, Any] = {}  # sid -> (topic_key, handler)
 
-    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0) -> int:
+    def subscribe(
+        self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0
+    ) -> int:
         """Register *handler* to receive messages on *topic*.
 
         Args:
@@ -774,10 +777,7 @@ class PubSubBus:
         key = str(topic)
         handlers = list(self._subscribers.pop(key, []))
         # Remove corresponding sid_map entries for these handlers
-        stale_sids = [
-            sid for sid, (k, h) in self._sid_map.items()
-            if k == key and h in handlers
-        ]
+        stale_sids = [sid for sid, (k, h) in self._sid_map.items() if k == key and h in handlers]
         for sid in stale_sids:
             self._sid_map.pop(sid, None)
         return len(handlers)
@@ -834,10 +834,7 @@ class PubSubBus:
             Sorted list of topic key strings.  Empty list if *handler* is not
             subscribed to any topic.
         """
-        return sorted(
-            k for k, handlers in self._subscribers.items()
-            if handler in handlers
-        )
+        return sorted(k for k, handlers in self._subscribers.items() if handler in handlers)
 
     def handler_count(self) -> int:
         """Return the number of *unique* handlers across all topics.
@@ -1020,6 +1017,7 @@ class PubSubBus:
 
         key = str(topic)
         all_handlers = list(self._subscribers.get(key, []))
+
         # Sort by handler priority: handlers with __mcp_priority__ >= priority
         # are moved to the front.  Stable sort preserves insertion order within
         # each bucket.
@@ -1077,6 +1075,7 @@ class PubSubBus:
 # PubSubBus ↔ P2PServiceManager bridge (session 56)
 # ---------------------------------------------------------------------------
 
+
 class PubSubBridge:
     """Bridge between :class:`PubSubBus` and a :class:`P2PServiceManager`.
 
@@ -1120,6 +1119,7 @@ class PubSubBridge:
 
         for event_type in PubSubEventType:
             topic = event_type.value
+
             # Each handler receives (topic_key, payload) from PubSubBus.publish().
             def _make_handler() -> Any:
                 def _handler(topic_key: str, payload: Any) -> None:
@@ -1130,7 +1130,9 @@ class PubSubBridge:
                             logger.warning("announce_capability(%s) failed: %s", topic_key, exc)
                     else:
                         logger.debug("PubSubBridge forwarding %s: %s", topic_key, payload)
+
                 return _handler
+
             bus.subscribe(topic, _make_handler())
 
         self._connected = True

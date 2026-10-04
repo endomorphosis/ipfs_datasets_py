@@ -15,6 +15,7 @@ GIVEN-WHEN-THEN tests covering missed branches in:
   - lineage/metrics.py        (lines 289-291, 313)
   - extraction/types.py       (lines 20-22, 32-36)
 """
+
 import sys
 import os
 import types as _types
@@ -27,8 +28,14 @@ import pytest
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _make_kg(n_entities=2, n_rels=1):
-    from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+    from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+        KnowledgeGraph,
+        Entity,
+        Relationship,
+    )
+
     kg = KnowledgeGraph()
     for i in range(n_entities):
         e = Entity(name=f"E{i}", entity_type="Person")
@@ -36,17 +43,20 @@ def _make_kg(n_entities=2, n_rels=1):
         kg.add_entity(e)
     if n_rels and n_entities >= 2:
         vals = list(kg.entities.values())
-        kg.add_relationship(Relationship(
-            relationship_type="knows",
-            source_entity=vals[0],
-            target_entity=vals[1],
-        ))
+        kg.add_relationship(
+            Relationship(
+                relationship_type="knows",
+                source_entity=vals[0],
+                target_entity=vals[1],
+            )
+        )
     return kg
 
 
 # ===========================================================================
 # 1. extraction/validator.py
 # ===========================================================================
+
 
 class TestValidatorRelationshipCorrections:
     """Cover lines 195-206 (relationship corrections branch)."""
@@ -58,6 +68,7 @@ class TestValidatorRelationshipCorrections:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         inst = KnowledgeGraphExtractorWithValidation.__new__(KnowledgeGraphExtractorWithValidation)
         inst.tracer = None
         inst.validate_during_extraction = True
@@ -98,6 +109,7 @@ class TestValidatorRelationshipCorrections:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         inst = KnowledgeGraphExtractorWithValidation.__new__(KnowledgeGraphExtractorWithValidation)
         inst.tracer = None
         inst.validate_during_extraction = True
@@ -131,6 +143,7 @@ class TestValidatorExtractFromDocumentsAutoCorrect:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         inst = KnowledgeGraphExtractorWithValidation.__new__(KnowledgeGraphExtractorWithValidation)
         inst.tracer = None
         inst.validate_during_extraction = True
@@ -166,6 +179,7 @@ class TestValidatorExtractFromDocumentsValidationDepth:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         inst = KnowledgeGraphExtractorWithValidation.__new__(KnowledgeGraphExtractorWithValidation)
         inst.tracer = None
         inst.validate_during_extraction = True
@@ -202,6 +216,7 @@ class TestValidatorExtractFromDocumentsValidationDepth:
 # 2. extraction/srl.py
 # ===========================================================================
 
+
 class TestSRLEmptySentences:
     """Cover line 613 (empty-sentence skip in build_temporal_graph) and 724."""
 
@@ -210,6 +225,7 @@ class TestSRLEmptySentences:
         WHEN build_temporal_graph is called
         THEN returns KG without error"""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         kg = ext.build_temporal_graph("Alice runs.\n\nBob sings.")
         assert kg is not None
@@ -219,6 +235,7 @@ class TestSRLEmptySentences:
         WHEN _extract_heuristic is called with sentence_split=True
         THEN returns list without error"""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         ext.sentence_split = True
         frames = ext._extract_heuristic("Alice runs.  \n\n  Bob sings.")
@@ -261,11 +278,13 @@ class TestSRLSpacyFallback:
 # 3. reasoning/helpers.py
 # ===========================================================================
 
+
 class TestReasoningHelpersSideEffect:
     """Cover side_effect raise paths and LLM exception paths."""
 
     def _make_reasoner(self):
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import CrossDocumentReasoner
+
         r = CrossDocumentReasoner.__new__(CrossDocumentReasoner)
         r.llm_service = None
         r._default_llm_router = None
@@ -276,6 +295,7 @@ class TestReasoningHelpersSideEffect:
         WHEN _generate_llm_answer is called with OPENAI_API_KEY set
         THEN fallback rule-based answer returned"""
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _m
+
         old = _m.openai
         fake = MagicMock()
         fake.side_effect = ImportError("no openai")
@@ -293,6 +313,7 @@ class TestReasoningHelpersSideEffect:
         WHEN _generate_llm_answer is called
         THEN warning logged and fallback returned"""
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _m
+
         old = _m.openai
         # Use a regular MagicMock (auto-specs attrs) — no `side_effect` attribute trick
         fake = MagicMock()
@@ -313,6 +334,7 @@ class TestReasoningHelpersSideEffect:
         WHEN _generate_llm_answer called with ANTHROPIC_API_KEY (no OPENAI_API_KEY)
         THEN fallback answer returned"""
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _m
+
         old_oa = _m.openai
         old_an = _m.anthropic
         _m.openai = None
@@ -322,8 +344,7 @@ class TestReasoningHelpersSideEffect:
         _m.anthropic = fake
         r = self._make_reasoner()
         try:
-            env = {k: v for k, v in os.environ.items()
-                   if k != "OPENAI_API_KEY"}
+            env = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
             env["ANTHROPIC_API_KEY"] = "key"
             with patch.dict(os.environ, env, clear=True):
                 answer, conf = r._generate_llm_answer("p", "q")
@@ -337,6 +358,7 @@ class TestReasoningHelpersSideEffect:
         WHEN _generate_llm_answer called
         THEN fallback answer returned"""
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _m
+
         old_oa = _m.openai
         old_an = _m.anthropic
         _m.openai = None
@@ -360,6 +382,7 @@ class TestReasoningHelpersSideEffect:
         WHEN _get_llm_router is called
         THEN returns None"""
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _m
+
         old = _m.LLMRouter
         _m.LLMRouter = MagicMock(side_effect=RuntimeError("init fail"))
         r = self._make_reasoner()
@@ -375,13 +398,14 @@ class TestReasoningHelpersSideEffect:
 # 4. jsonld/rdf_serializer.py
 # ===========================================================================
 
-class TestRDFSerializerMissedBranches:
 
+class TestRDFSerializerMissedBranches:
     def test_format_term_unsupported_type_returns_quoted_string(self):
         """GIVEN a list value (unsupported type: not str/bool/int/float/dict)
         WHEN _format_term is called
         THEN falls through to else branch and returns quoted str(term)"""
         from ipfs_datasets_py.knowledge_graphs.jsonld.rdf_serializer import TurtleSerializer
+
         s = TurtleSerializer()
         # A list is not str/bool/int/float/dict — falls to else: return f'"{str(term)}"'
         result = s._format_term([1, 2, 3])
@@ -392,6 +416,7 @@ class TestRDFSerializerMissedBranches:
         WHEN _parse_object called
         THEN returns dict with @value and @type"""
         from ipfs_datasets_py.knowledge_graphs.jsonld.rdf_serializer import TurtleParser
+
         p = TurtleParser()
         # Must not contain ':' (which would be treated as URI); use bare type name
         result = p._parse_object('"42"^^integer')
@@ -403,6 +428,7 @@ class TestRDFSerializerMissedBranches:
         WHEN _parse_object called
         THEN returns 'hello' as string"""
         from ipfs_datasets_py.knowledge_graphs.jsonld.rdf_serializer import TurtleParser
+
         p = TurtleParser()
         result = p._parse_object("hello")
         assert result == "hello"
@@ -414,6 +440,7 @@ class TestRDFSerializerMissedBranches:
         Note: uses bare type name 'datatype' (no colon) to ensure the object bypasses
         the URI-detection check at line 372 and is parsed as a typed-literal dict."""
         from ipfs_datasets_py.knowledge_graphs.jsonld.rdf_serializer import turtle_to_jsonld
+
         # '"hello"^^datatype' → dict → triggers line 512 relationship branch
         # The subsequent translator call may fail with TypeError (pre-existing);
         # we only care that line 512 was reached.
@@ -428,13 +455,16 @@ class TestRDFSerializerMissedBranches:
 # 5. jsonld/context.py
 # ===========================================================================
 
-class TestJSONLDContextMissedBranches:
 
+class TestJSONLDContextMissedBranches:
     def test_expand_extracts_context_from_data_dict(self):
         """GIVEN data with @context and context arg=None
         WHEN expand called
         THEN context extracted from data"""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextExpander as JSONLDExpander
+        from ipfs_datasets_py.knowledge_graphs.jsonld.context import (
+            ContextExpander as JSONLDExpander,
+        )
+
         exp = JSONLDExpander()
         data = {
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -447,7 +477,10 @@ class TestJSONLDContextMissedBranches:
         """GIVEN data without @context and context arg=None
         WHEN expand called
         THEN empty context used, no error"""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextExpander as JSONLDExpander
+        from ipfs_datasets_py.knowledge_graphs.jsonld.context import (
+            ContextExpander as JSONLDExpander,
+        )
+
         exp = JSONLDExpander()
         result = exp.expand({"name": "Alice"})
         assert isinstance(result, dict)
@@ -456,7 +489,10 @@ class TestJSONLDContextMissedBranches:
         """GIVEN object with list value
         WHEN expand called
         THEN list items individually expanded"""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextExpander as JSONLDExpander
+        from ipfs_datasets_py.knowledge_graphs.jsonld.context import (
+            ContextExpander as JSONLDExpander,
+        )
+
         exp = JSONLDExpander()
         result = exp.expand({"tags": ["a", "b", "c"]})
         vals = list(result.values())
@@ -466,7 +502,11 @@ class TestJSONLDContextMissedBranches:
         """GIVEN data where value is a list
         WHEN compact called
         THEN list preserved in output"""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextCompactor as JSONLDCompactor, JSONLDContext
+        from ipfs_datasets_py.knowledge_graphs.jsonld.context import (
+            ContextCompactor as JSONLDCompactor,
+            JSONLDContext,
+        )
+
         comp = JSONLDCompactor()
         ctx = JSONLDContext()
         ctx.prefixes["ex"] = "http://example.org/"
@@ -478,7 +518,11 @@ class TestJSONLDContextMissedBranches:
         """GIVEN @type is a list
         WHEN compact called
         THEN @type list handled"""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextCompactor as JSONLDCompactor, JSONLDContext
+        from ipfs_datasets_py.knowledge_graphs.jsonld.context import (
+            ContextCompactor as JSONLDCompactor,
+            JSONLDContext,
+        )
+
         comp = JSONLDCompactor()
         ctx = JSONLDContext()
         data = {"@type": ["http://schema.org/Person", "http://schema.org/Agent"]}
@@ -489,7 +533,11 @@ class TestJSONLDContextMissedBranches:
         """GIVEN context term defined as {'@id': uri}
         WHEN _compact_term called with that URI
         THEN returns term name"""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextCompactor as JSONLDCompactor, JSONLDContext
+        from ipfs_datasets_py.knowledge_graphs.jsonld.context import (
+            ContextCompactor as JSONLDCompactor,
+            JSONLDContext,
+        )
+
         comp = JSONLDCompactor()
         ctx = JSONLDContext()
         ctx.terms["name"] = {"@id": "http://schema.org/name"}
@@ -501,8 +549,8 @@ class TestJSONLDContextMissedBranches:
 # 6. query/knowledge_graph.py — GraphRAG fallback
 # ===========================================================================
 
-class TestQueryKGGraphRAGFallback:
 
+class TestQueryKGGraphRAGFallback:
     def test_graphrag_fallback_when_unified_not_available(self):
         """GIVEN UnifiedGraphRAGProcessor import raises ImportError
         WHEN query_knowledge_graph called
@@ -522,9 +570,7 @@ class TestQueryKGGraphRAGFallback:
         original = sys.modules.get(
             "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag"
         )
-        sys.modules[
-            "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag"
-        ] = None  # type: ignore
+        sys.modules["ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag"] = None  # type: ignore
 
         original_legacy = sys.modules.get("ipfs_datasets_py.processors.graphrag_processor")
         sys.modules["ipfs_datasets_py.processors.graphrag_processor"] = legacy_module  # type: ignore
@@ -543,9 +589,9 @@ class TestQueryKGGraphRAGFallback:
                     "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag", None
                 )
             else:
-                sys.modules[
-                    "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag"
-                ] = original
+                sys.modules["ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag"] = (
+                    original
+                )
 
             if original_legacy is None:
                 sys.modules.pop("ipfs_datasets_py.processors.graphrag_processor", None)
@@ -557,15 +603,16 @@ class TestQueryKGGraphRAGFallback:
 # 7. migration/neo4j_exporter.py
 # ===========================================================================
 
-class TestNeo4jExporterMissedBranches:
 
+class TestNeo4jExporterMissedBranches:
     def test_migration_error_reraised_from_connect(self):
         """GIVEN _GraphDatabase.driver raises MigrationError
         WHEN _connect called
         THEN MigrationError propagates unchanged"""
         pytest.importorskip("ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter")
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            Neo4jExporter, ExportConfig,
+            Neo4jExporter,
+            ExportConfig,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
 
@@ -602,7 +649,8 @@ class TestNeo4jExporterMissedBranches:
         THEN callback invoked"""
         pytest.importorskip("ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter")
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            Neo4jExporter, ExportConfig,
+            Neo4jExporter,
+            ExportConfig,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
 
@@ -640,13 +688,14 @@ class TestNeo4jExporterMissedBranches:
 # 8. neo4j_compat/types.py
 # ===========================================================================
 
-class TestNeo4jCompatTypesGetItem:
 
+class TestNeo4jCompatTypesGetItem:
     def test_node_getitem_returns_property(self):
         """GIVEN Node with property 'name'
         WHEN node['name'] accessed
         THEN returns value"""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         n = Node("1", ["Person"], {"name": "Alice"})
         assert n["name"] == "Alice"
 
@@ -655,17 +704,18 @@ class TestNeo4jCompatTypesGetItem:
         WHEN rel['weight'] accessed
         THEN returns value"""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Relationship
+
         r = Relationship("r1", "KNOWS", "n1", "n2", {"weight": 0.9})
         assert r["weight"] == 0.9
 
 
 class TestPathTypeErrors:
-
     def test_path_raises_type_error_when_node_where_rel_expected(self):
         """GIVEN Path constructed with Node at even (rel) position
         WHEN constructed
         THEN TypeError raised"""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node, Path
+
         n0 = Node("n0", [], {})
         n1 = Node("n1", [], {})
         with pytest.raises(TypeError):
@@ -676,6 +726,7 @@ class TestPathTypeErrors:
         WHEN constructed
         THEN TypeError raised"""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node, Relationship, Path
+
         n0 = Node("n0", [], {})
         r1 = Relationship("r1", "KNOWS", "n0", "n1", {})
         r2 = Relationship("r2", "KNOWS", "n1", "n2", {})
@@ -687,17 +738,19 @@ class TestPathTypeErrors:
 # 9. lineage/core.py
 # ===========================================================================
 
-class TestLineageCoreNetworkXUnavailable:
 
+class TestLineageCoreNetworkXUnavailable:
     def test_lineage_graph_raises_when_networkx_unavailable(self):
         """GIVEN NETWORKX_AVAILABLE=False
         WHEN LineageGraph instantiated
         THEN ImportError raised"""
         import ipfs_datasets_py.knowledge_graphs.lineage.core as core_mod
+
         old = core_mod.NETWORKX_AVAILABLE
         core_mod.NETWORKX_AVAILABLE = False
         try:
             from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageGraph
+
             with pytest.raises(ImportError, match="NetworkX"):
                 LineageGraph()
         finally:
@@ -708,10 +761,11 @@ class TestLineageCoreNetworkXUnavailable:
 # 10. lineage/enhanced.py
 # ===========================================================================
 
-class TestLineageEnhancedMissedBranches:
 
+class TestLineageEnhancedMissedBranches:
     def _make_tracker(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
         return LineageTracker()
 
     def test_semantic_analyzer_returns_empty_when_node_not_found(self):
@@ -719,6 +773,7 @@ class TestLineageEnhancedMissedBranches:
         WHEN detect_semantic_patterns called
         THEN returns {} (line 77)"""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import SemanticAnalyzer
+
         tracker = self._make_tracker()
         analyzer = SemanticAnalyzer()
         result = analyzer.detect_semantic_patterns(tracker.graph, "nonexistent")
@@ -729,6 +784,7 @@ class TestLineageEnhancedMissedBranches:
         WHEN calculate_path_confidence called
         THEN returns 1.0 (line 237)"""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import ConfidenceScorer
+
         scorer = ConfidenceScorer()
         tracker = self._make_tracker()
         score = scorer.calculate_path_confidence(tracker.graph, ["n1"])
@@ -740,6 +796,7 @@ class TestLineageEnhancedMissedBranches:
         THEN returns float (line 259 branch: confidences empty → 1.0)"""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import ConfidenceScorer
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
+
         scorer = ConfidenceScorer()
         tracker = self._make_tracker()
         n1 = LineageNode(node_id="n1", node_type="dataset")
@@ -755,6 +812,7 @@ class TestLineageEnhancedMissedBranches:
         WHEN track_link_with_analysis called with unknown IDs
         THEN raises ValueError (line 354)"""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import EnhancedLineageTracker
+
         et = EnhancedLineageTracker()
         with pytest.raises(ValueError, match="Both nodes must exist"):
             et.track_link_with_analysis("unknown-src", "unknown-tgt", "knows")
@@ -764,6 +822,7 @@ class TestLineageEnhancedMissedBranches:
         WHEN find_similar_nodes called
         THEN skips itself (line 429) and returns empty list"""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import EnhancedLineageTracker
+
         et = EnhancedLineageTracker()
         et.track_node("solo", "dataset")
         result = et.find_similar_nodes("solo")
@@ -774,11 +833,12 @@ class TestLineageEnhancedMissedBranches:
 # 11. lineage/metrics.py
 # ===========================================================================
 
-class TestLineageMetricsMissedBranches:
 
+class TestLineageMetricsMissedBranches:
     def _make_cyclic_tracker(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode, LineageLink
+
         tracker = LineageTracker()
         for nid in ["A", "B", "C"]:
             n = LineageNode(node_id=nid, node_type="dataset")
@@ -796,6 +856,7 @@ class TestLineageMetricsMissedBranches:
         WHEN detect_circular_dependencies called
         THEN returns non-empty list (cycles found, lines 287-288)"""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         tracker = self._make_cyclic_tracker()
         analyzer = DependencyAnalyzer(tracker)
         cycles = analyzer.detect_circular_dependencies()
@@ -807,6 +868,7 @@ class TestLineageMetricsMissedBranches:
         WHEN find_dependency_chains called
         THEN returns list (cycle guard prevents infinite loop)"""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         tracker = self._make_cyclic_tracker()
         analyzer = DependencyAnalyzer(tracker)
         chains = analyzer.find_dependency_chains("A", direction="upstream")
@@ -817,6 +879,7 @@ class TestLineageMetricsMissedBranches:
 # 12. extraction/types.py
 # ===========================================================================
 
+
 class TestExtractionTypesAttributes:
     """Confirm attributes exist regardless of which branch was taken."""
 
@@ -825,6 +888,7 @@ class TestExtractionTypesAttributes:
         WHEN imported
         THEN HAVE_TRACER attribute exists"""
         from ipfs_datasets_py.knowledge_graphs.extraction import types as t
+
         assert hasattr(t, "HAVE_TRACER")
 
     def test_have_accelerate_attribute_exists(self):
@@ -832,6 +896,7 @@ class TestExtractionTypesAttributes:
         WHEN imported
         THEN HAVE_ACCELERATE attribute exists"""
         from ipfs_datasets_py.knowledge_graphs.extraction import types as t
+
         assert hasattr(t, "HAVE_ACCELERATE")
 
     def test_is_accelerate_available_callable(self):
@@ -839,6 +904,7 @@ class TestExtractionTypesAttributes:
         WHEN is_accelerate_available called
         THEN returns bool"""
         from ipfs_datasets_py.knowledge_graphs.extraction.types import is_accelerate_available
+
         assert isinstance(is_accelerate_available(), bool)
 
     def test_get_accelerate_status_callable(self):
@@ -846,5 +912,6 @@ class TestExtractionTypesAttributes:
         WHEN get_accelerate_status called
         THEN returns dict"""
         from ipfs_datasets_py.knowledge_graphs.extraction.types import get_accelerate_status
+
         result = get_accelerate_status()
         assert isinstance(result, dict)

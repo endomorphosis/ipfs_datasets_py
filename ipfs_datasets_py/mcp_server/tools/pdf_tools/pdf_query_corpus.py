@@ -19,6 +19,7 @@ from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
     parse_json_object,
 )
 
+
 async def pdf_query_corpus(
     query: str,
     query_type: str = "hybrid",
@@ -26,7 +27,7 @@ async def pdf_query_corpus(
     document_filters: Optional[Dict[str, Any]] = None,
     enable_reasoning: bool = True,
     include_sources: bool = True,
-    confidence_threshold: float = 0.7
+    confidence_threshold: float = 0.7,
 ) -> Dict[str, Any]:
     # MCP JSON-string entrypoint (used by unit tests)
     if (
@@ -37,7 +38,12 @@ async def pdf_query_corpus(
         and enable_reasoning is True
         and include_sources is True
         and confidence_threshold == 0.7
-        and (query.lstrip().startswith("{") or query.lstrip().startswith("[") or any(ch.isspace() for ch in query) or not query.strip())
+        and (
+            query.lstrip().startswith("{")
+            or query.lstrip().startswith("[")
+            or any(ch.isspace() for ch in query)
+            or not query.strip()
+        )
     ):
         data, error = parse_json_object(query)
         if error is not None:

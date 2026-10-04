@@ -1,13 +1,11 @@
-
 from types_ import Logger, Processor
 from ._is_mock import is_mock
 from logger import logger
 
+
 def check_if_all_these_processors_are_mocks(
-        name: str, 
-        keys: list[str], 
-        processors: dict[str, Processor]
-    ) -> bool:
+    name: str, keys: list[str], processors: dict[str, Processor]
+) -> bool:
     """Check if all specified processors are mock objects.
 
     Args:
@@ -25,5 +23,7 @@ def check_if_all_these_processors_are_mocks(
     else:
         for key in keys:
             if is_mock(processors[key]):
-                logger.warning(f"'{key}' processor in {name} handler is a mock. Some functionality may be limited.")
+                logger.warning(
+                    f"'{key}' processor in {name} handler is a mock. Some functionality may be limited."
+                )
         return False

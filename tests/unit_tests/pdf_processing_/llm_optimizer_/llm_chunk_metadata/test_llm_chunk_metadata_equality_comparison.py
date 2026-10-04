@@ -6,12 +6,13 @@ Test suite for equality comparison operations.
 Tests equality, inequality, and hash operations for LLMChunkMetadata instances
 including edge cases with None and non-metadata objects.
 """
+
 import pytest
 from pydantic import ValidationError
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
 
 
@@ -26,15 +27,15 @@ class TestLLMChunkMetadataEqualityComparison:
         """
         # Constants
         EXPECTED_RESULT = True
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata1 = LLMChunkMetadata(**valid_data)
         metadata2 = LLMChunkMetadata(**valid_data)
-        
+
         # When
         result = metadata1 == metadata2
-        
+
         # Then
         assert result is EXPECTED_RESULT
 
@@ -46,15 +47,15 @@ class TestLLMChunkMetadataEqualityComparison:
         """
         # Constants
         EXPECTED_RESULT = False
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata1 = LLMChunkMetadata(**valid_data)
         metadata2 = LLMChunkMetadata(**valid_data)
-        
+
         # When
         result = metadata1 != metadata2
-        
+
         # Then
         assert result is EXPECTED_RESULT
 
@@ -68,17 +69,17 @@ class TestLLMChunkMetadataEqualityComparison:
         FIELD_TO_CHANGE = "element_type"
         DIFFERENT_VALUE = "table"
         EXPECTED_RESULT = False
-        
+
         # Given
         data1 = DataFactory.create_valid_baseline_data()
         data2 = DataFactory.create_valid_baseline_data()
         data2[FIELD_TO_CHANGE] = DIFFERENT_VALUE  # Make them different
         metadata1 = LLMChunkMetadata(**data1)
         metadata2 = LLMChunkMetadata(**data2)
-        
+
         # When
         result = metadata1 == metadata2
-        
+
         # Then
         assert result is EXPECTED_RESULT
 
@@ -92,17 +93,17 @@ class TestLLMChunkMetadataEqualityComparison:
         FIELD_TO_CHANGE = "confidence"
         DIFFERENT_VALUE = 0.5
         EXPECTED_RESULT = True
-        
+
         # Given
         data1 = DataFactory.create_valid_baseline_data()
         data2 = DataFactory.create_valid_baseline_data()
         data2[FIELD_TO_CHANGE] = DIFFERENT_VALUE  # Make them different
         metadata1 = LLMChunkMetadata(**data1)
         metadata2 = LLMChunkMetadata(**data2)
-        
+
         # When
         result = metadata1 != metadata2
-        
+
         # Then
         assert result is EXPECTED_RESULT
 
@@ -115,14 +116,14 @@ class TestLLMChunkMetadataEqualityComparison:
         # Constants
         NON_METADATA_OBJECT = {"some": "dict"}
         EXPECTED_RESULT = False
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         result = metadata == NON_METADATA_OBJECT
-        
+
         # Then
         assert result is EXPECTED_RESULT
 
@@ -135,14 +136,14 @@ class TestLLMChunkMetadataEqualityComparison:
         # Constants
         NONE_VALUE = None
         EXPECTED_RESULT = False
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         result = metadata == NONE_VALUE
-        
+
         # Then
         assert result is EXPECTED_RESULT
 
@@ -156,14 +157,15 @@ class TestLLMChunkMetadataEqualityComparison:
         valid_data = DataFactory.create_valid_baseline_data()
         metadata1 = LLMChunkMetadata(**valid_data)
         metadata2 = LLMChunkMetadata(**valid_data)
-        
+
         # When
         hash1 = hash(metadata1)
         hash2 = hash(metadata2)
-        
+
         # Then
         assert metadata1 == metadata2  # Verify they are equal first
         assert hash1 == hash2  # Hash values must be equal for equal objects
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

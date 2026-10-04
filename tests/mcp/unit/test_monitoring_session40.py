@@ -20,6 +20,7 @@ Covers previously-uncovered code paths:
 - P2PMetricsCollector dashboard cache hit
 - get_metrics_collector() / get_p2p_metrics_collector() singletons
 """
+
 import asyncio
 import time
 from collections import deque
@@ -46,6 +47,7 @@ from ipfs_datasets_py.mcp_server.exceptions import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_collector(**kwargs) -> EnhancedMetricsCollector:
     return EnhancedMetricsCollector(enabled=True, retention_hours=24, **kwargs)
@@ -81,8 +83,8 @@ def _make_snapshot(ts_offset_minutes: float = 0, **kwargs) -> PerformanceSnapsho
 # _serialize_labels
 # ===========================================================================
 
-class TestSerializeLabels:
 
+class TestSerializeLabels:
     def test_empty_labels(self):
         collector = _make_collector()
         result = collector._serialize_labels({})
@@ -104,8 +106,8 @@ class TestSerializeLabels:
 # increment_counter with labels
 # ===========================================================================
 
-class TestIncrementCounterWithLabels:
 
+class TestIncrementCounterWithLabels:
     def test_counter_incremented_with_labels(self):
         collector = _make_collector()
         collector.increment_counter("requests", labels={"tool": "search"})
@@ -122,8 +124,8 @@ class TestIncrementCounterWithLabels:
 # set_gauge with labels
 # ===========================================================================
 
-class TestSetGaugeWithLabels:
 
+class TestSetGaugeWithLabels:
     def test_gauge_set_with_labels(self):
         collector = _make_collector()
         collector.set_gauge("latency_ms", 42.5, labels={"endpoint": "search"})
@@ -140,8 +142,8 @@ class TestSetGaugeWithLabels:
 # observe_histogram with labels
 # ===========================================================================
 
-class TestObserveHistogramWithLabels:
 
+class TestObserveHistogramWithLabels:
     def test_histogram_recorded_with_labels(self):
         collector = _make_collector()
         collector.observe_histogram("response_time", 100.0, labels={"status": "200"})
@@ -158,8 +160,8 @@ class TestObserveHistogramWithLabels:
 # _compute_percentiles edge cases
 # ===========================================================================
 
-class TestComputePercentiles:
 
+class TestComputePercentiles:
     def test_empty_list_returns_zeros(self):
         collector = _make_collector()
         result = collector._compute_percentiles([])
@@ -202,8 +204,8 @@ class TestComputePercentiles:
 # get_tool_latency_percentiles
 # ===========================================================================
 
-class TestGetToolLatencyPercentiles:
 
+class TestGetToolLatencyPercentiles:
     def test_empty_tool_returns_zeros(self):
         collector = _make_collector()
         result = collector.get_tool_latency_percentiles("nonexistent_tool")
@@ -233,8 +235,8 @@ class TestGetToolLatencyPercentiles:
 # get_performance_trends
 # ===========================================================================
 
-class TestGetPerformanceTrends:
 
+class TestGetPerformanceTrends:
     def test_empty_returns_empty_lists(self):
         collector = _make_collector()
         trends = collector.get_performance_trends(hours=1)
@@ -283,8 +285,8 @@ class TestGetPerformanceTrends:
 # _cleanup_old_data
 # ===========================================================================
 
-class TestCleanupOldData:
 
+class TestCleanupOldData:
     def test_old_snapshots_removed(self):
         collector = _make_collector()
         # Add a snapshot older than retention_hours (24h)
@@ -314,8 +316,8 @@ class TestCleanupOldData:
 # track_request async context manager
 # ===========================================================================
 
-class TestTrackRequestLifecycle:
 
+class TestTrackRequestLifecycle:
     def test_track_request_increments_count(self):
         collector = _make_collector()
 
@@ -355,8 +357,8 @@ class TestTrackRequestLifecycle:
 # get_metrics_collector / get_p2p_metrics_collector singletons
 # ===========================================================================
 
-class TestGlobalSingletons:
 
+class TestGlobalSingletons:
     def test_get_metrics_collector_returns_instance(self):
         collector = get_metrics_collector()
         assert isinstance(collector, EnhancedMetricsCollector)
@@ -370,8 +372,8 @@ class TestGlobalSingletons:
 # _collect_system_metrics (no-psutil path)
 # ===========================================================================
 
-class TestCollectSystemMetrics:
 
+class TestCollectSystemMetrics:
     def test_no_psutil_adds_snapshot(self):
         """When psutil is absent, _collect_system_metrics should still append a snapshot."""
         collector = _make_collector()
@@ -387,8 +389,8 @@ class TestCollectSystemMetrics:
 # Disabled collector no-ops
 # ===========================================================================
 
-class TestDisabledCollectorNoOps:
 
+class TestDisabledCollectorNoOps:
     def test_track_tool_execution_disabled(self):
         collector = EnhancedMetricsCollector(enabled=False)
         collector.track_tool_execution("my_tool", 50.0, True)
@@ -406,8 +408,8 @@ class TestDisabledCollectorNoOps:
 # HealthCheckError path in _check_health
 # ===========================================================================
 
-class TestCheckHealthSpecialExceptions:
 
+class TestCheckHealthSpecialExceptions:
     def test_health_check_error_maps_to_critical(self):
         """HealthCheckError raised by a check function → status='critical'."""
         collector = _make_collector()
@@ -449,8 +451,8 @@ class TestCheckHealthSpecialExceptions:
 # Disk and response-time alert paths in _check_alerts
 # ===========================================================================
 
-class TestCheckAlertsAdditionalPaths:
 
+class TestCheckAlertsAdditionalPaths:
     def test_cpu_alert_triggered(self):
         """_check_alerts should add a cpu_high alert when cpu_percent > threshold."""
         collector = _make_collector()
@@ -494,8 +496,8 @@ class TestCheckAlertsAdditionalPaths:
 # _calculate_request_rate with snapshots (non-zero path)
 # ===========================================================================
 
-class TestCalculateRequestRate:
 
+class TestCalculateRequestRate:
     def test_request_rate_with_recent_snapshots(self):
         """_calculate_request_rate returns >0 when request_times is non-empty."""
         collector = _make_collector()
@@ -518,8 +520,8 @@ class TestCalculateRequestRate:
 # MonitoringError raised in track_request
 # ===========================================================================
 
-class TestTrackRequestMonitoringError:
 
+class TestTrackRequestMonitoringError:
     def test_monitoring_error_increments_error_count(self):
         """MonitoringError propagates and increments error_count."""
         collector = _make_collector()
@@ -539,8 +541,8 @@ class TestTrackRequestMonitoringError:
 # P2PMetricsCollector dashboard cache hit
 # ===========================================================================
 
-class TestP2PDashboardCache:
 
+class TestP2PDashboardCache:
     def test_cache_hit_returns_same_data(self):
         """get_dashboard_data() returns cached result on second call (cache hit)."""
         p2p = P2PMetricsCollector()

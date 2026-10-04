@@ -4,6 +4,7 @@ This test exercises the full pipeline with real (no-LLM) components using
 rule-based extraction and the default OntologyCritic. It verifies that the
 three components integrate correctly without mocking the core logic.
 """
+
 from __future__ import annotations
 
 import pytest

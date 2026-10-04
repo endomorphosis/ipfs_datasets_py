@@ -104,7 +104,7 @@ result = await load_dataset("glue/mnli", options={"split": "train", "streaming":
 operations = [
     {"type": "filter", "column": "text", "condition": "length > 100"},
     {"type": "select", "columns": ["id", "text", "label"]},
-    {"type": "sort", "column": "id", "ascending": True}
+    {"type": "sort", "column": "id", "ascending": True},
 ]
 result = await process_dataset("dataset_123", operations)
 ```
@@ -775,7 +775,7 @@ dataset_id = dataset_result["dataset_id"]
 # Process dataset
 operations = [
     {"type": "filter", "column": "context", "condition": "length > 100"},
-    {"type": "select", "columns": ["question", "context", "answers"]}
+    {"type": "select", "columns": ["question", "context", "answers"]},
 ]
 processed_result = await process_dataset(dataset_id, operations)
 
@@ -784,9 +784,7 @@ embedding_result = await generate_embeddings_from_dataset(processed_result["data
 
 # Create vector index
 index_result = await create_vector_index(
-    vectors=embedding_result["embeddings"],
-    metric="cosine",
-    index_name="squad_embeddings"
+    vectors=embedding_result["embeddings"], metric="cosine", index_name="squad_embeddings"
 )
 
 # Save results
@@ -797,46 +795,35 @@ await save_dataset(processed_result["dataset_id"], "/output/processed_squad.json
 ```python
 # Search vector index
 search_results = await search_vector_index(
-    index_id="squad_embeddings",
-    query_vector=query_embedding,
-    top_k=10,
-    include_metadata=True
+    index_id="squad_embeddings", query_vector=query_embedding, top_k=10, include_metadata=True
 )
 
 # Analyze results
 cluster_results = await cluster_analysis(
-    data=search_results["results"],
-    algorithm="kmeans",
-    n_clusters=3
+    data=search_results["results"], algorithm="kmeans", n_clusters=3
 )
 
 # Generate quality assessment
 quality_results = await quality_assessment(
-    data=search_results["results"],
-    metrics=["coherence", "diversity", "coverage"]
+    data=search_results["results"], metrics=["coherence", "diversity", "coverage"]
 )
 ```
 
 #### 3. IPFS Integration Workflow
 ```python
 # Pin dataset to IPFS
-pin_result = await pin_to_ipfs(
-    content_source="/path/to/dataset.json",
-    recursive=True
-)
+pin_result = await pin_to_ipfs(content_source="/path/to/dataset.json", recursive=True)
 
 # Record provenance
 provenance_result = await record_provenance(
-    dataset_id="dataset_123",
-    operation="ipfs_pin",
-    parameters={"cid": pin_result["cid"]}
+    dataset_id="dataset_123", operation="ipfs_pin", parameters={"cid": pin_result["cid"]}
 )
 
 # Create audit record
 audit_result = await record_audit_event(
     action="dataset.publish",
     resource_id="dataset_123",
-    details={"cid": pin_result["cid"], "size": pin_result["size"]}
+    details={"cid": pin_result["cid"], "size": pin_result["size"]},
 )
 ```
 
@@ -862,22 +849,12 @@ result = await tool_function(parameters)
 
 #### Error Response Format
 ```python
-{
-    "status": "error",
-    "message": "Error description",
-    "error_code": "ERROR_CODE",
-    "details": {}
-}
+{"status": "error", "message": "Error description", "error_code": "ERROR_CODE", "details": {}}
 ```
 
 #### Success Response Format
 ```python
-{
-    "status": "success",
-    "data": {},
-    "metadata": {},
-    "execution_time": 1.23
-}
+{"status": "success", "data": {}, "metadata": {}, "execution_time": 1.23}
 ```
 
 ### Performance Optimization

@@ -64,10 +64,7 @@ retrieved_data = await storage.retrieve_data(cid)
 from ipfs_datasets_py.data_transformation.ipld import IPLDVectorStore
 
 vector_store = IPLDVectorStore(ipfs_client=ipfs_client)
-vector_cid = await vector_store.add_vectors(
-    vectors=embedding_vectors,
-    metadata=document_metadata
-)
+vector_cid = await vector_store.add_vectors(vectors=embedding_vectors, metadata=document_metadata)
 ```
 
 ## See Also
