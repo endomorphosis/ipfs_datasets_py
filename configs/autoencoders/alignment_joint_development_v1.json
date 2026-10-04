@@ -1,0 +1,13 @@
+{
+  "schema": "alignment-joint-experiment-config/v1",
+  "study_id": "autoformalization-joint-development-v1",
+  "retrieval_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/retrieval-01/report.json",
+    "sha256": "edd57679e2a41b2f5c5d67ab8940058a54e21aadf48ee2f89894e49e469ad47b"
+  },
+  "policies": ["mmr", "hard_joint", "soft_joint"],
+  "top_k": 5,
+  "shortlist": 20,
+  "diversity_lambda": 0.7,
+  "max_seconds": 180
+}

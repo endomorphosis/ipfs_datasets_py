@@ -1,0 +1,294 @@
+{
+  "admitted": false,
+  "autoencoder_bridge_evaluation": false,
+  "candidate_sha256": {
+    "docs/autoencoders/context_projection_handoff.md": "8f0e8612d031af5811e8183cea01882cbe018ccf46ea90dbfe65a5ee009b37ea",
+    "docs/autoencoders/provisional_context_workflow.md": "658491f908ed348faa6e918b56b58f38d1d41b9b27ce55de9a4a5dc5156d2620",
+    "ipfs_datasets_py/logic/formalization/autoencoder/context_declaration_bridge.py": "5f5bce1bc7c4a6cb11733d82ef980a8c7a7b52b9819a0a88473ba4b654b50f22",
+    "ipfs_datasets_py/logic/formalization/context_slot_bindings.py": "b67b7798c16cac789570e70419ae3d3caec90b9800015660441d0427c1a6fd8f",
+    "ipfs_datasets_py/logic/formalization/context_slot_manifests.py": "dc2fa108f37265fe33b63aa7b05099494732780f7e138f81a07b0c53f076e2ac",
+    "scripts/ops/autoencoder/smoke_context_projection_handoff.py": "7a3c76d2bbfe635c63618c23bdff69e202cba5cd4855b820914fb546a20c4c7c",
+    "tests/unit/logic/formalization/autoencoder/test_context_declaration_bridge.py": "29797dd9c1efd9159b0436d20260134cb17b68cd26ddf84d946240a9b1988dcd",
+    "tests/unit/logic/formalization/test_context_slot_bindings.py": "b3399a9622d8012117bfc6eefce6f9d434eab11e418a8fc06ef54eea1c2eb1df",
+    "tests/unit/logic/formalization/test_context_slot_manifests.py": "72a8bd6ae29fb13bdb0d588a5f37b624d7f70daf64751653eee07cfb5c35c071"
+  },
+  "constitution_formalized": false,
+  "corpus_conversion_benchmark": false,
+  "earlier_attempts_retained": true,
+  "earlier_failed_attempt": {
+    "reason": "Two test assertions checked substring membership on a nullable profile. Test-only assertions were corrected; production unchanged.",
+    "receipt": "validation/bridge-tests-r1.xml",
+    "superseded_by": [
+      "validation/bridge-tests-r2.xml",
+      "validation/final-tests.xml"
+    ]
+  },
+  "evidence_archive": "evidence.tar.gz",
+  "full_catalog_coverage_complete": false,
+  "holdout_evaluation_executed": false,
+  "missing_requested_families": {
+    "legal_ir": [
+      "agency",
+      "argumentation",
+      "authorization",
+      "bdi",
+      "concurrency",
+      "cryptographic_protocol",
+      "datalog",
+      "defeasible_logic",
+      "dependent_type",
+      "description_logic",
+      "doxastic",
+      "epistemic",
+      "epistemic_temporal",
+      "finite_field_constraint",
+      "fuzzy_weighted",
+      "higher_order",
+      "horn_chc",
+      "hyperproperty",
+      "intention_agency",
+      "linear_logic",
+      "modal",
+      "mu_calculus",
+      "nonmonotonic_logic",
+      "probabilistic",
+      "process_calculus",
+      "program",
+      "refinement",
+      "relevance_paraconsistent",
+      "separation_logic",
+      "session_process",
+      "situation_calculus",
+      "transition_system"
+    ],
+    "ui_ux_ir": [
+      "agency",
+      "argumentation",
+      "authorization",
+      "bdi",
+      "concurrency",
+      "cryptographic_protocol",
+      "datalog",
+      "defeasible_logic",
+      "dependent_type",
+      "description_logic",
+      "doxastic",
+      "epistemic",
+      "epistemic_temporal",
+      "finite_field_constraint",
+      "fuzzy_weighted",
+      "higher_order",
+      "horn_chc",
+      "hyperproperty",
+      "intention_agency",
+      "linear_logic",
+      "modal",
+      "mu_calculus",
+      "nonmonotonic_logic",
+      "probabilistic",
+      "process_calculus",
+      "program",
+      "refinement",
+      "relevance_paraconsistent",
+      "separation_logic",
+      "session_process",
+      "situation_calculus"
+    ]
+  },
+  "native_integration": {
+    "actual_lake_build_count": 4,
+    "admitted": false,
+    "integration_passed": true,
+    "interpretation_variants": 4,
+    "original_blocker_count": 3,
+    "qualified": false,
+    "results": {
+      "legal_ir": {
+        "context_change_invalidates_target_identity": true,
+        "original_blockers": {
+          "legal-ir/modal-family/deontic/v3": "native_projection_not_ready",
+          "legal-ir/modal-family/temporal/v3": "native_projection_not_ready"
+        },
+        "original_source_preserved": true,
+        "slot_count": 3,
+        "variants": {
+          "cited": {
+            "actual_lake_build": true,
+            "additional_syntax_checks": [],
+            "contextual_target_sha256": "2b7e789bb26f646e4a75ffde19be3a0c7b6b7e224edad2adaad1b97864f7839e",
+            "native_library": "LegalIR",
+            "native_report_sha256": "4d8a535f48a4950696f6cb8b2d4ce16a4224df116fe9adc1ee5929e473124ece",
+            "passed_projection_count": 11,
+            "projection_count": 11,
+            "training_allowed": false,
+            "wall_seconds": 4.555093912873417
+          },
+          "fixture": {
+            "actual_lake_build": true,
+            "additional_syntax_checks": [],
+            "contextual_target_sha256": "9676de33d0cad50a32bd23e815a3b547f494cc51870fcac9e8803318469cae31",
+            "native_library": "LegalIR",
+            "native_report_sha256": "4d8a535f48a4950696f6cb8b2d4ce16a4224df116fe9adc1ee5929e473124ece",
+            "passed_projection_count": 11,
+            "projection_count": 11,
+            "training_allowed": false,
+            "wall_seconds": 4.546285794116557
+          }
+        }
+      },
+      "ui_ux_ir": {
+        "context_change_invalidates_target_identity": true,
+        "original_blockers": {
+          "ui_ux_ir:tdfol": "UI_before_requires_explicit_occurrence_and_precedence_semantics"
+        },
+        "original_source_preserved": true,
+        "slot_count": 2,
+        "variants": {
+          "cited": {
+            "actual_lake_build": true,
+            "additional_syntax_checks": [
+              [
+                {
+                  "SANY_version_banner_observed": true,
+                  "admitted": false,
+                  "command": [
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+                    "-Xmx128m",
+                    "-cp",
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "tla2sany.SANY",
+                    "-error-codes",
+                    "BoundedNativeState.tla"
+                  ],
+                  "executed": true,
+                  "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+                  "level_checking_enabled": true,
+                  "matching_module_parse_observed": true,
+                  "matching_module_semantic_processing_observed": true,
+                  "model_checker_executed": false,
+                  "model_sha256": "a3915346fc692700d255f6999550f7a9c3a7ee753bc72b9d0c060023443cba50",
+                  "output_truncated": false,
+                  "returncode": 0,
+                  "status": "passed",
+                  "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+                  "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-8atqmbqe/BoundedNativeState.tla\nParsing file /tmp/tlc-17431911135310539080/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-17431911135310539080/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-17431911135310539080/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+                  "timed_out": false,
+                  "tool_sha256": {
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  }
+                }
+              ]
+            ],
+            "contextual_target_sha256": "2f460a9723cdf0f14dbfe7a68426ca9e4f334f49b53d85a9c3cefb76c5e031c1",
+            "native_library": "UIUXIR",
+            "native_report_sha256": "04c3a9a80706f1661c237e02753f17738dd9e6c7ffff483cd4a2754e435275ec",
+            "passed_projection_count": 16,
+            "projected_max_age_ticks": 12,
+            "projection_count": 16,
+            "training_allowed": false,
+            "wall_seconds": 5.810142667032778
+          },
+          "fixture": {
+            "actual_lake_build": true,
+            "additional_syntax_checks": [
+              [
+                {
+                  "SANY_version_banner_observed": true,
+                  "admitted": false,
+                  "command": [
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+                    "-Xmx128m",
+                    "-cp",
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "tla2sany.SANY",
+                    "-error-codes",
+                    "BoundedNativeState.tla"
+                  ],
+                  "executed": true,
+                  "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+                  "level_checking_enabled": true,
+                  "matching_module_parse_observed": true,
+                  "matching_module_semantic_processing_observed": true,
+                  "model_checker_executed": false,
+                  "model_sha256": "a3915346fc692700d255f6999550f7a9c3a7ee753bc72b9d0c060023443cba50",
+                  "output_truncated": false,
+                  "returncode": 0,
+                  "status": "passed",
+                  "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+                  "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-6weyzrxw/BoundedNativeState.tla\nParsing file /tmp/tlc-12085498614497798807/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-12085498614497798807/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-12085498614497798807/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+                  "timed_out": false,
+                  "tool_sha256": {
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+                    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  }
+                }
+              ]
+            ],
+            "contextual_target_sha256": "f1e64b0ce841b941fef58ca985966f7ca159f10556740a014fe42434cd8ccd4d",
+            "native_library": "UIUXIR",
+            "native_report_sha256": "e56fd4141538d578f5a0be0bbd8a6a5a6e1a8af0ff1b9a1d9d64ab6fa002b702",
+            "passed_projection_count": 16,
+            "projected_max_age_ticks": 10,
+            "projection_count": 16,
+            "training_allowed": false,
+            "wall_seconds": 5.737390864873305
+          }
+        }
+      }
+    },
+    "runner_sha256": "7a3c76d2bbfe635c63618c23bdff69e202cba5cd4855b820914fb546a20c4c7c",
+    "schema": "context-projection-handoff-smoke/v1",
+    "scope": "authored retrieval manifests to explicit slot bindings to native conditional projections",
+    "source_count": 2,
+    "source_semantics_verified": false,
+    "successful_lake_build_count": 4,
+    "tool_pins_after": {
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake": "8c987aee79f105bc2ff21772b958b219c8921a51b8ca2df8af410a2b17bd8701",
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lean": "e215cbe9eab0914b49761e9e486d388e2e701cf876d1079d1ba733c48edb2d7b",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+    },
+    "tool_pins_before": {
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake": "8c987aee79f105bc2ff21772b958b219c8921a51b8ca2df8af410a2b17bd8701",
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lean": "e215cbe9eab0914b49761e9e486d388e2e701cf876d1079d1ba733c48edb2d7b",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+    },
+    "total_projection_checks": 54,
+    "training_executed": false,
+    "unique_native_projection_count": 27,
+    "wall_seconds": 26.977809017989784,
+    "weights_downloaded": false
+  },
+  "original_ambiguities_resolved": false,
+  "qualified": false,
+  "schema": "context-projection-handoff-evidence/v1",
+  "scope": "Two authored Legal/UI source cases, each tested with explicit fixture and source-cited declaration variants. The three original projection blockers remain negative controls. No generic prose inference or authentication of review declarations.",
+  "source_semantics_verified": false,
+  "successful_SANY_count": 2,
+  "tested_base_revision": "6f49f557f0996e20a361aeae3b640c09debd00aa",
+  "training_executed": false,
+  "unit_tests": {
+    "errors": "0",
+    "failures": "0",
+    "files": [
+      "tests/unit/logic/formalization/autoencoder/test_context_declaration_bridge.py",
+      "tests/unit/logic/formalization/autoencoder/test_provisional_context_panel.py",
+      "tests/unit/logic/formalization/test_context_link_obligations.py",
+      "tests/unit/logic/formalization/test_context_resolution.py",
+      "tests/unit/logic/formalization/test_context_retrieval_adapters.py",
+      "tests/unit/logic/formalization/test_context_slot_bindings.py",
+      "tests/unit/logic/formalization/test_context_slot_manifests.py"
+    ],
+    "hostname": "spark-b271",
+    "name": "pytest",
+    "skipped": "0",
+    "status": "passed",
+    "tests": "148",
+    "time": "23.012",
+    "timestamp": "2026-10-01T20:22:23.904705+00:00"
+  },
+  "validation_date_utc": "2026-10-01",
+  "validation_source": "isolated export of the pinned workspace tree and scoped candidate files"
+}

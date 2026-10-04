@@ -1,0 +1,289 @@
+{
+  "authority": "candidate_training_declaration",
+  "code_logic": {
+    "authority": "candidate_declaration",
+    "backend_calls": 0,
+    "bridge": "SoftwareVerificationSyntaxBridge@1",
+    "completion_authority": false,
+    "execution_authority": false,
+    "label_to_formula_inference": false,
+    "missing_source_policy": "quarantine_without_targets",
+    "profile_cid": "bafkreifwr36zo4nzwdpx4lqktos6pgfdngq3mhdwezzqgqz2uzeyzogpp4",
+    "projections": [
+      {
+        "available_without_typed_evidence": false,
+        "family": "program",
+        "kind": "program",
+        "owner_schema": "program-ir/v1",
+        "payload_schema": "program.program_ir/v1",
+        "profile": "program_ir",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": false,
+        "typed_owner": "ProgramIR",
+        "view_role": ""
+      },
+      {
+        "available_without_typed_evidence": false,
+        "family": "program",
+        "kind": "contract",
+        "owner_schema": "program-contract/v1",
+        "payload_schema": "program.program_contract/v1",
+        "profile": "dynamic_hoare",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": true,
+        "typed_owner": "ProgramContract",
+        "view_role": ""
+      },
+      {
+        "available_without_typed_evidence": false,
+        "family": "transition_system",
+        "kind": "transition",
+        "owner_schema": "state-transition-ir/v1",
+        "payload_schema": "transition_system.state_transition_ir/v1",
+        "profile": "action_system",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": false,
+        "typed_owner": "StateTransitionIR",
+        "view_role": ""
+      },
+      {
+        "available_without_typed_evidence": false,
+        "family": "temporal",
+        "kind": "temporal",
+        "owner_schema": "temporal-formula/v1",
+        "payload_schema": "temporal.formula/v1",
+        "profile": "ltl",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": false,
+        "typed_owner": "TemporalFormula",
+        "view_role": ""
+      },
+      {
+        "available_without_typed_evidence": false,
+        "family": "separation_logic",
+        "kind": "heap",
+        "owner_schema": "heap-model/v1",
+        "payload_schema": "separation_logic.heap_model/v1",
+        "profile": "heap_model",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": false,
+        "typed_owner": "HeapModel",
+        "view_role": ""
+      },
+      {
+        "available_without_typed_evidence": false,
+        "family": "separation_logic",
+        "kind": "separation",
+        "owner_schema": "separation-logic-ir/v1",
+        "payload_schema": "separation_logic.ir/v1",
+        "profile": "separation",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": false,
+        "typed_owner": "SeparationLogicIR",
+        "view_role": ""
+      },
+      {
+        "available_without_typed_evidence": false,
+        "family": "hyperproperty",
+        "kind": "hyperproperty",
+        "owner_schema": "hyperproperty-ir/v1",
+        "payload_schema": "hyperproperty.ir/v1",
+        "profile": "hyperltl",
+        "requires_explicit_source_ref": true,
+        "requires_program_binding": false,
+        "typed_owner": "HyperpropertyIR",
+        "view_role": ""
+      }
+    ],
+    "proof_authority": false,
+    "provider_calls": 0,
+    "schema": "security-code-logic-projection-profile/v1",
+    "source_binding_is_semantic_verification": false,
+    "source_contract": "CodeUnit body_sha256 + body_cid verified against exact UTF-8 bytes",
+    "source_semantics_verified": false,
+    "supported_kinds": [
+      "program",
+      "contract",
+      "transition",
+      "temporal",
+      "heap",
+      "separation",
+      "hyperproperty"
+    ],
+    "tla_encoding": {
+      "bounded": true,
+      "compiler": "TLACompiler",
+      "encoding": "tla+",
+      "kind": "transition",
+      "losses_preserved": true,
+      "model_checker_executed": false
+    },
+    "unsupported_frontiers": [
+      "automatic_code_to_ir_semantic_translation",
+      "unbounded_proof",
+      "cwe_label_to_formula",
+      "separation_without_heap",
+      "information_flow_without_explicit_policy",
+      "non_ltl_temporal_profile",
+      "concurrency_and_protocol_source_join"
+    ]
+  },
+  "corpus": {
+    "benchmark_exclusions": {
+      "code_sha256": [
+        "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba"
+      ],
+      "file_names": [
+        "bottle.py"
+      ],
+      "source_families": [
+        "github.com/bottlepy/bottle"
+      ]
+    },
+    "budget": {
+      "max_original_rows": 3,
+      "max_response_bytes": 1048576,
+      "max_total_response_bytes": 3145728
+    },
+    "execution_authority": false,
+    "graph_shards": [
+      "data/graph/nodes/part-000000.parquet"
+    ],
+    "pin": {
+      "dataset_id": "Publicus/cvefixes-security-ir-graphrag",
+      "manifest_sha256": "96865caf69f2ff8208a08d50ac07732488a8fc3b447b7aae6ad137fc0936d832",
+      "release_root": "bafkreiaoirr52so2im23swotylyffivoubcuhvumr2oei3s3sk2v6f4vly",
+      "revision": "6fd5918bed34f8851430e74a149502587a953fe2",
+      "schema_version": "cvefixes-huggingface-source/v1"
+    },
+    "proof_authority": false,
+    "repository_splits": {
+      "test": [
+        "https://github.com/codingjoe/django-s3file"
+      ],
+      "train": [
+        "https://github.com/Gerapy/Gerapy"
+      ],
+      "validation": [
+        "https://github.com/jupyterhub/binderhub"
+      ]
+    },
+    "schema": "publicus-security-code-corpus-profile@1",
+    "split_unit": "canonical_repository_family"
+  },
+  "execution_authority": false,
+  "initialization": {
+    "legal_checkpoint_writes": false,
+    "legal_heads_reused_as_code_heads": false,
+    "new_heads": "separate security namespace; explicit architecture and training receipt required",
+    "preserve_values_and_dimensions": true,
+    "random_backbone_initialization": false,
+    "shared_component": "compatible feature_embedding_weights[token:*] rows"
+  },
+  "legal_parent": {
+    "checkpoint_id": "legal-ir-autoencoder-canonical-20260630T221836Z",
+    "manifest_path": "checkpoints/20260630T221836Z/manifest.json",
+    "manifest_sha256": "487bb6ccfec671141fefba7600faad99c0dcef14c5f5a2a2cf80b125c240fcfd",
+    "readme_sha256": "c5de35ea8525221a39f4260f61e59b5339f883225682d0d64f01a1048f9245cc",
+    "repo_id": "justicedao/legal-ir-autoencoder-checkpoints",
+    "revision": "94ca549d102e3e31781370aec1247f91365440eb",
+    "schema": "published-legal-initializer-pin@1",
+    "source_count": 10,
+    "source_git_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+    "source_records_sha256": "e2d6361c6b6b5f168e528170886e4f1cda1f919b6ccad486a659caa784594ea4",
+    "state_bytes": 398209746,
+    "state_path": "checkpoints/20260630T221836Z/state/legal-ir-autoencoder-canonical.state.json",
+    "state_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be"
+  },
+  "profile_cid": "bafkreidtindypj44fisp63nkgllgoxo54mfi6jhddc3izn7fly73q3bj3a",
+  "proof_authority": false,
+  "publication_authority": false,
+  "schema": "security-code-training-profile@1",
+  "source_modeling": {
+    "adapter": "SourceSoftwareVerificationAdapter@1",
+    "adapter_version": "software-verification-source-adapter/v1",
+    "assumptions": {
+      "excluded_runtime_behavior": [
+        "operator overloading",
+        "resource exhaustion",
+        "concurrency"
+      ],
+      "execution_model": "sequential calls under the declared input assumption",
+      "integer_values": "unbounded mathematical model; literal-size bound is a parser resource limit",
+      "modeled_argument_type": "exact built-in Python int; not verified from source",
+      "native_effects_may_overapproximate_parameter_reads": true,
+      "native_parameter_and_result_types": "any; no silent integer-sort refinement"
+    },
+    "authority": "candidate_structural_model",
+    "completion_authority": false,
+    "executes_source": false,
+    "execution_authority": false,
+    "family": "program",
+    "include_supervisor_evidence": false,
+    "language": "python",
+    "max_ast_depth": 32,
+    "max_ast_nodes": 512,
+    "max_integer_literal_bits": 64,
+    "max_source_bytes": 65536,
+    "parser": "cpython-312",
+    "profile": "program_ir",
+    "profile_cid": "bafkreiaavestcd6w5mbpzd4znnaruksq6sd5vq6nrl5zc7ksdqsx4t3xum",
+    "proof_authority": false,
+    "provider_calls": 0,
+    "requires_native_status": "success without unsupported constructs or diagnostics",
+    "schema": "security-code-program-derivation-profile/v1",
+    "security_specification_inferred": false,
+    "solver_calls": 0,
+    "source_remapping": "exact source SHA/CID plus replayed source-ref and byte-span mapping",
+    "source_semantics_verified": false,
+    "target_kind": "program",
+    "unsupported": [
+      "calls and keyword arguments",
+      "defaults and annotations",
+      "decorators",
+      "branches and loops",
+      "global reads",
+      "reassignment",
+      "imports",
+      "multiple functions",
+      "non-ASCII source",
+      "heap and information-flow semantics",
+      "contract inference"
+    ],
+    "whitelist": {
+      "expressions": [
+        "integer literal excluding bool",
+        "previously bound name",
+        "binary + - *",
+        "unary + -"
+      ],
+      "module": "one synchronous function, ASCII source; only LF and tab controls",
+      "parameters": "simple positional parameters without defaults or annotations",
+      "statements": [
+        "fresh single-local assignment",
+        "one terminal value return"
+      ]
+    }
+  },
+  "training": {
+    "classification_targets": "native audit/CWE/polarity candidates",
+    "code_logic_targets": "source-bound typed modeling declarations with exact native projections",
+    "declarations_are_verified_source_semantics": false,
+    "fit_splits": [
+      "train"
+    ],
+    "formula_head_trained": false,
+    "held_out_splits": [
+      "test"
+    ],
+    "heldout_evaluated": false,
+    "input_features": "source-body lexical and supported AST observations only",
+    "missing_typed_evidence": "explicit frontier; never infer formulas from CWE labels",
+    "model_selection_splits": [
+      "validation"
+    ],
+    "proved_targets_require_independent_evidence": true,
+    "split_before_fit": true,
+    "training_started": false
+  }
+}

@@ -37,6 +37,7 @@ from ipfs_datasets_py.logic.backends.process import (
     BoundedToolRunner,
     RawProcessResult,
 )
+from ipfs_datasets_py.logic.backends.resource_admission import ResourceAdmittedToolRunner
 from ipfs_datasets_py.logic.backends.results import (
     ResultAuthority,
     ResultStatus,
@@ -2481,9 +2482,10 @@ class AtpExecutionEngineV2:
 
     Interface owner: ``ATPProviderEvidence@2``.
 
-    Hermetic fixture runners are the default for deterministic CI.  Live
-    pinned Vampire/E may be injected when available.  Mock and fallback
-    outputs are rejected as non-authoritative typed dispositions.
+    Hermetic mode requires an explicitly supplied fixture runner. Live pinned
+    Vampire/E use shared resource admission unless a runner is supplied.
+    Mock and fallback outputs are rejected as non-authoritative typed
+    dispositions.
     """
 
     INTERFACE: ClassVar[str] = ATP_PROVIDER_EVIDENCE_V2_INTERFACE
@@ -2693,7 +2695,7 @@ class AtpExecutionEngineV2:
                 available=False,
             )
         if runner is None:
-            runner = BoundedToolRunner()
+            runner = ResourceAdmittedToolRunner()
 
         if provider is AtpProviderKind.VAMPIRE:
             backend = VampireBackend(

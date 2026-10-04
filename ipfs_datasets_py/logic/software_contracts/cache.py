@@ -88,6 +88,7 @@ LEASED_OUTCOMES: Final[frozenset[str]] = ALL_OUTCOMES - {OUTCOME_PROVED}
 
 DEFAULT_MAX_LEASE_SECONDS: Final[int] = 60 * 60
 DEFAULT_MAX_OBJECT_BYTES: Final[int] = 16 * 1024 * 1024
+MAX_INDEX_RECORD_BYTES: Final[int] = 64 * 1024
 
 _KEY_FIELDS: Final[frozenset[str]] = frozenset(
     {
@@ -517,7 +518,8 @@ class ImmutableCAS:
     def get(self, cid: str, *, expected_schema: str | None = None) -> Any:
         target = self.path_for(cid)
         try:
-            payload = target.read_bytes()
+            with target.open("rb") as stream:
+                payload = stream.read(self.max_object_bytes + 1)
         except FileNotFoundError:
             raise
         except OSError as exc:
@@ -557,7 +559,8 @@ class ImmutableCAS:
     def get_bytes(self, cid: str) -> bytes:
         target = self.path_for(cid, source=True)
         try:
-            payload = target.read_bytes()
+            with target.open("rb") as stream:
+                payload = stream.read(self.max_object_bytes + 1)
         except FileNotFoundError:
             raise
         except OSError as exc:
@@ -670,9 +673,14 @@ class AnalysisCache:
     def _read_index(self, key_cid: str) -> str | None:
         path = self._index_path(key_cid)
         try:
-            payload = path.read_bytes()
+            with path.open("rb") as stream:
+                payload = stream.read(MAX_INDEX_RECORD_BYTES + 1)
         except FileNotFoundError:
             return None
+        except OSError as exc:
+            raise CacheIntegrityError("cannot read cache index record") from exc
+        if len(payload) > MAX_INDEX_RECORD_BYTES:
+            raise CacheIntegrityError("cache index record exceeds byte bound")
         try:
             record = json.loads(payload.decode("utf-8"))
             if payload != canonical_dag_json_bytes(record):

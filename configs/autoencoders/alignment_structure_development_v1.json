@@ -1,0 +1,9 @@
+{
+  "schema": "alignment-structure-experiment-config/v1",
+  "study_id": "autoformalization-structure-development-v1",
+  "parser_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/parser-01/report.json",
+    "sha256": "0e8b43316bb1209a4a7be47c3fef98ce8172e674f93e50e6237b38cb27e210e5"
+  },
+  "max_seconds": 120
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "gte-decoder-source-evaluation-config/v1",
+  "workspace_root": "/home/barberb/lift_coding",
+  "mode": "evaluate",
+  "max_primary_rows": 60,
+  "max_auxiliary_rows": 2,
+  "training_parent_manifest": {
+    "path": "artifacts/gte-aligned-interface-training-preparation-20261002/run-01/manifest.json",
+    "sha256": "b7df7ed8ffeda40cc8c456ae413c3af7c2e9504bd472b567c9b13782cd38b2e8"
+  },
+  "primary_checkpoint": {
+    "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+    "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+  },
+  "legacy8_checkpoint": {
+    "path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+    "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe"
+  }
+}

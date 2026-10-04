@@ -1,0 +1,649 @@
+{
+  "admitted": false,
+  "bound_evidence": {
+    "workspace/test-logs/decoder-balanced-generalization-review-20261004/geometry-erratum-review.json": {
+      "bytes": 1727,
+      "sha256": "1d46b0bddb5b93b154064c2cc1897326e9485f97961cfcd314e71e3b200c2219"
+    },
+    "workspace/test-logs/decoder-balanced-generalization-review-20261004/preparation-failed-lifecycle-review.json": {
+      "bytes": 6478,
+      "sha256": "145a06b862f4eb50bebabc8decd455bacbf34f9e126ac313eeeccaf29053cd3d"
+    },
+    "workspace/test-logs/decoder-eight-source-preconditioning-20261004/geometry-erratum.json": {
+      "bytes": 3938,
+      "sha256": "fc232434e18838e2e9d02b248ec0e04e2f8336226f83dd83a7d2f22984e35005"
+    },
+    "workspace/test-logs/decoder-eight-source-preconditioning-20261004/independent-preconditioning-review.json": {
+      "bytes": 304101,
+      "sha256": "6bf4edf4c1fc7cdbcc5fe881facd9df16e5db895b93d2d7e32ba74f13074e0e4"
+    },
+    "workspace/test-logs/decoder-eight-source-preconditioning-20261004/results.json": {
+      "bytes": 192746,
+      "sha256": "e75da2f18521951c392c309f30b46a151ffeb87abb7e0d5fc9b115151362a100"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/independent-preparation-review.json": {
+      "bytes": 239856,
+      "sha256": "c93ed1a3b098398f2b3b56c8a9de7c549d49ca701a99ba501a17c8544a300cda"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-manifest.json": {
+      "bytes": 259103,
+      "sha256": "2bd79a47f79b22a767180dc2e088b962461dc9a77077d848933bf238a7ca3f2d"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "5c85b47d285bb41d8f2aa7652dc4659c1fe1cbbb20574e245e922ba641f74938"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/resources-final.json": {
+      "bytes": 5839,
+      "sha256": "6147e64be3f1e5ba87034f93835ffad7ceacd5c1ed05b2c662dd5f40db005238"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/original-training-bank-used.json": {
+      "bytes": 38792,
+      "sha256": "97a928de6fb124cf01ea24fefa7ac43c94352de748354422fdcdb35f34216b10"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/prior-source-inventories.json": {
+      "bytes": 118378,
+      "sha256": "b9cdf4cb6526cf102656667a2b3ff3d78c21c39093c56beba3ecb1a4409dbf8f"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/source-plan.json": {
+      "bytes": 129499,
+      "sha256": "b4b08d2b1f054ff35eb0daad0ebe6475abf4efe7bf4f967042c38e04f6ff39a8"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/summary.json": {
+      "bytes": 31087,
+      "sha256": "1da1dfdcd9417b5fc219a0fdf071720cafdddd17456e06067f1e658ab448c54d"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/training-corpus-receipt.json": {
+      "bytes": 3624,
+      "sha256": "c61ca27f5d01fbc5d9e9449f8c32edee4d93dcf8034c6d1f4ca9eb7b9b112156"
+    },
+    "workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/training-references.json": {
+      "bytes": 206528,
+      "sha256": "bf390f9ec51085f6a8320c4186b189734b8449288321db9795ca3bc51c3716ee"
+    },
+    "workspace/test-logs/native4096-balanced-cohort-20261004/decoded-balanced-examples.json": {
+      "bytes": 25498,
+      "sha256": "cd1112e74196711da76bad101ff490f98a94648b7d09443381a314fc60af0f26"
+    },
+    "workspace/test-logs/native4096-balanced-cohort-20261004/independent-balanced-audit.json": {
+      "bytes": 564482,
+      "sha256": "b423e99b4339ff8a8c2bb89ea311bc965080268c9decbfebd250451b290b215c"
+    },
+    "workspace/test-logs/native4096-balanced-cohort-20261004/same-author-balanced-review.json": {
+      "bytes": 25302,
+      "sha256": "a86877633fee3b105a46bb25f7db425781704118898c82be902a58e48cc71156"
+    },
+    "workspace/test-logs/native4096-balanced-cohort-20261004/training-r1-guardian-exit.json": {
+      "bytes": 315,
+      "sha256": "c46c3e81bea802d21ac74e91beabab0f7a0de16452f2efd5388cf653327e513c"
+    },
+    "workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/resources-final.json": {
+      "bytes": 5828,
+      "sha256": "1bf721686ef67885f1c2d9faf03f91aebb4d7f702d53f97a00f569e4b4947cf4"
+    },
+    "workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/native/receipt.json": {
+      "bytes": 2399207,
+      "sha256": "a62a6aa7e0be25145f284759ad7ed1bb994f6eea8387cd19a20d47c94883fafb"
+    }
+  },
+  "bridge_speedup_claimed": false,
+  "checkpoint_promoted": false,
+  "conclusions": [
+    "740 real head optimizer updates completed; no source encoder was finetuned.",
+    "The8D covariance candidate is rejected under unchanged fidelity selection.",
+    "The4096 source-scaled rate is not adopted as a default from this broader cohort.",
+    "Restricted rule parsing and low whole-sequence CE do not establish correct logical fields or legal formalization.",
+    "Different cohorts and head architectures do not support an8D-versus4096 model-quality ranking.",
+    "No matched throughput improvement, bridge-on evaluation timing, fresh-holdout gain, convergence, global minimum or admission is claimed."
+  ],
+  "constitution_formalized": false,
+  "context_tokens": 512,
+  "convergence_proven": false,
+  "date": "2026-10-04",
+  "decoder_output_limit_tokens": 512,
+  "dimensions_actually_trained_this_followup": [
+    8,
+    4096
+  ],
+  "encoder_weights_trained": false,
+  "encoders_frozen": true,
+  "experiments": {
+    "4096": {
+      "arms": [
+        {
+          "arm": "joint_unscaled",
+          "final_development": {
+            "conditioned": {
+              "cross_entropy": 0.13737919926643372,
+              "exact": 0,
+              "field_correct": {
+                "action": 2,
+                "actor": 4,
+                "modality": 6,
+                "object": 8
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 11,
+              "sample_count": 12
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0368058979511261,
+            "conditioned_advantage_over_zero_ce": 0.0056295692920684814,
+            "rotated_source": {
+              "cross_entropy": 0.17418509721755981,
+              "exact": 0,
+              "field_correct": {
+                "action": 0,
+                "actor": 1,
+                "modality": 8,
+                "object": 5
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 11,
+              "sample_count": 12
+            },
+            "zero_source": {
+              "cross_entropy": 0.1430087685585022,
+              "exact": 0,
+              "field_correct": {
+                "action": 3,
+                "actor": 2,
+                "modality": 4,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            }
+          },
+          "final_tensor_sha256": "16f83a448ce27ab4614e09147c7805c8a434df9017a56e678883802b94ef3682",
+          "final_training": {
+            "conditioned": {
+              "cross_entropy": 0.07071669399738312,
+              "exact": 7,
+              "field_correct": {
+                "action": 10,
+                "actor": 9,
+                "modality": 12,
+                "object": 12
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            },
+            "conditioned_advantage_over_rotated_ce": 0.11694233119487762,
+            "conditioned_advantage_over_zero_ce": 0.0679832249879837,
+            "rotated_source": {
+              "cross_entropy": 0.18765902519226074,
+              "exact": 0,
+              "field_correct": {
+                "action": 1,
+                "actor": 1,
+                "modality": 9,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            },
+            "zero_source": {
+              "cross_entropy": 0.13869991898536682,
+              "exact": 0,
+              "field_correct": {
+                "action": 2,
+                "actor": 3,
+                "modality": 4,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            }
+          },
+          "fit_seconds": 1.430476877023466,
+          "initial_tensor_sha256": "208778fc7619d8686fbf7e2ae05c7d6a5d89752098ceb3215d4fe192019e622e",
+          "learning_rates": {
+            "copied_prior": 0.001,
+            "source_bias": 0.001,
+            "source_weights": 0.001
+          },
+          "optimizer_updates": 200,
+          "seconds_per_training_row_presentation": 0.0005960320320931109,
+          "selection_policy": "none; all final endpoints reported",
+          "source_l1_bound": 52.683197021484375,
+          "target_token_presentations": 93600,
+          "training_row_presentations": 2400
+        },
+        {
+          "arm": "joint_source_scaled",
+          "final_development": {
+            "conditioned": {
+              "cross_entropy": 0.1312001645565033,
+              "exact": 0,
+              "field_correct": {
+                "action": 1,
+                "actor": 3,
+                "modality": 4,
+                "object": 8
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            },
+            "conditioned_advantage_over_rotated_ce": 0.010603472590446472,
+            "conditioned_advantage_over_zero_ce": 0.007766783237457275,
+            "rotated_source": {
+              "cross_entropy": 0.14180363714694977,
+              "exact": 0,
+              "field_correct": {
+                "action": 2,
+                "actor": 2,
+                "modality": 5,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            },
+            "zero_source": {
+              "cross_entropy": 0.13896694779396057,
+              "exact": 0,
+              "field_correct": {
+                "action": 2,
+                "actor": 2,
+                "modality": 4,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            }
+          },
+          "final_tensor_sha256": "8dbec8944ccf30abac1e478dff9c474ef449920f335eaf54a3ec01fbeb10def3",
+          "final_training": {
+            "conditioned": {
+              "cross_entropy": 0.10923880338668823,
+              "exact": 1,
+              "field_correct": {
+                "action": 6,
+                "actor": 6,
+                "modality": 5,
+                "object": 12
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            },
+            "conditioned_advantage_over_rotated_ce": 0.041046544909477234,
+            "conditioned_advantage_over_zero_ce": 0.024077922105789185,
+            "rotated_source": {
+              "cross_entropy": 0.15028534829616547,
+              "exact": 0,
+              "field_correct": {
+                "action": 2,
+                "actor": 3,
+                "modality": 5,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            },
+            "zero_source": {
+              "cross_entropy": 0.13331672549247742,
+              "exact": 0,
+              "field_correct": {
+                "action": 3,
+                "actor": 3,
+                "modality": 4,
+                "object": 6
+              },
+              "field_denominator": 12,
+              "parsed_restricted_rule_count": 12,
+              "sample_count": 12
+            }
+          },
+          "fit_seconds": 1.4128135849896353,
+          "initial_tensor_sha256": "208778fc7619d8686fbf7e2ae05c7d6a5d89752098ceb3215d4fe192019e622e",
+          "learning_rates": {
+            "copied_prior": 0.001,
+            "source_bias": 0.001,
+            "source_weights": 1.898138413263335e-05
+          },
+          "optimizer_updates": 200,
+          "seconds_per_training_row_presentation": 0.0005886723270790147,
+          "selection_policy": "none; all final endpoints reported",
+          "source_l1_bound": 52.683197021484375,
+          "target_token_presentations": 93600,
+          "training_row_presentations": 2400
+        }
+      ],
+      "bridge_names": [],
+      "bridge_on_evaluate_executed": false,
+      "candidate_result": "Source scaling modestly lowers development token CE but worsens training exactness; final development exactness remains0/12 in both arms. Prior two-source improvement does not justify adopting this rate.",
+      "cohort_balance_per_split": {
+        "action_counts": "2\u20133 per value across5 values",
+        "actor_counts": "2\u20133 per value across5 values",
+        "modalities": {
+          "F": 4,
+          "O": 4,
+          "P": 4
+        },
+        "objects": {
+          "archive": 6,
+          "notice": 6
+        }
+      },
+      "development_sources": 12,
+      "development_status": "exposed original authored development clauses; not a fresh holdout",
+      "development_used_for_learning_rates": false,
+      "development_used_for_normalization": false,
+      "development_used_for_selection": false,
+      "development_used_for_updates": false,
+      "guardian_seconds": 532.2804933759908,
+      "maximum_sampled_combined_rss_bytes": 1234501632,
+      "metric_disk_cache": false,
+      "native_child_seconds": 321.15647863800405,
+      "native_context_tokens": 512,
+      "native_model_hash_seconds": 95.11541480701999,
+      "native_model_sha256": "4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da",
+      "native_profile": "leanstral4096:cpu1:last:l2:single-sequence:tokens512:layer-reclaim:v3",
+      "native_rows_including_repeat": 25,
+      "native_rss_limit_bytes": 8589934592,
+      "native_seconds": 416.2733165870013,
+      "native_seconds_per_requested_row": 16.650932663480052,
+      "original_bank_actor_action_pairs_disjoint": true,
+      "original_normalized_source_texts_disjoint": true,
+      "os_page_cache": "uncontrolled",
+      "provers": false,
+      "reset_repeat_l2": 0.0,
+      "resource_status": "released",
+      "status": "completed_no_development_exact_reconstruction_no_promotion",
+      "training_sources": 12,
+      "updates": 400,
+      "workers": 1
+    },
+    "8": {
+      "arms": [
+        {
+          "arm": "identity-preconditioner",
+          "final_development": {
+            "exact": 1,
+            "field_denominator": 180,
+            "generated_field_correct": {
+              "action": 88,
+              "actor": 102,
+              "modality": 137,
+              "object": 97
+            },
+            "numerical_seconds_per_span": 0.0061915451248448035,
+            "raw_object_correct": 88,
+            "samples": 48,
+            "token_cross_entropy": 0.16349188731738062
+          },
+          "final_tensor_sha256": "eb476709a2b95f13fb10f8beee8cb8b497725d5313d4a36b17c0f684c6997034",
+          "final_training": {
+            "exact": 12,
+            "samples": 48,
+            "token_cross_entropy": 0.03873324930170215
+          },
+          "fit_seconds": 25.925108127994463,
+          "initial_tensor_sha256": "91b796624f9aaf70063643a09290a5d04a53349d0be9237ec3b7ea06b64404b2",
+          "optimizer_updates": 170,
+          "parent_retained": true,
+          "policy": "identity",
+          "presentations_per_second": 47.0586272572811,
+          "selected_development": {
+            "exact": 1,
+            "samples": 48,
+            "token_cross_entropy": 0.14907417285113128
+          },
+          "selected_epoch": 0,
+          "selected_tensor_sha256": "91b796624f9aaf70063643a09290a5d04a53349d0be9237ec3b7ea06b64404b2",
+          "training_row_presentations": 1220
+        },
+        {
+          "arm": "train-covariance-preconditioner",
+          "final_development": {
+            "exact": 1,
+            "field_denominator": 180,
+            "generated_field_correct": {
+              "action": 84,
+              "actor": 99,
+              "modality": 140,
+              "object": 93
+            },
+            "numerical_seconds_per_span": 0.006380858562503515,
+            "raw_object_correct": 88,
+            "samples": 48,
+            "token_cross_entropy": 0.16850285723030223
+          },
+          "final_tensor_sha256": "43c55f9614fe4ea1b09f30630db58591bc3d15d3b9cf8f0329b5b0977b1d6f8c",
+          "final_training": {
+            "exact": 12,
+            "samples": 48,
+            "token_cross_entropy": 0.04176932799180655
+          },
+          "fit_seconds": 25.196043453994207,
+          "initial_tensor_sha256": "91b796624f9aaf70063643a09290a5d04a53349d0be9237ec3b7ea06b64404b2",
+          "optimizer_updates": 170,
+          "parent_retained": true,
+          "policy": "train_covariance_inverse",
+          "presentations_per_second": 48.42030068044669,
+          "selected_development": {
+            "exact": 1,
+            "samples": 48,
+            "token_cross_entropy": 0.14907417285113128
+          },
+          "selected_epoch": 0,
+          "selected_tensor_sha256": "91b796624f9aaf70063643a09290a5d04a53349d0be9237ec3b7ea06b64404b2",
+          "training_row_presentations": 1220
+        }
+      ],
+      "baseline_archived_tensor_replay": true,
+      "bridge_names": [],
+      "bridge_on_evaluate_executed": false,
+      "candidate_result": "No exact development improvement; candidate token CE and generated object fidelity worse; both selected states retain parent.",
+      "control_panels_retained": 36,
+      "controls_per_selected_or_final_endpoint": 9,
+      "development_status": "exposed authored original development paragraphs",
+      "guardian_seconds": 160.6722120399936,
+      "maximum_sampled_group_rss_bytes": 1087111168,
+      "metric_disk_cache": false,
+      "provers": false,
+      "resource_status": "released",
+      "source_representation": "unchanged historical eight-dimensional linguistic feature hash; not semantic embeddings",
+      "source_vectors_warm_cached": true,
+      "status": "completed_candidate_not_adopted",
+      "updates": 340,
+      "workers": 1
+    }
+  },
+  "formalized": false,
+  "fresh_holdout_evaluated": false,
+  "geometry_erratum": {
+    "corrected_feature_path": [
+      "raw_cached8D",
+      "frozen_input_center_rms",
+      "verified_identity_residual_projection",
+      "frozen_clause_center_rms",
+      "source_projection_affine",
+      "tanh"
+    ],
+    "development_maximum_absolute_preactivation": 1.9040708768187486,
+    "development_saturated_tanh_count": 0,
+    "object_feature_hash_contributions": {
+      "lemma:archive": {
+        "slot": 2,
+        "value": 0.9784313725490197
+      },
+      "lemma:notice": {
+        "slot": 2,
+        "value": 0.919607843137255
+      }
+    },
+    "original_evidence_modified": false,
+    "reason": "v1 diagnostic omitted frozen paragraph input center/RMS before identity residual projection and clause center/RMS",
+    "selection_affected": false,
+    "train_maximum_absolute_preactivation": 2.079063538405191,
+    "train_saturated_tanh_count": 0,
+    "training_implementation_affected": false,
+    "training_results_affected": false
+  },
+  "global_minimum_claimed": false,
+  "historical8D_linguistic_teacher_changed": false,
+  "lake_executed": false,
+  "logic_family_qualification_claimed": false,
+  "preparation": {
+    "384": {
+      "batch_size": 4,
+      "bridge_names": [],
+      "bridge_on_evaluate_executed": false,
+      "cache_scope": "new local forward outputs; OS page-cache warmth uncontrolled; metric disk cache off",
+      "context_tokens": 512,
+      "encoder_seconds": 8.679368020995753,
+      "evaluation_references_added_to_training": false,
+      "fresh_holdout_claimed": false,
+      "maximum_actual_tokens": 111,
+      "metric_disk_cache": false,
+      "model_training_claimed": false,
+      "new_head_updates_in_this_followup": 0,
+      "original_train_rules": 90,
+      "paragraph_count": 48,
+      "prior_unique_vectors": 911,
+      "prior_vector_rows": 947,
+      "provers": false,
+      "receipt": {
+        "bytes": 2766871,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/production-384.json",
+        "sha256": "8666ce6e1df0c8332a61d2519700f7f0ecfb2a1af80cb47531e885dfb06c791d"
+      },
+      "seconds_per_unique_source": 0.040182259356461816,
+      "source_inputs": {
+        "bytes": 3406508,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/dimension-inputs-384.json",
+        "sha256": "6c7f6cf44140f6608b456c8117f845516edc60c0ff0e7248c9b1c321389899b3"
+      },
+      "status": "verified_local_source_vectors_prepared_no_head_training",
+      "template_families": [
+        "rule_gerund_by_actor",
+        "topicalized_actor_norm"
+      ],
+      "training_references_from": "original TRAIN bank only",
+      "unique_clause_count": 180,
+      "vector_identity_overlap": 0,
+      "verified_source_count": 216,
+      "workers": 1
+    },
+    "768": {
+      "batch_size": 4,
+      "bridge_names": [],
+      "bridge_on_evaluate_executed": false,
+      "cache_scope": "new local forward outputs; OS page-cache warmth uncontrolled; metric disk cache off",
+      "context_tokens": 512,
+      "encoder_seconds": 26.96948464398156,
+      "evaluation_references_added_to_training": false,
+      "fresh_holdout_claimed": false,
+      "maximum_actual_tokens": 132,
+      "metric_disk_cache": false,
+      "model_training_claimed": false,
+      "new_head_updates_in_this_followup": 0,
+      "original_train_rules": 90,
+      "paragraph_count": 48,
+      "prior_unique_vectors": 671,
+      "prior_vector_rows": 719,
+      "provers": false,
+      "receipt": {
+        "bytes": 7282243,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/production-768.json",
+        "sha256": "6002b29f9095a279691592e98ee7e717c41082bfe2e399f0ee3729f961a51b16"
+      },
+      "seconds_per_unique_source": 0.12485872520361833,
+      "source_inputs": {
+        "bytes": 6723600,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/dimension-inputs-768.json",
+        "sha256": "355a379986f98c7908bf25e7d28a58c865565cbd9b7e8e7cc9fc65ee0b04361a"
+      },
+      "status": "verified_local_source_vectors_prepared_no_head_training",
+      "template_families": [
+        "rule_gerund_by_actor",
+        "topicalized_actor_norm"
+      ],
+      "training_references_from": "original TRAIN bank only",
+      "unique_clause_count": 180,
+      "vector_identity_overlap": 0,
+      "verified_source_count": 216,
+      "workers": 1
+    }
+  },
+  "preparation_common": {
+    "driver_seconds": 52.5599442810053,
+    "final_attempt_bytes": 20761283,
+    "guardian_inner_seconds": 83.15844739999739,
+    "guardian_seconds": 84.48897728801239,
+    "guardian_timing_scope": "outer subprocess invocation; separate inner guardian duration includes admission/accounting before return",
+    "inherited_setup_reads_old_metadata": true,
+    "maximum_sampled_group_rss_bytes": 2716860416,
+    "memory_limit_bytes": 4294967296,
+    "new_head_updates": 0,
+    "preprocessing_fitted": false,
+    "prior_inventory_scope": "raw TRAIN/development/test/canary, original paragraph TRAIN/development, exposed R6/R8/v3; literal and normalized clauses included",
+    "prior_vector_scope": "available original, R6 and v3 at both dimensions; R8 at384 only, no768 R8 vector artifact exists",
+    "resource_status": "released",
+    "separation_claim": "literal and exact vector exclusion, not a new linguistic family",
+    "source_text_overlap_with_declared_prior_inventories": 0,
+    "storage_reservation_bytes": 250000000,
+    "target_free_encoder_inputs": true,
+    "total_verified_vectors": 432
+  },
+  "protected_restart12_checkpoint_changed": false,
+  "publication_status": "completed_fit_and_preparation_results",
+  "qualified": false,
+  "retained_preparation_attempts": [
+    {
+      "reason": "packing could combine modality variants of same content within one paragraph; fixed by separated content-group rounds",
+      "root": "decoder-training-paraphrases-20261004",
+      "status": "superseded_before_guard_or_encoder"
+    },
+    {
+      "claim_bytes_retained": 250000000,
+      "lease_released": true,
+      "reason": "output directory created before inherited fresh-output check",
+      "root": "decoder-training-paraphrases-r2-20261004",
+      "status": "failed_before_encoder"
+    },
+    {
+      "claim_bytes_retained": 250000000,
+      "lease_released": true,
+      "reason": "one inherited frozen helper missing from producer list, already bound in inputs",
+      "root": "decoder-training-paraphrases-r3-20261004",
+      "status": "failed_before_encoder"
+    },
+    {
+      "claim_status": "released",
+      "root": "decoder-training-paraphrases-r4-20261004",
+      "status": "complete"
+    }
+  ],
+  "roundtrip_ok": false,
+  "schema": "four-width-decoder-generalization-results/v1",
+  "temperature": 0,
+  "tests": {
+    "eight_dimensional": 137,
+    "native4096": 47,
+    "paraphrase_tests_reused_from_r3_for_byte_identical_canonical_sources": true,
+    "training_paraphrases": 41
+  },
+  "total_completed_head_optimizer_updates": 740,
+  "verification": {
+    "eight_dimensional_focused_and_regression_tests": 137,
+    "eight_dimensional_independent_audit_checks": 169385,
+    "initial_failed_test_and_audit_logs_retained": true,
+    "native4096_focused_and_regression_tests": 47,
+    "native4096_independent_audit_checks": 4717,
+    "retained_preparation_lifecycle_independent_audit_checks": 16,
+    "retained_preparation_lifecycle_review": "workspace/test-logs/decoder-balanced-generalization-review-20261004/preparation-failed-lifecycle-review.json",
+    "review_scope": "completed fit experiments and saved evidence; does not authorize model reexecution or qualification",
+    "training_preparation_independent_audit_checks": 7060,
+    "training_preparation_independent_review": "workspace/test-logs/decoder-training-paraphrases-r4-20261004/independent-preparation-review.json"
+  }
+}

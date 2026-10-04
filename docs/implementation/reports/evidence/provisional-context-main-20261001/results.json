@@ -1,0 +1,499 @@
+{
+  "admitted": false,
+  "baseline_revision": "bc8ee2a7459ba9bf2a277d765e87891b54791fb4",
+  "candidate_files": {
+    "docs/autoencoders/projection_context_resolution.md": "a993467856e9559985e6b1390a99cbb1a05f58916dd5052134d770ba33e31077",
+    "docs/autoencoders/provisional_context_workflow.md": "4bffc7382e8a823febd3ba6a24ebcf99f665fc652a8ee01ae0b053b469b9bab4",
+    "ipfs_datasets_py/logic/formalization/context_link_obligations.py": "08cf4a03c784f19df3aaaafbf3bdc8a6897513f1216c035b7262f2311d6885ac",
+    "ipfs_datasets_py/logic/formalization/context_resolution.py": "a1c8b92b0388d3adb36646a619290d9ad68fbb741d0bb1f70cc59de112e942d5",
+    "ipfs_datasets_py/logic/formalization/context_retrieval_adapters.py": "73bd796e5708732d4ec151ca7cc9bb636a83a2bbd4b25124021851a7820c3841",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/provisional_context_panel.py": "b159e7120dfe9641c8609f66d89fb5730b9d80e3938f10fd9fdeec17df7f841a",
+    "scripts/ops/autoencoder/smoke_context_retrieval.py": "d140156fb8076f0b56aff14609e1762f140496d382b56971f3d2f66528b0621e",
+    "scripts/ops/autoencoder/smoke_provisional_context_fixtures.py": "f18f27f57d00ec4161676eee054944cfb1883f972cba57efcd672f79fc863810",
+    "tests/unit/logic/formalization/autoencoder/test_provisional_context_panel.py": "872d2a61b5bdea737f5a5419fbb0584982adf70f2ab8655600a0415c86dd7e74",
+    "tests/unit/logic/formalization/test_context_link_obligations.py": "a353ea857f7e48cdcc9dcb5aa61895e7006381861c9f24033fa56cb5eaf834bd",
+    "tests/unit/logic/formalization/test_context_resolution.py": "a6b1e2064430d99bb4f75b6cb955db52577a86a8454461209f031d71fa989ef7",
+    "tests/unit/logic/formalization/test_context_retrieval_adapters.py": "9c669db381373ac35d207f77796e978f944c1da5908df1565d72910d3ad3619b"
+  },
+  "hub_upload_executed": false,
+  "native": {
+    "actual_lake_build_count": 2,
+    "admitted": false,
+    "backend_execution_verified": false,
+    "cache_scope": "fresh native workspace for each companion",
+    "companion_projection_count": 27,
+    "companion_source_count": 2,
+    "constitution_formalized": false,
+    "context_retrieval_executed": false,
+    "download_calls": 0,
+    "event_occurrences_attested": false,
+    "fixture_builder_sha256": "b159e7120dfe9641c8609f66d89fb5730b9d80e3938f10fd9fdeec17df7f841a",
+    "formalized": false,
+    "integration_passed": true,
+    "original_semantic_blocker_count": 3,
+    "original_source_count": 2,
+    "passed_companion_projection_count": 27,
+    "qualified": false,
+    "results": {
+      "legal_ir": {
+        "actual_lake_build": true,
+        "additional_syntax_checks": [],
+        "admitted": false,
+        "all_source_projection_gates_passed": false,
+        "backend_execution_verified": false,
+        "checks": {
+          "all_companion_projection_checks_passed": true,
+          "complete_family_inventory": true,
+          "every_projection_retained": true,
+          "negative_control_preserved": true,
+          "reviews_not_silently_supplied": true,
+          "same_projection_count": true,
+          "strict_training_still_blocked_without_complete_review": true
+        },
+        "companion_fixture_sha256": "b2bb5b424eccc3d5e74905c7479af868d515832ca7295dbb6ec3c06bd353e8e2",
+        "companion_projection_count": 11,
+        "constitution_formalized": false,
+        "context_retrieval_executed": false,
+        "domain_id": "legal_ir",
+        "event_occurrences_attested": false,
+        "execution_tool_sha256": {
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake": "8c987aee79f105bc2ff21772b958b219c8921a51b8ca2df8af410a2b17bd8701"
+        },
+        "formalized": false,
+        "integration_passed": true,
+        "lake_command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+          "build",
+          "LegalIR"
+        ],
+        "lake_status": "passed",
+        "modality_floor_satisfied": true,
+        "original_semantic_blockers": {
+          "legal-ir/modal-family/deontic/v3": "native_projection_not_ready",
+          "legal-ir/modal-family/temporal/v3": "native_projection_not_ready"
+        },
+        "passed_companion_projections": 11,
+        "qualified": false,
+        "source_gate_blockers": [
+          {
+            "family_id": "agency",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "argumentation",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "authorization",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "bdi",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "concurrency",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "cryptographic_protocol",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "datalog",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "defeasible_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "dependent_type",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "description_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "doxastic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "epistemic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "epistemic_temporal",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "finite_field_constraint",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "fuzzy_weighted",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "higher_order",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "horn_chc",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "hyperproperty",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "intention_agency",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "linear_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "modal",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "mu_calculus",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "nonmonotonic_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "probabilistic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "process_calculus",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "program",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "refinement",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "relevance_paraconsistent",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "separation_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "session_process",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "situation_calculus",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "transition_system",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          }
+        ],
+        "source_semantics_verified": false,
+        "strict_training_allowed": false,
+        "successful_lake_build": true,
+        "training_executed": false,
+        "wall_seconds": 8.97727716807276
+      },
+      "ui_ux_ir": {
+        "actual_lake_build": true,
+        "additional_syntax_checks": [
+          {
+            "checks": [
+              {
+                "SANY_version_banner_observed": true,
+                "admitted": false,
+                "command": [
+                  "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+                  "-Xmx128m",
+                  "-cp",
+                  "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                  "tla2sany.SANY",
+                  "-error-codes",
+                  "BoundedNativeState.tla"
+                ],
+                "executed": true,
+                "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+                "level_checking_enabled": true,
+                "matching_module_parse_observed": true,
+                "matching_module_semantic_processing_observed": true,
+                "model_checker_executed": false,
+                "model_sha256": "8b1213d06ad140d460efe4357fa7b001e9afe847b26ef80ce428b7c75479cba4",
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+                "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-e223uga0/BoundedNativeState.tla\nParsing file /tmp/tlc-17372654539462976058/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-17372654539462976058/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-17372654539462976058/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+                "timed_out": false,
+                "tool_sha256": {
+                  "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+                  "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                }
+              }
+            ],
+            "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4"
+          }
+        ],
+        "admitted": false,
+        "all_source_projection_gates_passed": false,
+        "backend_execution_verified": false,
+        "checks": {
+          "all_companion_projection_checks_passed": true,
+          "complete_family_inventory": true,
+          "every_projection_retained": true,
+          "negative_control_preserved": true,
+          "reviews_not_silently_supplied": true,
+          "same_projection_count": true,
+          "strict_training_still_blocked_without_complete_review": true
+        },
+        "companion_fixture_sha256": "0206fdfd3767eae22d69a01aac04e73ccac4732887b7f045dc7c9fbe461d78a2",
+        "companion_projection_count": 16,
+        "constitution_formalized": false,
+        "context_retrieval_executed": false,
+        "domain_id": "ui_ux_ir",
+        "event_occurrences_attested": false,
+        "execution_tool_sha256": {
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake": "8c987aee79f105bc2ff21772b958b219c8921a51b8ca2df8af410a2b17bd8701",
+          "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+          "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+        },
+        "formalized": false,
+        "integration_passed": true,
+        "lake_command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+          "build",
+          "UIUXIR"
+        ],
+        "lake_status": "passed",
+        "modality_floor_satisfied": true,
+        "original_semantic_blockers": {
+          "ui_ux_ir:tdfol": "UI_before_requires_explicit_occurrence_and_precedence_semantics"
+        },
+        "passed_companion_projections": 16,
+        "qualified": false,
+        "source_gate_blockers": [
+          {
+            "family_id": "agency",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "argumentation",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "authorization",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "bdi",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "concurrency",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "cryptographic_protocol",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "datalog",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "defeasible_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "dependent_type",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "description_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "doxastic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "epistemic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "epistemic_temporal",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "finite_field_constraint",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "fuzzy_weighted",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "higher_order",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "horn_chc",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "hyperproperty",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "intention_agency",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "linear_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "modal",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "mu_calculus",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "nonmonotonic_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "probabilistic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "process_calculus",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "program",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "refinement",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "relevance_paraconsistent",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "separation_logic",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "session_process",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          },
+          {
+            "family_id": "situation_calculus",
+            "reason": "no_native_projection_or_source_specific_applicability_review"
+          }
+        ],
+        "source_semantics_verified": false,
+        "strict_training_allowed": false,
+        "successful_lake_build": true,
+        "training_executed": false,
+        "wall_seconds": 6.446745991939679
+      }
+    },
+    "runner_sha256": "f18f27f57d00ec4161676eee054944cfb1883f972cba57efcd672f79fc863810",
+    "schema": "provisional-context-companion-smoke/v1",
+    "scope": "explicitly assumed fixture lowering; original negatives retained; no source fidelity or complete training gate claim",
+    "source_semantics_verified": false,
+    "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/provisional-context-main-20261001/source",
+    "successful_lake_build_count": 2,
+    "tool_hashes_unchanged": true,
+    "tool_sha256": {
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake": "8c987aee79f105bc2ff21772b958b219c8921a51b8ca2df8af410a2b17bd8701",
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lean": "e215cbe9eab0914b49761e9e486d388e2e701cf876d1079d1ba733c48edb2d7b",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+    },
+    "tools": {
+      "java_executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+      "lake": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+      "tla2tools_jar": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar"
+    },
+    "total_wall_seconds": 15.432388245826587,
+    "training_executed": false,
+    "training_gates_changed": false
+  },
+  "previous_validation_revision": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+  "retrieval": {
+    "admitted": false,
+    "bridge_evaluate_executed": false,
+    "cold_index": true,
+    "context_span_count": 5,
+    "index_sha256": "7790cf1ee2ed378e05bb335a31b4fdc4724ce5967629994e1a1e8650d72c83af",
+    "model_training_executed": false,
+    "proof_executed": false,
+    "results": [
+      {
+        "bundle_sha256": "23c7f68a4232d97e9843d65c3f6d295157feca8b40bd747088ba325d9522cb87",
+        "candidate_count": 2,
+        "source_resolved_slot_count": 0,
+        "source_span_id": "legal-selected",
+        "telemetry": {
+          "bm25_queries": 1,
+          "graph_visits": 3,
+          "unique_context_bytes": 136
+        },
+        "wall_seconds_with_replay": 0.0014819749630987644
+      },
+      {
+        "bundle_sha256": "1497a5ef7a54d49ac4613232294a3355a24d0774b7de79717a3ea8659f298771",
+        "candidate_count": 2,
+        "source_resolved_slot_count": 0,
+        "source_span_id": "ui-selected",
+        "telemetry": {
+          "bm25_queries": 1,
+          "graph_visits": 2,
+          "unique_context_bytes": 163
+        },
+        "wall_seconds_with_replay": 0.0012381949927657843
+      }
+    ],
+    "schema": "authored-context-retrieval-smoke/v1",
+    "scope": "authored local BM25/neighbor/explicit-graph retrieval",
+    "source_count": 2,
+    "source_semantics_verified": false,
+    "wall_seconds": 0.0031408481299877167,
+    "weights_downloaded": false,
+    "workers": 1
+  },
+  "schema": "provisional-context-validation/v1",
+  "scope": "provisional authored companions and bounded context/link preparation; no source promotion or numerical training",
+  "source_semantics_verified": false,
+  "supervisor_tasks_enqueued": 0,
+  "tests": {
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "64",
+    "time": "12.916"
+  },
+  "training_executed": false
+}

@@ -1,0 +1,1317 @@
+{
+  "admitted": false,
+  "bridge_names": [],
+  "cold_process": true,
+  "compiler_seconds_per_span": 0.01941157584951725,
+  "formalized": false,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": false,
+  "pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "roundtrip_ok_count": 0,
+  "sample_count": 8,
+  "seconds_per_span": 0.023217191628646106,
+  "separate_calls": [
+    {
+      "compile_seconds": 0.014193111914210021,
+      "id": "art-1.sec-1.span-1",
+      "result": {
+        "canonical_ir": null,
+        "canonical_ir_cid": null,
+        "component_trace": [],
+        "diagnostics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "end": 150,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "severity": "error",
+            "source_cid": "bafkreidijz6jjv3lxs5b3nnhlcjqlunhpgvuou7pbx23wrnrkojqahx76y",
+            "start": 0
+          }
+        ],
+        "error": {
+          "code": "unsupported_semantics",
+          "details": {
+            "affected_norm_count": 1,
+            "unsupported_semantic_count": 1
+          },
+          "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+          "retryable": false
+        },
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeerakgdhh4sb5jajsx5qecrqrvuka6pvxusi3kri7br4fj73qcuvr37a",
+          "request_cid": "baguqeeraymwoa5ussa4xpz4mk66rzh7noudlsfrr3evz3r5vu4rnswktzfqq",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreidijz6jjv3lxs5b3nnhlcjqlunhpgvuou7pbx23wrnrkojqahx76y",
+          "terminal_stage": "canonical_projection"
+        },
+        "request_cid": "baguqeeraymwoa5ussa4xpz4mk66rzh7noudlsfrr3evz3r5vu4rnswktzfqq",
+        "result_cid": "baguqeerajdfg4h4zat65o7xwyurrwww5qp64ifqt2vm5ccez4ivk2435jznq",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": null,
+        "status": "abstained",
+        "unsupported_semantics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "disposition": "abstain",
+            "end": 150,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "source_cid": "bafkreidijz6jjv3lxs5b3nnhlcjqlunhpgvuou7pbx23wrnrkojqahx76y",
+            "start": 0
+          }
+        ]
+      },
+      "vocabulary": {
+        "actions": [
+          "be"
+        ],
+        "actors": [
+          "All legislative Powers herein granted"
+        ],
+        "objects": [
+          "vested in a Congress of the United States which shall consist of a Senate and House of Representatives"
+        ],
+        "qualifiers": []
+      },
+      "vocabulary_seconds": 0.11270673794206232
+    },
+    {
+      "compile_seconds": 0.010766724008135498,
+      "id": "art-1.sec-2.span-1",
+      "result": {
+        "canonical_ir": null,
+        "canonical_ir_cid": null,
+        "component_trace": [],
+        "diagnostics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "end": 256,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "severity": "error",
+            "source_cid": "bafkreif6iyjc2hvnc3bh74cuug66smm7dh7ejmwscat5ub3sdcjsnfn6wm",
+            "start": 0
+          }
+        ],
+        "error": {
+          "code": "unsupported_semantics",
+          "details": {
+            "affected_norm_count": 1,
+            "unsupported_semantic_count": 1
+          },
+          "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+          "retryable": false
+        },
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeerab2ksjb3axsi3qovb7fvk62t4zyqmwdc25x56jlrpwxbwdzl7onvq",
+          "request_cid": "baguqeeralpwfu2kfxgqlcpqyd75l5auutzzjvsm5m36x3fdvxnk5giswn5yq",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreif6iyjc2hvnc3bh74cuug66smm7dh7ejmwscat5ub3sdcjsnfn6wm",
+          "terminal_stage": "canonical_projection"
+        },
+        "request_cid": "baguqeeralpwfu2kfxgqlcpqyd75l5auutzzjvsm5m36x3fdvxnk5giswn5yq",
+        "result_cid": "baguqeerafjypw5xiscpoystzrweh2a7axphp4vceivtahsbcdlfh5iyrwnra",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": null,
+        "status": "abstained",
+        "unsupported_semantics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "disposition": "abstain",
+            "end": 256,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "source_cid": "bafkreif6iyjc2hvnc3bh74cuug66smm7dh7ejmwscat5ub3sdcjsnfn6wm",
+            "start": 0
+          }
+        ]
+      },
+      "vocabulary": {
+        "actions": [
+          "be"
+        ],
+        "actors": [
+          "House of Representatives"
+        ],
+        "objects": [
+          "composed of Members chosen every second Year by the People of the several States and the Electors in each State shall have the Qualifications requisite for Electors of the most numerous Branch of the State Legislature"
+        ],
+        "qualifiers": []
+      },
+      "vocabulary_seconds": 0.008833927102386951
+    },
+    {
+      "compile_seconds": 0.03048838395625353,
+      "id": "art-1.sec-2.span-2",
+      "result": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "be",
+              "actor": "Person",
+              "conditions": [
+                "condition"
+              ],
+              "exceptions": [],
+              "modality": "F",
+              "object": "a Representative who shall not have attained to the Age of twenty five Years and been seven Years a Citizen of the United States and who shall not",
+              "temporal": []
+            },
+            {
+              "action": "be",
+              "actor": "be an Inhabitant of that State in which he",
+              "conditions": [
+                "condition"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "chosen",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_ir_cid": "baguqeeraudhssw4rs3td3yhmqmpqnhq7zijnsqaiajlg43umbce6k7zpp55q",
+        "component_trace": [
+          {
+            "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "component_interface": "TypedDeonticCanonicalConstructor@1",
+            "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "deterministic": true,
+            "input_cid": "baguqeeraiotdjbfqjfj34u4nhnuxegwdmsmt4wuoaw4pupfohqrddymhuggq",
+            "input_codec": "dag-json",
+            "model_receipt_cid": null,
+            "output_cid": "baguqeeraudhssw4rs3td3yhmqmpqnhq7zijnsqaiajlg43umbce6k7zpp55q",
+            "output_codec": "dag-json"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "compiler.measured_path",
+            "end": null,
+            "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+            "severity": "info",
+            "source_cid": null,
+            "start": null
+          }
+        ],
+        "error": null,
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeera7py7k2gojj3yiydytumskxrxr456ytmbfvwk5hqmm3cadbvfag7q",
+          "request_cid": "baguqeeraiotdjbfqjfj34u4nhnuxegwdmsmt4wuoaw4pupfohqrddymhuggq",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+          "terminal_stage": "complete"
+        },
+        "request_cid": "baguqeeraiotdjbfqjfj34u4nhnuxegwdmsmt4wuoaw4pupfohqrddymhuggq",
+        "result_cid": "baguqeerazzitbu7es6s6lcbulw3s2tkofck3rahnn6mioactfvvbe63gneqa",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": {
+          "canonical_ir_cid": "baguqeeraudhssw4rs3td3yhmqmpqnhq7zijnsqaiajlg43umbce6k7zpp55q",
+          "entries": [
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/action",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/actor",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/conditions",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/exceptions",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/modality",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/object",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/0/temporal",
+              "rule_cid": "baguqeera72cecnzki2k7z6wfyiu7gt6yxhvmoqjx5pke7moofd6p6hipo4uq",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/action",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/actor",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/conditions",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/exceptions",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/modality",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/object",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 241,
+              "field_path": "/rules/1/temporal",
+              "rule_cid": "baguqeeraq4jxoc2kpdovludfid253tjjzmjpuinhdcqhipcksk67mo43vu4a",
+              "source_cid": "bafkreigd4ovx76wsc2awfmweqx5j5i7rt3nkwg77mnz6rsr3pb3g2qu3ee",
+              "start": 0
+            }
+          ],
+          "interface": "CanonicalSourceMapReceipt@1",
+          "receipt_cid": "baguqeeranqorga2dhbqpssurojjvzf6qy2whfh5bgczpaotvzzyimxg5hrga",
+          "request_cid": "baguqeeraiotdjbfqjfj34u4nhnuxegwdmsmt4wuoaw4pupfohqrddymhuggq"
+        },
+        "status": "success",
+        "unsupported_semantics": []
+      },
+      "vocabulary": {
+        "actions": [
+          "be"
+        ],
+        "actors": [
+          "Person",
+          "be an Inhabitant of that State in which he"
+        ],
+        "objects": [
+          "a Representative who shall not have attained to the Age of twenty five Years and been seven Years a Citizen of the United States and who shall not",
+          "chosen"
+        ],
+        "qualifiers": [
+          "condition",
+          "when",
+          "elected"
+        ]
+      },
+      "vocabulary_seconds": 0.01238991692662239
+    },
+    {
+      "compile_seconds": 0.026509237941354513,
+      "id": "art-1.sec-2.span-3",
+      "result": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "be",
+              "actor": "Representatives and direct Taxes",
+              "conditions": [],
+              "exceptions": [
+                "Indians not taxed"
+              ],
+              "modality": "O",
+              "object": "apportioned among the several States which may be included",
+              "temporal": []
+            },
+            {
+              "action": "determin",
+              "actor": "adding to the whole Number of free Persons, including those bound to Service for a Term of Years, and excluding Indians not taxed, three fifths of all other Persons",
+              "conditions": [],
+              "exceptions": [
+                "Indians not taxed"
+              ],
+              "modality": "O",
+              "object": "which",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_ir_cid": "baguqeeravaicxjii3rybo7aqfh6a7jm4hoe5xus22f3upowdd5bs63cgarha",
+        "component_trace": [
+          {
+            "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "component_interface": "TypedDeonticCanonicalConstructor@1",
+            "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "deterministic": true,
+            "input_cid": "baguqeeraye62lb5muqmzmhesusebmuwokwxyhu6qfev7o5ldg2a7ci7wkwha",
+            "input_codec": "dag-json",
+            "model_receipt_cid": null,
+            "output_cid": "baguqeeravaicxjii3rybo7aqfh6a7jm4hoe5xus22f3upowdd5bs63cgarha",
+            "output_codec": "dag-json"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "compiler.measured_path",
+            "end": null,
+            "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+            "severity": "info",
+            "source_cid": null,
+            "start": null
+          }
+        ],
+        "error": null,
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeerabsrzujs5qxybfiies3f3xmvhdj5r73b4xqp2pmd4ixl3a7qkotga",
+          "request_cid": "baguqeeraye62lb5muqmzmhesusebmuwokwxyhu6qfev7o5ldg2a7ci7wkwha",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+          "terminal_stage": "complete"
+        },
+        "request_cid": "baguqeeraye62lb5muqmzmhesusebmuwokwxyhu6qfev7o5ldg2a7ci7wkwha",
+        "result_cid": "baguqeeraw3dgttsmnyq3kopgg2mch4vhxnkzpftbxcztheqdeyz7ubldih5a",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": {
+          "canonical_ir_cid": "baguqeeravaicxjii3rybo7aqfh6a7jm4hoe5xus22f3upowdd5bs63cgarha",
+          "entries": [
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/action",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/actor",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/conditions",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/exceptions",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/modality",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/object",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/1/temporal",
+              "rule_cid": "baguqeerabg3l2qs6ylx6dfxnbflojwbe3gfgocvi3bp7rhwnutz2teeuuhcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/action",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/actor",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/conditions",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/exceptions",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/modality",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/object",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 352,
+              "field_path": "/rules/0/temporal",
+              "rule_cid": "baguqeerajg2yrsnp7xc3tu4w4sfbueco7gjgksqmdh2wrmp7el3rt6oh4fcq",
+              "source_cid": "bafkreihu674azffuqaa6q4atysd3zixyv2lowbeudxzxcqlllrrztkrlhi",
+              "start": 0
+            }
+          ],
+          "interface": "CanonicalSourceMapReceipt@1",
+          "receipt_cid": "baguqeerau4r5gakap5jzr2vw7iskrkn7kzawcwikupmeegp67zcnec2jzrrq",
+          "request_cid": "baguqeeraye62lb5muqmzmhesusebmuwokwxyhu6qfev7o5ldg2a7ci7wkwha"
+        },
+        "status": "success",
+        "unsupported_semantics": []
+      },
+      "vocabulary": {
+        "actions": [
+          "be",
+          "determin"
+        ],
+        "actors": [
+          "Representatives and direct Taxes",
+          "adding to the whole Number of free Persons, including those bound to Service for a Term of Years, and excluding Indians not taxed, three fifths of all other Persons"
+        ],
+        "objects": [
+          "apportioned among the several States which may be included",
+          "which"
+        ],
+        "qualifiers": [
+          "exception",
+          "excluding",
+          "Indians not taxed",
+          "indians not taxed"
+        ]
+      },
+      "vocabulary_seconds": 0.014310793951153755
+    },
+    {
+      "compile_seconds": 0.021863032947294414,
+      "id": "art-1.sec-2.span-4",
+      "result": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "be",
+              "actor": "actual Enumeration",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "made",
+              "temporal": []
+            },
+            {
+              "action": "by",
+              "actor": "in such Manner as they",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "Law direct",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_ir_cid": "baguqeeraogrkkn536b55whjnb3qfuulg2nd7gsfqgyecp7v5wlcknetamrwq",
+        "component_trace": [
+          {
+            "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "component_interface": "TypedDeonticCanonicalConstructor@1",
+            "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "deterministic": true,
+            "input_cid": "baguqeeraggtmjxwl2xvjjbtmlc7ccfkbwiti6cwdpvafwcplepu5hrxsfupa",
+            "input_codec": "dag-json",
+            "model_receipt_cid": null,
+            "output_cid": "baguqeeraogrkkn536b55whjnb3qfuulg2nd7gsfqgyecp7v5wlcknetamrwq",
+            "output_codec": "dag-json"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "compiler.measured_path",
+            "end": null,
+            "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+            "severity": "info",
+            "source_cid": null,
+            "start": null
+          }
+        ],
+        "error": null,
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeerawb6mstyn6ktpgmep5bqxqcp56qouysczk3e7jn2ynwnqedcawh6q",
+          "request_cid": "baguqeeraggtmjxwl2xvjjbtmlc7ccfkbwiti6cwdpvafwcplepu5hrxsfupa",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+          "terminal_stage": "complete"
+        },
+        "request_cid": "baguqeeraggtmjxwl2xvjjbtmlc7ccfkbwiti6cwdpvafwcplepu5hrxsfupa",
+        "result_cid": "baguqeeraihnqxrklfw53wcjsiiqvizder5fircjrfzbmef5ceyvgju434nza",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": {
+          "canonical_ir_cid": "baguqeeraogrkkn536b55whjnb3qfuulg2nd7gsfqgyecp7v5wlcknetamrwq",
+          "entries": [
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/action",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/actor",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/conditions",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/exceptions",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/modality",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/object",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/0/temporal",
+              "rule_cid": "baguqeeraopcsqpldpv6chohltya7omqbgmp5afetjqarbxos4sthqtxuc6ja",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/action",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/actor",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/conditions",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/exceptions",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/modality",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/object",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 207,
+              "field_path": "/rules/1/temporal",
+              "rule_cid": "baguqeerapix32k5jtqg3z2e6xv7kyp3cqxxqpcol3q7zqywp6c2zyivutljq",
+              "source_cid": "bafkreidzafynwtbkkyivnc4tweb67htn2hnycv4nbm6ocid7ahg7nfjiya",
+              "start": 0
+            }
+          ],
+          "interface": "CanonicalSourceMapReceipt@1",
+          "receipt_cid": "baguqeeraff6w27bdt5f57hm7sx4jb7ux46gkeaw54x7hzh3tch2fvz34tpqq",
+          "request_cid": "baguqeeraggtmjxwl2xvjjbtmlc7ccfkbwiti6cwdpvafwcplepu5hrxsfupa"
+        },
+        "status": "success",
+        "unsupported_semantics": []
+      },
+      "vocabulary": {
+        "actions": [
+          "be",
+          "by"
+        ],
+        "actors": [
+          "actual Enumeration",
+          "in such Manner as they"
+        ],
+        "objects": [
+          "made",
+          "Law direct"
+        ],
+        "qualifiers": []
+      },
+      "vocabulary_seconds": 0.009380299015901983
+    },
+    {
+      "compile_seconds": 0.02878422907087952,
+      "id": "art-1.sec-2.span-5",
+      "result": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "exceed",
+              "actor": "Number of Representatives",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "one for every thirty Thousand but each State shall have at Least one Representative",
+              "temporal": []
+            },
+            {
+              "action": "be",
+              "actor": "and until such enumeration",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "made the State of New Hampshire shall be entitled to chuse three Massachusetts eight Rhode-Island and Providence Plantations one Connecticut five New-York six New Jersey four Pennsylvania eight Delaware one Maryland six Virginia ten North Carolina five South Carolina five and Georgia three",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_ir_cid": "baguqeeraah4r6q23jiwqeqxxbuqmrlkqfsrjjalzsovweznod2c27v3gebrq",
+        "component_trace": [
+          {
+            "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "component_interface": "TypedDeonticCanonicalConstructor@1",
+            "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "deterministic": true,
+            "input_cid": "baguqeera7e4mnylmulvos6tmyjcu2c6vonq7zkjebgbfujdrl3yanye7slha",
+            "input_codec": "dag-json",
+            "model_receipt_cid": null,
+            "output_cid": "baguqeeraah4r6q23jiwqeqxxbuqmrlkqfsrjjalzsovweznod2c27v3gebrq",
+            "output_codec": "dag-json"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "compiler.measured_path",
+            "end": null,
+            "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+            "severity": "info",
+            "source_cid": null,
+            "start": null
+          }
+        ],
+        "error": null,
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeeravkst62oeygj5butbhnxv364gb7twhdipromllfaqkv6fptszkpba",
+          "request_cid": "baguqeera7e4mnylmulvos6tmyjcu2c6vonq7zkjebgbfujdrl3yanye7slha",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+          "terminal_stage": "complete"
+        },
+        "request_cid": "baguqeera7e4mnylmulvos6tmyjcu2c6vonq7zkjebgbfujdrl3yanye7slha",
+        "result_cid": "baguqeeratyrlf5lftcogd652dksznrhwhhf4cpurw5ixjmwolzfpep6i5rcq",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": {
+          "canonical_ir_cid": "baguqeeraah4r6q23jiwqeqxxbuqmrlkqfsrjjalzsovweznod2c27v3gebrq",
+          "entries": [
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/action",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/actor",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/conditions",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/exceptions",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/modality",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/object",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/0/temporal",
+              "rule_cid": "baguqeerasuyo6ybwab5jllqsg77a6spfojct4hwb7g445x3dx3fgsl37r5eq",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/action",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/actor",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/conditions",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/exceptions",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/modality",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/object",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            },
+            {
+              "attribution": "coarse:typed_deontic_record_span",
+              "end": 472,
+              "field_path": "/rules/1/temporal",
+              "rule_cid": "baguqeerayrlez7zqukfj7qjp4ow5ldjfd736oeslrwptpsmtkvgn7ywo2fga",
+              "source_cid": "bafkreidoz7e5tmp43hmocwy2l2ycpgmecpxq6njbovbb5po4xv35lt3jc4",
+              "start": 0
+            }
+          ],
+          "interface": "CanonicalSourceMapReceipt@1",
+          "receipt_cid": "baguqeeraj6n2wmjji3t2qjpteui36llihy6kiiyeo2ujr4qigtsn5osn2brq",
+          "request_cid": "baguqeera7e4mnylmulvos6tmyjcu2c6vonq7zkjebgbfujdrl3yanye7slha"
+        },
+        "status": "success",
+        "unsupported_semantics": []
+      },
+      "vocabulary": {
+        "actions": [
+          "exceed",
+          "be"
+        ],
+        "actors": [
+          "Number of Representatives",
+          "and until such enumeration"
+        ],
+        "objects": [
+          "one for every thirty Thousand but each State shall have at Least one Representative",
+          "made the State of New Hampshire shall be entitled to chuse three Massachusetts eight Rhode-Island and Providence Plantations one Connecticut five New-York six New Jersey four Pennsylvania eight Delaware one Maryland six Virginia ten North Carolina five South Carolina five and Georgia three"
+        ],
+        "qualifiers": []
+      },
+      "vocabulary_seconds": 0.01604779704939574
+    },
+    {
+      "compile_seconds": 0.009726541000418365,
+      "id": "art-1.sec-2.span-6",
+      "result": {
+        "canonical_ir": null,
+        "canonical_ir_cid": null,
+        "component_trace": [],
+        "diagnostics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "end": 144,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "severity": "error",
+            "source_cid": "bafkreihk75a77piw2l7hq6tiuuitwvidwkowaf5vrpntogt6dnpmy3qwme",
+            "start": 0
+          },
+          {
+            "code": "typed_deontic.unrepresented_procedure",
+            "end": 144,
+            "message": "The typed deontic procedure facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "severity": "error",
+            "source_cid": "bafkreihk75a77piw2l7hq6tiuuitwvidwkowaf5vrpntogt6dnpmy3qwme",
+            "start": 0
+          }
+        ],
+        "error": {
+          "code": "unsupported_semantics",
+          "details": {
+            "affected_norm_count": 1,
+            "unsupported_semantic_count": 2
+          },
+          "message": "2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+          "retryable": false
+        },
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeeraudhoox5o7pylnfitef42s67aquul3ziofs4fc272el2bdjewoiga",
+          "request_cid": "baguqeera4comilgihdm4aectlnh4ufggodv2ilygcbonjgl7wt3hpyv67a7q",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreihk75a77piw2l7hq6tiuuitwvidwkowaf5vrpntogt6dnpmy3qwme",
+          "terminal_stage": "canonical_projection"
+        },
+        "request_cid": "baguqeera4comilgihdm4aectlnh4ufggodv2ilygcbonjgl7wt3hpyv67a7q",
+        "result_cid": "baguqeerazuygdssdpze7u4td2xfujprprhddjyykwqh7bpvrp73uk3t5lkea",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": null,
+        "status": "abstained",
+        "unsupported_semantics": [
+          {
+            "code": "typed_deontic.unrepresented_procedure",
+            "disposition": "abstain",
+            "end": 144,
+            "message": "The typed deontic procedure facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "source_cid": "bafkreihk75a77piw2l7hq6tiuuitwvidwkowaf5vrpntogt6dnpmy3qwme",
+            "start": 0
+          },
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "disposition": "abstain",
+            "end": 144,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "source_cid": "bafkreihk75a77piw2l7hq6tiuuitwvidwkowaf5vrpntogt6dnpmy3qwme",
+            "start": 0
+          }
+        ]
+      },
+      "vocabulary": {
+        "actions": [
+          "issue"
+        ],
+        "actors": [
+          "Executive Authority thereof"
+        ],
+        "objects": [
+          "Writs of Election to fill such Vacancies"
+        ],
+        "qualifiers": [
+          "condition",
+          "when",
+          "vacancies happen in the Representation from any State",
+          "vacancies happen in the representation from any state"
+        ]
+      },
+      "vocabulary_seconds": 0.007206988986581564
+    },
+    {
+      "compile_seconds": 0.01296134595759213,
+      "id": "art-1.sec-2.span-7",
+      "result": {
+        "canonical_ir": null,
+        "canonical_ir_cid": null,
+        "component_trace": [],
+        "diagnostics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "end": 119,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "severity": "error",
+            "source_cid": "bafkreigggg4xgv7s3jiwakoolmrjqoz4imagt5ur3xcwqnihc7pdym7lli",
+            "start": 0
+          }
+        ],
+        "error": {
+          "code": "unsupported_semantics",
+          "details": {
+            "affected_norm_count": 1,
+            "unsupported_semantic_count": 1
+          },
+          "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+          "retryable": false
+        },
+        "interface": "CanonicalStructuredTextCompiler@1",
+        "provenance": {
+          "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+          "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+          "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+          "deterministic": true,
+          "fallback_allowed": false,
+          "fallback_used": false,
+          "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "learned_stages": [],
+          "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+          "model_call_count": 0,
+          "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+          "provenance_cid": "baguqeera3bknicjudwwmjfyfgvvew4wr3wu7uxi4dk3uswlvhhsrrk75eroa",
+          "request_cid": "baguqeeralsw73cx4acdpcwavdvspnqxu624ve423z2iqqzjqbhxmnanqtb3q",
+          "selection_basis": "replacement_bounded_tie_policy",
+          "source_cid": "bafkreigggg4xgv7s3jiwakoolmrjqoz4imagt5ur3xcwqnihc7pdym7lli",
+          "terminal_stage": "canonical_projection"
+        },
+        "request_cid": "baguqeeralsw73cx4acdpcwavdvspnqxu624ve423z2iqqzjqbhxmnanqtb3q",
+        "result_cid": "baguqeeranc7bxhhm72xevchchjcoddyok3cxuvi7xgd3w74nycijbq4q55lq",
+        "result_cid_codec": "dag-json",
+        "result_cid_scope": "identity_payload",
+        "source_map_receipt": null,
+        "status": "abstained",
+        "unsupported_semantics": [
+          {
+            "code": "typed_deontic.unrepresented_recipient",
+            "disposition": "abstain",
+            "end": 119,
+            "message": "The typed deontic recipient facet is nonempty but CanonicalRoundTripIR@1 has no reviewed field for it.",
+            "source_cid": "bafkreigggg4xgv7s3jiwakoolmrjqoz4imagt5ur3xcwqnihc7pdym7lli",
+            "start": 0
+          }
+        ]
+      },
+      "vocabulary": {
+        "actions": [
+          "chuse",
+          "have"
+        ],
+        "actors": [
+          "House of Representatives"
+        ],
+        "objects": [
+          "their Speaker and other Officers",
+          "the sole Power of Impeachment"
+        ],
+        "qualifiers": []
+      },
+      "vocabulary_seconds": 0.010561041999608278
+    }
+  ],
+  "source_files": {
+    "logic/autoformal/__init__.py": "59a578cf7b6795296d73c83c8d49b9e4c5555222b3569340b7d2b91b0d409481",
+    "logic/deontic/formula_builder.py": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba",
+    "logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12"
+  },
+  "source_sha256": "9dd8624bf0ef83dd135772f7c19aeef0496c3164d04d4bc0d6d8f1de91746e4b",
+  "span_calls": [
+    {
+      "id": "art-1.sec-1.span-1",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.015784403076395392
+    },
+    {
+      "id": "art-1.sec-2.span-1",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.018859653966501355
+    },
+    {
+      "id": "art-1.sec-2.span-2",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.025408543995581567
+    },
+    {
+      "id": "art-1.sec-2.span-3",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.029420583974570036
+    },
+    {
+      "id": "art-1.sec-2.span-4",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.02120158902835101
+    },
+    {
+      "id": "art-1.sec-2.span-5",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.034070821944624186
+    },
+    {
+      "id": "art-1.sec-2.span-6",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.016321782022714615
+    },
+    {
+      "id": "art-1.sec-2.span-7",
+      "outcome": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained."
+      },
+      "wall_seconds": 0.024670155020430684
+    }
+  ],
+  "vocabulary_seconds_per_span": 0.023929687871714123
+}

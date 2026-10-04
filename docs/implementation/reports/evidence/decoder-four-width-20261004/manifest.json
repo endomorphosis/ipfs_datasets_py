@@ -1,0 +1,1543 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 135474775,
+    "format": "split gzip tar",
+    "members": 299,
+    "sha256": "a4fdc7de16d0b394154ecd2b1cde9d6c4862f8bd4604b168157a44931187b08e"
+  },
+  "archive_parts": [
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-001",
+      "sha256": "6b5cfa29d06de491894a24dbba06a670f91880da50b04cfe56734c38425ba990"
+    },
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-002",
+      "sha256": "04b6771ff1ab72f3b2370f4d6b61941ac71e982ca63acb6ff39ee0896919e4f2"
+    },
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-003",
+      "sha256": "491ff44fb25c6de88447298598c09e850e000cd82eb5b8a78960ec8b6cdea8b8"
+    },
+    {
+      "bytes": 15474775,
+      "path": "evidence.tar.gz.part-004",
+      "sha256": "9322c6d9124d2660d84982c61a12c9fd66a8f1ad2516074f96c63fcc0d7d64f8"
+    }
+  ],
+  "checkpoint_promoted": false,
+  "external_4096_diagnostic_vectors_included": false,
+  "external_inputs_are_hash_bound_not_all_bundled": true,
+  "external_model_assets_included": false,
+  "lake_executed": false,
+  "members": {
+    "documentation/four_width_training.md": {
+      "bytes": 10207,
+      "sha256": "1f5a0f1d9cbdf0140a9c650c788d8c711b088a2ea748934e7e605b0120c068d2"
+    },
+    "run/adopt_shared_scheduler.py": {
+      "bytes": 10999,
+      "sha256": "c16eb27b9c46bd7e06541bd36ffb5d5f1edc686e15ca12143aca68ea9bfc2dee"
+    },
+    "run/audit-revision-r2.json": {
+      "bytes": 21774,
+      "sha256": "b0937c7b7fa7ee75af7bdcf67c41ef07b726a20dc7573aad7e6e15f66a03ccfa"
+    },
+    "run/audit-training-attempt1.log": {
+      "bytes": 4185,
+      "sha256": "381ef88c96a44a398350ed86d28a88953bd2645e461ed4ffae06006ebfe8fd10"
+    },
+    "run/audit-training-attempt2.log": {
+      "bytes": 52,
+      "sha256": "d9853ad2f1993b87ef3ad5b17085540e22657a6c33900287fd659c475066814b"
+    },
+    "run/audit_four_width_readiness.py": {
+      "bytes": 18275,
+      "sha256": "2b99d8a94ed7bcd45f9b64f455c63cc9014ee53e90b997d67058a9bdff8fafa2"
+    },
+    "run/audit_postfit.py": {
+      "bytes": 23095,
+      "sha256": "a6cc1e224cfdd065efc7772f2ca0dcfd8d595fbf2acdcbbd47b3299bfd4170c0"
+    },
+    "run/audit_representations.py": {
+      "bytes": 10350,
+      "sha256": "50dd01686f1502c546a15b52ca6770e145a7c455c50e7f60ded55cab1c45774b"
+    },
+    "run/audit_training_results.py": {
+      "bytes": 38779,
+      "sha256": "ba0ee62939652f6f7c8c0d1ee7590e5d2a729052c5d47a8316799ba67637e79e"
+    },
+    "run/audit_training_results_r2.py": {
+      "bytes": 39049,
+      "sha256": "eef73e8189ec3ec4bbaf5764232140de157597c03b6cb1f296928668ce9a4bba"
+    },
+    "run/build_evidence.py": {
+      "bytes": 6151,
+      "sha256": "5b8faf239431620ed1c205f288d8a4e5842b4c5b3c1a7d087f464a37046367ef"
+    },
+    "run/comparison-results-attempt1.json": {
+      "bytes": 256182,
+      "sha256": "d5c14ed1dc152c145e340b257a2a702ba0bf2a3a5ce0f2212bebc84e6b5b347d"
+    },
+    "run/comparison-results.json": {
+      "bytes": 251828,
+      "sha256": "1fc67b440c1660c3323b81d4bad5eaa7634d8a63e5364404ccb41842d9d4648a"
+    },
+    "run/current-workspace-compiler-gates.json": {
+      "bytes": 37686,
+      "sha256": "df762de149ea437a90180a46988d099216a6bf047163539d9d00ba88c11d7446"
+    },
+    "run/current-workspace-compiler-gates.log": {
+      "bytes": 786,
+      "sha256": "5d42e03eb7678cb9ad302c7e94963126e291b87f179ad22be66eb57ca7d026c1"
+    },
+    "run/documentation-review.json": {
+      "bytes": 14371,
+      "sha256": "469636ca48b5364545182fc158eaaac468fdc108be55023abffb3e291827e619"
+    },
+    "run/evaluation-freeze.json": {
+      "bytes": 465,
+      "sha256": "10fd267dbb120e9e5aaf426cab28616a464b1ca9a10ba8d277f4efa681c7b617"
+    },
+    "run/evaluation-harness/adopt_shared_scheduler.py": {
+      "bytes": 10999,
+      "sha256": "c16eb27b9c46bd7e06541bd36ffb5d5f1edc686e15ca12143aca68ea9bfc2dee"
+    },
+    "run/evaluation-harness/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "run/evaluation-harness/run_reserved.py": {
+      "bytes": 16202,
+      "sha256": "b3ca6c258a92884f145df8494416a517f2b3cb41d63b32754a2922a2e14614a5"
+    },
+    "run/evaluation-manifest.json": {
+      "bytes": 147939,
+      "sha256": "f253c2d581d5a04a9adbf8ea0e2567cea80d664b59e8fd9fdb83bd41597e4e22"
+    },
+    "run/evaluation-plan.json": {
+      "bytes": 146420,
+      "sha256": "54706bb21bac2f25291ffb966813b3401bae41b892226a422a177e48cde8df8e"
+    },
+    "run/evaluation-r1-guardian-exit.json": {
+      "bytes": 316,
+      "sha256": "299e0bb30094f623c648550dde840406e55e81c171a9f2026baa33fbc52f737d"
+    },
+    "run/evaluation-r1-guardian.log": {
+      "bytes": 5090,
+      "sha256": "3ff910497bc39a1da22e577d4d94ed1f81cb101a30f5bf3c118241b3e552ad72"
+    },
+    "run/evaluation-r1-lease-observations.jsonl": {
+      "bytes": 36752,
+      "sha256": "38e1135b6722ee75a8613dfe6b34c766ba9c019211bdf1a11310700d3bab2a9f"
+    },
+    "run/evaluation-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "fb0ca9d0b2f8bd9e424a4d554577be2449e2a00bdf80f32700a3097e74f95330"
+    },
+    "run/evaluation-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "66023f9ea3257017bd17cca0318a32defb327cea8531ee89729dd0832b9986da"
+    },
+    "run/evaluation-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "0c0372179b32267885c3cb3a151655bf80951cddc9b3abdafc5a72b0a3532ae9"
+    },
+    "run/evaluation-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "run/evaluation-r1/command.json": {
+      "bytes": 6379,
+      "sha256": "78ccfe6bf0dc5870799e63e7276bb16430738fd6687a65c5ce8fc3879af18852"
+    },
+    "run/evaluation-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "b2a7f088238b1de39027769be366a23b9cefa84afc90855f7c8cb5c0fb8ea259"
+    },
+    "run/evaluation-r1/resource-observations.json": {
+      "bytes": 1747,
+      "sha256": "87e229bfcb39066978f66aa2a8cc03f8455ca88dc51d0eba7af378063d8b42af"
+    },
+    "run/evaluation-r1/resources-final.json": {
+      "bytes": 5816,
+      "sha256": "9d19a2bd6db04624f0d75a72ef98c7c457da0ec2537ea0e922355e3a41f8cae8"
+    },
+    "run/evaluation-r1/resources-start.json": {
+      "bytes": 3169,
+      "sha256": "02611b336053e0f5352a1034ac7bd3977f3687730b7eb39304bdbd11689c20f2"
+    },
+    "run/evaluation-r1/results/384-aux-used113-1729/last-attempt-predictions.json": {
+      "bytes": 26098,
+      "sha256": "a2036842510da3da9e1a8407626ddb62927fe4194699b59be8e0e74f5a31483a"
+    },
+    "run/evaluation-r1/results/384-aux-used113-1729/last-attempt-score.json": {
+      "bytes": 643034,
+      "sha256": "98829644faed73313480969acf9fe30bcfef8c1de418a871f2daa2442eb8622d"
+    },
+    "run/evaluation-r1/results/384-aux-used113-1729/selected-predictions.json": {
+      "bytes": 26098,
+      "sha256": "5342051baffca5d0919463514286d93775dbe84bf8bb537b1bab7160d0806698"
+    },
+    "run/evaluation-r1/results/384-aux-used113-1729/selected-score.json": {
+      "bytes": 643034,
+      "sha256": "aeac3481905061d7520995026f09ad2093f0f1c9f0cb1bc2272a7db4d1ca2e31"
+    },
+    "run/evaluation-r1/results/384-source-head-lr10-1729/last-attempt-predictions.json": {
+      "bytes": 26096,
+      "sha256": "739b9cdb337bfaaac24abadc5bfdc122bc78375ecb12fa8869cf9180709cc870"
+    },
+    "run/evaluation-r1/results/384-source-head-lr10-1729/last-attempt-score.json": {
+      "bytes": 642969,
+      "sha256": "29dedc5a00915f04860bcfeafccdf269e0d9cd38553cc57888298e9a49a29838"
+    },
+    "run/evaluation-r1/results/384-source-head-lr10-1729/selected-predictions.json": {
+      "bytes": 10911,
+      "sha256": "ea7d32574cdc3f859f90d8ec54b619686719acc0fa1732a3429747a43010c812"
+    },
+    "run/evaluation-r1/results/384-source-head-lr10-1729/selected-score.json": {
+      "bytes": 522123,
+      "sha256": "7097d64ac3de2be2c8dc54492de8be998ea2ad9bb06e4a2ff5b51563e81201dc"
+    },
+    "run/evaluation-r1/results/768-aux-used113-1729/last-attempt-predictions.json": {
+      "bytes": 26097,
+      "sha256": "6e937534a8e8b8cf61e37709345a4d0cc1c09253c17417cbaba3c0ecfea77791"
+    },
+    "run/evaluation-r1/results/768-aux-used113-1729/last-attempt-score.json": {
+      "bytes": 643305,
+      "sha256": "e6b76d1f53331e3bc993847e4edd354f867acefaf51ba8c24d408b62a79ecb1f"
+    },
+    "run/evaluation-r1/results/768-aux-used113-1729/selected-predictions.json": {
+      "bytes": 10911,
+      "sha256": "ae8396e24e2c56f5af658d5f1ce7a75abf45660586027346caa11440697c0e8b"
+    },
+    "run/evaluation-r1/results/768-aux-used113-1729/selected-score.json": {
+      "bytes": 522122,
+      "sha256": "56ffa50853c6d0bd388d019e46c3a5ba1c4454ec5b7105c1f0dd956c27b6411d"
+    },
+    "run/evaluation-r1/results/768-source-head-lr10-1729/last-attempt-predictions.json": {
+      "bytes": 26097,
+      "sha256": "e447513489c979426e89c2f308c068b075a1f570081ce35de1c220f50304bda9"
+    },
+    "run/evaluation-r1/results/768-source-head-lr10-1729/last-attempt-score.json": {
+      "bytes": 643234,
+      "sha256": "0340e55fb622d377ec0a1429c480fc4ae0db691b8004df932d6f2b70b724289c"
+    },
+    "run/evaluation-r1/results/768-source-head-lr10-1729/selected-predictions.json": {
+      "bytes": 10910,
+      "sha256": "e35beb9f53597634a1dc84f46b8353034963b1f4020c5ac719c58b93a802e8c5"
+    },
+    "run/evaluation-r1/results/768-source-head-lr10-1729/selected-score.json": {
+      "bytes": 522123,
+      "sha256": "a09ed7c70c93500fe163cefe7094c2404d2e619a59ee06790b2a6951110c538f"
+    },
+    "run/evaluation-r1/results/8-aux-used113-1729/last-attempt-predictions.json": {
+      "bytes": 18062,
+      "sha256": "f8f065210b9185f9cec37d391b4055fa449b121d204c4fdc44ba6f19254715e8"
+    },
+    "run/evaluation-r1/results/8-aux-used113-1729/last-attempt-score.json": {
+      "bytes": 570343,
+      "sha256": "0038d3d91b78bb1b408c993b8eaa32b19ab4900b7652a6eddcdf0a26027bbe80"
+    },
+    "run/evaluation-r1/results/8-aux-used113-1729/selected-predictions.json": {
+      "bytes": 10911,
+      "sha256": "d9bb083277d4775780925c2fb84d18c355219f3e5902bf16ff5895c29cdb6785"
+    },
+    "run/evaluation-r1/results/8-aux-used113-1729/selected-score.json": {
+      "bytes": 522123,
+      "sha256": "64581797f6b333e45f943c1574a7c3a806f968e78919fe041e3b799604a58597"
+    },
+    "run/evaluation-r1/results/8-source-head-lr10-1729/last-attempt-predictions.json": {
+      "bytes": 16844,
+      "sha256": "656a93ea6d75bd7b3d3e7db9648001ea302de214e739b143321127e4bf260766"
+    },
+    "run/evaluation-r1/results/8-source-head-lr10-1729/last-attempt-score.json": {
+      "bytes": 567014,
+      "sha256": "f25dafc7888b04a021ce67a9d442b99a4765a1e7c73e370af71097336a35c7f5"
+    },
+    "run/evaluation-r1/results/8-source-head-lr10-1729/selected-predictions.json": {
+      "bytes": 10912,
+      "sha256": "1600c04cd5b1872d7107e525c6f89e720379b75aa42a78d8d9879719bd6cb158"
+    },
+    "run/evaluation-r1/results/8-source-head-lr10-1729/selected-score.json": {
+      "bytes": 522123,
+      "sha256": "98037d14111d3aadeee68fab1bf6d2405e6a8bcd03338a959ca14f9e92559f59"
+    },
+    "run/evaluation-r1/results/predictions-complete.json": {
+      "bytes": 9671,
+      "sha256": "0d24b82cda9bb9a135e200d057dc187220f420c6aa20f6820c5d139a0afcb171"
+    },
+    "run/evaluation-r1/results/sealed-recipe.json": {
+      "bytes": 287467,
+      "sha256": "fabf63bcb1f57edb85334f8aac2c60b386bda0fa683f4432fd7ffc71418b22c8"
+    },
+    "run/evaluation-r1/results/summary.json": {
+      "bytes": 28513,
+      "sha256": "cc0dd8a0d9609cfb41b40e56a777ef0836f12900e21bb1bca4378fa0213c4f3c"
+    },
+    "run/evaluation-source/scripts/ops/autoencoder/evaluate_multidimension_modality_holdout.py": {
+      "bytes": 14609,
+      "sha256": "2b7bff7b971236a8ce7d1acf80964f3b8919dc500e64212a212e5dadb51709e7"
+    },
+    "run/evaluation-source/tests/unit/logic/formalization/autoencoder/test_multidimension_modality_holdout.py": {
+      "bytes": 7841,
+      "sha256": "245952f56dfb312660785ebf38920800a2b4fa196ed380aff9aaa2828fb69405"
+    },
+    "run/experiment-source/scripts/ops/autoencoder/benchmark_multidimension_modality_training.py": {
+      "bytes": 37250,
+      "sha256": "5cf07411916024fa8be12f5b68ad258a113c31a335d6fc6b366cabcf0ded926b"
+    },
+    "run/experiment-source/tests/unit/logic/formalization/autoencoder/test_multidimension_modality_training_runner.py": {
+      "bytes": 11422,
+      "sha256": "315ebf2552da12ce99acb3a8092769e17184601416625be86516bc52a246e3aa"
+    },
+    "run/four-width-readiness.json": {
+      "bytes": 13255,
+      "sha256": "3b4b4de535fe97d1ef23bf436656ed345d0581c5f8f59a78b2bda71feda9bdd0"
+    },
+    "run/freeze-receipt.json": {
+      "bytes": 567,
+      "sha256": "32bec51d225e432bcb9b96d01fc5b11dde29216a099a650f8e0f4f75e7827d4b"
+    },
+    "run/independent-audit-attempt1.json": {
+      "bytes": 4726951,
+      "sha256": "f9d629879642a60df92bafeaf2a98491a91b4f86fa0b2e7c616ff33319a7564b"
+    },
+    "run/independent-audit.json": {
+      "bytes": 4723834,
+      "sha256": "0256524967d7b0983e0bc177b0714e007e05d21c516cb2beb69b83625bd528c8"
+    },
+    "run/launch_evaluation.py": {
+      "bytes": 1253,
+      "sha256": "74869a7c00afe8e9ac35cbd42001896507748effb395f4ebc4630d525e71e51e"
+    },
+    "run/launch_phase.py": {
+      "bytes": 1234,
+      "sha256": "2c69785cf1b04d9f6ea054fb44ea87e878b6eece9f68b3f4f3a8e346300c5ec3"
+    },
+    "run/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "run/postfit-audit.json": {
+      "bytes": 257657,
+      "sha256": "0fbd035d2cdc54915ff842ca803e3627bfe3ff9fbcb9e3dc24fb540e477dfefd"
+    },
+    "run/postfit-results.json": {
+      "bytes": 98769,
+      "sha256": "efe64447efc65a02ce192d9d1bdf455ca66985f6bd28dabc4fb3e4b0aba04348"
+    },
+    "run/preflight-r1-guardian-exit.json": {
+      "bytes": 294,
+      "sha256": "05050c55aea07792252b5295e8a3edd9ed271889c040aac72e4ca479c8dd3a64"
+    },
+    "run/preflight-r1-guardian.log": {
+      "bytes": 5091,
+      "sha256": "4b99d189c8c52a6a208b5e038448cdfe8e916cae2020c0a004840583a17dad2d"
+    },
+    "run/preflight-r1-lease-observations.jsonl": {
+      "bytes": 23652,
+      "sha256": "7654ce2b6b1b286c68dad652d74874faaf5098ab007a9e168f7657633ea48596"
+    },
+    "run/preflight-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "40faeeb5b20065099a3fe450521b39b59a0aa0522eefe030247f752f2eab3b77"
+    },
+    "run/preflight-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "50550d31c62c6460a57ae8f8a045e05127c06ffbaa4bce5416afb47fcc71e480"
+    },
+    "run/preflight-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "8cf38babeddb0dd533af89331643814a804ebcfad1296241dab39113f477faa8"
+    },
+    "run/preflight-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "run/preflight-r1/command.json": {
+      "bytes": 6375,
+      "sha256": "bb442f8d89a2f730e4126b0599f7f53b903195f9f3406e843dabb260c37db271"
+    },
+    "run/preflight-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "48c75497c5c8524d886daf93311ac3b2ca45b7dd1de19b87c4f376834ed97a44"
+    },
+    "run/preflight-r1/resources-final.json": {
+      "bytes": 5818,
+      "sha256": "82928b5e2e2ce375c2ab7b0a5c098603b2a4821cb9810ac4a855fa13d72a612b"
+    },
+    "run/preflight-r1/resources-start.json": {
+      "bytes": 3171,
+      "sha256": "b1d4c6389f93bf2fcdd4ab5dbdc9af13f5e5ae2b3b58010db9e7558ae47b785a"
+    },
+    "run/preflight-r1/results/384/auxiliary-bank.json": {
+      "bytes": 993993,
+      "sha256": "8879adb6aa5f6701067b1935c545f8f638d8400371b620851b70bf3490be45c4"
+    },
+    "run/preflight-r1/results/384/bank-derivation.json": {
+      "bytes": 2607,
+      "sha256": "0bdd928d02adef16954b2ed5f6e1d7561379f9a8632e6da10c1777951883c9de"
+    },
+    "run/preflight-r1/results/384/initial-parity.json": {
+      "bytes": 19706,
+      "sha256": "9923e5b4207ae7f1e95a60f8a4bccf7b132492461aa5c4550e9dbe996a4dcd8f"
+    },
+    "run/preflight-r1/results/384/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "run/preflight-r1/results/384/source-contexts.json": {
+      "bytes": 3032308,
+      "sha256": "85415c5cef1c25450119cc419797c7f53b2817658d975cd4b357fdde01362a8c"
+    },
+    "run/preflight-r1/results/384/training-rows.json": {
+      "bytes": 841411,
+      "sha256": "854c059a7f7b2f9285eac10795191a9439b24ad6141d80406ffa9d6726892359"
+    },
+    "run/preflight-r1/results/768/auxiliary-bank.json": {
+      "bytes": 1912781,
+      "sha256": "3a315a11c253f4c8028f3baed2c468b34354709b5a086df470c7c614cc8234aa"
+    },
+    "run/preflight-r1/results/768/bank-derivation.json": {
+      "bytes": 2607,
+      "sha256": "20bd13a3cacf7c850473b9e91950342012ab269d7be1dca13a813f46df4fb514"
+    },
+    "run/preflight-r1/results/768/initial-parity.json": {
+      "bytes": 19708,
+      "sha256": "c4cddbfd2c48e34391554de9d7d6d51fbd49a971f4a74626d2a627a89f66556d"
+    },
+    "run/preflight-r1/results/768/preprocessing.json": {
+      "bytes": 2864122,
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    "run/preflight-r1/results/768/source-contexts.json": {
+      "bytes": 5960181,
+      "sha256": "88406d13f72794934d4c9dc8aa69238004e1f6c5d7bd855ba319c14486392104"
+    },
+    "run/preflight-r1/results/768/training-rows.json": {
+      "bytes": 1621518,
+      "sha256": "a66ba07b38d101b48f8cd995cc82b2f22f220323ba6f7fc676b87638c4e05254"
+    },
+    "run/preflight-r1/results/8/auxiliary-bank.json": {
+      "bytes": 88615,
+      "sha256": "5a8721ebbe9e253f683de7ea98f126aacc63b7e421f186c26f027c39d5403c67"
+    },
+    "run/preflight-r1/results/8/bank-derivation.json": {
+      "bytes": 2601,
+      "sha256": "32d9756df795fb304274a283eafc791731d67dcaeb3b80de8c24092fea677f5a"
+    },
+    "run/preflight-r1/results/8/initial-parity.json": {
+      "bytes": 19704,
+      "sha256": "ca249422ede1e22dce15f176adc7fdf8f6155b02609a7dd813c7e56d085da243"
+    },
+    "run/preflight-r1/results/8/preprocessing.json": {
+      "bytes": 204737,
+      "sha256": "ab3af09517154fcf074a21d4648fd4b672ad7c657153295edc363d36d337a8fb"
+    },
+    "run/preflight-r1/results/8/source-contexts.json": {
+      "bytes": 148526,
+      "sha256": "7ebb38207fb90edfa378908fcc320e7afd5a62cc79e434d0c8d937876362e1fb"
+    },
+    "run/preflight-r1/results/8/training-rows.json": {
+      "bytes": 73176,
+      "sha256": "a49125a8a934b61dbc71c5bef1bbfe7e75dafbcb958643b8d216242b33e039e1"
+    },
+    "run/preflight-r1/results/original384-bank-evidence.json": {
+      "bytes": 2577441,
+      "sha256": "cc773f9741263af5c708c67437d532c7c974a60c600b5d94c6fb52a43683e2ed"
+    },
+    "run/preflight-r1/results/readiness.json": {
+      "bytes": 686,
+      "sha256": "fd88cf8df3355115babffb53951ff502a833af1dd8da69fae6b465641d43e0bf"
+    },
+    "run/preflight-r1/results/sealed-recipe.json": {
+      "bytes": 215742,
+      "sha256": "eb30618a57f24e379d47175838eb2e37351a7e1c0d214427c0035d6a8a5d7bac"
+    },
+    "run/preflight-r1/results/summary.json": {
+      "bytes": 23300,
+      "sha256": "9d2cb8d72f46d19c1179bd6dba2270ff58cecab09200a0520a028b10ce9ce234"
+    },
+    "run/prepare_evaluation.py": {
+      "bytes": 4055,
+      "sha256": "60913aae6889b648b2371d0ca39ca7efe8187fa869237eab9e1e20e008b5c31e"
+    },
+    "run/prepare_freeze.py": {
+      "bytes": 4254,
+      "sha256": "2dad1653b0de1037d0ad39d16f2d994a4cde0f373cba9d11b9500aefb8c5960a"
+    },
+    "run/protected-checkpoint-after.json": {
+      "bytes": 297,
+      "sha256": "51863bfa636109b3d1f477ba7516674baeaf29785a8cc2753d5ade8ee14deb30"
+    },
+    "run/protected-checkpoint-before.json": {
+      "bytes": 297,
+      "sha256": "51863bfa636109b3d1f477ba7516674baeaf29785a8cc2753d5ade8ee14deb30"
+    },
+    "run/publish_results.py": {
+      "bytes": 5102,
+      "sha256": "886290d55113e8adb72184ca752813c942223f7b9c923ee5945756c7552dbe45"
+    },
+    "run/representation-audit.json": {
+      "bytes": 12976,
+      "sha256": "4d330010baf69a7f2867fb477af66a5edaf2181d8ff017cbdf5b6e6bf724c89c"
+    },
+    "run/run_current_workspace_compiler_gates.py": {
+      "bytes": 7376,
+      "sha256": "886831ad84e5333e47f3ae2fd668655c8c3c438354d05a7ea48e6f597d187b1c"
+    },
+    "run/run_reserved.py": {
+      "bytes": 16187,
+      "sha256": "1843f99650128e1142a40893f63cf1918bbf8fe08866b0c2900fa39ee69ef88d"
+    },
+    "run/runner-source-review.json": {
+      "bytes": 5305,
+      "sha256": "ffb587a59189dae71dea912c4eeb3fb7d921f58df9e0edba966ae0abd455fb9b"
+    },
+    "run/runner-unit-tests.log": {
+      "bytes": 1174,
+      "sha256": "bcefceac8ee5a91e9df7f458e7b265d5ced55ce8a9376bf485dd2277aed3f95e"
+    },
+    "run/runner-unit-tests.xml": {
+      "bytes": 8671,
+      "sha256": "881e74472c15b19d31bf6ac188851ec0565e1eac392379488dc504c2af25fe0a"
+    },
+    "run/tests-evaluation-focused.log": {
+      "bytes": 1173,
+      "sha256": "daff33966ead7ac4fb4c0b09c41f3bd759ca83b0c7244542bdb10fb17456c9ae"
+    },
+    "run/tests-evaluation-focused.xml": {
+      "bytes": 5563,
+      "sha256": "1f567ab26f00187a95b11678661fd80fff33922f867bcd6dd049fe19cbf33a06"
+    },
+    "run/tests-runner-focused.log": {
+      "bytes": 1177,
+      "sha256": "49ad32ddd04d4ba8879e8a2ec4bc232b865a791f98390dce7c538041d9354676"
+    },
+    "run/tests-runner-focused.xml": {
+      "bytes": 8671,
+      "sha256": "ba8e0c524a90f5b6962e3358d1b3f4cb107ff43b437e0b1b86543c1c309fdb9f"
+    },
+    "run/training-manifest.json": {
+      "bytes": 108577,
+      "sha256": "5d775a57e3592eee6f88aa973ad67f2725f7dd498100a7032b98fa2b06eee2f5"
+    },
+    "run/training-plan.json": {
+      "bytes": 112274,
+      "sha256": "9e1629c40fa73615678993bac310db48fa74de63c1a9a1daf797b18d02686997"
+    },
+    "run/training-r1-guardian-exit.json": {
+      "bytes": 292,
+      "sha256": "4382964019943582bf8ca8ef8d43b133479654ba233a10dc29541634e1d74d9f"
+    },
+    "run/training-r1-guardian.log": {
+      "bytes": 5086,
+      "sha256": "26ce5fbdfd4065dcac6b28a24068dafa78bd1ddbc540a6082829a81d02132a31"
+    },
+    "run/training-r1-lease-observations.jsonl": {
+      "bytes": 555669,
+      "sha256": "714d53a0688b27fef6205f4c930b39223dcad7756504b049ab9e95ff35733283"
+    },
+    "run/training-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "fce19f66c681f9fbbb17882a4fba363392b65679a48eca21ecac00e52409b1d4"
+    },
+    "run/training-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "9a7ef339a7433ec0683a505746ba99b41cfde7ff5f941ef03bc642c2f87d3db8"
+    },
+    "run/training-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "fbea51a43b6007ba28f50bda531f87f8cbbda7611d58ace106876734a1732a9c"
+    },
+    "run/training-r1/child.log": {
+      "bytes": 2401,
+      "sha256": "bf9e44af371434e355fc8e13a99aed94a951fa846c3bcbc20de9d5ee9d48a098"
+    },
+    "run/training-r1/command.json": {
+      "bytes": 6374,
+      "sha256": "6866a33b636426cb3fec3dcde90a5a2b92d16ea4abc3875990dc93e7e06351bc"
+    },
+    "run/training-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "29467b5db93a33298b394f1b2e81650ed6befd312298169472aca221da496434"
+    },
+    "run/training-r1/resource-observations.json": {
+      "bytes": 25539,
+      "sha256": "53974f2b09e687c0d68cf1910da5fe5c9a623060d474cee1a21800a744934fb3"
+    },
+    "run/training-r1/resources-final.json": {
+      "bytes": 5812,
+      "sha256": "fe33614742c652fbc1b7c6fccecce457c6504316a757c819c1a69eeebf6999b1"
+    },
+    "run/training-r1/resources-start.json": {
+      "bytes": 3171,
+      "sha256": "e5e712def5d0c8352d0b835ba4196faf657e349caa86984ae36820b362795046"
+    },
+    "run/training-r1/results/384-aux-used113-1729/initial-parity.json": {
+      "bytes": 19706,
+      "sha256": "9923e5b4207ae7f1e95a60f8a4bccf7b132492461aa5c4550e9dbe996a4dcd8f"
+    },
+    "run/training-r1/results/384-aux-used113-1729/initial-state.json": {
+      "bytes": 2125122,
+      "sha256": "26cc42bbc280ff1a7c61860e2fedd57535e86ab595a15ce32a591d91286bd9f7"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt-state.json": {
+      "bytes": 2807320,
+      "sha256": "bfd3aa3f67ab3cb2ac362592cb44751866bb8875f7e91e7cc6748160b88455fc"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2083209,
+      "sha256": "049f1c3d195518d4ad1863a56d1ac758d1584641c6f73cf55f0fcef207d3c839"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2083243,
+      "sha256": "08744a5a2c15ce26cdaa4a526d11565aecbe6bb84241aa10ef1a3947aceedf87"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2083208,
+      "sha256": "15cfb26bf62194f69be5d86f30dcc6eee3660f84439194570d209983bfaecdd7"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2083291,
+      "sha256": "cc335fc7aaa6ff3981ebd83cd7bf8a173d28fd1005aa197f9787ba2c6cf9fcfb"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1993921,
+      "sha256": "544f33e380d9ae5a8598326867b282ee1b6b403956204242a15af44ad4e9468b"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2083136,
+      "sha256": "2d831212291fbcc71188a4a2b2a3c35dec760e5c627c6b7e5adf69a7851f9783"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-training.json": {
+      "bytes": 2075905,
+      "sha256": "c24e1d6ffb4f46b29e1b6cb0ef363d7b01fd3d77b6959979bf8a7dcf8bab59f8"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 2082158,
+      "sha256": "3acf36fa2677fcc2e20f35de68983ec578777cb04121a67c9c63e4a2ebb27b5a"
+    },
+    "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2737255,
+      "sha256": "0912db9ceab772eb8f5b2877aef9756be245358f737b6addb7183e808bceeff4"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected-state.json": {
+      "bytes": 2807316,
+      "sha256": "6fd5c7cf7492125567fe1ddfe23cf66037465b7082c3288cb8da1c024b04da2d"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2083209,
+      "sha256": "6711eea7d0f66b4e15458d6473d819ce4e434e0aeafafd5be185bf99271a3e6d"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-context-reverse.json": {
+      "bytes": 2083244,
+      "sha256": "6cc4a1f4eec0dd7d9af94f2f7773e1b1e843aae89ade032315fb393f530b31f3"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-context-rotate.json": {
+      "bytes": 2083210,
+      "sha256": "3b652a4aeb958b63063d2f8d314b813bd754863e0f1f92c74033f483782026fa"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2083292,
+      "sha256": "090acc6b8b4ceece0d68f5d695e350e5a3a93e837c8e901c6cfc8e9e45199671"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1993921,
+      "sha256": "8681b7c2eea0fe16d9b9bcc84f6a286b9412c0fb2b9cfd0f4678dafe3848f9f2"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 2083136,
+      "sha256": "59670278fe814b0d636b1c64768516a32c61f0343148627a67ed6d3c03ad1189"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-training.json": {
+      "bytes": 2075906,
+      "sha256": "8040f7a9dd9d03a56a978b3f7a91f6d9b8b97cf10a7bd5a442fafe530deb380e"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-validation.json": {
+      "bytes": 2082158,
+      "sha256": "11314b12732a65e4338255ab2de2945c864f78b325534ed7659df5e6c49e5444"
+    },
+    "run/training-r1/results/384-aux-used113-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 2737255,
+      "sha256": "3c224d33960db327532471e7096317b7f0672f14b8839e01b18819be245e1f6a"
+    },
+    "run/training-r1/results/384-aux-used113-1729/summary.json": {
+      "bytes": 335030,
+      "sha256": "21615410f3c3a3ef9eb24fb92b4ef85110091d11d508b359864cb05a35d5b233"
+    },
+    "run/training-r1/results/384-aux-used113-1729/training.json": {
+      "bytes": 33298984,
+      "sha256": "e8c16e5195f0dc2b1c28ef24c2e2d0459d43c52f3b5c31d35b9eebcccbe3379b"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/initial-parity.json": {
+      "bytes": 19706,
+      "sha256": "9923e5b4207ae7f1e95a60f8a4bccf7b132492461aa5c4550e9dbe996a4dcd8f"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/initial-state.json": {
+      "bytes": 2125127,
+      "sha256": "f1d0031cf4a4c6415b189153ff507e030069eaf8b59f5ab32731f8be45d1b531"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt-state.json": {
+      "bytes": 2808956,
+      "sha256": "afbc284e95b66bfb12099b49c7bcea41588106d474b7301382e99c5a133c94f9"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2084343,
+      "sha256": "6966751925b8e17208392d9535f417cf2f512c64fefea757a50e9aaba9db6cf3"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2084381,
+      "sha256": "a55b175059531ab76053138d2db9b1e7e20547d156a4e2e69be7516f12b9f3eb"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2084348,
+      "sha256": "bb72e636f8dd5e1b21e6e3d2f32e0b34807227edf69bad11e84ae2e8e2edbba1"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2084431,
+      "sha256": "011fa4bf40b602088fa686c7425a00b38a6bfa7389feda862ec27c931946be4b"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1995447,
+      "sha256": "272ab4611ffc5b8b8e217cd20bdcd9d59185e9bb513d0a7779f0d8716ee2c5c7"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2084273,
+      "sha256": "e17665063571fbe93347ca8f10aa2825f6cb24476f5ea28c9a27e70736fadbc0"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-training.json": {
+      "bytes": 2077688,
+      "sha256": "b09875b13628608815044f2d04b207a74b69301d528801beedbc83dc1cccc3d0"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 2083304,
+      "sha256": "7ca42ce779452372eb4215344ae08ae233fa7db7373ea2d34b375a911c4eb281"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2730403,
+      "sha256": "ae28397a8fedc1471b1679529eaf6e36bff050425530e789bc7e911df2640414"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected-state.json": {
+      "bytes": 2125127,
+      "sha256": "b2f03631017563c12fa2e3dc249482986767af94377f7f55ca558268e6850e81"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1232022,
+      "sha256": "f70eb61b446a8d9d2c39dbe4bc7445c4eccb347111ddbc23820490ae305fc0df"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-reverse.json": {
+      "bytes": 1232013,
+      "sha256": "175dcdea4813b9b0c1eba7c6ff17bc736d16e0e60346fd1abedd2ac5c6a2444d"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-rotate.json": {
+      "bytes": 1232012,
+      "sha256": "dc90b912fd914cd504ea3c22ccf270c3ae79bb4ec5185d1bdd6c5012cb2c461f"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1231976,
+      "sha256": "77da9615dcc463d350bba3c9c9cb1fc353fd77795336e72971c782f82fe12368"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1232078,
+      "sha256": "c0e5d78aace0326cf4a62a69c7a53f63395bf384e70c6fdd72e25f54d7eff465"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 1231952,
+      "sha256": "2af54a8c57247bc1edba274aa5a794eb4613abe16d27046f6e077ff023cc02f6"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-training.json": {
+      "bytes": 1226655,
+      "sha256": "670f2cd7442457f38310be98655468797db499f053ea3cba873209015829d758"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-validation.json": {
+      "bytes": 1232034,
+      "sha256": "4652cb446b13449842e62e4b4cf536977851fd3b244c93278c2336e756fcbfd9"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 1232100,
+      "sha256": "08e497b8d0d2fae2abf163bed698c38ae24fe910beefc8f9b1999c54d4d92957"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/summary.json": {
+      "bytes": 338034,
+      "sha256": "87b3d5041d2e63ee3b269d52d34af0d3cf76d0db7b732e1f35c3b54c4aaf1277"
+    },
+    "run/training-r1/results/384-source-head-lr10-1729/training.json": {
+      "bytes": 27993159,
+      "sha256": "abac7d15c43d54f87eeb52e7b696b71bb25e0dcf55a01093d4a83d14e6b13ba4"
+    },
+    "run/training-r1/results/384/auxiliary-bank.json": {
+      "bytes": 993993,
+      "sha256": "8879adb6aa5f6701067b1935c545f8f638d8400371b620851b70bf3490be45c4"
+    },
+    "run/training-r1/results/384/bank-derivation.json": {
+      "bytes": 2607,
+      "sha256": "0bdd928d02adef16954b2ed5f6e1d7561379f9a8632e6da10c1777951883c9de"
+    },
+    "run/training-r1/results/384/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "run/training-r1/results/384/source-contexts.json": {
+      "bytes": 3032308,
+      "sha256": "85415c5cef1c25450119cc419797c7f53b2817658d975cd4b357fdde01362a8c"
+    },
+    "run/training-r1/results/384/training-rows.json": {
+      "bytes": 841411,
+      "sha256": "854c059a7f7b2f9285eac10795191a9439b24ad6141d80406ffa9d6726892359"
+    },
+    "run/training-r1/results/768-aux-used113-1729/initial-parity.json": {
+      "bytes": 19708,
+      "sha256": "c4cddbfd2c48e34391554de9d7d6d51fbd49a971f4a74626d2a627a89f66556d"
+    },
+    "run/training-r1/results/768-aux-used113-1729/initial-state.json": {
+      "bytes": 3613475,
+      "sha256": "71133081a3834786ea90d644bb0343825fd2f648769da9dc6e0f34c0ce5ee921"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt-state.json": {
+      "bytes": 4802422,
+      "sha256": "57bdd595816c7e36527734e8aa8334b2c428655ba64644197739990253f087bc"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2479285,
+      "sha256": "cc89261ffecd775e1beafab77fc486aa0a7d45581516d0c9205d0275490e73be"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2479317,
+      "sha256": "5b95dc16e58b431cbbbab7a60259124d7becbd3a7e4c5464d883bef11b671224"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2479281,
+      "sha256": "d553990f1d95e48ac3dd4d45e6e50340b92a46e1c225257fbef79a92259012dc"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2479367,
+      "sha256": "aa9b8ff5454845bbce48b8711c614c03a59389c84d580a7c4ad24da6da349ef0"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 2390163,
+      "sha256": "5a66eda1d959029b22caf335f6742ee3232150752c84dbb82add92d116338d25"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2479214,
+      "sha256": "c9143e102da4eb9cd38389970c850a79df357d8970f9a5a6061d5d6c378352b4"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-training.json": {
+      "bytes": 2472674,
+      "sha256": "c133fc89c8f5db7224d750625dd359e817220b7a105d7dc957377d09ad397528"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 2478244,
+      "sha256": "b9e98a92893d07c25ea89f88b7a6e473020be33bb28508852397f65ddab20940"
+    },
+    "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 3130469,
+      "sha256": "b80bccd555588dc81f4e7ff7f926c78ff995a3cb4600d48d83a0b5003f460237"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected-state.json": {
+      "bytes": 3613475,
+      "sha256": "e13f7a9dac4b3cb5885ebe8b812a03fa46f228a179d7b5be09a9afb09399ee53"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1622051,
+      "sha256": "dc83ab689260cf65383b3366fbe7cf0fb837f5a5cdbb392326a7c7bb8e5e1008"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-context-reverse.json": {
+      "bytes": 1622045,
+      "sha256": "43b9d00006f7abfed1991519e441c3403a9ae4c5a3c280cd2b4111f4a0f90e4d"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-context-rotate.json": {
+      "bytes": 1622041,
+      "sha256": "5a4c3f4cdd37b7546643c27d0dcc668270868c7c608e0272ad7ce446369eee72"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1622002,
+      "sha256": "2b2e1ff615a7ac3f35d82307265a9c19dad7ba92f9ffaf856f21c4a3361be7b9"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1622111,
+      "sha256": "f6500cd3d56d2d938604eb2a2d226f58328135040762c7806ef31381a07f5d82"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 1621981,
+      "sha256": "ef8ed6dfa6bbb9711b14c49df55c32bbc70f8fea12ce79f25d671fdbc28d76ac"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-training.json": {
+      "bytes": 1616815,
+      "sha256": "e8d4db999c13cee7b7d927fa935459e3d72331cbf9f6fd0c48f6fb4159d96c24"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-validation.json": {
+      "bytes": 1622066,
+      "sha256": "b038827a483a954e98dbf5e5c7f35e47bd63859c15874f255ffb7b4609d0e974"
+    },
+    "run/training-r1/results/768-aux-used113-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 1622133,
+      "sha256": "b48fc5b5a2d3b4431d023759c72cd377ac20fb6c2ef16f91ddbc6b0e5f43a1d2"
+    },
+    "run/training-r1/results/768-aux-used113-1729/summary.json": {
+      "bytes": 334385,
+      "sha256": "495a80f717c70208f3b2b20e90f0d0e504fb8b1b7dffd329f0e9f49786cfedfa"
+    },
+    "run/training-r1/results/768-aux-used113-1729/training.json": {
+      "bytes": 33903880,
+      "sha256": "fd96f7a04793586f1b53ca6bda3e5f1a23fd29a81c6eb047b26b12c3ca63c82c"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/initial-parity.json": {
+      "bytes": 19708,
+      "sha256": "c4cddbfd2c48e34391554de9d7d6d51fbd49a971f4a74626d2a627a89f66556d"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/initial-state.json": {
+      "bytes": 3613480,
+      "sha256": "302d8f3ed0b6a55409ea590ab0afecbf9b2272596cfe68cd50eac3fd1042b3cb"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt-state.json": {
+      "bytes": 4802356,
+      "sha256": "b3d05e3c4247ca596e2e46d4f927f5b5eb5a148f5d5567a6a724038ad4ae7681"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2477863,
+      "sha256": "45ce8f937f5900e29668e2301ce7cbe52bf503ad3717919f96be71559e265214"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2477900,
+      "sha256": "63e17ec670b06e3da6af52ded7426c69baf9f020f215e46e2ebdeef1f8a10224"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2477862,
+      "sha256": "d65635a97f8c77dd9517761dc04bb0cb4a07ff26e89573976f7b546caf1d459f"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2477943,
+      "sha256": "d337fcab1acbee1de9b4b46c6fc1b625f5d3df386851881f669ebf477d8e4d3d"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 2388607,
+      "sha256": "8efd8472c395354404ebe367e421db809b093947709dbfd21d6a3bb9bb793bfb"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2477789,
+      "sha256": "1962632704480c3d465c0942330f1942812459d955bff5e63d5797eae1f94da1"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-training.json": {
+      "bytes": 2471061,
+      "sha256": "9070c7dda82e006315193daf34fb41e541c3a83ce84f8e886c566027be8a55e1"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 2476819,
+      "sha256": "2841d74da0d723e8fb7d3c956882a5c6c97c46c6b760e0504298589f7441f0cc"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 3129951,
+      "sha256": "9dc9a03d3ab1635e5c679ba0d42c9b8f7debc8960fdae8d3fc3f05107d0752e4"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected-state.json": {
+      "bytes": 3613480,
+      "sha256": "268f5d3e779e79481084043950666abd5e7a30bd1ee8cc9c179533945363ac3e"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1622054,
+      "sha256": "f416e99861a7529a8b0ac144f9f3a837661d2b55b7d7c3d1459654ad4c2994c5"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-reverse.json": {
+      "bytes": 1622048,
+      "sha256": "1686681a41dfe12255ca5fd621bf4053c0f75714be2af6281267ce8880341cfd"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-rotate.json": {
+      "bytes": 1622046,
+      "sha256": "9ac0034dc84ab120dc19ae1adbc8f019b61ba66f4825b79b21996a9024e12cb1"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1622007,
+      "sha256": "66bbb231ceda67f02d194899c57157262d2ab42c8c930c982520181e0d439d84"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1622114,
+      "sha256": "f7b1de8272b4d7d1e18e4b25dbdf5bfff2c53d326b28752973cf52520da1d446"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 1621982,
+      "sha256": "273fc2f691bd3cc21abb6197c01ba4b43f71e07d9213e46512f81ed55a5566f5"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-training.json": {
+      "bytes": 1616820,
+      "sha256": "0ac9c4fc15d92037d982a352cb1828517f6250a129594bb9c66885da6a8f2da2"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-validation.json": {
+      "bytes": 1622069,
+      "sha256": "d46a25e2c55c44c533e7e34420b67676189e5539666494b18ea605fec9144752"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 1622136,
+      "sha256": "082db66dc30e2d8652dc8a06b1fc5ebbea555a7d01c61d84594d18ca15880bcd"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/summary.json": {
+      "bytes": 338036,
+      "sha256": "9522f48667c2d156f063117865b2fe7d7655d5200e7b77e170feee6a32e7703c"
+    },
+    "run/training-r1/results/768-source-head-lr10-1729/training.json": {
+      "bytes": 28120582,
+      "sha256": "bf6fcba79512ea4dc7907b1cbaa96f17b107987d227524242ff6e5c82f491862"
+    },
+    "run/training-r1/results/768/auxiliary-bank.json": {
+      "bytes": 1912781,
+      "sha256": "3a315a11c253f4c8028f3baed2c468b34354709b5a086df470c7c614cc8234aa"
+    },
+    "run/training-r1/results/768/bank-derivation.json": {
+      "bytes": 2607,
+      "sha256": "20bd13a3cacf7c850473b9e91950342012ab269d7be1dca13a813f46df4fb514"
+    },
+    "run/training-r1/results/768/preprocessing.json": {
+      "bytes": 2864122,
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    "run/training-r1/results/768/source-contexts.json": {
+      "bytes": 5960181,
+      "sha256": "88406d13f72794934d4c9dc8aa69238004e1f6c5d7bd855ba319c14486392104"
+    },
+    "run/training-r1/results/768/training-rows.json": {
+      "bytes": 1621518,
+      "sha256": "a66ba07b38d101b48f8cd995cc82b2f22f220323ba6f7fc676b87638c4e05254"
+    },
+    "run/training-r1/results/8-aux-used113-1729/initial-parity.json": {
+      "bytes": 19704,
+      "sha256": "ca249422ede1e22dce15f176adc7fdf8f6155b02609a7dd813c7e56d085da243"
+    },
+    "run/training-r1/results/8-aux-used113-1729/initial-state.json": {
+      "bytes": 683085,
+      "sha256": "409b040d3766370a04d754d4d44e08ed639e1292a9a14dcf83a46fb5864d6347"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt-state.json": {
+      "bytes": 866306,
+      "sha256": "b5f93c650e9e1b9c3d5cf92d42fa2df101491059adda0380be9c61b507dcc304"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 1697582,
+      "sha256": "4b59a383b8c5b142158157ad24337c9b16dc4e31f984de7ba7844eec250538ca"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 1697590,
+      "sha256": "4f1236ba17c419d043d511818a3b9b949f79944b48f13a31e602e8a7d0e2494e"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 1697603,
+      "sha256": "7472b3b6201c1c0975a23e77edfc41a8526fec31f269210a2f4dda7b7ba60e56"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 1697555,
+      "sha256": "4772ac5e1bf8b074894b2037e57d4ca360ae1d00097599ce76f839d4e557fe0c"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1609199,
+      "sha256": "05fb888b7cd7a6a1a8721d7e114f8df951fe50334f06a9a8313ace79de5ac946"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1697514,
+      "sha256": "fbce480cb62a468ecec6fc5d306afe3be8a962de193c4329fda1125592d513d6"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-training.json": {
+      "bytes": 1693072,
+      "sha256": "0947f971ae46b7b73d4f971f9eb8bf3ab74edde2cf183a2c16444d4a2b21e0f3"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 1697147,
+      "sha256": "3c4839bff41dccf2ee7f68d2ae3cbf314dc34ea9b2cde368f83ac8627f92f2da"
+    },
+    "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2359881,
+      "sha256": "69b69845794b4ac85f9fabf1113628400ecc81bd210ff8d35faefab9bb0d5123"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected-state.json": {
+      "bytes": 683085,
+      "sha256": "f962de0ade004826cf2b801521a169b977c605a7400c1acca9d93b886acecffc"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 851332,
+      "sha256": "b289a19d464e3466b89ea6ffb7b5ec58a6cfdfc93254c8c05ac840a32e2a28f5"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-context-reverse.json": {
+      "bytes": 851321,
+      "sha256": "e33d9d1d0669db5a6bb4d13a6a7d815a0a2183b2cbd3fbd3da71f63bdea07eb1"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-context-rotate.json": {
+      "bytes": 851322,
+      "sha256": "9def69892f25e6c07feeed6977812529ed318b847ddcb50faf8aa4c88f44f5e7"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 851284,
+      "sha256": "4d0c63278f1cfb1f46ea69f302df0ef967beeb638023701a659c24c573fa10ee"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 851393,
+      "sha256": "baeaca86e36698ff55511c2486ad1b47e6bc400a9379c3df0d5b42c3048101e8"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 851260,
+      "sha256": "ac6604f3fd195e0b9a155da6643963d8b689d656c57124e93e08776b1b26ef8c"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-training.json": {
+      "bytes": 846114,
+      "sha256": "a7c2d7513059c060393be8ea6cfa8a505f6aff737a720add313bd3f98d6a0668"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-validation.json": {
+      "bytes": 851348,
+      "sha256": "9780d67cbcdfdee36e7d6e24de3ed889333328a2759bb5e8ed16cfffe5f114d6"
+    },
+    "run/training-r1/results/8-aux-used113-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 851414,
+      "sha256": "36c2e9bd1f2b204fc56b8352ea643f9c2f85573aefda0a6c9dbe265f37a99fd1"
+    },
+    "run/training-r1/results/8-aux-used113-1729/summary.json": {
+      "bytes": 334188,
+      "sha256": "cbba010c288713e914dd312311d649c1156fd3ed81569e2e025041c905080993"
+    },
+    "run/training-r1/results/8-aux-used113-1729/training.json": {
+      "bytes": 32972014,
+      "sha256": "6c5f3dae5cc422b7402d6c25af044a83a5ee268e078a38a8eb2ca204f16857b0"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/initial-parity.json": {
+      "bytes": 19704,
+      "sha256": "ca249422ede1e22dce15f176adc7fdf8f6155b02609a7dd813c7e56d085da243"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/initial-state.json": {
+      "bytes": 683090,
+      "sha256": "83c6b41bafb14185dc890cccc1679d47eb5974508665dfa6f20c9622d710341b"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt-state.json": {
+      "bytes": 866607,
+      "sha256": "bf7c32aa72a69efd0a2671d524702bd45e68bd420afe0da70905162fe1c634f5"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 1698395,
+      "sha256": "f39d10f1990360a3cba90fd8cf106e42f7a7cc2bcc6cf3b2a9f67369e7c097b3"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 1698397,
+      "sha256": "8b7a76a57c821af29cfde804447667aa290d7ed6e8be1a5cdc5f4fe2554a5b0f"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 1698405,
+      "sha256": "78980c867245a4390e52140836347e235b5e1892e98c9ec4ba31d14cc4535cb4"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 1698378,
+      "sha256": "cb3ea12f09407bb3838d66696f83b61aab4b66f57c155d3701221d27c7151d05"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1608299,
+      "sha256": "c245aec1b4d3aa375ce24e001fc4b0379dd3de20043794455ac123745a63619e"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1698328,
+      "sha256": "70af2f17702d56937508669efe0d8189134641307d9cb58b0a2a8565ba23ac13"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-training.json": {
+      "bytes": 1693957,
+      "sha256": "e9f2dcf1e149b3159ba5b96e15197eff9fe41726af0fb454f3b02c489880fd05"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 1697981,
+      "sha256": "043aa75c0ae493e421efed47fe1f2e6df0af25c34ff432a3f417570f95088f17"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2356673,
+      "sha256": "53c7f9bc7de885f003bd177073590293e18f96eb97ff85fce393e16b98f10a87"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected-state.json": {
+      "bytes": 683090,
+      "sha256": "5277b81de9ce167d78e012932370b0db1c42b07cd7a83f3a5a096f3a3578ab36"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 851337,
+      "sha256": "30e62c1a82b4baa38f131c43632efe26bf4ba9bc5c0e9e176fbb0c7af4b452dc"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-reverse.json": {
+      "bytes": 851328,
+      "sha256": "714c27be206816592936c62aa951ac8d7b22ed1b192a1a2343d607d52f466bfe"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-rotate.json": {
+      "bytes": 851326,
+      "sha256": "d9684653ea353efc7b2000de22d02f1b542fe643a0d37cdfda953799fe1736c3"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 851289,
+      "sha256": "cc6bdf65d493da4b64530b9ce17c5a69a947d65cc6952063e831a8e120e72fae"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 851397,
+      "sha256": "7322716239e08d5f838b3e70bc1fc9a77553cf3a441f03c8c667fedeb28d2056"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 851268,
+      "sha256": "a351fc8488a8482fdc19ef0a5d66e86dbd5e41557d45f89a8163e5d749e66e03"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-training.json": {
+      "bytes": 846119,
+      "sha256": "55e7a738c67e0ac245f577befaf20eea7061de10cec13378ba19f2d4db64c89e"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-validation.json": {
+      "bytes": 851352,
+      "sha256": "d7e8752c9357de8947fdb2eed6fe0c59bfd3d2e683c3b4247af60c6a248d443a"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 851419,
+      "sha256": "de9de17c5cea472050a6ede0b8c3c6749ea206f23d01f0f05e2f5427ccca3d2c"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/summary.json": {
+      "bytes": 337845,
+      "sha256": "5e3b3879e02ee009fb367a86996b6f138d51ffa9b3f2cbe3b4279903ae304bce"
+    },
+    "run/training-r1/results/8-source-head-lr10-1729/training.json": {
+      "bytes": 28136244,
+      "sha256": "a1b7469bb1ba77ec0df13143f6af51dd7629649d987302de9cb4926ad57aabf7"
+    },
+    "run/training-r1/results/8/auxiliary-bank.json": {
+      "bytes": 88615,
+      "sha256": "5a8721ebbe9e253f683de7ea98f126aacc63b7e421f186c26f027c39d5403c67"
+    },
+    "run/training-r1/results/8/bank-derivation.json": {
+      "bytes": 2601,
+      "sha256": "32d9756df795fb304274a283eafc791731d67dcaeb3b80de8c24092fea677f5a"
+    },
+    "run/training-r1/results/8/preprocessing.json": {
+      "bytes": 204737,
+      "sha256": "ab3af09517154fcf074a21d4648fd4b672ad7c657153295edc363d36d337a8fb"
+    },
+    "run/training-r1/results/8/source-contexts.json": {
+      "bytes": 148526,
+      "sha256": "7ebb38207fb90edfa378908fcc320e7afd5a62cc79e434d0c8d937876362e1fb"
+    },
+    "run/training-r1/results/8/training-rows.json": {
+      "bytes": 73176,
+      "sha256": "a49125a8a934b61dbc71c5bef1bbfe7e75dafbcb958643b8d216242b33e039e1"
+    },
+    "run/training-r1/results/original384-bank-evidence.json": {
+      "bytes": 2577441,
+      "sha256": "cc773f9741263af5c708c67437d532c7c974a60c600b5d94c6fb52a43683e2ed"
+    },
+    "run/training-r1/results/readiness.json": {
+      "bytes": 686,
+      "sha256": "fd88cf8df3355115babffb53951ff502a833af1dd8da69fae6b465641d43e0bf"
+    },
+    "run/training-r1/results/sealed-recipe.json": {
+      "bytes": 215742,
+      "sha256": "eb30618a57f24e379d47175838eb2e37351a7e1c0d214427c0035d6a8a5d7bac"
+    },
+    "run/training-r1/results/summary.json": {
+      "bytes": 16233,
+      "sha256": "54a74986f0121f018af05fb96237a4094f0415c79d0025b6450be799919e8f98"
+    }
+  },
+  "original_artifact_archive_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/four_width_training.md": "documentation/four_width_training.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/adopt_shared_scheduler.py": "run/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit-revision-r2.json": "run/audit-revision-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit-training-attempt1.log": "run/audit-training-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit-training-attempt2.log": "run/audit-training-attempt2.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit_four_width_readiness.py": "run/audit_four_width_readiness.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit_postfit.py": "run/audit_postfit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit_representations.py": "run/audit_representations.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit_training_results.py": "run/audit_training_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/audit_training_results_r2.py": "run/audit_training_results_r2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/build_evidence.py": "run/build_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/comparison-results-attempt1.json": "run/comparison-results-attempt1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/comparison-results.json": "run/comparison-results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/current-workspace-compiler-gates.json": "run/current-workspace-compiler-gates.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/current-workspace-compiler-gates.log": "run/current-workspace-compiler-gates.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/documentation-review.json": "run/documentation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-freeze.json": "run/evaluation-freeze.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-harness/adopt_shared_scheduler.py": "run/evaluation-harness/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-harness/owned_lease_watchdog.py": "run/evaluation-harness/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-harness/run_reserved.py": "run/evaluation-harness/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-manifest.json": "run/evaluation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-plan.json": "run/evaluation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1-guardian-exit.json": "run/evaluation-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1-guardian.log": "run/evaluation-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1-lease-observations.jsonl": "run/evaluation-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1-scheduler-adoption.json": "run/evaluation-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/child-exit.json": "run/evaluation-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/child-identity.json": "run/evaluation-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/child.log": "run/evaluation-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/command.json": "run/evaluation-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/lease-binding.json": "run/evaluation-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/resource-observations.json": "run/evaluation-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/resources-final.json": "run/evaluation-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/resources-start.json": "run/evaluation-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-aux-used113-1729/last-attempt-predictions.json": "run/evaluation-r1/results/384-aux-used113-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-aux-used113-1729/last-attempt-score.json": "run/evaluation-r1/results/384-aux-used113-1729/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-aux-used113-1729/selected-predictions.json": "run/evaluation-r1/results/384-aux-used113-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-aux-used113-1729/selected-score.json": "run/evaluation-r1/results/384-aux-used113-1729/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-source-head-lr10-1729/last-attempt-predictions.json": "run/evaluation-r1/results/384-source-head-lr10-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-source-head-lr10-1729/last-attempt-score.json": "run/evaluation-r1/results/384-source-head-lr10-1729/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-source-head-lr10-1729/selected-predictions.json": "run/evaluation-r1/results/384-source-head-lr10-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/384-source-head-lr10-1729/selected-score.json": "run/evaluation-r1/results/384-source-head-lr10-1729/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-aux-used113-1729/last-attempt-predictions.json": "run/evaluation-r1/results/768-aux-used113-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-aux-used113-1729/last-attempt-score.json": "run/evaluation-r1/results/768-aux-used113-1729/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-aux-used113-1729/selected-predictions.json": "run/evaluation-r1/results/768-aux-used113-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-aux-used113-1729/selected-score.json": "run/evaluation-r1/results/768-aux-used113-1729/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-source-head-lr10-1729/last-attempt-predictions.json": "run/evaluation-r1/results/768-source-head-lr10-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-source-head-lr10-1729/last-attempt-score.json": "run/evaluation-r1/results/768-source-head-lr10-1729/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-source-head-lr10-1729/selected-predictions.json": "run/evaluation-r1/results/768-source-head-lr10-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/768-source-head-lr10-1729/selected-score.json": "run/evaluation-r1/results/768-source-head-lr10-1729/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-aux-used113-1729/last-attempt-predictions.json": "run/evaluation-r1/results/8-aux-used113-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-aux-used113-1729/last-attempt-score.json": "run/evaluation-r1/results/8-aux-used113-1729/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-aux-used113-1729/selected-predictions.json": "run/evaluation-r1/results/8-aux-used113-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-aux-used113-1729/selected-score.json": "run/evaluation-r1/results/8-aux-used113-1729/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-source-head-lr10-1729/last-attempt-predictions.json": "run/evaluation-r1/results/8-source-head-lr10-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-source-head-lr10-1729/last-attempt-score.json": "run/evaluation-r1/results/8-source-head-lr10-1729/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-source-head-lr10-1729/selected-predictions.json": "run/evaluation-r1/results/8-source-head-lr10-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/8-source-head-lr10-1729/selected-score.json": "run/evaluation-r1/results/8-source-head-lr10-1729/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/predictions-complete.json": "run/evaluation-r1/results/predictions-complete.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/sealed-recipe.json": "run/evaluation-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-r1/results/summary.json": "run/evaluation-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-source/scripts/ops/autoencoder/evaluate_multidimension_modality_holdout.py": "run/evaluation-source/scripts/ops/autoencoder/evaluate_multidimension_modality_holdout.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/evaluation-source/tests/unit/logic/formalization/autoencoder/test_multidimension_modality_holdout.py": "run/evaluation-source/tests/unit/logic/formalization/autoencoder/test_multidimension_modality_holdout.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/experiment-source/scripts/ops/autoencoder/benchmark_multidimension_modality_training.py": "run/experiment-source/scripts/ops/autoencoder/benchmark_multidimension_modality_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_multidimension_modality_training_runner.py": "run/experiment-source/tests/unit/logic/formalization/autoencoder/test_multidimension_modality_training_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/four-width-readiness.json": "run/four-width-readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/freeze-receipt.json": "run/freeze-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/independent-audit-attempt1.json": "run/independent-audit-attempt1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/independent-audit.json": "run/independent-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/launch_evaluation.py": "run/launch_evaluation.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/launch_phase.py": "run/launch_phase.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/owned_lease_watchdog.py": "run/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/postfit-audit.json": "run/postfit-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/postfit-results.json": "run/postfit-results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1-guardian-exit.json": "run/preflight-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1-guardian.log": "run/preflight-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1-lease-observations.jsonl": "run/preflight-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1-scheduler-adoption.json": "run/preflight-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/child-exit.json": "run/preflight-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/child-identity.json": "run/preflight-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/child.log": "run/preflight-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/command.json": "run/preflight-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/lease-binding.json": "run/preflight-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/resources-final.json": "run/preflight-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/resources-start.json": "run/preflight-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/384/auxiliary-bank.json": "run/preflight-r1/results/384/auxiliary-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/384/bank-derivation.json": "run/preflight-r1/results/384/bank-derivation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/384/initial-parity.json": "run/preflight-r1/results/384/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/384/preprocessing.json": "run/preflight-r1/results/384/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/384/source-contexts.json": "run/preflight-r1/results/384/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/384/training-rows.json": "run/preflight-r1/results/384/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/768/auxiliary-bank.json": "run/preflight-r1/results/768/auxiliary-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/768/bank-derivation.json": "run/preflight-r1/results/768/bank-derivation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/768/initial-parity.json": "run/preflight-r1/results/768/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/768/preprocessing.json": "run/preflight-r1/results/768/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/768/source-contexts.json": "run/preflight-r1/results/768/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/768/training-rows.json": "run/preflight-r1/results/768/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/8/auxiliary-bank.json": "run/preflight-r1/results/8/auxiliary-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/8/bank-derivation.json": "run/preflight-r1/results/8/bank-derivation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/8/initial-parity.json": "run/preflight-r1/results/8/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/8/preprocessing.json": "run/preflight-r1/results/8/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/8/source-contexts.json": "run/preflight-r1/results/8/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/8/training-rows.json": "run/preflight-r1/results/8/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/original384-bank-evidence.json": "run/preflight-r1/results/original384-bank-evidence.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/readiness.json": "run/preflight-r1/results/readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/sealed-recipe.json": "run/preflight-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/preflight-r1/results/summary.json": "run/preflight-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/prepare_evaluation.py": "run/prepare_evaluation.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/prepare_freeze.py": "run/prepare_freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/protected-checkpoint-after.json": "run/protected-checkpoint-after.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/protected-checkpoint-before.json": "run/protected-checkpoint-before.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/publish_results.py": "run/publish_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/representation-audit.json": "run/representation-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/run_current_workspace_compiler_gates.py": "run/run_current_workspace_compiler_gates.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/run_reserved.py": "run/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/runner-source-review.json": "run/runner-source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/runner-unit-tests.log": "run/runner-unit-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/runner-unit-tests.xml": "run/runner-unit-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/tests-evaluation-focused.log": "run/tests-evaluation-focused.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/tests-evaluation-focused.xml": "run/tests-evaluation-focused.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/tests-runner-focused.log": "run/tests-runner-focused.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/tests-runner-focused.xml": "run/tests-runner-focused.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-manifest.json": "run/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-plan.json": "run/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1-guardian-exit.json": "run/training-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1-guardian.log": "run/training-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1-lease-observations.jsonl": "run/training-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1-scheduler-adoption.json": "run/training-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/child-exit.json": "run/training-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/child-identity.json": "run/training-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/child.log": "run/training-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/command.json": "run/training-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/lease-binding.json": "run/training-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/resource-observations.json": "run/training-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/resources-final.json": "run/training-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/resources-start.json": "run/training-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/initial-parity.json": "run/training-r1/results/384-aux-used113-1729/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/initial-state.json": "run/training-r1/results/384-aux-used113-1729/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt-state.json": "run/training-r1/results/384-aux-used113-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-reverse.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-rotate.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-source-shuffle.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-training.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-validation.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-zero-condition.json": "run/training-r1/results/384-aux-used113-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected-state.json": "run/training-r1/results/384-aux-used113-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-context-only-shuffle.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-context-reverse.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-context-rotate.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-cross-length-shuffle.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-recurrent-residual-off.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-source-shuffle.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-training.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-validation.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/selected/evaluation-zero-condition.json": "run/training-r1/results/384-aux-used113-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/summary.json": "run/training-r1/results/384-aux-used113-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-aux-used113-1729/training.json": "run/training-r1/results/384-aux-used113-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/initial-parity.json": "run/training-r1/results/384-source-head-lr10-1729/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/initial-state.json": "run/training-r1/results/384-source-head-lr10-1729/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt-state.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-training.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-validation.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json": "run/training-r1/results/384-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected-state.json": "run/training-r1/results/384-source-head-lr10-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-reverse.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-rotate.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-source-shuffle.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-training.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-validation.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/selected/evaluation-zero-condition.json": "run/training-r1/results/384-source-head-lr10-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/summary.json": "run/training-r1/results/384-source-head-lr10-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384-source-head-lr10-1729/training.json": "run/training-r1/results/384-source-head-lr10-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/auxiliary-bank.json": "run/training-r1/results/384/auxiliary-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/bank-derivation.json": "run/training-r1/results/384/bank-derivation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json": "run/training-r1/results/384/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/source-contexts.json": "run/training-r1/results/384/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/training-rows.json": "run/training-r1/results/384/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/initial-parity.json": "run/training-r1/results/768-aux-used113-1729/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/initial-state.json": "run/training-r1/results/768-aux-used113-1729/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt-state.json": "run/training-r1/results/768-aux-used113-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-reverse.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-rotate.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-source-shuffle.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-training.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-validation.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-zero-condition.json": "run/training-r1/results/768-aux-used113-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected-state.json": "run/training-r1/results/768-aux-used113-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-context-only-shuffle.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-context-reverse.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-context-rotate.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-cross-length-shuffle.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-recurrent-residual-off.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-source-shuffle.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-training.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-validation.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/selected/evaluation-zero-condition.json": "run/training-r1/results/768-aux-used113-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/summary.json": "run/training-r1/results/768-aux-used113-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-aux-used113-1729/training.json": "run/training-r1/results/768-aux-used113-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/initial-parity.json": "run/training-r1/results/768-source-head-lr10-1729/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/initial-state.json": "run/training-r1/results/768-source-head-lr10-1729/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt-state.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-training.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-validation.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json": "run/training-r1/results/768-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected-state.json": "run/training-r1/results/768-source-head-lr10-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-reverse.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-rotate.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-source-shuffle.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-training.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-validation.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/selected/evaluation-zero-condition.json": "run/training-r1/results/768-source-head-lr10-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/summary.json": "run/training-r1/results/768-source-head-lr10-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768-source-head-lr10-1729/training.json": "run/training-r1/results/768-source-head-lr10-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/auxiliary-bank.json": "run/training-r1/results/768/auxiliary-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/bank-derivation.json": "run/training-r1/results/768/bank-derivation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json": "run/training-r1/results/768/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/source-contexts.json": "run/training-r1/results/768/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/training-rows.json": "run/training-r1/results/768/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/initial-parity.json": "run/training-r1/results/8-aux-used113-1729/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/initial-state.json": "run/training-r1/results/8-aux-used113-1729/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt-state.json": "run/training-r1/results/8-aux-used113-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-reverse.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-rotate.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-source-shuffle.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-training.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-validation.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-zero-condition.json": "run/training-r1/results/8-aux-used113-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected-state.json": "run/training-r1/results/8-aux-used113-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-context-only-shuffle.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-context-reverse.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-context-rotate.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-cross-length-shuffle.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-recurrent-residual-off.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-source-shuffle.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-training.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-validation.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/selected/evaluation-zero-condition.json": "run/training-r1/results/8-aux-used113-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/summary.json": "run/training-r1/results/8-aux-used113-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-aux-used113-1729/training.json": "run/training-r1/results/8-aux-used113-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/initial-parity.json": "run/training-r1/results/8-source-head-lr10-1729/initial-parity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/initial-state.json": "run/training-r1/results/8-source-head-lr10-1729/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt-state.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-training.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-validation.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json": "run/training-r1/results/8-source-head-lr10-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected-state.json": "run/training-r1/results/8-source-head-lr10-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-reverse.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-rotate.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-source-shuffle.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-training.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-validation.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/selected/evaluation-zero-condition.json": "run/training-r1/results/8-source-head-lr10-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/summary.json": "run/training-r1/results/8-source-head-lr10-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8-source-head-lr10-1729/training.json": "run/training-r1/results/8-source-head-lr10-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8/auxiliary-bank.json": "run/training-r1/results/8/auxiliary-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8/bank-derivation.json": "run/training-r1/results/8/bank-derivation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8/preprocessing.json": "run/training-r1/results/8/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8/source-contexts.json": "run/training-r1/results/8/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/8/training-rows.json": "run/training-r1/results/8/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/original384-bank-evidence.json": "run/training-r1/results/original384-bank-evidence.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/readiness.json": "run/training-r1/results/readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/sealed-recipe.json": "run/training-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/summary.json": "run/training-r1/results/summary.json"
+  },
+  "prior_published_evidence": {
+    "commit": "dcefd3e2fa68f13a40cf5d7d89d07f7308023f9b",
+    "path": "docs/implementation/reports/evidence/decoder-content-matched-20261004/manifest.json",
+    "sha256": "6d9ed76312e20114a39b004bbbf50999d73ef5ae1cf7ceec568b1221eb34fd40",
+    "transitive_dependencies_required": true
+  },
+  "qualified": false,
+  "schema": "multidimension-modality-training-evidence/v1"
+}

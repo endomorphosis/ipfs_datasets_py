@@ -31,22 +31,85 @@ def setup(tmp_path, monkeypatch):
     return factory, roots, ledger, scheduler
 
 
-def test_production_storage_cap_is_ninety_gb_without_admission(tmp_path):
+def test_production_storage_cap_is_one_hundred_forty_gb_without_admission(tmp_path):
     root = tmp_path / "outputs"
     root.mkdir()
     ledger = tmp_path / "disk.json"
     reservation = resources.DaemonResourceReservation(
         ledger, roots=[root], storage_bytes=7, memory_mb=1)
-    assert resources.MAX_STORAGE_BYTES == 90_000_000_000
+    assert resources.MAX_STORAGE_BYTES == 140_000_000_000
+    assert resources.MAX_INVENTORY_ENTRIES == 2_000_000
     assert reservation._read() == {
         "schema": resources.SCHEMA, "roots": reservation.root_identities,
-        "limit_bytes": 90_000_000_000, "reservations": {},
+        "limit_bytes": 140_000_000_000, "reservations": {},
     }
-    assert reservation.to_dict()["storage_limit_bytes"] == 90_000_000_000
+    assert reservation.to_dict()["storage_limit_bytes"] == 140_000_000_000
     assert reservation.to_dict()["status"] == "not_entered"
     assert reservation.to_dict()["resource_lease"] is None
     assert not ledger.exists()
     assert not reservation.lock_path.exists()
+
+
+def test_campaign_cap_does_not_raise_fifty_gb_per_worker_policy():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_campaign_training_request as request
+
+    policy = {"ledger_path": "/owned/disk.json", "roots": ["/owned/outputs"],
+              "storage_bytes": 50_000_000_000, "memory_mb": 128, "cpu_slots": 1}
+    assert request.MAX_STORAGE_BYTES == 50_000_000_000
+    request._resource_policy(policy)
+    with pytest.raises(request.CampaignTrainingRequestError, match="per-worker storage bytes"):
+        request._resource_policy({**policy, "storage_bytes": 50_000_000_001})
+
+
+def test_raised_campaign_boundary_still_counts_all_nonreleased_claims(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    root = tmp_path / "outputs"
+    root.mkdir()
+    ledger_path = tmp_path / "disk.json"
+    reservation = resources.DaemonResourceReservation(
+        ledger_path, roots=[root], storage_bytes=7, memory_mb=1)
+    ledger = reservation._read()
+    ledger["reservations"] = {
+        "retained": {"status": "retained", "storage_bytes": 30_000_000_000},
+        "active": {"status": "active", "storage_bytes": 1_000_000_000},
+        "reserved": {"status": "reserved", "storage_bytes": 465_000_000},
+        "released": {"status": "released", "storage_bytes": 50_000_000_000},
+    }
+    before = json.dumps(ledger, sort_keys=True)
+    monkeypatch.setattr(resources, "_inventory", lambda roots: {
+        "apparent_bytes": 100_203_148_222, "entry_count": 1_359_805,
+        "symlink_count": 4_557, "special_file_count": 28})
+    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=80_000_000_000))
+    headroom = 8_331_851_778
+    usage = reservation._account(ledger, additional=headroom)
+    assert usage["outstanding_full_reservations_bytes"] == 31_465_000_000
+    assert usage["charged_bytes"] == usage["limit_bytes"] == 140_000_000_000
+    with pytest.raises(resources.DaemonResourceError, match="capacity"):
+        reservation._account(ledger, additional=headroom + 1)
+    # Accounting headroom never substitutes for physically free storage.
+    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=31_714_999_999))
+    with pytest.raises(resources.DaemonResourceError, match="capacity"):
+        reservation._account(ledger, additional=250_000_000)
+    assert json.dumps(ledger, sort_keys=True) == before
+    assert not ledger_path.exists()
+    assert reservation.to_dict()["resource_lease"] is None
+
+
+@pytest.mark.parametrize("strict", [False, True])
+def test_inventory_entry_limit_remains_inclusive_and_fail_closed(tmp_path, monkeypatch, strict):
+    root = tmp_path / "outputs"
+    root.mkdir()
+    for index in range(3):
+        (root / str(index)).write_bytes(b"abc")
+    # Exercise the real scanner at a small finite limit, not millions of files.
+    monkeypatch.setattr(resources, "MAX_INVENTORY_ENTRIES", 3)
+    assert resources._inventory([root], strict=strict) == {
+        "apparent_bytes": 9, "entry_count": 3, "symlink_count": 0, "special_file_count": 0}
+    (root / "overflow").write_bytes(b"retained")
+    with pytest.raises(resources.DaemonResourceError, match="inventory entry bound exceeded"):
+        resources._inventory([root], strict=strict)
+    assert (root / "overflow").read_bytes() == b"retained"
 
 
 def test_declared_process_envelope_is_reserved_and_recorded(setup):
@@ -76,8 +139,8 @@ def test_process_envelope_cannot_exceed_authoritative_scheduler_slots(setup):
         active.release(artifacts_durable=True)
 
 
-@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000],
-                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb"])
+@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000],
+                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb"])
 def historical_storage_ledger(tmp_path, request):
     previous_limit = request.param
     root = tmp_path / "outputs"
@@ -122,7 +185,7 @@ def test_historical_ledger_fails_closed_without_implicit_migration(historical_st
 def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(historical_storage_ledger):
     reservation, ledger, historical, raw = historical_storage_ledger
     old_prefix = ('{"limit_bytes":' + str(historical["limit_bytes"]) + ',').encode()
-    new_prefix = b'{"limit_bytes":90000000000,'
+    new_prefix = b'{"limit_bytes":140000000000,'
     assert raw.startswith(old_prefix)
     # Model the explicit one-time edit on a tiny, test-owned fixture. This
     # neither introduces an implicit migration API nor acquires a reservation.
@@ -131,13 +194,13 @@ def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(
     backup.write_bytes(raw)
     with reservation._locked():
         assert ledger.read_bytes() == raw
-        reservation._write({**historical, "limit_bytes": 90_000_000_000})
+        reservation._write({**historical, "limit_bytes": 140_000_000_000})
     current = reservation._read()
-    assert current == {**historical, "limit_bytes": 90_000_000_000}
+    assert current == {**historical, "limit_bytes": 140_000_000_000}
     assert current["reservations"] == historical["reservations"]
     assert migrated[len(new_prefix):] == raw[len(old_prefix):]
     usage = reservation._account(current, additional=13)
-    assert usage["limit_bytes"] == 90_000_000_000
+    assert usage["limit_bytes"] == 140_000_000_000
     assert usage["observed_apparent_bytes"] == 3
     assert usage["outstanding_full_reservations_bytes"] == 4_000
     assert usage["additional_requested_bytes"] == 13

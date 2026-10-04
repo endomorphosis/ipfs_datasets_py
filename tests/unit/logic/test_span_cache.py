@@ -1,12 +1,23 @@
 """Sealed span cache skips compiles and unseals dependents when terms change."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import pyarrow.parquet as pq
 import pytest
 
-from ipfs_datasets_py.huggingface.autoformal_span_cache import build_span_cache_package, flush_span_cache
-from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache, terms_from_rule
+from ipfs_datasets_py.huggingface.autoformal_span_cache import (
+    AutoformalSpanCacheError,
+    build_span_cache_package,
+    flush_span_cache,
+)
+from ipfs_datasets_py.logic.autoformal.span_cache import (
+    SpanCache,
+    SpanCacheError,
+    span_groups_from_parquet,
+    terms_from_rule,
+)
 from ipfs_datasets_py.logic.autoformal.supervisor_loop import recensus_open_todos
 
 
@@ -609,8 +620,98 @@ def test_flush_writes_parquet_not_jsonl(tmp_path: Path) -> None:
     assert package["row_count"] == 1
     assert (tmp_path / "pkg" / "sealed-spans.parquet").is_file()
     assert not list((tmp_path / "pkg").glob("*.jsonl"))
+    exported = pq.read_table(tmp_path / "pkg" / "sealed-spans.parquet").to_pylist()
+    assert len(exported) == 1
+    assert exported[0]["admitted"] is False and exported[0]["formalized"] is False
+    assert exported[0]["status"] == "sealed"
+    assert json.loads(exported[0]["rule_json"])["actor"] == "Agency"
+    assert any(
+        item["kind"] == "actor" and item["value"] == "Agency"
+        for item in json.loads(exported[0]["term_rows_json"])
+    )
     flushed = flush_span_cache(cache.sealed_rows(), tmp_path / "pkg2", dry_run=True)
     assert flushed["dry_run"] is True
     assert flushed["uploaded"] is False
     assert flushed["remote_write_contacted"] is False
     cache.close()
+
+
+def test_parquet_groups_match_duckdb_and_keep_gaps_beside_clauses(tmp_path: Path) -> None:
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    cache.apply_census(
+        {"rows": [_agreed()]},
+        path_hashes={"ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "aaa"},
+    )
+    build_span_cache_package(cache.sealed_rows(), tmp_path / "pkg")
+    grouped = span_groups_from_parquet(tmp_path / "pkg" / "sealed-spans.parquet")
+    assert grouped["statutes"] == cache.statute_groups()
+    assert grouped["terms"] == cache.term_groups()
+    assert grouped["admitted"] is False and grouped["formalized"] is False
+    cache.close()
+
+    build_span_cache_package(
+        [
+            _agreed("kept"),
+            {
+                "legal_id": "usc:us:5:552",
+                "source_span_id": "gap-same",
+                "status": "gap",
+                "text": "A gap on the same section.",
+            },
+            {
+                "legal_id": "usc:us:9:9",
+                "source_span_id": "still-pending",
+                "status": "pending",
+                "text": "This section is not ready.",
+            },
+        ],
+        tmp_path / "mixed",
+    )
+    mixed = span_groups_from_parquet(tmp_path / "mixed" / "sealed-spans.parquet")
+    clauses = mixed["statutes"]["usc:us:5:552"]
+    assert [item["source_span_id"] for item in clauses] == ["kept"]
+    assert mixed["gaps"]["usc:us:5:552"][0]["source_span_id"] == "gap-same"
+    assert "gap-same" not in [item["source_span_id"] for item in clauses]
+    assert "usc:us:5:552" in mixed["ready"]
+    assert "usc:us:9:9" in mixed["not_ready"]
+    assert "usc:us:9:9" not in mixed["statutes"]
+    assert "still-pending" not in [item["source_span_id"] for item in clauses]
+
+
+def test_parquet_reader_pins_sealed_spans_only(tmp_path: Path) -> None:
+    build_span_cache_package([_agreed()], tmp_path / "pkg")
+    blob = tmp_path / "hf-blob"
+    blob.write_bytes((tmp_path / "pkg" / "sealed-spans.parquet").read_bytes())
+    seen: list[tuple] = []
+
+    def download(repo, filename, **kwargs):
+        seen.append((repo, filename, kwargs))
+        return str(blob)
+
+    with pytest.raises(SpanCacheError, match="pinned"):
+        span_groups_from_parquet(None, revision="main", download=download)
+    assert seen == []
+    with pytest.raises(SpanCacheError, match="pinned"):
+        span_groups_from_parquet(None, download=download)
+    revision = "a" * 40
+    grouped = span_groups_from_parquet(None, revision=revision, download=download)
+    assert seen == [
+        (
+            "justicedao/uscode-autoformal-span-cache",
+            "sealed-spans.parquet",
+            {"repo_type": "dataset", "revision": revision},
+        )
+    ]
+    assert grouped["revision"] == revision
+    assert grouped["source"] == "sealed-spans.parquet"
+    assert "usc:us:5:552" in grouped["statutes"]
+    other = tmp_path / "other.parquet"
+    other.write_bytes(blob.read_bytes())
+    with pytest.raises(SpanCacheError, match="sealed-spans"):
+        span_groups_from_parquet(other)
+    resume = tmp_path / "resume-checkpoint.parquet"
+    resume.write_bytes(blob.read_bytes())
+    with pytest.raises(SpanCacheError, match="sealed-spans"):
+        span_groups_from_parquet(resume)
+    with pytest.raises(AutoformalSpanCacheError, match="resume-checkpoint"):
+        build_span_cache_package([_agreed()], tmp_path / "resume-checkpoint.parquet")

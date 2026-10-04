@@ -1,0 +1,124 @@
+{
+  "schema": "gte-parallel-lineage-plan/v1",
+  "kind": "declarative_coexistence_plan_not_launch_configuration",
+  "coexistence_required": true,
+  "execution_model": "independent_processes_with_private_models_and_state",
+  "maximum_parallel_processes": 3,
+  "resource_admission": "Worker CPU/GPU/memory budgets must be enforced before launch; process-count cap is not memory admission",
+  "shared_source_policy": "Same source identities and frozen group/split memberships; each lane prepares its own declared representation",
+  "outputs_policy": "Preserve lineage, runtime, checkpoint, representation and native metrics; do not average unrelated losses or merge model state",
+  "checkpoint_exchange_policy": "Distillation reads immutable generation snapshots; training continues on independent donor branches",
+  "registry_policy": "Publish through the existing single owner; workers do not concurrently write one DuckDB registry",
+  "lanes": [
+    {
+      "lane_id": "legacy_8d",
+      "dimension": 8,
+      "domain_scope": [
+        "legal_ir"
+      ],
+      "runtime_id": "legal_ir:legacy_v1",
+      "runtime_registration": "existing_explicit_registry_version",
+      "backend": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_runtime_registry.open_runtime",
+      "representation_id": "legacy_hub_v1:explicit_8d:original_encoder_provenance_unrecorded",
+      "availability": "existing_backend_and_local_checkpoint_requires_explicit_input_binding",
+      "checkpoint": {
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "bytes": 398209746,
+        "original_read_only": true
+      },
+      "state_namespace": "artifacts/gte-parallel-paths/state/legacy_8d",
+      "output_namespace": "artifacts/gte-parallel-paths/runs/<run_id>/legacy_8d",
+      "training_policy": "Create a separately identified branch and private session; never train the immutable historical artifact in place",
+      "scope_limitations": [
+        "Original encoder provenance and token context are unknown",
+        "Base inference reconstructs vectors/metrics, not independent learned source-to-IR",
+        "Linguistic spaCy-hash profiles require their own representation and checkpoint identities"
+      ]
+    },
+    {
+      "lane_id": "source_384d",
+      "dimension": 384,
+      "domain_scope": [
+        "legal_ir",
+        "intent_ir",
+        "security_ir",
+        "ui_ux_ir"
+      ],
+      "runtime_id": "legal_ir:source_training_v2",
+      "runtime_registration": "existing_module_api_not_a_new_registry_version",
+      "backend": "ipfs_datasets_py.logic.formalization.autoencoder.complete_training.load_source_decoder_384_v2",
+      "representation_id": "thenlper/gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2",
+      "availability": "existing_backend_and_local_development_checkpoint",
+      "checkpoint": {
+        "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+        "teacher_qualified": false
+      },
+      "state_namespace": "artifacts/gte-parallel-paths/state/source_384d",
+      "output_namespace": "artifacts/gte-parallel-paths/runs/<run_id>/source_384d",
+      "training_policy": "Continue independent 384D training and evaluation while frozen generations supervise 768D",
+      "scope_limitations": [
+        "512-token GTE input ceiling",
+        "Decoder output scope and target vocabulary remain checkpoint-specific",
+        "Source and sparse Legal backends remain distinct explicit selections"
+      ]
+    },
+    {
+      "lane_id": "multilingual_768d",
+      "dimension": 768,
+      "domain_scope": [
+        "legal_ir",
+        "intent_ir",
+        "security_ir",
+        "ui_ux_ir"
+      ],
+      "runtime_id": "legal_ir:gte_multilingual_768_v1",
+      "runtime_registration": "proposed_not_installed",
+      "backend": null,
+      "representation_id": "Alibaba-NLP/gte-multilingual-base@9bbca17d9273fd0d03d5725c7a4b0f6b45142062:code=Alibaba-NLP/new-impl@40ced75c3017eb27626c9d4ea981bde21a2662f4:d768:pool=cls:norm=l2:cpu:float32:tokens8192:reject_overlength:v1",
+      "availability": "embedding_producer_implemented_local_assets_and_ir_decoder_unavailable",
+      "checkpoint": null,
+      "state_namespace": "artifacts/gte-parallel-paths/state/multilingual_768d",
+      "output_namespace": "artifacts/gte-parallel-paths/runs/<run_id>/multilingual_768d",
+      "training_policy": "Develop and run supervised baseline independently; enable screened KD only after donor qualification",
+      "scope_limitations": [
+        "8192-token encoder limit is enforced by producer admission; real boundary/resource qualification and IR decoder output scope remain pending",
+        "No automatic fallback to 384D",
+        "No invented checkpoint hash or synthetic embeddings for an unavailable model"
+      ],
+      "producer": {
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768",
+        "cli": "scripts/ops/autoencoder/prepare_gte_multilingual.py",
+        "asset_manifest": "configs/autoencoders/gte_multilingual_local_assets_v1.json",
+        "implementation_available": true,
+        "native_numerics_verified": false,
+        "device": "cpu",
+        "dtype": "float32",
+        "attention_implementation": "eager",
+        "max_tokens_including_special_tokens": 8192,
+        "overlength_policy": "reject"
+      }
+    }
+  ],
+  "execution": {
+    "launch_jobs": false,
+    "download_models": false,
+    "train_models": false,
+    "modify_default_selection": false
+  },
+  "workspace_root": "/home/barberb/lift_coding",
+  "relative_path_policy": "Resolve checkpoint and artifact namespace paths against workspace_root; run_id placeholders require a fresh concrete run identity",
+  "worker_integration": {
+    "script": "scripts/ops/autoencoder/run_gte_model_worker.py",
+    "mode": "CPU_infer_only",
+    "supported_8d_runtimes": [
+      "legal_ir:legacy_v1",
+      "legal_ir:legacy_linguistic_historical_blank_en"
+    ],
+    "supported_384d_runtime_pattern": "DOMAIN:source_training_v2",
+    "multilingual_768d_worker_available": false,
+    "selected_cpu_smoke_verification": "artifacts/gte-parallel-model-smoke-20261001/run-02/verification.json",
+    "smoke_does_not_replay_full_historical8d_checkpoint": true
+  }
+}

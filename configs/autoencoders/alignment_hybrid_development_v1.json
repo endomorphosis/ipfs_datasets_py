@@ -1,0 +1,15 @@
+{
+  "schema": "alignment-hybrid-experiment-config/v1",
+  "study_id": "autoformalization-hybrid-development-v1",
+  "joint_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/joint-01/report.json",
+    "sha256": "b46b6e453ccd9fbe6e411b37aada410855b9c8c0db65bea930a2f97897d52bc3"
+  },
+  "policies": ["source_only", "formal_only", "source_discovery_formal_select", "rrf_formal", "quota_formal"],
+  "top_k": 5,
+  "shortlist": 20,
+  "head_budget": 20,
+  "rrf_k": 60,
+  "diversity_lambda": 0.7,
+  "max_seconds": 180
+}
