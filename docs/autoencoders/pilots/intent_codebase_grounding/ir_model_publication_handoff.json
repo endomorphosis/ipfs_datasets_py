@@ -3685,7 +3685,7 @@
     "store_selection_scope": {
       "alternate_configured_stores_verified": false,
       "constructor_default_resolution": "MODEL_MANAGER_DB_PATH when set, otherwise ./model_manager.duckdb relative to caller cwd",
-      "package_cwd_default_equivalence_only": true,
+      "package_cwd_default_equivalence_when_env_unset": true,
       "running_supervisor_store_verified": false,
       "selection": "explicit_absolute_existing_accelerate_store",
       "workspace_root_default_association_verified": false
