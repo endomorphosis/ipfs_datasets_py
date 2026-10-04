@@ -35,7 +35,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-056 Recover crypto_exchange source and verification artifact tree
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -46,7 +46,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-057 Protect theorem-prover taskboard and artifact retention
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -57,7 +57,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-058 Build solver dependency bootstrap and environment probe
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -68,7 +68,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-088 Stabilize recovered tree across supervisor commit cleanup
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -79,7 +79,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-089 Remediate required TypeScript compiler dependency
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_typescript_dependency_remediation.py -q; PATH="$PWD/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin:$PATH" PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/provision_required_typescript_toolchain.py --probe security_ir_artifacts/environment/solver-dependency-probe.json --out security_ir_artifacts/environment/typescript-remediation-report.json
 - Priority: P0
@@ -91,7 +91,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-059 Freeze proof-boundary and security decision policy
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -102,7 +102,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-060 Acquire and pin Xaman App corpus
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_corpus_manifest.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/fetch_xaman_corpus.py --repo https://github.com/XRPL-Labs/Xaman-App --ref 942f43876265a7af44f233288ad2b1d00841d5fa --out security_ir_artifacts/corpora/xaman-app/source-manifest.json
 - Priority: P0
@@ -114,7 +114,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-061 Build Xaman dependency and build-environment probe
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_environment_probe.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_xaman_environment.py --corpus-manifest security_ir_artifacts/corpora/xaman-app/source-manifest.json --out security_ir_artifacts/corpora/xaman-app/environment-probe.json
 - Priority: P0
@@ -126,7 +126,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-062 Restore SecurityModelIR schema and source coverage gates
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -137,7 +137,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-063 Extend extractor for Xaman React Native TypeScript corpus
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_source_extractor.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m ipfs_datasets_py.logic.security_models.crypto_exchange.extractors.xaman_source_extractor --manifest security_ir_artifacts/corpora/xaman-app/source-manifest.json --out security_ir_artifacts/corpora/xaman-app/source-coverage.json
 - Priority: P0
@@ -149,7 +149,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-064 Model Xaman account, vault, storage, and authentication facts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_wallet_auth_model.py -q
 - Priority: P0
@@ -161,7 +161,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-065 Model Xaman payload and sign-request lifecycle
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_payload_lifecycle.py -q
 - Priority: P0
@@ -173,7 +173,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-066 Model XRPL transaction semantics from Xaman ledger code
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_xrpl_transaction_model.py -q
 - Priority: P0
@@ -185,7 +185,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-067 Define Xaman XRPL security claims and assumptions
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_security_claims.py -q
 - Priority: P0
@@ -197,7 +197,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-068 Generate Xaman SecurityModelIR baseline
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_security_model_ir.py -q
 - Priority: P0
@@ -209,7 +209,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-069 Emit SMT-LIB and run Z3/CVC5 differential proofs
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: solver
@@ -220,7 +220,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-070 Build mutation and disproof counterexample suite
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py -q
 - Priority: P0
@@ -232,7 +232,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-071 Add TLA/Apalache workflow checks for Xaman signing
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_lean_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_lean_solver_lane.py --out security_ir_artifacts/environment/lean-solver-lane-report.json
 - Priority: P1
@@ -244,7 +244,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-072 Add Tamarin/ProVerif protocol checks for payload flow
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_apalache_solver_lane.py --out security_ir_artifacts/environment/apalache-solver-lane-report.json
 - Priority: P1
@@ -256,7 +256,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-073 Add Lean/Coq proof-consumer invariants
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_protocol_solver_lanes.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_protocol_solver_lanes.py --out security_ir_artifacts/environment/protocol-solver-lane-report.json
 - Priority: P1
@@ -268,7 +268,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-074 Ingest Xaman e2e and runtime traces
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_runtime_trace_ingestor.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m ipfs_datasets_py.logic.security_models.crypto_exchange.extractors.xaman_runtime_trace_ingestor --out security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json
 - Priority: P1
@@ -280,7 +280,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-075 Produce Xaman assurance packet and release decision
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -291,7 +291,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-076 Bridge Xaman artifacts into production-blocker removal
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -398,7 +398,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-085 Build production evidence intake scaffold
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_production_evidence_intake.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/validate_production_evidence_bundle.py --bundle security_ir_artifacts/production/evidence-bundle.json --out security_ir_artifacts/production/evidence-bundle-report.json
 - Priority: P0
@@ -410,7 +410,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-086 Build optional solver installer and blocker remover
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --out security_ir_artifacts/environment/optional-solver-install-report.json
 - Priority: P1
@@ -422,7 +422,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-087 Wire taskboard integrity into CI and supervisor preflight
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py --taskboard docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md --state data/crypto_exchange_theorem_prover/state/cxtp_task_state.json --out security_ir_artifacts/recovery/taskboard-preflight-report.json
 - Priority: P1
@@ -434,7 +434,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-090 Remediate Lean optional proof-consumer solver lane
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_coq_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_coq_solver_lane.py --out security_ir_artifacts/environment/coq-solver-lane-report.json
 - Priority: P1
@@ -446,7 +446,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-091 Provision Apalache TLA model-checker lane
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_apalache_solver_lane.py --out security_ir_artifacts/environment/apalache-solver-lane-report.json
 - Priority: P1
@@ -458,7 +458,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-092 Provision Tamarin and ProVerif protocol solver lanes
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_protocol_solver_lanes.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_protocol_solver_lanes.py --out security_ir_artifacts/environment/protocol-solver-lane-report.json
 - Priority: P1
@@ -470,7 +470,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-093 Provision Coq proof-kernel solver lane
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_coq_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_coq_solver_lane.py --out security_ir_artifacts/environment/coq-solver-lane-report.json
 - Priority: P1
@@ -482,7 +482,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-094 Generate production evidence packets for each remaining blocker
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_production_blocker_evidence_packets.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_production_blocker_evidence_packets.py --out security_ir_artifacts/production/blocker-evidence-packets.json
 - Priority: P0
@@ -494,7 +494,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-095 Build guarded production blocker status updater
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_production_blocker_status_updater.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/update_production_blocker_status.py --dry-run --packets security_ir_artifacts/production/blocker-evidence-packets.json --out security_ir_artifacts/production/blocker-status-update-report.json
 - Priority: P0
@@ -506,7 +506,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-096 Protect appended solver and production unblocker tasks
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_appended_cxtp_task_retention.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/check_appended_cxtp_tasks.py --taskboard docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md --out security_ir_artifacts/recovery/appended-task-retention-report.json
 - Priority: P0
@@ -518,7 +518,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-097 Integrate Leanstral proof-assistant lane
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_leanstral_proof_assistant_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_leanstral_proof_assistant.py --out security_ir_artifacts/environment/leanstral-proof-assistant-report.json
 - Priority: P1
@@ -680,7 +680,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-111 Publish production blocker prerequisite matrix
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: test -f docs/security_verification/production_unblock_prerequisite_matrix.md
 - Priority: P0
@@ -780,7 +780,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-119 Prepare Firebase-stubbed Xaman public-source Testnet build kit
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Durable verifier-kit manifest, source assessment, and Firebase-stub test artifacts are retained in the completed supervisor state.
 - Priority: P0
@@ -792,7 +792,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-120 Capture redacted Testnet telemetry in DuckDB
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the redacted telemetry report and local DuckDB artifact.
 - Priority: P0
@@ -804,7 +804,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-121 Run public-Testnet device trial
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the device-trial report, verifier APK path, and redacted telemetry dependency.
 - Priority: P0
@@ -816,7 +816,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-122 Map Testnet runtime telemetry to model categories
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the monitor mapping and its scope documentation.
 - Priority: P0
@@ -828,7 +828,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-123 Repair verifier-build Android compatibility boundary
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the compatibility source and Testnet network-selection report.
 - Priority: P1
@@ -840,7 +840,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-124 Analyze release R8 dependencies and native boundary
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the release R8 dependency report and analysis.
 - Priority: P1
@@ -852,7 +852,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-125 Capture Testnet network-selection evidence
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the Testnet network-selection report and capture tooling.
 - Priority: P0
@@ -864,7 +864,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-126 Audit native Firebase packaging boundary
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the native Firebase boundary report and audit test.
 - Priority: P0
@@ -876,7 +876,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-127 Stabilize Firebase-stubbed Testnet build tooling
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the runnable build-kit script, documentation, and test.
 - Priority: P1
@@ -888,7 +888,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-128 Ingest redacted Xaman runtime traces
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the runtime trace ingestor, documented assumptions, and tests.
 - Priority: P0
@@ -900,7 +900,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-129 Operationalize baseline proof and disproof commands
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains baseline/disproof command wrappers, release-gate documentation, and tests.
 - Priority: P0
@@ -912,7 +912,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-130 Capture redacted Xaman Testnet transaction lifecycle trial
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the transaction-trial script, report, documentation, and test.
 - Priority: P0
@@ -924,7 +924,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-131 Review frozen Xaman Testnet SecurityModelIR
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the model, claim trace map, assumptions, documentation, and test.
 - Priority: P0
@@ -936,7 +936,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-132 Lock Testnet SMT proof worker and CVC5 runner
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the proof-worker lock, CVC5 report, documentation, and test.
 - Priority: P0
@@ -948,7 +948,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-133 Generate Z3/CVC5 Testnet results and counterexamples
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains differential reports, counterexamples, and result documentation.
 - Priority: P0
@@ -960,7 +960,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-134 Generate Testnet Apalache concurrency model
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the Testnet TLA artifact, report, documentation, and test.
 - Priority: P1
@@ -972,7 +972,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-135 Generate Testnet Tamarin/ProVerif protocol model
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Tamarin 1.12.0 and ProVerif 2.05 successfully execute the bounded Testnet protocol artifacts; unresolved assumptions and unmodeled semantics remain fail-closed.
 - Priority: P1
@@ -984,7 +984,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-136 Check Lean kernel and decide independent Rocq coverage
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Lean compiles and Rocq 9.1.1 checks the independent bounded kernel; production and overall Testnet assurance remain blocked outside this coverage lane.
 - Priority: P1
@@ -996,7 +996,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-137 Govern Leanstral-assisted proof suggestions
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the Leanstral lock, candidate audit, and policy document.
 - Priority: P1
@@ -1008,7 +1008,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-138 Execute Testnet fuzzing and counterexample retention
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the fuzz report, counterexample directory, documentation, and test.
 - Priority: P0
@@ -1020,7 +1020,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-139 Generate fail-closed Testnet assurance verdict
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the assurance bundle, verdict, and documentation.
 - Priority: P0
@@ -1032,7 +1032,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-140 Reconcile Xaman TLA workflow with executable Apalache evidence
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the reconciled TLA workflow, Apalache lane report, and tests.
 - Priority: P0
@@ -1044,7 +1044,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-141 Pin a Tamarin-supported Maude runtime
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the Tamarin/Maude runtime probe report, documentation, and test.
 - Priority: P0
@@ -1056,7 +1056,7 @@ and release gates use one canonical board.
 
 ## PORTAL-CXTP-142 Finalize headless ProVerif and Rocq proof toolchain evidence
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: Completed supervisor state retains the headless ProVerif/Rocq toolchain probe, documentation, and test.
 - Priority: P0
@@ -1097,7 +1097,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-143 Reconcile canonical CXTP taskboard with supervisor state
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -1108,7 +1108,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-144 Refresh the pinned Xaman public-source and Testnet assessment baseline
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: source
@@ -1119,7 +1119,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-145 Build a claim-to-source map for wallet, payload, native bridge, and deep-link boundaries
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: model
@@ -1130,7 +1130,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-146 Extend XRPL transaction semantics for reachable public Xaman flows
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: model
@@ -1141,7 +1141,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-147 Run a reconciled multi-solver public-source Testnet proof portfolio
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: solver
@@ -1152,7 +1152,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-148 Expand adversarial Testnet fuzzing and formal counterexample minimization
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: disproof
@@ -1163,7 +1163,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-149 Reproduce the public Android Testnet verifier build with a locked environment
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: runtime
@@ -1174,7 +1174,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-150 Capture and validate redacted XRPL Testnet lifecycle evidence
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: runtime
@@ -1185,7 +1185,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-151 Issue a bounded Xaman public-source/Testnet assurance verdict
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: assurance
@@ -1196,7 +1196,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-152 Prepare an authorized vendor-evidence intake request for native and backend blockers
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: governance
@@ -1219,7 +1219,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-154 Prepare a verifier-only Xaman self-hosted endpoint-rebind candidate
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/endpoint-rebound-candidate.json` has CID `sha256:8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88` and a separate source candidate was materialized from public commit `942f43876265a7af44f233288ad2b1d00841d5fa`.
 - Priority: P0
@@ -1231,7 +1231,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-155 Provision and verify an isolated self-hosted XRPL bridge
 
-- Status: completed
+- Status: todo
 - Completion: automated plus reviewed configuration
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/daemon-health.json` has CID `sha256:5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b`; `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/bridge-isolation-report.json` has CID `sha256:f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d`. The captured retained run checks standalone network ID `777777`, loopback-only exposure, and denied public egress. It is not an independent review or a wallet-security result.
 - Priority: P0
@@ -1243,7 +1243,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-156 Independently review the endpoint-rebound candidate and bridge isolation
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_review.py -q
 - Priority: P0
@@ -1255,7 +1255,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-157 Capture a redacted self-hosted Xaman runtime-conformance trace
 
-- Status: completed
+- Status: todo
 - Completion: automated plus reviewed trace
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-trace-review.json` has CID `bafkreigyua5yjzvcuq5ajzzuw4agxzvauey666tqx6nvs5i3n2tex5cpwa`; `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-conformance-report.json` has CID `bafkreic3olc6u2lwlxywbn6wxoiochfzjnkeje54sd2mzs3pdj5uz5wz2a`
 - Priority: P0
@@ -1267,7 +1267,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-158 Prepare a fail-closed self-hosted runtime-trace contract
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: The non-evidence template at `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-trace-template.json` declares `NOT_RUNTIME_EVIDENCE`; the validator and focused tests reject missing lifecycle categories, expired review, vendor-equivalence scope, or raw sensitive material.
 - Priority: P0
@@ -1279,7 +1279,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-159 Check conditional local resolver semantics with Tamarin and ProVerif
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/resolution-protocol-report.json` records passing Tamarin and ProVerif runs with decision `SELF_HOSTED_RESOLUTION_MODEL_CHECKED_CONDITIONALLY` and retains `production_release_blocked: true`.
 - Priority: P0
@@ -1291,7 +1291,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-160 Prepare a content-addressed independent-review packet
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/independent-review-packet.json` has CID `bafkreibg3zvjoh5fzuns2dvu2v26ugnb4yoleenix6wlvu5vp36iji36ku` and remains `PENDING_INDEPENDENT_REVIEW`; its companion template is explicitly non-review evidence.
 - Priority: P0
@@ -1303,7 +1303,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-161 Validate independent endpoint-rebind review decisions fail-closed
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: The review validator is tested to reject an unbound packet, non-independent reviewer attestation, failed mandatory check, or production-scope escalation. A valid review can only emit `ALLOW_VERIFIER_ONLY_RUNTIME_CAPTURE` and still retains `production_release_blocked: true`.
 - Priority: P0
@@ -1315,7 +1315,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-162 Assess public native-vault source and check rekey recovery invariants
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/native-vault-public-source-assessment.json` has CID `bafkreiacnwrbg7o7t5rbff4qjvonwgiwxy3et567wrhrzw6virnjyyr2qe`; both Z3 4.16.0 and CVC5 1.3.2 return `unsat`, `unsat`, and `sat` for the bounded successful-rekey, recovery-preservation, and expected-partial-state queries.
 - Priority: P0
@@ -1327,7 +1327,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-163 Fault-inject public native-vault rekey transitions on Android and iOS
 
-- Status: completed
+- Status: todo
 - Completion: reviewed runtime evidence
 - Priority: P0
 - Track: runtime
@@ -1339,7 +1339,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-164 Triage disproof and fuzz outputs by source support and evidence owner
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/counterexample-triage.json` has CID `bafkreig66sstrnk3it7c3vtnmcwoy6fsigiw4d7kkc6f3a2z7r52ckw3x4`; all 37 retained entries, including three source-bounded native-vault runtime obligations, are classified without a confirmed-vulnerability label.
 - Priority: P0
@@ -1351,7 +1351,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-165 Prepare redacted native-vault fault-injection evidence contract
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/native-vault/fault-injection-plan.json` has CID `bafkreidnoaul3gxidib5pchyq4qkwebkv3uiec4l5lbbojypvp3rqmp3ri`; its companion template explicitly declares `NOT_RUNTIME_EVIDENCE`. The validator rejects an absent Android/iOS single or first/later-batch case for either replacement-write or recovery-cleanup failure, an unapproved or expired review, a scope escalation, raw sensitive material, and an invalid content identifier.
 - Priority: P0
@@ -1363,7 +1363,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-166 Verify Android host readiness for native-vault fault injection
 
-- Status: completed
+- Status: todo
 - Completion: automated host preflight
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-android-host-preflight.json` has CID `bafkreigtyz64cpjzyarknmbzmst2cdsvng6ps3hscwajoy7pypgq6gkgxi` and records executable command-line tools 19.0, ADB 37.0.0, emulator 36.6.11, and the redacted API-34/x86_64/google-APIs AVD configuration. It did not boot an emulator, build Xaman, or capture a wallet trace.
 - Priority: P0
@@ -1375,7 +1375,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-167 Exhaustively state-fuzz native-vault rekey fault boundaries
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json` has CID `bafkreieaqpjiyuhsejag2vf6zfysh3l4rjws6gpuv5rnmlgbu34wdyifa4`; the source-bound campaign enumerates 14 single/two-vault phase/index cases using the source's per-vault purge/replacement batch order, and Z3 4.16.0 plus CVC5 1.3.2 independently return the expected `unsat`, `unsat`, `unsat`, and `sat` results. The SAT cleanup witness is recorded only as a runtime test obligation.
 - Priority: P0
@@ -1387,7 +1387,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-168 Verify iOS/XCTest host readiness for native-vault fault injection
 
-- Status: completed
+- Status: todo
 - Completion: automated host preflight
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight.json` has CID `bafkreidqehalti65voyeqt34fmvmjt45o666fhv7sjldqulrrmqf65j5nu` and reports `IOS_NATIVE_VAULT_HOST_PREPARED_BLOCKED_NON_DARWIN`.
 - Priority: P0
@@ -1399,7 +1399,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-169 Add a deterministic iOS preflight blocker artifact mode for non-Darwin environments
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight-blocker.json`
 - Priority: P0
@@ -1411,7 +1411,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-170 Prioritize proof-lane gap remediation from counterexample and fuzz classification
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Completion evidence: `security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json`
 - Priority: P0
@@ -1423,7 +1423,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-171 Remediate ErgoAI executable discovery and launcher compatibility
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --out security_ir_artifacts/environment/optional-solver-install-report.json; `security_ir_artifacts/environment/optional-solver-install-report.json`
 - Priority: P1
@@ -1435,7 +1435,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-172 Execute prioritized proof lanes and fuzz gaps from remediation matrix
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: disproof
 - Depends on: PORTAL-CXTP-170, PORTAL-CXTP-171
@@ -1448,7 +1448,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-173 Recompute disproof vectors and counterexample report before each remediation run
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Priority: P1
 - Track: disproof
@@ -1460,7 +1460,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-174 Capture a reconciled residual-gap blocker manifest and blocker-class index
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: disproof
@@ -1472,7 +1472,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-175 Bind each unresolved gap to explicit external/runtime unblock lanes
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -1548,7 +1548,7 @@ PY
 
 ## PORTAL-CXTP-180 Add explicit install-time progress and stale-version refresh telemetry for all lazy theorem-prover lanes
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Priority: P1
 - Track: ops
@@ -1560,7 +1560,7 @@ PY
 
 ## PORTAL-CXTP-181 Complete `PORTAL-CXTP-086` dependency matrix for out-of-date binaries (Tamarin, ProVerif, Maude, z3, cvc5, Lean, Coq/Rocq 9.1.1, and leanstral)
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: solver
@@ -1573,7 +1573,7 @@ PY
 
 ## PORTAL-CXTP-182 Consolidate local gap-remediation status after proof, fuzz, and counterexample reruns
 
-- Status: completed
+- Status: todo
 - Completion: automated
 - Priority: P0
 - Track: disproof
