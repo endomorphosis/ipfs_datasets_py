@@ -7,6 +7,7 @@ Covers:
 - legal_report_generator_tool: generate_legal_report, export_legal_report
 - citation_extraction_tool: extract_legal_citations
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -85,6 +86,7 @@ def _mock_legal_tool_entrypoints(monkeypatch):
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _run(coro):
     loop = asyncio.new_event_loop()
     try:
@@ -97,11 +99,13 @@ def _run(coro):
 # mcp_tools
 # ---------------------------------------------------------------------------
 
+
 class TestScrapeRecapArchive:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             scrape_recap_archive,
         )
+
         r = _run(scrape_recap_archive({"case_name": "Roe v. Wade"}))
         assert isinstance(r, dict)
 
@@ -109,6 +113,7 @@ class TestScrapeRecapArchive:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             scrape_recap_archive,
         )
+
         r = _run(scrape_recap_archive({}))
         assert "status" in r or "error" in r
 
@@ -116,6 +121,7 @@ class TestScrapeRecapArchive:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             scrape_recap_archive,
         )
+
         r = _run(scrape_recap_archive({}))
         assert isinstance(r, dict)
 
@@ -125,6 +131,7 @@ class TestSearchRecapDocuments:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             search_recap_documents,
         )
+
         r = _run(search_recap_documents({"query": "privacy"}))
         assert isinstance(r, dict)
 
@@ -132,6 +139,7 @@ class TestSearchRecapDocuments:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             search_recap_documents,
         )
+
         r = _run(search_recap_documents({}))
         assert isinstance(r, dict)
 
@@ -141,6 +149,7 @@ class TestScrapeStateLaws:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             scrape_state_laws,
         )
+
         r = _run(scrape_state_laws({"state": "CA"}))
         assert isinstance(r, dict)
 
@@ -150,6 +159,7 @@ class TestListScrapingJobs:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             list_scraping_jobs,
         )
+
         r = _run(list_scraping_jobs({}))
         assert isinstance(r, dict)
 
@@ -159,6 +169,7 @@ class TestScrapeUsCode:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
             scrape_us_code,
         )
+
         r = _run(scrape_us_code({"title": "42"}))
         assert isinstance(r, dict)
 
@@ -167,11 +178,13 @@ class TestScrapeUsCode:
 # brave_legal_search_tools (sync)
 # ---------------------------------------------------------------------------
 
+
 class TestBraveLegalSearch:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.brave_legal_search_tools import (
             brave_legal_search,
         )
+
         r = brave_legal_search("GDPR compliance", max_results=3)
         assert isinstance(r, dict)
 
@@ -179,6 +192,7 @@ class TestBraveLegalSearch:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.brave_legal_search_tools import (
             brave_legal_search,
         )
+
         r = brave_legal_search("copyright", max_results=10)
         assert isinstance(r, dict)
 
@@ -186,6 +200,7 @@ class TestBraveLegalSearch:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.brave_legal_search_tools import (
             brave_legal_search,
         )
+
         r = brave_legal_search("")
         assert isinstance(r, dict)
 
@@ -195,6 +210,7 @@ class TestBraveLegalSearchGenerateTerms:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.brave_legal_search_tools import (
             brave_legal_search_generate_terms,
         )
+
         r = brave_legal_search_generate_terms("privacy law")
         assert isinstance(r, dict)
 
@@ -203,11 +219,13 @@ class TestBraveLegalSearchGenerateTerms:
 # legal_report_generator_tool
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateLegalReport:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
             generate_legal_report,
         )
+
         r = _run(generate_legal_report([], "default", "Test Report"))
         assert isinstance(r, dict)
 
@@ -215,6 +233,7 @@ class TestGenerateLegalReport:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
             generate_legal_report,
         )
+
         r = _run(generate_legal_report([], "summary", "My Report"))
         assert "status" in r or "report" in r
 
@@ -222,9 +241,8 @@ class TestGenerateLegalReport:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
             generate_legal_report,
         )
-        r = _run(
-            generate_legal_report([], "default", "Report", include_summary=True)
-        )
+
+        r = _run(generate_legal_report([], "default", "Report", include_summary=True))
         assert isinstance(r, dict)
 
 
@@ -233,6 +251,7 @@ class TestExportLegalReport:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
             export_legal_report,
         )
+
         r = _run(export_legal_report({}, "json"))
         assert isinstance(r, dict)
 
@@ -241,11 +260,13 @@ class TestExportLegalReport:
 # citation_extraction_tool
 # ---------------------------------------------------------------------------
 
+
 class TestExtractLegalCitations:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.citation_extraction_tool import (
             extract_legal_citations,
         )
+
         r = _run(extract_legal_citations({"results": []}))
         assert isinstance(r, dict)
 
@@ -253,6 +274,7 @@ class TestExtractLegalCitations:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.citation_extraction_tool import (
             extract_legal_citations,
         )
+
         r = _run(extract_legal_citations({}))
         assert "status" in r or "citations" in r
 
@@ -260,11 +282,8 @@ class TestExtractLegalCitations:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.citation_extraction_tool import (
             extract_legal_citations,
         )
-        r = _run(
-            extract_legal_citations(
-                {"results": [], "extract_metadata": True}
-            )
-        )
+
+        r = _run(extract_legal_citations({"results": [], "extract_metadata": True}))
         assert isinstance(r, dict)
 
 
@@ -273,5 +292,6 @@ class TestAnalyzeCitationNetwork:
         from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.citation_extraction_tool import (
             analyze_citation_network,
         )
+
         r = _run(analyze_citation_network({}))
         assert isinstance(r, dict)

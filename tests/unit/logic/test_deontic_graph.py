@@ -65,7 +65,12 @@ def test_deontic_graph_reports_conflicts_and_source_gaps():
                 "target_label": "Grant review",
                 "sources": [
                     {"id": "actor_hacc", "label": "HACC", "node_type": "actor", "active": True},
-                    {"id": "fact_requested", "label": "Requested", "node_type": "fact", "active": True},
+                    {
+                        "id": "fact_requested",
+                        "label": "Requested",
+                        "node_type": "fact",
+                        "active": True,
+                    },
                 ],
                 "active": True,
             },
@@ -104,8 +109,18 @@ def test_support_map_builder_creates_rule_centered_support_entries():
                 "target_id": "action_review",
                 "target_label": "Grant review",
                 "sources": [
-                    {"id": "fact:request", "label": "Review requested", "node_type": "fact", "active": True},
-                    {"id": "fact:notice", "label": "Notice sent", "node_type": "fact", "active": True},
+                    {
+                        "id": "fact:request",
+                        "label": "Review requested",
+                        "node_type": "fact",
+                        "active": True,
+                    },
+                    {
+                        "id": "fact:notice",
+                        "label": "Notice sent",
+                        "node_type": "fact",
+                        "active": True,
+                    },
                 ],
                 "evidence_ids": ["exhibit:A"],
                 "active": True,
@@ -113,18 +128,34 @@ def test_support_map_builder_creates_rule_centered_support_entries():
         ]
     )
 
-    payload = SupportMapBuilder().build_from_deontic_graph(
-        graph,
-        fact_catalog={
-            "fact:request": {"predicate": "requested_review", "status": "verified", "source_ids": ["email:1"]},
-            "fact:notice": {"predicate": "sent_notice", "status": "verified", "source_ids": ["notice:1"]},
-        },
-        filing_map={
-            "rule_1": [
-                {"filing_id": "motion:show-cause", "filing_type": "motion", "proposition": "Agency had a duty to grant review."}
-            ]
-        },
-    ).to_dict()
+    payload = (
+        SupportMapBuilder()
+        .build_from_deontic_graph(
+            graph,
+            fact_catalog={
+                "fact:request": {
+                    "predicate": "requested_review",
+                    "status": "verified",
+                    "source_ids": ["email:1"],
+                },
+                "fact:notice": {
+                    "predicate": "sent_notice",
+                    "status": "verified",
+                    "source_ids": ["notice:1"],
+                },
+            },
+            filing_map={
+                "rule_1": [
+                    {
+                        "filing_id": "motion:show-cause",
+                        "filing_type": "motion",
+                        "proposition": "Agency had a duty to grant review.",
+                    }
+                ]
+            },
+        )
+        .to_dict()
+    )
 
     assert payload["entry_count"] == 1
     assert payload["entries"][0]["facts"][0]["fact_id"] == "fact:request"

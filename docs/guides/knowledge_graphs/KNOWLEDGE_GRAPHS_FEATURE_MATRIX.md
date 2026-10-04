@@ -291,10 +291,12 @@ Complete (v2.0):        ██████████████████�
 ```python
 # Before
 from neo4j import GraphDatabase
+
 driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "pass"))
 
 # After
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
+
 driver = GraphDatabase.driver("ipfs://localhost:5001", auth=("user", "token"))
 ```
 

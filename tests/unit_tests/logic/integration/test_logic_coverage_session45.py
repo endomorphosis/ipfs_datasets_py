@@ -26,6 +26,7 @@ import numpy as np
 
 # ─── Fixtures / helpers ────────────────────────────────────────────────────────
 
+
 def _run(coro):
     """Run an async coroutine in a fresh event loop (pytest-safe)."""
     loop = asyncio.new_event_loop()
@@ -37,8 +38,10 @@ def _run(coro):
 
 def _make_formula(operator_name: str = "OBLIGATION", proposition: str = "perform_action"):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-        DeonticFormula, DeonticOperator
+        DeonticFormula,
+        DeonticOperator,
     )
+
     op = getattr(DeonticOperator, operator_name)
     return DeonticFormula(operator=op, proposition=proposition)
 
@@ -47,37 +50,53 @@ def _make_formula(operator_name: str = "OBLIGATION", proposition: str = "perform
 # 1.  medical_theorem_framework.py
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestMedicalTheoremDataclasses:
     """GIVEN medical entities and constraints, WHEN created, THEN fields are set."""
 
     def test_medical_entity_creation(self):
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalEntity
-        entity = MedicalEntity(entity_type="treatment", name="aspirin", properties={"dosage": "100mg"})
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalEntity,
+        )
+
+        entity = MedicalEntity(
+            entity_type="treatment", name="aspirin", properties={"dosage": "100mg"}
+        )
         assert entity.entity_type == "treatment"
         assert entity.name == "aspirin"
         assert entity.properties["dosage"] == "100mg"
 
     def test_temporal_constraint_defaults(self):
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import TemporalConstraint
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            TemporalConstraint,
+        )
+
         tc = TemporalConstraint()
         assert tc.time_to_effect is None
         assert tc.duration is None
         assert tc.temporal_operator is None
 
     def test_temporal_constraint_with_values(self):
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import TemporalConstraint
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            TemporalConstraint,
+        )
+
         tc = TemporalConstraint(
             time_to_effect=timedelta(hours=1),
             duration=timedelta(days=7),
-            temporal_operator="before"
+            temporal_operator="before",
         )
         assert tc.time_to_effect.total_seconds() == 3600
         assert tc.temporal_operator == "before"
 
     def test_medical_theorem_post_init(self):
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheorem, MedicalTheoremType, MedicalEntity, ConfidenceLevel
+            MedicalTheorem,
+            MedicalTheoremType,
+            MedicalEntity,
+            ConfidenceLevel,
         )
+
         ant = MedicalEntity("treatment", "paracetamol", {})
         con = MedicalEntity("outcome", "pain_relief", {})
         t = MedicalTheorem(
@@ -90,12 +109,18 @@ class TestMedicalTheoremDataclasses:
         assert t.evidence_sources == []  # __post_init__ sets to []
 
     def test_confidence_level_enum_values(self):
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import ConfidenceLevel
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            ConfidenceLevel,
+        )
+
         assert ConfidenceLevel.VERY_HIGH.value == "very_high"
         assert ConfidenceLevel.LOW.value == "low"
 
     def test_medical_theorem_type_enum(self):
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremType
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremType,
+        )
+
         assert MedicalTheoremType.CAUSAL_RELATIONSHIP.value == "causal"
         assert MedicalTheoremType.ADVERSE_EVENT.value == "adverse"
 
@@ -128,43 +153,64 @@ class TestMedicalTheoremGenerator:
         return {
             "primary_outcomes": [],
             "adverse_events": [
-                {"event_type": "nausea", "frequency": 0.08, "severity": "mild", "time_frame": "30 minutes"},
+                {
+                    "event_type": "nausea",
+                    "frequency": 0.08,
+                    "severity": "mild",
+                    "time_frame": "30 minutes",
+                },
             ],
         }
 
     def test_generate_treatment_theorem(self):
         """GIVEN intervention+outcome, WHEN generate called, THEN treatment theorem returned."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, MedicalTheoremType
+            MedicalTheoremGenerator,
+            MedicalTheoremType,
         )
+
         gen = MedicalTheoremGenerator()
-        results = gen.generate_from_clinical_trial(self._make_trial_data(), self._make_outcomes_data_treatment())
+        results = gen.generate_from_clinical_trial(
+            self._make_trial_data(), self._make_outcomes_data_treatment()
+        )
         assert len(results) >= 1
-        treatment_theorems = [t for t in results if t.theorem_type == MedicalTheoremType.TREATMENT_OUTCOME]
+        treatment_theorems = [
+            t for t in results if t.theorem_type == MedicalTheoremType.TREATMENT_OUTCOME
+        ]
         assert len(treatment_theorems) >= 1
         assert treatment_theorems[0].antecedent.name == "aspirin"
 
     def test_generate_adverse_event_theorem(self):
         """GIVEN adverse event in outcomes, WHEN generate called, THEN adverse theorem produced."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, MedicalTheoremType
+            MedicalTheoremGenerator,
+            MedicalTheoremType,
         )
+
         gen = MedicalTheoremGenerator()
-        results = gen.generate_from_clinical_trial(self._make_trial_data(), self._make_outcomes_data_adverse())
+        results = gen.generate_from_clinical_trial(
+            self._make_trial_data(), self._make_outcomes_data_adverse()
+        )
         adverse = [t for t in results if t.theorem_type == MedicalTheoremType.ADVERSE_EVENT]
         assert len(adverse) >= 1
         assert adverse[0].consequent.entity_type == "adverse_event"
 
     def test_generate_empty_trial(self):
         """GIVEN no interventions, WHEN generate called, THEN empty list."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremGenerator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremGenerator,
+        )
+
         gen = MedicalTheoremGenerator()
         results = gen.generate_from_clinical_trial({}, {})
         assert results == []
 
     def test_generate_from_pubmed_research(self):
         """GIVEN PubMed articles, WHEN generate_from_pubmed called, THEN list returned."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremGenerator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremGenerator,
+        )
+
         gen = MedicalTheoremGenerator()
         articles = [
             {
@@ -179,14 +225,20 @@ class TestMedicalTheoremGenerator:
 
     def test_generate_from_pubmed_empty(self):
         """GIVEN empty articles list, WHEN generate_from_pubmed called, THEN empty list."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremGenerator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremGenerator,
+        )
+
         gen = MedicalTheoremGenerator()
         results = gen.generate_from_pubmed_research([])
         assert results == []
 
     def test_parse_time_frame_returns_constraint(self):
         """GIVEN non-empty time frame, WHEN parsed, THEN TemporalConstraint returned."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremGenerator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremGenerator,
+        )
+
         gen = MedicalTheoremGenerator()
         # The implementation is a placeholder — any non-empty string returns TemporalConstraint()
         tc = gen._parse_time_frame("2 hours")
@@ -194,14 +246,20 @@ class TestMedicalTheoremGenerator:
 
     def test_parse_time_frame_days(self):
         """GIVEN non-empty time frame, WHEN parsed, THEN TemporalConstraint returned."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremGenerator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremGenerator,
+        )
+
         gen = MedicalTheoremGenerator()
         tc = gen._parse_time_frame("7 days")
         assert tc is not None
 
     def test_parse_time_frame_unknown(self):
         """GIVEN empty time frame, WHEN parsed, THEN None returned."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremGenerator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremGenerator,
+        )
+
         gen = MedicalTheoremGenerator()
         tc = gen._parse_time_frame("")
         assert tc is None
@@ -209,8 +267,10 @@ class TestMedicalTheoremGenerator:
     def test_calculate_confidence_from_frequency_high(self):
         """GIVEN high frequency (>100), WHEN calculated, THEN VERY_HIGH confidence."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, ConfidenceLevel
+            MedicalTheoremGenerator,
+            ConfidenceLevel,
         )
+
         gen = MedicalTheoremGenerator()
         assert gen._calculate_confidence_from_frequency(150) == ConfidenceLevel.VERY_HIGH
         assert gen._calculate_confidence_from_frequency(80) == ConfidenceLevel.HIGH
@@ -218,8 +278,10 @@ class TestMedicalTheoremGenerator:
     def test_calculate_confidence_from_frequency_low(self):
         """GIVEN low frequency (<=5), WHEN calculated, THEN VERY_LOW confidence."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, ConfidenceLevel
+            MedicalTheoremGenerator,
+            ConfidenceLevel,
         )
+
         gen = MedicalTheoremGenerator()
         assert gen._calculate_confidence_from_frequency(3) == ConfidenceLevel.VERY_LOW
         assert gen._calculate_confidence_from_frequency(10) == ConfidenceLevel.LOW
@@ -230,8 +292,12 @@ class TestFuzzyLogicValidator:
 
     def _make_treatment_theorem(self):
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheorem, MedicalTheoremType, MedicalEntity, ConfidenceLevel
+            MedicalTheorem,
+            MedicalTheoremType,
+            MedicalEntity,
+            ConfidenceLevel,
         )
+
         return MedicalTheorem(
             theorem_id="T_TREAT",
             theorem_type=MedicalTheoremType.TREATMENT_OUTCOME,
@@ -242,8 +308,12 @@ class TestFuzzyLogicValidator:
 
     def _make_adverse_theorem(self):
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheorem, MedicalTheoremType, MedicalEntity, ConfidenceLevel
+            MedicalTheorem,
+            MedicalTheoremType,
+            MedicalEntity,
+            ConfidenceLevel,
         )
+
         return MedicalTheorem(
             theorem_id="T_ADV",
             theorem_type=MedicalTheoremType.ADVERSE_EVENT,
@@ -254,11 +324,14 @@ class TestFuzzyLogicValidator:
 
     def test_validate_treatment_theorem_high_effect(self):
         """GIVEN treatment theorem, WHEN validate called, THEN validation result returned."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import FuzzyLogicValidator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            FuzzyLogicValidator,
+        )
+
         v = FuzzyLogicValidator()
         result = v.validate_theorem(
             self._make_treatment_theorem(),
-            {"effect_size": 0.8, "p_value": 0.01, "sample_size": 500}
+            {"effect_size": 0.8, "p_value": 0.01, "sample_size": 500},
         )
         assert result["validated"] is True
         assert "fuzzy_confidence" in result
@@ -266,7 +339,10 @@ class TestFuzzyLogicValidator:
 
     def test_validate_treatment_theorem_low_effect(self):
         """GIVEN low effect treatment theorem, WHEN validate called, THEN validated."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import FuzzyLogicValidator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            FuzzyLogicValidator,
+        )
+
         v = FuzzyLogicValidator()
         result = v.validate_theorem(
             self._make_treatment_theorem(), {"effect_size": 0.1, "p_value": 0.5}
@@ -275,11 +351,14 @@ class TestFuzzyLogicValidator:
 
     def test_validate_adverse_event_theorem(self):
         """GIVEN adverse theorem, WHEN validate called, THEN result has required keys."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import FuzzyLogicValidator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            FuzzyLogicValidator,
+        )
+
         v = FuzzyLogicValidator()
         result = v.validate_theorem(
             self._make_adverse_theorem(),
-            {"frequency": 0.05, "severity_score": 3, "sample_size": 200}
+            {"frequency": 0.05, "severity_score": 3, "sample_size": 200},
         )
         assert "fuzzy_confidence" in result
         assert isinstance(result["fuzzy_confidence"], float)
@@ -287,8 +366,13 @@ class TestFuzzyLogicValidator:
     def test_validate_unknown_type_returns_default(self):
         """GIVEN theorem with non-treatment/adverse type, WHEN validate, THEN default result."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            FuzzyLogicValidator, MedicalTheorem, MedicalTheoremType, MedicalEntity, ConfidenceLevel
+            FuzzyLogicValidator,
+            MedicalTheorem,
+            MedicalTheoremType,
+            MedicalEntity,
+            ConfidenceLevel,
         )
+
         v = FuzzyLogicValidator()
         t = MedicalTheorem(
             theorem_id="T_CAUSAL",
@@ -307,8 +391,13 @@ class TestTimeSeriesTheoremValidator:
 
     def _make_temporal_theorem(self):
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheorem, MedicalTheoremType, MedicalEntity, ConfidenceLevel, TemporalConstraint
+            MedicalTheorem,
+            MedicalTheoremType,
+            MedicalEntity,
+            ConfidenceLevel,
+            TemporalConstraint,
         )
+
         return MedicalTheorem(
             theorem_id="T_TEMP",
             theorem_type=MedicalTheoremType.TEMPORAL_PROGRESSION,
@@ -316,14 +405,16 @@ class TestTimeSeriesTheoremValidator:
             consequent=MedicalEntity("outcome", "recovery", {}),
             confidence=ConfidenceLevel.HIGH,
             temporal_constraint=TemporalConstraint(
-                time_to_effect=timedelta(hours=24),
-                temporal_operator="after"
-            )
+                time_to_effect=timedelta(hours=24), temporal_operator="after"
+            ),
         )
 
     def test_validate_temporal_with_time_series(self):
         """GIVEN time_series_data, WHEN validate_temporal_theorem, THEN temporal result returned."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import TimeSeriesTheoremValidator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            TimeSeriesTheoremValidator,
+        )
+
         v = TimeSeriesTheoremValidator()
         now = datetime.now()
         time_series = [
@@ -337,7 +428,10 @@ class TestTimeSeriesTheoremValidator:
 
     def test_validate_temporal_empty_series(self):
         """GIVEN empty time_series, WHEN validate_temporal_theorem, THEN handled gracefully."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import TimeSeriesTheoremValidator
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            TimeSeriesTheoremValidator,
+        )
+
         v = TimeSeriesTheoremValidator()
         result = v.validate_temporal_theorem(self._make_temporal_theorem(), [])
         assert "validated" in result
@@ -347,24 +441,28 @@ class TestTimeSeriesTheoremValidator:
 # 2.  temporal_deontic_rag_store.py
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestTheoremMetadata:
     """GIVEN TheoremMetadata objects, WHEN hashed/compared, THEN use theorem_id."""
 
     def test_hash_and_eq(self):
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act")
         m1 = TheoremMetadata(
-            theorem_id="T001", formula=f,
-            embedding=np.zeros(4), temporal_scope=(None, None)
+            theorem_id="T001", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
         )
         m2 = TheoremMetadata(
-            theorem_id="T001", formula=f,
-            embedding=np.zeros(4), temporal_scope=(None, None)
+            theorem_id="T001", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
         )
         m3 = TheoremMetadata(
-            theorem_id="T002", formula=f,
-            embedding=np.zeros(4), temporal_scope=(None, None)
+            theorem_id="T002", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
         )
         assert m1 == m2
         assert m1 != m3
@@ -372,10 +470,18 @@ class TestTheoremMetadata:
         assert hash(m1) != hash(m3)
 
     def test_not_equal_to_non_metadata(self):
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="x")
-        m = TheoremMetadata(theorem_id="T1", formula=f, embedding=np.zeros(4), temporal_scope=(None, None))
+        m = TheoremMetadata(
+            theorem_id="T1", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
+        )
         assert m != "T1"
         assert m != 42
 
@@ -384,7 +490,10 @@ class TestTemporalDeonticRAGStore:
     """GIVEN TemporalDeonticRAGStore, WHEN theorems added and queried, THEN correct results."""
 
     def _make_store(self):
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
+
         return TemporalDeonticRAGStore()
 
     def test_add_theorem_returns_id(self):
@@ -467,19 +576,24 @@ class TestTemporalDeonticRAGStore:
     def test_check_consistency_with_temporal_context(self):
         """GIVEN temporal context, WHEN check, THEN temporal filtering applied."""
         store = self._make_store()
-        store.add_theorem(_make_formula("OBLIGATION", "file_annual_report"),
-                          temporal_scope=(datetime(2020, 1, 1), datetime(2023, 12, 31)))
+        store.add_theorem(
+            _make_formula("OBLIGATION", "file_annual_report"),
+            temporal_scope=(datetime(2020, 1, 1), datetime(2023, 12, 31)),
+        )
         result = store.check_document_consistency(
-            [_make_formula("OBLIGATION", "file_report")],
-            temporal_context=datetime(2021, 6, 15)
+            [_make_formula("OBLIGATION", "file_report")], temporal_context=datetime(2021, 6, 15)
         )
         assert hasattr(result, "is_consistent")
 
     def test_get_statistics(self):
         """GIVEN store with theorems, WHEN get_statistics, THEN counts correct."""
         store = self._make_store()
-        store.add_theorem(_make_formula("OBLIGATION", "act1"), jurisdiction="NY", legal_domain="contract")
-        store.add_theorem(_make_formula("PERMISSION", "act2"), jurisdiction="CA", legal_domain="property")
+        store.add_theorem(
+            _make_formula("OBLIGATION", "act1"), jurisdiction="NY", legal_domain="contract"
+        )
+        store.add_theorem(
+            _make_formula("PERMISSION", "act2"), jurisdiction="CA", legal_domain="property"
+        )
         stats = store.get_statistics()
         assert stats["total_theorems"] == 2
         assert stats["jurisdictions"] == 2
@@ -500,7 +614,11 @@ class TestTemporalDeonticRAGStore:
 
     def test_check_formula_conflict_obligation_prohibition(self):
         """GIVEN O(p) vs P(!p), WHEN _check_formula_conflict, THEN conflict detected."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         store = self._make_store()
         f1 = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay_rent")
         f2 = DeonticFormula(operator=DeonticOperator.PROHIBITION, proposition="pay_rent")
@@ -509,7 +627,11 @@ class TestTemporalDeonticRAGStore:
 
     def test_check_formula_no_conflict_same_operator(self):
         """GIVEN two OBLIGATION formulas, WHEN _check_formula_conflict, THEN no conflict."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         store = self._make_store()
         f1 = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay_rent")
         f2 = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay_rent")
@@ -518,12 +640,21 @@ class TestTemporalDeonticRAGStore:
 
     def test_deduplicate_theorems(self):
         """GIVEN duplicate theorem ids, WHEN _deduplicate_theorems, THEN unique ids."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
         store = self._make_store()
         f = _make_formula("OBLIGATION", "act")
-        m1 = TheoremMetadata(theorem_id="T1", formula=f, embedding=np.zeros(4), temporal_scope=(None, None))
-        m2 = TheoremMetadata(theorem_id="T1", formula=f, embedding=np.zeros(4), temporal_scope=(None, None))
-        m3 = TheoremMetadata(theorem_id="T2", formula=f, embedding=np.zeros(4), temporal_scope=(None, None))
+        m1 = TheoremMetadata(
+            theorem_id="T1", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
+        )
+        m2 = TheoremMetadata(
+            theorem_id="T1", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
+        )
+        m3 = TheoremMetadata(
+            theorem_id="T2", formula=f, embedding=np.zeros(4), temporal_scope=(None, None)
+        )
         result = store._deduplicate_theorems([m1, m2, m3])
         ids = [m.theorem_id for m in result]
         assert len(ids) == len(set(ids))
@@ -548,12 +679,18 @@ class TestTemporalDeonticRAGStore:
 # 3.  document_consistency_checker.py
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDocumentConsistencyChecker:
     """GIVEN a DocumentConsistencyChecker, WHEN checking documents, THEN analyses returned."""
 
     def _make_checker(self):
-        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import DocumentConsistencyChecker
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
+            DocumentConsistencyChecker,
+        )
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
+
         store = TemporalDeonticRAGStore()
         store.add_theorem(_make_formula("OBLIGATION", "pay_rent"))
         store.add_theorem(_make_formula("PROHIBITION", "discriminate"))
@@ -563,9 +700,7 @@ class TestDocumentConsistencyChecker:
         """GIVEN text, WHEN check_document, THEN DocumentAnalysis returned."""
         checker = self._make_checker()
         result = checker.check_document(
-            "The tenant shall pay rent monthly.",
-            "doc_001",
-            jurisdiction="NY"
+            "The tenant shall pay rent monthly.", "doc_001", jurisdiction="NY"
         )
         assert result.document_id == "doc_001"
         assert isinstance(result.confidence_score, float)
@@ -577,7 +712,7 @@ class TestDocumentConsistencyChecker:
         result = checker.check_document(
             "Tenants are obligated to notify landlord.",
             "doc_002",
-            temporal_context=datetime(2023, 1, 1)
+            temporal_context=datetime(2023, 1, 1),
         )
         assert result.document_id == "doc_002"
 
@@ -599,9 +734,13 @@ class TestDocumentConsistencyChecker:
     def test_generate_debug_report_with_issues(self):
         """GIVEN analysis with issues, WHEN generate_debug_report, THEN issues counted."""
         from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
-            DocumentConsistencyChecker, DocumentAnalysis
+            DocumentConsistencyChecker,
+            DocumentAnalysis,
         )
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
+
         store = TemporalDeonticRAGStore()
         checker = DocumentConsistencyChecker(rag_store=store)
         # Inject an issue into analysis
@@ -629,20 +768,32 @@ class TestDocumentConsistencyChecker:
 
     def test_basic_formula_extraction_obligation(self):
         """GIVEN text with 'must', WHEN _basic_formula_extraction, THEN OBLIGATION formula."""
-        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import DocumentConsistencyChecker
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
+            DocumentConsistencyChecker,
+        )
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         store = TemporalDeonticRAGStore()
         checker = DocumentConsistencyChecker(rag_store=store)
-        formulas = checker._basic_formula_extraction("The party must provide notice within 30 days.")
+        formulas = checker._basic_formula_extraction(
+            "The party must provide notice within 30 days."
+        )
         obligation_formulas = [f for f in formulas if f.operator == DeonticOperator.OBLIGATION]
         assert len(obligation_formulas) >= 1
 
     def test_basic_formula_extraction_prohibition(self):
         """GIVEN text with 'shall not', WHEN _basic_formula_extraction, THEN PROHIBITION formula."""
-        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import DocumentConsistencyChecker
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
+            DocumentConsistencyChecker,
+        )
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         store = TemporalDeonticRAGStore()
         checker = DocumentConsistencyChecker(rag_store=store)
         formulas = checker._basic_formula_extraction("No party shall not discriminate.")
@@ -651,10 +802,14 @@ class TestDocumentConsistencyChecker:
 
     def test_calculate_overall_confidence(self):
         """GIVEN consistency_result, WHEN _calculate_overall_confidence, THEN float in [0,1]."""
-        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import DocumentConsistencyChecker
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
-            TemporalDeonticRAGStore, ConsistencyResult
+        from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
+            DocumentConsistencyChecker,
         )
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+            ConsistencyResult,
+        )
+
         store = TemporalDeonticRAGStore()
         checker = DocumentConsistencyChecker(rag_store=store)
         cr = ConsistencyResult(is_consistent=True, confidence_score=0.9)
@@ -666,11 +821,13 @@ class TestDocumentConsistencyChecker:
 # 4.  caselaw_bulk_processor.py
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCaselawDocumentDataclass:
     """GIVEN CaselawDocument, WHEN created, THEN fields accessible."""
 
     def test_create_caselaw_document(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
             document_id="case_001",
             title="Smith v Jones",
@@ -691,6 +848,7 @@ class TestProcessingStats:
 
     def test_processing_time_computed(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import ProcessingStats
+
         stats = ProcessingStats()
         stats.start_time = datetime(2024, 1, 1, 10, 0, 0)
         stats.end_time = datetime(2024, 1, 1, 10, 0, 30)
@@ -698,11 +856,13 @@ class TestProcessingStats:
 
     def test_success_rate_zero_total(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import ProcessingStats
+
         stats = ProcessingStats()
         assert stats.success_rate == 0.0
 
     def test_success_rate_with_documents(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import ProcessingStats
+
         stats = ProcessingStats(total_documents=10, processed_documents=8)
         assert stats.success_rate == pytest.approx(0.8, abs=1e-9)
 
@@ -711,14 +871,20 @@ class TestBulkProcessingConfig:
     """GIVEN BulkProcessingConfig, WHEN created, THEN sensible defaults."""
 
     def test_default_config(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import BulkProcessingConfig
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            BulkProcessingConfig,
+        )
+
         config = BulkProcessingConfig()
         assert config.enable_parallel_processing is True
         assert config.max_concurrent_documents >= 1
         assert config.enable_consistency_validation is True
 
     def test_custom_config(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import BulkProcessingConfig
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            BulkProcessingConfig,
+        )
+
         config = BulkProcessingConfig(
             caselaw_directories=["/tmp/cases"],
             max_concurrent_documents=2,
@@ -738,7 +904,8 @@ class TestCaselawBulkProcessorBasic:
         doc = {
             "id": "case_001",
             "title": "Smith v Jones",
-            "text": text or (
+            "text": text
+            or (
                 "This Court holds that tenants are obligated to pay rent monthly. "
                 "The landlord shall not evict without due process. "
                 "Parties must provide 30 days written notice before termination. " * 3
@@ -756,8 +923,10 @@ class TestCaselawBulkProcessorBasic:
     def test_process_empty_directory(self):
         """GIVEN empty directory, WHEN process, THEN zero documents processed."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         td = tempfile.mkdtemp()
         od = tempfile.mkdtemp()
         config = BulkProcessingConfig(
@@ -773,8 +942,10 @@ class TestCaselawBulkProcessorBasic:
     def test_process_with_one_document(self):
         """GIVEN one caselaw JSON, WHEN process, THEN document discovered."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         td = tempfile.mkdtemp()
         od = tempfile.mkdtemp()
         self._make_caselaw_file(td)
@@ -792,8 +963,11 @@ class TestCaselawBulkProcessorBasic:
     def test_passes_filters_length(self):
         """GIVEN document below min_length, WHEN _passes_filters, THEN False."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
+            CaselawDocument,
         )
+
         config = BulkProcessingConfig(min_document_length=100)
         proc = CaselawBulkProcessor(config)
         doc = CaselawDocument(
@@ -812,8 +986,11 @@ class TestCaselawBulkProcessorBasic:
     def test_passes_filters_passes_long(self):
         """GIVEN document meeting min_length, WHEN _passes_filters, THEN True."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
+            CaselawDocument,
         )
+
         config = BulkProcessingConfig(min_document_length=10)
         proc = CaselawBulkProcessor(config)
         doc = CaselawDocument(
@@ -832,8 +1009,10 @@ class TestCaselawBulkProcessorBasic:
     def test_extract_date_from_filename(self):
         """GIVEN filename with date, WHEN _extract_date_from_filename, THEN datetime."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         proc = CaselawBulkProcessor(BulkProcessingConfig())
         dt = proc._extract_date_from_filename("smith_jones_2020_01_15.json")
         assert dt is not None
@@ -843,8 +1022,10 @@ class TestCaselawBulkProcessorBasic:
     def test_extract_jurisdiction_from_path(self):
         """GIVEN path with 'federal', WHEN _extract_jurisdiction, THEN 'Federal'."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         proc = CaselawBulkProcessor(BulkProcessingConfig())
         j = proc._extract_jurisdiction_from_path("/data/federal/2020/smith.json")
         assert j == "Federal"
@@ -852,8 +1033,10 @@ class TestCaselawBulkProcessorBasic:
     def test_is_legal_proposition(self):
         """GIVEN non-legal text, WHEN _is_legal_proposition, THEN False for indicators."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         proc = CaselawBulkProcessor(BulkProcessingConfig())
         # 'said' is a non-legal indicator
         assert proc._is_legal_proposition("he said goodbye") is False
@@ -863,8 +1046,11 @@ class TestCaselawBulkProcessorBasic:
     def test_process_single_document(self):
         """GIVEN CaselawDocument, WHEN _process_single_document, THEN formulas list."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
+            CaselawDocument,
         )
+
         proc = CaselawBulkProcessor(BulkProcessingConfig())
         doc = CaselawDocument(
             document_id="d1",
@@ -882,7 +1068,10 @@ class TestCaselawBulkProcessorBasic:
 
     def test_create_bulk_processor_factory(self):
         """GIVEN directories, WHEN create_bulk_processor, THEN processor returned."""
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import create_bulk_processor
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            create_bulk_processor,
+        )
+
         proc = create_bulk_processor(["/tmp"], output_directory="/tmp/out")
         assert proc is not None
 
@@ -891,18 +1080,27 @@ class TestCaselawBulkProcessorBasic:
 # 5.  bridges/external_provers.py
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestProverResult:
     """GIVEN ProverResult, WHEN created, THEN fields set correctly."""
 
     def test_prover_result_creation(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         r = ProverResult(status=ProverStatus.THEOREM, proof="proof_str", time=0.5, prover="Vampire")
         assert r.status == ProverStatus.THEOREM
         assert r.proof == "proof_str"
         assert r.prover == "Vampire"
 
     def test_prover_result_error(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverResult, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            ProverResult,
+            ProverStatus,
+        )
+
         r = ProverResult(status=ProverStatus.ERROR, error="binary not found")
         assert r.status == ProverStatus.ERROR
         assert r.error == "binary not found"
@@ -914,13 +1112,18 @@ class TestVampireProver:
     def test_init_unavailable(self):
         """GIVEN no vampire binary, WHEN init, THEN proves log warning."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         v = VampireProver(vampire_path="/nonexistent_vampire_binary_xyz")
         # No exception raised; availability check runs but prover is not available
         assert v.vampire_path == "/nonexistent_vampire_binary_xyz"
 
     def test_prove_returns_error_when_unavailable(self):
         """GIVEN no vampire binary, WHEN prove, THEN ERROR status."""
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         v = VampireProver(vampire_path="/nonexistent_vampire_binary_xyz")
         result = v.prove("∀x (P(x) → Q(x))")
         assert result.status == ProverStatus.ERROR
@@ -928,7 +1131,11 @@ class TestVampireProver:
 
     def test_prove_with_axioms_error(self):
         """GIVEN no binary, WHEN prove with axioms, THEN ERROR status."""
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            VampireProver,
+            ProverStatus,
+        )
+
         v = VampireProver(vampire_path="/nonexistent_xyz")
         result = v.prove("P(a)", axioms=["P(a) → Q(a)"])
         assert result.status == ProverStatus.ERROR
@@ -936,6 +1143,7 @@ class TestVampireProver:
     def test_formula_to_tptp(self):
         """GIVEN formula, WHEN _formula_to_tptp, THEN TPTP string contains formula."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         v = VampireProver(vampire_path="/nonexistent")
         tptp = v._formula_to_tptp("P(a)")
         assert "P(a)" in tptp
@@ -944,6 +1152,7 @@ class TestVampireProver:
     def test_extract_proof_with_refutation(self):
         """GIVEN output with 'Refutation', WHEN _extract_proof, THEN non-None."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         v = VampireProver(vampire_path="/nonexistent")
         output = "...some output...\nRefutation found\n1. step\n2. qed\n"
         proof = v._extract_proof(output)
@@ -952,6 +1161,7 @@ class TestVampireProver:
     def test_extract_proof_no_refutation(self):
         """GIVEN output without proof keywords, WHEN _extract_proof, THEN None."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         v = VampireProver(vampire_path="/nonexistent")
         proof = v._extract_proof("SZS status Unknown")
         assert proof is None
@@ -959,6 +1169,7 @@ class TestVampireProver:
     def test_extract_statistics(self):
         """GIVEN output with time/memory stats, WHEN _extract_statistics, THEN dict."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import VampireProver
+
         v = VampireProver(vampire_path="/nonexistent")
         output = "Time: 1.23s\nMemory: 45 MB\n"
         stats = v._extract_statistics(output)
@@ -970,11 +1181,16 @@ class TestEProver:
 
     def test_init_unavailable(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver
+
         e = EProver(eprover_path="/nonexistent_eprover_xyz")
         assert e.eprover_path == "/nonexistent_eprover_xyz"
 
     def test_prove_returns_error_when_unavailable(self):
-        from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver, ProverStatus
+        from ipfs_datasets_py.logic.integration.bridges.external_provers import (
+            EProver,
+            ProverStatus,
+        )
+
         e = EProver(eprover_path="/nonexistent_eprover_xyz")
         result = e.prove("∀x (P(x) → Q(x))")
         assert result.status == ProverStatus.ERROR
@@ -982,12 +1198,14 @@ class TestEProver:
 
     def test_formula_to_tptp_e(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver
+
         e = EProver(eprover_path="/nonexistent")
         tptp = e._formula_to_tptp("P(a)")
         assert "P(a)" in tptp
 
     def test_extract_statistics_e(self):
         from ipfs_datasets_py.logic.integration.bridges.external_provers import EProver
+
         e = EProver(eprover_path="/nonexistent")
         stats = e._extract_statistics("Proof found!\nTime: 0.5s\n")
         assert isinstance(stats, dict)
@@ -999,8 +1217,10 @@ class TestProverRegistry:
     def test_register_and_list(self):
         """GIVEN prover, WHEN register, THEN list_provers includes it."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import (
-            ProverRegistry, VampireProver
+            ProverRegistry,
+            VampireProver,
         )
+
         r = ProverRegistry()
         v = VampireProver(vampire_path="/nonexistent")
         r.register(v)
@@ -1009,8 +1229,10 @@ class TestProverRegistry:
     def test_get_prover_found(self):
         """GIVEN registered prover, WHEN get_prover, THEN returns it."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import (
-            ProverRegistry, EProver
+            ProverRegistry,
+            EProver,
         )
+
         r = ProverRegistry()
         e = EProver(eprover_path="/nonexistent")
         r.register(e)
@@ -1019,14 +1241,17 @@ class TestProverRegistry:
     def test_get_prover_not_found(self):
         """GIVEN unregistered prover name, WHEN get_prover, THEN None."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import ProverRegistry
+
         r = ProverRegistry()
         assert r.get_prover("NonExistent") is None
 
     def test_prove_auto_empty_registry(self):
         """GIVEN no provers, WHEN prove_auto, THEN UNKNOWN status."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import (
-            ProverRegistry, ProverStatus
+            ProverRegistry,
+            ProverStatus,
         )
+
         r = ProverRegistry()
         result = r.prove_auto("P(a) -> P(a)")
         assert result.status in (ProverStatus.UNKNOWN, ProverStatus.ERROR)
@@ -1034,8 +1259,11 @@ class TestProverRegistry:
     def test_prove_auto_with_unavailable_prover(self):
         """GIVEN unavailable prover, WHEN prove_auto, THEN error result."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import (
-            ProverRegistry, VampireProver, ProverStatus
+            ProverRegistry,
+            VampireProver,
+            ProverStatus,
         )
+
         r = ProverRegistry()
         v = VampireProver(vampire_path="/nonexistent_v")
         r.register(v)
@@ -1046,8 +1274,10 @@ class TestProverRegistry:
     def test_get_prover_registry_singleton_type(self):
         """GIVEN get_prover_registry, WHEN called, THEN ProverRegistry returned."""
         from ipfs_datasets_py.logic.integration.bridges.external_provers import (
-            ProverRegistry, get_prover_registry
+            ProverRegistry,
+            get_prover_registry,
         )
+
         r = get_prover_registry()
         assert isinstance(r, ProverRegistry)
 
@@ -1056,24 +1286,28 @@ class TestProverRegistry:
 # 6.  bridges/prover_installer.py
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestProverInstaller:
     """GIVEN prover_installer, WHEN ensure_lean/ensure_coq called, THEN handles missing provers."""
 
     def test_ensure_lean_not_found_no_yes(self):
         """GIVEN lean not installed, WHEN ensure_lean(yes=False), THEN returns False."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         result = ensure_lean(yes=False, strict=False)
         assert result is False
 
     def test_ensure_coq_not_found_no_yes(self):
         """GIVEN coq not installed, WHEN ensure_coq(yes=False), THEN returns False."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
+
         result = ensure_coq(yes=False, strict=False)
         assert result is False
 
     def test_ensure_lean_strict_false_no_raise(self):
         """GIVEN lean missing, strict=False, WHEN ensure_lean, THEN no exception."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         try:
             ensure_lean(yes=False, strict=False)
         except SystemExit:
@@ -1082,6 +1316,7 @@ class TestProverInstaller:
     def test_ensure_coq_strict_false_no_raise(self):
         """GIVEN coq missing, strict=False, WHEN ensure_coq, THEN no exception."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
+
         try:
             ensure_coq(yes=False, strict=False)
         except SystemExit:
@@ -1090,6 +1325,7 @@ class TestProverInstaller:
     def test_ensure_lean_strict_false_no_raise_v2(self):
         """GIVEN lean missing, strict=True, yes=False, WHEN ensure_lean, THEN returns False."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         # strict only raises if yes=True and the install fails with an exception
         result = ensure_lean(yes=False, strict=True)
         assert result is False
@@ -1097,24 +1333,28 @@ class TestProverInstaller:
     def test_main_no_args(self):
         """GIVEN no args, WHEN main(), THEN returns 0 (both unavailable, non-strict)."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         result = main([])
         assert result == 0
 
     def test_main_lean_flag(self):
         """GIVEN --lean flag, WHEN main(['--lean']), THEN runs lean check."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         result = main(["--lean"])
         assert isinstance(result, int)
 
     def test_main_coq_flag(self):
         """GIVEN --coq flag, WHEN main(['--coq']), THEN runs coq check."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         result = main(["--coq"])
         assert isinstance(result, int)
 
     def test_truthy_function(self):
         """GIVEN truthy values, WHEN _truthy, THEN True for yes/1/true."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _truthy
+
         assert _truthy("yes") is True
         assert _truthy("1") is True
         assert _truthy("true") is True
@@ -1125,6 +1365,7 @@ class TestProverInstaller:
     def test_which_function_known_command(self):
         """GIVEN 'python3' (always present), WHEN _which, THEN returns path."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _which
+
         result = _which("python3")
         assert result is not None
         assert "python" in result
@@ -1132,12 +1373,14 @@ class TestProverInstaller:
     def test_which_function_nonexistent(self):
         """GIVEN nonexistent command, WHEN _which, THEN None."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _which
+
         result = _which("nonexistent_command_xyz_abc_123")
         assert result is None
 
     def test_ensure_lean_yes_with_mocked_which_found(self):
         """GIVEN lean found via _which, WHEN ensure_lean(yes=False), THEN True."""
         from ipfs_datasets_py.logic.integration.bridges import prover_installer as pi
+
         orig = pi._which
         try:
             pi._which = lambda cmd: "/usr/bin/lean" if cmd == "lean" else orig(cmd)
@@ -1149,6 +1392,7 @@ class TestProverInstaller:
     def test_ensure_coq_found_via_mocked_which(self):
         """GIVEN coqc found, WHEN ensure_coq(yes=False), THEN True."""
         from ipfs_datasets_py.logic.integration.bridges import prover_installer as pi
+
         orig = pi._which
         try:
             pi._which = lambda cmd: "/usr/bin/coqc" if cmd == "coqc" else orig(cmd)

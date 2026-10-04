@@ -13,29 +13,21 @@ storage, and IPFS-backed storage. Business logic in `storage_engine.py`.
 ## Usage
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.storage_tools import (
-    store_data, retrieve_data, list_storage
-)
+from ipfs_datasets_py.mcp_server.tools.storage_tools import store_data, retrieve_data, list_storage
 
 # Store data to a backend
 result = await store_data(
     data=my_dataset,
     key="legal_corpus/v2/data.parquet",
-    backend="s3",             # "s3" | "local" | "ipfs"
-    metadata={"version": "2", "rows": 50000}
+    backend="s3",  # "s3" | "local" | "ipfs"
+    metadata={"version": "2", "rows": 50000},
 )
 
 # Retrieve data
-data = await retrieve_data(
-    key="legal_corpus/v2/data.parquet",
-    backend="s3"
-)
+data = await retrieve_data(key="legal_corpus/v2/data.parquet", backend="s3")
 
 # List stored objects
-objects = await list_storage(
-    prefix="legal_corpus/",
-    backend="s3"
-)
+objects = await list_storage(prefix="legal_corpus/", backend="s3")
 # Returns: {"objects": [{"key": "...", "size_bytes": 123456, "last_modified": "..."}]}
 
 # Storage statistics

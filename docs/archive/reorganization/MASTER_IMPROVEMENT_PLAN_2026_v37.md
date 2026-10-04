@@ -51,9 +51,9 @@ Complements `from_dict` and provides idiomatic Python iteration.
 def iter_failed(self) -> Iterator[tuple[str, str]]:
     """
     Yield (policy_name, error_reason) pairs for failed pin operations.
-    
+
     A policy is considered failed if pin_results[name] is None.
-    The error_reason is extracted from pin_errors dict, defaulting to 
+    The error_reason is extracted from pin_errors dict, defaulting to
     "unknown error" if not present.
     """
     for name, cid in self.pin_results.items():

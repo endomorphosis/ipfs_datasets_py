@@ -156,15 +156,12 @@ from ipfs_datasets_py.logic.TDFOL import (
     # Phase 11.1: Proof Trees
     ProofTreeVisualizer,
     visualize_proof,
-    
     # Phase 11.2: Dependencies
     FormulaDependencyGraph,
     analyze_proof_dependencies,
-    
     # Phase 11.3: Countermodels
     CountermodelVisualizer,
     create_visualizer,
-    
     # Phase 11.4: Performance
     PerformanceDashboard,
     get_global_dashboard,
@@ -181,7 +178,7 @@ from ipfs_datasets_py.logic.TDFOL import visualize_proof
 result = prover.prove(formula)
 tree = visualize_proof(result)
 print(tree)  # ASCII art
-tree.export_html('proof.html')  # Interactive HTML
+tree.export_html("proof.html")  # Interactive HTML
 ```
 
 ### Quick Start - Dependency Analysis
@@ -190,9 +187,9 @@ tree.export_html('proof.html')  # Interactive HTML
 from ipfs_datasets_py.logic.TDFOL import FormulaDependencyGraph
 
 graph = FormulaDependencyGraph()
-graph.add_dependency(formula1, formula2, 'uses')
+graph.add_dependency(formula1, formula2, "uses")
 graph.detect_cycles()  # Find circular dependencies
-graph.export_html('deps.html')
+graph.export_html("deps.html")
 ```
 
 ### Quick Start - Countermodel Visualization
@@ -202,7 +199,7 @@ from ipfs_datasets_py.logic.TDFOL import create_visualizer
 
 viz = create_visualizer()
 viz.visualize(countermodel)  # ASCII art
-viz.export_html('countermodel.html')
+viz.export_html("countermodel.html")
 ```
 
 ### Quick Start - Performance Monitoring
@@ -211,8 +208,8 @@ viz.export_html('countermodel.html')
 from ipfs_datasets_py.logic.TDFOL import PerformanceDashboard
 
 dashboard = PerformanceDashboard()
-dashboard.record_proof(result, metadata={'strategy': 'forward'})
-dashboard.generate_html('dashboard.html')
+dashboard.record_proof(result, metadata={"strategy": "forward"})
+dashboard.generate_html("dashboard.html")
 ```
 
 ## 🏆 Quality Metrics

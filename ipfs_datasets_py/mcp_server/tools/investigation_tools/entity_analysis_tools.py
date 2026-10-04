@@ -6,6 +6,7 @@ Entity Analysis MCP Tools
 Thin MCP wrapper for entity analysis. Business logic has been extracted to:
     ipfs_datasets_py/processors/investigation/entity_analysis_engine.py
 """
+
 from __future__ import annotations
 
 import json
@@ -32,14 +33,14 @@ logger = logging.getLogger(__name__)
 @wrap_function_as_tool(
     name="analyze_entities",
     description="Analyze entities in a corpus of documents for investigation purposes",
-    category="investigation"
+    category="investigation",
 )
 async def analyze_entities(
     corpus_data: str,
     analysis_type: str = "comprehensive",
     entity_types: Optional[List[str]] = None,
     confidence_threshold: float = 0.85,
-    user_context: Optional[str] = None
+    user_context: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Analyze entities in corpus data for investigation purposes."""
     try:
@@ -53,14 +54,16 @@ async def analyze_entities(
             "relationships": [],
             "clusters": [],
             "statistics": {},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         entities = []
         if "documents" in corpus:
             for doc_id, doc in enumerate(corpus["documents"]):
                 doc_entities = await _extract_entities_from_document(
-                    doc, entity_types or ["PERSON", "ORG", "GPE", "EVENT"], confidence_threshold,
+                    doc,
+                    entity_types or ["PERSON", "ORG", "GPE", "EVENT"],
+                    confidence_threshold,
                 )
                 for entity in doc_entities:
                     entity["document_id"] = doc_id
@@ -69,17 +72,21 @@ async def analyze_entities(
 
         entity_clusters = _cluster_entities(entities)
         relationships = _analyze_entity_relationships(entity_clusters)
-        results.update({
-            "entities": entity_clusters,
-            "relationships": relationships,
-            "statistics": {
-                "total_entities": len(entity_clusters),
-                "total_relationships": len(relationships),
-                "entity_type_counts": _count_entity_types(entity_clusters),
-                "confidence_distribution": _analyze_confidence_distribution(entity_clusters)
+        results.update(
+            {
+                "entities": entity_clusters,
+                "relationships": relationships,
+                "statistics": {
+                    "total_entities": len(entity_clusters),
+                    "total_relationships": len(relationships),
+                    "entity_type_counts": _count_entity_types(entity_clusters),
+                    "confidence_distribution": _analyze_confidence_distribution(entity_clusters),
+                },
             }
-        })
-        logger.info(f"Entity analysis completed: {len(entity_clusters)} entities, {len(relationships)} relationships")
+        )
+        logger.info(
+            f"Entity analysis completed: {len(entity_clusters)} entities, {len(relationships)} relationships"
+        )
         return results
     except Exception as e:
         logger.error(f"Entity analysis failed: {e}")
@@ -89,14 +96,14 @@ async def analyze_entities(
 @wrap_function_as_tool(
     name="explore_entity",
     description="Explore detailed information about a specific entity",
-    category="investigation"
+    category="investigation",
 )
 async def explore_entity(
     entity_id: str,
     corpus_data: str,
     include_relationships: bool = True,
     include_timeline: bool = True,
-    include_sources: bool = True
+    include_sources: bool = True,
 ) -> Dict[str, Any]:
     """Explore detailed information about a specific entity."""
     try:
@@ -111,14 +118,17 @@ async def explore_entity(
                 "include_relationships": include_relationships,
                 "include_timeline": include_timeline,
                 "include_sources": include_sources,
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         }
 
         entity_details = await _find_entity_in_corpus(entity_id, corpus)
         if not entity_details:
-            return {"error": f"Entity {entity_id} not found in corpus", "entity_id": entity_id,
-                    "timestamp": datetime.now().isoformat()}
+            return {
+                "error": f"Entity {entity_id} not found in corpus",
+                "entity_id": entity_id,
+                "timestamp": datetime.now().isoformat(),
+            }
 
         results["entity_details"] = entity_details
         if include_relationships:

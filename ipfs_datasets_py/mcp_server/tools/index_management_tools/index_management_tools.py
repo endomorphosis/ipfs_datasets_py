@@ -37,6 +37,7 @@ except ImportError:  # pragma: no cover - compatibility fallback chain
             manage_index_configuration_core,
         )
     except ImportError:  # pragma: no cover - lightweight local fallback
+
         class IndexType(Enum):
             FAISS = "faiss"
 
@@ -77,13 +78,13 @@ async def load_index(
     dataset_split: str = "train",
     knn_index_split: str = "train",
     columns: str = "text",
-    index_config: Optional[Dict[str, Any]] = None
+    index_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Load and manage vector indices.
-    
+
     MCP tool wrapper that delegates to core implementation.
-    
+
     Args:
         action: Action to perform ('load', 'create', 'reload', 'unload', 'status', 'optimize')
         dataset: Dataset name to load index for
@@ -92,7 +93,7 @@ async def load_index(
         knn_index_split: Index split to use
         columns: Columns to include in the index
         index_config: Index configuration parameters
-        
+
     Returns:
         Dictionary containing operation result and metadata
     """
@@ -103,7 +104,7 @@ async def load_index(
         dataset_split=dataset_split,
         knn_index_split=knn_index_split,
         columns=columns,
-        index_config=index_config
+        index_config=index_config,
     )
 
 
@@ -114,13 +115,13 @@ async def manage_shards(
     shard_size: str = "auto",
     sharding_strategy: str = "clustering",
     models: Optional[List[str]] = None,
-    shard_ids: Optional[List[str]] = None
+    shard_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Manage index shards and distributed indexing.
-    
+
     MCP tool wrapper that delegates to core implementation.
-    
+
     Args:
         action: Shard management action ('create_shards', 'list_shards', 'rebalance', 'merge_shards', 'status', 'distribute')
         dataset: Dataset name for shard operations
@@ -129,7 +130,7 @@ async def manage_shards(
         sharding_strategy: Strategy for sharding ('clustering', 'hash', 'round_robin', 'size_based')
         models: List of models to consider for sharding
         shard_ids: List of shard IDs for operations like merging
-        
+
     Returns:
         Dictionary containing shard operation result and metadata
     """
@@ -140,7 +141,7 @@ async def manage_shards(
         shard_size=shard_size,
         sharding_strategy=sharding_strategy,
         models=models,
-        shard_ids=shard_ids
+        shard_ids=shard_ids,
     )
 
 
@@ -148,27 +149,24 @@ async def monitor_index_status(
     index_id: Optional[str] = None,
     metrics: Optional[List[str]] = None,
     time_range: str = "24h",
-    include_details: bool = False
+    include_details: bool = False,
 ) -> Dict[str, Any]:
     """
     Monitor index health and performance.
-    
+
     MCP tool wrapper that delegates to core implementation.
-    
+
     Args:
         index_id: Specific index ID to monitor (if None, monitors all indices)
         metrics: List of metrics to include ('performance', 'health', 'usage', 'errors', 'all')
         time_range: Time range for metrics ('1h', '6h', '24h', '7d', '30d')
         include_details: Whether to include detailed diagnostics
-        
+
     Returns:
         Dictionary containing index status and performance metrics
     """
     return await monitor_index_status_core(
-        index_id=index_id,
-        metrics=metrics,
-        time_range=time_range,
-        include_details=include_details
+        index_id=index_id, metrics=metrics, time_range=time_range, include_details=include_details
     )
 
 
@@ -176,19 +174,19 @@ async def manage_index_configuration(
     action: str,
     index_id: Optional[str] = None,
     config_updates: Optional[Dict[str, Any]] = None,
-    optimization_level: int = 1
+    optimization_level: int = 1,
 ) -> Dict[str, Any]:
     """
     Manage index configuration and optimization settings.
-    
+
     MCP tool wrapper that delegates to core implementation.
-    
+
     Args:
         action: Configuration action ('get_config', 'update_config', 'optimize_config', 'reset_config')
         index_id: Index ID to configure
         config_updates: Configuration updates to apply
         optimization_level: Level of optimization (1-3, higher is more aggressive)
-        
+
     Returns:
         Dictionary containing configuration operation result
     """
@@ -196,7 +194,7 @@ async def manage_index_configuration(
         action=action,
         index_id=index_id,
         config_updates=config_updates,
-        optimization_level=optimization_level
+        optimization_level=optimization_level,
     )
 
 

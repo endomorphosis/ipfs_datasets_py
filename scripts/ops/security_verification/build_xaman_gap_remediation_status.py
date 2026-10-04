@@ -19,22 +19,30 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_gap_re
 )
 
 
-GAP_MANIFEST_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json')
-SOLVER_PORTFOLIO_REPORT_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json')
-FUZZ_REPORT_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json')
-OUTPUT_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/gap-remediation-status.json')
+GAP_MANIFEST_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json"
+)
+SOLVER_PORTFOLIO_REPORT_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json"
+)
+FUZZ_REPORT_PATH = Path("security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json")
+OUTPUT_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/gap-remediation-status.json"
+)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'{path} did not contain a JSON object')
+        raise ValueError(f"{path} did not contain a JSON object")
     return payload
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def generate(
@@ -57,11 +65,23 @@ def generate(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_ir_artifacts.')
-    parser.add_argument('--gap-manifest', default=str(GAP_MANIFEST_PATH), help='Final gap remediation manifest path.')
-    parser.add_argument('--solver-portfolio-report', default=str(SOLVER_PORTFOLIO_REPORT_PATH), help='Solver portfolio report path.')
-    parser.add_argument('--fuzz-report', default=str(FUZZ_REPORT_PATH), help='Fuzz report path.')
-    parser.add_argument('--out', default=str(OUTPUT_PATH), help='Output status report path.')
+    parser.add_argument(
+        "--repo-root",
+        default=str(ROOT_DIR),
+        help="Repository root containing security_ir_artifacts.",
+    )
+    parser.add_argument(
+        "--gap-manifest",
+        default=str(GAP_MANIFEST_PATH),
+        help="Final gap remediation manifest path.",
+    )
+    parser.add_argument(
+        "--solver-portfolio-report",
+        default=str(SOLVER_PORTFOLIO_REPORT_PATH),
+        help="Solver portfolio report path.",
+    )
+    parser.add_argument("--fuzz-report", default=str(FUZZ_REPORT_PATH), help="Fuzz report path.")
+    parser.add_argument("--out", default=str(OUTPUT_PATH), help="Output status report path.")
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
@@ -80,11 +100,11 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'out': str(Path(args.out)),
-                'overall_status': report['overall_status'],
-                'local_remediated_count': report['summary']['local_remediated_count'],
-                'external_blocked_count': report['summary']['external_blocked_count'],
-                'security_decision': report['security_decision'],
+                "out": str(Path(args.out)),
+                "overall_status": report["overall_status"],
+                "local_remediated_count": report["summary"]["local_remediated_count"],
+                "external_blocked_count": report["summary"]["external_blocked_count"],
+                "security_decision": report["security_decision"],
             },
             sort_keys=True,
         )
@@ -92,5 +112,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

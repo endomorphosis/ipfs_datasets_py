@@ -22,106 +22,106 @@ from scripts.ops.security_verification.run_security_ir_disproof_suite import (  
     main as disproof_main,
 )
 
-INPUT_FIELDS = ('example', 'model', 'source_path')
+INPUT_FIELDS = ("example", "model", "source_path")
 PROOF_DOMAINS = (
-    'withdrawals',
-    'ledger',
-    'deposits',
-    'capabilities',
-    'hsm',
-    'audit',
+    "withdrawals",
+    "ledger",
+    "deposits",
+    "capabilities",
+    "hsm",
+    "audit",
 )
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _z3_version() -> str | None:
-    if importlib.util.find_spec('z3') is None:
+    if importlib.util.find_spec("z3") is None:
         return None
     import z3
 
-    return str(getattr(z3, 'get_full_version', lambda: 'unknown')())
+    return str(getattr(z3, "get_full_version", lambda: "unknown")())
 
 
 def _input_args(args: argparse.Namespace) -> list[str]:
     if args.model:
-        return ['--model', args.model]
+        return ["--model", args.model]
     if args.source_path:
-        values = ['--source-path', args.source_path]
+        values = ["--source-path", args.source_path]
         if args.source_model_id:
-            values.extend(['--source-model-id', args.source_model_id])
+            values.extend(["--source-model-id", args.source_model_id])
         return values
-    return ['--example']
+    return ["--example"]
 
 
 def _proof_args(args: argparse.Namespace, proof_path: Path, counterexamples_dir: Path) -> list[str]:
     values = [
         *_input_args(args),
-        '--strict-validation',
-        '--explain-soundness',
-        '--fail-on',
-        'disproof',
-        '--fail-on',
-        'unknown-critical',
-        '--fail-on',
-        'not-modeled-critical',
-        '--require-reviewed-evidence',
-        '--release-gate',
-        '--require-current-assumptions',
-        '--require-real-ergoai',
-        '--forbid-simulated-zkp',
-        '--min-modeled-blocking-claims',
+        "--strict-validation",
+        "--explain-soundness",
+        "--fail-on",
+        "disproof",
+        "--fail-on",
+        "unknown-critical",
+        "--fail-on",
+        "not-modeled-critical",
+        "--require-reviewed-evidence",
+        "--release-gate",
+        "--require-current-assumptions",
+        "--require-real-ergoai",
+        "--forbid-simulated-zkp",
+        "--min-modeled-blocking-claims",
         str(args.min_modeled_blocking_claims),
-        '--min-proved-blocking-claims',
+        "--min-proved-blocking-claims",
         str(args.min_proved_blocking_claims),
-        '--emit-counterexamples-dir',
+        "--emit-counterexamples-dir",
         str(counterexamples_dir),
-        '--out',
+        "--out",
         str(proof_path),
     ]
     for domain in PROOF_DOMAINS:
-        values.extend(['--require-domain', domain])
+        values.extend(["--require-domain", domain])
     return values
 
 
 def _disproof_args(args: argparse.Namespace, disproof_path: Path) -> list[str]:
     return [
         *_input_args(args),
-        '--fuzz-rounds',
+        "--fuzz-rounds",
         str(args.fuzz_rounds),
-        '--seed',
+        "--seed",
         str(args.seed),
-        '--fuzz-exhaustive-max-mutators',
+        "--fuzz-exhaustive-max-mutators",
         str(args.fuzz_exhaustive_max_mutators),
-        '--fuzz-max-scenarios',
+        "--fuzz-max-scenarios",
         str(args.fuzz_max_scenarios),
-        '--out',
+        "--out",
         str(disproof_path),
     ]
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding='utf-8'))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _claim_table(reports: list[dict[str, Any]]) -> str:
     lines = [
-        '| Claim | Status | Risk | Assumptions |',
-        '| --- | --- | --- | --- |',
+        "| Claim | Status | Risk | Assumptions |",
+        "| --- | --- | --- | --- |",
     ]
     for report in reports:
-        assumptions = ','.join(str(item) for item in report.get('assumptions', []))
+        assumptions = ",".join(str(item) for item in report.get("assumptions", []))
         lines.append(
-            '| `{}` | `{}` | `{}` | `{}` |'.format(
-                report.get('claim_id', ''),
-                report.get('status', ''),
-                report.get('risk', ''),
+            "| `{}` | `{}` | `{}` | `{}` |".format(
+                report.get("claim_id", ""),
+                report.get("status", ""),
+                report.get("risk", ""),
                 assumptions,
             )
         )
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def _render_summary(
@@ -134,122 +134,148 @@ def _render_summary(
     proof_payload: dict[str, Any],
     disproof_payload: dict[str, Any],
 ) -> str:
-    coverage = proof_payload.get('coverage', {})
-    release_gate = proof_payload.get('release_gate', {})
-    gate_summary = release_gate.get('gates', {}) if isinstance(release_gate, dict) else {}
-    assumption_registry = proof_payload.get('assumption_registry', {})
-    assumption_summary = assumption_registry.get('summary', {}) if isinstance(assumption_registry, dict) else {}
-    disproof_summary = disproof_payload.get('summary', {})
-    reports = proof_payload.get('reports', [])
+    coverage = proof_payload.get("coverage", {})
+    release_gate = proof_payload.get("release_gate", {})
+    gate_summary = release_gate.get("gates", {}) if isinstance(release_gate, dict) else {}
+    assumption_registry = proof_payload.get("assumption_registry", {})
+    assumption_summary = (
+        assumption_registry.get("summary", {}) if isinstance(assumption_registry, dict) else {}
+    )
+    disproof_summary = disproof_payload.get("summary", {})
+    reports = proof_payload.get("reports", [])
     if not isinstance(reports, list):
         reports = []
-    input_label = args.model or args.source_path or 'built-in example'
+    input_label = args.model or args.source_path or "built-in example"
     lines = [
-        '# Crypto Exchange Assurance Baseline',
-        '',
-        f'Generated: {generated_at}',
-        '',
-        '## Environment',
-        '',
-        f'- Python: `{sys.executable}`',
-        f'- Z3 Python bindings: `{z3_version}`',
-        f'- Model input: `{input_label}`',
-        f'- Proof report: `{proof_path}`',
-        f'- Disproof report: `{disproof_path}`',
-        '',
-        '## Proof Coverage',
-        '',
-        f'- Total claims: `{coverage.get("total_claims", 0)}`',
-        f'- Proved: `{coverage.get("proved", 0)}`',
-        f'- Disproved: `{coverage.get("disproved", 0)}`',
-        f'- Unknown: `{coverage.get("unknown", 0)}`',
-        f'- Not modeled: `{coverage.get("not_modeled", 0)}`',
-        f'- Blocking claims: `{coverage.get("blocking_claims", 0)}`',
-        f'- Blocking modeled: `{coverage.get("blocking_modeled", 0)}`',
-        f'- Blocking proved: `{coverage.get("blocking_proved", 0)}`',
-        '',
+        "# Crypto Exchange Assurance Baseline",
+        "",
+        f"Generated: {generated_at}",
+        "",
+        "## Environment",
+        "",
+        f"- Python: `{sys.executable}`",
+        f"- Z3 Python bindings: `{z3_version}`",
+        f"- Model input: `{input_label}`",
+        f"- Proof report: `{proof_path}`",
+        f"- Disproof report: `{disproof_path}`",
+        "",
+        "## Proof Coverage",
+        "",
+        f"- Total claims: `{coverage.get('total_claims', 0)}`",
+        f"- Proved: `{coverage.get('proved', 0)}`",
+        f"- Disproved: `{coverage.get('disproved', 0)}`",
+        f"- Unknown: `{coverage.get('unknown', 0)}`",
+        f"- Not modeled: `{coverage.get('not_modeled', 0)}`",
+        f"- Blocking claims: `{coverage.get('blocking_claims', 0)}`",
+        f"- Blocking modeled: `{coverage.get('blocking_modeled', 0)}`",
+        f"- Blocking proved: `{coverage.get('blocking_proved', 0)}`",
+        "",
         _claim_table(reports),
-        '',
-        '## Release Gate',
-        '',
-        f'- Release ready: `{release_gate.get("release_ready", "not reported") if isinstance(release_gate, dict) else "not reported"}`',
-        f'- Blocking accepted: `{gate_summary.get("blocking", {}).get("accepted", 0)}/{gate_summary.get("blocking", {}).get("total", 0)}`',
-        f'- High accepted: `{gate_summary.get("high", {}).get("accepted", 0)}/{gate_summary.get("high", {}).get("total", 0)}`',
-        f'- Medium accepted: `{gate_summary.get("medium", {}).get("accepted", 0)}/{gate_summary.get("medium", {}).get("total", 0)}`',
-        f'- Failures: `{len(release_gate.get("failures", [])) if isinstance(release_gate, dict) else 0}`',
-        f'- Attention items: `{len(release_gate.get("attention", [])) if isinstance(release_gate, dict) else 0}`',
-        '',
-        '## Assumption Registry',
-        '',
-        f'- Assumption evidence ready: `{assumption_registry.get("release_ready", "not reported") if isinstance(assumption_registry, dict) else "not reported"}`',
-        f'- Required assumptions: `{assumption_summary.get("total", 0)}`',
-        f'- Owned: `{assumption_summary.get("owned", 0)}/{assumption_summary.get("total", 0)}`',
-        f'- Evidenced: `{assumption_summary.get("evidenced", 0)}/{assumption_summary.get("total", 0)}`',
-        f'- Current: `{assumption_summary.get("current", 0)}/{assumption_summary.get("total", 0)}`',
-        f'- Stale: `{assumption_summary.get("stale", 0)}`',
-        f'- Failures: `{len(assumption_registry.get("failures", [])) if isinstance(assumption_registry, dict) else 0}`',
-        '',
-        '## Disproof Coverage',
-        '',
-        f'- Seed: `{disproof_payload.get("seed", args.seed)}`',
-        f'- Scenario count: `{disproof_summary.get("scenario_count", 0)}`',
-        f'- Exhaustive mutator combination max: `{disproof_payload.get("input_space", {}).get("exhaustive_combination_max_mutators", 0)}`',
-        f'- Exhaustive mutator combinations: `{disproof_payload.get("input_space", {}).get("exhaustive_combination_count", 0)}`',
-        f'- Scenario failures: `{disproof_summary.get("scenario_failures", 0)}`',
-        f'- Total disproved claims: `{disproof_summary.get("total_disproved_claims", 0)}`',
-        '',
-        '## Soundness Boundary',
-        '',
-        'This baseline covers the implemented bounded Z3/IR verifier for the selected model input. '
-        'It does not prove a production exchange secure unless the input facts are complete, reviewed, '
-        'and tied to the deployed code and environment.',
-        '',
-        'Treat any future `DISPROVED`, blocking `UNKNOWN`, blocking `NOT_MODELED`, missing Z3, '
-        'simulated proof dependency, stale model CID, stale assumption evidence, or unreviewed blocking evidence as non-secure.',
+        "",
+        "## Release Gate",
+        "",
+        f"- Release ready: `{release_gate.get('release_ready', 'not reported') if isinstance(release_gate, dict) else 'not reported'}`",
+        f"- Blocking accepted: `{gate_summary.get('blocking', {}).get('accepted', 0)}/{gate_summary.get('blocking', {}).get('total', 0)}`",
+        f"- High accepted: `{gate_summary.get('high', {}).get('accepted', 0)}/{gate_summary.get('high', {}).get('total', 0)}`",
+        f"- Medium accepted: `{gate_summary.get('medium', {}).get('accepted', 0)}/{gate_summary.get('medium', {}).get('total', 0)}`",
+        f"- Failures: `{len(release_gate.get('failures', [])) if isinstance(release_gate, dict) else 0}`",
+        f"- Attention items: `{len(release_gate.get('attention', [])) if isinstance(release_gate, dict) else 0}`",
+        "",
+        "## Assumption Registry",
+        "",
+        f"- Assumption evidence ready: `{assumption_registry.get('release_ready', 'not reported') if isinstance(assumption_registry, dict) else 'not reported'}`",
+        f"- Required assumptions: `{assumption_summary.get('total', 0)}`",
+        f"- Owned: `{assumption_summary.get('owned', 0)}/{assumption_summary.get('total', 0)}`",
+        f"- Evidenced: `{assumption_summary.get('evidenced', 0)}/{assumption_summary.get('total', 0)}`",
+        f"- Current: `{assumption_summary.get('current', 0)}/{assumption_summary.get('total', 0)}`",
+        f"- Stale: `{assumption_summary.get('stale', 0)}`",
+        f"- Failures: `{len(assumption_registry.get('failures', [])) if isinstance(assumption_registry, dict) else 0}`",
+        "",
+        "## Disproof Coverage",
+        "",
+        f"- Seed: `{disproof_payload.get('seed', args.seed)}`",
+        f"- Scenario count: `{disproof_summary.get('scenario_count', 0)}`",
+        f"- Exhaustive mutator combination max: `{disproof_payload.get('input_space', {}).get('exhaustive_combination_max_mutators', 0)}`",
+        f"- Exhaustive mutator combinations: `{disproof_payload.get('input_space', {}).get('exhaustive_combination_count', 0)}`",
+        f"- Scenario failures: `{disproof_summary.get('scenario_failures', 0)}`",
+        f"- Total disproved claims: `{disproof_summary.get('total_disproved_claims', 0)}`",
+        "",
+        "## Soundness Boundary",
+        "",
+        "This baseline covers the implemented bounded Z3/IR verifier for the selected model input. "
+        "It does not prove a production exchange secure unless the input facts are complete, reviewed, "
+        "and tied to the deployed code and environment.",
+        "",
+        "Treat any future `DISPROVED`, blocking `UNKNOWN`, blocking `NOT_MODELED`, missing Z3, "
+        "simulated proof dependency, stale model CID, stale assumption evidence, or unreviewed blocking evidence as non-secure.",
     ]
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--example', action='store_true', help='Use the built-in example model')
-    parser.add_argument('--model', help='Path to a canonical security model JSON file')
-    parser.add_argument('--source-path', help='Supported source file or directory to autoformalize before proving')
-    parser.add_argument('--source-model-id', help='Optional model_id override when using --source-path')
-    parser.add_argument('--out-dir', default='security_ir_artifacts', help='Directory for generated assurance artifacts')
-    parser.add_argument('--proof-report-name', default='proof-baseline.json', help='Proof report filename inside --out-dir')
-    parser.add_argument('--disproof-report-name', default='disproof-baseline.json', help='Disproof report filename inside --out-dir')
-    parser.add_argument('--summary-name', default='assurance-baseline.md', help='Markdown summary filename inside --out-dir')
-    parser.add_argument('--fuzz-rounds', type=int, default=8, help='Deterministic bounded mutation-fuzz rounds')
-    parser.add_argument('--seed', type=int, default=7, help='Seed for deterministic fuzzed mutation selection')
+    parser.add_argument("--example", action="store_true", help="Use the built-in example model")
+    parser.add_argument("--model", help="Path to a canonical security model JSON file")
     parser.add_argument(
-        '--fuzz-exhaustive-max-mutators',
+        "--source-path", help="Supported source file or directory to autoformalize before proving"
+    )
+    parser.add_argument(
+        "--source-model-id", help="Optional model_id override when using --source-path"
+    )
+    parser.add_argument(
+        "--out-dir",
+        default="security_ir_artifacts",
+        help="Directory for generated assurance artifacts",
+    )
+    parser.add_argument(
+        "--proof-report-name",
+        default="proof-baseline.json",
+        help="Proof report filename inside --out-dir",
+    )
+    parser.add_argument(
+        "--disproof-report-name",
+        default="disproof-baseline.json",
+        help="Disproof report filename inside --out-dir",
+    )
+    parser.add_argument(
+        "--summary-name",
+        default="assurance-baseline.md",
+        help="Markdown summary filename inside --out-dir",
+    )
+    parser.add_argument(
+        "--fuzz-rounds", type=int, default=8, help="Deterministic bounded mutation-fuzz rounds"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=7, help="Seed for deterministic fuzzed mutation selection"
+    )
+    parser.add_argument(
+        "--fuzz-exhaustive-max-mutators",
         type=int,
         default=2,
-        help='Exhaustively cover registered mutation combinations through this size',
+        help="Exhaustively cover registered mutation combinations through this size",
     )
     parser.add_argument(
-        '--fuzz-max-scenarios',
+        "--fuzz-max-scenarios",
         type=int,
         default=512,
-        help='Maximum additional exhaustive fuzz scenarios before failing closed',
+        help="Maximum additional exhaustive fuzz scenarios before failing closed",
     )
-    parser.add_argument('--min-modeled-blocking-claims', type=int, default=3)
-    parser.add_argument('--min-proved-blocking-claims', type=int, default=3)
+    parser.add_argument("--min-modeled-blocking-claims", type=int, default=3)
+    parser.add_argument("--min-proved-blocking-claims", type=int, default=3)
     args = parser.parse_args(argv)
 
     if sum(bool(getattr(args, field_name)) for field_name in INPUT_FIELDS) > 1:
-        parser.error('choose only one input: --example, --model, or --source-path')
+        parser.error("choose only one input: --example, --model, or --source-path")
     if args.fuzz_rounds < 0:
-        parser.error('--fuzz-rounds must be non-negative')
+        parser.error("--fuzz-rounds must be non-negative")
     if args.fuzz_exhaustive_max_mutators < 0:
-        parser.error('--fuzz-exhaustive-max-mutators must be non-negative')
+        parser.error("--fuzz-exhaustive-max-mutators must be non-negative")
     if args.fuzz_max_scenarios < 0:
-        parser.error('--fuzz-max-scenarios must be non-negative')
+        parser.error("--fuzz-max-scenarios must be non-negative")
 
     z3_version = _z3_version()
     if z3_version is None:
-        print('error: z3-solver is required for the assurance baseline', file=sys.stderr)
+        print("error: z3-solver is required for the assurance baseline", file=sys.stderr)
         return 2
 
     out_dir = Path(args.out_dir)
@@ -257,16 +283,16 @@ def main(argv: list[str] | None = None) -> int:
     proof_path = out_dir / args.proof_report_name
     disproof_path = out_dir / args.disproof_report_name
     summary_path = out_dir / args.summary_name
-    counterexamples_dir = out_dir / 'counterexamples'
+    counterexamples_dir = out_dir / "counterexamples"
 
     proof_rc = prove_all_main(_proof_args(args, proof_path, counterexamples_dir))
     if proof_rc != 0:
-        print(f'error: proof baseline failed with exit code {proof_rc}', file=sys.stderr)
+        print(f"error: proof baseline failed with exit code {proof_rc}", file=sys.stderr)
         return proof_rc
 
     disproof_rc = disproof_main(_disproof_args(args, disproof_path))
     if disproof_rc != 0:
-        print(f'error: disproof baseline failed with exit code {disproof_rc}', file=sys.stderr)
+        print(f"error: disproof baseline failed with exit code {disproof_rc}", file=sys.stderr)
         return disproof_rc
 
     proof_payload = _load_json(proof_path)
@@ -281,13 +307,13 @@ def main(argv: list[str] | None = None) -> int:
             proof_payload=proof_payload,
             disproof_payload=disproof_payload,
         ),
-        encoding='utf-8',
+        encoding="utf-8",
     )
-    print(f'wrote proof report: {proof_path}')
-    print(f'wrote disproof report: {disproof_path}')
-    print(f'wrote assurance summary: {summary_path}')
+    print(f"wrote proof report: {proof_path}")
+    print(f"wrote disproof report: {disproof_path}")
+    print(f"wrote assurance summary: {summary_path}")
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main(sys.argv[1:]))

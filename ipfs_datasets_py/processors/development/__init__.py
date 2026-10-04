@@ -9,6 +9,7 @@ Reusable by:
 - CLI commands
 - Direct Python imports
 """
+
 from .codebase_search_engine import (
     SearchMatch,
     FileSearchResult,

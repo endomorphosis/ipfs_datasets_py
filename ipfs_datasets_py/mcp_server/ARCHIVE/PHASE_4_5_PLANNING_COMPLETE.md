@@ -72,12 +72,8 @@ class TestRunner:
 from ipfs_datasets_py.testing import TestRunner
 from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 
-@tool_metadata(
-    runtime="fastapi",
-    category="development",
-    priority=7,
-    timeout_seconds=300.0
-)
+
+@tool_metadata(runtime="fastapi", category="development", priority=7, timeout_seconds=300.0)
 async def run_tests(test_path: str, coverage: bool = True) -> dict:
     """Run test suite - thin MCP wrapper."""
     runner = TestRunner()

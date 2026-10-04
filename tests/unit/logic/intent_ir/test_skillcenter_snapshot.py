@@ -39,16 +39,13 @@ def test_snapshot_is_immutable_deterministic_and_records_pilot_revision() -> Non
     first = _snapshot()
     second = SkillCenterSnapshot.from_dict(first.to_dict())
 
-    assert INSPECTED_SKILLCENTER_PILOT_REVISION == (
-        "f9dd4fec3c86d85ebf116c7408ac5ce602c418a1"
-    )
+    assert INSPECTED_SKILLCENTER_PILOT_REVISION == ("f9dd4fec3c86d85ebf116c7408ac5ce602c418a1")
     assert first == second
     assert SkillCenterSnapshot.from_json(first.to_json()) == first
     assert first.snapshot_id == second.snapshot_id
     assert first.content_cid.startswith("b")
     assert first.logical_source.endswith(
-        "@f9dd4fec3c86d85ebf116c7408ac5ce602c418a1/"
-        "pilot/security.sqlite"
+        "@f9dd4fec3c86d85ebf116c7408ac5ce602c418a1/pilot/security.sqlite"
     )
     artifact = first.to_artifact()
     assert artifact.content_sha256 == first.expected_sha256
@@ -61,9 +58,7 @@ def test_snapshot_rejects_cid_that_does_not_match_declared_hash() -> None:
     other_digest = hashlib.sha256(b"other bundle").hexdigest()
     other_cid = _snapshot(expected_sha256=other_digest).content_cid
 
-    with pytest.raises(
-        SkillCenterSnapshotValidationError, match="CID for expected_sha256"
-    ):
+    with pytest.raises(SkillCenterSnapshotValidationError, match="CID for expected_sha256"):
         _snapshot(content_cid=other_cid)
 
 
@@ -84,9 +79,7 @@ def test_snapshot_decoder_rejects_non_string_text_fields(field: str) -> None:
     manifest = _snapshot().to_dict()
     manifest[field] = 123
 
-    with pytest.raises(
-        SkillCenterSnapshotValidationError, match=rf"{field} must be a string"
-    ):
+    with pytest.raises(SkillCenterSnapshotValidationError, match=rf"{field} must be a string"):
         SkillCenterSnapshot.from_dict(manifest)
 
 
@@ -113,9 +106,7 @@ def test_snapshot_rejects_mutable_revisions(revision: str) -> None:
         ("dataset_id", "../other/dataset"),
     ),
 )
-def test_snapshot_rejects_path_traversal_and_partial_targets(
-    field: str, value: str
-) -> None:
+def test_snapshot_rejects_path_traversal_and_partial_targets(field: str, value: str) -> None:
     with pytest.raises(SkillCenterSnapshotValidationError):
         _snapshot(**{field: value})
 
@@ -126,9 +117,7 @@ def test_injected_offline_fetcher_uses_atomic_verified_promotion(
     snapshot = _snapshot()
     calls: list[Path] = []
 
-    def offline_fetcher(
-        requested: SkillCenterSnapshot, destination: Path
-    ) -> None:
+    def offline_fetcher(requested: SkillCenterSnapshot, destination: Path) -> None:
         assert requested is snapshot
         assert destination != tmp_path / snapshot.cache_path
         assert destination.name.endswith(".partial")
@@ -175,9 +164,7 @@ def test_huggingface_fetcher_stages_symlinked_cache_bytes(
     "payload",
     (_BUNDLE[:-1], _BUNDLE[:-1] + b"x"),
 )
-def test_fetch_rejects_partial_or_hash_mismatched_bytes(
-    tmp_path: Path, payload: bytes
-) -> None:
+def test_fetch_rejects_partial_or_hash_mismatched_bytes(tmp_path: Path, payload: bytes) -> None:
     snapshot = _snapshot()
     cache = SkillCenterSnapshotCache(
         tmp_path, fetcher=lambda _snapshot, destination: destination.write_bytes(payload)
@@ -193,9 +180,7 @@ def test_fetch_rejects_partial_or_hash_mismatched_bytes(
 
 def test_cache_hit_is_rehashed_and_tampering_is_rejected(tmp_path: Path) -> None:
     snapshot = _snapshot()
-    cache = SkillCenterSnapshotCache(
-        tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE
-    )
+    cache = SkillCenterSnapshotCache(tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE)
     path = cache.materialize(snapshot)
     path.write_bytes(b"x" * len(_BUNDLE))
 
@@ -205,9 +190,7 @@ def test_cache_hit_is_rehashed_and_tampering_is_rejected(tmp_path: Path) -> None
 
 def test_stale_alias_is_rejected_instead_of_retargeted(tmp_path: Path) -> None:
     snapshot = _snapshot()
-    cache = SkillCenterSnapshotCache(
-        tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE
-    )
+    cache = SkillCenterSnapshotCache(tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE)
     cache.materialize(snapshot)
     stale = replace(
         snapshot,
@@ -223,9 +206,7 @@ def test_stale_alias_is_rejected_instead_of_retargeted(tmp_path: Path) -> None:
 
 def test_alias_with_traversal_is_rejected(tmp_path: Path) -> None:
     snapshot = _snapshot()
-    cache = SkillCenterSnapshotCache(
-        tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE
-    )
+    cache = SkillCenterSnapshotCache(tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE)
     cache.materialize(snapshot)
     alias_path = cache.alias_path(snapshot)
     alias = json.loads(alias_path.read_text(encoding="utf-8"))
@@ -238,9 +219,7 @@ def test_alias_with_traversal_is_rejected(tmp_path: Path) -> None:
 
 def test_dangling_alias_symlink_is_rejected(tmp_path: Path) -> None:
     snapshot = _snapshot()
-    cache = SkillCenterSnapshotCache(
-        tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE
-    )
+    cache = SkillCenterSnapshotCache(tmp_path, fetcher=lambda _snapshot, _destination: _BUNDLE)
     cache.alias_path(snapshot).symlink_to(tmp_path / "missing-alias.json")
 
     with pytest.raises(SkillCenterStaleCacheAliasError, match="regular file"):

@@ -94,9 +94,7 @@ from benchmarks.logic_pipeline.capabilities import (
 BASELINE_MANIFEST_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.frozen-baseline-manifest.v1"
 )
-BASELINE_EXECUTION_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.baseline-execution.v1"
-)
+BASELINE_EXECUTION_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.baseline-execution.v1"
 BASELINE_CODEC_OUTPUT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.current-codec-output.v1"
 )
@@ -104,12 +102,8 @@ BASELINE_ID: Final = "a0-current-effective-v1"
 BASELINE_RUN_ID: Final = "a0-baseline-v1"
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
 FROZEN_BASELINE_ROOT: Final = DEFAULT_BENCHMARK_ROOT / BASELINE_RUN_ID
-DEFAULT_BASELINE_MANIFEST_PATH: Final = (
-    FROZEN_BASELINE_ROOT / "state" / "baseline-manifest.json"
-)
-CURRENT_ROUTE: Final = (
-    "ipfs_datasets_py.logic.modal.codec.DeterministicModalLogicCodec.encode",
-)
+DEFAULT_BASELINE_MANIFEST_PATH: Final = FROZEN_BASELINE_ROOT / "state" / "baseline-manifest.json"
+CURRENT_ROUTE: Final = ("ipfs_datasets_py.logic.modal.codec.DeterministicModalLogicCodec.encode",)
 CURRENT_ROUTE_COMPONENTS: Final = (
     "deterministic_modal_compiler",
     "spacy_linguistic_encoder",
@@ -177,9 +171,7 @@ def _decode_json(text: str, context: str) -> object:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise BaselineValidationError(f"{field} must be a JSON object")
     return value
 
@@ -190,15 +182,12 @@ def _array(value: object, field: str) -> Sequence[object]:
     return value
 
 
-def _exact_keys(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact_keys(value: Mapping[str, object], expected: set[str], field: str) -> None:
     missing = expected - set(value)
     unknown = set(value) - expected
     if missing or unknown:
         raise BaselineValidationError(
-            f"{field} fields invalid: missing={sorted(missing)}, "
-            f"unknown={sorted(unknown)}"
+            f"{field} fields invalid: missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 
@@ -212,9 +201,7 @@ def _sha256_json(value: object) -> str:
 
 def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {key: _freeze(value[key]) for key in sorted(value)}
-        )
+        return MappingProxyType({key: _freeze(value[key]) for key in sorted(value)})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze(item) for item in value)
     return value
@@ -251,9 +238,7 @@ class FrozenBaselineManifest:
     def pilot_case_ids(self) -> tuple[str, ...]:
         corpus = _mapping(self.payload["corpus"], "corpus")
         cases = _array(corpus["cases"], "corpus.cases")
-        return tuple(
-            str(_mapping(item, "corpus.cases[]")["case_id"]) for item in cases
-        )
+        return tuple(str(_mapping(item, "corpus.cases[]")["case_id"]) for item in cases)
 
     def to_dict(self) -> dict[str, object]:
         value = _thaw(self.payload)
@@ -282,9 +267,7 @@ def _validate_source_snapshot(source: Mapping[str, object]) -> None:
             or Path(path).is_absolute()
             or ".." in Path(path).parts
         ):
-            raise BaselineValidationError(
-                "source.submodules must use unique sorted relative paths"
-            )
+            raise BaselineValidationError("source.submodules must use unique sorted relative paths")
         if not isinstance(commit, str) or not _HEX_REVISION.fullmatch(commit):
             raise BaselineValidationError("submodule commit is not a full revision")
         frozen_submodules.append((path, commit))
@@ -305,9 +288,7 @@ def _validate_source_snapshot(source: Mapping[str, object]) -> None:
         try:
             actual = _sha256_bytes(local_path.read_bytes())
         except OSError as exc:
-            raise BaselineValidationError(
-                f"cannot read pinned source file {path}: {exc}"
-            ) from exc
+            raise BaselineValidationError(f"cannot read pinned source file {path}: {exc}") from exc
         if actual != digest:
             raise BaselineValidationError(f"pinned source file drifted: {path}")
     if tuple(paths) != SOURCE_SNAPSHOT_FILES:
@@ -329,9 +310,7 @@ def _validate_source_snapshot(source: Mapping[str, object]) -> None:
             text=True,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        raise BaselineValidationError(
-            f"cannot verify pinned Git identities: {exc}"
-        ) from exc
+        raise BaselineValidationError(f"cannot verify pinned Git identities: {exc}") from exc
     if commit_check.returncode:
         raise BaselineValidationError(
             "source.repository_commit is not available in this repository"
@@ -379,26 +358,20 @@ def _validate_corpus_snapshot(corpus_value: Mapping[str, object]) -> None:
     if corpus_value["split_sha256"] != FROZEN_SPLIT_SHA256[Split.PILOT]:
         raise BaselineValidationError("pilot split is not revision 1")
 
-    actual_cases = tuple(
-        case for case in unsealed_cases if case.split is Split.PILOT
-    )
+    actual_cases = tuple(case for case in unsealed_cases if case.split is Split.PILOT)
     frozen_cases = _array(corpus_value["cases"], "corpus.cases")
     expected = [
         {
             "case_id": case.case_id,
             "case_sha256": next(
-                entry.case_sha256
-                for entry in manifest.cases
-                if entry.case_id == case.case_id
+                entry.case_sha256 for entry in manifest.cases if entry.case_id == case.case_id
             ),
             "source_sha256": case.source_sha256,
         }
         for case in actual_cases
     ]
     if list(frozen_cases) != expected:
-        raise BaselineValidationError(
-            "pilot case membership, order, or content identity drifted"
-        )
+        raise BaselineValidationError("pilot case membership, order, or content identity drifted")
 
 
 def _validate_configuration(configuration: Mapping[str, object]) -> None:
@@ -431,9 +404,10 @@ def _validate_configuration(configuration: Mapping[str, object]) -> None:
         raise BaselineValidationError("A0 entrypoint is not the frozen current route")
     if tuple(_array(route["components"], "route.components")) != CURRENT_ROUTE_COMPONENTS:
         raise BaselineValidationError("A0 component allowlist drifted")
-    if tuple(
-        _array(route["components_not_invoked"], "route.components_not_invoked")
-    ) != OUT_OF_ROUTE_COMPONENTS:
+    if (
+        tuple(_array(route["components_not_invoked"], "route.components_not_invoked"))
+        != OUT_OF_ROUTE_COMPONENTS
+    ):
         raise BaselineValidationError("A0 out-of-route component list drifted")
     if set(route["components"]) & set(route["components_not_invoked"]):  # type: ignore[arg-type]
         raise BaselineValidationError("a component is both enabled and forbidden")
@@ -474,9 +448,7 @@ def _validate_configuration(configuration: Mapping[str, object]) -> None:
         or effective["spacy_used_fallback_model"] is not True
         or effective["llm_call_count"] != 0
     ):
-        raise BaselineValidationError(
-            "effective A0 spaCy identity or fallback observation drifted"
-        )
+        raise BaselineValidationError("effective A0 spaCy identity or fallback observation drifted")
     identity = {
         "requested": dict(requested),
         "effective": dict(effective),
@@ -579,8 +551,7 @@ def validate_baseline_manifest_payload(value: object) -> None:
         "capability_snapshot",
     )
     capability_body = {
-        key: capability[key]
-        for key in ("requested", "effective", "status", "provenance")
+        key: capability[key] for key in ("requested", "effective", "status", "provenance")
     }
     if capability["sha256"] != _sha256_json(capability_body):
         raise BaselineValidationError("capability snapshot digest is invalid")
@@ -607,11 +578,8 @@ def validate_baseline_manifest_payload(value: object) -> None:
     if (
         telemetry["schema"] != TELEMETRY_SCHEMA
         or telemetry["per_stage"] is not True
-        or tuple(_array(telemetry["required_fields"], "required_fields"))
-        != TELEMETRY_FIELDS
-        or tuple(
-            _array(telemetry["spacy_identity_fields"], "spacy_identity_fields")
-        )
+        or tuple(_array(telemetry["required_fields"], "required_fields")) != TELEMETRY_FIELDS
+        or tuple(_array(telemetry["spacy_identity_fields"], "spacy_identity_fields"))
         != (
             "spacy_requested_model",
             "spacy_effective_model",
@@ -678,18 +646,14 @@ def load_baseline_manifest(
             f"cannot read baseline manifest {manifest_path}: {exc}"
         ) from exc
     if not text.endswith("\n") or not text.strip():
-        raise BaselineValidationError(
-            "baseline manifest must be nonempty and newline-terminated"
-        )
+        raise BaselineValidationError("baseline manifest must be nonempty and newline-terminated")
     value = _decode_json(text, "baseline manifest")
     manifest = FrozenBaselineManifest(_mapping(value, "baseline manifest"))
     expected_bytes = (canonical_json(manifest.to_dict()) + "\n").encode("utf-8")
     if raw != expected_bytes:
         raise BaselineValidationError("baseline manifest is not canonical JSON")
     if manifest.digest != FROZEN_BASELINE_MANIFEST_SHA256:
-        raise BaselineValidationError(
-            "baseline manifest digest does not match the code pin"
-        )
+        raise BaselineValidationError("baseline manifest digest does not match the code pin")
     return manifest
 
 
@@ -856,15 +820,11 @@ def execute_baseline(
         or any(mode not in {CacheMode.COLD, CacheMode.WARM} for mode in selected_modes)
     ):
         raise BaselineValidationError("cache_modes must be unique cold/warm values")
-    contracts = {
-        contract.cache_mode: contract for contract in manifest.run_contracts
-    }
+    contracts = {contract.cache_mode: contract for contract in manifest.run_contracts}
     cases = _cases_for_manifest(manifest)
     codec = codec_factory()
     configuration = _mapping(manifest.payload["configuration"], "configuration")
-    effective = _mapping(
-        configuration["effective"], "configuration.effective"
-    )
+    effective = _mapping(configuration["effective"], "configuration.effective")
     adapter = CompilerAdapter(
         _current_codec_handler(codec, effective),
         adapter_id="a0-current-modal-codec",
@@ -901,26 +861,20 @@ def execute_baseline(
         raise BaselineValidationError("baseline result cardinality is incomplete")
 
     destination = (
-        Path(output_root)
-        if output_root is not None
-        else REPOSITORY_ROOT / FROZEN_BASELINE_ROOT
+        Path(output_root) if output_root is not None else REPOSITORY_ROOT / FROZEN_BASELINE_ROOT
     )
     result_path = destination / "results" / "case-results.jsonl"
     summary_path = destination / "results" / "summary.json"
-    encoded_results = "".join(
-        canonical_json(result.to_dict()) + "\n" for result in results
-    ).encode("utf-8")
+    encoded_results = "".join(canonical_json(result.to_dict()) + "\n" for result in results).encode(
+        "utf-8"
+    )
     outcome_counts: dict[str, int] = {}
     fallback_observations: set[bool] = set()
     for result in results:
-        outcome_counts[result.status.value] = (
-            outcome_counts.get(result.status.value, 0) + 1
-        )
+        outcome_counts[result.status.value] = outcome_counts.get(result.status.value, 0) + 1
         stage_data = result.stages[0].data
         if isinstance(stage_data, Mapping) and "spacy_used_fallback_model" in stage_data:
-            fallback_observations.add(
-                bool(stage_data["spacy_used_fallback_model"])
-            )
+            fallback_observations.add(bool(stage_data["spacy_used_fallback_model"]))
     summary = {
         "schema": BASELINE_EXECUTION_SCHEMA,
         "benchmark_id": BENCHMARK_ID,
@@ -941,9 +895,7 @@ def execute_baseline(
     }
     _write_exclusive(result_path, encoded_results)
     try:
-        _write_exclusive(
-            summary_path, (canonical_json(summary) + "\n").encode("utf-8")
-        )
+        _write_exclusive(summary_path, (canonical_json(summary) + "\n").encode("utf-8"))
     except Exception:
         # Preserve the case records rather than deleting evidence after a
         # partial durable write; an operator can diagnose and choose a new
@@ -999,25 +951,17 @@ class CacheModePair:
             value = getattr(self, name)
             if (
                 not isinstance(value, str)
-                or not re.fullmatch(
-                    r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", value
-                )
+                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", value)
                 or value in {".", ".."}
             ):
-                raise CacheIsolationError(
-                    f"{name} must be a safe benchmark identifier"
-                )
+                raise CacheIsolationError(f"{name} must be a safe benchmark identifier")
         for name in ("cold_result_sha256", "warm_result_sha256"):
             value = getattr(self, name)
             if not isinstance(value, str) or not _SHA256.fullmatch(value):
-                raise CacheIsolationError(
-                    f"{name} must be a lowercase SHA-256 digest"
-                )
+                raise CacheIsolationError(f"{name} must be a lowercase SHA-256 digest")
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            name: getattr(self, name) for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> "CacheModePair":
@@ -1025,9 +969,7 @@ class CacheModePair:
             raise CacheIsolationError("cache-mode pair must be an object")
         expected = set(cls.__dataclass_fields__)
         if set(value) != expected:
-            raise CacheIsolationError(
-                "cache-mode pair fields are missing or unknown"
-            )
+            raise CacheIsolationError("cache-mode pair fields are missing or unknown")
         try:
             return cls(**value)  # type: ignore[arg-type]
         except TypeError as exc:
@@ -1048,24 +990,18 @@ class CacheIsolationReport:
 
     def __post_init__(self) -> None:
         if self.schema != CACHE_ISOLATION_REPORT_SCHEMA:
-            raise CacheIsolationError(
-                "unsupported cache-isolation report schema"
-            )
+            raise CacheIsolationError("unsupported cache-isolation report schema")
         for name in ("plan_sha256", "environment_sha256"):
             value = getattr(self, name)
             if not isinstance(value, str) or not _SHA256.fullmatch(value):
-                raise CacheIsolationError(
-                    f"{name} must be a lowercase SHA-256 digest"
-                )
+                raise CacheIsolationError(f"{name} must be a lowercase SHA-256 digest")
         namespaces = tuple(self.cache_namespaces)
         if (
             not namespaces
             or any(not isinstance(item, str) or not item for item in namespaces)
             or len(namespaces) != len(set(namespaces))
         ):
-            raise CacheIsolationError(
-                "cache namespaces must be nonempty and unique"
-            )
+            raise CacheIsolationError("cache namespaces must be nonempty and unique")
         object.__setattr__(self, "cache_namespaces", namespaces)
         order = tuple(self.execution_order)
         if (
@@ -1073,9 +1009,7 @@ class CacheIsolationReport:
             or any(not isinstance(item, str) or not item for item in order)
             or len(order) != len(set(order))
         ):
-            raise CacheIsolationError(
-                "execution order must contain distinct recorded jobs"
-            )
+            raise CacheIsolationError("execution order must contain distinct recorded jobs")
         object.__setattr__(self, "execution_order", order)
         frozen_counts: dict[str, tuple[int, ...]] = {}
         for variant, counts in sorted(self.position_counts.items()):
@@ -1085,30 +1019,20 @@ class CacheIsolationReport:
                 or not isinstance(counts, (list, tuple))
                 or not counts
                 or any(
-                    isinstance(item, bool)
-                    or not isinstance(item, int)
-                    or item < 0
+                    isinstance(item, bool) or not isinstance(item, int) or item < 0
                     for item in counts
                 )
                 or max(counts) - min(counts) > 1
             ):
-                raise CacheIsolationError(
-                    "position counts must prove counterbalanced arm order"
-                )
+                raise CacheIsolationError("position counts must prove counterbalanced arm order")
             frozen_counts[variant] = tuple(counts)
-        object.__setattr__(
-            self, "position_counts", MappingProxyType(frozen_counts)
-        )
+        object.__setattr__(self, "position_counts", MappingProxyType(frozen_counts))
         pairs = tuple(self.pairs)
         if not pairs or any(not isinstance(item, CacheModePair) for item in pairs):
-            raise CacheIsolationError(
-                "cache report must contain cold/warm pairs"
-            )
+            raise CacheIsolationError("cache report must contain cold/warm pairs")
         identities = {(item.case_id, item.variant_id) for item in pairs}
         if len(identities) != len(pairs):
-            raise CacheIsolationError(
-                "cache report must not contain duplicate cold/warm pairs"
-            )
+            raise CacheIsolationError("cache report must not contain duplicate cold/warm pairs")
         object.__setattr__(self, "pairs", pairs)
 
     def to_dict(self) -> dict[str, object]:
@@ -1118,24 +1042,17 @@ class CacheIsolationReport:
             "environment_sha256": self.environment_sha256,
             "cache_namespaces": list(self.cache_namespaces),
             "execution_order": list(self.execution_order),
-            "position_counts": {
-                key: list(value)
-                for key, value in self.position_counts.items()
-            },
+            "position_counts": {key: list(value) for key, value in self.position_counts.items()},
             "pairs": [item.to_dict() for item in self.pairs],
         }
 
     @classmethod
     def from_dict(cls, value: object) -> "CacheIsolationReport":
         if not isinstance(value, Mapping):
-            raise CacheIsolationError(
-                "cache-isolation report must be an object"
-            )
+            raise CacheIsolationError("cache-isolation report must be an object")
         expected = set(cls.__dataclass_fields__)
         if set(value) != expected:
-            raise CacheIsolationError(
-                "cache-isolation report fields are missing or unknown"
-            )
+            raise CacheIsolationError("cache-isolation report fields are missing or unknown")
         namespaces = value["cache_namespaces"]
         order = value["execution_order"]
         counts = value["position_counts"]
@@ -1146,9 +1063,7 @@ class CacheIsolationReport:
             or not isinstance(counts, Mapping)
             or not isinstance(pairs, (list, tuple))
         ):
-            raise CacheIsolationError(
-                "cache-isolation report collections are invalid"
-            )
+            raise CacheIsolationError("cache-isolation report collections are invalid")
         try:
             return cls(
                 schema=value["schema"],  # type: ignore[arg-type]
@@ -1160,15 +1075,11 @@ class CacheIsolationReport:
                 pairs=tuple(CacheModePair.from_dict(item) for item in pairs),
             )
         except TypeError as exc:
-            raise CacheIsolationError(
-                "invalid cache-isolation report"
-            ) from exc
+            raise CacheIsolationError("invalid cache-isolation report") from exc
 
     @property
     def digest(self) -> str:
-        return hashlib.sha256(
-            canonical_json(self.to_dict()).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
 
 
 _OPERATIONAL_CACHE_IDENTITY_KEYS: Final = frozenset(
@@ -1206,9 +1117,7 @@ def _effective_backend_identity(
     """
 
     return {
-        key: value
-        for key, value in identity.items()
-        if key not in _OPERATIONAL_CACHE_IDENTITY_KEYS
+        key: value for key, value in identity.items() if key not in _OPERATIONAL_CACHE_IDENTITY_KEYS
     }
 
 
@@ -1223,21 +1132,13 @@ def validate_cache_isolation(
     """
 
     if not isinstance(execution, AblationRunResult) or not execution.complete:
-        raise CacheIsolationError(
-            "execution must be a complete AblationRunResult"
-        )
+        raise CacheIsolationError("execution must be a complete AblationRunResult")
     plan = execution.plan
     if plan.environment_sha256 is None:
-        raise CacheIsolationError(
-            "cache comparison requires a pinned environment identity"
-        )
+        raise CacheIsolationError("cache comparison requires a pinned environment identity")
     if set(plan.cache_modes) != {CacheMode.COLD, CacheMode.WARM}:
-        raise CacheIsolationError(
-            "cache comparison requires separate cold and warm modes"
-        )
-    namespaces = tuple(
-        contract.cache_namespace for contract in execution.contracts
-    )
+        raise CacheIsolationError("cache comparison requires separate cold and warm modes")
+    namespaces = tuple(contract.cache_namespace for contract in execution.contracts)
     if len(namespaces) != len(set(namespaces)):
         raise CacheIsolationError("cache namespaces collide")
     expected_namespaces = {
@@ -1252,22 +1153,17 @@ def validate_cache_isolation(
         for mode in plan.cache_modes
     }
     if set(namespaces) != expected_namespaces:
-        raise CacheIsolationError(
-            "cache namespaces do not bind the complete execution identity"
-        )
+        raise CacheIsolationError("cache namespaces do not bind the complete execution identity")
 
     jobs_by_identity = {
-        (job.case.case_id, job.variant_id, job.cache_mode): job
-        for job in plan.jobs
+        (job.case.case_id, job.variant_id, job.cache_mode): job for job in plan.jobs
     }
     results_by_identity = {
         (result.case_id, result.variant_id, result.cache_mode): result
         for result in execution.results
     }
     if set(jobs_by_identity) != set(results_by_identity):
-        raise CacheIsolationError(
-            "cache results do not match the recorded schedule"
-        )
+        raise CacheIsolationError("cache results do not match the recorded schedule")
     pairs: list[CacheModePair] = []
     for case_id in plan.case_ids:
         for variant in plan.variant_ids:
@@ -1276,30 +1172,20 @@ def validate_cache_isolation(
             if (
                 cold.receipt is None
                 or warm.receipt is None
-                or cold.receipt.environment_sha256
-                != plan.environment_sha256
-                or warm.receipt.environment_sha256
-                != plan.environment_sha256
+                or cold.receipt.environment_sha256 != plan.environment_sha256
+                or warm.receipt.environment_sha256 != plan.environment_sha256
             ):
-                raise CacheIsolationError(
-                    "result environment drifted from the pinned plan"
-                )
+                raise CacheIsolationError("result environment drifted from the pinned plan")
             cold_route = tuple(stage.stage for stage in cold.stages)
             warm_route = tuple(stage.stage for stage in warm.stages)
             if cold_route != warm_route:
-                raise CacheIsolationError(
-                    "cold and warm results executed different routes"
-                )
+                raise CacheIsolationError("cold and warm results executed different routes")
             for cold_stage, warm_stage in zip(cold.stages, warm.stages):
                 if (
                     cold_stage.provenance.requested_identity
                     != warm_stage.provenance.requested_identity
-                    or _effective_backend_identity(
-                        cold_stage.provenance.effective_identity
-                    )
-                    != _effective_backend_identity(
-                        warm_stage.provenance.effective_identity
-                    )
+                    or _effective_backend_identity(cold_stage.provenance.effective_identity)
+                    != _effective_backend_identity(warm_stage.provenance.effective_identity)
                 ):
                     raise CacheIsolationError(
                         "backend, model, or solver identity drifted across modes"
@@ -1313,20 +1199,12 @@ def validate_cache_isolation(
                 )
             )
 
-    position_counts = {
-        variant: [0 for _ in plan.variant_ids]
-        for variant in plan.variant_ids
-    }
+    position_counts = {variant: [0 for _ in plan.variant_ids] for variant in plan.variant_ids}
     for block in plan.blocks:
         for position, job in enumerate(block):
             position_counts[job.variant_id][position] += 1
-    if any(
-        max(counts) - min(counts) > 1
-        for counts in position_counts.values()
-    ):
-        raise CacheIsolationError(
-            "recorded execution order is not counterbalanced"
-        )
+    if any(max(counts) - min(counts) > 1 for counts in position_counts.values()):
+        raise CacheIsolationError("recorded execution order is not counterbalanced")
     return CacheIsolationReport(
         schema=CACHE_ISOLATION_REPORT_SCHEMA,
         plan_sha256=plan.digest,
@@ -1363,13 +1241,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.variant != BASELINE_VARIANT:
-            raise BaselineValidationError(
-                "this frozen runner accepts only baseline variant A0"
-            )
+            raise BaselineValidationError("this frozen runner accepts only baseline variant A0")
         if args.split != Split.PILOT.value:
-            raise BaselineValidationError(
-                "this frozen baseline contains only the pilot split"
-            )
+            raise BaselineValidationError("this frozen baseline contains only the pilot split")
         manifest = load_baseline_manifest(args.manifest)
         if args.validate_only:
             print(
@@ -1378,8 +1252,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "baseline_id": BASELINE_ID,
                         "baseline_manifest_sha256": manifest.digest,
                         "cache_modes": [
-                            contract.cache_mode.value
-                            for contract in manifest.run_contracts
+                            contract.cache_mode.value for contract in manifest.run_contracts
                         ],
                         "case_count": len(manifest.pilot_case_ids),
                         "status": "valid",

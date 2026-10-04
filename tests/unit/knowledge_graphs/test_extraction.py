@@ -20,7 +20,7 @@ from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
 
 class TestEntity:
     """Test Entity class."""
-    
+
     def test_entity_creation_with_defaults(self):
         """
         GIVEN basic entity attributes
@@ -28,11 +28,8 @@ class TestEntity:
         THEN entity is created with correct default values
         """
         # WHEN
-        entity = Entity(
-            entity_type="person",
-            name="John Doe"
-        )
-        
+        entity = Entity(entity_type="person", name="John Doe")
+
         # THEN
         assert entity.entity_type == "person"
         assert entity.name == "John Doe"
@@ -40,7 +37,7 @@ class TestEntity:
         assert entity.properties == {}
         assert entity.confidence == 1.0
         assert entity.source_text is None
-    
+
     def test_entity_creation_with_all_fields(self):
         """
         GIVEN complete entity attributes
@@ -54,7 +51,7 @@ class TestEntity:
         properties = {"founded": "1976", "location": "Cupertino"}
         confidence = 0.95
         source_text = "Apple Inc. was founded in 1976"
-        
+
         # WHEN
         entity = Entity(
             entity_id=entity_id,
@@ -62,9 +59,9 @@ class TestEntity:
             name=name,
             properties=properties,
             confidence=confidence,
-            source_text=source_text
+            source_text=source_text,
         )
-        
+
         # THEN
         assert entity.entity_id == entity_id
         assert entity.entity_type == entity_type
@@ -72,7 +69,7 @@ class TestEntity:
         assert entity.properties == properties
         assert entity.confidence == confidence
         assert entity.source_text == source_text
-    
+
     def test_entity_to_dict(self, sample_entity):
         """
         GIVEN an Entity instance
@@ -81,7 +78,7 @@ class TestEntity:
         """
         # WHEN
         entity_dict = sample_entity.to_dict()
-        
+
         # THEN
         assert isinstance(entity_dict, dict)
         assert entity_dict["entity_id"] == sample_entity.entity_id
@@ -89,7 +86,7 @@ class TestEntity:
         assert entity_dict["name"] == sample_entity.name
         assert entity_dict["properties"] == sample_entity.properties
         assert entity_dict["confidence"] == sample_entity.confidence
-    
+
     def test_entity_from_dict(self):
         """
         GIVEN a dictionary representation of an entity
@@ -103,12 +100,12 @@ class TestEntity:
             "name": "Alice",
             "properties": {"age": "30"},
             "confidence": 0.9,
-            "source_text": "Alice is 30 years old"
+            "source_text": "Alice is 30 years old",
         }
-        
+
         # WHEN
         entity = Entity.from_dict(entity_data)
-        
+
         # THEN
         assert entity.entity_id == entity_data["entity_id"]
         assert entity.entity_type == entity_data["entity_type"]
@@ -116,7 +113,7 @@ class TestEntity:
         assert entity.properties == entity_data["properties"]
         assert entity.confidence == entity_data["confidence"]
         assert entity.source_text == entity_data["source_text"]
-    
+
     def test_entity_round_trip_serialization(self, sample_entity):
         """
         GIVEN an Entity instance
@@ -126,7 +123,7 @@ class TestEntity:
         # WHEN
         entity_dict = sample_entity.to_dict()
         restored_entity = Entity.from_dict(entity_dict)
-        
+
         # THEN
         assert restored_entity.entity_id == sample_entity.entity_id
         assert restored_entity.entity_type == sample_entity.entity_type
@@ -137,7 +134,7 @@ class TestEntity:
 
 class TestRelationship:
     """Test Relationship class."""
-    
+
     def test_relationship_creation(self, sample_entities):
         """
         GIVEN source and target entities
@@ -150,23 +147,23 @@ class TestRelationship:
         rel_type = "FOUNDED_BY"
         properties = {"year": "1976"}
         confidence = 0.9
-        
+
         # WHEN
         relationship = Relationship(
             source_entity=source,
             target_entity=target,
             relationship_type=rel_type,
             properties=properties,
-            confidence=confidence
+            confidence=confidence,
         )
-        
+
         # THEN
         assert relationship.source_entity == source
         assert relationship.target_entity == target
         assert relationship.relationship_type == rel_type
         assert relationship.properties == properties
         assert relationship.confidence == confidence
-    
+
     def test_relationship_with_defaults(self, sample_entities):
         """
         GIVEN source and target entities only
@@ -176,19 +173,17 @@ class TestRelationship:
         # GIVEN
         source = sample_entities[0]
         target = sample_entities[1]
-        
+
         # WHEN
         relationship = Relationship(
-            source_entity=source,
-            target_entity=target,
-            relationship_type="RELATED_TO"
+            source_entity=source, target_entity=target, relationship_type="RELATED_TO"
         )
-        
+
         # THEN
         assert relationship.properties == {}
         assert relationship.confidence == 1.0
         assert relationship.source_text is None
-    
+
     def test_relationship_to_dict(self, sample_relationship):
         """
         GIVEN a Relationship instance
@@ -197,14 +192,14 @@ class TestRelationship:
         """
         # WHEN
         rel_dict = sample_relationship.to_dict()
-        
+
         # THEN
         assert isinstance(rel_dict, dict)
         assert "source" in rel_dict  # API uses "source" not "source_entity"
         assert "target" in rel_dict  # API uses "target" not "target_entity"
         assert rel_dict["relationship_type"] == sample_relationship.relationship_type
         assert rel_dict["confidence"] == sample_relationship.confidence
-    
+
     def test_relationship_from_dict(self):
         """
         GIVEN a dictionary representation of a relationship
@@ -218,23 +213,23 @@ class TestRelationship:
                 "entity_type": "person",
                 "name": "John",
                 "properties": {},
-                "confidence": 1.0
+                "confidence": 1.0,
             },
             "target": {  # API uses "target" not "target_entity"
                 "entity_id": "e2",
                 "entity_type": "organization",
                 "name": "Microsoft",
                 "properties": {},
-                "confidence": 1.0
+                "confidence": 1.0,
             },
             "relationship_type": "WORKS_AT",
             "properties": {"since": "2020"},
-            "confidence": 0.85
+            "confidence": 0.85,
         }
-        
+
         # WHEN
         relationship = Relationship.from_dict(rel_data)
-        
+
         # THEN
         assert relationship.source_entity.name == "John"
         assert relationship.target_entity.name == "Microsoft"
@@ -245,7 +240,7 @@ class TestRelationship:
 
 class TestKnowledgeGraph:
     """Test KnowledgeGraph class."""
-    
+
     def test_knowledge_graph_creation(self):
         """
         GIVEN nothing
@@ -254,12 +249,12 @@ class TestKnowledgeGraph:
         """
         # WHEN
         kg = KnowledgeGraph()
-        
+
         # THEN
         assert kg.entities == {}
         assert kg.relationships == {}  # Dict not List
-        assert hasattr(kg, 'name')  # Has a name attribute
-    
+        assert hasattr(kg, "name")  # Has a name attribute
+
     def test_add_entity(self, empty_knowledge_graph, sample_entity):
         """
         GIVEN a KnowledgeGraph and entity
@@ -269,15 +264,15 @@ class TestKnowledgeGraph:
         # GIVEN
         kg = empty_knowledge_graph
         entity = sample_entity
-        
+
         # WHEN
         kg.add_entity(entity)
-        
+
         # THEN
         assert entity.entity_id in kg.entities
         assert kg.entities[entity.entity_id] == entity
         assert len(kg.entities) == 1
-    
+
     def test_add_multiple_entities(self, empty_knowledge_graph, sample_entities):
         """
         GIVEN a KnowledgeGraph and multiple entities
@@ -286,16 +281,16 @@ class TestKnowledgeGraph:
         """
         # GIVEN
         kg = empty_knowledge_graph
-        
+
         # WHEN
         for entity in sample_entities:
             kg.add_entity(entity)
-        
+
         # THEN
         assert len(kg.entities) == len(sample_entities)
         for entity in sample_entities:
             assert entity.entity_id in kg.entities
-    
+
     def test_add_duplicate_entity(self, empty_knowledge_graph, sample_entity):
         """
         GIVEN a KnowledgeGraph with existing entity
@@ -305,13 +300,13 @@ class TestKnowledgeGraph:
         # GIVEN
         kg = empty_knowledge_graph
         kg.add_entity(sample_entity)
-        
+
         # WHEN
         kg.add_entity(sample_entity)
-        
+
         # THEN
         assert len(kg.entities) == 1
-    
+
     def test_add_relationship(self, empty_knowledge_graph, sample_entities, sample_relationship):
         """
         GIVEN a KnowledgeGraph
@@ -322,15 +317,15 @@ class TestKnowledgeGraph:
         kg = empty_knowledge_graph
         for entity in sample_entities:
             kg.add_entity(entity)
-        
+
         # WHEN
         kg.add_relationship(sample_relationship)
-        
+
         # THEN
         assert len(kg.relationships) == 1
         # Check relationship is in dict
         assert sample_relationship.relationship_id in kg.relationships
-    
+
     def test_get_entity(self, populated_knowledge_graph, sample_entities):
         """
         GIVEN a populated KnowledgeGraph
@@ -340,13 +335,13 @@ class TestKnowledgeGraph:
         # GIVEN
         kg = populated_knowledge_graph
         entity = sample_entities[0]
-        
+
         # WHEN
         retrieved = kg.get_entity_by_id(entity.entity_id)  # Actual method name
-        
+
         # THEN
         assert retrieved == entity
-    
+
     def test_get_nonexistent_entity(self, empty_knowledge_graph):
         """
         GIVEN an empty KnowledgeGraph
@@ -355,10 +350,10 @@ class TestKnowledgeGraph:
         """
         # WHEN
         result = empty_knowledge_graph.get_entity_by_id("nonexistent_id")  # Actual method name
-        
+
         # THEN
         assert result is None
-    
+
     def test_get_entities_by_type(self, populated_knowledge_graph):
         """
         GIVEN a populated KnowledgeGraph
@@ -367,17 +362,17 @@ class TestKnowledgeGraph:
         """
         # GIVEN
         kg = populated_knowledge_graph
-        
+
         # WHEN
         persons = kg.get_entities_by_type("person")
         orgs = kg.get_entities_by_type("organization")
-        
+
         # THEN
         assert len(persons) >= 1
         assert len(orgs) >= 1
         assert all(e.entity_type == "person" for e in persons)
         assert all(e.entity_type == "organization" for e in orgs)
-    
+
     def test_get_relationships_for_entity(self, populated_knowledge_graph, sample_entities):
         """
         GIVEN a KnowledgeGraph with relationships
@@ -387,17 +382,21 @@ class TestKnowledgeGraph:
         # GIVEN
         kg = populated_knowledge_graph
         entity = sample_entities[0]
-        
+
         # WHEN
-        relationships = kg.get_relationships_by_entity(entity)  # Actual method name, takes Entity not ID
-        
+        relationships = kg.get_relationships_by_entity(
+            entity
+        )  # Actual method name, takes Entity not ID
+
         # THEN
         assert isinstance(relationships, list)
         # Check that all relationships involve this entity
         for rel in relationships:
-            assert (rel.source_entity.entity_id == entity.entity_id or
-                    rel.target_entity.entity_id == entity.entity_id)
-    
+            assert (
+                rel.source_entity.entity_id == entity.entity_id
+                or rel.target_entity.entity_id == entity.entity_id
+            )
+
     def test_to_dict(self, populated_knowledge_graph):
         """
         GIVEN a populated KnowledgeGraph
@@ -406,10 +405,10 @@ class TestKnowledgeGraph:
         """
         # GIVEN
         kg = populated_knowledge_graph
-        
+
         # WHEN
         kg_dict = kg.to_dict()
-        
+
         # THEN
         assert isinstance(kg_dict, dict)
         assert "entities" in kg_dict
@@ -417,7 +416,7 @@ class TestKnowledgeGraph:
         assert "name" in kg_dict  # Has name field
         assert isinstance(kg_dict["entities"], list)
         assert isinstance(kg_dict["relationships"], list)
-    
+
     def test_from_dict(self, populated_knowledge_graph):
         """
         GIVEN a dictionary representation of a knowledge graph
@@ -426,14 +425,14 @@ class TestKnowledgeGraph:
         """
         # GIVEN
         kg_dict = populated_knowledge_graph.to_dict()
-        
+
         # WHEN
         kg = KnowledgeGraph.from_dict(kg_dict)
-        
+
         # THEN
         assert len(kg.entities) == len(populated_knowledge_graph.entities)
         assert len(kg.relationships) == len(populated_knowledge_graph.relationships)
-    
+
     def test_round_trip_serialization(self, populated_knowledge_graph):
         """
         GIVEN a KnowledgeGraph
@@ -442,15 +441,15 @@ class TestKnowledgeGraph:
         """
         # GIVEN
         original_kg = populated_knowledge_graph
-        
+
         # WHEN
         kg_dict = original_kg.to_dict()
         restored_kg = KnowledgeGraph.from_dict(kg_dict)
-        
+
         # THEN
         assert len(restored_kg.entities) == len(original_kg.entities)
         assert len(restored_kg.relationships) == len(original_kg.relationships)
-    
+
     def test_json_serialization(self, populated_knowledge_graph):
         """
         GIVEN a KnowledgeGraph
@@ -459,13 +458,13 @@ class TestKnowledgeGraph:
         """
         # GIVEN
         kg = populated_knowledge_graph
-        
+
         # WHEN
         kg_dict = kg.to_dict()
         json_str = json.dumps(kg_dict)
         loaded_dict = json.loads(json_str)
         restored_kg = KnowledgeGraph.from_dict(loaded_dict)
-        
+
         # THEN
         assert len(restored_kg.entities) == len(kg.entities)
         assert len(restored_kg.relationships) == len(kg.relationships)
@@ -473,7 +472,7 @@ class TestKnowledgeGraph:
 
 class TestKnowledgeGraphExtractor:
     """Test KnowledgeGraphExtractor class."""
-    
+
     def test_extractor_initialization(self):
         """
         GIVEN nothing
@@ -482,11 +481,11 @@ class TestKnowledgeGraphExtractor:
         """
         # WHEN
         extractor = KnowledgeGraphExtractor()
-        
+
         # THEN
         assert extractor is not None
-        assert hasattr(extractor, 'extract_knowledge_graph')  # Actual method name
-    
+        assert hasattr(extractor, "extract_knowledge_graph")  # Actual method name
+
     def test_extract_with_simple_text(self, basic_extractor, simple_text):
         """
         GIVEN simple text
@@ -495,10 +494,10 @@ class TestKnowledgeGraphExtractor:
         """
         # WHEN
         kg = basic_extractor.extract_knowledge_graph(simple_text)  # Actual method name
-        
+
         # THEN
         assert isinstance(kg, KnowledgeGraph)
-    
+
     def test_extract_empty_text(self, basic_extractor):
         """
         GIVEN empty text
@@ -507,15 +506,15 @@ class TestKnowledgeGraphExtractor:
         """
         # GIVEN
         empty_text = ""
-        
+
         # WHEN
         kg = basic_extractor.extract_knowledge_graph(empty_text)  # Actual method name
-        
+
         # THEN
         assert isinstance(kg, KnowledgeGraph)
         assert len(kg.entities) == 0
         assert len(kg.relationships) == 0
-    
+
     def test_extract_none_text(self, basic_extractor):
         """
         GIVEN None as text
@@ -530,7 +529,7 @@ class TestKnowledgeGraphExtractor:
         except (TypeError, AttributeError):
             # Expected if None is not handled
             pass
-    
+
     def test_extract_returns_valid_structure(self, basic_extractor, sample_text):
         """
         GIVEN sample text
@@ -539,21 +538,21 @@ class TestKnowledgeGraphExtractor:
         """
         # WHEN
         kg = basic_extractor.extract_knowledge_graph(sample_text)  # Actual method name
-        
+
         # THEN
         assert isinstance(kg, KnowledgeGraph)
         assert isinstance(kg.entities, dict)
         assert isinstance(kg.relationships, dict)  # Dict not list
         # All entities should have required attributes
         for entity_id, entity in kg.entities.items():
-            assert hasattr(entity, 'entity_id')
-            assert hasattr(entity, 'entity_type')
-            assert hasattr(entity, 'name')
+            assert hasattr(entity, "entity_id")
+            assert hasattr(entity, "entity_type")
+            assert hasattr(entity, "name")
 
 
 class TestKnowledgeGraphExtractorWithValidation:
     """Test KnowledgeGraphExtractorWithValidation class."""
-    
+
     def test_validation_extractor_creation(self):
         """
         GIVEN nothing
@@ -562,12 +561,12 @@ class TestKnowledgeGraphExtractorWithValidation:
         """
         # WHEN
         extractor = KnowledgeGraphExtractorWithValidation()
-        
+
         # THEN
         assert extractor is not None
         # Validation extractor has its own interface
-        assert hasattr(extractor, 'extract_knowledge_graph')
-    
+        assert hasattr(extractor, "extract_knowledge_graph")
+
     def test_extract_with_validation(self, validation_extractor, simple_text):
         """
         GIVEN simple text
@@ -576,7 +575,7 @@ class TestKnowledgeGraphExtractorWithValidation:
         """
         # WHEN
         kg = validation_extractor.extract_knowledge_graph(simple_text)  # Actual method name
-        
+
         # THEN
         assert isinstance(kg, KnowledgeGraph)
         # Entities should pass basic validation
@@ -588,7 +587,7 @@ class TestKnowledgeGraphExtractorWithValidation:
 # Integration tests
 class TestKnowledgeGraphIntegration:
     """Integration tests for full extraction pipeline."""
-    
+
     @pytest.mark.integration
     def test_full_extraction_pipeline(self, sample_text):
         """
@@ -598,23 +597,23 @@ class TestKnowledgeGraphIntegration:
         """
         # GIVEN
         extractor = KnowledgeGraphExtractor()
-        
+
         # WHEN
         kg = extractor.extract_knowledge_graph(sample_text)  # Actual method name
-        
+
         # THEN
         # Should have some entities (exact number depends on NLP)
         assert isinstance(kg, KnowledgeGraph)
-        
+
         # Should be serializable
         kg_dict = kg.to_dict()
         assert "entities" in kg_dict
         assert "relationships" in kg_dict
-        
+
         # Should be restorable
         restored_kg = KnowledgeGraph.from_dict(kg_dict)
         assert isinstance(restored_kg, KnowledgeGraph)
-    
+
     @pytest.mark.integration
     def test_entity_relationship_integrity(self, sample_text):
         """
@@ -625,7 +624,7 @@ class TestKnowledgeGraphIntegration:
         # GIVEN
         extractor = KnowledgeGraphExtractor()
         kg = extractor.extract_knowledge_graph(sample_text)  # Actual method name
-        
+
         # WHEN/THEN
         for rel_id, rel in kg.relationships.items():  # Dict not list
             # Source and target entities should exist in graph
@@ -640,7 +639,7 @@ class TestKnowledgeGraphIntegration:
 # Additional tests for helper functions and edge cases
 class TestKnowledgeGraphHelperFunctions:
     """Test helper functions in knowledge_graph_extraction module."""
-    
+
     def test_entity_properties_update(self, sample_entity):
         """
         GIVEN an entity with properties
@@ -650,16 +649,16 @@ class TestKnowledgeGraphHelperFunctions:
         # GIVEN
         entity = sample_entity
         initial_props = entity.properties.copy() if entity.properties else {}
-        
+
         # WHEN
         if entity.properties is None:
             entity.properties = {}
         entity.properties["new_key"] = "new_value"
-        
+
         # THEN
         assert "new_key" in entity.properties
         assert entity.properties["new_key"] == "new_value"
-    
+
     def test_relationship_confidence_bounds(self):
         """
         GIVEN relationship with various confidence values
@@ -667,17 +666,13 @@ class TestKnowledgeGraphHelperFunctions:
         THEN confidence is stored correctly
         """
         # Test low confidence
-        rel_low = Relationship.create(Entity(name="A"), Entity(name="B"), "test",
-            confidence=0.1
-        )
+        rel_low = Relationship.create(Entity(name="A"), Entity(name="B"), "test", confidence=0.1)
         assert rel_low.confidence == 0.1
-        
+
         # Test high confidence
-        rel_high = Relationship.create(Entity(name="C"), Entity(name="D"), "test",
-            confidence=0.99
-        )
+        rel_high = Relationship.create(Entity(name="C"), Entity(name="D"), "test", confidence=0.99)
         assert rel_high.confidence == 0.99
-    
+
     def test_knowledge_graph_empty_operations(self, empty_knowledge_graph):
         """
         GIVEN an empty knowledge graph
@@ -686,15 +681,15 @@ class TestKnowledgeGraphHelperFunctions:
         """
         # GIVEN
         kg = empty_knowledge_graph
-        
+
         # WHEN/THEN - Should not raise errors
         assert len(kg.entities) == 0
         assert len(kg.relationships) == 0
-        
+
         # Try to get non-existent entity
         result = kg.get_entity_by_id("nonexistent")
         assert result is None
-    
+
     def test_knowledge_graph_add_multiple_entities(self, empty_knowledge_graph):
         """
         GIVEN an empty knowledge graph
@@ -703,15 +698,15 @@ class TestKnowledgeGraphHelperFunctions:
         """
         # GIVEN
         kg = empty_knowledge_graph
-        
+
         # WHEN
         for i in range(5):
             entity = Entity(name=f"Entity{i}", entity_type="test")
             kg.add_entity(entity)
-        
+
         # THEN
         assert len(kg.entities) == 5
-    
+
     def test_entity_serialization_with_none_values(self):
         """
         GIVEN entity with None values
@@ -719,21 +714,16 @@ class TestKnowledgeGraphHelperFunctions:
         THEN handles None correctly
         """
         # GIVEN
-        entity = Entity(
-            name="Test",
-            entity_type="test",
-            source_text=None,
-            properties=None
-        )
-        
+        entity = Entity(name="Test", entity_type="test", source_text=None, properties=None)
+
         # WHEN
         entity_dict = entity.to_dict()
-        
+
         # THEN
         assert "source_text" not in entity_dict
         # properties should be empty dict or None
         assert entity_dict.get("properties") is None or entity_dict.get("properties") == {}
-    
+
     def test_relationship_serialization_with_properties(self):
         """
         GIVEN relationship with properties
@@ -741,13 +731,13 @@ class TestKnowledgeGraphHelperFunctions:
         THEN properties are included
         """
         # GIVEN
-        rel = Relationship.create(Entity(name="A"), Entity(name="B"), "test",
-            properties={"key1": "value1", "key2": 123}
+        rel = Relationship.create(
+            Entity(name="A"), Entity(name="B"), "test", properties={"key1": "value1", "key2": 123}
         )
-        
+
         # WHEN
         rel_dict = rel.to_dict()
-        
+
         # THEN
         assert "properties" in rel_dict
         assert rel_dict["properties"]["key1"] == "value1"
@@ -756,7 +746,7 @@ class TestKnowledgeGraphHelperFunctions:
 
 class TestKnowledgeGraphEdgeCases:
     """Test edge cases and error handling."""
-    
+
     def test_entity_with_empty_name(self):
         """
         GIVEN entity with empty name
@@ -765,11 +755,11 @@ class TestKnowledgeGraphEdgeCases:
         """
         # GIVEN/WHEN
         entity = Entity(name="", entity_type="test")
-        
+
         # THEN
         assert entity.name == ""
         assert entity.entity_type == "test"
-    
+
     def test_knowledge_graph_to_dict_comprehensive(self, populated_knowledge_graph):
         """
         GIVEN a populated knowledge graph
@@ -778,17 +768,17 @@ class TestKnowledgeGraphEdgeCases:
         """
         # GIVEN
         kg = populated_knowledge_graph
-        
+
         # WHEN
         kg_dict = kg.to_dict()
-        
+
         # THEN
         assert "name" in kg_dict
         assert "entities" in kg_dict
         assert "relationships" in kg_dict
         assert isinstance(kg_dict["entities"], list)
         assert isinstance(kg_dict["relationships"], list)
-    
+
     def test_extractor_with_empty_text(self, basic_extractor):
         """
         GIVEN empty text
@@ -797,14 +787,14 @@ class TestKnowledgeGraphEdgeCases:
         """
         # GIVEN
         text = ""
-        
+
         # WHEN
         kg = basic_extractor.extract_knowledge_graph(text)
-        
+
         # THEN
         assert kg is not None
         assert isinstance(kg, KnowledgeGraph)
-    
+
     def test_extractor_with_whitespace_only(self, basic_extractor):
         """
         GIVEN text with only whitespace
@@ -813,14 +803,14 @@ class TestKnowledgeGraphEdgeCases:
         """
         # GIVEN
         text = "   \n\t   "
-        
+
         # WHEN
         kg = basic_extractor.extract_knowledge_graph(text)
-        
+
         # THEN
         assert kg is not None
         assert isinstance(kg, KnowledgeGraph)
-    
+
     def test_knowledge_graph_merge_entities(self, empty_knowledge_graph):
         """
         GIVEN two sets of entities
@@ -829,14 +819,14 @@ class TestKnowledgeGraphEdgeCases:
         """
         # GIVEN
         kg = empty_knowledge_graph
-        
+
         # WHEN
         kg.add_entity(Entity(name="Entity1", entity_type="type1"))
         kg.add_entity(Entity(name="Entity2", entity_type="type2"))
-        
+
         # THEN
         assert len(kg.entities) == 2
-    
+
     def test_relationship_with_same_source_target(self):
         """
         GIVEN relationship where source equals target
@@ -845,10 +835,10 @@ class TestKnowledgeGraphEdgeCases:
         """
         # GIVEN
         entity = Entity(name="SelfRef", entity_type="test")
-        
+
         # WHEN
         rel = Relationship.create(entity, entity, "self_reference")
-        
+
         # THEN
         assert rel.source_entity == rel.target_entity
         assert rel.source_entity == entity

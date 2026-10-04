@@ -9,6 +9,7 @@ Run with::
 
     pytest benchmarks/bench_tool_loading.py -v
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,6 +24,7 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def fresh_manager() -> HierarchicalToolManager:
@@ -45,6 +47,7 @@ def warm_manager() -> HierarchicalToolManager:
 # ---------------------------------------------------------------------------
 # Benchmarks
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.benchmark(group="tool_loading")
 def test_discover_categories(benchmark, fresh_manager):

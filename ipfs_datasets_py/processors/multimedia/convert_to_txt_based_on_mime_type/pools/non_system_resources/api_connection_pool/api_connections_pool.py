@@ -1,9 +1,9 @@
-
 """
 Implementing pooling of connections to APIs
-    This pooling supports both API connections 
+    This pooling supports both API connections
     and Models loaded in from the Transformers library.
 """
+
 from __future__ import annotations
 
 import queue
@@ -23,17 +23,22 @@ ERROR_NO_CEXT = "MySQL Connector/Python C Extension not available"
 
 _CONNECTION_POOLS: Dict[str, ApiConnectionPool] = {}
 
+
 class Error(Exception):
     pass
+
 
 class InterfaceError(Exception):
     pass
 
+
 class PoolError(Exception):
     pass
 
+
 class NotSupportedError(Exception):
     pass
+
 
 class ProgrammingError(Exception):
     pass
@@ -52,14 +57,13 @@ from logger.logger import Logger
 CNX_POOL_ARGS = None
 DEFAULT_CONFIGURATION = None
 
+
 def _get_pooled_connection(**kwargs: Any) -> PooledApiConnection:
     """
     Return a pooled API connection.
     """
     # If no pool name specified, generate one
-    pool_name = (
-        kwargs["pool_name"] if "pool_name" in kwargs else generate_pool_name(**kwargs)
-    )
+    pool_name = kwargs["pool_name"] if "pool_name" in kwargs else generate_pool_name(**kwargs)
 
     # Setup the pool, ensuring only 1 thread can update at a time
     with API_CONNECTION_POOL_LOCK:
@@ -76,18 +80,14 @@ def _get_pooled_connection(**kwargs: Any) -> PooledApiConnection:
     try:
         return _CONNECTION_POOLS[pool_name].get_connection()
     except AttributeError:
-        raise InterfaceError(
-            f"Failed getting connection from pool '{pool_name}'"
-        ) from None
+        raise InterfaceError(f"Failed getting connection from pool '{pool_name}'") from None
 
 
 def read_option_files(**kwargs):
-    return {key: value for key, value in kwargs} 
+    return {key: value for key, value in kwargs}
 
 
-def connect(
-    *args: Any, **kwargs: Any
-) -> Union[PooledApiConnection, ApiConnection]:
+def connect(*args: Any, **kwargs: Any) -> Union[PooledApiConnection, ApiConnection]:
     """Requests an ApiConnection object.
 
     In its simplest form, `connect()` will request an API connection object
@@ -145,7 +145,6 @@ def connect(
     return ApiConnection(*args, **kwargs)
 
 
-
 def generate_pool_name(**kwargs: Any) -> str:
     """Generate a pool name
 
@@ -168,8 +167,6 @@ def generate_pool_name(**kwargs: Any) -> str:
         raise PoolError("Failed generating pool name; specify pool_name")
 
     return "_".join(parts)
-
-
 
 
 class ApiConnectionPool:
@@ -222,9 +219,7 @@ class ApiConnectionPool:
         self._set_pool_size(pool_size)
         self._set_pool_name(pool_name or generate_pool_name(**kwargs))
         self._cnx_config: Dict[str, Any] = {}
-        self._cnx_queue: queue.Queue[ApiConnection] = queue.Queue(
-            self._pool_size
-        )
+        self._cnx_queue: queue.Queue[ApiConnection] = queue.Queue(self._pool_size)
         self._config_version = uuid4()
 
     @property
@@ -272,7 +267,6 @@ class ApiConnectionPool:
             except AttributeError as err:
                 raise PoolError(f"Connection configuration not valid: {err}") from err
 
-
     def _set_pool_size(self, pool_size: int) -> None:
         """Set the size of the pool
 
@@ -283,11 +277,9 @@ class ApiConnectionPool:
         """
         if pool_size <= 0 or pool_size > CNX_POOL_MAXSIZE:
             raise AttributeError(
-                "Pool size should be higher than 0 and lower or equal to "
-                f"{CNX_POOL_MAXSIZE}"
+                f"Pool size should be higher than 0 and lower or equal to {CNX_POOL_MAXSIZE}"
             )
         self._pool_size = pool_size
-
 
     def _set_pool_name(self, pool_name: str) -> None:
         r"""Set the name of the pool.
@@ -305,7 +297,6 @@ class ApiConnectionPool:
 
         self._pool_name = pool_name
 
-
     def _queue_connection(self, cnx: ApiConnection) -> None:
         """Put connection back in the queue
 
@@ -316,15 +307,12 @@ class ApiConnectionPool:
         Raises `PoolError` on errors.
         """
         if not isinstance(cnx, ApiConnection):
-            raise PoolError(
-                "Connection instance not an ApiConnection instance"
-            )
+            raise PoolError("Connection instance not an ApiConnection instance")
 
         try:
             self._cnx_queue.put(cnx, block=False)
         except queue.Full as err:
             raise PoolError("Failed adding connection; queue is full") from err
-
 
     def add_connection(self, cnx: Optional[ApiConnection] = None) -> None:
         """Adds a connection to the pool.
@@ -336,8 +324,8 @@ class ApiConnectionPool:
         queue.
 
         Args:
-            cnx: The `ApiConnection`  object to be added to the pool. 
-                If this argument is None, the pool requests a new connection 
+            cnx: The `ApiConnection`  object to be added to the pool.
+                If this argument is None, the pool requests a new connection
                 from the External Resource Manager.
 
         Raises:
@@ -371,12 +359,9 @@ class ApiConnectionPool:
                 cnx.pool_config_version = self._config_version
             else:
                 if not isinstance(cnx, MYSQL_CNX_CLASS):
-                    raise PoolError(
-                        "Connection instance not subclass of ApiConnectionAbstract"
-                    )
+                    raise PoolError("Connection instance not subclass of ApiConnectionAbstract")
 
             self._queue_connection(cnx)
-
 
     def get_connection(self) -> PooledApiConnection:
         """Gets a connection from the pool.
@@ -399,10 +384,7 @@ class ApiConnectionPool:
             except queue.Empty as err:
                 raise PoolError("Failed getting connection; pool exhausted") from err
 
-            if (
-                not cnx.is_connected()
-                or self._config_version != cnx.pool_config_version
-            ):
+            if not cnx.is_connected() or self._config_version != cnx.pool_config_version:
                 cnx.config(**self._cnx_config)
                 try:
                     cnx.reconnect()
@@ -413,7 +395,6 @@ class ApiConnectionPool:
                 cnx.pool_config_version = self._config_version
 
             return PooledApiConnection(self, cnx)
-
 
     def _remove_connections(self) -> int:
         """Close all connections
@@ -444,11 +425,10 @@ class ApiConnectionPool:
             return cnt
 
 
-
 class PooledApiConnection:
     """
     NOTE: This is lifted directly from the `PooledApiConnection` class in
-    the `mysql.connector` package. Except for variable renames and docstrings, 
+    the `mysql.connector` package. Except for variable renames and docstrings,
     it is unchanged unless otherwise noted.
 
     Class holding an API Connection in a pool
@@ -484,11 +464,14 @@ class PooledApiConnection:
         self._cnx_pool: ApiConnectionPool = pool
         self._cnx: ApiConnection = cnx
 
-    def __enter__(self) -> 'PooledApiConnection':
+    def __enter__(self) -> "PooledApiConnection":
         return self
 
     def __exit__(
-        self, exc_type: Type[BaseException], exc_value: BaseException, traceback: TracebackType,
+        self,
+        exc_type: Type[BaseException],
+        exc_value: BaseException,
+        traceback: TracebackType,
     ) -> None:
         self.close()
 
@@ -496,7 +479,7 @@ class PooledApiConnection:
         """Do not close, but adds connection back to pool.
 
         For a pooled connection, close() does not actually close it but returns it
-            to the pool and makes it available for subsequent connection requests. 
+            to the pool and makes it available for subsequent connection requests.
             If the pool configuration parameters are changed, a returned connection is closed
             and reopened with the new configuration before being returned from the pool
             again in response to a connection request.
@@ -529,7 +512,3 @@ class PooledApiConnection:
     def pool_name(self) -> str:
         """Returns the name of the connection pool to which the connection belongs."""
         return self._cnx_pool.pool_name
-
-
-
-

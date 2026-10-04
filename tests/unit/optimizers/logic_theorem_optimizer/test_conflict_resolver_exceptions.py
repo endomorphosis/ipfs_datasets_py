@@ -26,7 +26,9 @@ def test_resolve_conflicts_handles_typed_value_error(monkeypatch) -> None:
     conflict = _sample_conflict()
 
     monkeypatch.setattr(resolver.detector, "detect_conflicts", lambda statements: [conflict])
-    monkeypatch.setattr(resolver, "_resolve_conflict", lambda c: (_ for _ in ()).throw(ValueError("bad resolution")))
+    monkeypatch.setattr(
+        resolver, "_resolve_conflict", lambda c: (_ for _ in ()).throw(ValueError("bad resolution"))
+    )
 
     result = resolver.resolve_conflicts(conflict.statements)
 
@@ -41,7 +43,9 @@ def test_resolve_conflicts_does_not_swallow_keyboard_interrupt(monkeypatch) -> N
     conflict = _sample_conflict()
 
     monkeypatch.setattr(resolver.detector, "detect_conflicts", lambda statements: [conflict])
-    monkeypatch.setattr(resolver, "_resolve_conflict", lambda c: (_ for _ in ()).throw(KeyboardInterrupt()))
+    monkeypatch.setattr(
+        resolver, "_resolve_conflict", lambda c: (_ for _ in ()).throw(KeyboardInterrupt())
+    )
 
     with pytest.raises(KeyboardInterrupt):
         resolver.resolve_conflicts(conflict.statements)

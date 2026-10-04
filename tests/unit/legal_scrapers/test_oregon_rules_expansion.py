@@ -6,12 +6,14 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import Ore
 
 
 @pytest.mark.anyio
-async def test_oregon_other_rules_entry_discovery_filters_terms(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_oregon_other_rules_entry_discovery_filters_terms(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     payload = (
         '{"value":['
         '{"Title":"Oregon Rules of Civil Procedure","EncodedAbsUrl":"https://example.org/orcp.aspx"},'
         '{"Title":"Random Rule","EncodedAbsUrl":"https://example.org/random.aspx"}'
-        ']}'
+        "]}"
     ).encode("utf-8")
 
     async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
@@ -23,10 +25,14 @@ async def test_oregon_other_rules_entry_discovery_filters_terms(monkeypatch: pyt
     scraper = OregonScraper("OR", "Oregon")
     rows = await scraper._discover_other_rules_entries(["civil procedure"])
 
-    assert rows == [{"title": "Oregon Rules of Civil Procedure", "url": "https://example.org/orcp.aspx"}]
+    assert rows == [
+        {"title": "Oregon Rules of Civil Procedure", "url": "https://example.org/orcp.aspx"}
+    ]
 
 
-def test_oregon_parse_criminal_chapter_selection_with_ranges(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_oregon_parse_criminal_chapter_selection_with_ranges(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("OREGON_CRIMINAL_PROCEDURE_CHAPTERS", "131-133, 136, 140-139")
     scraper = OregonScraper("OR", "Oregon")
 
@@ -34,7 +40,9 @@ def test_oregon_parse_criminal_chapter_selection_with_ranges(monkeypatch: pytest
 
 
 @pytest.mark.anyio
-async def test_oregon_scrape_code_dispatches_to_court_rule_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_oregon_scrape_code_dispatches_to_court_rule_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def _fake_local(self, code_name: str, code_url: str):
         return ["local"]
 
@@ -50,9 +58,16 @@ async def test_oregon_scrape_code_dispatches_to_court_rule_paths(monkeypatch: py
 
     scraper = OregonScraper("OR", "Oregon")
 
-    local_rows = await scraper.scrape_code("Oregon Local Court Rules", "https://www.courts.oregon.gov/rules/Pages/slr.aspx")
-    civil_rows = await scraper.scrape_code("Oregon Rules of Civil Procedure", "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx")
-    criminal_rows = await scraper.scrape_code("Oregon Rules of Criminal Procedure", "https://example.org")
+    local_rows = await scraper.scrape_code(
+        "Oregon Local Court Rules", "https://www.courts.oregon.gov/rules/Pages/slr.aspx"
+    )
+    civil_rows = await scraper.scrape_code(
+        "Oregon Rules of Civil Procedure",
+        "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx",
+    )
+    criminal_rows = await scraper.scrape_code(
+        "Oregon Rules of Criminal Procedure", "https://example.org"
+    )
 
     assert local_rows == ["local"]
     assert civil_rows == ["civil"]
@@ -69,8 +84,8 @@ def test_oregon_code_list_includes_procedural_and_local_rules() -> None:
 
 
 def test_extract_orcp_rules_from_html_parses_rule_headings() -> None:
-        scraper = OregonScraper("OR", "Oregon")
-        html = """
+    scraper = OregonScraper("OR", "Oregon")
+    html = """
         <html><body>
             <div>Rule 01 - Scope; Construction; Application; Rule; Citation</div>
             <div>Rule 12 - Pleadings; Motions; Defenses</div>
@@ -78,21 +93,21 @@ def test_extract_orcp_rules_from_html_parses_rule_headings() -> None:
         </body></html>
         """
 
-        rows = scraper._extract_orcp_rules_from_html(
-                html,
-                "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx",
-                "Oregon Rules of Civil Procedure",
-        )
+    rows = scraper._extract_orcp_rules_from_html(
+        html,
+        "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx",
+        "Oregon Rules of Civil Procedure",
+    )
 
-        assert len(rows) == 2
-        assert rows[0].official_cite == "ORCP 01"
-        assert "Scope" in str(rows[0].section_name)
-        assert rows[1].official_cite == "ORCP 12"
+    assert len(rows) == 2
+    assert rows[0].official_cite == "ORCP 01"
+    assert "Scope" in str(rows[0].section_name)
+    assert rows[1].official_cite == "ORCP 12"
 
 
 def test_extract_local_rule_documents_from_html_filters_county_links() -> None:
-        scraper = OregonScraper("OR", "Oregon")
-        html = """
+    scraper = OregonScraper("OR", "Oregon")
+    html = """
         <html><body>
             <a href="/courts/multnomah/go/Documents/SLR_2026.pdf">Supplementary Local Rules 2026</a>
             <a href="/courts/multnomah/go/Pages/rules.aspx">Rules page</a>
@@ -100,13 +115,13 @@ def test_extract_local_rule_documents_from_html_filters_county_links() -> None:
         </body></html>
         """
 
-        rows = scraper._extract_local_rule_documents_from_html(
-                county_name="Multnomah",
-                county_url="https://www.courts.oregon.gov/courts/multnomah/go/Pages/rules.aspx",
-                html=html,
-                code_name="Oregon Local Court Rules",
-        )
+    rows = scraper._extract_local_rule_documents_from_html(
+        county_name="Multnomah",
+        county_url="https://www.courts.oregon.gov/courts/multnomah/go/Pages/rules.aspx",
+        html=html,
+        code_name="Oregon Local Court Rules",
+    )
 
-        assert len(rows) == 2
-        assert all("Multnomah County" in str(row.official_cite) for row in rows)
-        assert any("SLR_2026" in str(row.source_url) for row in rows)
+    assert len(rows) == 2
+    assert all("Multnomah County" in str(row.official_cite) for row in rows)
+    assert any("SLR_2026" in str(row.source_url) for row in rows)

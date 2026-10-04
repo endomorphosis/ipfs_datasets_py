@@ -72,8 +72,7 @@ _DCEC_STATE_PREDICATE_BY_KIND = {
     "purpose": "Purpose",
 }
 _DCEC_STATE_PREDICATE_CANONICAL_BY_LOWER = {
-    predicate.lower(): predicate
-    for predicate in _DCEC_STATE_PREDICATE_BY_KIND.values()
+    predicate.lower(): predicate for predicate in _DCEC_STATE_PREDICATE_BY_KIND.values()
 }
 _DCEC_STATE_PREDICATE_SET = set(_DCEC_STATE_PREDICATE_BY_KIND.values())
 _CEC_GUIDANCE_ROUTE_TOKENS = {
@@ -175,19 +174,14 @@ class CecDcecBridgeAdapter:
                                 record.get("event_formula_target_quality_gate")
                             ),
                             "selected_frame": str(record.get("selected_frame") or ""),
-                            "selected_frame_source": str(
-                                record.get("selected_frame_source") or ""
-                            ),
+                            "selected_frame_source": str(record.get("selected_frame_source") or ""),
                             "compiler_guidance_source": str(
                                 record.get("compiler_guidance_source") or ""
                             ),
                             "modality": record["modality"],
                             "procedure_event_records": [
                                 dict(procedure_event)
-                                for procedure_event in record.get(
-                                    "procedure_event_records"
-                                )
-                                or []
+                                for procedure_event in record.get("procedure_event_records") or []
                             ],
                             "source_id": record["source_id"],
                         }
@@ -201,9 +195,7 @@ class CecDcecBridgeAdapter:
                         1 for record in records if str(record.get("selected_frame") or "")
                     ),
                     "syntax_valid_count": sum(
-                        1
-                        for record in records
-                        if record["event_formula_syntax_valid"]
+                        1 for record in records if record["event_formula_syntax_valid"]
                     ),
                 },
             ),
@@ -278,13 +270,10 @@ class CecDcecBridgeAdapter:
                         1 for record in records if str(record.get("selected_frame") or "")
                     ),
                     "compiler_guidance_applied": any(
-                        str(record.get("compiler_guidance_source") or "")
-                        for record in records
+                        str(record.get("compiler_guidance_source") or "") for record in records
                     ),
                     "event_formula_syntax_valid_count": sum(
-                        1
-                        for record in records
-                        if record["event_formula_syntax_valid"]
+                        1 for record in records if record["event_formula_syntax_valid"]
                     ),
                 },
             ),
@@ -323,20 +312,11 @@ class CecDcecBridgeAdapter:
         failure_ratio = max(0.0, (attempted - proof_gate.valid_count) / attempted)
         event_formula_invalid_ratio = max(
             0.0,
-            (
-                attempted
-                - sum(
-                    1
-                    for record in records
-                    if record.get("event_formula_syntax_valid")
-                )
-            )
+            (attempted - sum(1 for record in records if record.get("event_formula_syntax_valid")))
             / attempted,
         )
         no_formula_loss = 0.0 if records else 1.0
-        legal_ir_view_cross_entropy_loss = _cec_legal_ir_view_cross_entropy_loss(
-            ir_document
-        )
+        legal_ir_view_cross_entropy_loss = _cec_legal_ir_view_cross_entropy_loss(ir_document)
         compiler_ir_cross_entropy_loss = max(
             failure_ratio,
             event_formula_invalid_ratio,
@@ -355,11 +335,7 @@ class CecDcecBridgeAdapter:
         source_copy_reward_hack_penalty = _cec_source_copy_reward_hack_penalty(
             source_text=text,
             decoded_text=" ".join(
-                str(
-                    record.get("event_calculus_formula")
-                    or record.get("formula")
-                    or ""
-                )
+                str(record.get("event_calculus_formula") or record.get("formula") or "")
                 for record in records
             ),
         )
@@ -400,8 +376,7 @@ class CecDcecBridgeAdapter:
             status = "partial"
         guidance_signal = _cec_compiler_guidance_signal(compiler_guidance)
         compiler_guidance_applied = any(
-            str(record.get("compiler_guidance_source") or "")
-            for record in records
+            str(record.get("compiler_guidance_source") or "") for record in records
         )
         return BridgeEvaluationReport(
             adapter_name=self.name,
@@ -411,11 +386,7 @@ class CecDcecBridgeAdapter:
             proof_gate=proof_gate,
             graph_projection=graph_result,
             decoded_text=" ".join(
-                str(
-                    record.get("event_calculus_formula")
-                    or record.get("formula")
-                    or ""
-                )
+                str(record.get("event_calculus_formula") or record.get("formula") or "")
                 for record in records
             ),
             status=status,
@@ -580,8 +551,7 @@ def _dcec_records(
         if guided_records:
             event_formula_exports[guided_source_id] = list(guided_records)
     pending_event_formula_exports = {
-        source_id: list(records)
-        for source_id, records in event_formula_exports.items()
+        source_id: list(records) for source_id, records in event_formula_exports.items()
     }
     records: list[dict[str, Any]] = []
     for index, norm in enumerate(norms):
@@ -637,12 +607,8 @@ def _dcec_records(
             index=index,
         )
         if event_formula_export:
-            event_calculus_formula = str(
-                event_formula_export.get("event_calculus_formula") or ""
-            )
-            event_formula_source = str(
-                event_formula_export.get("event_formula_source") or ""
-            )
+            event_calculus_formula = str(event_formula_export.get("event_calculus_formula") or "")
+            event_formula_source = str(event_formula_export.get("event_formula_source") or "")
             event_formula_syntax_valid = bool(
                 event_formula_export.get("event_formula_syntax_valid")
             )
@@ -658,12 +624,10 @@ def _dcec_records(
             invalid_export_fallback = _event_formula_export_needs_bridge_fallback(
                 event_calculus_formula
             )
-            native_grounding_fallback = (
-                _event_formula_export_needs_native_grounding_fallback(
-                    event_calculus_formula,
-                    source_id=source_id,
-                    target_components=event_formula_target_components,
-                )
+            native_grounding_fallback = _event_formula_export_needs_native_grounding_fallback(
+                event_calculus_formula,
+                source_id=source_id,
+                target_components=event_formula_target_components,
             )
             if invalid_export_fallback or native_grounding_fallback:
                 event_calculus_formula = _event_calculus_formula_text(
@@ -689,15 +653,11 @@ def _dcec_records(
                 event_formula_target_quality_gate = {
                     "syntax_valid": bool(event_formula_syntax_valid),
                     "target_parse_profile_complete": bool(
-                        event_formula_target_parse_profile.get(
-                            "target_parse_profile_complete"
-                        )
+                        event_formula_target_parse_profile.get("target_parse_profile_complete")
                         is True
                     ),
                     "requires_validation": not bool(event_formula_syntax_valid),
-                    "cec_dcec_bridge_fallback_from_invalid_export": bool(
-                        invalid_export_fallback
-                    ),
+                    "cec_dcec_bridge_fallback_from_invalid_export": bool(invalid_export_fallback),
                     "cec_dcec_bridge_fallback_from_quantified_export": bool(
                         native_grounding_fallback
                     ),
@@ -708,9 +668,7 @@ def _dcec_records(
                 deontic_formula=proof_input,
             )
             event_formula_source = "cec_dcec_bridge_fallback"
-            event_formula_syntax_valid = _event_calculus_formula_shape_valid(
-                event_calculus_formula
-            )
+            event_formula_syntax_valid = _event_calculus_formula_shape_valid(event_calculus_formula)
             event_formula_target_parse_profile = _event_formula_parse_profile(
                 event_calculus_formula
             )
@@ -722,8 +680,7 @@ def _dcec_records(
             event_formula_target_quality_gate = {
                 "syntax_valid": bool(event_formula_syntax_valid),
                 "target_parse_profile_complete": bool(
-                    event_formula_target_parse_profile.get("target_parse_profile_complete")
-                    is True
+                    event_formula_target_parse_profile.get("target_parse_profile_complete") is True
                 ),
                 "requires_validation": not bool(event_formula_syntax_valid),
             }
@@ -744,9 +701,8 @@ def _dcec_records(
             selected_frame=selected_frame,
             selected_frame_source=selected_frame_source,
         )
-        if (
-            not compiler_guidance_source
-            and str(event_formula_source or "").startswith("compiler_guidance.")
+        if not compiler_guidance_source and str(event_formula_source or "").startswith(
+            "compiler_guidance."
         ):
             compiler_guidance_source = "repair_cec_dcec_bridge"
         event_formula_fingerprint = _stable_short_hash(event_calculus_formula)
@@ -805,9 +761,7 @@ def _procedure_event_records_from_norm(
     if not records:
         records.extend(_exported_procedure_event_records_from_norm(norm))
 
-    records.extend(
-        _slot_procedure_event_records_from_norm(norm, source_id=source_id)
-    )
+    records.extend(_slot_procedure_event_records_from_norm(norm, source_id=source_id))
 
     normalized: list[dict[str, Any]] = []
     seen: set[tuple[str, str, int, str]] = set()
@@ -832,9 +786,7 @@ def _procedure_event_records_from_norm(
             record.get("event_symbol"),
             fallback=_symbol(event, fallback="event"),
         )
-        identity = "|".join(
-            [source_id, str(event_order), event, relation, anchor_event]
-        )
+        identity = "|".join([source_id, str(event_order), event, relation, anchor_event])
         event_id = _first_text_value(
             record.get("event_id"),
             fallback=f"event:{_stable_short_hash(identity)}",
@@ -855,9 +807,7 @@ def _procedure_event_records_from_norm(
                 "event_id": event_id,
                 "event_order": event_order,
                 "event_symbol": event_symbol,
-                "is_formula_antecedent": bool(
-                    _boolish(record.get("is_formula_antecedent"))
-                ),
+                "is_formula_antecedent": bool(_boolish(record.get("is_formula_antecedent"))),
                 "is_terminal": bool(_boolish(record.get("is_terminal"))),
                 "is_trigger": bool(_boolish(record.get("is_trigger"))),
                 "proof_role": _first_text_value(
@@ -1036,9 +986,7 @@ def _augment_procedure_events_from_selected_frame(
     selected_frame_source: str,
     compiler_guidance_source: str,
 ) -> list[dict[str, Any]]:
-    normalized_records = [
-        dict(record) for record in records if isinstance(record, Mapping)
-    ]
+    normalized_records = [dict(record) for record in records if isinstance(record, Mapping)]
     if selected_frame != "administrative_notice_hearing":
         return normalized_records
 
@@ -1057,13 +1005,11 @@ def _augment_procedure_events_from_selected_frame(
             norm.get("text"),
             norm.get("action"),
             fallback="",
-        ).lower().split()
+        )
+        .lower()
+        .split()
     )
-    if (
-        "notice" not in corpus
-        and "hearing" not in corpus
-        and not compiler_guidance_source
-    ):
+    if "notice" not in corpus and "hearing" not in corpus and not compiler_guidance_source:
         return normalized_records
 
     frame_source = selected_frame_source or "selected_frame"
@@ -1128,7 +1074,12 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
             return normalized
         if normalized in {"def", "definition"}:
             return "definition"
-        if normalized in {"life", "lifecycle", "instrument_lifecycle_validity", "instrument_lifecycle_expiration"}:
+        if normalized in {
+            "life",
+            "lifecycle",
+            "instrument_lifecycle_validity",
+            "instrument_lifecycle_expiration",
+        }:
             return "instrument_lifecycle"
 
     corpus = " ".join(
@@ -1138,7 +1089,9 @@ def _dcec_state_kind(norm: Mapping[str, Any]) -> str:
             norm.get("text"),
             norm.get("action"),
             fallback="",
-        ).lower().split()
+        )
+        .lower()
+        .split()
     )
     if re.search(r"\b(?:the\s+term|terms?)\b.{0,80}\bmeans\b", corpus):
         return "definition"
@@ -1227,11 +1180,7 @@ def _cec_source_copy_reward_hack_penalty(
 
 
 def _metric_tokens(text: str) -> list[str]:
-    return [
-        token
-        for token in re.findall(r"[a-z0-9_]+", str(text or "").lower())
-        if len(token) > 2
-    ]
+    return [token for token in re.findall(r"[a-z0-9_]+", str(text or "").lower()) if len(token) > 2]
 
 
 def _cec_event_view_rows(records: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -1279,22 +1228,44 @@ def _dcec_frame_logic_triples(
     *,
     records: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, str]]:
-    triples = [
-        {"subject": document_id, "predicate": "type", "object": "legal_dcec_document"}
-    ]
+    triples = [{"subject": document_id, "predicate": "type", "object": "legal_dcec_document"}]
     for record in records:
         source_id = str(record.get("source_id") or "")
         if not source_id:
             continue
         triples.extend(
             [
-                {"subject": document_id, "predicate": "contains_event_formula", "object": source_id},
+                {
+                    "subject": document_id,
+                    "predicate": "contains_event_formula",
+                    "object": source_id,
+                },
                 {"subject": source_id, "predicate": "type", "object": "dcec_formula"},
-                {"subject": source_id, "predicate": "actor", "object": str(record.get("actor") or "")},
-                {"subject": source_id, "predicate": "event", "object": str(record.get("event") or "")},
-                {"subject": source_id, "predicate": "formula", "object": str(record.get("formula") or "")},
-                {"subject": source_id, "predicate": "modality", "object": str(record.get("modality") or "")},
-                {"subject": source_id, "predicate": "valid", "object": str(bool(record.get("valid"))).lower()},
+                {
+                    "subject": source_id,
+                    "predicate": "actor",
+                    "object": str(record.get("actor") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "event",
+                    "object": str(record.get("event") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "formula",
+                    "object": str(record.get("formula") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "modality",
+                    "object": str(record.get("modality") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "valid",
+                    "object": str(bool(record.get("valid"))).lower(),
+                },
                 {
                     "subject": source_id,
                     "predicate": "event_calculus_formula",
@@ -1303,9 +1274,7 @@ def _dcec_frame_logic_triples(
                 {
                     "subject": source_id,
                     "predicate": "event_formula_syntax_valid",
-                    "object": str(
-                        bool(record.get("event_formula_syntax_valid"))
-                    ).lower(),
+                    "object": str(bool(record.get("event_formula_syntax_valid"))).lower(),
                 },
                 {
                     "subject": source_id,
@@ -1523,9 +1492,7 @@ def _proof_input_formula_text(
 def _event_formula_exports_from_norms(
     norms: Sequence[Mapping[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
-    exports: dict[str, list[dict[str, Any]]] = (
-        _direct_event_formula_exports_from_norms(norms)
-    )
+    exports: dict[str, list[dict[str, Any]]] = _direct_event_formula_exports_from_norms(norms)
     if not norms:
         return exports
     try:
@@ -1562,9 +1529,7 @@ def _event_formula_exports_from_norms(
                     "event_formula_fingerprint": _stable_short_hash(exported_formula),
                     "event_formula_source": "deontic.prover_syntax",
                     "event_formula_syntax_valid": bool(record.get("syntax_valid") is True),
-                    "event_formula_target_components": _mapping(
-                        record.get("target_components")
-                    ),
+                    "event_formula_target_components": _mapping(record.get("target_components")),
                     "event_formula_target_parse_profile": _mapping(
                         record.get("target_parse_profile")
                     ),
@@ -1721,12 +1686,13 @@ def _compiler_guidance_row_supports_cec_materialization(
 ) -> bool:
     if not row:
         return False
-    target = str(
-        row.get("target_view")
-        or row.get("predicted_view")
-        or row.get("target_component")
-        or ""
-    ).strip().lower()
+    target = (
+        str(
+            row.get("target_view") or row.get("predicted_view") or row.get("target_component") or ""
+        )
+        .strip()
+        .lower()
+    )
     if target in {"cec.native", "cec_dcec", "deontic_cec"}:
         return True
     bridge_failure_name = str(row.get("bridge_failure_name") or "").strip().lower()
@@ -1760,22 +1726,21 @@ def _compiler_guidance_top_level_supports_cec_materialization(
         or guidance.get("semantic_bundle")
         or guidance.get("semantic_bundle_key")
     )
-    scope = str(
-        guidance.get("program_synthesis_scope")
-        or bundle.get("program_synthesis_scope")
-        or ""
-    ).strip().lower()
-    target = str(
-        guidance.get("target_component") or bundle.get("target_component") or ""
-    ).strip().lower()
+    scope = (
+        str(guidance.get("program_synthesis_scope") or bundle.get("program_synthesis_scope") or "")
+        .strip()
+        .lower()
+    )
+    target = (
+        str(guidance.get("target_component") or bundle.get("target_component") or "")
+        .strip()
+        .lower()
+    )
     return (
         scope == "cec"
         or target == "cec.native"
         or _cec_guidance_record_targets_cec(guidance)
-        or any(
-            metric.startswith("cec_dcec_")
-            for metric in _guidance_metric_names(guidance)
-        )
+        or any(metric.startswith("cec_dcec_") for metric in _guidance_metric_names(guidance))
     )
 
 
@@ -1818,9 +1783,7 @@ def _compiler_guidance_event_formula_candidates(
             candidates.append((collection_key, row, key))
 
     top_level_row = {
-        key: guidance.get(key)
-        for key in candidate_keys
-        if str(guidance.get(key) or "").strip()
+        key: guidance.get(key) for key in candidate_keys if str(guidance.get(key) or "").strip()
     }
     if top_level_row:
         for key in candidate_keys:
@@ -1847,8 +1810,7 @@ def _event_formula_export_from_guidance_row(
     if not (
         parse_profile.get("target_parse_profile_complete") is True
         or parse_profile.get("event_predicates")
-        or parse_profile.get("top_level_symbol")
-        in (_DCEC_STATE_PREDICATE_SET | {"O", "P", "F"})
+        or parse_profile.get("top_level_symbol") in (_DCEC_STATE_PREDICATE_SET | {"O", "P", "F"})
     ):
         return None
     syntax_valid = bool(
@@ -1866,16 +1828,13 @@ def _event_formula_export_from_guidance_row(
         ),
         "event_formula_syntax_valid": syntax_valid,
         "event_formula_target_components": _mapping(
-            row.get("event_formula_target_components")
-            or row.get("target_components")
+            row.get("event_formula_target_components") or row.get("target_components")
         ),
         "event_formula_target_parse_profile": _mapping(
-            row.get("event_formula_target_parse_profile")
-            or row.get("target_parse_profile")
+            row.get("event_formula_target_parse_profile") or row.get("target_parse_profile")
         ),
         "event_formula_target_quality_gate": _mapping(
-            row.get("event_formula_target_quality_gate")
-            or row.get("target_quality_gate")
+            row.get("event_formula_target_quality_gate") or row.get("target_quality_gate")
         ),
     }
 
@@ -1926,16 +1885,13 @@ def _direct_event_formula_export_from_norm(
         "event_formula_source": source,
         "event_formula_syntax_valid": syntax_valid,
         "event_formula_target_components": _mapping(
-            norm.get("event_formula_target_components")
-            or norm.get("target_components")
+            norm.get("event_formula_target_components") or norm.get("target_components")
         ),
         "event_formula_target_parse_profile": _mapping(
-            norm.get("event_formula_target_parse_profile")
-            or norm.get("target_parse_profile")
+            norm.get("event_formula_target_parse_profile") or norm.get("target_parse_profile")
         ),
         "event_formula_target_quality_gate": _mapping(
-            norm.get("event_formula_target_quality_gate")
-            or norm.get("target_quality_gate")
+            norm.get("event_formula_target_quality_gate") or norm.get("target_quality_gate")
         ),
     }
 
@@ -2006,10 +1962,7 @@ def _take_event_formula_export(
 
 def _event_calculus_formula_text(*, source_id: str, deontic_formula: str) -> str:
     source_symbol = _source_symbol(source_id)
-    return (
-        f"Happens(legal_norm({source_symbol}), t) => "
-        f"HoldsAt({deontic_formula}, t)"
-    )
+    return f"Happens(legal_norm({source_symbol}), t) => HoldsAt({deontic_formula}, t)"
 
 
 def _event_calculus_formula_shape_valid(formula: str) -> bool:
@@ -2030,8 +1983,7 @@ def _event_formula_export_needs_bridge_fallback(formula: str) -> bool:
         return parse_profile.get("event_predicate_slot_complete") is not True
     top_level_symbol = str(parse_profile.get("top_level_symbol") or "")
     return top_level_symbol not in (
-        _DCEC_STATE_PREDICATE_SET
-        | {"O", "P", "F", "always", "forall", "exists"}
+        _DCEC_STATE_PREDICATE_SET | {"O", "P", "F", "always", "forall", "exists"}
     )
 
 
@@ -2052,9 +2004,7 @@ def _event_formula_export_needs_native_grounding_fallback(
     if list(components.get("formula_missing_decoded_slots") or []):
         return False
     ungrounded_slots = {
-        str(slot)
-        for slot in components.get("formula_ungrounded_slots") or []
-        if str(slot)
+        str(slot) for slot in components.get("formula_ungrounded_slots") or [] if str(slot)
     }
     if ungrounded_slots - {"modality"}:
         return False
@@ -2095,9 +2045,7 @@ def _event_formula_parse_profile(formula: str) -> dict[str, Any]:
     ]
     event_predicates = _event_predicates(text)
     event_predicate_argument_counts = _event_predicate_argument_counts(text)
-    event_predicate_slot_complete = _event_predicate_slots_complete(
-        event_predicate_argument_counts
-    )
+    event_predicate_slot_complete = _event_predicate_slots_complete(event_predicate_argument_counts)
     top_level_symbol = _top_level_symbol(text)
     parse_profile_complete = _event_formula_parse_profile_complete(
         text=text,
@@ -2143,7 +2091,7 @@ def _event_formula_parse_profile_complete(
         if connector_index <= 0:
             return False
         left = text[:connector_index].strip()
-        right = text[connector_index + len(top_level_connector):].strip()
+        right = text[connector_index + len(top_level_connector) :].strip()
         return bool(left and right)
     if top_level_symbol in {"forall", "exists"}:
         return bool(quantifier_variables)
@@ -2304,7 +2252,7 @@ def _function_argument_texts(text: str) -> list[tuple[str, str]]:
         close_index = _matching_close_paren_index(value, open_index)
         if close_index < 0:
             continue
-        records.append((match.group(1), value[open_index + 1:close_index]))
+        records.append((match.group(1), value[open_index + 1 : close_index]))
     return records
 
 
@@ -2357,7 +2305,7 @@ def _top_level_formula_arguments_complete(text: str) -> bool:
     close_index = _matching_close_paren_index(value, open_index)
     if close_index < 0:
         return False
-    arguments = _split_top_level_arguments(value[open_index + 1:close_index])
+    arguments = _split_top_level_arguments(value[open_index + 1 : close_index])
     return bool(arguments) and not any(not argument for argument in arguments)
 
 
@@ -2430,7 +2378,7 @@ def _canonicalize_function_style_event_connectors(text: str) -> str:
     close_index = _matching_close_paren_index(value, open_index)
     if close_index != len(value) - 1:
         return value
-    arguments = _split_top_level_arguments(value[open_index + 1:close_index])
+    arguments = _split_top_level_arguments(value[open_index + 1 : close_index])
     if len(arguments) != 2 or not arguments[0] or not arguments[1]:
         return value
     return f"{arguments[0]} => {arguments[1]}"
@@ -2471,9 +2419,7 @@ def _normalize_event_formula_brackets(text: str) -> str:
             f"{wrapper}(",
             normalized,
             flags=(
-                re.IGNORECASE
-                if wrapper in {"Happens", "HoldsAt", "Initiates", "Terminates"}
-                else 0
+                re.IGNORECASE if wrapper in {"Happens", "HoldsAt", "Initiates", "Terminates"} else 0
             ),
         )
     if "[" not in normalized and "]" not in normalized:
@@ -2504,10 +2450,7 @@ def _normalize_event_formula_fields(
         derived=derived_parse_profile,
     )
     resolved_syntax_valid = bool(
-        (
-            syntax_valid
-            or merged_parse_profile.get("target_parse_profile_complete") is True
-        )
+        (syntax_valid or merged_parse_profile.get("target_parse_profile_complete") is True)
         and merged_parse_profile.get("event_predicate_slot_complete") is not False
     )
     derived_components = _event_formula_target_components(
@@ -2618,13 +2561,10 @@ def _event_calculus_state_formula_from_export(
     if not text:
         return text
     parse_profile = _event_formula_parse_profile(text)
-    if (
-        parse_profile.get("target_parse_profile_complete") is True
-        and (
-            parse_profile.get("top_level_connector")
-            or parse_profile.get("top_level_symbol") in _EVENT_PREDICATE_SET
-            or parse_profile.get("top_level_symbol") in {"always", "forall", "exists"}
-        )
+    if parse_profile.get("target_parse_profile_complete") is True and (
+        parse_profile.get("top_level_connector")
+        or parse_profile.get("top_level_symbol") in _EVENT_PREDICATE_SET
+        or parse_profile.get("top_level_symbol") in {"always", "forall", "exists"}
     ):
         return text
     if parse_profile.get("top_level_symbol") in _DCEC_STATE_PREDICATE_SET:
@@ -2700,9 +2640,7 @@ def _merge_event_formula_target_components(
         merged.get("target_parse_profile_complete") is True
         or parse_profile.get("target_parse_profile_complete") is True
     )
-    merged["uses_event_calculus_wrapper"] = bool(
-        list(parse_profile.get("event_predicates") or [])
-    )
+    merged["uses_event_calculus_wrapper"] = bool(list(parse_profile.get("event_predicates") or []))
     if selected_frame:
         merged["selected_frame"] = selected_frame
     if selected_frame_source:
@@ -2725,9 +2663,7 @@ def _event_formula_target_components(
         "target_parse_profile_complete": bool(
             parse_profile.get("target_parse_profile_complete") is True
         ),
-        "uses_event_calculus_wrapper": bool(
-            list(parse_profile.get("event_predicates") or [])
-        ),
+        "uses_event_calculus_wrapper": bool(list(parse_profile.get("event_predicates") or [])),
     }
 
 
@@ -2753,9 +2689,7 @@ def _frame_guidance_from_norm(
     ):
         canonical = _canonical_frame_symbol(value)
         if canonical:
-            if source == "norm.legal_frame.category" and _is_generic_frame_symbol(
-                canonical
-            ):
+            if source == "norm.legal_frame.category" and _is_generic_frame_symbol(canonical):
                 generic_frame = {
                     "selected_frame": canonical,
                     "selected_frame_source": source,
@@ -2838,16 +2772,10 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
     ):
         value = guidance.get(key)
         if isinstance(value, Mapping):
-            if any(
-                str(route).strip().lower() in _CEC_GUIDANCE_ROUTE_TOKENS
-                for route in value
-            ):
+            if any(str(route).strip().lower() in _CEC_GUIDANCE_ROUTE_TOKENS for route in value):
                 return True
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            if any(
-                str(route).strip().lower() in _CEC_GUIDANCE_ROUTE_TOKENS
-                for route in value
-            ):
+            if any(str(route).strip().lower() in _CEC_GUIDANCE_ROUTE_TOKENS for route in value):
                 return True
     for key in (
         "bundle",
@@ -2876,8 +2804,7 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
         "samples",
     ):
         if any(
-            _cec_guidance_token_targets_cec(item)
-            for item in _sequence_values(guidance.get(key))
+            _cec_guidance_token_targets_cec(item) for item in _sequence_values(guidance.get(key))
         ):
             return True
     if _cec_guidance_record_targets_cec(guidance):
@@ -2957,11 +2884,7 @@ def _cec_compiler_guidance_signal(
         bundle.get("compiler_guidance_target_metrics"),
     ):
         if isinstance(value, str):
-            metric_values.extend(
-                metric.strip()
-                for metric in value.split(",")
-                if metric.strip()
-            )
+            metric_values.extend(metric.strip() for metric in value.split(",") if metric.strip())
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             metric_values.extend(value)
     target_metrics: list[str] = []
@@ -3086,17 +3009,13 @@ def _cec_guidance_record_targets_cec(row: Mapping[str, Any]) -> bool:
         "legal_ir_underrepresented_components",
         "compiler_guidance_legal_ir_underrepresented_components",
     ):
-        if any(
-            _cec_guidance_token_targets_cec(item)
-            for item in _sequence_values(row.get(key))
-        ):
+        if any(_cec_guidance_token_targets_cec(item) for item in _sequence_values(row.get(key))):
             return True
     if any(metric.startswith("cec_dcec_") for metric in _guidance_metric_names(row)):
         return True
     for gap_key, gap_value in _cec_guidance_gap_items(row):
-        if (
-            _cec_guidance_gap_quality_gate_passes(gap_value)
-            and _cec_guidance_token_targets_cec(str(gap_key).split(":", 1)[0])
+        if _cec_guidance_gap_quality_gate_passes(gap_value) and _cec_guidance_token_targets_cec(
+            str(gap_key).split(":", 1)[0]
         ):
             return True
     for gap_key, gap_value in _cec_guidance_component_gap_items(row):
@@ -3141,11 +3060,7 @@ def _guidance_metric_names(row: Mapping[str, Any]) -> list[str]:
             values.extend(metric.strip() for metric in value.split(",") if metric.strip())
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             values.extend(value)
-    return [
-        str(value or "").strip().lower()
-        for value in values
-        if str(value or "").strip()
-    ]
+    return [str(value or "").strip().lower() for value in values if str(value or "").strip()]
 
 
 def _cec_guidance_gap_items(row: Mapping[str, Any]) -> list[tuple[str, Any]]:
@@ -3158,19 +3073,13 @@ def _cec_guidance_gap_items(row: Mapping[str, Any]) -> list[tuple[str, Any]]:
     ):
         value = row.get(key)
         if isinstance(value, Mapping):
-            items.extend(
-                (str(gap_key), gap_value)
-                for gap_key, gap_value in value.items()
-            )
+            items.extend((str(gap_key), gap_value) for gap_key, gap_value in value.items())
     attribution = row.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
         for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
             value = attribution.get(key)
             if isinstance(value, Mapping):
-                items.extend(
-                    (str(gap_key), gap_value)
-                    for gap_key, gap_value in value.items()
-                )
+                items.extend((str(gap_key), gap_value) for gap_key, gap_value in value.items())
     return items
 
 
@@ -3182,18 +3091,12 @@ def _cec_guidance_component_gap_items(row: Mapping[str, Any]) -> list[tuple[str,
     ):
         value = row.get(key)
         if isinstance(value, Mapping):
-            items.extend(
-                (str(gap_key), gap_value)
-                for gap_key, gap_value in value.items()
-            )
+            items.extend((str(gap_key), gap_value) for gap_key, gap_value in value.items())
     attribution = row.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
         value = attribution.get("legal_ir_component_gaps")
         if isinstance(value, Mapping):
-            items.extend(
-                (str(gap_key), gap_value)
-                for gap_key, gap_value in value.items()
-            )
+            items.extend((str(gap_key), gap_value) for gap_key, gap_value in value.items())
     return items
 
 
@@ -3283,7 +3186,9 @@ def _infer_selected_frame_from_norm_text(norm: Mapping[str, Any]) -> str:
             norm.get("text"),
             norm.get("action"),
             fallback="",
-        ).lower().split()
+        )
+        .lower()
+        .split()
     )
     if corpus and "notice" in corpus and "hearing" in corpus:
         return "administrative_notice_hearing"
@@ -3344,8 +3249,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
         return {
             "actor": "congress",
             "action": _clean_operational_slot(
-                "authorize appropriation of "
-                + appropriation_authorization_match.group("action")
+                "authorize appropriation of " + appropriation_authorization_match.group("action")
             ),
             "modality": "permitted",
             "norm_type": "permitted",
@@ -3362,12 +3266,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if penalty_imposition_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                penalty_imposition_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                penalty_imposition_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(penalty_imposition_match.group("actor")),
+            "action": _clean_operational_slot(penalty_imposition_match.group("action")),
             "modality": "obligated",
             "norm_type": "obligated",
             "source_id": f"dcec:section:{digest}",
@@ -3383,12 +3283,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if fers_applicability_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                fers_applicability_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                fers_applicability_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(fers_applicability_match.group("actor")),
+            "action": _clean_operational_slot(fers_applicability_match.group("action")),
             "modality": "obligated",
             "norm_type": "obligated",
             "source_id": f"dcec:section:{digest}",
@@ -3404,12 +3300,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if conditional_fee_collection_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                conditional_fee_collection_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                conditional_fee_collection_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(conditional_fee_collection_match.group("actor")),
+            "action": _clean_operational_slot(conditional_fee_collection_match.group("action")),
             "modality": "permitted",
             "norm_type": "permitted",
             "source_id": f"dcec:section:{digest}",
@@ -3447,12 +3339,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if authorized_assistance_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                authorized_assistance_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                authorized_assistance_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(authorized_assistance_match.group("actor")),
+            "action": _clean_operational_slot(authorized_assistance_match.group("action")),
             "modality": "permitted",
             "norm_type": "permitted",
             "source_id": f"dcec:section:{digest}",
@@ -3468,9 +3356,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if nato_contribution_limit_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                nato_contribution_limit_match.group("actor")
-            ),
+            "actor": _clean_operational_actor_slot(nato_contribution_limit_match.group("actor")),
             "action": _clean_operational_slot(
                 "contribute " + nato_contribution_limit_match.group("action")
             ),
@@ -3493,9 +3379,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
         object_text = re.sub(r"^(?:this|the)\s+", "", object_text, flags=re.IGNORECASE)
         action_verb = _clean_operational_slot(passive_governance_match.group("verb"))
         return {
-            "actor": _clean_operational_actor_slot(
-                passive_governance_match.group("actor")
-            ),
+            "actor": _clean_operational_actor_slot(passive_governance_match.group("actor")),
             "action": _clean_operational_slot(f"{action_verb} {object_text}"),
             "modality": "obligated",
             "norm_type": "obligated",
@@ -3512,16 +3396,10 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     )
     if passive_administration_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
-        object_text = _clean_operational_slot(
-            passive_administration_match.group("object")
-        )
+        object_text = _clean_operational_slot(passive_administration_match.group("object"))
         return {
-            "actor": _clean_operational_actor_slot(
-                passive_administration_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                "administer " + object_text
-            ),
+            "actor": _clean_operational_actor_slot(passive_administration_match.group("actor")),
+            "action": _clean_operational_slot("administer " + object_text),
             "modality": "obligated",
             "norm_type": "obligated",
             "source_id": f"dcec:section:{digest}",
@@ -3537,12 +3415,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if construction_exemption_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                construction_exemption_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                construction_exemption_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(construction_exemption_match.group("actor")),
+            "action": _clean_operational_slot(construction_exemption_match.group("action")),
             "modality": "obligated",
             "norm_type": "exemption",
             "source_id": f"dcec:section:{digest}",
@@ -3557,12 +3431,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if applicable_to_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                applicable_to_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                "apply to " + applicable_to_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(applicable_to_match.group("actor")),
+            "action": _clean_operational_slot("apply to " + applicable_to_match.group("action")),
             "modality": "obligated",
             "norm_type": "applicability",
             "source_id": f"dcec:section:{digest}",
@@ -3580,12 +3450,8 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if discretionary_transfer_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                discretionary_transfer_match.group("actor")
-            ),
-            "action": _clean_operational_slot(
-                discretionary_transfer_match.group("action")
-            ),
+            "actor": _clean_operational_actor_slot(discretionary_transfer_match.group("actor")),
+            "action": _clean_operational_slot(discretionary_transfer_match.group("action")),
             "modality": "permitted",
             "norm_type": "permitted",
             "source_id": f"dcec:section:{digest}",
@@ -3617,9 +3483,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if nothing_shall_affect_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                nothing_shall_affect_match.group("actor")
-            ),
+            "actor": _clean_operational_actor_slot(nothing_shall_affect_match.group("actor")),
             "action": _clean_operational_slot(nothing_shall_affect_match.group("action")),
             "modality": "permitted",
             "norm_type": "exemption",
@@ -3668,9 +3532,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     if corporation_records_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
         return {
-            "actor": _clean_operational_actor_slot(
-                corporation_records_match.group("actor")
-            ),
+            "actor": _clean_operational_actor_slot(corporation_records_match.group("actor")),
             "action": _clean_operational_slot(corporation_records_match.group("action")),
             "modality": "obligated",
             "norm_type": "obligated",
@@ -3685,9 +3547,7 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
     )
     if passive_preference_match:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
-        beneficiary = _clean_operational_slot(
-            passive_preference_match.group("beneficiary")
-        )
+        beneficiary = _clean_operational_slot(passive_preference_match.group("beneficiary"))
         return {
             "actor": "selection official",
             "action": _clean_operational_slot(f"give preference to {beneficiary}"),
@@ -4184,15 +4044,15 @@ def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
         flags=re.IGNORECASE,
     )
     if subsection_dash_match:
-        return value[subsection_dash_match.end():].strip()
+        return value[subsection_dash_match.end() :].strip()
     subsection_match = re.match(
-        rf"^.{1,220}?\s+\([a-z0-9]+\)\s+[^.;]{{0,140}}?\s+"
+        rf"^.{1, 220}?\s+\([a-z0-9]+\)\s+[^.;]{{0,140}}?\s+"
         rf"(?=({starter_pattern})\b)",
         value,
         flags=re.IGNORECASE,
     )
     if subsection_match:
-        value = value[subsection_match.end():].strip()
+        value = value[subsection_match.end() :].strip()
     if not value.lower().startswith(tuple(starter.lower() for starter in starters)):
         catchline_match = re.match(
             rf"^(.{{1,160}}?)\s+(?=({starter_pattern})\b)",
@@ -4200,7 +4060,7 @@ def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
             flags=re.IGNORECASE,
         )
         if catchline_match:
-            value = value[catchline_match.end():].strip()
+            value = value[catchline_match.end() :].strip()
     return value
 
 
@@ -4223,15 +4083,19 @@ def _looks_like_statutory_purpose_statement(lowered_text: str) -> bool:
 
 def _purpose_actor_from_text(text: str) -> str:
     lowered = text.lower()
-    institute_matches = re.findall(
-        r"\bgeneral\s+purpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
-        lowered,
-    ) or re.findall(
-        r"\bpurpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
-        lowered,
-    ) or re.findall(
-        r"\bpurposes\s+of\s+(?:the\s+)?(.+?)\s+are\b",
-        lowered,
+    institute_matches = (
+        re.findall(
+            r"\bgeneral\s+purpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
+            lowered,
+        )
+        or re.findall(
+            r"\bpurpose\s+of\s+(?:the\s+)?(.+?)\s+is\b",
+            lowered,
+        )
+        or re.findall(
+            r"\bpurposes\s+of\s+(?:the\s+)?(.+?)\s+are\b",
+            lowered,
+        )
     )
     if institute_matches:
         actor = re.sub(
@@ -4268,9 +4132,7 @@ def _purpose_action_from_text(text: str) -> str:
 def _section_status_heading_matches(text: str, status: str) -> bool:
     escaped_status = re.escape(status)
     section_id = r"[0-9][0-9a-z]*(?:[.-][0-9a-z]+)*"
-    section_range = (
-        rf"{section_id}(?:\s*(?:,|and|to|-)\s*{section_id})*"
-    )
+    section_range = rf"{section_id}(?:\s*(?:,|and|to|-)\s*{section_id})*"
     return bool(
         re.search(
             rf"\bsecs?\.?\s*{section_range}\s*(?:-|\.|:)\s*{escaped_status}\b",
@@ -4390,7 +4252,9 @@ def _looks_like_heading_polluted_text(text: str) -> bool:
     value = _normalize_legal_sample_text(text).lower()
     if len(value) > 240 and re.search(r"\bu\.s\.c\.\s+title\b|\bunited\s+states\s+code\b", value):
         return True
-    if len(value) > 240 and re.search(r"\bfrom\s+the\s+u\.s\.\s+government\s+publishing\s+office\b", value):
+    if len(value) > 240 and re.search(
+        r"\bfrom\s+the\s+u\.s\.\s+government\s+publishing\s+office\b", value
+    ):
         return True
     return False
 

@@ -427,10 +427,7 @@ def test_blank_control_refuses_an_accidentally_loaded_full_model() -> None:
     ).run(_request(), telemetry=_telemetry())
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SPACY_PARSE_OR_MODEL_FALLBACK
-    )
+    assert record.failure_code is contracts.FailureCode.SPACY_PARSE_OR_MODEL_FALLBACK
     assert record.output_sha256 is None
     assert record.provenance.effective_identity["mode"] == "blank_model"
     assert record.provenance.effective_identity["used_fallback_model"] is False
@@ -471,9 +468,7 @@ def test_regex_legal_control_is_distinct_and_does_not_construct_spacy() -> None:
 
 
 def test_linguistic_evidence_is_descriptive_and_cannot_claim_proof_authority() -> None:
-    record = _adapter(adapters.SpacyAdapterMode.FULL_MODEL).run(
-        _request(), telemetry=_telemetry()
-    )
+    record = _adapter(adapters.SpacyAdapterMode.FULL_MODEL).run(_request(), telemetry=_telemetry())
 
     assert record.status is contracts.StageStatus.SUCCESS
     assert record.data["assurance"] == {

@@ -8,6 +8,7 @@ import sys
 import traceback
 from pathlib import Path
 
+
 async def async_test_phase1_status():
     """Test Phase 1 completion status"""
     print("Phase 1 Status Check")
@@ -27,26 +28,31 @@ async def async_test_phase1_status():
             codebase_search,
             documentation_generator,
             lint_python_codebase,
-            run_comprehensive_tests
+            run_comprehensive_tests,
         )
+
         print("✓ All 5 development tools imported successfully")
-        results['imports'] = True
+        results["imports"] = True
     except Exception as e:
         print(f"✗ Import failed: {e}")
         traceback.print_exc()
-        results['imports'] = False
+        results["imports"] = False
 
     # Test 2: Server tool registration
     print("\n2. Testing server tool registration...")
     try:
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+
         server = IPFSDatasetsMCPServer()
         await server.register_tools()
 
         # Check for development tools
         dev_tool_names = [
-            'test_generator', 'codebase_search', 'documentation_generator',
-            'lint_python_codebase', 'run_comprehensive_tests'
+            "test_generator",
+            "codebase_search",
+            "documentation_generator",
+            "lint_python_codebase",
+            "run_comprehensive_tests",
         ]
 
         registered_dev_tools = []
@@ -62,34 +68,31 @@ async def async_test_phase1_status():
             missing = set(dev_tool_names) - set(registered_dev_tools)
             print(f"Missing tools: {missing}")
 
-        results['registration'] = len(registered_dev_tools) == 5
+        results["registration"] = len(registered_dev_tools) == 5
     except Exception as e:
         print(f"✗ Server registration failed: {e}")
         traceback.print_exc()
-        results['registration'] = False
+        results["registration"] = False
 
     # Test 3: Basic function execution
     print("\n3. Testing basic tool execution...")
     try:
-        from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
-
-        result = codebase_search(
-            pattern="def",
-            path=".",
-            max_depth=1,
-            format="json"
+        from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import (
+            codebase_search,
         )
 
-        if result and isinstance(result, dict) and 'success' in result and result['success']:
+        result = codebase_search(pattern="def", path=".", max_depth=1, format="json")
+
+        if result and isinstance(result, dict) and "success" in result and result["success"]:
             print("✓ Codebase search executed successfully")
-            results['execution'] = True
+            results["execution"] = True
         else:
             print(f"✗ Codebase search returned unexpected result: {type(result)} - {result}")
-            results['execution'] = False
+            results["execution"] = False
     except Exception as e:
         print(f"✗ Tool execution failed: {e}")
         traceback.print_exc()
-        results['execution'] = False
+        results["execution"] = False
 
     # Summary
     print("\n" + "=" * 30)
@@ -114,7 +117,9 @@ async def async_test_phase1_status():
 
     return all_passed
 
+
 import pytest
+
 
 def test_phase1_status_pytest():
     """Pytest wrapper for phase1 status test."""
@@ -124,6 +129,7 @@ def test_phase1_status_pytest():
         pytest.skip("MCP FastMCP dependency not available (mcp.server.FastMCP import failed)")
     success = anyio.run(async_test_phase1_status)
     assert success, "Phase 1 status test failed"
+
 
 if __name__ == "__main__":
     try:

@@ -132,7 +132,7 @@ assert speedup >= 10, f"Expected >10x speedup, got {speedup:.1f}x"
 **3. Hit Rate Tracking:**
 ```python
 stats = prover.get_cache_statistics()
-hit_rate = stats['cache_hits'] / stats['total_lookups']
+hit_rate = stats["cache_hits"] / stats["total_lookups"]
 assert hit_rate >= 0.4, f"Expected >40% hit rate, got {hit_rate:.1%}"
 ```
 
@@ -208,10 +208,10 @@ assert result.execution_time > 0
 
 # Statistics
 stats = prover.get_cache_statistics()
-assert 'total_lookups' in stats
-assert 'cache_hits' in stats
-assert 'cache_misses' in stats
-assert 'hit_rate' in stats
+assert "total_lookups" in stats
+assert "cache_hits" in stats
+assert "cache_misses" in stats
+assert "hit_rate" in stats
 ```
 
 ### Enums and Types:
@@ -265,20 +265,16 @@ WARNING: Cache store error: ProofCache.set() got an unexpected keyword argument 
 **Current Code:**
 ```python
 self.cache.set(
-    cache_key, 
+    cache_key,
     cached_result,
     ttl=self.default_ttl,
-    metadata=metadata  # ← Remove this line
+    metadata=metadata,  # ← Remove this line
 )
 ```
 
 **Fixed Code:**
 ```python
-self.cache.set(
-    cache_key, 
-    cached_result,
-    ttl=self.default_ttl
-)
+self.cache.set(cache_key, cached_result, ttl=self.default_ttl)
 ```
 
 **Expected Result After Fix:**

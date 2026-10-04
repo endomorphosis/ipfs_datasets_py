@@ -78,7 +78,9 @@ class LegalRequirementsGraph:
         ]
 
     def get_elements_by_type(self, element_type: str) -> List[LegalElement]:
-        return [element for element in self.elements.values() if element.element_type == element_type]
+        return [
+            element for element in self.elements.values() if element.element_type == element_type
+        ]
 
     def get_requirements_for_claim_type(self, claim_type: str) -> List[LegalElement]:
         requirements: List[LegalElement] = []
@@ -96,7 +98,9 @@ class LegalRequirementsGraph:
             element_counts[element.element_type] = element_counts.get(element.element_type, 0) + 1
         relation_counts: Dict[str, int] = {}
         for relation in self.relations.values():
-            relation_counts[relation.relation_type] = relation_counts.get(relation.relation_type, 0) + 1
+            relation_counts[relation.relation_type] = (
+                relation_counts.get(relation.relation_type, 0) + 1
+            )
         return {
             "total_elements": len(self.elements),
             "total_relations": len(self.relations),
@@ -188,7 +192,9 @@ class LegalRequirementsGraphBuilder:
             statute_elements.append(element)
 
         for statute_element in statute_elements:
-            requirements = self._extract_requirements_from_statute(statute_element, list(claim_types))
+            requirements = self._extract_requirements_from_statute(
+                statute_element, list(claim_types)
+            )
             for requirement in requirements:
                 req_element = LegalElement(
                     id=self._get_element_id(),
@@ -261,7 +267,9 @@ class LegalRequirementsGraphBuilder:
     ) -> List[Dict[str, Any]]:
         requirements: List[Dict[str, Any]] = []
         claim_type_text = " ".join(claim_types).lower()
-        statute_text = f"{statute.name} {statute.description} {statute.attributes.get('text', '')}".lower()
+        statute_text = (
+            f"{statute.name} {statute.description} {statute.attributes.get('text', '')}".lower()
+        )
 
         if "discrimination" in claim_type_text or "discrimination" in statute_text:
             requirements.extend(

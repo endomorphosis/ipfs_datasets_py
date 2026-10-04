@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Minimal MCP server test script."""
+
 import os
 import sys
 from pathlib import Path

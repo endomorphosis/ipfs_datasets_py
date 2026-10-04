@@ -56,12 +56,8 @@ def test_packet_001840_family_pairs_are_explicitly_registered() -> None:
     assert COMPILER_AMBIGUITY_PACKET_001840_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -128,9 +124,13 @@ def test_modal_compiler_surfaces_packet_001840_adaptive_ambiguity_policy(
         lambda _: {},
     )
 
-    predicted_share = 0.5 if predicted_family == target_family else min(
-        0.99,
-        abs(family_margin) + 0.05,
+    predicted_share = (
+        0.5
+        if predicted_family == target_family
+        else min(
+            0.99,
+            abs(family_margin) + 0.05,
+        )
     )
     target_share = (
         predicted_share - family_margin
@@ -145,15 +145,16 @@ def test_modal_compiler_surfaces_packet_001840_adaptive_ambiguity_policy(
             "share": predicted_share,
         },
         {
-            "family": target_family if target_family != predicted_family else ModalLogicFamily.FRAME.value,
+            "family": target_family
+            if target_family != predicted_family
+            else ModalLogicFamily.FRAME.value,
             "count": 0,
             "share_raw": target_share,
             "share": target_share,
         },
     ]
     family_shares = {
-        str(candidate["family"]): float(candidate["share_raw"])
-        for candidate in ranking
+        str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
     }
     text = f"Synthetic packet 001840 {predicted_family} ambiguity evidence."
     predicted_system = "FRAME_BM25" if predicted_family == "frame" else "D"
@@ -220,9 +221,7 @@ def test_modal_compiler_surfaces_packet_001840_adaptive_ambiguity_policy(
         else [predicted_family, target_family]
     )
     expected_direction = "outvoted" if family_margin < 0.0 else "contested"
-    expected_type = (
-        f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
-    )
+    expected_type = f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
     policy_pair = f"{predicted_family}->{target_family}"
     base_ambiguity = next(
         ambiguity
@@ -238,15 +237,11 @@ def test_modal_compiler_surfaces_packet_001840_adaptive_ambiguity_policy(
     assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
     assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
-    assert (
-        abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-        < 1e-12
-    )
+    assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
     assert any(
         ambiguity.ambiguity_type == expected_type
         and ambiguity.candidate_ids == expected_candidate_ids
         and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-        and ambiguity.metadata["adaptive_base_ambiguity_type"]
-        == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
         for ambiguity in ambiguities
     )

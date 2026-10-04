@@ -79,6 +79,7 @@ Migrate all internal imports from legacy modules to the new lineage package whil
 # File: audit/audit_provenance_integration.py (Line 58)
 # OLD
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
+
 # NEW
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 ```
@@ -88,14 +89,22 @@ from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 # File: analytics/data_provenance_enhanced.py (Line 4169)
 # OLD
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
+
 # NEW
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 
 # File: analytics/data_provenance_enhanced.py (Line 5990)
 # OLD
-from ipfs_datasets_py.cross_document_lineage_enhanced import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+from ipfs_datasets_py.cross_document_lineage_enhanced import (
+    CrossDocumentLineageEnhancer,
+    DetailedLineageIntegrator,
+)
+
 # NEW
-from ipfs_datasets_py.knowledge_graphs.lineage import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+from ipfs_datasets_py.knowledge_graphs.lineage import (
+    CrossDocumentLineageEnhancer,
+    DetailedLineageIntegrator,
+)
 ```
 
 **3. Dashboard Module** ✅
@@ -103,6 +112,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import CrossDocumentLineageEnhanc
 # File: dashboards/provenance_dashboard.py (Lines 57, 1299)
 # OLD
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
+
 # NEW
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 ```

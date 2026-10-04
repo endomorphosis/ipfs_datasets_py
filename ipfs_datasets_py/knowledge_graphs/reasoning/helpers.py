@@ -15,6 +15,7 @@ Extracted methods:
 These methods are re-exported as instance methods via inheritance in
 ``CrossDocumentReasoner(ReasoningHelpersMixin)``.
 """
+
 from __future__ import annotations
 
 import logging
@@ -41,7 +42,7 @@ class ReasoningHelpersMixin:
         self,
         documents: List[DocumentNode],
         entity_connections: List[EntityMediatedConnection],
-        reasoning_depth: str
+        reasoning_depth: str,
     ) -> List[List[str]]:
         """
         Generate document traversal paths for multi-document reasoning.
@@ -101,11 +102,7 @@ class ReasoningHelpersMixin:
             doc_graph[conn.target_doc_id].append(conn.source_doc_id)
 
         # Generate paths based on reasoning depth
-        max_path_length = {
-            "basic": 2,
-            "moderate": 3,
-            "deep": 5
-        }.get(reasoning_depth, 3)
+        max_path_length = {"basic": 2, "moderate": 3, "deep": 5}.get(reasoning_depth, 3)
 
         # Sort documents by relevance
         sorted_docs = sorted(documents, key=lambda x: x.relevance_score, reverse=True)
@@ -135,10 +132,7 @@ class ReasoningHelpersMixin:
         return paths
 
     def _find_multi_hop_connections(
-        self,
-        documents: List[DocumentNode],
-        max_hops: int,
-        knowledge_graph: Any
+        self, documents: List[DocumentNode], max_hops: int, knowledge_graph: Any
     ) -> List[EntityMediatedConnection]:
         """Find multi-hop connections between documents using graph traversal.
 
@@ -161,7 +155,7 @@ class ReasoningHelpersMixin:
         # Build entity relationship graph from knowledge graph
         entity_graph: Any = defaultdict(list)
 
-        if hasattr(knowledge_graph, 'relationships'):
+        if hasattr(knowledge_graph, "relationships"):
             for rel_id, rel in knowledge_graph.relationships.items():
                 # Bidirectional edges
                 entity_graph[rel.source_id].append((rel.target_id, rel.relationship_type))
@@ -206,10 +200,10 @@ class ReasoningHelpersMixin:
                                     relation_type=relation_type,
                                     connection_strength=strength,
                                     context={
-                                        'path': path,
-                                        'path_length': path_length,
-                                        'relationship_types': rel_types
-                                    }
+                                        "path": path,
+                                        "path_length": path_length,
+                                        "relationship_types": rel_types,
+                                    },
                                 )
                                 connections.append(connection)
                                 paths_found += 1
@@ -235,17 +229,17 @@ class ReasoningHelpersMixin:
             Inferred information relation type
         """
         # Simple heuristic: if path contains certain relationship types, infer the overall type
-        rel_str = ' '.join(relationship_types).lower()
+        rel_str = " ".join(relationship_types).lower()
 
-        if 'support' in rel_str or 'confirm' in rel_str:
+        if "support" in rel_str or "confirm" in rel_str:
             return InformationRelationType.SUPPORTING
-        elif 'contradict' in rel_str or 'conflict' in rel_str:
+        elif "contradict" in rel_str or "conflict" in rel_str:
             return InformationRelationType.CONTRADICTING
-        elif 'detail' in rel_str or 'elaborat' in rel_str:
+        elif "detail" in rel_str or "elaborat" in rel_str:
             return InformationRelationType.ELABORATING
-        elif 'prereq' in rel_str or 'require' in rel_str:
+        elif "prereq" in rel_str or "require" in rel_str:
             return InformationRelationType.PREREQUISITE
-        elif 'conseq' in rel_str or 'result' in rel_str:
+        elif "conseq" in rel_str or "result" in rel_str:
             return InformationRelationType.CONSEQUENCE
         else:
             return InformationRelationType.COMPLEMENTARY
@@ -255,10 +249,7 @@ class ReasoningHelpersMixin:
     # ---------------------------------------------------------------------------
 
     def _generate_llm_answer(
-        self,
-        prompt: str,
-        query: str,
-        router: Optional[Any] = None
+        self, prompt: str, query: str, router: Optional[Any] = None
     ) -> Tuple[str, float]:
         """Generate an answer using OpenAI/Anthropic if available, else router/fallback."""
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _parent

@@ -17,9 +17,9 @@ import importlib.metadata
 import tempfile
 
 # Platform detection
-IS_WINDOWS = platform.system() == 'Windows'
-IS_LINUX = platform.system() == 'Linux'
-IS_MACOS = platform.system() == 'Darwin'
+IS_WINDOWS = platform.system() == "Windows"
+IS_LINUX = platform.system() == "Linux"
+IS_MACOS = platform.system() == "Darwin"
 
 _VENV_SYNC_MARKER = ".ipfs_datasets_py_venv_sync.json"
 
@@ -34,24 +34,24 @@ def _setup_scripts_dir() -> Path:
 
 def _venv_python(venv_dir: Path) -> Path:
     if IS_WINDOWS:
-        return venv_dir / 'Scripts' / 'python.exe'
-    return venv_dir / 'bin' / 'python'
+        return venv_dir / "Scripts" / "python.exe"
+    return venv_dir / "bin" / "python"
 
 
 def _venv_marker_payload(repo_root: Path) -> dict:
     tracked_files = [
-        repo_root / 'requirements.txt',
-        repo_root / 'pyproject.toml',
-        repo_root / 'setup.py',
-        repo_root / 'scripts' / 'setup' / 'install.py',
+        repo_root / "requirements.txt",
+        repo_root / "pyproject.toml",
+        repo_root / "setup.py",
+        repo_root / "scripts" / "setup" / "install.py",
     ]
     return {
-        'tracked_files': {
+        "tracked_files": {
             str(path.relative_to(repo_root)): path.stat().st_mtime_ns
             for path in tracked_files
             if path.exists()
         },
-        'python': f'{sys.version_info.major}.{sys.version_info.minor}',
+        "python": f"{sys.version_info.major}.{sys.version_info.minor}",
     }
 
 
@@ -61,7 +61,7 @@ def _needs_venv_sync(repo_root: Path, venv_dir: Path) -> bool:
         return True
     try:
         current = _venv_marker_payload(repo_root)
-        previous = json.loads(marker_path.read_text(encoding='utf-8'))
+        previous = json.loads(marker_path.read_text(encoding="utf-8"))
         return previous != current
     except Exception:
         return True
@@ -69,7 +69,9 @@ def _needs_venv_sync(repo_root: Path, venv_dir: Path) -> bool:
 
 def _write_venv_sync_marker(repo_root: Path, venv_dir: Path) -> None:
     marker_path = venv_dir / _VENV_SYNC_MARKER
-    marker_path.write_text(json.dumps(_venv_marker_payload(repo_root), indent=2, sort_keys=True), encoding='utf-8')
+    marker_path.write_text(
+        json.dumps(_venv_marker_payload(repo_root), indent=2, sort_keys=True), encoding="utf-8"
+    )
 
 
 def _create_or_reuse_venv(venv_dir: Path) -> Path:
@@ -79,20 +81,20 @@ def _create_or_reuse_venv(venv_dir: Path) -> Path:
 
     venv_dir.parent.mkdir(parents=True, exist_ok=True)
     print(f"📦 Creating virtual environment at {venv_dir}...")
-    subprocess.run([sys.executable, '-m', 'venv', str(venv_dir)], check=True, text=True)
+    subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=True, text=True)
     return python_path
 
 
 def _local_requirement_overrides(repo_root: Path) -> dict[str, Path]:
     overrides: dict[str, Path] = {}
     candidate_paths = {
-        'ipfs_kit_py': repo_root / 'ipfs_kit_py',
-        'ipfs_accelerate_py': repo_root / 'ipfs_accelerate_py',
+        "ipfs_kit_py": repo_root / "ipfs_kit_py",
+        "ipfs_accelerate_py": repo_root / "ipfs_accelerate_py",
     }
     for package_name, package_path in candidate_paths.items():
         if not package_path.is_dir():
             continue
-        if (package_path / 'pyproject.toml').exists() or (package_path / 'setup.py').exists():
+        if (package_path / "pyproject.toml").exists() or (package_path / "setup.py").exists():
             overrides[package_name] = package_path
     return overrides
 
@@ -116,9 +118,9 @@ def _candidate_ipfs_accelerate_roots(repo_root: Path) -> list[Path]:
             roots.append(Path(value).expanduser())
     roots.extend(
         [
-            repo_root / 'ipfs_accelerate_py',
-            repo_root.parent / 'ipfs_accelerate_py',
-            Path.home() / 'ipfs_accelerate_py',
+            repo_root / "ipfs_accelerate_py",
+            repo_root.parent / "ipfs_accelerate_py",
+            Path.home() / "ipfs_accelerate_py",
         ]
     )
     seen: set[str] = set()
@@ -135,29 +137,29 @@ def _candidate_ipfs_accelerate_roots(repo_root: Path) -> list[Path]:
 
 
 def _activate_ipfs_accelerate_checkout(checkout_root: Path) -> bool:
-    package_root = checkout_root / 'ipfs_accelerate_py'
-    package_init = package_root / '__init__.py'
+    package_root = checkout_root / "ipfs_accelerate_py"
+    package_init = package_root / "__init__.py"
     if not package_init.exists():
         return False
-    if not (package_root / 'p2p_tasks').is_dir():
+    if not (package_root / "p2p_tasks").is_dir():
         return False
     checkout_text = str(checkout_root)
     if checkout_text not in sys.path:
         sys.path.insert(0, checkout_text)
-    current_module = sys.modules.get('ipfs_accelerate_py')
-    if current_module is not None and not getattr(current_module, '__file__', None):
-        sys.modules.pop('ipfs_accelerate_py', None)
+    current_module = sys.modules.get("ipfs_accelerate_py")
+    if current_module is not None and not getattr(current_module, "__file__", None):
+        sys.modules.pop("ipfs_accelerate_py", None)
     importlib.invalidate_caches()
     return True
 
 
 def _ipfs_accelerate_service_active() -> bool:
-    systemctl = shutil.which('systemctl')
+    systemctl = shutil.which("systemctl")
     if not systemctl:
         return False
     try:
         result = subprocess.run(
-            [systemctl, '--user', 'is-active', 'ipfs-accelerate-task-worker.service'],
+            [systemctl, "--user", "is-active", "ipfs-accelerate-task-worker.service"],
             check=False,
             capture_output=True,
             text=True,
@@ -165,35 +167,50 @@ def _ipfs_accelerate_service_active() -> bool:
         )
     except Exception:
         return False
-    return result.returncode == 0 and (result.stdout or '').strip() == 'active'
+    return result.returncode == 0 and (result.stdout or "").strip() == "active"
 
 
-def _install_requirements_with_local_overrides(python_path: Path, repo_root: Path, requirements_path: Path) -> None:
+def _install_requirements_with_local_overrides(
+    python_path: Path, repo_root: Path, requirements_path: Path
+) -> None:
     overrides = _local_requirement_overrides(repo_root)
     filtered_lines: list[str] = []
-    for raw_line in requirements_path.read_text(encoding='utf-8').splitlines():
+    for raw_line in requirements_path.read_text(encoding="utf-8").splitlines():
         stripped = raw_line.strip()
-        if overrides.get('ipfs_kit_py') and 'github.com/endomorphosis/ipfs_kit_py.git' in stripped:
+        if overrides.get("ipfs_kit_py") and "github.com/endomorphosis/ipfs_kit_py.git" in stripped:
             continue
-        if overrides.get('ipfs_accelerate_py') and 'github.com/endomorphosis/ipfs_accelerate_py.git' in stripped:
+        if (
+            overrides.get("ipfs_accelerate_py")
+            and "github.com/endomorphosis/ipfs_accelerate_py.git" in stripped
+        ):
             continue
         filtered_lines.append(raw_line)
 
-    with tempfile.NamedTemporaryFile('w', encoding='utf-8', suffix='-requirements.txt', delete=False) as handle:
-        handle.write('\n'.join(filtered_lines) + '\n')
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", suffix="-requirements.txt", delete=False
+    ) as handle:
+        handle.write("\n".join(filtered_lines) + "\n")
         temp_requirements_path = Path(handle.name)
 
     try:
-        subprocess.run([str(python_path), '-m', 'pip', 'install', '-r', str(temp_requirements_path)], check=True, text=True)
+        subprocess.run(
+            [str(python_path), "-m", "pip", "install", "-r", str(temp_requirements_path)],
+            check=True,
+            text=True,
+        )
         for package_name, package_path in overrides.items():
             print(f"📦 Installing local {package_name} from {package_path}...")
-            subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(package_path)], check=True, text=True)
+            subprocess.run(
+                [str(python_path), "-m", "pip", "install", "-e", str(package_path)],
+                check=True,
+                text=True,
+            )
     finally:
         temp_requirements_path.unlink(missing_ok=True)
 
 
 def _prune_stale_torch_cuda_packages(python_path: Path) -> None:
-    script = r'''
+    script = r"""
 import importlib.metadata as md
 import json
 import platform
@@ -226,18 +243,22 @@ if torch is not None:
 
 stale = sorted(name for name in installed_nvidia if name not in required)
 print(json.dumps({'stale': stale}))
-'''
-    result = subprocess.run([str(python_path), '-c', script], check=True, text=True, capture_output=True)
-    payload = json.loads(result.stdout.strip() or '{}')
-    stale_packages = list(payload.get('stale') or [])
+"""
+    result = subprocess.run(
+        [str(python_path), "-c", script], check=True, text=True, capture_output=True
+    )
+    payload = json.loads(result.stdout.strip() or "{}")
+    stale_packages = list(payload.get("stale") or [])
     if not stale_packages:
         return
     print(f"🧹 Removing stale Torch/CUDA packages: {', '.join(stale_packages)}")
-    subprocess.run([str(python_path), '-m', 'pip', 'uninstall', '-y', *stale_packages], check=True, text=True)
+    subprocess.run(
+        [str(python_path), "-m", "pip", "uninstall", "-y", *stale_packages], check=True, text=True
+    )
 
 
 def _ocr_runtime_status(python_path: Path) -> dict:
-    script = r'''
+    script = r"""
 import importlib
 import json
 import shutil
@@ -285,36 +306,40 @@ payload['ocr_available'] = bool(
     and payload['tesseract_version']
 )
 print(json.dumps(payload))
-'''
+"""
     try:
-        result = subprocess.run([str(python_path), '-c', script], check=True, text=True, capture_output=True)
-        return json.loads(result.stdout.strip() or '{}')
+        result = subprocess.run(
+            [str(python_path), "-c", script], check=True, text=True, capture_output=True
+        )
+        return json.loads(result.stdout.strip() or "{}")
     except Exception as exc:
         return {
-            'fitz': False,
-            'pillow': False,
-            'pytesseract': False,
-            'tesseract_cmd': '',
-            'tesseract_version': '',
-            'languages': [],
-            'ocr_available': False,
-            'error': str(exc),
+            "fitz": False,
+            "pillow": False,
+            "pytesseract": False,
+            "tesseract_cmd": "",
+            "tesseract_version": "",
+            "languages": [],
+            "ocr_available": False,
+            "error": str(exc),
         }
 
 
 def _noninteractive_privilege_prefix() -> list[str] | None:
     if not IS_LINUX:
         return []
-    geteuid = getattr(os, 'geteuid', None)
+    geteuid = getattr(os, "geteuid", None)
     if callable(geteuid) and geteuid() == 0:
         return []
-    if shutil.which('sudo'):
+    if shutil.which("sudo"):
         try:
-            result = subprocess.run(['sudo', '-n', 'true'], check=False, capture_output=True, text=True)
+            result = subprocess.run(
+                ["sudo", "-n", "true"], check=False, capture_output=True, text=True
+            )
         except Exception:
             return None
         if result.returncode == 0:
-            return ['sudo', '-n']
+            return ["sudo", "-n"]
     return None
 
 
@@ -323,54 +348,81 @@ def _tesseract_install_commands() -> list[list[str]]:
         privilege_prefix = _noninteractive_privilege_prefix()
         if privilege_prefix is None:
             return []
-        if shutil.which('apt-get'):
+        if shutil.which("apt-get"):
             return [
-                [*privilege_prefix, 'apt-get', 'update'],
-                [*privilege_prefix, 'apt-get', 'install', '-y', 'tesseract-ocr', 'tesseract-ocr-eng'],
+                [*privilege_prefix, "apt-get", "update"],
+                [
+                    *privilege_prefix,
+                    "apt-get",
+                    "install",
+                    "-y",
+                    "tesseract-ocr",
+                    "tesseract-ocr-eng",
+                ],
             ]
-        if shutil.which('dnf'):
-            return [[*privilege_prefix, 'dnf', 'install', '-y', 'tesseract', 'tesseract-langpack-eng']]
-        if shutil.which('yum'):
-            return [[*privilege_prefix, 'yum', 'install', '-y', 'tesseract', 'tesseract-langpack-eng']]
-        if shutil.which('zypper'):
-            return [[*privilege_prefix, 'zypper', '--non-interactive', 'install', 'tesseract-ocr']]
-        if shutil.which('pacman'):
-            return [[*privilege_prefix, 'pacman', '-Sy', '--noconfirm', 'tesseract', 'tesseract-data-eng']]
+        if shutil.which("dnf"):
+            return [
+                [*privilege_prefix, "dnf", "install", "-y", "tesseract", "tesseract-langpack-eng"]
+            ]
+        if shutil.which("yum"):
+            return [
+                [*privilege_prefix, "yum", "install", "-y", "tesseract", "tesseract-langpack-eng"]
+            ]
+        if shutil.which("zypper"):
+            return [[*privilege_prefix, "zypper", "--non-interactive", "install", "tesseract-ocr"]]
+        if shutil.which("pacman"):
+            return [
+                [
+                    *privilege_prefix,
+                    "pacman",
+                    "-Sy",
+                    "--noconfirm",
+                    "tesseract",
+                    "tesseract-data-eng",
+                ]
+            ]
         return []
-    if IS_MACOS and shutil.which('brew'):
-        return [['brew', 'install', 'tesseract']]
-    if IS_WINDOWS and shutil.which('winget'):
-        return [[
-            'winget',
-            'install',
-            '--exact',
-            '--id',
-            'UB-Mannheim.TesseractOCR',
-            '--accept-package-agreements',
-            '--accept-source-agreements',
-        ]]
-    if IS_WINDOWS and shutil.which('choco'):
-        return [['choco', 'install', '-y', 'tesseract']]
+    if IS_MACOS and shutil.which("brew"):
+        return [["brew", "install", "tesseract"]]
+    if IS_WINDOWS and shutil.which("winget"):
+        return [
+            [
+                "winget",
+                "install",
+                "--exact",
+                "--id",
+                "UB-Mannheim.TesseractOCR",
+                "--accept-package-agreements",
+                "--accept-source-agreements",
+            ]
+        ]
+    if IS_WINDOWS and shutil.which("choco"):
+        return [["choco", "install", "-y", "tesseract"]]
     return []
 
 
 def _ensure_ocr_runtime(python_path: Path) -> None:
-    if str(os.environ.get('IPFS_DATASETS_PY_AUTO_INSTALL_OCR', '1')).strip().lower() in {'0', 'false', 'no', 'off'}:
+    if str(os.environ.get("IPFS_DATASETS_PY_AUTO_INSTALL_OCR", "1")).strip().lower() in {
+        "0",
+        "false",
+        "no",
+        "off",
+    }:
         return
 
     status = _ocr_runtime_status(python_path)
-    if status.get('ocr_available'):
-        version = str(status.get('tesseract_version') or '').strip()
+    if status.get("ocr_available"):
+        version = str(status.get("tesseract_version") or "").strip()
         if version:
             print(f"✅ OCR runtime available (Tesseract {version})")
         return
 
     commands = _tesseract_install_commands()
     if not commands:
-        print('⚠️ OCR runtime unavailable and no non-interactive Tesseract installer was found')
+        print("⚠️ OCR runtime unavailable and no non-interactive Tesseract installer was found")
         return
 
-    print('📦 Installing OCR runtime dependencies...')
+    print("📦 Installing OCR runtime dependencies...")
     for command in commands:
         result = subprocess.run(command, check=False, text=True)
         if result.returncode != 0:
@@ -378,12 +430,12 @@ def _ensure_ocr_runtime(python_path: Path) -> None:
             return
 
     verified = _ocr_runtime_status(python_path)
-    if verified.get('ocr_available'):
-        version = str(verified.get('tesseract_version') or '').strip()
+    if verified.get("ocr_available"):
+        version = str(verified.get("tesseract_version") or "").strip()
         if version:
             print(f"✅ OCR runtime installed (Tesseract {version})")
     else:
-        print('⚠️ OCR runtime is still unavailable after attempted install')
+        print("⚠️ OCR runtime is still unavailable after attempted install")
 
 
 def _sync_venv_dependencies(repo_root: Path, venv_dir: Path) -> None:
@@ -394,18 +446,28 @@ def _sync_venv_dependencies(repo_root: Path, venv_dir: Path) -> None:
         _ensure_ocr_runtime(python_path)
         return
 
-    requirements_path = repo_root / 'requirements.txt'
+    requirements_path = repo_root / "requirements.txt"
     editable_target = repo_root
     print(f"📦 Syncing dependencies into {venv_dir}...")
-    subprocess.run([str(python_path), '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], check=True, text=True)
+    subprocess.run(
+        [str(python_path), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"],
+        check=True,
+        text=True,
+    )
     _install_requirements_with_local_overrides(python_path, repo_root, requirements_path)
-    subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(editable_target)], check=True, text=True)
+    subprocess.run(
+        [str(python_path), "-m", "pip", "install", "-e", str(editable_target)],
+        check=True,
+        text=True,
+    )
     _prune_stale_torch_cuda_packages(python_path)
     _ensure_ocr_runtime(python_path)
     _write_venv_sync_marker(repo_root, venv_dir)
 
 
-def ensure_project_venv(original_argv: list[str], *, venv_dir: Path, disable_bootstrap: bool) -> None:
+def ensure_project_venv(
+    original_argv: list[str], *, venv_dir: Path, disable_bootstrap: bool
+) -> None:
     if disable_bootstrap:
         return
 
@@ -423,7 +485,9 @@ def ensure_project_venv(original_argv: list[str], *, venv_dir: Path, disable_boo
 
     _sync_venv_dependencies(repo_root, venv_dir)
     print(f"✅ Re-running setup inside {venv_dir}...")
-    os.execv(str(target_python), [str(target_python), __file__, '--no-venv-bootstrap', *original_argv])
+    os.execv(
+        str(target_python), [str(target_python), __file__, "--no-venv-bootstrap", *original_argv]
+    )
 
 
 _LOGIC_PROVER_PORTFOLIOS = frozenset(
@@ -475,11 +539,7 @@ def _logic_prover_install_args() -> tuple[list[str], tuple[str, ...]]:
         "IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIO",
     )
     configured_portfolio = next(
-        (
-            str(os.environ[name]).strip()
-            for name in portfolio_env_names
-            if name in os.environ
-        ),
+        (str(os.environ[name]).strip() for name in portfolio_env_names if name in os.environ),
         "",
     )
     portfolio_is_explicit = any(name in os.environ for name in portfolio_env_names)
@@ -492,19 +552,13 @@ def _logic_prover_install_args() -> tuple[list[str], tuple[str, ...]]:
         configured_portfolio = "legal_ir_full"
 
     requested = tuple(
-        dict.fromkeys(
-            token
-            for token in configured_portfolio.replace(",", " ").split()
-            if token
-        )
+        dict.fromkeys(token for token in configured_portfolio.replace(",", " ").split() if token)
     )
     unknown = tuple(
         portfolio for portfolio in requested if portfolio not in _LOGIC_PROVER_PORTFOLIOS
     )
     if unknown:
-        raise ValueError(
-            "unknown prover portfolio(s): " + ", ".join(sorted(unknown))
-        )
+        raise ValueError("unknown prover portfolio(s): " + ", ".join(sorted(unknown)))
     portfolios = tuple(
         portfolio for portfolio in requested if portfolio in _LOGIC_PROVER_PORTFOLIOS
     )
@@ -570,23 +624,18 @@ def ensure_logic_provers() -> None:
         print(f"\nSkipping theorem-prover setup: {exc}")
         return
     selected = ", ".join(portfolios) if portfolios else "explicit solver flags"
-    print(
-        "\nInstalling explicitly requested theorem provers "
-        f"through {selected} (best-effort)..."
-    )
+    print(f"\nInstalling explicitly requested theorem provers through {selected} (best-effort)...")
     completed = subprocess.run(args, check=False, text=True)
-    if (
-        completed.returncode
-        and _setup_env_truthy("IPFS_DATASETS_PY_PROVER_INSTALL_STRICT", "0")
-    ):
+    if completed.returncode and _setup_env_truthy("IPFS_DATASETS_PY_PROVER_INSTALL_STRICT", "0"):
         raise RuntimeError(
             f"strict theorem-prover setup failed with exit code {completed.returncode}"
         )
 
+
 def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
     """Check whether ipfs_kit_py is installed from the main repo path."""
     try:
-        spec = importlib.util.find_spec('ipfs_kit_py')
+        spec = importlib.util.find_spec("ipfs_kit_py")
         if not spec or not spec.origin:
             return False
         origin_path = Path(spec.origin).resolve()
@@ -595,25 +644,26 @@ def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
     except Exception:
         return False
 
+
 def ensure_main_ipfs_kit_py() -> None:
     """Ensure ipfs_kit_py is installed from the main branch."""
 
-    os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
+    os.environ.setdefault("IPFS_KIT_PY_USE_GIT", "true")
 
     repo_root = Path(__file__).resolve().parents[2]
-    repo_path = repo_root / '.tools' / 'ipfs_kit_py'
-    marker_file = repo_path / '.main_installed'
+    repo_path = repo_root / ".tools" / "ipfs_kit_py"
+    marker_file = repo_path / ".main_installed"
 
     if marker_file.exists():
-        os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+        os.environ["IPFS_KIT_PY_INSTALLED"] = "true"
         return
 
     if _is_main_ipfs_kit_py_installed(repo_path):
-        os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+        os.environ["IPFS_KIT_PY_INSTALLED"] = "true"
         return
 
     try:
-        subprocess.run(['git', '--version'], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "--version"], check=True, capture_output=True, text=True)
     except Exception as e:
         print(f"⚠️ Git not available; skipping main ipfs_kit_py install: {e}")
         return
@@ -621,49 +671,69 @@ def ensure_main_ipfs_kit_py() -> None:
     try:
         repo_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if not (repo_path / '.git').exists():
-            subprocess.run([
-                'git', 'clone', '--filter=blob:none',
-                'https://github.com/endomorphosis/ipfs_kit_py.git',
-                str(repo_path)
-            ], check=False, text=True)
+        if not (repo_path / ".git").exists():
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--filter=blob:none",
+                    "https://github.com/endomorphosis/ipfs_kit_py.git",
+                    str(repo_path),
+                ],
+                check=False,
+                text=True,
+            )
 
-        subprocess.run(['git', '-C', str(repo_path), 'fetch', '--all', '--prune'], check=False, text=True)
-        subprocess.run(['git', '-C', str(repo_path), 'checkout', 'main'], check=False, text=True)
+        subprocess.run(
+            ["git", "-C", str(repo_path), "fetch", "--all", "--prune"], check=False, text=True
+        )
+        subprocess.run(["git", "-C", str(repo_path), "checkout", "main"], check=False, text=True)
 
-        result = subprocess.run([
-            sys.executable, '-m', 'pip', 'install', '-e', str(repo_path),
-            '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
-        ], check=False, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-e",
+                str(repo_path),
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
+            ],
+            check=False,
+            text=True,
+        )
         if result.returncode == 0:
-            marker_file.write_text('main', encoding='utf-8')
-            os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+            marker_file.write_text("main", encoding="utf-8")
+            os.environ["IPFS_KIT_PY_INSTALLED"] = "true"
     except Exception as e:
         print(f"⚠️ Failed to install main ipfs_kit_py: {e}")
 
 
 def ensure_libp2p_main() -> None:
     """Ensure libp2p is installed from the git main branch."""
-    if importlib.util.find_spec('libp2p') is not None:
+    if importlib.util.find_spec("libp2p") is not None:
         print("✅ libp2p already installed")
         return
     try:
         result = subprocess.run(
             [
                 sys.executable,
-                '-m',
-                'pip',
-                'install',
-                '--upgrade',
-                '--no-deps',
-                'protobuf>=5.27.0',
-                'pymultihash>=0.8.2',
-                'dnspython>=2.2.1',
-                'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
-                '--disable-pip-version-check',
-                '--no-input',
-                '--progress-bar',
-                'off',
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "--no-deps",
+                "protobuf>=5.27.0",
+                "pymultihash>=0.8.2",
+                "dnspython>=2.2.1",
+                "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
             ],
             check=False,
             text=True,
@@ -682,28 +752,32 @@ def ensure_ipfs_accelerate_py() -> None:
     for local_path in _candidate_ipfs_accelerate_roots(repo_root):
         if _activate_ipfs_accelerate_checkout(local_path):
             location = local_path.resolve()
-            service_note = " with running systemd service" if _ipfs_accelerate_service_active() else ""
+            service_note = (
+                " with running systemd service" if _ipfs_accelerate_service_active() else ""
+            )
             print(f"✅ ipfs_accelerate_py available from local checkout: {location}{service_note}")
             return
-    local_path = repo_root / 'ipfs_accelerate_py'
+    local_path = repo_root / "ipfs_accelerate_py"
 
-    if local_path.is_dir() and ((local_path / 'pyproject.toml').exists() or (local_path / 'setup.py').exists()):
-        if _is_local_package_installed('ipfs_accelerate_py', local_path):
+    if local_path.is_dir() and (
+        (local_path / "pyproject.toml").exists() or (local_path / "setup.py").exists()
+    ):
+        if _is_local_package_installed("ipfs_accelerate_py", local_path):
             print("✅ ipfs_accelerate_py already installed from local checkout")
             return
         try:
             result = subprocess.run(
                 [
                     sys.executable,
-                    '-m',
-                    'pip',
-                    'install',
-                    '-e',
+                    "-m",
+                    "pip",
+                    "install",
+                    "-e",
                     str(local_path),
-                    '--disable-pip-version-check',
-                    '--no-input',
-                    '--progress-bar',
-                    'off',
+                    "--disable-pip-version-check",
+                    "--no-input",
+                    "--progress-bar",
+                    "off",
                 ],
                 check=False,
                 capture_output=True,
@@ -713,7 +787,9 @@ def ensure_ipfs_accelerate_py() -> None:
                 print("✅ Installed ipfs_accelerate_py from local checkout")
                 return
             error_msg = result.stderr or result.stdout or "No error details available"
-            print(f"⚠️ Failed to install ipfs_accelerate_py from local checkout: {error_msg.strip()}")
+            print(
+                f"⚠️ Failed to install ipfs_accelerate_py from local checkout: {error_msg.strip()}"
+            )
         except Exception as e:
             print(f"⚠️ Failed to install ipfs_accelerate_py from local checkout: {e}")
 
@@ -721,15 +797,15 @@ def ensure_ipfs_accelerate_py() -> None:
         result = subprocess.run(
             [
                 sys.executable,
-                '-m',
-                'pip',
-                'install',
-                '--upgrade',
-                'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
-                '--disable-pip-version-check',
-                '--no-input',
-                '--progress-bar',
-                'off',
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main",
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
             ],
             check=False,
             capture_output=True,
@@ -743,22 +819,23 @@ def ensure_ipfs_accelerate_py() -> None:
     except Exception as e:
         print(f"⚠️ Failed to install ipfs_accelerate_py from git main: {e}")
 
+
 def run_setup_wizard():
     """Run the interactive setup wizard"""
     print("🧙 IPFS Datasets Setup Wizard")
     print("=" * 40)
-    
+
     print("\nChoose your installation type:")
     print("1. Quick Setup (core dependencies for CLI)")
     print("2. Interactive Setup (custom selection)")
     print("3. Profile-based (specific features)")
     print("4. Health Check (diagnose issues)")
     print("5. Full Analysis (comprehensive scan)")
-    
+
     while True:
         try:
             choice = input("\nSelect option (1-5): ").strip()
-            
+
             if choice == "1":
                 return quick_setup()
             elif choice == "2":
@@ -771,133 +848,158 @@ def run_setup_wizard():
                 return full_analysis()
             else:
                 print("Invalid choice, please select 1-5")
-                
+
         except KeyboardInterrupt:
             print("\nSetup cancelled.")
             return 1
 
+
 def quick_setup():
     """Run quick setup for core dependencies"""
     print("\n🚀 Running Quick Setup...")
-    
+
     try:
-        quick_setup_path = Path(__file__).resolve().with_name('quick_setup.py')
-        result = subprocess.run([sys.executable, str(quick_setup_path)], 
-                              check=False, text=True)
+        quick_setup_path = Path(__file__).resolve().with_name("quick_setup.py")
+        result = subprocess.run([sys.executable, str(quick_setup_path)], check=False, text=True)
         return result.returncode
     except Exception as e:
         print(f"❌ Quick setup failed: {e}")
         return 1
 
+
 def interactive_setup():
     """Run interactive dependency manager setup"""
     print("\n🎛️ Running Interactive Setup...")
-    
+
     try:
-        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'setup'], 
-                              check=False, text=True)
+        result = subprocess.run(
+            [sys.executable, str(_setup_scripts_dir() / "dependency_manager.py"), "setup"],
+            check=False,
+            text=True,
+        )
         return result.returncode
     except Exception as e:
         print(f"❌ Interactive setup failed: {e}")
         return 1
 
+
 def profile_setup():
     """Install specific dependency profiles"""
     print("\n📦 Profile-based Installation")
-    
+
     profiles = {
-        'minimal': 'Basic functionality only',
-        'cli': 'CLI tools functionality', 
-        'pdf': 'PDF processing capabilities',
-        'ml': 'Machine learning and AI features',
-        'vectors': 'Vector storage and search',
-        'web': 'Web scraping and archiving',
-        'media': 'Media processing (audio/video)',
-        'api': 'FastAPI web services',
-        'dev': 'Development and testing',
-        'full': 'All functionality (everything)'
+        "minimal": "Basic functionality only",
+        "cli": "CLI tools functionality",
+        "pdf": "PDF processing capabilities",
+        "ml": "Machine learning and AI features",
+        "vectors": "Vector storage and search",
+        "web": "Web scraping and archiving",
+        "media": "Media processing (audio/video)",
+        "api": "FastAPI web services",
+        "dev": "Development and testing",
+        "full": "All functionality (everything)",
     }
-    
+
     print("\nAvailable profiles:")
     for i, (name, desc) in enumerate(profiles.items(), 1):
         print(f"{i:2d}. {name:8s} - {desc}")
-    
+
     try:
         choice = input(f"\nSelect profile (1-{len(profiles)}): ").strip()
         profile_idx = int(choice) - 1
         profile_names = list(profiles.keys())
-        
+
         if 0 <= profile_idx < len(profile_names):
             profile_name = profile_names[profile_idx]
             print(f"\n📦 Installing {profile_name} profile...")
-            
-            result = subprocess.run([
-                sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'install', 
-                '--profile', profile_name
-            ], check=False, text=True)
-            
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(_setup_scripts_dir() / "dependency_manager.py"),
+                    "install",
+                    "--profile",
+                    profile_name,
+                ],
+                check=False,
+                text=True,
+            )
+
             return result.returncode
         else:
             print("Invalid selection")
             return 1
-            
+
     except (ValueError, KeyboardInterrupt):
         print("Installation cancelled")
         return 1
 
+
 def health_check():
     """Run dependency health check"""
     print("\n🏥 Running Health Check...")
-    
+
     try:
-        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'dependency_health_checker.py'), 'check'], 
-                              check=False, text=True)
+        result = subprocess.run(
+            [sys.executable, str(_setup_scripts_dir() / "dependency_health_checker.py"), "check"],
+            check=False,
+            text=True,
+        )
         return result.returncode
     except Exception as e:
         print(f"❌ Health check failed: {e}")
         return 1
 
+
 def full_analysis():
     """Run comprehensive dependency analysis"""
     print("\n📊 Running Full Analysis...")
-    
+
     try:
-        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'analyze'], 
-                              check=False, text=True)
+        result = subprocess.run(
+            [sys.executable, str(_setup_scripts_dir() / "dependency_manager.py"), "analyze"],
+            check=False,
+            text=True,
+        )
         return result.returncode
     except Exception as e:
         print(f"❌ Analysis failed: {e}")
         return 1
 
+
 def test_installation():
     """Test CLI functionality after installation"""
     print("\n🧪 Testing CLI Functionality...")
-    
+
     try:
-        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'comprehensive_cli_test.py')], 
-                              check=False, text=True)
+        result = subprocess.run(
+            [sys.executable, str(_setup_scripts_dir() / "comprehensive_cli_test.py")],
+            check=False,
+            text=True,
+        )
         return result.returncode
     except Exception as e:
         print(f"❌ Testing failed: {e}")
         return 1
 
+
 def show_status():
     """Show current dependency status"""
     print("\n📋 Current Dependency Status")
     print("=" * 35)
-    
+
     # Quick check of critical dependencies
     critical_deps = [
-        ('numpy', 'numpy'),
-        ('pandas', 'pandas'),
-        ('requests', 'requests'),
-        ('pyyaml', 'yaml'),
-        ('tqdm', 'tqdm'),
-        ('symbolicai', 'symai'),
-        ('faiss', 'faiss'),
-        ('sentence_tx', 'sentence_transformers'),
+        ("numpy", "numpy"),
+        ("pandas", "pandas"),
+        ("requests", "requests"),
+        ("pyyaml", "yaml"),
+        ("tqdm", "tqdm"),
+        ("symbolicai", "symai"),
+        ("faiss", "faiss"),
+        ("sentence_tx", "sentence_transformers"),
     ]
-    
+
     for label, module_name in critical_deps:
         try:
             __import__(module_name)
@@ -906,19 +1008,22 @@ def show_status():
             print(f"❌ {label:12s} - Missing")
 
     ocr_status = _ocr_runtime_status(Path(sys.executable))
-    if ocr_status.get('ocr_available'):
-        version = str(ocr_status.get('tesseract_version') or '').strip()
+    if ocr_status.get("ocr_available"):
+        version = str(ocr_status.get("tesseract_version") or "").strip()
         print(f"✅ {'ocr_runtime':12s} - Available ({version or 'Tesseract detected'})")
     else:
         print(f"❌ {'ocr_runtime':12s} - Missing")
-    
-    print(f"\nFor detailed status, run: python {_setup_scripts_dir() / 'dependency_health_checker.py'} check")
+
+    print(
+        f"\nFor detailed status, run: python {_setup_scripts_dir() / 'dependency_health_checker.py'} check"
+    )
+
 
 def main():
     """Main CLI interface"""
     repo_root = _repo_root()
     parser = argparse.ArgumentParser(
-        description='IPFS Datasets Unified Dependency Installer',
+        description="IPFS Datasets Unified Dependency Installer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -928,30 +1033,37 @@ Examples:
   python install.py --health          # Health check
   python install.py --test            # Test CLI tools
   python install.py --status          # Show status
-        """
+        """,
     )
-    
-    parser.add_argument('--quick', action='store_true',
-                       help='Run quick setup (core dependencies)')
-    parser.add_argument('--profile', 
-                       choices=['minimal', 'cli', 'pdf', 'ml', 'vectors', 
-                               'web', 'media', 'api', 'dev', 'full'],
-                       help='Install specific dependency profile')
-    parser.add_argument('--health', action='store_true',
-                       help='Run dependency health check')
-    parser.add_argument('--analyze', action='store_true',
-                       help='Run comprehensive dependency analysis')
-    parser.add_argument('--test', action='store_true',
-                       help='Test CLI functionality')
-    parser.add_argument('--status', action='store_true',
-                       help='Show current dependency status')
-    parser.add_argument('--enable-auto-install', action='store_true',
-                       help='Enable automatic dependency installation')
-    parser.add_argument('--venv-dir', default=str(repo_root / '.venv'),
-                       help='Virtual environment path to create/sync before running setup')
-    parser.add_argument('--no-venv-bootstrap', action='store_true',
-                       help='Skip automatic .venv creation and dependency sync')
-    
+
+    parser.add_argument("--quick", action="store_true", help="Run quick setup (core dependencies)")
+    parser.add_argument(
+        "--profile",
+        choices=["minimal", "cli", "pdf", "ml", "vectors", "web", "media", "api", "dev", "full"],
+        help="Install specific dependency profile",
+    )
+    parser.add_argument("--health", action="store_true", help="Run dependency health check")
+    parser.add_argument(
+        "--analyze", action="store_true", help="Run comprehensive dependency analysis"
+    )
+    parser.add_argument("--test", action="store_true", help="Test CLI functionality")
+    parser.add_argument("--status", action="store_true", help="Show current dependency status")
+    parser.add_argument(
+        "--enable-auto-install",
+        action="store_true",
+        help="Enable automatic dependency installation",
+    )
+    parser.add_argument(
+        "--venv-dir",
+        default=str(repo_root / ".venv"),
+        help="Virtual environment path to create/sync before running setup",
+    )
+    parser.add_argument(
+        "--no-venv-bootstrap",
+        action="store_true",
+        help="Skip automatic .venv creation and dependency sync",
+    )
+
     args = parser.parse_args()
 
     ensure_project_venv(
@@ -964,22 +1076,29 @@ Examples:
     ensure_libp2p_main()
     ensure_ipfs_accelerate_py()
     ensure_logic_provers()
-    
+
     # Enable auto-installation if requested
     if args.enable_auto_install:
-        os.environ['IPFS_DATASETS_AUTO_INSTALL'] = 'true'
+        os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "true"
         print("✅ Auto-installation enabled")
-    
+
     # Handle specific commands
     if args.quick:
         return quick_setup()
     elif args.profile:
         print(f"📦 Installing {args.profile} profile...")
         try:
-            result = subprocess.run([
-                sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'install',
-                '--profile', args.profile
-            ], check=False, text=True)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(_setup_scripts_dir() / "dependency_manager.py"),
+                    "install",
+                    "--profile",
+                    args.profile,
+                ],
+                check=False,
+                text=True,
+            )
             return result.returncode
         except Exception as e:
             print(f"❌ Profile installation failed: {e}")
@@ -997,5 +1116,6 @@ Examples:
         # Run interactive wizard
         return run_setup_wizard()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

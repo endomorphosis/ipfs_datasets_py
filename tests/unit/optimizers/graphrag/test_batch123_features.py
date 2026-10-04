@@ -5,6 +5,7 @@ Methods under test:
   - LogicValidator.is_connected(ontology)
   - LogicValidator.duplicate_relationship_count(ontology)
 """
+
 import pytest
 
 
@@ -12,8 +13,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -35,6 +38,7 @@ def _rel(src, tgt, rtype="knows"):
 # ---------------------------------------------------------------------------
 # LogicValidator.relationship_type_set
 # ---------------------------------------------------------------------------
+
 
 class TestRelationshipTypeSet:
     def test_empty(self):
@@ -63,6 +67,7 @@ class TestRelationshipTypeSet:
 # ---------------------------------------------------------------------------
 # LogicValidator.is_connected
 # ---------------------------------------------------------------------------
+
 
 class TestIsConnected:
     def test_empty_entities(self):
@@ -102,6 +107,7 @@ class TestIsConnected:
 # ---------------------------------------------------------------------------
 # LogicValidator.duplicate_relationship_count
 # ---------------------------------------------------------------------------
+
 
 class TestDuplicateRelationshipCount:
     def test_empty(self):

@@ -222,9 +222,7 @@ class TDFOLTraceWitness:
                     "kind": step.kind_code(),
                     "atom_field": _sha256_field_int(step.atom),
                     "antecedent_field": (
-                        _sha256_field_int(step.antecedent)
-                        if step.antecedent
-                        else 0
+                        _sha256_field_int(step.antecedent) if step.antecedent else 0
                     ),
                 }
             )
@@ -335,9 +333,7 @@ def build_tdfol_v1_trace_witness(
         )
 
     # Build richer step objects (kind + antecedent justification).
-    trace_steps = tuple(
-        _build_steps(parsed_axioms, atoms_in_trace)
-    )
+    trace_steps = tuple(_build_steps(parsed_axioms, atoms_in_trace))
 
     # Compute public commitments.
     th_hash = theorem_hash_hex(theorem)
@@ -443,8 +439,7 @@ def validate_tdfol_v1_trace_witness(
             rederived = derive_tdfol_v1_trace(private_axioms, witness.theorem)
             if rederived is None:
                 raise TDFOLTraceNotDerivableError(
-                    "Re-derivation from private_axioms returned None; "
-                    "the theorem is not derivable."
+                    "Re-derivation from private_axioms returned None; the theorem is not derivable."
                 )
             rederived_atoms = rederived
             witness_atoms = [s.atom for s in witness.trace_steps]
@@ -493,9 +488,7 @@ def _build_steps(
 
     for idx, atom in enumerate(atoms_in_trace):
         if atom in direct_facts:
-            steps.append(
-                TDFOLTraceStep(kind="fact", atom=atom, antecedent=None, step_index=idx)
-            )
+            steps.append(TDFOLTraceStep(kind="fact", atom=atom, antecedent=None, step_index=idx))
         else:
             # Pick the earliest antecedent already known in the trace.
             antecedent: Optional[str] = None

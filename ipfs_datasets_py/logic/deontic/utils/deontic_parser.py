@@ -341,25 +341,77 @@ _OVERRIDE_PATTERNS = [
     ("without_regard_to", rf"\bwithout regard to\s+(.+?)(?:,|[.]$|$)"),
 ]
 _TEMPORAL_PATTERNS = [
-    ("deadline", "by_date", r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)"),
+    (
+        "deadline",
+        "by_date",
+        r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)",
+    ),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})"),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})"),
-    ("deadline", "whichever_is_earlier", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+earlier)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)"),
-    ("deadline", "whichever_is_later", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+later)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)"),
-    ("deadline", "within_duration", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
-    ("deadline", "not_later_than", r"\bnot\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
-    ("deadline", "no_later_than", r"\bno\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
-    ("deadline", "not_more_than", r"\bnot\s+more\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
-    ("deadline", "no_more_than", r"\bno\s+more\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
-    ("deadline", "before_date", r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
-    ("deadline", "after_date", r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
-    ("procedure", "after_notice_and_hearing", r"\b(after\s+(?:public\s+)?notice\s+and\s+hearing)\b"),
-    ("procedure", "after_consultation", r"\b(after\s+consultation\s+with\s+(?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})\b"),
+    (
+        "deadline",
+        "whichever_is_earlier",
+        r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+earlier)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)",
+    ),
+    (
+        "deadline",
+        "whichever_is_later",
+        r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+later)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)",
+    ),
+    (
+        "deadline",
+        "within_duration",
+        r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)",
+    ),
+    (
+        "deadline",
+        "not_later_than",
+        r"\bnot\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)",
+    ),
+    (
+        "deadline",
+        "no_later_than",
+        r"\bno\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)",
+    ),
+    (
+        "deadline",
+        "not_more_than",
+        r"\bnot\s+more\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)",
+    ),
+    (
+        "deadline",
+        "no_more_than",
+        r"\bno\s+more\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)",
+    ),
+    (
+        "deadline",
+        "before_date",
+        r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
+    ),
+    (
+        "deadline",
+        "after_date",
+        r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
+    ),
+    (
+        "procedure",
+        "after_notice_and_hearing",
+        r"\b(after\s+(?:public\s+)?notice\s+and\s+hearing)\b",
+    ),
+    (
+        "procedure",
+        "after_consultation",
+        r"\b(after\s+consultation\s+with\s+(?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})\b",
+    ),
     ("period", "annually", r"\b(annually)\b"),
     ("period", "monthly", r"\b(monthly)\b"),
     ("period", "weekly", r"\b(weekly)\b"),
     ("period", "daily", r"\b(daily)\b"),
-    ("duration", "for_duration", r"\bfor\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?))"),
+    (
+        "duration",
+        "for_duration",
+        r"\bfor\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?))",
+    ),
 ]
 _DEFINITION_RE = re.compile(
     r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
@@ -744,7 +796,9 @@ def _apply_local_applicability_repair_clearance(elements: List[Dict[str, Any]]) 
         readiness["local_applicability_resolved"] = True
         readiness["deterministic_resolution"] = {
             "type": "local_scope_applicability",
-            "scopes": sorted({record.get("value", "") for record in local_records if record.get("value")}),
+            "scopes": sorted(
+                {record.get("value", "") for record in local_records if record.get("value")}
+            ),
             "reason": "local applicability subject is a self-scope reference exported as provenance",
         }
         element["export_readiness"] = readiness
@@ -808,22 +862,36 @@ def _local_applicability_reference_records(element: Dict[str, Any]) -> List[Dict
     for ref in refs:
         if not isinstance(ref, dict):
             return []
-        reference_type = str(ref.get("reference_type") or ref.get("type") or "section").strip().lower()
+        reference_type = (
+            str(ref.get("reference_type") or ref.get("type") or "section").strip().lower()
+        )
         if reference_type not in {"section", "subsection", "chapter", "title", "article", "part"}:
             return []
 
-        text = str(
-            ref.get("value")
-            or ref.get("normalized_text")
-            or ref.get("raw_text")
-            or ref.get("text")
-            or ""
-        ).strip().lower()
-        target = str(ref.get("target") or ref.get("section") or ref.get("subsection") or "").strip().lower()
+        text = (
+            str(
+                ref.get("value")
+                or ref.get("normalized_text")
+                or ref.get("raw_text")
+                or ref.get("text")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
+        target = (
+            str(ref.get("target") or ref.get("section") or ref.get("subsection") or "")
+            .strip()
+            .lower()
+        )
         scope = ""
         if target in {"this", f"this {reference_type}"}:
             scope = f"this {reference_type}"
-        elif text in {f"this {reference_type}", f"the {reference_type}", f"section this {reference_type}"}:
+        elif text in {
+            f"this {reference_type}",
+            f"the {reference_type}",
+            f"section this {reference_type}",
+        }:
             scope = f"this {reference_type}"
         if not scope:
             return []
@@ -918,11 +986,15 @@ def _local_scope_condition_scopes(element: Dict[str, Any]) -> List[str]:
     if not condition_records:
         return []
 
-    pattern = re.compile(r"^(?:this|current)\s+(section|subsection|chapter|title|article|part)$", re.IGNORECASE)
+    pattern = re.compile(
+        r"^(?:this|current)\s+(section|subsection|chapter|title|article|part)$", re.IGNORECASE
+    )
     for record in condition_records:
         if not isinstance(record, dict):
             return []
-        text = str(record.get("normalized_text") or record.get("raw_text") or record.get("value") or "").strip()
+        text = str(
+            record.get("normalized_text") or record.get("raw_text") or record.get("value") or ""
+        ).strip()
         match = pattern.match(text)
         if not match:
             return []
@@ -1012,7 +1084,9 @@ def _local_scope_exception_scopes(element: Dict[str, Any]) -> List[str]:
     for record in exception_records:
         if not isinstance(record, dict):
             return []
-        text = str(record.get("normalized_text") or record.get("raw_text") or record.get("value") or "").strip()
+        text = str(
+            record.get("normalized_text") or record.get("raw_text") or record.get("value") or ""
+        ).strip()
         match = pattern.match(text)
         if not match:
             return []
@@ -1121,31 +1195,43 @@ def _precedence_override_reference_records(element: Dict[str, Any]) -> List[Dict
     for ref in refs:
         if not isinstance(ref, dict):
             continue
-        reference_type = str(ref.get("reference_type") or ref.get("type") or "section").strip().lower()
-        value = str(ref.get("value") or ref.get("canonical_citation") or ref.get("normalized_text") or ref.get("raw_text") or "").strip()
+        reference_type = (
+            str(ref.get("reference_type") or ref.get("type") or "section").strip().lower()
+        )
+        value = str(
+            ref.get("value")
+            or ref.get("canonical_citation")
+            or ref.get("normalized_text")
+            or ref.get("raw_text")
+            or ""
+        ).strip()
         if not value:
             target = str(ref.get("target") or ref.get("section") or "").strip()
             value = f"{reference_type} {target}".strip() if target else ""
         if not value:
             continue
-        canonical = value if value.lower().startswith(reference_type + " ") else f"{reference_type} {value}"
+        canonical = (
+            value if value.lower().startswith(reference_type + " ") else f"{reference_type} {value}"
+        )
         key = canonical.lower()
         if key in seen:
             continue
         raw_text = str(ref.get("raw_text") or ref.get("text") or canonical)
-        records.append({
-            "type": reference_type,
-            "value": value,
-            "raw_text": raw_text,
-            "normalized_text": canonical,
-            "span": list(ref.get("span") or []),
-            "resolution_scope": "precedence_provenance",
-            "resolved": True,
-            "resolution_status": "resolved",
-            "precedence_only": True,
-            "same_document": False,
-            "target_exists": False,
-        })
+        records.append(
+            {
+                "type": reference_type,
+                "value": value,
+                "raw_text": raw_text,
+                "normalized_text": canonical,
+                "span": list(ref.get("span") or []),
+                "resolution_scope": "precedence_provenance",
+                "resolved": True,
+                "resolution_status": "resolved",
+                "precedence_only": True,
+                "same_document": False,
+                "target_exists": False,
+            }
+        )
         seen.add(key)
     return records
 
@@ -1207,7 +1293,9 @@ def _build_enumerated_child_element(
     action_start = action_span[0] if len(action_span) == 2 else 0
     field_spans["action_verb"] = _find_span(sentence, child["action_verb"], start=action_start)
     field_spans["action_object"] = _find_span(sentence, child["action_object"], start=action_start)
-    field_spans["action_recipient"] = _find_span(sentence, child["action_recipient"], start=action_start)
+    field_spans["action_recipient"] = _find_span(
+        sentence, child["action_recipient"], start=action_start
+    )
     child["field_spans"] = field_spans
     return _finalize_element(child)
 
@@ -1261,7 +1349,10 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
                     "level": level,
                     "value": value,
                     "heading": heading,
-                    "span": [detail_start + hierarchy_header.start(), detail_start + hierarchy_header.end()],
+                    "span": [
+                        detail_start + hierarchy_header.start(),
+                        detail_start + hierarchy_header.end(),
+                    ],
                 }
             )
             continue
@@ -1417,7 +1508,9 @@ def _hierarchy_path_replaced_by(level: str, item: str) -> bool:
 def _hierarchy_detail_replaced_by(level: str, item: Dict[str, Any]) -> bool:
     order = ["title", "division", "chapter", "article", "part"]
     item_level = item.get("level")
-    return bool(item_level in order and level in order and order.index(item_level) >= order.index(level))
+    return bool(
+        item_level in order and level in order and order.index(item_level) >= order.index(level)
+    )
 
 
 def _looks_like_section_header(line: str, match: re.Match[str]) -> bool:
@@ -1425,7 +1518,11 @@ def _looks_like_section_header(line: str, match: re.Match[str]) -> bool:
     if re.match(r"^\s*(?:sec(?:tion)?\.?|§)\b", line, re.IGNORECASE):
         return True
     heading = match.group(2).strip()
-    return bool(heading and len(line) < 140 and not re.search(r"\b(?:shall|must|may|means|includes?)\b", line, re.IGNORECASE))
+    return bool(
+        heading
+        and len(line) < 140
+        and not re.search(r"\b(?:shall|must|may|means|includes?)\b", line, re.IGNORECASE)
+    )
 
 
 def _split_segment_fragments(line: str) -> List[tuple[int, int, str, List[str]]]:
@@ -1498,9 +1595,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             _strip_leading_authorized_action_prefix(hereby_match.group("action"))
         )
         norm_type, deontic_operator = (
-            ("obligation", "O")
-            if "directed" in modal
-            else ("permission", "P")
+            ("obligation", "O") if "directed" in modal else ("permission", "P")
         )
         if action_text:
             return [
@@ -1598,7 +1693,10 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         first_subject = (elements[0].get("subject") or [""])[0]
         occupied_spans = [tuple(item.get("support_span") or []) for item in elements]
         for match in _IMPLICIT_MODAL_RE.finditer(sentence):
-            if any(len(span) == 2 and match.start() >= span[0] and match.end() <= span[1] for span in occupied_spans):
+            if any(
+                len(span) == 2 and match.start() >= span[0] and match.end() <= span[1]
+                for span in occupied_spans
+            ):
                 continue
             modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
             norm_type, deontic_operator = classify_modal(modal)
@@ -1684,7 +1782,10 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     support_span=validity_match.span(),
                     field_spans={
                         "subject": list(validity_match.span("instrument_type")),
-                        "modal": [validity_match.end("instrument_type"), validity_match.start("duration")],
+                        "modal": [
+                            validity_match.end("instrument_type"),
+                            validity_match.start("duration"),
+                        ],
                         "action": list(validity_match.span("duration")),
                     },
                     extraction_method="deterministic_instrument_validity_clause_v1",
@@ -1709,7 +1810,10 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     support_span=expiration_match.span(),
                     field_spans={
                         "subject": list(expiration_match.span("instrument_type")),
-                        "modal": [expiration_match.end("instrument_type"), expiration_match.start("anchor")],
+                        "modal": [
+                            expiration_match.end("instrument_type"),
+                            expiration_match.start("anchor"),
+                        ],
                         "action": list(expiration_match.span("anchor")),
                     },
                     extraction_method="deterministic_instrument_expiration_clause_v1",
@@ -1749,7 +1853,10 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     support_span=not_required_match.span(),
                     field_spans={
                         "subject": list(not_required_match.span("target")),
-                        "modal": [not_required_match.start("instrument"), not_required_match.start("target")],
+                        "modal": [
+                            not_required_match.start("instrument"),
+                            not_required_match.start("target"),
+                        ],
                         "action": list(not_required_match.span("instrument")),
                     },
                     extraction_method="deterministic_not_required_exemption_clause_v1",
@@ -1819,9 +1926,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         )
         if nested_subject_markers:
             nested_start = nested_subject_markers[-1].end()
-            subject_text = _clean_phrase(
-                subject_text[nested_start:]
-            )
+            subject_text = _clean_phrase(subject_text[nested_start:])
             subject_span = [
                 subject_span[0] + nested_start,
                 subject_span[1],
@@ -1865,7 +1970,10 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     support_span=non_applicability_match.span(),
                     field_spans={
                         "subject": list(non_applicability_match.span("scope_type")),
-                        "modal": [non_applicability_match.start(), non_applicability_match.start("target")],
+                        "modal": [
+                            non_applicability_match.start(),
+                            non_applicability_match.start("target"),
+                        ],
                         "action": list(non_applicability_match.span("target")),
                     },
                     extraction_method="deterministic_non_applicability_clause_v1",
@@ -1915,7 +2023,10 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     support_span=exemption_match.span(),
                     field_spans={
                         "subject": list(exemption_match.span("target")),
-                        "modal": [exemption_match.end("target"), exemption_match.start("requirement")],
+                        "modal": [
+                            exemption_match.end("target"),
+                            exemption_match.start("requirement"),
+                        ],
                         "action": list(exemption_match.span("requirement")),
                     },
                     extraction_method="deterministic_exemption_clause_v1",
@@ -1924,72 +2035,80 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         ]
 
     if _DEFINITION_RE.search(sentence_lower):
-        defined_term_match = _DEFINED_TERM_RE.search(sentence) or _UNQUOTED_DEFINED_TERM_RE.search(sentence)
-        defined_terms = [_clean_phrase(defined_term_match.group(1))] if defined_term_match else extract_legal_subject(sentence)
+        defined_term_match = _DEFINED_TERM_RE.search(sentence) or _UNQUOTED_DEFINED_TERM_RE.search(
+            sentence
+        )
+        defined_terms = (
+            [_clean_phrase(defined_term_match.group(1))]
+            if defined_term_match
+            else extract_legal_subject(sentence)
+        )
         return [
             _finalize_element(
                 {
-                "schema_version": PARSER_SCHEMA_VERSION,
-                "source_id": "",
-                "canonical_citation": "",
-                "text": sentence,
-                "support_text": sentence,
-                "support_span": [0, len(sentence)],
-                "field_spans": {
-                    "defined_term": list(defined_term_match.span(1)) if defined_term_match else [],
-                    "definition_body": _definition_body_span(sentence),
-                    "subject": list(defined_term_match.span(1)) if defined_term_match else [],
-                    "modal": [],
-                    "action": [0, len(sentence)],
-                    "action_verb": [],
-                    "action_object": [],
-                    "action_recipient": [],
-                },
-                "norm_type": "definition",
-                "deontic_operator": "DEF",
-                "modal": "definition",
-                "subject": defined_terms,
-                "action": [sentence],
-                "defined_term": defined_terms[0] if defined_terms else "",
-                "definition_body": extract_definition_body(sentence),
-                "conditions": extract_conditions(sentence),
-                "condition_details": extract_condition_details(sentence),
-                "temporal_constraints": extract_temporal_constraints(sentence),
-                "temporal_constraint_details": extract_temporal_constraint_details(sentence),
-                "exceptions": extract_exceptions(sentence),
-                "exception_details": extract_exception_details(sentence),
-                "override_clauses": extract_override_clauses(sentence),
-                "override_clause_details": extract_override_clause_details(sentence),
-                "cross_references": extract_cross_references(sentence),
-                "cross_reference_details": extract_cross_reference_details(sentence),
-                "resolved_cross_references": [],
-                "enforcement_links": [],
-                "conflict_links": [],
-                "enumerated_items": extract_enumerated_items(sentence),
-                "defined_term_refs": [],
-                "definition_scope": infer_definition_scope(sentence),
-                "ontology_terms": extract_ontology_terms(sentence),
-                "formal_terms": {},
-                "llm_repair": {},
-                "export_readiness": {},
-                "logic_frame": {},
-                "legal_frame": {},
-                "kg_relationship_hints": [],
-                "monetary_amounts": extract_monetary_amounts(sentence),
-                "monetary_amount_details": extract_monetary_amount_details(sentence),
-                "penalty": {},
-                "procedure": {},
-                "actor_type": classify_legal_entity(defined_terms[0] if defined_terms else ""),
-                "entity_type": classify_legal_entity(defined_terms[0] if defined_terms else ""),
-                "action_verb": "",
-                "action_object": "",
-                "action_recipient": "",
-                "section_context": {},
-                "hierarchy_path": [],
-                "hierarchy_details": [],
-                "document_type": document_type,
-                "extraction_method": "deterministic_definition_v2",
-                "confidence_floor": 0.25,
+                    "schema_version": PARSER_SCHEMA_VERSION,
+                    "source_id": "",
+                    "canonical_citation": "",
+                    "text": sentence,
+                    "support_text": sentence,
+                    "support_span": [0, len(sentence)],
+                    "field_spans": {
+                        "defined_term": list(defined_term_match.span(1))
+                        if defined_term_match
+                        else [],
+                        "definition_body": _definition_body_span(sentence),
+                        "subject": list(defined_term_match.span(1)) if defined_term_match else [],
+                        "modal": [],
+                        "action": [0, len(sentence)],
+                        "action_verb": [],
+                        "action_object": [],
+                        "action_recipient": [],
+                    },
+                    "norm_type": "definition",
+                    "deontic_operator": "DEF",
+                    "modal": "definition",
+                    "subject": defined_terms,
+                    "action": [sentence],
+                    "defined_term": defined_terms[0] if defined_terms else "",
+                    "definition_body": extract_definition_body(sentence),
+                    "conditions": extract_conditions(sentence),
+                    "condition_details": extract_condition_details(sentence),
+                    "temporal_constraints": extract_temporal_constraints(sentence),
+                    "temporal_constraint_details": extract_temporal_constraint_details(sentence),
+                    "exceptions": extract_exceptions(sentence),
+                    "exception_details": extract_exception_details(sentence),
+                    "override_clauses": extract_override_clauses(sentence),
+                    "override_clause_details": extract_override_clause_details(sentence),
+                    "cross_references": extract_cross_references(sentence),
+                    "cross_reference_details": extract_cross_reference_details(sentence),
+                    "resolved_cross_references": [],
+                    "enforcement_links": [],
+                    "conflict_links": [],
+                    "enumerated_items": extract_enumerated_items(sentence),
+                    "defined_term_refs": [],
+                    "definition_scope": infer_definition_scope(sentence),
+                    "ontology_terms": extract_ontology_terms(sentence),
+                    "formal_terms": {},
+                    "llm_repair": {},
+                    "export_readiness": {},
+                    "logic_frame": {},
+                    "legal_frame": {},
+                    "kg_relationship_hints": [],
+                    "monetary_amounts": extract_monetary_amounts(sentence),
+                    "monetary_amount_details": extract_monetary_amount_details(sentence),
+                    "penalty": {},
+                    "procedure": {},
+                    "actor_type": classify_legal_entity(defined_terms[0] if defined_terms else ""),
+                    "entity_type": classify_legal_entity(defined_terms[0] if defined_terms else ""),
+                    "action_verb": "",
+                    "action_object": "",
+                    "action_recipient": "",
+                    "section_context": {},
+                    "hierarchy_path": [],
+                    "hierarchy_details": [],
+                    "document_type": document_type,
+                    "extraction_method": "deterministic_definition_v2",
+                    "confidence_floor": 0.25,
                 }
             )
         ]
@@ -2346,7 +2465,9 @@ def _build_element(
     if complex_split[0]:
         complex_mental_state, action_text = complex_split
         action_start = 0
-        raw_action_span = list(field_spans.get("action") or _find_span(sentence, original_action_text))
+        raw_action_span = list(
+            field_spans.get("action") or _find_span(sentence, original_action_text)
+        )
         if len(raw_action_span) == 2:
             action_start = raw_action_span[0]
         mental_state_span = _find_span(sentence, complex_mental_state, start=action_start)
@@ -2424,7 +2545,11 @@ def _complete_field_spans(
     raw_subject_span = list(field_spans.get("subject") or [])
     if len(raw_subject_span) == 2:
         raw_subject = sentence[raw_subject_span[0] : raw_subject_span[1]]
-        subject_span = raw_subject_span if raw_subject.strip().lower() == subject_text.lower() else _find_span(sentence, subject_text, start=raw_subject_span[0])
+        subject_span = (
+            raw_subject_span
+            if raw_subject.strip().lower() == subject_text.lower()
+            else _find_span(sentence, subject_text, start=raw_subject_span[0])
+        )
     else:
         subject_span = _find_span(sentence, subject_text)
     spans = {
@@ -2467,7 +2592,9 @@ def _definition_body_span(sentence: str) -> List[int]:
 def _impersonal_field_spans(match: re.Match[str]) -> Dict[str, List[int]]:
     if match.group("unlawful"):
         return {
-            "subject": list(match.span("unlawful_subject")) if match.group("unlawful_subject") else [],
+            "subject": list(match.span("unlawful_subject"))
+            if match.group("unlawful_subject")
+            else [],
             "modal": list(match.span("unlawful")),
             "action": list(match.span("unlawful_action")),
         }
@@ -2563,7 +2690,9 @@ def _apply_definition_context(elements: List[Dict[str, Any]]) -> None:
                     }
                 )
             element["kg_relationship_hints"] = existing
-            element["ontology_terms"] = merge_ontology_terms(element.get("ontology_terms", []), refs)
+            element["ontology_terms"] = merge_ontology_terms(
+                element.get("ontology_terms", []), refs
+            )
             _finalize_element(element)
 
 
@@ -2604,7 +2733,9 @@ def build_source_id(element: Dict[str, Any]) -> str:
         "operator": element.get("deontic_operator", ""),
         "text": element.get("text", ""),
     }
-    digest = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
     return f"deontic:{digest[:24]}"
 
 
@@ -2623,7 +2754,9 @@ def build_formal_terms(element: Dict[str, Any]) -> Dict[str, Any]:
         "object_predicate": normalize_predicate_name(element.get("action_object", "")),
         "recipient_id": normalize_symbol(element.get("action_recipient", "")),
         "norm_predicate": normalize_predicate_name(element.get("norm_type", "")),
-        "category_predicate": normalize_predicate_name((element.get("legal_frame") or {}).get("category", "")),
+        "category_predicate": normalize_predicate_name(
+            (element.get("legal_frame") or {}).get("category", "")
+        ),
         "defined_term_id": normalize_symbol(element.get("defined_term", "")),
     }
 
@@ -2639,7 +2772,10 @@ def _definition_applies_to_element(definition: Dict[str, Any], element: Dict[str
     if scope_type == "section":
         definition_section = (definition.get("section_context") or {}).get("section")
         element_section = (element.get("section_context") or {}).get("section")
-        return bool(definition_section and definition_section == element_section) or not definition_section
+        return (
+            bool(definition_section and definition_section == element_section)
+            or not definition_section
+        )
     if scope_type in {"title", "chapter"}:
         return _same_hierarchy_scope(definition, element, scope_type)
     return True
@@ -2734,12 +2870,18 @@ def resolve_cross_references(
     return resolved
 
 
-def _hierarchy_reference_target(element: Dict[str, Any], ref_type: str, value: str) -> Dict[str, Any]:
+def _hierarchy_reference_target(
+    element: Dict[str, Any], ref_type: str, value: str
+) -> Dict[str, Any]:
     if _is_relative_reference(value):
         return _relative_reference_target(element, ref_type)
     if ref_type in {"chapter", "title"}:
         current_value = _hierarchy_value(element, ref_type)
-        return _relative_reference_target(element, ref_type) if current_value and current_value.lower() == value.lower() else {}
+        return (
+            _relative_reference_target(element, ref_type)
+            if current_value and current_value.lower() == value.lower()
+            else {}
+        )
     normalized_value = str(value or "").strip().lower()
     candidates = [f"{ref_type}:{normalized_value}"]
     if ref_type == "subsection":
@@ -2757,7 +2899,8 @@ def _hierarchy_reference_target(element: Dict[str, Any], ref_type: str, value: s
         "hierarchy_details": [
             item
             for item in element.get("hierarchy_details") or []
-            if item.get("level") in {ref_type, "paragraph"} and str(item.get("value") or "").lower() == normalized_value
+            if item.get("level") in {ref_type, "paragraph"}
+            and str(item.get("value") or "").lower() == normalized_value
         ],
         "source_span": list(element.get("source_span") or []),
     }
@@ -2807,9 +2950,15 @@ def _relative_reference_target(element: Dict[str, Any], ref_type: str) -> Dict[s
         }
     if ref_type in {"subsection", "paragraph"}:
         prefix = f"{ref_type}:"
-        path = [item for item in element.get("hierarchy_path") or [] if str(item).startswith(prefix)]
+        path = [
+            item for item in element.get("hierarchy_path") or [] if str(item).startswith(prefix)
+        ]
         if ref_type == "subsection" and not path:
-            path = [item for item in element.get("hierarchy_path") or [] if str(item).startswith("paragraph:")]
+            path = [
+                item
+                for item in element.get("hierarchy_path") or []
+                if str(item).startswith("paragraph:")
+            ]
         if not path:
             return {}
         section_context = element.get("section_context") or {}
@@ -2835,14 +2984,22 @@ def _relative_reference_target(element: Dict[str, Any], ref_type: str) -> Dict[s
     return {
         "section": "",
         "heading": detail.get("heading", ""),
-        "hierarchy_path": [item for item in element.get("hierarchy_path") or [] if str(item).startswith(prefix)],
+        "hierarchy_path": [
+            item for item in element.get("hierarchy_path") or [] if str(item).startswith(prefix)
+        ],
         "hierarchy_details": [detail] if detail else [],
         "source_span": list(detail.get("span") or []),
     }
 
 
 def _is_relative_reference(value: str) -> bool:
-    return bool(re.match(r"^this\s+(?:section|subsection|paragraph|chapter|title)$", str(value or ""), flags=re.IGNORECASE))
+    return bool(
+        re.match(
+            r"^this\s+(?:section|subsection|paragraph|chapter|title)$",
+            str(value or ""),
+            flags=re.IGNORECASE,
+        )
+    )
 
 
 def _normalize_section_ref(value: str) -> str:
@@ -2856,9 +3013,14 @@ def _unresolved_cross_references(element: Dict[str, Any]) -> List[Dict[str, Any]
         return [
             ref
             for ref in resolved
-            if ref.get("type") in internal_ref_types and ref.get("resolution_status") == "unresolved"
+            if ref.get("type") in internal_ref_types
+            and ref.get("resolution_status") == "unresolved"
         ]
-    return [ref for ref in element.get("cross_reference_details") or [] if ref.get("type") in internal_ref_types]
+    return [
+        ref
+        for ref in element.get("cross_reference_details") or []
+        if ref.get("type") in internal_ref_types
+    ]
 
 
 def _apply_document_penalty_context(elements: List[Dict[str, Any]], source_text: str) -> None:
@@ -3045,7 +3207,17 @@ def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
             type_errors.append(field)
     if "section_context" in element and not isinstance(element["section_context"], dict):
         type_errors.append("section_context")
-    for field in ["definition_scope", "export_readiness", "field_spans", "formal_terms", "legal_frame", "logic_frame", "llm_repair", "penalty", "procedure"]:
+    for field in [
+        "definition_scope",
+        "export_readiness",
+        "field_spans",
+        "formal_terms",
+        "legal_frame",
+        "logic_frame",
+        "llm_repair",
+        "penalty",
+        "procedure",
+    ]:
         if field in element and not isinstance(element[field], dict):
             type_errors.append(field)
     if "support_span" in element and len(element["support_span"]) != 2:
@@ -3083,20 +3255,39 @@ def migrate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
     migrated.setdefault("enumerated_items", [])
     for field, default in LEGACY_SCHEMA_DEFAULTS.items():
         migrated.setdefault(field, list(default) if isinstance(default, list) else dict(default))
-    migrated["condition_details"] = migrated["condition_details"] or _legacy_clause_details(migrated.get("conditions", []), "condition")
-    migrated["exception_details"] = migrated["exception_details"] or _legacy_clause_details(migrated.get("exceptions", []), "exception")
-    migrated["override_clause_details"] = migrated["override_clause_details"] or _legacy_clause_details(migrated.get("override_clauses", []), "override")
-    migrated["cross_reference_details"] = migrated["cross_reference_details"] or _legacy_cross_reference_details(migrated.get("cross_references", []))
-    migrated["temporal_constraint_details"] = migrated["temporal_constraint_details"] or _legacy_temporal_details(migrated.get("temporal_constraints", []))
+    migrated["condition_details"] = migrated["condition_details"] or _legacy_clause_details(
+        migrated.get("conditions", []), "condition"
+    )
+    migrated["exception_details"] = migrated["exception_details"] or _legacy_clause_details(
+        migrated.get("exceptions", []), "exception"
+    )
+    migrated["override_clause_details"] = migrated[
+        "override_clause_details"
+    ] or _legacy_clause_details(migrated.get("override_clauses", []), "override")
+    migrated["cross_reference_details"] = migrated[
+        "cross_reference_details"
+    ] or _legacy_cross_reference_details(migrated.get("cross_references", []))
+    migrated["temporal_constraint_details"] = migrated[
+        "temporal_constraint_details"
+    ] or _legacy_temporal_details(migrated.get("temporal_constraints", []))
     migrated.setdefault("temporal_constraints", [])
-    migrated["actor_type"] = migrated.get("actor_type") or classify_legal_entity((migrated.get("subject") or [""])[0] if migrated.get("subject") else "")
+    migrated["actor_type"] = migrated.get("actor_type") or classify_legal_entity(
+        (migrated.get("subject") or [""])[0] if migrated.get("subject") else ""
+    )
     migrated["entity_type"] = migrated.get("entity_type") or migrated["actor_type"]
     action_text = (migrated.get("action") or [""])[0] if migrated.get("action") else ""
     migrated["action_verb"] = migrated.get("action_verb") or _first_verb(action_text)
     migrated["action_object"] = migrated.get("action_object") or _action_object(action_text)
-    migrated["action_recipient"] = migrated.get("action_recipient") or extract_action_recipient(action_text)
+    migrated["action_recipient"] = migrated.get("action_recipient") or extract_action_recipient(
+        action_text
+    )
     if not migrated.get("field_spans"):
-        migrated["field_spans"] = _complete_field_spans(text, (migrated.get("subject") or [""])[0] if migrated.get("subject") else "", action_text, {})
+        migrated["field_spans"] = _complete_field_spans(
+            text,
+            (migrated.get("subject") or [""])[0] if migrated.get("subject") else "",
+            action_text,
+            {},
+        )
     return _finalize_element(migrated)
 
 
@@ -3304,14 +3495,22 @@ def build_export_readiness(element: Dict[str, Any]) -> Dict[str, Any]:
     allowed_exports = ["canonical_parquet", "bm25", "embeddings", "knowledge_graph"]
     formal_logic_targets: List[str] = []
     requires_validation: List[str] = []
-    has_temporal_or_procedure = bool(element.get("temporal_constraint_details") or element.get("procedure"))
+    has_temporal_or_procedure = bool(
+        element.get("temporal_constraint_details") or element.get("procedure")
+    )
 
     if element.get("schema_valid") is False:
         allowed_exports = []
         requires_validation.append("schema_repair")
     elif blockers:
         if has_temporal_or_procedure:
-            formal_logic_targets = ["deontic", "fol", "frame_logic", "temporal_logic", "event_calculus"]
+            formal_logic_targets = [
+                "deontic",
+                "fol",
+                "frame_logic",
+                "temporal_logic",
+                "event_calculus",
+            ]
         allowed_exports.append("llm_repair_queue")
         requires_validation.extend(["llm_router_repair", "human_or_llm_semantic_review"])
     else:
@@ -3474,9 +3673,14 @@ def classify_legal_frame(element: Dict[str, Any]) -> str:
         return "violation"
     if element.get("entity_type") == "legal_event" and subject in _LEGAL_EVENT_ENTITIES:
         return "procedure"
-    if re.search(r"\b(?:appeal|appealed|hearing|notice|decision|inspect|inspection|revoke|revocation|suspend|suspension)\b", action):
+    if re.search(
+        r"\b(?:appeal|appealed|hearing|notice|decision|inspect|inspection|revoke|revocation|suspend|suspension)\b",
+        action,
+    ):
         return "procedure"
-    if subject in _LEGAL_INSTRUMENT_ENTITIES or any(term in text for term in ["permit", "license", "certificate", "registration"]):
+    if subject in _LEGAL_INSTRUMENT_ENTITIES or any(
+        term in text for term in ["permit", "license", "certificate", "registration"]
+    ):
         return "permit_or_license"
     if extract_legal_instrument_target(action):
         return "permit_or_license"
@@ -3515,7 +3719,18 @@ def extract_monetary_amount_details(text: str) -> List[Dict[str, Any]]:
 def extract_penalty_details(text: str, action: str = "") -> Dict[str, Any]:
     combined = f"{text} {action}".strip()
     lower = combined.lower()
-    if not any(term in lower for term in ["fine", "penalty", "punishable", "imprison", "violation", "offense", "infraction"]):
+    if not any(
+        term in lower
+        for term in [
+            "fine",
+            "penalty",
+            "punishable",
+            "imprison",
+            "violation",
+            "offense",
+            "infraction",
+        ]
+    ):
         return {}
     amounts = extract_monetary_amount_details(combined)
     minimum_amount = _penalty_bound(combined, "minimum")
@@ -3554,7 +3769,9 @@ def classify_sanction_class(text: str) -> str:
 
 def classify_sanction_modality(text: str) -> str:
     lower = str(text or "").lower()
-    if re.search(r"\bmay\s+(?:be\s+)?(?:impose|imposed|punish|punished|fine|fined|assess|assessed)\b", lower):
+    if re.search(
+        r"\bmay\s+(?:be\s+)?(?:impose|imposed|punish|punished|fine|fined|assess|assessed)\b", lower
+    ):
         return "discretionary"
     if re.search(r"\b(?:is|shall\s+be)\s+(?:punishable\s+by|subject\s+to)\b", lower):
         return "mandatory"
@@ -3582,7 +3799,10 @@ def _penalty_bound(text: str, bound: str) -> Dict[str, Any]:
 
 def extract_penalty_recurrence(text: str) -> Dict[str, Any]:
     patterns = [
-        ("per_day", r"\b(?:each|every)\s+day\s+(?:constitutes|is)\s+(?:a\s+)?separate\s+violation\b"),
+        (
+            "per_day",
+            r"\b(?:each|every)\s+day\s+(?:constitutes|is)\s+(?:a\s+)?separate\s+violation\b",
+        ),
         ("per_violation", r"\b(?:per|for each)\s+violation\b"),
         ("per_offense", r"\b(?:per|for each)\s+offense\b"),
     ]
@@ -3628,7 +3848,9 @@ def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
             {
                 "event": event,
                 "order": index + 1,
-                "mentions": [mention for mention in event_mentions if mention.get("event") == event],
+                "mentions": [
+                    mention for mention in event_mentions if mention.get("event") == event
+                ],
                 "relations": [
                     relation
                     for relation in event_relations
@@ -3662,10 +3884,14 @@ def extract_procedure_event_mentions(text: str) -> List[Dict[str, Any]]:
                     "span": [match.start(), match.end()],
                 }
             )
-    return sorted(mentions, key=lambda item: (item["span"][0], _PROCEDURE_EVENT_ORDER.index(item["event"])))
+    return sorted(
+        mentions, key=lambda item: (item["span"][0], _PROCEDURE_EVENT_ORDER.index(item["event"]))
+    )
 
 
-def extract_procedure_event_relations(text: str, action: str = "", events: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+def extract_procedure_event_relations(
+    text: str, action: str = "", events: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
     """Extract deterministic event ordering relations from procedural connectors."""
     combined = str(text or "")
     known_events = events or [
@@ -3676,7 +3902,9 @@ def extract_procedure_event_relations(text: str, action: str = "", events: Optio
     action_event = _infer_event_from_phrase(action) or (known_events[-1] if known_events else "")
     relations: List[Dict[str, Any]] = []
 
-    def add_relation(event: str, relation: str, anchor_event: str, match: re.Match[str], raw_text: str = "") -> None:
+    def add_relation(
+        event: str, relation: str, anchor_event: str, match: re.Match[str], raw_text: str = ""
+    ) -> None:
         if not event and not anchor_event:
             return
         relation_record = {
@@ -3689,16 +3917,26 @@ def extract_procedure_event_relations(text: str, action: str = "", events: Optio
         if relation_record not in relations:
             relations.append(relation_record)
 
-    for match in re.finditer(r"\bupon\s+receipt\s+of\s+(?P<object>[^,.;]+)", combined, flags=re.IGNORECASE):
+    for match in re.finditer(
+        r"\bupon\s+receipt\s+of\s+(?P<object>[^,.;]+)", combined, flags=re.IGNORECASE
+    ):
         anchor_event = _infer_event_from_phrase(match.group("object")) or "receipt"
         add_relation(action_event, "triggered_by_receipt_of", anchor_event, match)
         add_relation("receipt", "receives", anchor_event, match)
 
-    for match in re.finditer(r"\bafter\s+(?P<events>[^,.;]+?)(?=\s+(?:and\s+)?(?:shall|must|may|before|within)\b|[,.;]|$)", combined, flags=re.IGNORECASE):
+    for match in re.finditer(
+        r"\bafter\s+(?P<events>[^,.;]+?)(?=\s+(?:and\s+)?(?:shall|must|may|before|within)\b|[,.;]|$)",
+        combined,
+        flags=re.IGNORECASE,
+    ):
         for anchor_event in _events_from_phrase(match.group("events")):
             add_relation(action_event, "after", anchor_event, match)
 
-    for match in re.finditer(r"\bbefore\s+(?P<events>[^,.;]+?)(?=\s+(?:and\s+)?(?:shall|must|may|after|within)\b|[,.;]|$)", combined, flags=re.IGNORECASE):
+    for match in re.finditer(
+        r"\bbefore\s+(?P<events>[^,.;]+?)(?=\s+(?:and\s+)?(?:shall|must|may|after|within)\b|[,.;]|$)",
+        combined,
+        flags=re.IGNORECASE,
+    ):
         for anchor_event in _events_from_phrase(match.group("events")):
             add_relation(action_event, "before", anchor_event, match)
 
@@ -3707,13 +3945,20 @@ def extract_procedure_event_relations(text: str, action: str = "", events: Optio
 
 def _infer_trigger_event(events: List[str], relations: List[Dict[str, Any]]) -> str:
     for relation in relations:
-        if relation.get("relation") in {"triggered_by_receipt_of", "after"} and relation.get("anchor_event") in events:
+        if (
+            relation.get("relation") in {"triggered_by_receipt_of", "after"}
+            and relation.get("anchor_event") in events
+        ):
             return relation["anchor_event"]
     return events[0] if events else ""
 
 
 def _infer_terminal_event(events: List[str], relations: List[Dict[str, Any]]) -> str:
-    before_events = [relation.get("anchor_event") for relation in relations if relation.get("relation") == "before"]
+    before_events = [
+        relation.get("anchor_event")
+        for relation in relations
+        if relation.get("relation") == "before"
+    ]
     for event in reversed(events):
         if event not in before_events:
             return event
@@ -3779,23 +4024,57 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
             }
         )
     if element.get("action_recipient"):
-        relationships.append({"subject": subject, "predicate": "directedTo", "object": element["action_recipient"]})
+        relationships.append(
+            {"subject": subject, "predicate": "directedTo", "object": element["action_recipient"]}
+        )
     procedure = element.get("procedure") or {}
     events = set(procedure.get("events") or [])
     if "notice" in events:
-        relationships.append({"subject": subject, "predicate": "providesNoticeTo", "object": element.get("action_recipient") or action})
+        relationships.append(
+            {
+                "subject": subject,
+                "predicate": "providesNoticeTo",
+                "object": element.get("action_recipient") or action,
+            }
+        )
     if "hearing" in events:
-        relationships.append({"subject": subject, "predicate": "holdsHearingFor", "object": element.get("action_recipient") or action})
+        relationships.append(
+            {
+                "subject": subject,
+                "predicate": "holdsHearingFor",
+                "object": element.get("action_recipient") or action,
+            }
+        )
     if "decision" in events:
         relationships.append({"subject": subject, "predicate": "issuesDecision", "object": action})
     if "appeal" in events:
-        relationships.append({"subject": action or subject, "predicate": "mayAppealDecision", "object": subject})
+        relationships.append(
+            {"subject": action or subject, "predicate": "mayAppealDecision", "object": subject}
+        )
     if "inspection" in events:
-        relationships.append({"subject": subject, "predicate": "mayInspect", "object": element.get("action_object") or action})
+        relationships.append(
+            {
+                "subject": subject,
+                "predicate": "mayInspect",
+                "object": element.get("action_object") or action,
+            }
+        )
     if "revocation" in events:
-        relationships.append({"subject": subject, "predicate": "mayRevokeInstrument", "object": instrument_target or element.get("action_object") or action})
+        relationships.append(
+            {
+                "subject": subject,
+                "predicate": "mayRevokeInstrument",
+                "object": instrument_target or element.get("action_object") or action,
+            }
+        )
     if "suspension" in events:
-        relationships.append({"subject": subject, "predicate": "maySuspendInstrument", "object": instrument_target or element.get("action_object") or action})
+        relationships.append(
+            {
+                "subject": subject,
+                "predicate": "maySuspendInstrument",
+                "object": instrument_target or element.get("action_object") or action,
+            }
+        )
     for link in element.get("enforcement_links", []):
         if link.get("type") == "defines_violation_of":
             relationships.append(
@@ -3825,17 +4104,37 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
     if resolved_refs:
         for ref in resolved_refs:
             if ref.get("type") == "section_range":
-                predicate = "referencesResolvedSectionRange" if ref.get("resolution_status") == "resolved" else "referencesUnresolvedSectionRange"
-                relationships.append({"subject": "law", "predicate": predicate, "object": ref.get("value", "")})
+                predicate = (
+                    "referencesResolvedSectionRange"
+                    if ref.get("resolution_status") == "resolved"
+                    else "referencesUnresolvedSectionRange"
+                )
+                relationships.append(
+                    {"subject": "law", "predicate": predicate, "object": ref.get("value", "")}
+                )
                 continue
             target = ref.get("target_section") or ref.get("value", "")
-            predicate = "referencesResolvedSection" if ref.get("resolution_status") == "resolved" else "referencesUnresolvedSection"
-            relationships.append({"subject": "law", "predicate": predicate, "object": f"{ref.get('type')}:{target}"})
+            predicate = (
+                "referencesResolvedSection"
+                if ref.get("resolution_status") == "resolved"
+                else "referencesUnresolvedSection"
+            )
+            relationships.append(
+                {"subject": "law", "predicate": predicate, "object": f"{ref.get('type')}:{target}"}
+            )
     else:
         for ref in element.get("cross_references", []):
-            relationships.append({"subject": "law", "predicate": "references", "object": f"{ref.get('type')}:{ref.get('value')}"})
+            relationships.append(
+                {
+                    "subject": "law",
+                    "predicate": "references",
+                    "object": f"{ref.get('type')}:{ref.get('value')}",
+                }
+            )
     for amount in element.get("monetary_amounts", []):
-        relationships.append({"subject": "law", "predicate": "mentionsAmount", "object": amount.get("raw_text", "")})
+        relationships.append(
+            {"subject": "law", "predicate": "mentionsAmount", "object": amount.get("raw_text", "")}
+        )
     return relationships
 
 
@@ -4148,10 +4447,14 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     if element.get("override_clauses"):
         warnings.append("override_clause_requires_precedence_review")
         score -= 0.05
-    if (element.get("legal_frame") or {}).get("category") == "penalty" and not element.get("penalty"):
+    if (element.get("legal_frame") or {}).get("category") == "penalty" and not element.get(
+        "penalty"
+    ):
         warnings.append("penalty_requires_amount_or_sanction_review")
         score -= 0.05
-    if (element.get("legal_frame") or {}).get("category") == "procedure" and element.get("temporal_constraints"):
+    if (element.get("legal_frame") or {}).get("category") == "procedure" and element.get(
+        "temporal_constraints"
+    ):
         warnings.append("procedure_timeline_requires_event_order_review")
         score -= 0.04
     if norm_type != "purpose" and len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
@@ -4213,14 +4516,10 @@ def extract_legal_subject(sentence: str) -> List[str]:
 def extract_legal_action(sentence: str) -> List[str]:
     actions: List[str] = []
 
-    modal_verb_pattern = (
-        r"(?:must|shall|may|can|cannot|must not|shall not)\s+(?:not\s+)?(\w+(?:\s+\w+)*?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
-    )
+    modal_verb_pattern = r"(?:must|shall|may|can|cannot|must not|shall not)\s+(?:not\s+)?(\w+(?:\s+\w+)*?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
     actions.extend([m.strip() for m in re.findall(modal_verb_pattern, sentence.lower())])
 
-    prohibited_pattern = (
-        r"(?:prohibited from|prohibited to|forbidden to)\s+([^.]+?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
-    )
+    prohibited_pattern = r"(?:prohibited from|prohibited to|forbidden to)\s+([^.]+?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)"
     actions.extend([m.strip() for m in re.findall(prohibited_pattern, sentence.lower())])
 
     legal_action_patterns = [
@@ -4251,13 +4550,19 @@ def extract_override_clause_details(sentence: str) -> List[Dict[str, Any]]:
 
 
 def extract_cross_references(sentence: str) -> List[Dict[str, str]]:
-    return [{"type": item["type"], "value": item["value"]} for item in extract_cross_reference_details(sentence)]
+    return [
+        {"type": item["type"], "value": item["value"]}
+        for item in extract_cross_reference_details(sentence)
+    ]
 
 
 def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
     refs: List[Dict[str, Any]] = []
     patterns = [
-        ("section_range", r"\bsections?\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\s+(?:through|thru|to|-)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
+        (
+            "section_range",
+            r"\bsections?\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\s+(?:through|thru|to|-)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)",
+        ),
         ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"§\s*([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"\b(this\s+section)\b"),
@@ -4367,7 +4672,10 @@ def normalize_temporal_value(value: str) -> Dict[str, Any]:
     """Normalize a temporal phrase into atoms useful for temporal logic export."""
     normalized = str(value or "").strip().lower()
     duration = normalized.split(" after ", 1)[0].split(" before ", 1)[0].strip()
-    match = re.match(r"(?P<quantity>\d+)\s+(?:(?P<calendar>business|calendar)\s+)?(?P<unit>days?|weeks?|months?|years?)\b", duration)
+    match = re.match(
+        r"(?P<quantity>\d+)\s+(?:(?P<calendar>business|calendar)\s+)?(?P<unit>days?|weeks?|months?|years?)\b",
+        duration,
+    )
     anchor_event = ""
     direction = ""
     if " after " in normalized:
@@ -4504,7 +4812,11 @@ def build_procedure_event_records(element: Dict[str, Any]) -> List[Dict[str, Any
                 "event_mentions": item.get("mentions", []),
                 "event_relations": relations,
                 "relation_types": [relation.get("relation", "") for relation in relations],
-                "anchor_events": [relation.get("anchor_event", "") for relation in relations if relation.get("anchor_event")],
+                "anchor_events": [
+                    relation.get("anchor_event", "")
+                    for relation in relations
+                    if relation.get("anchor_event")
+                ],
                 "temporal_anchors": anchors,
                 "actor_id": (element.get("formal_terms") or {}).get("actor_id", ""),
                 "action_predicate": (element.get("formal_terms") or {}).get("action_predicate", ""),
@@ -4640,7 +4952,9 @@ def build_reference_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
                     "target_exists": bool(ref.get("target_exists")),
                     "target_section": target_section,
                     "target_heading": target.get("heading", "") if isinstance(target, dict) else "",
-                    "target_hierarchy_path": target.get("hierarchy_path", []) if isinstance(target, dict) else [],
+                    "target_hierarchy_path": target.get("hierarchy_path", [])
+                    if isinstance(target, dict)
+                    else [],
                     "span": ref.get("span", []),
                     "provenance": {
                         "text": element.get("text", ""),
@@ -4793,7 +5107,9 @@ def build_export_record_bundle(element: Dict[str, Any]) -> Dict[str, Any]:
         "procedure_event_records": build_procedure_event_records(element),
         "sanction_records": build_sanction_records(element),
         "ontology_entities": build_ontology_entity_records(element),
-        "repair_queue": [build_repair_queue_record(element)] if (element.get("llm_repair") or {}).get("required") else [],
+        "repair_queue": [build_repair_queue_record(element)]
+        if (element.get("llm_repair") or {}).get("required")
+        else [],
     }
 
 
@@ -4827,7 +5143,9 @@ def build_document_export_manifest(
 ) -> Dict[str, Any]:
     """Build deterministic metadata for a parsed document export."""
     tables = tables or build_document_export_tables(elements)
-    source_ids = [element.get("source_id") or build_source_id(element) for element in elements or []]
+    source_ids = [
+        element.get("source_id") or build_source_id(element) for element in elements or []
+    ]
     table_counts = {name: len(rows or []) for name, rows in tables.items()}
     identity = {
         "schema_version": PARSER_SCHEMA_VERSION,
@@ -4844,9 +5162,17 @@ def build_document_export_manifest(
         "source_ids": source_ids,
         "table_counts": table_counts,
         "quality": {
-            "proof_candidates": sum(1 for element in elements or [] if (element.get("export_readiness") or {}).get("proof_ready")),
-            "repair_required": sum(1 for element in elements or [] if (element.get("llm_repair") or {}).get("required")),
-            "schema_valid": sum(1 for element in elements or [] if element.get("schema_valid") is True),
+            "proof_candidates": sum(
+                1
+                for element in elements or []
+                if (element.get("export_readiness") or {}).get("proof_ready")
+            ),
+            "repair_required": sum(
+                1 for element in elements or [] if (element.get("llm_repair") or {}).get("required")
+            ),
+            "schema_valid": sum(
+                1 for element in elements or [] if element.get("schema_valid") is True
+            ),
         },
     }
 
@@ -4861,7 +5187,9 @@ def validate_document_export_tables(tables: Dict[str, List[Any]]) -> Dict[str, A
         errors.extend([f"missing_table:{name}" for name in missing_tables])
     canonical = list((tables or {}).get("canonical") or [])
     canonical_source_ids = {row.get("source_id") for row in canonical if isinstance(row, dict)}
-    if any(not source_id for source_id in canonical_source_ids) or len(canonical_source_ids) != len(canonical):
+    if any(not source_id for source_id in canonical_source_ids) or len(canonical_source_ids) != len(
+        canonical
+    ):
         errors.append("canonical_source_ids_missing_or_not_unique")
     for table_name, rows in (tables or {}).items():
         spec = EXPORT_TABLE_SPECS.get(table_name, {})
@@ -4878,7 +5206,11 @@ def validate_document_export_tables(tables: Dict[str, List[Any]]) -> Dict[str, A
                     errors.append(f"{table_name}[{index}]_missing_{primary_key}")
             if spec.get("requires_source_id") and not row.get("source_id"):
                 errors.append(f"{table_name}[{index}]_missing_source_id")
-            if table_name != "canonical" and row.get("source_id") and row.get("source_id") not in canonical_source_ids:
+            if (
+                table_name != "canonical"
+                and row.get("source_id")
+                and row.get("source_id") not in canonical_source_ids
+            ):
                 warnings.append(f"{table_name}[{index}]_source_id_not_in_canonical")
         if primary_key and len(set(primary_values)) != len(primary_values):
             errors.append(f"{table_name}_{primary_key}_not_unique")
@@ -5039,45 +5371,47 @@ def identify_obligations(elements: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def detect_normative_conflicts(elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Detect conflicts between normative statements.
-    
+
     This function identifies four types of conflicts:
     1. Direct conflicts: O(p) ∧ F(p) (obligation vs prohibition)
     2. Permission conflicts: P(p) ∧ F(p) (permission vs prohibition)
     3. Conditional conflicts: Conflicting norms with overlapping conditions
     4. Temporal conflicts: Conflicting norms with overlapping time periods
-    
+
     Args:
         elements: List of normative elements extracted from legal text
-        
+
     Returns:
         List of detected conflicts with type, severity, and resolution strategies
     """
     conflicts: List[Dict[str, Any]] = []
-    
+
     # Check each pair of normative elements
     for i, elem1 in enumerate(elements):
-        for j, elem2 in enumerate(elements[i+1:], i+1):
+        for j, elem2 in enumerate(elements[i + 1 :], i + 1):
             conflict = _check_conflict_pair(elem1, elem2)
             if conflict:
-                conflicts.append({
-                    "type": conflict["type"],
-                    "elements": [elem1, elem2],
-                    "element_indices": [i, j],
-                    "severity": conflict["severity"],
-                    "description": conflict["description"],
-                    "resolution_strategies": conflict["strategies"]
-                })
-    
+                conflicts.append(
+                    {
+                        "type": conflict["type"],
+                        "elements": [elem1, elem2],
+                        "element_indices": [i, j],
+                        "severity": conflict["severity"],
+                        "description": conflict["description"],
+                        "resolution_strategies": conflict["strategies"],
+                    }
+                )
+
     return conflicts
 
 
 def _check_conflict_pair(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Check if two normative elements conflict.
-    
+
     Args:
         elem1: First normative element
         elem2: Second normative element
-        
+
     Returns:
         Conflict details if conflict exists, None otherwise
     """
@@ -5088,77 +5422,79 @@ def _check_conflict_pair(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Option
     action2 = _first_text(elem2.get("action")).lower().strip()
     subject1 = _first_text(elem1.get("subject")).lower().strip()
     subject2 = _first_text(elem2.get("subject")).lower().strip()
-    
+
     # Skip if missing critical information
     if not all([norm1_type, norm2_type, action1, action2]):
         return None
-    
+
     # Check if actions are similar (exact match or high similarity)
     actions_match = _actions_similar(action1, action2)
     subjects_match = _subjects_similar(subject1, subject2)
-    
+
     if not (actions_match and subjects_match):
         return None
-    
+
     # Check for temporal conflicts first (more specific than direct conflicts)
     temporal_conflict = _check_temporal_conflict(elem1, elem2)
     if temporal_conflict:
         return temporal_conflict
-    
+
     # Check for direct conflicts: O(p) ∧ F(p)
-    if (norm1_type == "obligation" and norm2_type == "prohibition") or \
-       (norm1_type == "prohibition" and norm2_type == "obligation"):
+    if (norm1_type == "obligation" and norm2_type == "prohibition") or (
+        norm1_type == "prohibition" and norm2_type == "obligation"
+    ):
         return {
             "type": "direct_conflict",
             "severity": "high",
             "description": f"Direct conflict: {norm1_type} conflicts with {norm2_type} for same action",
-            "strategies": ["lex_superior", "lex_specialis", "lex_posterior"]
+            "strategies": ["lex_superior", "lex_specialis", "lex_posterior"],
         }
-    
+
     # Check for permission conflicts: P(p) ∧ F(p)
-    if (norm1_type == "permission" and norm2_type == "prohibition") or \
-       (norm1_type == "prohibition" and norm2_type == "permission"):
+    if (norm1_type == "permission" and norm2_type == "prohibition") or (
+        norm1_type == "prohibition" and norm2_type == "permission"
+    ):
         return {
             "type": "permission_conflict",
             "severity": "medium",
             "description": f"Permission conflict: {norm1_type} conflicts with {norm2_type} for same action",
-            "strategies": ["prohibition_prevails", "context_dependent"]
+            "strategies": ["prohibition_prevails", "context_dependent"],
         }
-    
+
     # Check for conditional conflicts
     conditional_conflict = _check_conditional_conflict(elem1, elem2)
     if conditional_conflict:
         return conditional_conflict
-    
+
     return None
 
 
 def _actions_similar(action1: str, action2: str) -> bool:
     """Check if two actions are similar enough to conflict.
-    
+
     Args:
         action1: First action string
         action2: Second action string
-        
+
     Returns:
         True if actions are similar, False otherwise
     """
     if not action1 or not action2:
         return False
-    
+
     # Exact match
     if action1 == action2:
         return True
-    
+
     # Normalize and check for overlap
     words1 = set(action1.split())
     words2 = set(action2.split())
-    
+
     # If there's significant word overlap (>50%), consider similar
     if words1 and words2:
         overlap = len(words1 & words2) / min(len(words1), len(words2))
         return overlap > 0.5
-    
+
     return False
 
 
@@ -5170,66 +5506,68 @@ def _first_text(value: Any) -> str:
 
 def _subjects_similar(subject1: str, subject2: str) -> bool:
     """Check if two subjects are similar enough to conflict.
-    
+
     Args:
         subject1: First subject string
         subject2: Second subject string
-        
+
     Returns:
         True if subjects are similar, False otherwise
     """
     if not subject1 or not subject2:
         # If either subject is empty, assume they refer to same general subject
         return True
-    
+
     # Exact match
     if subject1 == subject2:
         return True
-    
+
     # Check for subset relationship
     if subject1 in subject2 or subject2 in subject1:
         return True
-    
+
     # Normalize and check for overlap
     words1 = set(subject1.split())
     words2 = set(subject2.split())
-    
+
     if words1 and words2:
         overlap = len(words1 & words2) / min(len(words1), len(words2))
         return overlap > 0.5
-    
+
     return False
 
 
-def _check_temporal_conflict(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _check_temporal_conflict(
+    elem1: Dict[str, Any], elem2: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     """Check for temporal conflicts between two normative elements.
-    
+
     Args:
         elem1: First normative element
         elem2: Second normative element
-        
+
     Returns:
         Conflict details if temporal conflict exists, None otherwise
     """
     temporal1 = elem1.get("temporal_constraints", [])
     temporal2 = elem2.get("temporal_constraints", [])
-    
+
     # Only check if both have temporal constraints
     if not (temporal1 and temporal2):
         return None
-    
+
     # Check if temporal periods overlap and norms conflict
     norm1_type = elem1.get("norm_type")
     norm2_type = elem2.get("norm_type")
-    
+
     # If norms are conflicting types and have overlapping time periods
     conflicting_types = {
         ("obligation", "prohibition"),
         ("prohibition", "obligation"),
         ("permission", "prohibition"),
-        ("prohibition", "permission")
+        ("prohibition", "permission"),
     }
-    
+
     if (norm1_type, norm2_type) in conflicting_types:
         # Simple check: if both have temporal constraints, assume potential overlap
         # A more sophisticated implementation would parse actual dates/times
@@ -5237,60 +5575,62 @@ def _check_temporal_conflict(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Op
             "type": "temporal_conflict",
             "severity": "medium",
             "description": "Conflicting norms with overlapping temporal constraints",
-            "strategies": ["temporal_precedence", "latest_applies"]
+            "strategies": ["temporal_precedence", "latest_applies"],
         }
-    
+
     return None
 
 
-def _check_conditional_conflict(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _check_conditional_conflict(
+    elem1: Dict[str, Any], elem2: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     """Check for conditional conflicts between two normative elements.
-    
+
     Args:
         elem1: First normative element
         elem2: Second normative element
-        
+
     Returns:
         Conflict details if conditional conflict exists, None otherwise
     """
     conditions1 = elem1.get("conditions", [])
     conditions2 = elem2.get("conditions", [])
-    
+
     # Only check if both have conditions
     if not (conditions1 and conditions2):
         return None
-    
+
     norm1_type = elem1.get("norm_type")
     norm2_type = elem2.get("norm_type")
-    
+
     # Check if conditions overlap
     # Simple check: if conditions share words, they might overlap
     cond1_text = " ".join(str(c).lower() for c in conditions1)
     cond2_text = " ".join(str(c).lower() for c in conditions2)
-    
+
     words1 = set(cond1_text.split())
     words2 = set(cond2_text.split())
-    
+
     if words1 and words2:
         overlap = len(words1 & words2) / min(len(words1), len(words2))
-        
+
         # If conditions overlap significantly and norms conflict
         if overlap > 0.3:
             conflicting_types = {
                 ("obligation", "prohibition"),
                 ("prohibition", "obligation"),
                 ("permission", "prohibition"),
-                ("prohibition", "permission")
+                ("prohibition", "permission"),
             }
-            
+
             if (norm1_type, norm2_type) in conflicting_types:
                 return {
                     "type": "conditional_conflict",
                     "severity": "low",
                     "description": "Conflicting norms with overlapping conditions",
-                    "strategies": ["specificity_analysis", "context_evaluation"]
+                    "strategies": ["specificity_analysis", "context_evaluation"],
                 }
-    
+
     return None
 
 
@@ -5478,9 +5818,7 @@ def _clear_subject_to_duty_condition_noise(element: Dict[str, Any]) -> None:
         return text == f"duty to {action}"
 
     conditions = [
-        condition
-        for condition in element.get("conditions") or []
-        if not is_noise(condition)
+        condition for condition in element.get("conditions") or [] if not is_noise(condition)
     ]
     element["conditions"] = conditions
 
@@ -5548,7 +5886,9 @@ def _clear_standard_substantive_exception_active_repair(element: Dict[str, Any])
         return
     if element.get("deontic_operator") not in {"O", "P", "F"}:
         return
-    if not _parser_slot_first_text(element.get("subject")) or not _parser_slot_first_text(element.get("action")):
+    if not _parser_slot_first_text(element.get("subject")) or not _parser_slot_first_text(
+        element.get("action")
+    ):
         return
     if element.get("conditions") or element.get("condition_details"):
         return
@@ -5605,7 +5945,9 @@ def _clear_local_applicability_active_repair(element: Dict[str, Any]) -> None:
 
     resolution = {
         "type": "local_scope_applicability",
-        "scopes": sorted({record.get("value", "") for record in local_records if record.get("value")}),
+        "scopes": sorted(
+            {record.get("value", "") for record in local_records if record.get("value")}
+        ),
         "reason": "local applicability subject is a self-scope reference exported as provenance",
     }
 
@@ -5633,7 +5975,9 @@ def _clear_pure_precedence_override_active_repair(element: Dict[str, Any]) -> No
         return
     if element.get("deontic_operator") not in {"O", "P", "F"}:
         return
-    if not _parser_slot_first_text(element.get("subject")) or not _parser_slot_first_text(element.get("action")):
+    if not _parser_slot_first_text(element.get("subject")) or not _parser_slot_first_text(
+        element.get("action")
+    ):
         return
     if element.get("conditions") or element.get("condition_details"):
         return
@@ -5659,7 +6003,10 @@ def _clear_pure_precedence_override_active_repair(element: Dict[str, Any]) -> No
     resolution = {
         "type": "pure_precedence_override",
         "resolved_blockers": sorted(required_warnings),
-        "references": [record.get("normalized_text") or record.get("raw_text") or record.get("value") for record in precedence_records],
+        "references": [
+            record.get("normalized_text") or record.get("raw_text") or record.get("value")
+            for record in precedence_records
+        ],
         "reason": "override reference is retained as precedence provenance outside the operative formula",
     }
 
@@ -5722,12 +6069,14 @@ def _substantive_exception_requires_external_resolution(text: str) -> bool:
         normalized,
     ):
         return True
-    return normalized.startswith((
-        "as otherwise provided",
-        "as provided",
-        "otherwise provided in",
-        "provided in",
-        "under ",
-        "pursuant to ",
-        "notwithstanding ",
-    ))
+    return normalized.startswith(
+        (
+            "as otherwise provided",
+            "as provided",
+            "otherwise provided in",
+            "provided in",
+            "under ",
+            "pursuant to ",
+            "notwithstanding ",
+        )
+    )

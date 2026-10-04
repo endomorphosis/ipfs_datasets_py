@@ -97,7 +97,9 @@ def test_legal_ir_hammer_runner_emits_trusted_guidance_for_obligations() -> None
     assert report.trusted_success_rate == 1.0
     assert all(artifact.trusted for artifact in report.artifacts)
     assert any(artifact.legal_ir_view == "deontic.ir" for artifact in report.artifacts)
-    assert any("compiler_ir_cross_entropy_loss" in artifact.target_metrics for artifact in report.artifacts)
+    assert any(
+        "compiler_ir_cross_entropy_loss" in artifact.target_metrics for artifact in report.artifacts
+    )
     assert all(artifact.selected_premises for artifact in report.artifacts)
     assert all(artifact.to_leanstral_guidance_item()["accepted"] for artifact in report.artifacts)
     assert len(report.route_results) == report.obligation_count

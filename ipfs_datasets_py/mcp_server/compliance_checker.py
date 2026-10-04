@@ -218,9 +218,7 @@ class ComplianceResult:
                 normalized_status = ComplianceStatus.COMPLIANT
             else:
                 normalized_status = (
-                    ComplianceStatus.COMPLIANT
-                    if passed
-                    else ComplianceStatus.NON_COMPLIANT
+                    ComplianceStatus.COMPLIANT if passed else ComplianceStatus.NON_COMPLIANT
                 )
         elif isinstance(status, ComplianceStatus):
             normalized_status = status
@@ -228,9 +226,13 @@ class ComplianceResult:
             normalized_status = ComplianceStatus(str(status))
 
         normalized_violations = list(violations or [])
-        if message and not normalized_violations and (
-            normalized_status in (ComplianceStatus.NON_COMPLIANT, ComplianceStatus.WARNING)
-            or passed is False
+        if (
+            message
+            and not normalized_violations
+            and (
+                normalized_status in (ComplianceStatus.NON_COMPLIANT, ComplianceStatus.WARNING)
+                or passed is False
+            )
         ):
             normalized_violations.append(
                 ComplianceViolation(
@@ -442,11 +444,7 @@ class ComplianceRule:
                         v.rule_id = self.rule_id
                 return result
             if isinstance(result, bool):
-                status = (
-                    ComplianceStatus.COMPLIANT
-                    if result
-                    else ComplianceStatus.NON_COMPLIANT
-                )
+                status = ComplianceStatus.COMPLIANT if result else ComplianceStatus.NON_COMPLIANT
                 return ComplianceResult(rule_id=self.rule_id, status=status)
             return ComplianceResult(
                 rule_id=self.rule_id,
@@ -492,8 +490,7 @@ def _is_json_serializable(obj: Any, _depth: int = 0) -> bool:
         return all(_is_json_serializable(v, _depth + 1) for v in obj)
     if isinstance(obj, dict):
         return all(
-            isinstance(k, str) and _is_json_serializable(v, _depth + 1)
-            for k, v in obj.items()
+            isinstance(k, str) and _is_json_serializable(v, _depth + 1) for k, v in obj.items()
         )
     return False
 
@@ -536,7 +533,7 @@ class ComplianceChecker:
 
         Lifecycle hooks are invoked at key points during backup rotation and
         purging operations. Supported hook types:
-        
+
         - ``before_rotate``: Called before rotating backup files
         - ``after_rotate``: Called after rotating backup files
         - ``before_purge``: Called before purging backup files
@@ -546,11 +543,11 @@ class ComplianceChecker:
 
             def audit_rotation(path: str) -> None:
                 logger.info("Rotating backups for: %s", path)
-            
+
             ComplianceChecker.add_lifecycle_hook("before_rotate", audit_rotation)
 
         Args:
-            hook_type: One of "before_rotate", "after_rotate", 
+            hook_type: One of "before_rotate", "after_rotate",
                 "before_purge", "after_purge".
             callback: Callable receiving file path (str) as argument.
 
@@ -559,8 +556,7 @@ class ComplianceChecker:
         """
         if hook_type not in cls.lifecycle_hooks:
             raise ValueError(
-                f"Unknown hook type {hook_type!r}. "
-                f"Valid types: {list(cls.lifecycle_hooks.keys())}"
+                f"Unknown hook type {hook_type!r}. Valid types: {list(cls.lifecycle_hooks.keys())}"
             )
         if callback not in cls.lifecycle_hooks[hook_type]:
             cls.lifecycle_hooks[hook_type].append(callback)
@@ -570,7 +566,7 @@ class ComplianceChecker:
         """Remove a previously registered lifecycle hook.
 
         Args:
-            hook_type: One of "before_rotate", "after_rotate", 
+            hook_type: One of "before_rotate", "after_rotate",
                 "before_purge", "after_purge".
             callback: The exact callable previously registered.
 
@@ -582,8 +578,7 @@ class ComplianceChecker:
         """
         if hook_type not in cls.lifecycle_hooks:
             raise ValueError(
-                f"Unknown hook type {hook_type!r}. "
-                f"Valid types: {list(cls.lifecycle_hooks.keys())}"
+                f"Unknown hook type {hook_type!r}. Valid types: {list(cls.lifecycle_hooks.keys())}"
             )
         try:
             cls.lifecycle_hooks[hook_type].remove(callback)
@@ -674,8 +669,18 @@ class ComplianceChecker:
         return [
             _RuleEntry(
                 rule_id,
-                description=self._rule_meta.get(rule_id, ComplianceRule(rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT))).description,
-                removable=self._rule_meta.get(rule_id, ComplianceRule(rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT))).removable,
+                description=self._rule_meta.get(
+                    rule_id,
+                    ComplianceRule(
+                        rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT)
+                    ),
+                ).description,
+                removable=self._rule_meta.get(
+                    rule_id,
+                    ComplianceRule(
+                        rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT)
+                    ),
+                ).removable,
             )
             for rule_id in self._rule_order
         ]
@@ -684,8 +689,18 @@ class ComplianceChecker:
         return [
             {
                 "rule_id": rule_id,
-                "description": self._rule_meta.get(rule_id, ComplianceRule(rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT))).description,
-                "removable": self._rule_meta.get(rule_id, ComplianceRule(rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT))).removable,
+                "description": self._rule_meta.get(
+                    rule_id,
+                    ComplianceRule(
+                        rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT)
+                    ),
+                ).description,
+                "removable": self._rule_meta.get(
+                    rule_id,
+                    ComplianceRule(
+                        rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT)
+                    ),
+                ).removable,
             }
             for rule_id in self._rule_order
         ]
@@ -788,7 +803,8 @@ class ComplianceChecker:
         removed = sorted(set(self_ids) - set(other_ids))
         common = sorted(set(self_ids) & set(other_ids))
         changed = [
-            rid for rid in common
+            rid
+            for rid in common
             if (
                 (self_ids[rid] and other_ids[rid])
                 and (
@@ -1220,7 +1236,7 @@ class ComplianceChecker:
         Invokes lifecycle hooks:
         - ``before_purge``: Before purging starts
         - ``after_purge``: After purging completes
-        
+
         Returns:
             Number of backup files removed.
         """
@@ -1340,7 +1356,9 @@ class ComplianceChecker:
 
     def _rule_tool_name_convention(self, intent: Any) -> ComplianceResult:
         rule_id = "tool_name_convention"
-        tool_name = self._get_field(intent, "tool_name", "") or self._get_field(intent, "tool", "") or ""
+        tool_name = (
+            self._get_field(intent, "tool_name", "") or self._get_field(intent, "tool", "") or ""
+        )
         violations: List[ComplianceViolation] = []
         if not tool_name:
             violations.append(
@@ -1421,7 +1439,9 @@ class ComplianceChecker:
 
     def _rule_tool_not_in_deny_list(self, intent: Any) -> ComplianceResult:
         rule_id = "tool_not_in_deny_list"
-        tool_name = self._get_field(intent, "tool_name", "") or self._get_field(intent, "tool", "") or ""
+        tool_name = (
+            self._get_field(intent, "tool_name", "") or self._get_field(intent, "tool", "") or ""
+        )
         violations: List[ComplianceViolation] = []
         if tool_name in self._deny_list:
             violations.append(

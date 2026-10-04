@@ -4,16 +4,19 @@ Test stubs for Municipal Codes Scraper Dashboard Integration Tests.
 Feature: Municipal Codes Scraper Dashboard Integration Tests
   Pytest-based end-to-end tests for Municipal Codes Scraper MCP tool in Dashboard UI.
 """
+
 import pytest
 import sys
 from typing import Dict, Any
 import requests
+
 
 class FixtureError(Exception):
     """Local fixture error used by stub test templates."""
 
 
 # Tab Navigation
+
 
 class TestTabNavigation:
     """Tab Navigation"""
@@ -33,6 +36,7 @@ class TestTabNavigation:
           Then the municipal codes scraper section is displayed
         """
         raise NotImplementedError
+
 
 class TestFormElements:
     """Form Elements"""
@@ -133,6 +137,7 @@ class TestFormElements:
         """
         raise NotImplementedError
 
+
 class TestSingleJurisdictionScraping:
     """Single Jurisdiction Scraping"""
 
@@ -141,6 +146,7 @@ class TestSingleJurisdictionScraping:
 
     def test_scrape_displays_job_id(self, dashboard_url_configured):
         raise NotImplementedError
+
 
 class TestMultipleJurisdictionsScraping:
     """Multiple Jurisdictions Scraping"""
@@ -151,6 +157,7 @@ class TestMultipleJurisdictionsScraping:
     def test_scrape_multiple_shows_all(self, dashboard_url_configured):
         raise NotImplementedError
 
+
 class TestFormValidation:
     """Form Validation"""
 
@@ -159,6 +166,7 @@ class TestFormValidation:
 
     def test_error_indicates_required(self, dashboard_url_configured):
         raise NotImplementedError
+
 
 class TestClearForm:
     """Clear Form"""
@@ -169,6 +177,7 @@ class TestClearForm:
     def test_clear_shows_message(self, dashboard_url_configured):
         raise NotImplementedError
 
+
 class TestCustomParameters:
     """Custom Parameters"""
 
@@ -177,6 +186,7 @@ class TestCustomParameters:
 
     def test_response_reflects_config(self, dashboard_url_configured):
         raise NotImplementedError
+
 
 class TestProviderOptions:
     """Provider Options"""
@@ -196,6 +206,7 @@ class TestProviderOptions:
     def test_provider_contains_lexisnexis(self, dashboard_url_configured):
         raise NotImplementedError
 
+
 class TestOutputFormatOptions:
     """Output Format Options"""
 
@@ -207,6 +218,7 @@ class TestOutputFormatOptions:
 
     def test_format_contains_sql(self, dashboard_url_configured):
         raise NotImplementedError
+
 
 class TestInformationPanel:
     """Information Panel"""
@@ -250,6 +262,7 @@ class TestInformationPanel:
           Then the panel explains output format details
         """
         raise NotImplementedError
+
 
 class TestMCPToolIntegration:
     """MCP Tool Integration"""

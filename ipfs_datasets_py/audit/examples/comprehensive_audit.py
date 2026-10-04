@@ -16,34 +16,41 @@ from datetime import datetime, timedelta
 from typing import Callable
 
 # Configure logging
-logging.basicConfig(level=logging.INFO,
-                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 # Import audit logging components
-from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditCategory, AuditLevel
-)
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.handlers import (
-    FileAuditHandler, JSONAuditHandler, SyslogAuditHandler,
-    ElasticsearchAuditHandler, AlertingAuditHandler
+    FileAuditHandler,
+    JSONAuditHandler,
+    SyslogAuditHandler,
+    ElasticsearchAuditHandler,
+    AlertingAuditHandler,
 )
 from ipfs_datasets_py.audit.integration import (
-    AuditProvenanceIntegrator, AuditDatasetIntegrator,
-    AuditContextManager, audit_function
+    AuditProvenanceIntegrator,
+    AuditDatasetIntegrator,
+    AuditContextManager,
+    audit_function,
 )
 from ipfs_datasets_py.audit.compliance import (
-    ComplianceStandard, ComplianceReport, GDPRComplianceReporter
+    ComplianceStandard,
+    ComplianceReport,
+    GDPRComplianceReporter,
 )
-from ipfs_datasets_py.audit.intrusion import (
-    IntrusionDetection, SecurityAlert, SecurityAlertManager
-)
+from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlert, SecurityAlertManager
 
 # Try to import data provenance components
 try:
     from ipfs_datasets_py.data_provenance_enhanced import (
-        EnhancedProvenanceManager, ProvenanceContext,
-        SourceRecord, TransformationRecord
+        EnhancedProvenanceManager,
+        ProvenanceContext,
+        SourceRecord,
+        TransformationRecord,
     )
+
     PROVENANCE_AVAILABLE = True
 except ImportError:
     PROVENANCE_AVAILABLE = False
@@ -69,7 +76,7 @@ def setup_audit_logging():
         file_path="logs/audit.log",
         min_level=AuditLevel.INFO,
         rotate_size_mb=10,
-        rotate_count=5
+        rotate_count=5,
     )
     audit_logger.add_handler(file_handler)
 
@@ -80,25 +87,20 @@ def setup_audit_logging():
         min_level=AuditLevel.INFO,
         pretty=False,
         rotate_size_mb=10,
-        rotate_count=5
+        rotate_count=5,
     )
     audit_logger.add_handler(json_handler)
 
     # Add handler for security-specific events
     security_handler = JSONAuditHandler(
-        name="security",
-        file_path="logs/security.json",
-        min_level=AuditLevel.WARNING,
-        pretty=False
+        name="security", file_path="logs/security.json", min_level=AuditLevel.WARNING, pretty=False
     )
     audit_logger.add_handler(security_handler)
 
     # Add syslog handler if available
     try:
         syslog_handler = SyslogAuditHandler(
-            name="syslog",
-            min_level=AuditLevel.NOTICE,
-            identity="ipfs_datasets_audit"
+            name="syslog", min_level=AuditLevel.NOTICE, identity="ipfs_datasets_audit"
         )
         audit_logger.add_handler(syslog_handler)
         logging.info("Added syslog handler")
@@ -108,12 +110,13 @@ def setup_audit_logging():
     # Add Elasticsearch handler if available
     try:
         from elasticsearch import Elasticsearch
+
         es_handler = ElasticsearchAuditHandler(
             name="elasticsearch",
             hosts=["localhost:9200"],
             index_pattern="audit-logs-{date}",
             min_level=AuditLevel.INFO,
-            bulk_size=100
+            bulk_size=100,
         )
         audit_logger.add_handler(es_handler)
         logging.info("Added Elasticsearch handler")
@@ -124,8 +127,10 @@ def setup_audit_logging():
     alerting_handler = AlertingAuditHandler(
         name="alerting",
         min_level=AuditLevel.WARNING,
-        alert_handlers=[lambda event: print(f"ALERT: {event.level} - {event.category}: {event.action}")],
-        rate_limit_seconds=60
+        alert_handlers=[
+            lambda event: print(f"ALERT: {event.level} - {event.category}: {event.action}")
+        ],
+        rate_limit_seconds=60,
     )
     audit_logger.add_handler(alerting_handler)
 
@@ -143,20 +148,23 @@ def demonstrate_basic_audit_logging():
     logging.info("Demonstrating basic audit logging...")
 
     # Log authentication events
-    audit_logger.auth("login", status="success",
-                   details={"method": "password", "mfa_used": True})
+    audit_logger.auth("login", status="success", details={"method": "password", "mfa_used": True})
 
     # Log data access events
-    audit_logger.data_access("read",
-                          resource_id="dataset123",
-                          resource_type="dataset",
-                          details={"format": "parquet", "rows_accessed": 1000})
+    audit_logger.data_access(
+        "read",
+        resource_id="dataset123",
+        resource_type="dataset",
+        details={"format": "parquet", "rows_accessed": 1000},
+    )
 
     # Log data modification events
-    audit_logger.data_modify("update",
-                          resource_id="dataset123",
-                          resource_type="dataset",
-                          details={"changes": {"added_column": "new_feature"}})
+    audit_logger.data_modify(
+        "update",
+        resource_id="dataset123",
+        resource_type="dataset",
+        details={"changes": {"added_column": "new_feature"}},
+    )
 
     # Log configuration change
     audit_logger.log(
@@ -167,20 +175,22 @@ def demonstrate_basic_audit_logging():
         resource_type="system_config",
         details={
             "changes": {"log_level": "DEBUG", "retention_days": 90},
-            "reason": "Increased logging for security audit"
-        }
+            "reason": "Increased logging for security audit",
+        },
     )
 
     # Log security event
-    audit_logger.security("permission_change",
-                       level=AuditLevel.WARNING,
-                       resource_id="role123",
-                       resource_type="role",
-                       details={
-                           "target_user": "jane_doe",
-                           "permissions_added": ["admin"],
-                           "permissions_removed": []
-                       })
+    audit_logger.security(
+        "permission_change",
+        level=AuditLevel.WARNING,
+        resource_id="role123",
+        resource_type="role",
+        details={
+            "target_user": "jane_doe",
+            "permissions_added": ["admin"],
+            "permissions_removed": [],
+        },
+    )
 
     # Log error event
     audit_logger.error(
@@ -189,8 +199,8 @@ def demonstrate_basic_audit_logging():
         details={
             "process": "data_import",
             "error": "Database connection timeout",
-            "retry_count": 3
-        }
+            "retry_count": 3,
+        },
     )
 
     # Clear context when done
@@ -211,7 +221,7 @@ def demonstrate_dataset_audit_integration():
         dataset_name="wikipedia-sample",
         dataset_id="wiki123",
         source="huggingface",
-        user="researcher"
+        user="researcher",
     )
 
     # Record dataset transformation
@@ -220,7 +230,7 @@ def demonstrate_dataset_audit_integration():
         output_dataset="wiki123-processed",
         transformation_type="text_extraction",
         parameters={"tokenizer": "bert-base-uncased", "max_length": 512},
-        user="researcher"
+        user="researcher",
     )
 
     # Record dataset query
@@ -228,7 +238,7 @@ def demonstrate_dataset_audit_integration():
         dataset_name="wiki123-processed",
         query="SELECT * FROM dataset WHERE topic = 'science'",
         query_type="sql",
-        user="researcher"
+        user="researcher",
     )
 
     # Record dataset saving
@@ -237,7 +247,7 @@ def demonstrate_dataset_audit_integration():
         dataset_id="wiki123-processed",
         destination="ipfs",
         format="car",
-        user="researcher"
+        user="researcher",
     )
 
     logging.info("Dataset audit integration complete")
@@ -253,7 +263,7 @@ def demonstrate_context_manager():
         action="process_dataset",
         resource_id="dataset123",
         resource_type="dataset",
-        details={"algorithm": "tokenization", "batch_size": 1000}
+        details={"algorithm": "tokenization", "batch_size": 1000},
     ) as audit_ctx:
         # Perform the operation
         logging.info("Processing dataset...")
@@ -266,7 +276,7 @@ def demonstrate_context_manager():
             action="export_dataset",
             resource_id="dataset456",
             resource_type="dataset",
-            level=AuditLevel.WARNING
+            level=AuditLevel.WARNING,
         ):
             # Simulate an error
             logging.info("Exporting dataset (will fail)...")
@@ -283,7 +293,7 @@ def demonstrate_context_manager():
     category=AuditCategory.DATA_ACCESS,
     action="retrieve_vector",
     resource_id_arg="vector_id",
-    resource_type="vector_embedding"
+    resource_type="vector_embedding",
 )
 def retrieve_vector(vector_id, include_metadata=True):
     """Example function decorated with audit logging."""
@@ -324,7 +334,7 @@ def demonstrate_provenance_integration():
         source_id = provenance_manager.record_source(
             source_id="wikipedia",
             source_type="dataset",
-            source_uri="huggingface:wikipedia/20220301.en"
+            source_uri="huggingface:wikipedia/20220301.en",
         )
 
         # Generate an audit event from the provenance record
@@ -336,7 +346,7 @@ def demonstrate_provenance_integration():
             input_ids=[source_id],
             output_id="wikipedia-processed",
             transformation_type="tokenization",
-            parameters={"model": "bert-base-uncased"}
+            parameters={"model": "bert-base-uncased"},
         )
 
         # Generate an audit event from the transformation record
@@ -373,7 +383,7 @@ def demonstrate_compliance_reporting(historic_events=None):
                 user="user123",
                 resource_id="personal_data",
                 resource_type="user_data",
-                details={"purpose": "customer_support", "legal_basis": "legitimate_interest"}
+                details={"purpose": "customer_support", "legal_basis": "legitimate_interest"},
             ),
             AuditEvent(
                 event_id="evt2",
@@ -383,7 +393,7 @@ def demonstrate_compliance_reporting(historic_events=None):
                 action="encryption_check",
                 resource_id="database",
                 resource_type="storage",
-                details={"encryption_status": "enabled", "algorithm": "AES-256"}
+                details={"encryption_status": "enabled", "algorithm": "AES-256"},
             ),
             AuditEvent(
                 event_id="evt3",
@@ -394,8 +404,8 @@ def demonstrate_compliance_reporting(historic_events=None):
                 user="admin",
                 resource_id="user456",
                 resource_type="user_data",
-                details={"request_id": "sar123", "fulfilled": True}
-            )
+                details={"request_id": "sar123", "fulfilled": True},
+            ),
         ]
 
     # Generate a compliance report
@@ -443,7 +453,7 @@ def demonstrate_intrusion_detection():
             user="attacker",
             client_ip="192.168.1.100",
             status="failure",
-            details={"reason": "invalid_password", "attempt": i+1}
+            details={"reason": "invalid_password", "attempt": i + 1},
         )
         test_events.append(event)
 
@@ -458,7 +468,7 @@ def demonstrate_intrusion_detection():
             user="suspicious_user",
             resource_id=f"sensitive_resource_{i}",
             resource_type="financial_data",
-            details={"reason": "insufficient_permissions"}
+            details={"reason": "insufficient_permissions"},
         )
         test_events.append(event)
 
@@ -476,8 +486,8 @@ def demonstrate_intrusion_detection():
             "target_user": "compromised_account",
             "permissions_added": ["admin", "system"],
             "permissions_removed": [],
-            "justification": "emergency access"
-        }
+            "justification": "emergency access",
+        },
     )
     test_events.append(event)
 
@@ -513,7 +523,7 @@ def demonstrate_advanced_usage():
         action=operation,
         resource_id="financial_report_q2",
         resource_type=resource_type,
-        details={"reason": "quarterly_review"}
+        details={"reason": "quarterly_review"},
     )
 
     # 2. Transaction-like audit logging
@@ -524,7 +534,7 @@ def demonstrate_advanced_usage():
         level=AuditLevel.INFO,
         category=AuditCategory.OPERATIONAL,
         action="transaction_start",
-        details={"transaction_type": "batch_processing"}
+        details={"transaction_type": "batch_processing"},
     )
 
     # Individual operations within transaction
@@ -535,7 +545,7 @@ def demonstrate_advanced_usage():
             action="process_item",
             resource_id=f"item_{i}",
             resource_type="data_item",
-            details={"transaction_id": tx_id, "sequence": i}
+            details={"transaction_id": tx_id, "sequence": i},
         )
 
     # End transaction
@@ -543,7 +553,7 @@ def demonstrate_advanced_usage():
         level=AuditLevel.INFO,
         category=AuditCategory.OPERATIONAL,
         action="transaction_end",
-        details={"transaction_id": tx_id, "items_processed": 3, "status": "complete"}
+        details={"transaction_id": tx_id, "items_processed": 3, "status": "complete"},
     )
 
     audit_logger.clear_context()
@@ -558,8 +568,8 @@ def demonstrate_advanced_usage():
             "target_node": "worker-2",
             "message_type": "data_transfer",
             "correlation_id": "corr-123456",
-            "data_size_bytes": 1024 * 1024 * 5  # 5MB
-        }
+            "data_size_bytes": 1024 * 1024 * 5,  # 5MB
+        },
     )
 
     logging.info("Advanced usage demonstration complete")

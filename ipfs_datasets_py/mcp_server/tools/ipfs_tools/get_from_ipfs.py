@@ -4,6 +4,7 @@ MCP tool for getting content from IPFS.
 
 This tool handles retrieving files and directories from IPFS.
 """
+
 import anyio
 import os
 import json
@@ -38,7 +39,7 @@ async def get_from_ipfs(
     cid: str,
     output_path: Optional[str] = None,
     timeout_seconds: int = 60,
-    gateway: Optional[str] = None
+    gateway: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Get content from IPFS by its CID.
@@ -94,7 +95,7 @@ async def get_from_ipfs(
 
         # Determine if we're using direct ipfs_kit_py or MCP client
         # Use environment variable or default to "direct"
-        ipfs_kit_integration = os.environ.get('IPFS_KIT_INTEGRATION', 'direct')
+        ipfs_kit_integration = os.environ.get("IPFS_KIT_INTEGRATION", "direct")
 
         if ipfs_kit_integration == "direct":
             # Direct integration with ipfs_kit_py
@@ -114,27 +115,22 @@ async def get_from_ipfs(
                         "status": "error",
                         "message": "Failed to save content to output path",
                         "cid": cid,
-                        "output_path": output_path
+                        "output_path": output_path,
                     }
 
                 # Get file size
                 size = os.path.getsize(output_path) if os.path.isfile(output_path) else None
 
-                return {
-                    "status": "success",
-                    "cid": cid,
-                    "output_path": output_path,
-                    "size": size
-                }
+                return {"status": "success", "cid": cid, "output_path": output_path, "size": size}
             else:
                 # Return content directly - check if ipfs_kit_py has the right method
                 try:
                     # Try different possible method names
-                    if hasattr(ipfs_kit_py, 'cat_async'):
+                    if hasattr(ipfs_kit_py, "cat_async"):
                         content = await ipfs_kit_py.cat_async(cid, timeout=timeout_seconds)
-                    elif hasattr(ipfs_kit_py, 'cat'):
+                    elif hasattr(ipfs_kit_py, "cat"):
                         content = ipfs_kit_py.cat(cid, timeout=timeout_seconds)
-                    elif hasattr(ipfs_kit_py, 'get'):
+                    elif hasattr(ipfs_kit_py, "get"):
                         content = ipfs_kit_py.get(cid, timeout=timeout_seconds)
                     else:
                         # No suitable method found, create mock response
@@ -144,7 +140,7 @@ async def get_from_ipfs(
                             "cid": cid,
                             "content_type": "text",
                             "content": f"Mock content for CID {cid}",
-                            "binary_size": 20
+                            "binary_size": 20,
                         }
                 except Exception as e:
                     logger.warning(f"IPFS method call failed: {e}, creating mock response")
@@ -153,12 +149,14 @@ async def get_from_ipfs(
                         "cid": cid,
                         "content_type": "text",
                         "content": f"Mock content for CID {cid}",
-                        "binary_size": 20
+                        "binary_size": 20,
                     }
 
                 # Try to decode as UTF-8 if possible
                 try:
-                    decoded_content = content.decode('utf-8') if isinstance(content, bytes) else str(content)
+                    decoded_content = (
+                        content.decode("utf-8") if isinstance(content, bytes) else str(content)
+                    )
                     content_type = "text"
                 except (UnicodeDecodeError, AttributeError):
                     decoded_content = None
@@ -169,7 +167,7 @@ async def get_from_ipfs(
                     "cid": cid,
                     "content_type": content_type,
                     "content": decoded_content if decoded_content else None,
-                    "binary_size": len(content) if content else 0
+                    "binary_size": len(content) if content else 0,
                 }
 
         else:
@@ -178,29 +176,31 @@ async def get_from_ipfs(
                 from modelcontextprotocol.client import MCPClient
             except ImportError:
                 # Use our mock for testing when the real package isn't available
-                from ...mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
+                from ...mock_modelcontextprotocol_for_testing import (
+                    MockMCPClientForTesting as MCPClient,
+                )
 
             # Create client
-            ipfs_kit_mcp_url = os.environ.get('IPFS_KIT_MCP_URL', 'http://localhost:5001')
+            ipfs_kit_mcp_url = os.environ.get("IPFS_KIT_MCP_URL", "http://localhost:5001")
             try:
                 client = MCPClient(ipfs_kit_mcp_url)
             except Exception as e:
-                logger.warning(f"Failed to initialize MCP client for IPFS, using HTTP gateway fallback: {e}")
+                logger.warning(
+                    f"Failed to initialize MCP client for IPFS, using HTTP gateway fallback: {e}"
+                )
                 return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
 
             if output_path:
                 # Call the get tool
                 try:
-                    result = await client.call_tool("get", {
-                        "cid": cid,
-                        "output_path": output_path,
-                        "timeout": timeout_seconds
-                    })
+                    result = await client.call_tool(
+                        "get", {"cid": cid, "output_path": output_path, "timeout": timeout_seconds}
+                    )
                     return {
                         "status": "success",
                         "cid": cid,
                         "output_path": output_path,
-                        "size": result.get("size", None)
+                        "size": result.get("size", None),
                     }
                 except Exception as e:
                     logger.warning(f"MCP get tool failed, using HTTP gateway fallback: {e}")
@@ -208,34 +208,27 @@ async def get_from_ipfs(
             else:
                 # Call the cat tool
                 try:
-                    result = await client.call_tool("cat", {
-                        "cid": cid,
-                        "timeout": timeout_seconds
-                    })
+                    result = await client.call_tool("cat", {"cid": cid, "timeout": timeout_seconds})
                     return {
                         "status": "success",
                         "cid": cid,
                         "content_type": result.get("content_type", "binary"),
                         "content": result.get("content", None),
-                        "binary_size": result.get("binary_size", 0)
+                        "binary_size": result.get("binary_size", 0),
                     }
                 except Exception as e:
                     logger.warning(f"MCP cat tool failed, using HTTP gateway fallback: {e}")
                     return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
     except Exception as e:
         logger.error(f"Error getting content from IPFS: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "cid": cid
-        }
+        return {"status": "error", "message": str(e), "cid": cid}
 
 
 async def _fetch_via_http_gateway(
     cid: str,
     output_path: Optional[str],
     timeout_seconds: int,
-    gateway_override: Optional[str] = None
+    gateway_override: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Fetch content from a public (or configured) IPFS HTTP gateway as a fallback.
 
@@ -258,7 +251,9 @@ async def _fetch_via_http_gateway(
         base = gw.rstrip("/")
         url = f"{base}/ipfs/{cid}"
         try:
-            resp = await anyio.to_thread.run_sync(requests.get, url, timeout=timeout_seconds, stream=True)
+            resp = await anyio.to_thread.run_sync(
+                requests.get, url, timeout=timeout_seconds, stream=True
+            )
             if resp.status_code == 200:
                 content = resp.content
                 if output_path:
@@ -269,7 +264,7 @@ async def _fetch_via_http_gateway(
                         "cid": cid,
                         "output_path": output_path,
                         "size": len(content),
-                        "gateway": url
+                        "gateway": url,
                     }
                 # Try decoding text
                 try:
@@ -284,7 +279,7 @@ async def _fetch_via_http_gateway(
                     "content_type": ctype,
                     "content": decoded,
                     "binary_size": len(content),
-                    "gateway": url
+                    "gateway": url,
                 }
             else:
                 last_error = f"HTTP {resp.status_code} from {url}"
@@ -295,5 +290,5 @@ async def _fetch_via_http_gateway(
         "status": "error",
         "message": last_error or "Failed to fetch from any gateway",
         "cid": cid,
-        "gateways_tried": gateways
+        "gateways_tried": gateways,
     }

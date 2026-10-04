@@ -166,9 +166,7 @@ def test_mapping_decoder_is_fail_closed_until_versioned_decoder_exists() -> None
 
 
 def test_schema_rejects_untyped_enum_values() -> None:
-    with pytest.raises(
-        IntentIRValidationError, match="IntentIRDocument.intent_kind"
-    ):
+    with pytest.raises(IntentIRValidationError, match="IntentIRDocument.intent_kind"):
         replace(_document(), intent_kind="procedure").validate()  # type: ignore[arg-type]
 
 

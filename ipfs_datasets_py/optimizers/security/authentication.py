@@ -138,9 +138,7 @@ class PasswordHasher:
         if not password or not hashed_password:
             return False
         try:
-            return bool(
-                bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
-            )
+            return bool(bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8")))
         except (ValueError, TypeError):
             return False
 
@@ -369,7 +367,9 @@ def get_current_user(request: Request) -> Optional[TokenPayload]:
     return getattr(state, "user", None)
 
 
-def require_role(role: str) -> Callable[[Callable[..., Awaitable[_T]]], Callable[..., Awaitable[_T]]]:
+def require_role(
+    role: str,
+) -> Callable[[Callable[..., Awaitable[_T]]], Callable[..., Awaitable[_T]]]:
     def decorator(func: Callable[..., Awaitable[_T]]) -> Callable[..., Awaitable[_T]]:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> _T:

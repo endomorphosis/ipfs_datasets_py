@@ -25,18 +25,20 @@ class MassachusettsScraper(BaseStateScraper):
         r"/laws/generallaws/(?:part[a-z0-9-]*|title[a-z0-9-]*|chapter[a-z0-9-]*|section[a-z0-9-]*)(?:/|$)",
         re.IGNORECASE,
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Massachusetts's legislative website."""
         return "https://malegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Massachusetts."""
-        return [{
-            "name": "Massachusetts General Laws",
-            "url": f"{self.get_base_url()}/Laws/GeneralLaws",
-            "type": "Code"
-        }]
+        return [
+            {
+                "name": "Massachusetts General Laws",
+                "url": f"{self.get_base_url()}/Laws/GeneralLaws",
+                "type": "Code",
+            }
+        ]
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -45,7 +47,7 @@ class MassachusettsScraper(BaseStateScraper):
             if self._MA_SECTION_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -53,11 +55,11 @@ class MassachusettsScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Massachusetts's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -86,7 +88,9 @@ class MassachusettsScraper(BaseStateScraper):
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
         if not self._full_corpus_enabled() or max_statutes is not None:
-            direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct_sections = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct_sections:
                 _merge(direct_sections)
 
@@ -115,13 +119,17 @@ class MassachusettsScraper(BaseStateScraper):
 
         return merged
 
-    async def _scrape_official_general_laws_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_general_laws_tree(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
-        root_html = await self._request_text_direct(f"{self.get_base_url()}/Laws/GeneralLaws", timeout=20)
+        root_html = await self._request_text_direct(
+            f"{self.get_base_url()}/Laws/GeneralLaws", timeout=20
+        )
         if not root_html:
             return []
 
@@ -143,7 +151,9 @@ class MassachusettsScraper(BaseStateScraper):
         for part_url in part_links:
             if len(statutes) >= max_statutes:
                 break
-            section_links = await self._discover_section_links_from_part(part_url, max_sections=max_statutes * 4)
+            section_links = await self._discover_section_links_from_part(
+                part_url, max_sections=max_statutes * 4
+            )
             for section_url in section_links:
                 if len(statutes) >= max_statutes:
                     break
@@ -155,7 +165,9 @@ class MassachusettsScraper(BaseStateScraper):
                     statutes.append(statute)
         return statutes
 
-    async def _discover_section_links_from_part(self, part_url: str, max_sections: int) -> List[str]:
+    async def _discover_section_links_from_part(
+        self, part_url: str, max_sections: int
+    ) -> List[str]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -193,7 +205,10 @@ class MassachusettsScraper(BaseStateScraper):
                 chapter_page = BeautifulSoup(chapter_html, "html.parser")
                 for section_link in chapter_page.find_all("a", href=True):
                     raw_section_href = str(section_link.get("href", "")).strip()
-                    if "/Laws/GeneralLaws/" not in raw_section_href or "/Section" not in raw_section_href:
+                    if (
+                        "/Laws/GeneralLaws/" not in raw_section_href
+                        or "/Section" not in raw_section_href
+                    ):
                         continue
                     abs_section = urljoin(self.get_base_url(), raw_section_href)
                     if abs_section in seen_sections:
@@ -221,7 +236,9 @@ class MassachusettsScraper(BaseStateScraper):
             specs.append(item)
         return specs
 
-    async def _build_section_statute(self, code_name: str, section_url: str) -> Optional[NormalizedStatute]:
+    async def _build_section_statute(
+        self, code_name: str, section_url: str
+    ) -> Optional[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -233,7 +250,9 @@ class MassachusettsScraper(BaseStateScraper):
         soup = BeautifulSoup(html, "html.parser")
 
         heading = soup.select_one("h2.genLawHeading")
-        section_name = self._normalize_legal_text(heading.get_text(" ", strip=True)) if heading else ""
+        section_name = (
+            self._normalize_legal_text(heading.get_text(" ", strip=True)) if heading else ""
+        )
         body_chunks: List[str] = []
         for para in soup.find_all("p"):
             text = self._normalize_legal_text(para.get_text(" ", strip=True))
@@ -272,15 +291,25 @@ class MassachusettsScraper(BaseStateScraper):
             },
         )
 
-    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(
+        self, code_name: str, max_statutes: int = 2
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         seeds = [
-            ("1", "Citizens of commonwealth defined", f"{self.get_base_url()}/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section1"),
-            ("2", "Jurisdiction", f"{self.get_base_url()}/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section2"),
+            (
+                "1",
+                "Citizens of commonwealth defined",
+                f"{self.get_base_url()}/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section1",
+            ),
+            (
+                "2",
+                "Jurisdiction",
+                f"{self.get_base_url()}/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section2",
+            ),
         ]
         out: List[NormalizedStatute] = []
         for section_number, fallback_name, source_url in seeds[: max(1, int(max_statutes or 1))]:
@@ -289,7 +318,11 @@ class MassachusettsScraper(BaseStateScraper):
                 continue
             soup = BeautifulSoup(html, "html.parser")
             heading = soup.select_one("h2.genLawHeading")
-            section_name = self._normalize_legal_text(heading.get_text(" ", strip=True)) if heading else fallback_name
+            section_name = (
+                self._normalize_legal_text(heading.get_text(" ", strip=True))
+                if heading
+                else fallback_name
+            )
             body = ""
             for para in soup.find_all("p"):
                 text = self._normalize_legal_text(para.get_text(" ", strip=True))

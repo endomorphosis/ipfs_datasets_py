@@ -166,7 +166,11 @@ class LegalIRSymbolDefinition:
             normalized_name=str(data.get("normalized_name") or ""),
             source_node_ids=tuple(_unique(_strings(data.get("source_node_ids", ())))),
             span_ids=tuple(_unique(_strings(data.get("span_ids", ())))),
-            aliases=tuple(_unique(normalize_legal_symbol_name(item) for item in _strings(data.get("aliases", ())))),
+            aliases=tuple(
+                _unique(
+                    normalize_legal_symbol_name(item) for item in _strings(data.get("aliases", ()))
+                )
+            ),
             metadata=dict(data.get("metadata") or {}),
         )
 
@@ -265,8 +269,12 @@ class LegalIRSymbolReference:
             scope_id=str(data.get("scope_id") or ""),
             document_id=str(data.get("document_id") or ""),
             normalized_name=str(data.get("normalized_name") or ""),
-            explicit_target_document_id=str(data.get("explicit_target_document_id") or data.get("target_document_id") or ""),
-            explicit_scope_id=str(data.get("explicit_scope_id") or data.get("target_scope_id") or ""),
+            explicit_target_document_id=str(
+                data.get("explicit_target_document_id") or data.get("target_document_id") or ""
+            ),
+            explicit_scope_id=str(
+                data.get("explicit_scope_id") or data.get("target_scope_id") or ""
+            ),
             source_node_ids=tuple(_unique(_strings(data.get("source_node_ids", ())))),
             span_ids=tuple(_unique(_strings(data.get("span_ids", ())))),
             metadata=dict(data.get("metadata") or {}),
@@ -450,7 +458,10 @@ class LegalIRSymbolTable:
         return tuple(
             reference
             for reference in self.references
-            if resolutions.get(reference.reference_id, LegalIRSymbolResolution(reference.reference_id, LegalIRResolutionStatus.UNRESOLVED)).status
+            if resolutions.get(
+                reference.reference_id,
+                LegalIRSymbolResolution(reference.reference_id, LegalIRResolutionStatus.UNRESOLVED),
+            ).status
             is LegalIRResolutionStatus.UNRESOLVED
         )
 
@@ -460,7 +471,10 @@ class LegalIRSymbolTable:
         return tuple(
             reference
             for reference in self.references
-            if resolutions.get(reference.reference_id, LegalIRSymbolResolution(reference.reference_id, LegalIRResolutionStatus.UNRESOLVED)).status
+            if resolutions.get(
+                reference.reference_id,
+                LegalIRSymbolResolution(reference.reference_id, LegalIRResolutionStatus.UNRESOLVED),
+            ).status
             is LegalIRResolutionStatus.AMBIGUOUS
         )
 
@@ -606,7 +620,9 @@ class LegalIRSymbolTableBuilder:
             normalized_name=normalized_name,
             source_node_ids=tuple(_unique(_strings(source_node_ids))),
             span_ids=tuple(_unique(_strings(span_ids))),
-            aliases=tuple(_unique(normalize_legal_symbol_name(alias) for alias in _strings(aliases))),
+            aliases=tuple(
+                _unique(normalize_legal_symbol_name(alias) for alias in _strings(aliases))
+            ),
             metadata=dict(metadata or {}),
         )
         self._definitions[definition.symbol_id] = definition
@@ -713,11 +729,7 @@ class LegalIRSymbolTableBuilder:
         *,
         external_symbol_tables: Sequence[LegalIRSymbolTable | Mapping[str, Any]] = (),
     ) -> LegalIRSymbolResolution:
-        ref = (
-            self._references[str(reference)]
-            if isinstance(reference, str)
-            else reference
-        )
+        ref = self._references[str(reference)] if isinstance(reference, str) else reference
         table = self.to_symbol_table(resolve=False)
         return _resolve_reference(
             table,
@@ -732,14 +744,18 @@ class LegalIRSymbolTableBuilder:
         resolve: bool = True,
         external_symbol_tables: Sequence[LegalIRSymbolTable | Mapping[str, Any]] = (),
     ) -> LegalIRSymbolTable:
-        table_id = self.symbol_table_id or "lir-symbol-table-" + _stable_hash(
-            {
-                "aliases": sorted(self._aliases),
-                "definitions": sorted(self._definitions),
-                "references": sorted(self._references),
-                "scopes": sorted(self._scopes),
-            }
-        )[:24]
+        table_id = (
+            self.symbol_table_id
+            or "lir-symbol-table-"
+            + _stable_hash(
+                {
+                    "aliases": sorted(self._aliases),
+                    "definitions": sorted(self._definitions),
+                    "references": sorted(self._references),
+                    "scopes": sorted(self._scopes),
+                }
+            )[:24]
+        )
         base = LegalIRSymbolTable(
             symbol_table_id=table_id,
             scopes=tuple(self._scopes[key] for key in sorted(self._scopes)),
@@ -766,7 +782,11 @@ class LegalIRSymbolTableBuilder:
             _dedupe_diagnostics(
                 (
                     *base.diagnostics,
-                    *(diagnostic for resolution in resolutions for diagnostic in resolution.diagnostics),
+                    *(
+                        diagnostic
+                        for resolution in resolutions
+                        for diagnostic in resolution.diagnostics
+                    ),
                 )
             )
         )
@@ -800,7 +820,12 @@ def build_legal_ir_symbol_table(
 
     sample = _payload_mapping(document_or_sample)
     document = _mapping(sample.get("modal_ir") or sample.get("document") or sample)
-    document_id = str(document.get("document_id") or sample.get("document_id") or sample.get("sample_id") or "legal-ir-document")
+    document_id = str(
+        document.get("document_id")
+        or sample.get("document_id")
+        or sample.get("sample_id")
+        or "legal-ir-document"
+    )
     citation = str(document.get("citation") or sample.get("citation") or "")
     builder = LegalIRSymbolTableBuilder(
         source_map=source_map,
@@ -815,14 +840,20 @@ def build_legal_ir_symbol_table(
         scope_id = str(payload.get("scope_id") or document_scope.scope_id)
         builder.add_definition(
             str(payload.get("name") or payload.get("term") or payload.get("symbol") or ""),
-            _symbol_kind(payload.get("symbol_kind") or payload.get("kind") or LegalIRSymbolKind.DEFINED_TERM),
+            _symbol_kind(
+                payload.get("symbol_kind") or payload.get("kind") or LegalIRSymbolKind.DEFINED_TERM
+            ),
             symbol_id=str(payload.get("symbol_id") or ""),
             scope_id=scope_id,
             document_id=str(payload.get("document_id") or document_id),
             aliases=_strings(payload.get("aliases", ())),
             source_node_ids=_source_node_ids(payload),
             span_ids=_strings(payload.get("span_ids", ())),
-            metadata={key: value for key, value in payload.items() if key not in {"name", "term", "symbol", "aliases"}},
+            metadata={
+                key: value
+                for key, value in payload.items()
+                if key not in {"name", "term", "symbol", "aliases"}
+            },
         )
 
     for field_name, kind in (
@@ -833,7 +864,9 @@ def build_legal_ir_symbol_table(
     ):
         for item in _sequence(document.get(field_name)):
             payload = _definition_payload(item)
-            name = str(payload.get("name") or payload.get("term") or payload.get("symbol") or item or "")
+            name = str(
+                payload.get("name") or payload.get("term") or payload.get("symbol") or item or ""
+            )
             if name:
                 builder.add_definition(
                     name,
@@ -880,12 +913,20 @@ def build_legal_ir_symbol_table(
         ):
             for ordinal, item in enumerate(_sequence(formula_payload.get(field_name)), start=1):
                 payload = _definition_payload(item)
-                name = str(payload.get("name") or payload.get("term") or payload.get("symbol") or item or "")
+                name = str(
+                    payload.get("name")
+                    or payload.get("term")
+                    or payload.get("symbol")
+                    or item
+                    or ""
+                )
                 if name:
                     builder.add_definition(
                         name,
                         kind,
-                        symbol_id=str(payload.get("symbol_id") or f"{formula_id}:{field_name}:{ordinal}"),
+                        symbol_id=str(
+                            payload.get("symbol_id") or f"{formula_id}:{field_name}:{ordinal}"
+                        ),
                         scope_id=formula_scope.scope_id,
                         document_id=document_id,
                         source_node_ids=_source_node_ids(payload) or (formula_id,),
@@ -916,11 +957,19 @@ def build_legal_ir_symbol_table(
             reference_id=str(payload.get("reference_id") or ""),
             scope_id=str(payload.get("scope_id") or document_scope.scope_id),
             document_id=str(payload.get("document_id") or document_id),
-            explicit_target_document_id=str(payload.get("explicit_target_document_id") or payload.get("target_document_id") or ""),
-            explicit_scope_id=str(payload.get("explicit_scope_id") or payload.get("target_scope_id") or ""),
+            explicit_target_document_id=str(
+                payload.get("explicit_target_document_id")
+                or payload.get("target_document_id")
+                or ""
+            ),
+            explicit_scope_id=str(
+                payload.get("explicit_scope_id") or payload.get("target_scope_id") or ""
+            ),
             source_node_ids=_source_node_ids(payload),
             span_ids=_strings(payload.get("span_ids", ())),
-            metadata={key: value for key, value in payload.items() if key not in {"name", "term", "ref"}},
+            metadata={
+                key: value for key, value in payload.items() if key not in {"name", "term", "ref"}
+            },
         )
 
     return builder.to_symbol_table(external_symbol_tables=external_symbol_tables)
@@ -961,38 +1010,134 @@ def validate_legal_ir_symbol_table(
     definitions = table.definition_by_id
     references = table.reference_by_id
 
-    _duplicate_diagnostic("scope", [scope.scope_id for scope in table.scopes], diagnostics, LegalIRSymbolDiagnosticType.DUPLICATE_SCOPE_ID)
-    _duplicate_diagnostic("symbol", [definition.symbol_id for definition in table.definitions], diagnostics, LegalIRSymbolDiagnosticType.DUPLICATE_SYMBOL_ID)
-    _duplicate_diagnostic("reference", [reference.reference_id for reference in table.references], diagnostics, LegalIRSymbolDiagnosticType.DUPLICATE_REFERENCE_ID)
+    _duplicate_diagnostic(
+        "scope",
+        [scope.scope_id for scope in table.scopes],
+        diagnostics,
+        LegalIRSymbolDiagnosticType.DUPLICATE_SCOPE_ID,
+    )
+    _duplicate_diagnostic(
+        "symbol",
+        [definition.symbol_id for definition in table.definitions],
+        diagnostics,
+        LegalIRSymbolDiagnosticType.DUPLICATE_SYMBOL_ID,
+    )
+    _duplicate_diagnostic(
+        "reference",
+        [reference.reference_id for reference in table.references],
+        diagnostics,
+        LegalIRSymbolDiagnosticType.DUPLICATE_REFERENCE_ID,
+    )
 
     for scope in table.scopes:
         if not scope.scope_id:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.SCOPE_MISSING, "Scope has no ID.", scope_id=scope.scope_id))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.SCOPE_MISSING,
+                    "Scope has no ID.",
+                    scope_id=scope.scope_id,
+                )
+            )
         if scope.parent_scope_id and scope.parent_scope_id not in scopes:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.SCOPE_PARENT_MISSING, "Scope parent is missing.", scope_id=scope.scope_id, field_path=f"scopes.{scope.scope_id}.parent_scope_id"))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.SCOPE_PARENT_MISSING,
+                    "Scope parent is missing.",
+                    scope_id=scope.scope_id,
+                    field_path=f"scopes.{scope.scope_id}.parent_scope_id",
+                )
+            )
     for definition in table.definitions:
         if definition.scope_id not in scopes:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.SYMBOL_SCOPE_MISSING, "Symbol definition references a missing scope.", symbol_ids=(definition.symbol_id,), scope_id=definition.scope_id))
-        _append_provenance_diagnostics(diagnostics, definition.source_node_ids, resolved_source_map, symbol_ids=(definition.symbol_id,), scope_id=definition.scope_id)
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.SYMBOL_SCOPE_MISSING,
+                    "Symbol definition references a missing scope.",
+                    symbol_ids=(definition.symbol_id,),
+                    scope_id=definition.scope_id,
+                )
+            )
+        _append_provenance_diagnostics(
+            diagnostics,
+            definition.source_node_ids,
+            resolved_source_map,
+            symbol_ids=(definition.symbol_id,),
+            scope_id=definition.scope_id,
+        )
     for alias in table.aliases:
         if alias.scope_id not in scopes:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.SYMBOL_SCOPE_MISSING, "Alias references a missing scope.", alias_ids=(alias.alias_id,), scope_id=alias.scope_id))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.SYMBOL_SCOPE_MISSING,
+                    "Alias references a missing scope.",
+                    alias_ids=(alias.alias_id,),
+                    scope_id=alias.scope_id,
+                )
+            )
         if alias.target_symbol_id and alias.target_symbol_id not in definitions:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.ALIAS_TARGET_UNRESOLVED, "Alias target symbol is missing.", alias_ids=(alias.alias_id,), symbol_ids=(alias.target_symbol_id,), scope_id=alias.scope_id))
-        _append_provenance_diagnostics(diagnostics, alias.source_node_ids, resolved_source_map, alias_ids=(alias.alias_id,), scope_id=alias.scope_id)
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.ALIAS_TARGET_UNRESOLVED,
+                    "Alias target symbol is missing.",
+                    alias_ids=(alias.alias_id,),
+                    symbol_ids=(alias.target_symbol_id,),
+                    scope_id=alias.scope_id,
+                )
+            )
+        _append_provenance_diagnostics(
+            diagnostics,
+            alias.source_node_ids,
+            resolved_source_map,
+            alias_ids=(alias.alias_id,),
+            scope_id=alias.scope_id,
+        )
     for reference in table.references:
         if reference.scope_id not in scopes:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.REFERENCE_SCOPE_MISSING, "Reference uses a missing scope.", reference_id=reference.reference_id, scope_id=reference.scope_id))
-        _append_provenance_diagnostics(diagnostics, reference.source_node_ids, resolved_source_map, reference_id=reference.reference_id, scope_id=reference.scope_id)
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.REFERENCE_SCOPE_MISSING,
+                    "Reference uses a missing scope.",
+                    reference_id=reference.reference_id,
+                    scope_id=reference.scope_id,
+                )
+            )
+        _append_provenance_diagnostics(
+            diagnostics,
+            reference.source_node_ids,
+            resolved_source_map,
+            reference_id=reference.reference_id,
+            scope_id=reference.scope_id,
+        )
 
     for resolution in table.resolutions:
         if resolution.reference_id not in references:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.RESOLUTION_TARGET_MISSING, "Resolution references a missing reference.", reference_id=resolution.reference_id))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.RESOLUTION_TARGET_MISSING,
+                    "Resolution references a missing reference.",
+                    reference_id=resolution.reference_id,
+                )
+            )
         for symbol_id in resolution.symbol_ids:
-            if symbol_id not in definitions and not _external_definition_exists(symbol_id, external_tables):
-                diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.RESOLUTION_TARGET_MISSING, "Resolution points at a missing symbol.", reference_id=resolution.reference_id, symbol_ids=(symbol_id,)))
+            if symbol_id not in definitions and not _external_definition_exists(
+                symbol_id, external_tables
+            ):
+                diagnostics.append(
+                    _diagnostic(
+                        LegalIRSymbolDiagnosticType.RESOLUTION_TARGET_MISSING,
+                        "Resolution points at a missing symbol.",
+                        reference_id=resolution.reference_id,
+                        symbol_ids=(symbol_id,),
+                    )
+                )
         if resolution.status is not LegalIRResolutionStatus.RESOLVED and not resolution.diagnostics:
-            diagnostics.append(_diagnostic(LegalIRSymbolDiagnosticType.RESOLUTION_DIAGNOSTIC_MISSING, "Non-resolved resolution lacks diagnostics.", reference_id=resolution.reference_id))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRSymbolDiagnosticType.RESOLUTION_DIAGNOSTIC_MISSING,
+                    "Non-resolved resolution lacks diagnostics.",
+                    reference_id=resolution.reference_id,
+                )
+            )
 
     diagnostics = list(_dedupe_diagnostics(diagnostics))
     return LegalIRSymbolTableValidationResult(
@@ -1027,14 +1172,25 @@ def merge_legal_ir_symbol_tables(
 
     tables = tuple(_symbol_table(table) for table in symbol_tables)
     return LegalIRSymbolTable(
-        symbol_table_id=symbol_table_id or "lir-symbol-table-" + _stable_hash([table.symbol_table_id for table in tables])[:24],
+        symbol_table_id=symbol_table_id
+        or "lir-symbol-table-" + _stable_hash([table.symbol_table_id for table in tables])[:24],
         scopes=tuple(_unique_records(scope for table in tables for scope in table.scopes)),
-        definitions=tuple(_unique_records(definition for table in tables for definition in table.definitions)),
+        definitions=tuple(
+            _unique_records(definition for table in tables for definition in table.definitions)
+        ),
         aliases=tuple(_unique_records(alias for table in tables for alias in table.aliases)),
-        references=tuple(_unique_records(reference for table in tables for reference in table.references)),
-        resolutions=tuple(_unique_records(resolution for table in tables for resolution in table.resolutions)),
-        diagnostics=tuple(_dedupe_diagnostics(issue for table in tables for issue in table.diagnostics)),
-        source_map_id=",".join(_unique(table.source_map_id for table in tables if table.source_map_id)),
+        references=tuple(
+            _unique_records(reference for table in tables for reference in table.references)
+        ),
+        resolutions=tuple(
+            _unique_records(resolution for table in tables for resolution in table.resolutions)
+        ),
+        diagnostics=tuple(
+            _dedupe_diagnostics(issue for table in tables for issue in table.diagnostics)
+        ),
+        source_map_id=",".join(
+            _unique(table.source_map_id for table in tables if table.source_map_id)
+        ),
         metadata={"merged_symbol_table_ids": [table.symbol_table_id for table in tables]},
     )
 
@@ -1048,12 +1204,20 @@ def _resolve_reference(
 ) -> LegalIRSymbolResolution:
     external_tables = tuple(_symbol_table(item) for item in external_symbol_tables)
     normalized = reference.normalized_name or normalize_legal_symbol_name(reference.name)
-    scope_path = _scope_path(table, reference.scope_id, explicit_scope_id=reference.explicit_scope_id)
+    scope_path = _scope_path(
+        table, reference.scope_id, explicit_scope_id=reference.explicit_scope_id
+    )
     candidates: list[tuple[LegalIRSymbolDefinition, tuple[str, ...]]] = []
     diagnostics: list[LegalIRSymbolDiagnostic] = []
 
     for scope_id in scope_path:
-        local = _definition_candidates(table, normalized, reference.symbol_kind, scope_id, reference.explicit_target_document_id)
+        local = _definition_candidates(
+            table,
+            normalized,
+            reference.symbol_kind,
+            scope_id,
+            reference.explicit_target_document_id,
+        )
         alias_candidates, alias_diagnostics = _alias_candidates(
             table,
             normalized,
@@ -1148,7 +1312,9 @@ def _resolve_reference(
                 f"Reference {reference.reference_id!r} resolves to multiple {reference.symbol_kind.value} definitions.",
                 reference_id=reference.reference_id,
                 symbol_ids=tuple(definition.symbol_id for definition in collapsed),
-                alias_ids=tuple(_unique(alias_id for _, alias_ids in candidates for alias_id in alias_ids)),
+                alias_ids=tuple(
+                    _unique(alias_id for _, alias_ids in candidates for alias_id in alias_ids)
+                ),
                 scope_id=reference.scope_id,
                 document_id=reference.document_id,
                 source_node_ids=source_node_ids,
@@ -1159,7 +1325,9 @@ def _resolve_reference(
             reference_id=reference.reference_id,
             status=LegalIRResolutionStatus.AMBIGUOUS,
             symbol_ids=tuple(definition.symbol_id for definition in collapsed),
-            alias_ids=tuple(_unique(alias_id for _, alias_ids in candidates for alias_id in alias_ids)),
+            alias_ids=tuple(
+                _unique(alias_id for _, alias_ids in candidates for alias_id in alias_ids)
+            ),
             scope_path=scope_path,
             diagnostics=tuple(_dedupe_diagnostics(diagnostics)),
             source_traces=source_traces,
@@ -1198,11 +1366,17 @@ def _matches_definition(
     *,
     document_id: str = "",
 ) -> bool:
-    if kind is not LegalIRSymbolKind.UNKNOWN and definition.symbol_kind not in {kind, LegalIRSymbolKind.UNKNOWN}:
+    if kind is not LegalIRSymbolKind.UNKNOWN and definition.symbol_kind not in {
+        kind,
+        LegalIRSymbolKind.UNKNOWN,
+    }:
         return False
     if document_id and definition.document_id != document_id:
         return False
-    return normalized_name in {definition.normalized_name or normalize_legal_symbol_name(definition.name), *definition.aliases}
+    return normalized_name in {
+        definition.normalized_name or normalize_legal_symbol_name(definition.name),
+        *definition.aliases,
+    }
 
 
 def _alias_candidates(
@@ -1221,11 +1395,16 @@ def _alias_candidates(
             continue
         if (alias.normalized_alias or normalize_legal_symbol_name(alias.alias)) != normalized_name:
             continue
-        if kind is not LegalIRSymbolKind.UNKNOWN and alias.symbol_kind not in {kind, LegalIRSymbolKind.UNKNOWN}:
+        if kind is not LegalIRSymbolKind.UNKNOWN and alias.symbol_kind not in {
+            kind,
+            LegalIRSymbolKind.UNKNOWN,
+        }:
             continue
         if document_id and alias.document_id and alias.document_id != document_id:
             continue
-        resolved, alias_diagnostics = _resolve_alias(table, alias, kind, external_tables=external_tables)
+        resolved, alias_diagnostics = _resolve_alias(
+            table, alias, kind, external_tables=external_tables
+        )
         diagnostics.extend(alias_diagnostics)
         candidates.extend((definition, alias_path) for definition, alias_path in resolved)
     return tuple(candidates), tuple(_dedupe_diagnostics(diagnostics))
@@ -1238,7 +1417,9 @@ def _resolve_alias(
     *,
     external_tables: Sequence[LegalIRSymbolTable],
     stack: tuple[str, ...] = (),
-) -> tuple[tuple[tuple[LegalIRSymbolDefinition, tuple[str, ...]], ...], tuple[LegalIRSymbolDiagnostic, ...]]:
+) -> tuple[
+    tuple[tuple[LegalIRSymbolDefinition, tuple[str, ...]], ...], tuple[LegalIRSymbolDiagnostic, ...]
+]:
     if alias.alias_id in stack:
         return (), (
             _diagnostic(
@@ -1252,7 +1433,9 @@ def _resolve_alias(
             ),
         )
     if alias.target_symbol_id:
-        definition = table.definition_by_id.get(alias.target_symbol_id) or _external_definition(alias.target_symbol_id, external_tables)
+        definition = table.definition_by_id.get(alias.target_symbol_id) or _external_definition(
+            alias.target_symbol_id, external_tables
+        )
         if definition is None:
             return (), (
                 _diagnostic(
@@ -1313,7 +1496,9 @@ def _resolve_alias(
             candidates.extend(
                 (definition, (*stack, alias.alias_id))
                 for definition in external.definitions
-                if _matches_definition(definition, target, kind, document_id=alias.target_document_id)
+                if _matches_definition(
+                    definition, target, kind, document_id=alias.target_document_id
+                )
             )
     if not candidates:
         diagnostics.append(
@@ -1343,7 +1528,9 @@ def _scope_path(
     while current and current not in seen:
         seen.add(current)
         path.append(current)
-        current = scopes.get(current, LegalIRSymbolScope("", LegalIRScopeKind.GLOBAL)).parent_scope_id
+        current = scopes.get(
+            current, LegalIRSymbolScope("", LegalIRScopeKind.GLOBAL)
+        ).parent_scope_id
     if "global" not in path and "global" in scopes:
         path.append("global")
     return tuple(path)
@@ -1421,11 +1608,19 @@ def _append_provenance_diagnostics(
 
 
 def _source_map(value: LegalIRSourceMap | Mapping[str, Any]) -> LegalIRSourceMap:
-    return value if isinstance(value, LegalIRSourceMap) else LegalIRSourceMap.from_dict(_mapping(value))
+    return (
+        value
+        if isinstance(value, LegalIRSourceMap)
+        else LegalIRSourceMap.from_dict(_mapping(value))
+    )
 
 
 def _symbol_table(value: LegalIRSymbolTable | Mapping[str, Any]) -> LegalIRSymbolTable:
-    return value if isinstance(value, LegalIRSymbolTable) else LegalIRSymbolTable.from_dict(_mapping(value))
+    return (
+        value
+        if isinstance(value, LegalIRSymbolTable)
+        else LegalIRSymbolTable.from_dict(_mapping(value))
+    )
 
 
 def _definition_payload(item: Any) -> dict[str, Any]:
@@ -1505,14 +1700,22 @@ def _canonical_json_value(value: Any) -> Any:
 
 def _scope_kind(value: Any) -> LegalIRScopeKind:
     try:
-        return value if isinstance(value, LegalIRScopeKind) else LegalIRScopeKind(str(value or "global"))
+        return (
+            value
+            if isinstance(value, LegalIRScopeKind)
+            else LegalIRScopeKind(str(value or "global"))
+        )
     except ValueError:
         return LegalIRScopeKind.GLOBAL
 
 
 def _symbol_kind(value: Any) -> LegalIRSymbolKind:
     try:
-        return value if isinstance(value, LegalIRSymbolKind) else LegalIRSymbolKind(str(value or "unknown"))
+        return (
+            value
+            if isinstance(value, LegalIRSymbolKind)
+            else LegalIRSymbolKind(str(value or "unknown"))
+        )
     except ValueError:
         aliases = {
             "definition": LegalIRSymbolKind.DEFINED_TERM,
@@ -1529,14 +1732,22 @@ def _symbol_kind(value: Any) -> LegalIRSymbolKind:
 
 def _resolution_status(value: Any) -> LegalIRResolutionStatus:
     try:
-        return value if isinstance(value, LegalIRResolutionStatus) else LegalIRResolutionStatus(str(value or "unresolved"))
+        return (
+            value
+            if isinstance(value, LegalIRResolutionStatus)
+            else LegalIRResolutionStatus(str(value or "unresolved"))
+        )
     except ValueError:
         return LegalIRResolutionStatus.UNRESOLVED
 
 
 def _diagnostic_type(value: Any) -> LegalIRSymbolDiagnosticType:
     try:
-        return value if isinstance(value, LegalIRSymbolDiagnosticType) else LegalIRSymbolDiagnosticType(str(value or "unresolved_symbol"))
+        return (
+            value
+            if isinstance(value, LegalIRSymbolDiagnosticType)
+            else LegalIRSymbolDiagnosticType(str(value or "unresolved_symbol"))
+        )
     except ValueError:
         return LegalIRSymbolDiagnosticType.UNRESOLVED_SYMBOL
 
@@ -1570,7 +1781,9 @@ def _diagnostic(
     )
 
 
-def _dedupe_diagnostics(diagnostics: Iterable[LegalIRSymbolDiagnostic]) -> tuple[LegalIRSymbolDiagnostic, ...]:
+def _dedupe_diagnostics(
+    diagnostics: Iterable[LegalIRSymbolDiagnostic],
+) -> tuple[LegalIRSymbolDiagnostic, ...]:
     return tuple(
         {
             (
@@ -1597,7 +1810,9 @@ def _duplicate_diagnostic(
     seen: set[str] = set()
     for item in ids:
         if item in seen:
-            diagnostics.append(_diagnostic(diagnostic_type, f"Duplicate {kind} ID {item!r}.", field_path=kind))
+            diagnostics.append(
+                _diagnostic(diagnostic_type, f"Duplicate {kind} ID {item!r}.", field_path=kind)
+            )
         seen.add(item)
 
 

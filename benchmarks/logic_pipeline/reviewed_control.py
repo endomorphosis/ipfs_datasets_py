@@ -37,12 +37,10 @@ from .contracts import (
 
 
 REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-invalid-control-classification.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-invalid-control-classification.v2"
 )
 REVIEWED_CONTROL_ATTESTATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-control-attestation.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-attestation.v2"
 )
 REVIEWED_CONTROL_ENTRY_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-entry.v2"
@@ -51,29 +49,22 @@ REVIEWED_CONTROL_INDEX_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-index.v2"
 )
 REVIEWED_CONTROL_SAFETY_GATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-control-safety-gate.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-safety-gate.v2"
 )
 REVIEWED_CONTROL_COORDINATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-control-runtime-coordinate.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-runtime-coordinate.v2"
 )
 REVIEWED_CONTROL_RUNTIME_SET_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-control-runtime-set.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-runtime-set.v2"
 )
 REVIEWED_CONTROL_POLICY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-control-safety-policy.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-control-safety-policy.v2"
 )
 REVIEWED_CONTROL_REVIEW_PROTOCOL_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "independent-control-review-protocol.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.independent-control-review-protocol.v2"
 )
 
-G236_REQUIRED_VARIANT_IDS: Final = tuple(
-    f"A{index}" for index in range(13)
-)
+G236_REQUIRED_VARIANT_IDS: Final = tuple(f"A{index}" for index in range(13))
 G236_REQUIRED_CACHE_MODES: Final = (
     CacheMode.COLD,
     CacheMode.WARM,
@@ -102,38 +93,27 @@ def _plain(value: object) -> object:
             raise ReviewedControlSafetyError(
                 "reviewed-control DAG-JSON objects require string keys"
             )
-        return {
-            str(key): _plain(member)
-            for key, member in value.items()
-        }
+        return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     if value is None or type(value) in {str, bool, int, float}:
         return value
     raise ReviewedControlSafetyError(
-        "reviewed-control value is not DAG-JSON: "
-        f"{type(value).__name__}"
+        f"reviewed-control value is not DAG-JSON: {type(value).__name__}"
     )
 
 
 def _freeze(value: object) -> object:
     plain = _plain(value)
     if isinstance(plain, dict):
-        return MappingProxyType(
-            {
-                key: _freeze(member)
-                for key, member in plain.items()
-            }
-        )
+        return MappingProxyType({key: _freeze(member) for key, member in plain.items()})
     if isinstance(plain, list):
         return tuple(_freeze(member) for member in plain)
     return plain
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise ReviewedControlSafetyError(f"{field} must be an object")
     return value
 
@@ -163,15 +143,10 @@ def _safe_id(value: object, field: str) -> str:
         or not value
         or len(value) > 128
         or not value[0].isalnum()
-        or any(
-            not (character.isalnum() or character in "._-")
-            for character in value
-        )
+        or any(not (character.isalnum() or character in "._-") for character in value)
         or value in {".", ".."}
     ):
-        raise ReviewedControlSafetyError(
-            f"{field} must be a safe 1-128 character identifier"
-        )
+        raise ReviewedControlSafetyError(f"{field} must be a safe 1-128 character identifier")
     return value
 
 
@@ -191,9 +166,7 @@ def _cid(
 
 def _control_kind(value: object) -> ControlKind:
     if not isinstance(value, ControlKind):
-        raise ReviewedControlSafetyError(
-            "control_kind must be a typed frozen ControlKind"
-        )
+        raise ReviewedControlSafetyError("control_kind must be a typed frozen ControlKind")
     return value
 
 
@@ -205,12 +178,9 @@ def reviewed_control_policy_v2() -> dict[str, object]:
         "classification": _CONTROL_CLASSIFICATION,
         "control_kinds": [kind.value for kind in ControlKind],
         "required_variant_ids": list(G236_REQUIRED_VARIANT_IDS),
-        "required_cache_modes": [
-            mode.value for mode in G236_REQUIRED_CACHE_MODES
-        ],
+        "required_cache_modes": [mode.value for mode in G236_REQUIRED_CACHE_MODES],
         "runtime_evidence_schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "causal-runtime-evidence.v2"
+            "ipfs-datasets.logic-pipeline-benchmark.causal-runtime-evidence.v2"
         ),
         "success_authority": "terminal_independent_native_kernel",
         "maximum_native_kernel_acceptances": 0,
@@ -220,9 +190,7 @@ def reviewed_control_policy_v2() -> dict[str, object]:
     }
 
 
-REVIEWED_CONTROL_POLICY_V2_CID: Final = cid_for_dag_json(
-    reviewed_control_policy_v2()
-)
+REVIEWED_CONTROL_POLICY_V2_CID: Final = cid_for_dag_json(reviewed_control_policy_v2())
 
 
 def reviewed_control_review_protocol_v2() -> dict[str, object]:
@@ -283,27 +251,21 @@ class ReviewedControlAttestationV2:
     execution_authority_cid: str
     review_basis_cid: str
     control_policy_cid: str = REVIEWED_CONTROL_POLICY_V2_CID
-    review_protocol_cid: str = (
-        REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
-    )
+    review_protocol_cid: str = REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
     classification: str = _CONTROL_CLASSIFICATION
     holdout_included: bool = False
     schema: str = REVIEWED_CONTROL_ATTESTATION_SCHEMA_V2
 
     def __post_init__(self) -> None:
         if self.schema != REVIEWED_CONTROL_ATTESTATION_SCHEMA_V2:
-            raise ReviewedControlSafetyError(
-                "unsupported reviewed-control attestation schema"
-            )
+            raise ReviewedControlSafetyError("unsupported reviewed-control attestation schema")
         object.__setattr__(
             self,
             "case_id",
             _safe_id(self.case_id, "case_id"),
         )
         if self.split not in {Split.PILOT, Split.DEVELOPMENT}:
-            raise ReviewedControlSafetyError(
-                "reviewed controls must be pilot/development only"
-            )
+            raise ReviewedControlSafetyError("reviewed controls must be pilot/development only")
         object.__setattr__(
             self,
             "source_cid",
@@ -330,14 +292,11 @@ class ReviewedControlAttestationV2:
             )
         if (
             self.control_policy_cid != REVIEWED_CONTROL_POLICY_V2_CID
-            or self.review_protocol_cid
-            != REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
+            or self.review_protocol_cid != REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
             or self.classification != _CONTROL_CLASSIFICATION
             or self.holdout_included is not False
         ):
-            raise ReviewedControlSafetyError(
-                "reviewed-control attestation policy drifted"
-            )
+            raise ReviewedControlSafetyError("reviewed-control attestation policy drifted")
         if self.review_authority_cid == self.execution_authority_cid:
             raise ReviewedControlSafetyError(
                 "control review authority must be independent from execution"
@@ -363,9 +322,7 @@ class ReviewedControlAttestationV2:
         return {
             **self.classification_payload,
             "schema": self.schema,
-            "classification_schema": (
-                REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2
-            ),
+            "classification_schema": (REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2),
             "classification_cid": self.classification_cid,
             "review_protocol_cid": self.review_protocol_cid,
             "review_authority_cid": self.review_authority_cid,
@@ -419,35 +376,18 @@ class ReviewedControlAttestationV2:
             split=split,
             source_cid=data["source_cid"],  # type: ignore[arg-type]
             control_kind=kind,
-            source_manifest_cid=data[
-                "source_manifest_cid"
-            ],  # type: ignore[arg-type]
-            rescue_manifest_cid=data[
-                "rescue_manifest_cid"
-            ],  # type: ignore[arg-type]
-            review_authority_cid=data[
-                "review_authority_cid"
-            ],  # type: ignore[arg-type]
-            execution_authority_cid=data[
-                "execution_authority_cid"
-            ],  # type: ignore[arg-type]
-            review_basis_cid=data[
-                "review_basis_cid"
-            ],  # type: ignore[arg-type]
-            control_policy_cid=data[
-                "control_policy_cid"
-            ],  # type: ignore[arg-type]
-            review_protocol_cid=data[
-                "review_protocol_cid"
-            ],  # type: ignore[arg-type]
+            source_manifest_cid=data["source_manifest_cid"],  # type: ignore[arg-type]
+            rescue_manifest_cid=data["rescue_manifest_cid"],  # type: ignore[arg-type]
+            review_authority_cid=data["review_authority_cid"],  # type: ignore[arg-type]
+            execution_authority_cid=data["execution_authority_cid"],  # type: ignore[arg-type]
+            review_basis_cid=data["review_basis_cid"],  # type: ignore[arg-type]
+            control_policy_cid=data["control_policy_cid"],  # type: ignore[arg-type]
+            review_protocol_cid=data["review_protocol_cid"],  # type: ignore[arg-type]
             classification=data["classification"],  # type: ignore[arg-type]
-            holdout_included=data[
-                "holdout_included"
-            ],  # type: ignore[arg-type]
+            holdout_included=data["holdout_included"],  # type: ignore[arg-type]
         )
         if (
-            data["classification_schema"]
-            != REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2
+            data["classification_schema"] != REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2
             or data["classification_cid"] != result.classification_cid
             or data["attestation_cid"] != result.attestation_cid
         ):
@@ -475,18 +415,14 @@ class ReviewedControlEntryV2:
 
     def __post_init__(self) -> None:
         if self.schema != REVIEWED_CONTROL_ENTRY_SCHEMA_V2:
-            raise ReviewedControlSafetyError(
-                "unsupported reviewed-control entry schema"
-            )
+            raise ReviewedControlSafetyError("unsupported reviewed-control entry schema")
         object.__setattr__(
             self,
             "case_id",
             _safe_id(self.case_id, "case_id"),
         )
         if self.split not in {Split.PILOT, Split.DEVELOPMENT}:
-            raise ReviewedControlSafetyError(
-                "reviewed controls must be pilot/development only"
-            )
+            raise ReviewedControlSafetyError("reviewed controls must be pilot/development only")
         object.__setattr__(
             self,
             "source_cid",
@@ -513,9 +449,7 @@ class ReviewedControlEntryV2:
             or self.classification != _CONTROL_CLASSIFICATION
             or self.holdout_included is not False
         ):
-            raise ReviewedControlSafetyError(
-                "reviewed-control entry policy drifted"
-            )
+            raise ReviewedControlSafetyError("reviewed-control entry policy drifted")
 
     @property
     def classification_payload(self) -> dict[str, object]:
@@ -537,9 +471,7 @@ class ReviewedControlEntryV2:
         return {
             **self.classification_payload,
             "schema": self.schema,
-            "classification_schema": (
-                REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2
-            ),
+            "classification_schema": (REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2),
             "classification_cid": self.classification_cid,
             "review_attestation_cid": self.review_attestation_cid,
         }
@@ -584,32 +516,19 @@ class ReviewedControlEntryV2:
             split=split,
             source_cid=data["source_cid"],  # type: ignore[arg-type]
             control_kind=kind,
-            review_attestation_cid=data[
-                "review_attestation_cid"
-            ],  # type: ignore[arg-type]
-            source_manifest_cid=data[
-                "source_manifest_cid"
-            ],  # type: ignore[arg-type]
-            rescue_manifest_cid=data[
-                "rescue_manifest_cid"
-            ],  # type: ignore[arg-type]
-            control_policy_cid=data[
-                "control_policy_cid"
-            ],  # type: ignore[arg-type]
+            review_attestation_cid=data["review_attestation_cid"],  # type: ignore[arg-type]
+            source_manifest_cid=data["source_manifest_cid"],  # type: ignore[arg-type]
+            rescue_manifest_cid=data["rescue_manifest_cid"],  # type: ignore[arg-type]
+            control_policy_cid=data["control_policy_cid"],  # type: ignore[arg-type]
             classification=data["classification"],  # type: ignore[arg-type]
-            holdout_included=data[
-                "holdout_included"
-            ],  # type: ignore[arg-type]
+            holdout_included=data["holdout_included"],  # type: ignore[arg-type]
         )
         if (
-            data["classification_schema"]
-            != REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2
+            data["classification_schema"] != REVIEWED_CONTROL_CLASSIFICATION_SCHEMA_V2
             or data["classification_cid"] != result.classification_cid
             or data["entry_cid"] != result.entry_cid
         ):
-            raise ReviewedControlSafetyError(
-                "reviewed-control entry CID or classification changed"
-            )
+            raise ReviewedControlSafetyError("reviewed-control entry CID or classification changed")
         return result
 
 
@@ -626,18 +545,14 @@ class ReviewedControlIndexV2:
     entries: tuple[ReviewedControlEntryV2, ...]
     attestations: tuple[ReviewedControlAttestationV2, ...]
     control_policy_cid: str = REVIEWED_CONTROL_POLICY_V2_CID
-    review_protocol_cid: str = (
-        REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
-    )
+    review_protocol_cid: str = REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
     frozen: bool = True
     holdout_included: bool = False
     schema: str = REVIEWED_CONTROL_INDEX_SCHEMA_V2
 
     def __post_init__(self) -> None:
         if self.schema != REVIEWED_CONTROL_INDEX_SCHEMA_V2:
-            raise ReviewedControlSafetyError(
-                "unsupported reviewed-control index schema"
-            )
+            raise ReviewedControlSafetyError("unsupported reviewed-control index schema")
         for field in (
             "review_authority_cid",
             "execution_authority_cid",
@@ -652,33 +567,19 @@ class ReviewedControlIndexV2:
         if (
             self.review_authority_cid == self.execution_authority_cid
             or self.control_policy_cid != REVIEWED_CONTROL_POLICY_V2_CID
-            or self.review_protocol_cid
-            != REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
+            or self.review_protocol_cid != REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
             or self.frozen is not True
             or self.holdout_included is not False
         ):
-            raise ReviewedControlSafetyError(
-                "reviewed-control index authority or policy drifted"
-            )
+            raise ReviewedControlSafetyError("reviewed-control index authority or policy drifted")
         entries = tuple(self.entries)
-        if (
-            not entries
-            or any(
-                not isinstance(item, ReviewedControlEntryV2)
-                for item in entries
-            )
-        ):
+        if not entries or any(not isinstance(item, ReviewedControlEntryV2) for item in entries):
             raise ReviewedControlSafetyError(
                 "reviewed-control index requires a nonempty typed population"
             )
-        entries = tuple(
-            ReviewedControlEntryV2.from_dict(item.to_dict())
-            for item in entries
-        )
+        entries = tuple(ReviewedControlEntryV2.from_dict(item.to_dict()) for item in entries)
         keys = tuple(_entry_key(item) for item in entries)
-        source_keys = tuple(
-            (item.split.value, item.source_cid) for item in entries
-        )
+        source_keys = tuple((item.split.value, item.source_cid) for item in entries)
         if (
             keys != tuple(sorted(keys))
             or len(keys) != len(set(keys))
@@ -691,59 +592,37 @@ class ReviewedControlIndexV2:
             )
         attestations = tuple(self.attestations)
         if (
-            any(
-                not isinstance(item, ReviewedControlAttestationV2)
-                for item in attestations
-            )
+            any(not isinstance(item, ReviewedControlAttestationV2) for item in attestations)
             or not attestations
         ):
-            raise ReviewedControlSafetyError(
-                "reviewed-control index requires typed attestations"
-            )
+            raise ReviewedControlSafetyError("reviewed-control index requires typed attestations")
         attestations = tuple(
-            ReviewedControlAttestationV2.from_dict(item.to_dict())
-            for item in attestations
+            ReviewedControlAttestationV2.from_dict(item.to_dict()) for item in attestations
         )
-        attestation_cids = tuple(
-            item.attestation_cid for item in attestations
-        )
+        attestation_cids = tuple(item.attestation_cid for item in attestations)
         if (
             attestation_cids != tuple(sorted(attestation_cids))
             or len(attestation_cids) != len(set(attestation_cids))
-            or len(
-                {item.classification_cid for item in attestations}
-            )
-            != len(attestations)
+            or len({item.classification_cid for item in attestations}) != len(attestations)
         ):
             raise ReviewedControlSafetyError(
                 "reviewed-control attestations must be sorted and unique"
             )
-        by_cid = {
-            item.attestation_cid: item for item in attestations
-        }
-        if set(by_cid) != {
-            item.review_attestation_cid for item in entries
-        }:
+        by_cid = {item.attestation_cid: item for item in attestations}
+        if set(by_cid) != {item.review_attestation_cid for item in entries}:
             raise ReviewedControlSafetyError(
                 "every reviewed control requires exactly one attestation"
             )
         for entry in entries:
             attestation = by_cid[entry.review_attestation_cid]
             if (
-                attestation.classification_cid
-                != entry.classification_cid
-                or attestation.review_authority_cid
-                != self.review_authority_cid
-                or attestation.execution_authority_cid
-                != self.execution_authority_cid
-                or attestation.control_policy_cid
-                != self.control_policy_cid
-                or attestation.review_protocol_cid
-                != self.review_protocol_cid
-                or attestation.source_manifest_cid
-                != entry.source_manifest_cid
-                or attestation.rescue_manifest_cid
-                != entry.rescue_manifest_cid
+                attestation.classification_cid != entry.classification_cid
+                or attestation.review_authority_cid != self.review_authority_cid
+                or attestation.execution_authority_cid != self.execution_authority_cid
+                or attestation.control_policy_cid != self.control_policy_cid
+                or attestation.review_protocol_cid != self.review_protocol_cid
+                or attestation.source_manifest_cid != entry.source_manifest_cid
+                or attestation.rescue_manifest_cid != entry.rescue_manifest_cid
             ):
                 raise ReviewedControlSafetyError(
                     "reviewed-control entry has a forged or stale attestation"
@@ -753,23 +632,15 @@ class ReviewedControlIndexV2:
 
     @property
     def source_manifest_cids(self) -> tuple[str, ...]:
-        return tuple(
-            sorted({item.source_manifest_cid for item in self.entries})
-        )
+        return tuple(sorted({item.source_manifest_cid for item in self.entries}))
 
     @property
     def rescue_manifest_cids(self) -> tuple[str, ...]:
-        return tuple(
-            sorted({item.rescue_manifest_cid for item in self.entries})
-        )
+        return tuple(sorted({item.rescue_manifest_cid for item in self.entries}))
 
     @property
     def required_coordinate_count(self) -> int:
-        return (
-            len(self.entries)
-            * len(G236_REQUIRED_VARIANT_IDS)
-            * len(G236_REQUIRED_CACHE_MODES)
-        )
+        return len(self.entries) * len(G236_REQUIRED_VARIANT_IDS) * len(G236_REQUIRED_CACHE_MODES)
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -779,17 +650,13 @@ class ReviewedControlIndexV2:
             "review_authority_cid": self.review_authority_cid,
             "execution_authority_cid": self.execution_authority_cid,
             "required_variant_ids": list(G236_REQUIRED_VARIANT_IDS),
-            "required_cache_modes": [
-                mode.value for mode in G236_REQUIRED_CACHE_MODES
-            ],
+            "required_cache_modes": [mode.value for mode in G236_REQUIRED_CACHE_MODES],
             "source_manifest_cids": list(self.source_manifest_cids),
             "rescue_manifest_cids": list(self.rescue_manifest_cids),
             "entry_count": len(self.entries),
             "required_coordinate_count": self.required_coordinate_count,
             "entries": [item.to_dict() for item in self.entries],
-            "attestations": [
-                item.to_dict() for item in self.attestations
-            ],
+            "attestations": [item.to_dict() for item in self.attestations],
             "frozen": self.frozen,
             "holdout_included": self.holdout_included,
         }
@@ -830,35 +697,19 @@ class ReviewedControlIndexV2:
         )
         result = cls(
             schema=data["schema"],  # type: ignore[arg-type]
-            control_policy_cid=data[
-                "control_policy_cid"
-            ],  # type: ignore[arg-type]
-            review_protocol_cid=data[
-                "review_protocol_cid"
-            ],  # type: ignore[arg-type]
-            review_authority_cid=data[
-                "review_authority_cid"
-            ],  # type: ignore[arg-type]
-            execution_authority_cid=data[
-                "execution_authority_cid"
-            ],  # type: ignore[arg-type]
-            entries=tuple(
-                ReviewedControlEntryV2.from_dict(item)
-                for item in entries
-            ),
+            control_policy_cid=data["control_policy_cid"],  # type: ignore[arg-type]
+            review_protocol_cid=data["review_protocol_cid"],  # type: ignore[arg-type]
+            review_authority_cid=data["review_authority_cid"],  # type: ignore[arg-type]
+            execution_authority_cid=data["execution_authority_cid"],  # type: ignore[arg-type]
+            entries=tuple(ReviewedControlEntryV2.from_dict(item) for item in entries),
             attestations=tuple(
-                ReviewedControlAttestationV2.from_dict(item)
-                for item in attestations
+                ReviewedControlAttestationV2.from_dict(item) for item in attestations
             ),
             frozen=data["frozen"],  # type: ignore[arg-type]
-            holdout_included=data[
-                "holdout_included"
-            ],  # type: ignore[arg-type]
+            holdout_included=data["holdout_included"],  # type: ignore[arg-type]
         )
         if _plain(data) != result.to_dict():
-            raise ReviewedControlSafetyError(
-                "reviewed-control index derived fields or CID changed"
-            )
+            raise ReviewedControlSafetyError("reviewed-control index derived fields or CID changed")
         return result
 
 
@@ -871,17 +722,13 @@ def build_reviewed_control_index_v2(
 ) -> ReviewedControlIndexV2:
     """Build a canonical index from externally reviewed typed records."""
 
-    if isinstance(entries, (str, bytes)) or isinstance(
-        attestations, (str, bytes)
-    ):
+    if isinstance(entries, (str, bytes)) or isinstance(attestations, (str, bytes)):
         raise ReviewedControlSafetyError(
             "reviewed-control entries and attestations must be sequences"
         )
     try:
         ordered_entries = tuple(sorted(entries, key=_entry_key))
-        ordered_attestations = tuple(
-            sorted(attestations, key=lambda item: item.attestation_cid)
-        )
+        ordered_attestations = tuple(sorted(attestations, key=lambda item: item.attestation_cid))
     except (AttributeError, TypeError) as exc:
         raise ReviewedControlSafetyError(
             "reviewed-control index cannot accept caller classification claims"
@@ -989,49 +836,34 @@ def build_reviewed_control_safety_gate_v2(
             issues.add("rescue_manifest_failed_typed_replay")
             continue
         try:
-            manifests.append(
-                CausalRescueManifestV2.from_dict(value.to_dict())
-            )
+            manifests.append(CausalRescueManifestV2.from_dict(value.to_dict()))
         except (TypeError, ValueError, KeyError):
             issues.add("rescue_manifest_failed_typed_replay")
     manifest_cids = tuple(item.manifest_cid for item in manifests)
     if len(manifest_cids) != len(set(manifest_cids)):
         issues.add("duplicate_rescue_manifest")
     presented_rescue_manifest_cids = tuple(sorted(set(manifest_cids)))
-    presented_source_manifest_cids = tuple(
-        sorted({item.source_manifest_cid for item in manifests})
-    )
-    if set(presented_rescue_manifest_cids) != set(
-        index.rescue_manifest_cids
-    ) or set(presented_source_manifest_cids) != set(
-        index.source_manifest_cids
-    ):
+    presented_source_manifest_cids = tuple(sorted({item.source_manifest_cid for item in manifests}))
+    if set(presented_rescue_manifest_cids) != set(index.rescue_manifest_cids) or set(
+        presented_source_manifest_cids
+    ) != set(index.source_manifest_cids):
         issues.add("control_manifest_set_mismatch")
-    manifests_by_cid = {
-        item.manifest_cid: item for item in manifests
-    }
-    manifest_cases: dict[
-        tuple[str, str], tuple[CausalRescueManifestV2, object]
-    ] = {}
+    manifests_by_cid = {item.manifest_cid: item for item in manifests}
+    manifest_cases: dict[tuple[str, str], tuple[CausalRescueManifestV2, object]] = {}
     for entry in index.entries:
         manifest = manifests_by_cid.get(entry.rescue_manifest_cid)
         case = (
             None
             if manifest is None
             else next(
-                (
-                    item
-                    for item in manifest.cases
-                    if item.case_id == entry.case_id
-                ),
+                (item for item in manifest.cases if item.case_id == entry.case_id),
                 None,
             )
         )
         if (
             manifest is None
             or case is None
-            or manifest.source_manifest_cid
-            != entry.source_manifest_cid
+            or manifest.source_manifest_cid != entry.source_manifest_cid
             or case.split is not entry.split
             or case.source_cid != entry.source_cid
         ):
@@ -1043,9 +875,7 @@ def build_reviewed_control_safety_gate_v2(
         )
 
     required = _required_coordinates(index)
-    required_coordinate_cids = tuple(
-        sorted(value[1] for value in required.values())
-    )
+    required_coordinate_cids = tuple(sorted(value[1] for value in required.values()))
     evidence_by_coordinate: dict[
         tuple[str, str, str, str],
         list[CausalRuntimeEvidenceV2],
@@ -1062,9 +892,7 @@ def build_reviewed_control_safety_gate_v2(
             issues.add("runtime_evidence_not_full_typed_receipt")
             continue
         try:
-            replayed = validate_causal_runtime_evidence_v2(
-                value.to_dict()
-            )
+            replayed = validate_causal_runtime_evidence_v2(value.to_dict())
         except (TypeError, ValueError, KeyError):
             issues.add("runtime_evidence_failed_typed_replay")
             continue
@@ -1076,14 +904,10 @@ def build_reviewed_control_safety_gate_v2(
             issues.add("runtime_coordinate_has_no_reviewed_classification")
     if len(replayed_receipt_cids) != len(set(replayed_receipt_cids)):
         issues.add("duplicate_runtime_evidence_receipt")
-    if any(
-        len(values) != 1 for values in evidence_by_coordinate.values()
-    ):
+    if any(len(values) != 1 for values in evidence_by_coordinate.values()):
         issues.add("duplicate_runtime_coordinate")
 
-    observations_by_coordinate_cid: dict[
-        str, Mapping[str, object]
-    ] = {}
+    observations_by_coordinate_cid: dict[str, Mapping[str, object]] = {}
     accepted_runtime_receipt_cids: set[str] = set()
     missing_coordinate_cids: set[str] = set()
     observed_run_ids: set[str] = set()
@@ -1093,9 +917,7 @@ def build_reviewed_control_safety_gate_v2(
             missing_coordinate_cids.add(coordinate_cid)
             continue
         for evidence in values:
-            manifest_case = manifest_cases.get(
-                (entry.split.value, entry.case_id)
-            )
+            manifest_case = manifest_cases.get((entry.split.value, entry.case_id))
             result = evidence.case_result
             if manifest_case is None:
                 issues.add("runtime_control_manifest_binding_mismatch")
@@ -1103,16 +925,13 @@ def build_reviewed_control_safety_gate_v2(
             manifest, raw_case = manifest_case
             case = raw_case
             if (
-                evidence.compiler_exposure.source_cid
-                != entry.source_cid
+                evidence.compiler_exposure.source_cid != entry.source_cid
                 or result.case_id != entry.case_id
                 or result.split is not entry.split
                 or result.variant_id != key[2]
                 or result.cache_mode.value != key[3]
-                or result.case_manifest_sha256
-                != manifest.case_manifest_sha256
-                or _plain(evidence.proof_context)
-                != _plain(case.proof_context)
+                or result.case_manifest_sha256 != manifest.case_manifest_sha256
+                or _plain(evidence.proof_context) != _plain(case.proof_context)
             ):
                 issues.add("runtime_control_source_binding_mismatch")
                 continue
@@ -1120,17 +939,12 @@ def build_reviewed_control_safety_gate_v2(
             terminal = result.stages[-1]
             if (
                 terminal.stage is not StageName.KERNEL
-                or terminal.provenance.effective_identity.get(
-                    "graph_invoked"
-                )
-                is not True
+                or terminal.provenance.effective_identity.get("graph_invoked") is not True
             ):
                 issues.add("terminal_native_kernel_receipt_missing")
                 continue
             try:
-                accepted = validate_native_kernel_stage_receipt(
-                    terminal
-                )
+                accepted = validate_native_kernel_stage_receipt(terminal)
             except (ProtocolContractError, TypeError, ValueError):
                 issues.add("terminal_native_kernel_receipt_invalid")
                 continue
@@ -1140,9 +954,7 @@ def build_reviewed_control_safety_gate_v2(
                 "control_entry_cid": entry.entry_cid,
                 "classification_cid": entry.classification_cid,
                 "runtime_evidence_cid": evidence.receipt_cid,
-                "terminal_native_kernel_receipt_cid": (
-                    native_receipt_cid
-                ),
+                "terminal_native_kernel_receipt_cid": (native_receipt_cid),
                 "terminal_native_kernel_accepted": accepted,
             }
             previous = observations_by_coordinate_cid.setdefault(
@@ -1152,31 +964,24 @@ def build_reviewed_control_safety_gate_v2(
             if _plain(previous) != observation:
                 issues.add("duplicate_runtime_coordinate")
             if accepted:
-                accepted_runtime_receipt_cids.add(
-                    evidence.receipt_cid
-                )
+                accepted_runtime_receipt_cids.add(evidence.receipt_cid)
     if len(observed_run_ids) > 1:
         issues.add("runtime_run_identity_mismatch")
     observed_coordinate_cids = set(observations_by_coordinate_cid)
-    missing_coordinate_cids.update(
-        set(required_coordinate_cids) - observed_coordinate_cids
-    )
+    missing_coordinate_cids.update(set(required_coordinate_cids) - observed_coordinate_cids)
     if missing_coordinate_cids:
         issues.add("required_runtime_coordinate_missing")
     if (
         not index.entries
         or not required_coordinate_cids
-        or len(observed_coordinate_cids)
-        != len(required_coordinate_cids)
+        or len(observed_coordinate_cids) != len(required_coordinate_cids)
     ):
         issues.add("invalid_control_population_not_fully_observed")
 
     fatal = bool(accepted_runtime_receipt_cids)
     if fatal:
         issues.add("invalid_control_terminal_native_kernel_acceptance")
-    incomplete_issues = issues - {
-        "invalid_control_terminal_native_kernel_acceptance"
-    }
+    incomplete_issues = issues - {"invalid_control_terminal_native_kernel_acceptance"}
     complete = not incomplete_issues
     passed = complete and not fatal
     status = "failed" if fatal else ("passed" if passed else "incomplete")
@@ -1192,38 +997,26 @@ def build_reviewed_control_safety_gate_v2(
     body = {
         "schema": REVIEWED_CONTROL_SAFETY_GATE_SCHEMA_V2,
         "control_policy_cid": REVIEWED_CONTROL_POLICY_V2_CID,
-        "review_protocol_cid": (
-            REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID
-        ),
+        "review_protocol_cid": (REVIEWED_CONTROL_REVIEW_PROTOCOL_V2_CID),
         "control_index_cid": index.index_cid,
         "review_authority_cid": index.review_authority_cid,
         "execution_authority_cid": index.execution_authority_cid,
         "source_manifest_cids": list(index.source_manifest_cids),
         "rescue_manifest_cids": list(index.rescue_manifest_cids),
-        "presented_source_manifest_cids": list(
-            presented_source_manifest_cids
-        ),
-        "presented_rescue_manifest_cids": list(
-            presented_rescue_manifest_cids
-        ),
+        "presented_source_manifest_cids": list(presented_source_manifest_cids),
+        "presented_rescue_manifest_cids": list(presented_rescue_manifest_cids),
         "runtime_evidence_set_cid": cid_for_dag_json(runtime_set_body),
         "required_coordinate_count": len(required_coordinate_cids),
         "required_coordinate_cids": list(required_coordinate_cids),
         "observed_coordinate_count": len(observations),
         "observations": list(observations),
         "missing_coordinate_cids": sorted(missing_coordinate_cids),
-        "unexpected_runtime_evidence_cids": sorted(
-            unexpected_receipt_cids
-        ),
+        "unexpected_runtime_evidence_cids": sorted(unexpected_receipt_cids),
         "invalid_control_case_count": len(index.entries),
         "invalid_control_population_nonempty": bool(index.entries),
         "fully_observed": complete,
-        "terminal_independent_native_kernel_acceptance_count": len(
-            accepted_runtime_receipt_cids
-        ),
-        "accepted_runtime_evidence_cids": sorted(
-            accepted_runtime_receipt_cids
-        ),
+        "terminal_independent_native_kernel_acceptance_count": len(accepted_runtime_receipt_cids),
+        "accepted_runtime_evidence_cids": sorted(accepted_runtime_receipt_cids),
         "failure_codes": sorted(issues),
         "complete": complete,
         "passed": passed,
@@ -1266,15 +1059,9 @@ def validate_reviewed_control_safety_gate_v2(
         raise ReviewedControlSafetyError(
             "reviewed-control safety gate contains caller-asserted fields"
         )
-    body = {
-        key: _plain(member)
-        for key, member in data.items()
-        if key != "receipt_cid"
-    }
+    body = {key: _plain(member) for key, member in data.items() if key != "receipt_cid"}
     if data["receipt_cid"] != cid_for_dag_json(body):
-        raise ReviewedControlSafetyError(
-            "reviewed-control safety gate receipt CID changed"
-        )
+        raise ReviewedControlSafetyError("reviewed-control safety gate receipt CID changed")
     return rebuilt
 
 

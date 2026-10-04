@@ -31,7 +31,11 @@ _HF_INFERENCE_PROVIDER_EMBEDDING_MODELS: List[str] = [
 _HF_INFERENCE_PROVIDER_MODELS: List[str] = list(
     dict.fromkeys(_HF_INFERENCE_PROVIDER_LLM_MODELS + _HF_INFERENCE_PROVIDER_EMBEDDING_MODELS)
 )
-_HF_INFERENCE_PROVIDER_LLM_PIPELINE_TAGS = ("text-generation", "text2text-generation", "summarization")
+_HF_INFERENCE_PROVIDER_LLM_PIPELINE_TAGS = (
+    "text-generation",
+    "text2text-generation",
+    "summarization",
+)
 _HF_INFERENCE_PROVIDER_EMBEDDING_PIPELINE_TAGS = ("feature-extraction",)
 
 _DEFAULT_CONFIG: Dict[str, Any] = {
@@ -199,7 +203,12 @@ class _CompatModelMetadata:
 
 
 class _CompatModelManager:
-    def __init__(self, storage_path: str | None = None, use_database: bool | None = None, enable_ipfs: bool | None = None):
+    def __init__(
+        self,
+        storage_path: str | None = None,
+        use_database: bool | None = None,
+        enable_ipfs: bool | None = None,
+    ):
         _ = (storage_path, use_database, enable_ipfs)
         self.models: Dict[str, _CompatModelMetadata] = {}
 
@@ -345,7 +354,9 @@ def _hf_inference_discovery_limit() -> int:
         return 20
 
 
-def _discover_live_hf_inference_model_specs(*, model_kind: Optional[str] = None) -> List[Dict[str, Any]]:
+def _discover_live_hf_inference_model_specs(
+    *, model_kind: Optional[str] = None
+) -> List[Dict[str, Any]]:
     try:
         hub = importlib.import_module("huggingface_hub")
         api_cls = getattr(hub, "HfApi", None)
@@ -403,13 +414,23 @@ def _discover_live_hf_inference_model_specs(*, model_kind: Optional[str] = None)
 def _build_hf_model_metadata(spec: Dict[str, Any], *, bindings: _ModelManagerBindings) -> Any:
     model_id = str(spec["model_id"])
     model_kind = str(spec.get("model_kind") or "llm")
-    pipeline_tag = str(spec.get("pipeline_tag") or ("feature-extraction" if model_kind == "embedding" else "text-generation"))
-    architecture = str(spec.get("architecture") or ("sentence-transformer" if model_kind == "embedding" else "transformer"))
-    inputs = [bindings.IOSpec(name="input", data_type=bindings.DataType.TEXT, description="Input text")]
+    pipeline_tag = str(
+        spec.get("pipeline_tag")
+        or ("feature-extraction" if model_kind == "embedding" else "text-generation")
+    )
+    architecture = str(
+        spec.get("architecture")
+        or ("sentence-transformer" if model_kind == "embedding" else "transformer")
+    )
+    inputs = [
+        bindings.IOSpec(name="input", data_type=bindings.DataType.TEXT, description="Input text")
+    ]
     outputs = [
         bindings.IOSpec(
             name="embeddings" if model_kind == "embedding" else "text",
-            data_type=bindings.DataType.EMBEDDINGS if model_kind == "embedding" else bindings.DataType.TEXT,
+            data_type=bindings.DataType.EMBEDDINGS
+            if model_kind == "embedding"
+            else bindings.DataType.TEXT,
             description="Model output",
         )
     ]
@@ -429,7 +450,9 @@ def _build_hf_model_metadata(spec: Dict[str, Any], *, bindings: _ModelManagerBin
     return bindings.ModelMetadata(
         model_id=model_id,
         model_name=model_id.split("/")[-1],
-        model_type=bindings.ModelType.EMBEDDING_MODEL if model_kind == "embedding" else bindings.ModelType.LANGUAGE_MODEL,
+        model_type=bindings.ModelType.EMBEDDING_MODEL
+        if model_kind == "embedding"
+        else bindings.ModelType.LANGUAGE_MODEL,
         architecture=architecture,
         inputs=inputs,
         outputs=outputs,
@@ -555,7 +578,9 @@ def get_hf_inference_model_metadata(model_id: str) -> Optional[Dict[str, Any]]:
     return {
         "model_id": metadata.model_id,
         "model_name": metadata.model_name,
-        "model_type": getattr(getattr(metadata, "model_type", None), "value", str(getattr(metadata, "model_type", ""))),
+        "model_type": getattr(
+            getattr(metadata, "model_type", None), "value", str(getattr(metadata, "model_type", ""))
+        ),
         "pipeline_tag": hf_cfg.get("pipeline_tag"),
         "inference_provider": hf_cfg.get("inference_provider"),
         "supported_backends": list(getattr(metadata, "supported_backends", []) or []),
@@ -646,6 +671,9 @@ def load_hf_inference_ipld_from_ipfs(
 
     raw = cat(cid, backend=backend, backend_instance=backend_instance)
     doc = json.loads(raw.decode("utf-8"))
-    if not isinstance(doc, dict) or doc.get("kind") != "ipfs_datasets_py.hf_inference_model_registry":
+    if (
+        not isinstance(doc, dict)
+        or doc.get("kind") != "ipfs_datasets_py.hf_inference_model_registry"
+    ):
         raise ValueError("IPFS object is not an HF inference model registry IPLD document")
     return doc

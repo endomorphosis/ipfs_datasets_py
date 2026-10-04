@@ -72,9 +72,9 @@ def test_ir_formula_record_carries_proof_ready_provenance():
 
 
 def test_ir_formula_builder_uses_detail_only_mental_state_slot():
-    element = dict(extract_normative_elements(
-        "The inspector shall knowingly approve the discharge."
-    )[0])
+    element = dict(
+        extract_normative_elements("The inspector shall knowingly approve the discharge.")[0]
+    )
     element["mental_state"] = ""
     element["action"] = ["approve the discharge"]
     element["action_verb"] = "approve"
@@ -139,7 +139,7 @@ def test_duty_assignment_gerunds_export_base_action_predicates():
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -432,7 +432,7 @@ def test_transfer_and_conveyance_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -473,7 +473,7 @@ def test_correction_and_adjustment_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -577,7 +577,7 @@ def test_remittance_light_verb_duties_export_operative_remit_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -618,7 +618,7 @@ def test_renewal_light_verb_duties_export_operative_renew_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -659,7 +659,7 @@ def test_rescission_and_withdrawal_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -700,7 +700,7 @@ def test_registration_and_enrollment_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -747,7 +747,7 @@ def test_instrument_status_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -788,7 +788,7 @@ def test_abatement_and_remediation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -829,7 +829,7 @@ def test_notification_and_disclosure_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -870,7 +870,7 @@ def test_recommendation_and_referral_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -911,7 +911,7 @@ def test_docketing_and_calendaring_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1036,7 +1036,7 @@ def test_determination_light_verb_duties_export_operative_determine_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1077,7 +1077,7 @@ def test_calculation_and_computation_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1118,7 +1118,7 @@ def test_collection_and_compilation_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1159,7 +1159,7 @@ def test_delivery_and_distribution_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1200,7 +1200,7 @@ def test_adoption_and_promulgation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1241,7 +1241,7 @@ def test_designation_and_appointment_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1288,7 +1288,7 @@ def test_issuance_light_verb_duties_export_operative_issue_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -1431,9 +1431,9 @@ def test_service_light_verb_duties_export_operative_serve_predicates():
 
 
 def test_plural_measurements_light_verb_duty_exports_operative_measure_predicate():
-    element = extract_normative_elements(
-        "The inspector shall take measurements of the effluent."
-    )[0]
+    element = extract_normative_elements("The inspector shall take measurements of the effluent.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -1517,9 +1517,7 @@ def test_abstain_from_obligation_exports_as_prohibition_formula():
 
 
 def test_cease_obligation_exports_as_prohibition_formula():
-    element = extract_normative_elements(
-        "The operator shall cease discharging pollutants."
-    )[0]
+    element = extract_normative_elements("The operator shall cease discharging pollutants.")[0]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -1564,9 +1562,7 @@ def test_forbear_from_obligation_exports_as_prohibition_formula():
 
 
 def test_avoid_gerund_obligation_exports_as_prohibition_formula():
-    element = extract_normative_elements(
-        "The handler shall avoid contacting the witness."
-    )[0]
+    element = extract_normative_elements("The handler shall avoid contacting the witness.")[0]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -1611,9 +1607,9 @@ def test_direct_gerund_prohibition_exports_base_action_formula():
 
 
 def test_inspection_light_verb_duty_exports_operative_inspect_predicate():
-    element = extract_normative_elements(
-        "The Bureau shall conduct an inspection of the premises."
-    )[0]
+    element = extract_normative_elements("The Bureau shall conduct an inspection of the premises.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -1772,9 +1768,7 @@ def test_monitoring_light_verb_duties_export_operative_monitor_predicates():
 
 
 def test_payment_light_verb_duty_exports_operative_payment_predicate():
-    element = extract_normative_elements(
-        "The licensee shall make payment of the renewal fee."
-    )[0]
+    element = extract_normative_elements("The licensee shall make payment of the renewal fee.")[0]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -1800,9 +1794,7 @@ def test_payment_light_verb_duty_exports_operative_payment_predicate():
 
 
 def test_recordkeeping_light_verb_duty_exports_operative_record_predicate_and_preserves_apply_for():
-    element = extract_normative_elements(
-        "The Clerk shall make a record of the hearing."
-    )[0]
+    element = extract_normative_elements("The Clerk shall make a record of the hearing.")[0]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -1819,14 +1811,10 @@ def test_recordkeeping_light_verb_duty_exports_operative_record_predicate_and_pr
     assert record["requires_validation"] is False
     assert record["repair_required"] is False
 
-    apply_element = extract_normative_elements(
-        "The applicant shall apply for a permit."
-    )[0]
+    apply_element = extract_normative_elements("The applicant shall apply for a permit.")[0]
     apply_norm = LegalNormIR.from_parser_element(apply_element)
     assert apply_norm.action == "apply for a permit"
-    assert build_deontic_formula_from_ir(apply_norm) == (
-        "O(∀x (Applicant(x) → ApplyForPermit(x)))"
-    )
+    assert build_deontic_formula_from_ir(apply_norm) == ("O(∀x (Applicant(x) → ApplyForPermit(x)))")
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -2095,9 +2083,9 @@ def test_coercion_prohibitions_export_embedded_prohibited_action_formulas():
 
 
 def test_prevent_entry_obligation_exports_as_prohibition_formula():
-    element = extract_normative_elements(
-        "The owner shall prevent entry into the restricted area."
-    )[0]
+    element = extract_normative_elements("The owner shall prevent entry into the restricted area.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -2300,9 +2288,9 @@ def test_access_and_availability_duties_export_provide_action_formulas():
 
 
 def test_transmittal_actions_omit_structured_recipient_from_unary_formula():
-    element = dict(extract_normative_elements(
-        "The Director shall send notice to the applicant."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall send notice to the applicant.")[0]
+    )
     element["action"] = ["send notice to the applicant"]
     element["action_verb"] = "send"
     element["action_object"] = "notice"
@@ -2379,7 +2367,16 @@ def test_registry_and_posting_actions_omit_structured_recipient_from_unary_formu
         ),
     ]
 
-    for action, verb, action_object, recipient, span_key, span, expected_formula, rejected_predicate in examples:
+    for (
+        action,
+        verb,
+        action_object,
+        recipient,
+        span_key,
+        span,
+        expected_formula,
+        rejected_predicate,
+    ) in examples:
         element = dict(extract_normative_elements("The Director shall issue a notice.")[0])
         element["action"] = [action]
         element["action_verb"] = verb
@@ -2484,9 +2481,9 @@ def test_notice_duties_omit_structured_recipient_from_object_formula():
 
 
 def test_retention_duration_duty_uses_temporal_slot_not_action_tail():
-    element = dict(extract_normative_elements(
-        "The custodian shall retain records for three years."
-    )[0])
+    element = dict(
+        extract_normative_elements("The custodian shall retain records for three years.")[0]
+    )
     element["action"] = ["retain records for three years"]
     element["action_verb"] = "retain"
     element["action_object"] = "records"
@@ -2528,9 +2525,7 @@ def test_retention_duration_duty_uses_temporal_slot_not_action_tail():
 
 
 def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
-    element = dict(extract_normative_elements(
-        "The inspector shall approve the discharge."
-    )[0])
+    element = dict(extract_normative_elements("The inspector shall approve the discharge.")[0])
     element["action"] = []
     element["action_verb"] = "approve"
     element["action_object"] = "the discharge"
@@ -2559,9 +2554,7 @@ def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
 
 
 def test_ir_formula_builder_uses_detail_only_action_component_records():
-    element = dict(extract_normative_elements(
-        "The inspector shall approve the discharge."
-    )[0])
+    element = dict(extract_normative_elements("The inspector shall approve the discharge.")[0])
     element["action"] = []
     element["action_verb"] = ""
     element["action_object"] = ""
@@ -2597,9 +2590,7 @@ def test_ir_formula_builder_uses_detail_only_action_component_records():
 
 
 def test_ir_formula_builder_uses_detail_only_regulated_object_slot():
-    element = dict(extract_normative_elements(
-        "The inspector shall inspect the premises."
-    )[0])
+    element = dict(extract_normative_elements("The inspector shall inspect the premises.")[0])
     element["action"] = []
     element["action_verb"] = "inspect"
     element["action_object"] = ""
@@ -2637,9 +2628,7 @@ def test_ir_formula_builder_uses_detail_only_regulated_object_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_regulated_activity_object_slot():
-    element = dict(extract_normative_elements(
-        "The inspector shall monitor regulated activity."
-    )[0])
+    element = dict(extract_normative_elements("The inspector shall monitor regulated activity.")[0])
     element["action"] = []
     element["action_verb"] = "monitor"
     element["action_object"] = ""
@@ -2677,9 +2666,7 @@ def test_ir_formula_builder_uses_detail_only_regulated_activity_object_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_recipient_slot():
-    element = dict(extract_normative_elements(
-        "The clerk shall notify the applicant."
-    )[0])
+    element = dict(extract_normative_elements("The clerk shall notify the applicant.")[0])
     element["action"] = []
     element["action_verb"] = "notify"
     element["action_object"] = ""
@@ -2718,9 +2705,7 @@ def test_ir_formula_builder_uses_detail_only_recipient_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_actor_slot():
-    element = dict(extract_normative_elements(
-        "The inspector shall approve the discharge."
-    )[0])
+    element = dict(extract_normative_elements("The inspector shall approve the discharge.")[0])
     element["subject"] = []
     element["actor_details"] = [
         {
@@ -2752,9 +2737,11 @@ def test_ir_formula_builder_uses_detail_only_actor_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_definition_term_slot():
-    element = dict(extract_normative_elements(
-        'In this section, the term "food cart" means a mobile food vending unit.'
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            'In this section, the term "food cart" means a mobile food vending unit.'
+        )[0]
+    )
     element["subject"] = []
     element["defined_term_details"] = [
         {
@@ -2786,9 +2773,9 @@ def test_ir_formula_builder_uses_detail_only_definition_term_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_applicability_slots():
-    element = dict(extract_normative_elements(
-        "This section applies to food carts and mobile vendors."
-    )[0])
+    element = dict(
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0]
+    )
     element["subject"] = []
     element["action"] = []
     element["applicability_details"] = [
@@ -2827,9 +2814,9 @@ def test_ir_formula_builder_uses_detail_only_applicability_slots():
 
 
 def test_ir_formula_builder_uses_detail_only_exemption_slots():
-    element = dict(extract_normative_elements(
-        "Emergency repairs are exempt from permit requirements."
-    )[0])
+    element = dict(
+        extract_normative_elements("Emergency repairs are exempt from permit requirements.")[0]
+    )
     element["subject"] = []
     element["action"] = []
     element["exemption_details"] = [
@@ -2869,9 +2856,7 @@ def test_ir_formula_builder_uses_detail_only_exemption_slots():
 
 
 def test_ir_formula_builder_uses_detail_only_instrument_lifecycle_slot():
-    element = dict(extract_normative_elements(
-        "The license is valid for 30 days."
-    )[0])
+    element = dict(extract_normative_elements("The license is valid for 30 days.")[0])
     element["subject"] = []
     element["action"] = []
     element["instrument_lifecycle_details"] = [
@@ -2909,9 +2894,11 @@ def test_ir_formula_builder_uses_detail_only_instrument_lifecycle_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_penalty_sanction_slot():
-    element = dict(extract_normative_elements(
-        "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
+        )[0]
+    )
     element["action"] = []
     element["action_verb"] = ""
     element["action_object"] = ""
@@ -2949,9 +2936,9 @@ def test_ir_formula_builder_uses_detail_only_penalty_sanction_slot():
 
 
 def test_ir_formula_builder_preserves_detail_only_recipient_slot():
-    element = dict(extract_normative_elements(
-        "The Director shall send the notice to the applicant."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall send the notice to the applicant.")[0]
+    )
     element["action"] = ["send the notice"]
     element["action_verb"] = "send"
     element["action_object"] = "the notice"
@@ -2993,9 +2980,11 @@ def test_ir_formula_builder_preserves_detail_only_recipient_slot():
 
 
 def test_ir_formula_builder_uses_detail_only_condition_and_exception_alias_slots():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit if fees are paid unless inspection is incomplete."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit if fees are paid unless inspection is incomplete."
+        )[0]
+    )
     element["conditions"] = []
     element["exceptions"] = []
     element["condition_details"] = [
@@ -3020,8 +3009,7 @@ def test_ir_formula_builder_uses_detail_only_condition_and_exception_alias_slots
     assert norm.conditions[0]["condition_text"] == "fees are paid"
     assert norm.exceptions[0]["exception_text"] == "inspection is incomplete"
     assert formula == (
-        "O(∀x (Director(x) ∧ FeesArePaid(x) ∧ ¬InspectionIsIncomplete(x) "
-        "→ IssuePermit(x)))"
+        "O(∀x (Director(x) ∧ FeesArePaid(x) ∧ ¬InspectionIsIncomplete(x) → IssuePermit(x)))"
     )
     assert record["formula"] == formula
 
@@ -3034,9 +3022,11 @@ def test_ir_formula_builder_uses_detail_only_condition_and_exception_alias_slots
 
 
 def test_formula_record_preserves_capped_condition_slots_as_omitted_provenance():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit if all requirements are met."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit if all requirements are met."
+        )[0]
+    )
     element["condition_details"] = [
         {"type": "if", "value": "all requirements are met", "span": [37, 61]},
         {"type": "if", "value": "fees are paid", "span": [63, 76]},
@@ -3075,9 +3065,11 @@ def test_formula_record_preserves_capped_condition_slots_as_omitted_provenance()
 
 
 def test_formula_record_preserves_capped_exception_slots_as_omitted_provenance():
-    element = dict(extract_normative_elements(
-        "The applicant shall obtain a permit unless approval is denied."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0]
+    )
     element["exception_details"] = [
         {"type": "unless", "value": "approval is denied", "span": [45, 63]},
         {"type": "unless", "value": "the application is incomplete", "span": [65, 94]},
@@ -3125,9 +3117,7 @@ def test_ir_formula_record_preserves_blocked_reference_exception_slots():
 
 
 def test_failure_to_prohibition_becomes_positive_obligation_formula():
-    element = dict(extract_normative_elements(
-        "No person shall fail to maintain records."
-    )[0])
+    element = dict(extract_normative_elements("No person shall fail to maintain records.")[0])
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -3150,9 +3140,7 @@ def test_failure_to_prohibition_becomes_positive_obligation_formula():
 
 
 def test_refuse_to_prohibition_becomes_positive_obligation_formula():
-    element = dict(extract_normative_elements(
-        "No person shall refuse to permit inspection."
-    )[0])
+    element = dict(extract_normative_elements("No person shall refuse to permit inspection.")[0])
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -3212,9 +3200,7 @@ def test_neglect_and_omit_to_prohibitions_become_positive_obligation_formulas():
 
 
 def test_ordinary_prohibition_remains_forbidden_formula():
-    element = extract_normative_elements(
-        "No person may discharge pollutants into the sewer."
-    )[0]
+    element = extract_normative_elements("No person may discharge pollutants into the sewer.")[0]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -3232,9 +3218,11 @@ def test_ordinary_prohibition_remains_forbidden_formula():
 
 
 def test_formula_record_preserves_alias_only_reference_exception_omission():
-    element = dict(extract_normative_elements(
-        "The Secretary shall publish the notice except as provided in section 552."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+    )
     element["exceptions"] = []
     element["exception_details"] = [
         {
@@ -3315,7 +3303,9 @@ def test_local_scope_reference_exception_formula_record_is_proof_ready():
     assert "exception_requires_scope_review" in norm.blockers
     assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
     assert "AsProvidedThisSection" not in record["formula"]
-    assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in this section"
+    assert (
+        record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in this section"
+    )
     assert record["proof_ready"] is True
     assert record["requires_validation"] is False
     assert record["repair_required"] is False
@@ -3454,9 +3444,7 @@ def test_us_code_self_numbered_reference_exception_resolves_from_citation_and_so
     element["canonical_citation"] = "42 U.S.C. 18791."
     element["source_id"] = "us-code-42-18791.-fa3f6f298b46c6e4"
 
-    record = build_deontic_formula_records_from_irs(
-        [LegalNormIR.from_parser_element(element)]
-    )[0]
+    record = build_deontic_formula_records_from_irs([LegalNormIR.from_parser_element(element)])[0]
 
     assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
     assert record["proof_ready"] is True
@@ -3579,7 +3567,11 @@ def test_batch_formula_records_keep_partial_plural_section_list_exception_blocke
     )[0]
     exception_element = dict(exception_element)
     exception_element["exception_details"] = [
-        {"type": "cross_reference", "value": "as provided in sections 552 and 553", "span": [43, 82]}
+        {
+            "type": "cross_reference",
+            "value": "as provided in sections 552 and 553",
+            "span": [43, 82],
+        }
     ]
     exception_element["cross_reference_details"] = [
         {"reference_type": "section", "raw_text": "sections 552 and 553", "span": [58, 82]}
@@ -3587,7 +3579,10 @@ def test_batch_formula_records_keep_partial_plural_section_list_exception_blocke
     exception_element["resolved_cross_references"] = []
 
     records = build_deontic_formula_records_from_irs(
-        [LegalNormIR.from_parser_element(first_reference), LegalNormIR.from_parser_element(exception_element)]
+        [
+            LegalNormIR.from_parser_element(first_reference),
+            LegalNormIR.from_parser_element(exception_element),
+        ]
     )
 
     assert records[1]["proof_ready"] is False
@@ -3750,7 +3745,9 @@ def test_same_document_cross_reference_detail_exception_formula_record_is_proof_
     assert record["proof_ready"] is True
     assert record["requires_validation"] is False
     assert record["repair_required"] is False
-    assert record["deterministic_resolution"]["type"] == "resolved_same_document_reference_exception"
+    assert (
+        record["deterministic_resolution"]["type"] == "resolved_same_document_reference_exception"
+    )
     assert record["deterministic_resolution"]["references"] == ["section 552"]
 
 
@@ -3787,7 +3784,12 @@ def test_mixed_substantive_and_reference_exception_formula_record_remains_blocke
         {"type": "unless", "value": "publication is impossible", "span": [0, 0]}
     ]
     element["resolved_cross_references"] = [
-        {"reference_type": "section", "canonical_citation": "section 552", "target": "552", "same_document": True}
+        {
+            "reference_type": "section",
+            "canonical_citation": "section 552",
+            "target": "552",
+            "same_document": True,
+        }
     ]
     norm = LegalNormIR.from_parser_element(element)
 
@@ -4111,7 +4113,9 @@ def test_parser_and_formula_capture_whichever_is_earlier_deadline():
         item.get("temporal_kind") == "whichever_is_earlier"
         for item in element["temporal_constraint_details"]
     )
-    assert "10 days after application or 5 days after hearing, whichever is earlier" in temporal_values
+    assert (
+        "10 days after application or 5 days after hearing, whichever is earlier" in temporal_values
+    )
     assert build_deontic_formula_from_ir(norm) == (
         "O(∀x (Director(x) ∧ "
         "Deadline10DaysAfterApplicationOr5DaysAfterHearingWhicheverIsEarlier(x) "
@@ -4131,7 +4135,10 @@ def test_parser_and_formula_capture_whichever_is_later_deadline():
         item.get("temporal_kind") == "whichever_is_later"
         for item in element["temporal_constraint_details"]
     )
-    assert "30 days after application or 10 days after inspection, whichever is later" in temporal_values
+    assert (
+        "30 days after application or 10 days after inspection, whichever is later"
+        in temporal_values
+    )
     assert build_deontic_formula_from_ir(norm) == (
         "O(∀x (Director(x) ∧ "
         "Deadline30DaysAfterApplicationOr10DaysAfterInspectionWhicheverIsLater(x) "
@@ -4165,10 +4172,11 @@ def test_parser_and_formula_capture_no_later_than_deadline():
 
     assert norm.action == "publish notice"
     assert norm.temporal_constraints[0]["temporal_kind"] == "no_later_than"
-    assert norm.temporal_constraints[0]["value"] == "30 calendar days after receipt of the application"
+    assert (
+        norm.temporal_constraints[0]["value"] == "30 calendar days after receipt of the application"
+    )
     assert build_deontic_formula_from_ir(norm) == (
-        "O(∀x (Secretary(x) ∧ Deadline30CalendarDaysAfterReceiptApplication(x) "
-        "→ PublishNotice(x)))"
+        "O(∀x (Secretary(x) ∧ Deadline30CalendarDaysAfterReceiptApplication(x) → PublishNotice(x)))"
     )
 
 
@@ -4220,9 +4228,9 @@ def test_parser_and_formula_capture_upon_receipt_prerequisite():
 
 
 def test_non_receipt_procedure_ordering_does_not_add_receipt_prerequisite():
-    element = extract_normative_elements(
-        "The Bureau shall inspect the premises before approval."
-    )[0]
+    element = extract_normative_elements("The Bureau shall inspect the premises before approval.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -4246,9 +4254,7 @@ def test_after_notice_without_hearing_does_not_use_notice_and_hearing_prerequisi
         constraint.get("temporal_kind") != "after_notice_and_hearing"
         for constraint in norm.temporal_constraints
     )
-    assert build_deontic_formula_from_ir(norm) == (
-        "O(∀x (Commission(x) → AdoptRules(x)))"
-    )
+    assert build_deontic_formula_from_ir(norm) == ("O(∀x (Commission(x) → AdoptRules(x)))")
 
 
 def test_parser_and_formula_capture_after_public_notice_and_hearing_prerequisite():
@@ -4273,8 +4279,7 @@ def test_parser_and_formula_capture_after_public_notice_and_hearing_prerequisite
         "span": [33, 64],
     } in norm.temporal_constraints
     assert build_deontic_formula_from_ir(norm) == (
-        "O(∀x (Commission(x) ∧ ProcedureAfterPublicNoticeAndHearing(x) "
-        "→ AdoptRules(x)))"
+        "O(∀x (Commission(x) ∧ ProcedureAfterPublicNoticeAndHearing(x) → AdoptRules(x)))"
     )
 
 
@@ -4329,8 +4334,7 @@ def test_parser_and_formula_capture_after_consultation_prerequisite():
     assert norm.actor == "Director"
     assert norm.action == "adopt rules"
     assert build_deontic_formula_from_ir(norm) == (
-        "O(∀x (Director(x) ∧ ProcedureAfterConsultationAdvisoryCommittee(x) "
-        "→ AdoptRules(x)))"
+        "O(∀x (Director(x) ∧ ProcedureAfterConsultationAdvisoryCommittee(x) → AdoptRules(x)))"
     )
 
 
@@ -4394,7 +4398,9 @@ def test_ir_formula_suppresses_base_deadline_when_whichever_variant_is_later_in_
 
 
 def test_applicability_formula_targets_regulated_entity_not_apply_artifact():
-    element = extract_normative_elements("This section applies to food carts and mobile vendors.")[0]
+    element = extract_normative_elements("This section applies to food carts and mobile vendors.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -4428,9 +4434,7 @@ def test_formula_recovers_leading_mens_rea_from_action_slot():
     formula = build_deontic_formula_from_ir(norm)
 
     assert norm.action == "knowingly discharge pollutants into the sewer"
-    assert formula == (
-        "F(∀x (Person(x) ∧ Knowingly(x) → DischargePollutantsIntoSewer(x)))"
-    )
+    assert formula == ("F(∀x (Person(x) ∧ Knowingly(x) → DischargePollutantsIntoSewer(x)))")
     assert "KnowinglyDischargePollutantsIntoSewer" not in formula
 
 
@@ -4446,9 +4450,7 @@ def test_formula_prefers_structured_mens_rea_slot_over_action_fallback():
 
     assert norm.mental_state == "willfully"
     assert norm.action == "knowingly discharge pollutants into the sewer"
-    assert formula == (
-        "F(∀x (Person(x) ∧ Willfully(x) → DischargePollutantsIntoSewer(x)))"
-    )
+    assert formula == ("F(∀x (Person(x) ∧ Willfully(x) → DischargePollutantsIntoSewer(x)))")
     assert "Knowingly(x)" not in formula
 
 
@@ -4464,9 +4466,7 @@ def test_ir_formula_preserves_multiple_structured_actor_subjects():
     assert norm.actor_entities == ["Director", "Commissioner"]
     assert norm.to_dict()["actor"] == "Director"
     assert norm.to_dict()["actor_entities"] == ["Director", "Commissioner"]
-    assert formula == (
-        "O(∀x ((Director(x) ∨ Commissioner(x)) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x ((Director(x) ∨ Commissioner(x)) → IssuePermit(x)))")
 
 
 def test_ir_formula_deduplicates_multiple_actor_aliases():
@@ -4479,9 +4479,7 @@ def test_ir_formula_deduplicates_multiple_actor_aliases():
 
     assert norm.actor == "Director"
     assert norm.actor_entities == ["Director", "the Director", "Commissioner"]
-    assert formula == (
-        "O(∀x ((Director(x) ∨ Commissioner(x)) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x ((Director(x) ∨ Commissioner(x)) → IssuePermit(x)))")
     assert formula.count("Director(x)") == 1
     assert formula.count("Commissioner(x)") == 1
 
@@ -4525,9 +4523,7 @@ def test_ir_preserves_legacy_slot_lists_when_detail_records_are_absent():
     norm = LegalNormIR.from_parser_element(element)
 
     assert norm.conditions == [{"value": "all requirements are met"}]
-    assert norm.temporal_constraints == [
-        {"value": "10 days after application", "type": "deadline"}
-    ]
+    assert norm.temporal_constraints == [{"value": "10 days after application", "type": "deadline"}]
     assert norm.exceptions == [{"value": "the application is incomplete"}]
     assert build_deontic_formula_from_ir(norm) == (
         "O(∀x (Director(x) ∧ AllRequirementsAreMet(x) ∧ Deadline10DaysAfterApplication(x) "
@@ -4542,7 +4538,11 @@ def test_ir_prefers_rich_detail_records_over_legacy_slot_lists():
     element = dict(element)
     element["conditions"] = ["legacy broad condition"]
     element["condition_details"] = [
-        {"normalized_text": "all requirements are met", "raw_text": "all requirements are met", "span": [37, 61]}
+        {
+            "normalized_text": "all requirements are met",
+            "raw_text": "all requirements are met",
+            "span": [37, 61],
+        }
     ]
     element["temporal_constraints"] = ["legacy deadline"]
     element["temporal_constraint_details"] = [
@@ -4673,8 +4673,7 @@ def test_override_clause_is_provenance_not_formula_antecedent():
 
 def test_override_exclusion_preserves_true_condition_predicates():
     text = (
-        "Subject to approval, notwithstanding section 5.01.020, "
-        "the Director may issue a variance."
+        "Subject to approval, notwithstanding section 5.01.020, the Director may issue a variance."
     )
     element = extract_normative_elements(text)[0]
     norm = LegalNormIR.from_parser_element(element)
@@ -4790,9 +4789,9 @@ def test_resolved_reference_condition_is_still_not_a_factual_antecedent():
 
 
 def test_substantive_subject_to_condition_remains_formula_antecedent():
-    element = extract_normative_elements(
-        "Subject to approval, the Director shall issue a permit."
-    )[0]
+    element = extract_normative_elements("Subject to approval, the Director shall issue a permit.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     formula = build_deontic_formula_from_ir(norm)
@@ -4853,8 +4852,7 @@ def test_duplicate_condition_aliases_are_not_repeated_in_formula():
     formula = build_deontic_formula_from_ir(norm)
 
     assert formula == (
-        "O(∀x (Director(x) ∧ AllRequirementsAreMet(x) ∧ FeesArePaid(x) "
-        "→ IssuePermit(x)))"
+        "O(∀x (Director(x) ∧ AllRequirementsAreMet(x) ∧ FeesArePaid(x) → IssuePermit(x)))"
     )
     assert formula.count("AllRequirementsAreMet(x)") == 1
 
@@ -4877,8 +4875,7 @@ def test_reference_condition_filtering_preserves_other_substantive_conditions():
 
     assert norm.cross_references[0]["value"] == "section 552"
     assert formula == (
-        "O(∀x (Secretary(x) ∧ NoticeIsComplete(x) ∧ PublicationIsRequired(x) "
-        "→ PublishNotice(x)))"
+        "O(∀x (Secretary(x) ∧ NoticeIsComplete(x) ∧ PublicationIsRequired(x) → PublishNotice(x)))"
     )
     assert "Section552" not in formula
     assert "cross_reference_requires_resolution" in norm.quality.parser_warnings
@@ -5196,9 +5193,9 @@ def test_ir_procedure_record_gets_stable_value_alias_from_event_chain():
 
 
 def test_ir_procedure_value_alias_uses_event_relations_without_formula_strengthening():
-    element = extract_normative_elements(
-        "The Bureau shall inspect the premises before approval."
-    )[0]
+    element = extract_normative_elements("The Bureau shall inspect the premises before approval.")[
+        0
+    ]
     element = dict(element)
     element["procedure"] = {
         "event_relations": [
@@ -5258,9 +5255,11 @@ def test_ir_explicit_source_span_still_takes_precedence_over_support_span():
 
 
 def test_detail_only_substantive_exception_infers_obligation_operator_for_resolution():
-    element = dict(extract_normative_elements(
-        "The applicant shall obtain a permit unless approval is denied."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0]
+    )
     element["deontic_operator"] = None
     element["modality"] = None
 
@@ -5276,9 +5275,9 @@ def test_detail_only_substantive_exception_infers_obligation_operator_for_resolu
 
 
 def test_detail_only_applicability_infers_app_operator_for_local_scope_resolution():
-    element = dict(extract_normative_elements(
-        "This section applies to food carts and mobile vendors."
-    )[0])
+    element = dict(
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0]
+    )
     element["deontic_operator"] = None
     element["modality"] = None
 
@@ -5294,9 +5293,11 @@ def test_detail_only_applicability_infers_app_operator_for_local_scope_resolutio
 
 
 def test_detail_only_override_infers_permission_operator_for_precedence_resolution():
-    element = dict(extract_normative_elements(
-        "Notwithstanding section 5.01.020, the Director may issue a variance."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0]
+    )
     element["deontic_operator"] = None
     element["modality"] = None
 
@@ -5312,9 +5313,11 @@ def test_detail_only_override_infers_permission_operator_for_precedence_resoluti
 
 
 def test_detail_only_numbered_reference_exception_infers_operator_but_stays_blocked():
-    element = dict(extract_normative_elements(
-        "The Secretary shall publish the notice except as provided in section 552."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+    )
     element["deontic_operator"] = None
     element["modality"] = None
 
@@ -5333,7 +5336,9 @@ def test_batch_formula_records_resolve_numbered_exception_with_exact_same_docume
     reference_element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
     )[0]
-    cited_element = dict(extract_normative_elements("The Bureau shall maintain the public register.")[0])
+    cited_element = dict(
+        extract_normative_elements("The Bureau shall maintain the public register.")[0]
+    )
     cited_element["canonical_citation"] = "section 552"
     cited_element["section_context"] = {"section": "552"}
 
@@ -5366,9 +5371,11 @@ def test_batch_formula_records_keep_numbered_exception_blocked_without_same_docu
         "The Secretary shall publish the notice except as provided in section 552."
     )[0]
 
-    records = build_deontic_formula_records_from_irs([
-        LegalNormIR.from_parser_element(reference_element),
-    ])
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+        ]
+    )
 
     assert records[0]["proof_ready"] is False
     assert records[0]["requires_validation"] is True
@@ -5377,9 +5384,11 @@ def test_batch_formula_records_keep_numbered_exception_blocked_without_same_docu
 
 
 def test_ir_temporal_value_alias_handles_whichever_earlier_structured_alternatives():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit within 10 days after application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit within 10 days after application."
+        )[0]
+    )
     element["temporal_constraints"] = []
     element["temporal_constraint_details"] = [
         {
@@ -5414,9 +5423,11 @@ def test_ir_temporal_value_alias_handles_whichever_earlier_structured_alternativ
 
 
 def test_ir_temporal_value_alias_handles_quantity_unit_calendar_deadline():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit within 10 business days after application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit within 10 business days after application."
+        )[0]
+    )
     element["temporal_constraints"] = []
     element["temporal_constraint_details"] = [
         {
@@ -5435,15 +5446,16 @@ def test_ir_temporal_value_alias_handles_quantity_unit_calendar_deadline():
 
     assert norm.temporal_constraints[0]["value"] == "10 business days after application"
     assert formula == (
-        "O(∀x (Director(x) ∧ Deadline10BusinessDaysAfterApplication(x) "
-        "→ IssuePermit(x)))"
+        "O(∀x (Director(x) ∧ Deadline10BusinessDaysAfterApplication(x) → IssuePermit(x)))"
     )
 
 
 def test_action_recipient_is_not_formula_antecedent_regression():
-    element = dict(extract_normative_elements(
-        "The Director shall provide consultation with the advisory committee."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall provide consultation with the advisory committee."
+        )[0]
+    )
     element["action_recipient"] = "advisory committee"
 
     norm = LegalNormIR.from_parser_element(element)
@@ -5455,9 +5467,11 @@ def test_action_recipient_is_not_formula_antecedent_regression():
 
 
 def test_structured_procedure_filing_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after filing of an application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after filing of an application."
+        )[0]
+    )
     element["procedure"] = {
         "trigger_event": "application",
         "terminal_event": "issuance",
@@ -5475,16 +5489,16 @@ def test_structured_procedure_filing_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureUponFilingApplication(x) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureUponFilingApplication(x) → IssuePermit(x)))")
     assert "Recipient" not in formula
 
 
 def test_structured_procedure_submission_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after submission of a complete application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after submission of a complete application."
+        )[0]
+    )
     element["procedure"] = {
         "trigger_event": "complete application",
         "terminal_event": "issuance",
@@ -5516,9 +5530,9 @@ def test_structured_procedure_submission_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_notice_and_hearing_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after notice and hearing."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall issue a permit after notice and hearing.")[0]
+    )
     element["procedure"] = {
         "trigger_event": "notice and hearing",
         "terminal_event": "issuance",
@@ -5536,16 +5550,14 @@ def test_structured_procedure_notice_and_hearing_trigger_becomes_formula_prerequ
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterNoticeAndHearing(x) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterNoticeAndHearing(x) → IssuePermit(x)))")
     assert formula.count("ProcedureAfterNoticeAndHearing(x)") == 1
 
 
 def test_structured_procedure_notice_and_hearing_deduplicates_condition_alias():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after notice and hearing."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall issue a permit after notice and hearing.")[0]
+    )
     element["condition_details"] = [
         {
             "type": "procedure",
@@ -5571,16 +5583,16 @@ def test_structured_procedure_notice_and_hearing_deduplicates_condition_alias():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterNoticeAndHearing(x) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterNoticeAndHearing(x) → IssuePermit(x)))")
     assert formula.count("ProcedureAfterNoticeAndHearing(x)") == 1
 
 
 def test_structured_procedure_approval_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit upon approval of an application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit upon approval of an application."
+        )[0]
+    )
     element["action"] = ["issue a permit upon approval application"]
     element["procedure"] = {
         "trigger_event": "application",
@@ -5599,16 +5611,16 @@ def test_structured_procedure_approval_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureUponApprovalApplication(x) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureUponApprovalApplication(x) → IssuePermit(x)))")
     assert "IssuePermitUponApprovalApplication" not in formula
 
 
 def test_structured_procedure_approval_trigger_deduplicates_condition_alias():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit upon approval of an application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit upon approval of an application."
+        )[0]
+    )
     element["action"] = ["issue a permit upon approval application"]
     element["condition_details"] = [
         {
@@ -5635,17 +5647,17 @@ def test_structured_procedure_approval_trigger_deduplicates_condition_alias():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureUponApprovalApplication(x) → IssuePermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureUponApprovalApplication(x) → IssuePermit(x)))")
     assert formula.count("ProcedureUponApprovalApplication(x)") == 1
     assert "IssuePermitUponApprovalApplication" not in formula
 
 
 def test_structured_procedure_completion_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after completion of an inspection."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after completion of an inspection."
+        )[0]
+    )
     element["action"] = ["issue a permit after completion inspection"]
     element["procedure"] = {
         "trigger_event": "inspection",
@@ -5671,9 +5683,11 @@ def test_structured_procedure_completion_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_effective_date_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit upon the effective date of the ordinance."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit upon the effective date of the ordinance."
+        )[0]
+    )
     element["action"] = ["issue a permit upon effective date ordinance"]
     element["procedure"] = {
         "trigger_event": "ordinance",
@@ -5699,9 +5713,11 @@ def test_structured_procedure_effective_date_trigger_becomes_formula_prerequisit
 
 
 def test_structured_procedure_certification_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit upon certification of an inspection."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit upon certification of an inspection."
+        )[0]
+    )
     element["action"] = ["issue a permit upon certification inspection"]
     element["procedure"] = {
         "trigger_event": "inspection",
@@ -5727,9 +5743,11 @@ def test_structured_procedure_certification_trigger_becomes_formula_prerequisite
 
 
 def test_structured_procedure_issuance_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall renew a permit after issuance of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall renew a permit after issuance of the license."
+        )[0]
+    )
     element["action"] = ["renew a permit after issuance license"]
     element["procedure"] = {
         "trigger_event": "license",
@@ -5748,16 +5766,16 @@ def test_structured_procedure_issuance_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterIssuanceLicense(x) → RenewPermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterIssuanceLicense(x) → RenewPermit(x)))")
     assert "RenewPermitAfterIssuanceLicense" not in formula
 
 
 def test_structured_procedure_publication_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall renew a permit after publication of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall renew a permit after publication of the notice."
+        )[0]
+    )
     element["action"] = ["renew a permit after publication notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -5776,16 +5794,16 @@ def test_structured_procedure_publication_trigger_becomes_formula_prerequisite()
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterPublicationNotice(x) → RenewPermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterPublicationNotice(x) → RenewPermit(x)))")
     assert "RenewPermitAfterPublicationNotice" not in formula
 
 
 def test_structured_procedure_inspection_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall renew a permit after inspection of the premises."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall renew a permit after inspection of the premises."
+        )[0]
+    )
     element["action"] = ["renew a permit after inspection premises"]
     element["procedure"] = {
         "trigger_event": "premises",
@@ -5804,17 +5822,15 @@ def test_structured_procedure_inspection_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterInspectionPremises(x) → RenewPermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterInspectionPremises(x) → RenewPermit(x)))")
     assert "Procedureafterinspectionpremises" not in formula
     assert "RenewPermitAfterInspectionPremises" not in formula
 
 
 def test_structured_procedure_service_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall renew a permit after service of notice."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall renew a permit after service of notice.")[0]
+    )
     element["action"] = ["renew a permit after service notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -5833,17 +5849,17 @@ def test_structured_procedure_service_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterServiceNotice(x) → RenewPermit(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterServiceNotice(x) → RenewPermit(x)))")
     assert "Procedureafterservicenotice" not in formula
     assert "RenewPermitAfterServiceNotice" not in formula
 
 
 def test_structured_procedure_mailing_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after mailing of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after mailing of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after mailing notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -5867,9 +5883,11 @@ def test_structured_procedure_mailing_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_certified_mailing_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after certified mailing of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after certified mailing of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after certified mailing notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -5888,14 +5906,18 @@ def test_structured_procedure_certified_mailing_trigger_becomes_formula_prerequi
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterCertifiedMailingNotice(x) → IssueOrder(x)))"
+    assert (
+        formula == "O(∀x (Director(x) ∧ ProcedureAfterCertifiedMailingNotice(x) → IssueOrder(x)))"
+    )
     assert "IssueOrderAfterCertifiedMailingNotice" not in formula
 
 
 def test_structured_procedure_delivery_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after delivery of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after delivery of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after delivery notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -5919,9 +5941,11 @@ def test_structured_procedure_delivery_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_postmark_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall accept an appeal after postmark of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall accept an appeal after postmark of the notice."
+        )[0]
+    )
     element["action"] = ["accept an appeal after postmark notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -5945,9 +5969,11 @@ def test_structured_procedure_postmark_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_docketing_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Board shall accept an appeal after docketing of the appeal."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall accept an appeal after docketing of the appeal."
+        )[0]
+    )
     element["action"] = ["accept an appeal after docketing appeal"]
     element["procedure"] = {
         "trigger_event": "appeal",
@@ -5971,9 +5997,11 @@ def test_structured_procedure_docketing_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_entry_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Board shall serve notice after entry of the final order."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Board shall serve notice after entry of the final order.")[
+            0
+        ]
+    )
     element["action"] = ["serve notice after entry final order"]
     element["procedure"] = {
         "trigger_event": "final order",
@@ -5997,9 +6025,11 @@ def test_structured_procedure_entry_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_signature_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Board shall serve notice after signature of the final order."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall serve notice after signature of the final order."
+        )[0]
+    )
     element["action"] = ["serve notice after signature final order"]
     element["procedure"] = {
         "trigger_event": "final order",
@@ -6023,9 +6053,11 @@ def test_structured_procedure_signature_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_opening_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Board shall award the contract after opening of the bids."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Board shall award the contract after opening of the bids.")[
+            0
+        ]
+    )
     element["action"] = ["award the contract after opening bids"]
     element["procedure"] = {
         "trigger_event": "bids",
@@ -6049,9 +6081,11 @@ def test_structured_procedure_opening_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_return_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Board shall dismiss the appeal after return of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall dismiss the appeal after return of the notice."
+        )[0]
+    )
     element["action"] = ["dismiss the appeal after return notice"]
     element["procedure"] = {
         "trigger_event": "notice",
@@ -6075,9 +6109,11 @@ def test_structured_procedure_return_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall publish guidelines after adoption of rules."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall publish guidelines after adoption of rules."
+        )[0]
+    )
     element["action"] = ["publish guidelines after adoption rules"]
     element["procedure"] = {
         "trigger_event": "rules",
@@ -6104,9 +6140,11 @@ def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_commencement_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after commencement of operations."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after commencement of operations."
+        )[0]
+    )
     element["action"] = ["inspect the premises after commencement operations"]
     element["procedure"] = {
         "trigger_event": "operations",
@@ -6133,9 +6171,11 @@ def test_structured_procedure_commencement_trigger_becomes_formula_prerequisite(
 
 
 def test_structured_procedure_execution_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a certificate after execution of the agreement."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a certificate after execution of the agreement."
+        )[0]
+    )
     element["action"] = ["issue a certificate after execution agreement"]
     element["procedure"] = {
         "trigger_event": "agreement",
@@ -6162,9 +6202,11 @@ def test_structured_procedure_execution_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_recording_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall renew a license after recording of the deed."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall renew a license after recording of the deed."
+        )[0]
+    )
     element["action"] = ["renew a license after recording deed"]
     element["procedure"] = {
         "trigger_event": "deed",
@@ -6183,17 +6225,17 @@ def test_structured_procedure_recording_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterRecordingDeed(x) → RenewLicense(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterRecordingDeed(x) → RenewLicense(x)))")
     assert "Procedureafterrecordingdeed" not in formula
     assert "RenewLicenseAfterRecordingDeed" not in formula
 
 
 def test_structured_procedure_renewal_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after renewal of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after renewal of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after renewal license"]
     element["procedure"] = {
         "trigger_event": "license",
@@ -6212,17 +6254,17 @@ def test_structured_procedure_renewal_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == (
-        "O(∀x (Director(x) ∧ ProcedureAfterRenewalLicense(x) → InspectPremises(x)))"
-    )
+    assert formula == ("O(∀x (Director(x) ∧ ProcedureAfterRenewalLicense(x) → InspectPremises(x)))")
     assert "Procedureafterrenewallicense" not in formula
     assert "InspectPremisesAfterRenewalLicense" not in formula
 
 
 def test_structured_procedure_expiration_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after expiration of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after expiration of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after expiration license"]
     element["procedure"] = {
         "trigger_event": "license",
@@ -6249,9 +6291,11 @@ def test_structured_procedure_expiration_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_termination_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after termination of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after termination of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after termination license"]
     element["procedure"] = {
         "trigger_event": "license",
@@ -6278,9 +6322,11 @@ def test_structured_procedure_termination_trigger_becomes_formula_prerequisite()
 
 
 def test_structured_procedure_revocation_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after revocation of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after revocation of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after revocation license"]
     element["procedure"] = {
         "trigger_event": "license",
@@ -6307,9 +6353,11 @@ def test_structured_procedure_revocation_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_denial_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a notice after denial of the application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a notice after denial of the application."
+        )[0]
+    )
     element["action"] = ["issue a notice after denial application"]
     element["procedure"] = {
         "trigger_event": "application",
@@ -6334,9 +6382,9 @@ def test_structured_procedure_denial_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_payment_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after payment of the fee."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall issue a permit after payment of the fee.")[0]
+    )
     element["action"] = ["issue a permit after payment fee"]
     element["procedure"] = {
         "trigger_event": "fee",
@@ -6361,9 +6409,11 @@ def test_structured_procedure_payment_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_assessment_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a notice after assessment of the fee."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a notice after assessment of the fee."
+        )[0]
+    )
     element["action"] = ["issue a notice after assessment fee"]
     element["procedure"] = {
         "trigger_event": "fee",
@@ -6388,9 +6438,11 @@ def test_structured_procedure_assessment_trigger_becomes_formula_prerequisite():
 
 
 def test_structured_procedure_determination_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after determination of eligibility."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after determination of eligibility."
+        )[0]
+    )
     element["action"] = ["issue a permit after determination eligibility"]
     element["procedure"] = {
         "trigger_event": "eligibility",
@@ -6409,14 +6461,19 @@ def test_structured_procedure_determination_trigger_becomes_formula_prerequisite
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterDeterminationEligibility(x) → IssuePermit(x)))"
+    assert (
+        formula
+        == "O(∀x (Director(x) ∧ ProcedureAfterDeterminationEligibility(x) → IssuePermit(x)))"
+    )
     assert "IssuePermitAfterDeterminationEligibility" not in formula
 
 
 def test_structured_procedure_verification_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after verification of residency."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after verification of residency."
+        )[0]
+    )
     element["action"] = ["issue a permit after verification residency"]
     element["procedure"] = {
         "trigger_event": "residency",
@@ -6435,14 +6492,18 @@ def test_structured_procedure_verification_trigger_becomes_formula_prerequisite(
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterVerificationResidency(x) → IssuePermit(x)))"
+    assert (
+        formula == "O(∀x (Director(x) ∧ ProcedureAfterVerificationResidency(x) → IssuePermit(x)))"
+    )
     assert "IssuePermitAfterVerificationResidency" not in formula
 
 
 def test_structured_procedure_validation_trigger_becomes_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Bureau shall approve the license after validation of the application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Bureau shall approve the license after validation of the application."
+        )[0]
+    )
     element["action"] = ["approve the license after validation application"]
     element["procedure"] = {
         "trigger_event": "application",
@@ -6461,14 +6522,18 @@ def test_structured_procedure_validation_trigger_becomes_formula_prerequisite():
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
 
-    assert formula == "O(∀x (Bureau(x) ∧ ProcedureAfterValidationApplication(x) → ApproveLicense(x)))"
+    assert (
+        formula == "O(∀x (Bureau(x) ∧ ProcedureAfterValidationApplication(x) → ApproveLicense(x)))"
+    )
     assert "ApproveLicenseAfterValidationApplication" not in formula
 
 
 def test_structured_procedure_review_and_reconsideration_triggers_become_formula_prerequisites():
-    review_element = dict(extract_normative_elements(
-        "The Director shall issue a permit after review of the application."
-    )[0])
+    review_element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after review of the application."
+        )[0]
+    )
     review_element["action"] = ["issue a permit after review application"]
     review_element["procedure"] = {
         "trigger_event": "application",
@@ -6483,9 +6548,11 @@ def test_structured_procedure_review_and_reconsideration_triggers_become_formula
             }
         ],
     }
-    reconsideration_element = dict(extract_normative_elements(
-        "The Board shall issue a final order after reconsideration of the appeal."
-    )[0])
+    reconsideration_element = dict(
+        extract_normative_elements(
+            "The Board shall issue a final order after reconsideration of the appeal."
+        )[0]
+    )
     reconsideration_element["action"] = ["issue a final order after reconsideration appeal"]
     reconsideration_element["procedure"] = {
         "trigger_event": "appeal",
@@ -6504,15 +6571,17 @@ def test_structured_procedure_review_and_reconsideration_triggers_become_formula
     assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(review_element)) == (
         "O(∀x (Director(x) ∧ ProcedureAfterReviewApplication(x) → IssuePermit(x)))"
     )
-    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(reconsideration_element)) == (
-        "O(∀x (Board(x) ∧ ProcedureAfterReconsiderationAppeal(x) → IssueFinalOrder(x)))"
-    )
+    assert build_deontic_formula_from_ir(
+        LegalNormIR.from_parser_element(reconsideration_element)
+    ) == ("O(∀x (Board(x) ∧ ProcedureAfterReconsiderationAppeal(x) → IssueFinalOrder(x)))")
 
 
 def test_structured_procedure_hearing_and_final_decision_triggers_become_formula_prerequisites():
-    hearing_element = dict(extract_normative_elements(
-        "The Board shall issue a final order after hearing on the appeal."
-    )[0])
+    hearing_element = dict(
+        extract_normative_elements(
+            "The Board shall issue a final order after hearing on the appeal."
+        )[0]
+    )
     hearing_element["action"] = ["issue a final order after hearing appeal"]
     hearing_element["procedure"] = {
         "trigger_event": "appeal",
@@ -6521,15 +6590,21 @@ def test_structured_procedure_hearing_and_final_decision_triggers_become_formula
             {"event": "issuance", "relation": "triggered_by_hearing_of", "anchor_event": "appeal"}
         ],
     }
-    decision_element = dict(extract_normative_elements(
-        "The Director shall issue a permit after final decision on the application."
-    )[0])
+    decision_element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after final decision on the application."
+        )[0]
+    )
     decision_element["action"] = ["issue a permit after final decision application"]
     decision_element["procedure"] = {
         "trigger_event": "application",
         "terminal_event": "issuance",
         "event_relations": [
-            {"event": "issuance", "relation": "triggered_by_final_decision_of", "anchor_event": "application"}
+            {
+                "event": "issuance",
+                "relation": "triggered_by_final_decision_of",
+                "anchor_event": "application",
+            }
         ],
     }
 
@@ -6542,9 +6617,11 @@ def test_structured_procedure_hearing_and_final_decision_triggers_become_formula
 
 
 def test_structured_public_comment_and_consultation_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
+        )[0]
+    )
     element["action"] = [
         "adopt the rule after public comment proposal and after consultation Board"
     ]
@@ -6589,9 +6666,11 @@ def test_structured_public_comment_and_consultation_triggers_become_formula_prer
 
 
 def test_structured_temporal_duration_without_unit_remains_conservative():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit within 10 days after application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit within 10 days after application."
+        )[0]
+    )
     element["temporal_constraints"] = []
     element["temporal_constraint_details"] = [
         {"type": "deadline", "quantity": 10, "anchor_event": "application"}
@@ -6606,9 +6685,11 @@ def test_structured_temporal_duration_without_unit_remains_conservative():
 
 
 def test_structured_alternative_deadline_options_become_formula_prerequisite():
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit within 10 days after application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit within 10 days after application."
+        )[0]
+    )
     element["temporal_constraints"] = []
     element["temporal_constraint_details"] = [
         {
@@ -6643,9 +6724,11 @@ def test_structured_alternative_deadline_options_become_formula_prerequisite():
 
 
 def test_structured_registration_and_enrollment_triggers_become_formula_prerequisites():
-    registration_element = dict(extract_normative_elements(
-        "The Clerk shall activate the permit after registration of the applicant."
-    )[0])
+    registration_element = dict(
+        extract_normative_elements(
+            "The Clerk shall activate the permit after registration of the applicant."
+        )[0]
+    )
     registration_element["action"] = ["activate the permit after registration applicant"]
     registration_element["procedure"] = {
         "event_relations": [
@@ -6658,9 +6741,11 @@ def test_structured_registration_and_enrollment_triggers_become_formula_prerequi
             }
         ],
     }
-    enrollment_element = dict(extract_normative_elements(
-        "The Clerk shall activate the permit after enrollment of the license."
-    )[0])
+    enrollment_element = dict(
+        extract_normative_elements(
+            "The Clerk shall activate the permit after enrollment of the license."
+        )[0]
+    )
     enrollment_element["action"] = ["activate the permit after enrollment license"]
     enrollment_element["procedure"] = {
         "event_relations": [
@@ -6683,9 +6768,11 @@ def test_structured_registration_and_enrollment_triggers_become_formula_prerequi
 
 
 def test_structured_acceptance_and_acknowledgment_triggers_become_formula_prerequisites():
-    acceptance_element = dict(extract_normative_elements(
-        "The Board shall schedule the hearing after acceptance of the appeal."
-    )[0])
+    acceptance_element = dict(
+        extract_normative_elements(
+            "The Board shall schedule the hearing after acceptance of the appeal."
+        )[0]
+    )
     acceptance_element["action"] = ["schedule the hearing after acceptance appeal"]
     acceptance_element["procedure"] = {
         "event_relations": [
@@ -6698,9 +6785,11 @@ def test_structured_acceptance_and_acknowledgment_triggers_become_formula_prereq
             }
         ],
     }
-    acknowledgment_element = dict(extract_normative_elements(
-        "The Clerk shall docket the filing after acknowledgment of the filing."
-    )[0])
+    acknowledgment_element = dict(
+        extract_normative_elements(
+            "The Clerk shall docket the filing after acknowledgment of the filing."
+        )[0]
+    )
     acknowledgment_element["action"] = ["docket the filing after acknowledgment filing"]
     acknowledgment_element["procedure"] = {
         "event_relations": [
@@ -6717,15 +6806,17 @@ def test_structured_acceptance_and_acknowledgment_triggers_become_formula_prereq
     assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(acceptance_element)) == (
         "O(∀x (Board(x) ∧ ProcedureAfterAcceptanceAppeal(x) → ScheduleHearing(x)))"
     )
-    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(acknowledgment_element)) == (
-        "O(∀x (Clerk(x) ∧ ProcedureAfterAcknowledgmentFiling(x) → DocketFiling(x)))"
-    )
+    assert build_deontic_formula_from_ir(
+        LegalNormIR.from_parser_element(acknowledgment_element)
+    ) == ("O(∀x (Clerk(x) ∧ ProcedureAfterAcknowledgmentFiling(x) → DocketFiling(x)))")
 
 
 def test_structured_electronic_filing_and_service_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Clerk shall docket the appeal after electronic filing of the appeal and after electronic service on the respondent."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall docket the appeal after electronic filing of the appeal and after electronic service on the respondent."
+        )[0]
+    )
     element["action"] = [
         "docket the appeal after electronic filing appeal and after electronic service respondent"
     ]
@@ -6760,9 +6851,11 @@ def test_structured_electronic_filing_and_service_triggers_become_formula_prereq
 
 
 def test_structured_notice_delivery_and_docketing_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Clerk shall serve the order after certified mailing of the notice and after docketing of the appeal."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall serve the order after certified mailing of the notice and after docketing of the appeal."
+        )[0]
+    )
     element["action"] = ["serve the order"]
     element["procedure"] = {
         "event_relations": [
@@ -6805,9 +6898,11 @@ def test_structured_notice_delivery_and_docketing_triggers_become_formula_prereq
 
 
 def test_structured_signature_and_countersignature_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Clerk shall record the deed after signature of the final order and after countersignature of the certificate."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall record the deed after signature of the final order and after countersignature of the certificate."
+        )[0]
+    )
     element["action"] = ["record the deed"]
     element["procedure"] = {
         "event_relations": [
@@ -6850,9 +6945,11 @@ def test_structured_signature_and_countersignature_triggers_become_formula_prere
 
 
 def test_structured_determination_and_verification_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Director shall issue the certificate after determination of eligibility and after verification of the address."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue the certificate after determination of eligibility and after verification of the address."
+        )[0]
+    )
     element["action"] = ["issue the certificate"]
     element["procedure"] = {
         "event_relations": [
@@ -6895,9 +6992,11 @@ def test_structured_determination_and_verification_triggers_become_formula_prere
 
 
 def test_structured_financial_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Treasurer shall release the permit after payment of the fee and after assessment of charges."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Treasurer shall release the permit after payment of the fee and after assessment of charges."
+        )[0]
+    )
     element["action"] = ["release the permit"]
     element["procedure"] = {
         "event_relations": [
@@ -6940,9 +7039,11 @@ def test_structured_financial_triggers_become_formula_prerequisites():
 
 
 def test_structured_accounting_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Auditor shall certify the refund after calculation of the fee and after audit of the account."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Auditor shall certify the refund after calculation of the fee and after audit of the account."
+        )[0]
+    )
     element["action"] = ["certify the refund"]
     element["procedure"] = {
         "event_relations": [
@@ -6978,9 +7079,11 @@ def test_structured_accounting_triggers_become_formula_prerequisites():
 
 
 def test_structured_compliance_inspection_triggers_become_formula_prerequisites():
-    element = dict(extract_normative_elements(
-        "The Inspector shall approve the discharge after sampling of the effluent and after testing of the meter."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Inspector shall approve the discharge after sampling of the effluent and after testing of the meter."
+        )[0]
+    )
     element["action"] = ["approve the discharge"]
     element["procedure"] = {
         "event_relations": [
@@ -7023,12 +7126,12 @@ def test_structured_compliance_inspection_triggers_become_formula_prerequisites(
 
 
 def test_structured_recordkeeping_triggers_become_formula_prerequisites_without_action_tail():
-    element = dict(extract_normative_elements(
-        "The Clerk shall destroy the record after archiving of the file and after retention of the index."
-    )[0])
-    element["action"] = [
-        "destroy the record after archiving file and after retention index"
-    ]
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall destroy the record after archiving of the file and after retention of the index."
+        )[0]
+    )
+    element["action"] = ["destroy the record after archiving file and after retention index"]
     element["procedure"] = {
         "event_relations": [
             {
@@ -7070,9 +7173,11 @@ def test_structured_recordkeeping_triggers_become_formula_prerequisites_without_
 
 
 def test_supplemental_procedure_triggers_become_prerequisites_without_action_tail():
-    element = dict(extract_normative_elements(
-        "The Clerk shall file the certificate after transmission of the order and after receipt confirmation of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall file the certificate after transmission of the order and after receipt confirmation of the notice."
+        )[0]
+    )
     element["action"] = [
         "file the certificate after transmission order and after receipt confirmation notice"
     ]
@@ -7110,16 +7215,20 @@ def test_supplemental_procedure_triggers_become_prerequisites_without_action_tai
 
 
 def test_supplemental_status_triggers_become_prerequisites_without_action_tail():
-    element = dict(extract_normative_elements(
-        "The Board shall restore the license after posting of the bond and after reinstatement of the permit."
-    )[0])
-    element["action"] = [
-        "restore the license after posting bond and after reinstatement permit"
-    ]
+    element = dict(
+        extract_normative_elements(
+            "The Board shall restore the license after posting of the bond and after reinstatement of the permit."
+        )[0]
+    )
+    element["action"] = ["restore the license after posting bond and after reinstatement permit"]
     element["procedure"] = {
         "event_relations": [
             {"event": "restoration", "relation": "triggered_by_posting_of", "anchor_event": "bond"},
-            {"event": "restoration", "relation": "triggered_by_reinstatement_of", "anchor_event": "permit"},
+            {
+                "event": "restoration",
+                "relation": "triggered_by_reinstatement_of",
+                "anchor_event": "permit",
+            },
         ]
     }
 
@@ -7138,12 +7247,12 @@ def test_supplemental_status_triggers_become_prerequisites_without_action_tail()
 
 
 def test_commencement_and_execution_triggers_become_prerequisites_without_action_tail():
-    element = dict(extract_normative_elements(
-        "The Clerk shall docket the order after commencement of the case and after execution of the agreement."
-    )[0])
-    element["action"] = [
-        "docket the order after commencement case and after execution agreement"
-    ]
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall docket the order after commencement of the case and after execution of the agreement."
+        )[0]
+    )
+    element["action"] = ["docket the order after commencement case and after execution agreement"]
     element["procedure"] = {
         "event_relations": [
             {
@@ -7185,9 +7294,11 @@ def test_commencement_and_execution_triggers_become_prerequisites_without_action
 
 
 def test_public_participation_triggers_become_formula_prerequisites_without_action_tail():
-    element = dict(extract_normative_elements(
-        "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
+        )[0]
+    )
     element["action"] = [
         "adopt the rule after public comment proposal and after consultation Board"
     ]
@@ -7417,7 +7528,7 @@ def test_classification_reclassification_light_verb_duties_export_operative_pred
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7458,7 +7569,7 @@ def test_redaction_anonymization_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7499,7 +7610,7 @@ def test_masking_pseudonymization_light_verb_duties_export_operative_predicates(
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7552,7 +7663,7 @@ def test_encryption_tokenization_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7593,7 +7704,7 @@ def test_sealing_unsealing_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7634,7 +7745,7 @@ def test_expungement_destruction_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7693,7 +7804,7 @@ def test_enforcement_remedy_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7734,7 +7845,7 @@ def test_recordation_memorialization_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7775,7 +7886,7 @@ def test_ratification_confirmation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7816,7 +7927,7 @@ def test_attestation_notarization_light_verb_duties_export_operative_predicates(
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7857,7 +7968,7 @@ def test_acknowledgment_authentication_light_verb_duties_export_operative_predic
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7898,7 +8009,7 @@ def test_summarization_indexing_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7939,7 +8050,7 @@ def test_transcription_translation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -7980,7 +8091,7 @@ def test_codification_recodification_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8021,7 +8132,7 @@ def test_consolidation_reconciliation_light_verb_duties_export_operative_predica
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8062,7 +8173,7 @@ def test_aggregation_tabulation_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8103,7 +8214,7 @@ def test_segregation_sequestration_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8144,7 +8255,7 @@ def test_assignment_allocation_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8185,7 +8296,7 @@ def test_prioritization_scheduling_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8226,7 +8337,7 @@ def test_delegation_reservation_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8267,7 +8378,7 @@ def test_ratification_confirmation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8308,7 +8419,7 @@ def test_codification_consolidation_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8349,7 +8460,7 @@ def test_revocation_suspension_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8390,7 +8501,7 @@ def test_expungement_sealing_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8431,7 +8542,7 @@ def test_reconciliation_restitution_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8472,7 +8583,7 @@ def test_forfeiture_disgorgement_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8513,7 +8624,7 @@ def test_annulment_vacatur_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8554,7 +8665,7 @@ def test_recodification_renumbering_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8595,7 +8706,7 @@ def test_conversion_transmittal_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8636,7 +8747,7 @@ def test_acknowledgment_attestation_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8677,7 +8788,7 @@ def test_assessment_imposition_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8718,7 +8829,7 @@ def test_allocation_apportionment_light_verb_duties_export_operative_predicates(
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8759,7 +8870,7 @@ def test_referral_remand_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8800,7 +8911,7 @@ def test_waiver_extension_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8856,7 +8967,7 @@ def test_stay_continuance_postponement_deferral_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8915,7 +9026,7 @@ def test_registration_enrollment_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8956,7 +9067,7 @@ def test_indexing_cataloging_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -8997,7 +9108,7 @@ def test_redaction_anonymization_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9059,7 +9170,7 @@ def test_cybersecurity_access_control_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9083,12 +9194,10 @@ def test_cybersecurity_access_control_duties_export_operative_predicates():
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -9127,7 +9236,7 @@ def test_translation_interpretation_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9168,7 +9277,7 @@ def test_transcription_summarization_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9209,7 +9318,7 @@ def test_audit_examination_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9250,7 +9359,7 @@ def test_mediation_arbitration_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9291,7 +9400,7 @@ def test_delegation_assignment_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9332,7 +9441,7 @@ def test_recordation_memorialization_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9373,7 +9482,7 @@ def test_aggregation_consolidation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9414,7 +9523,7 @@ def test_segregation_separation_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9455,7 +9564,7 @@ def test_ratification_confirmation_light_verb_duties_export_operative_predicates
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9496,7 +9605,7 @@ def test_authentication_attestation_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9537,7 +9646,7 @@ def test_approval_authorization_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9578,7 +9687,7 @@ def test_revocation_suspension_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9625,7 +9734,7 @@ def test_cancellation_termination_light_verb_duties_export_operative_predicates(
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9672,7 +9781,7 @@ def test_renewal_reissuance_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9719,7 +9828,7 @@ def test_codification_recodification_light_verb_duties_export_operative_predicat
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9766,7 +9875,7 @@ def test_licensing_permitting_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9813,7 +9922,7 @@ def test_adjudication_hearing_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9860,7 +9969,7 @@ def test_settlement_conciliation_light_verb_duties_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9907,7 +10016,7 @@ def test_remediation_abatement_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -9960,7 +10069,7 @@ def test_rulemaking_enactment_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10007,7 +10116,7 @@ def test_codification_compilation_light_verb_duties_export_operative_predicates(
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10054,7 +10163,7 @@ def test_dissemination_distribution_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10101,7 +10210,7 @@ def test_public_notice_display_light_verb_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10148,7 +10257,7 @@ def test_objection_response_comment_light_verb_duties_export_operative_predicate
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10192,7 +10301,7 @@ def test_review_request_light_verb_duties_preserve_source_grounded_operative_pre
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert record["proof_ready"] is True
@@ -10241,7 +10350,7 @@ def test_training_orientation_instruction_light_verb_duties_export_operative_pre
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10263,12 +10372,10 @@ def test_training_orientation_instruction_light_verb_duties_export_operative_pre
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
@@ -10327,7 +10434,7 @@ def test_notice_notification_disclosure_duties_export_public_information_predica
         assert norm.action == action
         assert norm.support_span == norm.source_span
         assert element["field_spans"]["action"] == action_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10350,12 +10457,10 @@ def test_notice_notification_disclosure_duties_export_public_information_predica
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -10427,7 +10532,7 @@ def test_compliance_planning_and_risk_review_duties_export_operative_predicates(
         assert norm.action == action
         assert norm.support_span == norm.source_span
         assert element["field_spans"]["action"] == action_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert record["proof_ready"] is True
@@ -10446,12 +10551,10 @@ def test_compliance_planning_and_risk_review_duties_export_operative_predicates(
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -10517,7 +10620,7 @@ def test_data_quality_processing_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10542,12 +10645,10 @@ def test_data_quality_processing_duties_export_operative_predicates():
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -10605,7 +10706,7 @@ def test_regulatory_reporting_duties_export_operative_predicates():
         assert norm.action == action
         assert norm.support_span == norm.source_span
         assert element["field_spans"]["action"] == action_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10628,12 +10729,10 @@ def test_regulatory_reporting_duties_export_operative_predicates():
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -10691,7 +10790,7 @@ def test_consent_release_instrument_duties_export_operative_predicates():
         assert norm.action == action
         assert norm.support_span == norm.source_span
         assert element["field_spans"]["action"] == action_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -10714,12 +10813,10 @@ def test_consent_release_instrument_duties_export_operative_predicates():
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)

@@ -33,9 +33,7 @@ from .legal_ir_semantic_metrics import (
 
 
 LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION: Final = "legal-ir-hard-negative-curriculum-v1"
-LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION: Final = (
-    "legal-ir-hard-negative-effect-v1"
-)
+LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION: Final = "legal-ir-hard-negative-effect-v1"
 
 VERIFIED_COUNTEREXAMPLE: Final = "verified_counterexample"
 NEAR_MISS_CLAUSE: Final = "near_miss_clause"
@@ -236,8 +234,7 @@ class LegalIRHardNegativeConfig:
 
     def __post_init__(self) -> None:
         families = tuple(
-            canonical_legal_ir_evaluation_family(family)
-            for family in self.legal_ir_families
+            canonical_legal_ir_evaluation_family(family) for family in self.legal_ir_families
         )
         if not families:
             raise ValueError("at least one LegalIR family is required")
@@ -423,15 +420,15 @@ class LegalIRHardNegativeCurriculum:
 
     @property
     def ready_for_training(self) -> bool:
-        return bool(self.examples) and not self.missing_negative_families and all(
-            example.is_training_label for example in self.examples
+        return (
+            bool(self.examples)
+            and not self.missing_negative_families
+            and all(example.is_training_label for example in self.examples)
         )
 
     def by_family(self, negative_family: str) -> tuple[LegalIRHardNegativeExample, ...]:
         return tuple(
-            example
-            for example in self.examples
-            if example.negative_family == negative_family
+            example for example in self.examples if example.negative_family == negative_family
         )
 
     def to_dict(self, *, include_examples: bool = True) -> dict[str, Any]:
@@ -441,9 +438,7 @@ class LegalIRHardNegativeCurriculum:
             "curriculum_id": self.curriculum_id,
             "missing_negative_families": list(self.missing_negative_families),
             "ready_for_training": self.ready_for_training,
-            "rejected_candidates": [
-                candidate.to_dict() for candidate in self.rejected_candidates
-            ],
+            "rejected_candidates": [candidate.to_dict() for candidate in self.rejected_candidates],
             "rejected_count": self.rejected_count,
             "schema_version": self.schema_version,
             "stages": [stage.to_dict() for stage in self.stages],
@@ -543,9 +538,7 @@ class LegalIRHardNegativeCurriculumBuilder:
         for item in verified_counterexamples:
             example = self._example_from_counterexample(item)
             if example is None:
-                rejected.append(
-                    _rejected(item, "unverified_counterexample_not_training_label")
-                )
+                rejected.append(_rejected(item, "unverified_counterexample_not_training_label"))
             else:
                 accepted.append(example)
 
@@ -608,15 +601,20 @@ class LegalIRHardNegativeCurriculumBuilder:
         )
         verification = _verification_payload(candidate)
         difficulty = self._difficulty(negative_family, semantic_family)
-        example_id = source.get("candidate_id") or source.get("example_id") or (
-            "lir-hard-negative-" + _stable_hash(
-                {
-                    "family": negative_family,
-                    "minimal": minimal,
-                    "reference": reference,
-                    "verification": verification,
-                }
-            )[:24]
+        example_id = (
+            source.get("candidate_id")
+            or source.get("example_id")
+            or (
+                "lir-hard-negative-"
+                + _stable_hash(
+                    {
+                        "family": negative_family,
+                        "minimal": minimal,
+                        "reference": reference,
+                        "verification": verification,
+                    }
+                )[:24]
+            )
         )
         return LegalIRHardNegativeExample(
             example_id=str(example_id),
@@ -674,7 +672,9 @@ class LegalIRHardNegativeCurriculumBuilder:
         )
         examples: list[LegalIRHardNegativeExample] = []
         for negative_family, candidate in variants:
-            family = "decompiler" if negative_family == DECOMPILER_HALLUCINATION else semantic_family
+            family = (
+                "decompiler" if negative_family == DECOMPILER_HALLUCINATION else semantic_family
+            )
             if negative_family in {WRONG_CITATION, SOURCE_COPY_SPAN}:
                 family = "provenance"
             if negative_family == STALE_AMENDMENT:
@@ -713,9 +713,7 @@ class LegalIRHardNegativeCurriculumBuilder:
                         "source_record_digest": _stable_hash(source),
                         "source_citation": source.get("citation", ""),
                     },
-                    source_text_sha256=str(
-                        source.get("source_text_sha256") or _text_hash(text)
-                    )
+                    source_text_sha256=str(source.get("source_text_sha256") or _text_hash(text))
                     if text
                     else "",
                 )
@@ -737,8 +735,7 @@ class LegalIRHardNegativeCurriculumBuilder:
         semantic_family = _canonical_family_or_default(source.get("semantic_family"))
         return LegalIRHardNegativeExample(
             example_id=str(
-                source.get("example_id")
-                or "lir-hard-negative-" + _stable_hash(source)[:24]
+                source.get("example_id") or "lir-hard-negative-" + _stable_hash(source)[:24]
             ),
             negative_family=negative_family,
             semantic_family=semantic_family,
@@ -887,12 +884,8 @@ def prove_hard_negatives_reduce_false_positive_semantic_equivalence(
             "within_tolerance": degradation <= cfg.trusted_positive_obligation_tolerance,
         }
 
-    positive_guard = (
-        worst_degradation <= cfg.trusted_positive_obligation_tolerance
-        and (
-            verified_positive_count > 0
-            or not cfg.require_trusted_positive_obligation_evidence
-        )
+    positive_guard = worst_degradation <= cfg.trusted_positive_obligation_tolerance and (
+        verified_positive_count > 0 or not cfg.require_trusted_positive_obligation_evidence
     )
     block_reasons: list[str] = []
     if not curriculum.ready_for_training:
@@ -996,8 +989,7 @@ def _rejected(
 def _counterexample_negative_family(source: Mapping[str, Any], minimal: Any) -> str:
     verification = _verification_payload(source)
     grammar_rejections = " ".join(
-        str(item)
-        for item in _sequence(verification.get("grammar_rejections"))
+        str(item) for item in _sequence(verification.get("grammar_rejections"))
     ).lower()
     target = str(source.get("target", "")).lower()
     if "source_copy" in grammar_rejections or _contains_source_copy_marker(minimal):
@@ -1071,7 +1063,9 @@ def _swap_actor(reference: Any, text: str) -> Any:
 
 
 def _invert_modality(reference: Any, text: str) -> Any:
-    return _mutate_rule_field(copy.deepcopy(reference), ("modality", "operator"), _flip_modality(_modality(text)))
+    return _mutate_rule_field(
+        copy.deepcopy(reference), ("modality", "operator"), _flip_modality(_modality(text))
+    )
 
 
 def _stale_amendment(reference: Any, source: Mapping[str, Any]) -> Any:
@@ -1261,9 +1255,7 @@ def _semantic_score_from_positive_pair(
         family=_canonical_family_or_default(source.get("semantic_family")),
     )
     values = [
-        result.scores[metric]
-        for metric in SEMANTIC_EQUIVALENCE_METRICS
-        if metric in result.scores
+        result.scores[metric] for metric in SEMANTIC_EQUIVALENCE_METRICS if metric in result.scores
     ]
     return min(values) if values else default
 

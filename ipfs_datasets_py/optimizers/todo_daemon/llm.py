@@ -200,7 +200,9 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
 
     backend = os.environ.get(config.backend_env_name, config.backend_default)
     if backend != "llm_router":
-        raise RuntimeError(f"Unsupported {config.backend_label} {backend!r}; expected 'llm_router'.")
+        raise RuntimeError(
+            f"Unsupported {config.backend_label} {backend!r}; expected 'llm_router'."
+        )
     if len(prompt) > config.max_prompt_chars + len(config.prompt_overage_allowance):
         raise RuntimeError(
             f"LLM prompt exceeds configured budget before llm_router child launch: "
@@ -226,14 +228,20 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
                 _env_name(config, "PROMPT_FILE"): str(prompt_file),
                 _env_name(config, "MODEL_NAME"): config.model_name,
                 _env_name(config, "PROVIDER"): config.provider or "",
-                _env_name(config, "ALLOW_LOCAL_FALLBACK"): "1" if config.allow_local_fallback else "0",
+                _env_name(config, "ALLOW_LOCAL_FALLBACK"): "1"
+                if config.allow_local_fallback
+                else "0",
                 _env_name(config, "TIMEOUT"): str(config.timeout_seconds),
                 _env_name(config, "MAX_NEW_TOKENS"): str(config.max_new_tokens),
                 _env_name(config, "TEMPERATURE"): str(config.temperature),
                 _env_name(config, "TRACE"): "1" if config.trace else "0",
                 _env_name(config, "TRACE_DIR"): str(config.trace_dir or ""),
-                _env_name(config, "REJECT_EFFECTIVE_PROVIDER"): config.reject_effective_provider_name or "",
-                _env_name(config, "REQUIRED_EFFECTIVE_PROVIDERS"): ",".join(config.required_effective_providers),
+                _env_name(
+                    config, "REJECT_EFFECTIVE_PROVIDER"
+                ): config.reject_effective_provider_name or "",
+                _env_name(config, "REQUIRED_EFFECTIVE_PROVIDERS"): ",".join(
+                    config.required_effective_providers
+                ),
             }
         )
         command = [config.python_executable, "-c", _llm_router_child_code(config)]
@@ -252,7 +260,9 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
             stdout, stderr = process.communicate(timeout=timeout_seconds)
         except subprocess.TimeoutExpired as exc:
             terminate_process_group(process)
-            raise RuntimeError(f"llm_router child timed out after {timeout_seconds} seconds") from exc
+            raise RuntimeError(
+                f"llm_router child timed out after {timeout_seconds} seconds"
+            ) from exc
         finally:
             if _ACTIVE_LLM_PROCESS is process:
                 _ACTIVE_LLM_PROCESS = None
@@ -271,7 +281,9 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
     if completed is None:
         raise RuntimeError("llm_router child did not produce a completed process result")
     if completed.returncode != 0:
-        details = compact_message((completed.stdout or "") + " " + (completed.stderr or ""), limit=1200)
+        details = compact_message(
+            (completed.stdout or "") + " " + (completed.stderr or ""), limit=1200
+        )
         raise RuntimeError(f"llm_router child exited with code {completed.returncode}: {details}")
     return completed.stdout
 

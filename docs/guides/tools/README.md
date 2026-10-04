@@ -49,11 +49,13 @@ import anyio
 
 from ipfs_datasets_py.mcp_server.tool_registry import ToolRegistry
 
+
 async def main():
-	registry = ToolRegistry()
-	tool = await registry.get_tool("development", "github_cli_status")
-	result = await tool.execute({"install_dir": None})
-	print(result)
+    registry = ToolRegistry()
+    tool = await registry.get_tool("development", "github_cli_status")
+    result = await tool.execute({"install_dir": None})
+    print(result)
+
 
 anyio.run(main)
 ```

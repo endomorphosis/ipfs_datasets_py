@@ -20,7 +20,9 @@ def test_recommend_strategies_batch_records_per_item_failures(monkeypatch):
             confidence=0.8,
         )
 
-    monkeypatch.setattr(BatchStrategyRecommender, "_recommend_for_single", staticmethod(_fake_recommend_for_single))
+    monkeypatch.setattr(
+        BatchStrategyRecommender, "_recommend_for_single", staticmethod(_fake_recommend_for_single)
+    )
 
     ontologies = [
         OntologyRef(ontology_id="ok-1", data={"entities": [], "relationships": []}),
@@ -49,7 +51,9 @@ def test_recommend_strategies_batch_applies_confidence_threshold(monkeypatch):
             confidence=confidence,
         )
 
-    monkeypatch.setattr(BatchStrategyRecommender, "_recommend_for_single", staticmethod(_fake_recommend_for_single))
+    monkeypatch.setattr(
+        BatchStrategyRecommender, "_recommend_for_single", staticmethod(_fake_recommend_for_single)
+    )
 
     ontologies = [
         OntologyRef(ontology_id="low", data={"entities": [], "relationships": []}),

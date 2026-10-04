@@ -19,7 +19,7 @@ def identify_strengths(
     clarity: float,
     granularity: float,
     relationship_coherence: float,
-    domain_alignment: float
+    domain_alignment: float,
 ) -> List[str]:
     """Identify ontology strengths based on dimension scores.
 
@@ -60,7 +60,7 @@ def identify_weaknesses(
     clarity: float,
     granularity: float,
     relationship_coherence: float,
-    domain_alignment: float
+    domain_alignment: float,
 ) -> List[str]:
     """Identify ontology weaknesses based on dimension scores.
 
@@ -103,7 +103,7 @@ def generate_recommendations(
     clarity: float,
     granularity: float,
     relationship_coherence: float,
-    domain_alignment: float
+    domain_alignment: float,
 ) -> List[str]:
     """Generate specific, actionable recommendations for improvement.
 
@@ -126,9 +126,9 @@ def generate_recommendations(
     """
     recommendations: List[str] = []
 
-    entities = ontology.get('entities', [])
-    relationships = ontology.get('relationships', [])
-    entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
+    entities = ontology.get("entities", [])
+    relationships = ontology.get("relationships", [])
+    entity_ids = {e.get("id") for e in entities if isinstance(e, dict) and e.get("id")}
 
     # -- Completeness recommendations -------------------------------------
     if completeness < 0.7:
@@ -155,7 +155,7 @@ def generate_recommendations(
                 "Aim for at least one relationship per entity."
             )
 
-        types = {e.get('type') for e in entities if isinstance(e, dict) and e.get('type')}
+        types = {e.get("type") for e in entities if isinstance(e, dict) and e.get("type")}
         if len(types) < 2:
             recommendations.append(
                 "All entities share the same type. "
@@ -165,19 +165,20 @@ def generate_recommendations(
     # -- Consistency recommendations ---------------------------------------
     if consistency < 0.7:
         dangling = [
-            r for r in relationships
+            r
+            for r in relationships
             if isinstance(r, dict)
-            and (r.get('source_id') not in entity_ids or r.get('target_id') not in entity_ids)
+            and (r.get("source_id") not in entity_ids or r.get("target_id") not in entity_ids)
         ]
         if dangling:
-            rel_ids = [r.get('id', '?') for r in dangling[:3]]
+            rel_ids = [r.get("id", "?") for r in dangling[:3]]
             recommendations.append(
                 f"{len(dangling)} relationship(s) have dangling references "
                 f"(e.g. {', '.join(str(r) for r in rel_ids)}). "
                 "Ensure all source_id / target_id values match existing entity IDs."
             )
 
-        all_ids = [e.get('id') for e in entities if isinstance(e, dict) and e.get('id')]
+        all_ids = [e.get("id") for e in entities if isinstance(e, dict) and e.get("id")]
         dupes = len(all_ids) - len(set(all_ids))
         if dupes > 0:
             recommendations.append(
@@ -187,14 +188,14 @@ def generate_recommendations(
 
     # -- Clarity recommendations -------------------------------------------
     if clarity < 0.7:
-        no_props = [e for e in entities if isinstance(e, dict) and not e.get('properties')]
+        no_props = [e for e in entities if isinstance(e, dict) and not e.get("properties")]
         if len(no_props) > len(entities) * 0.5:
             recommendations.append(
                 f"{len(no_props)} of {len(entities)} entities lack properties. "
                 "Add descriptive properties (e.g. role, description, domain) to improve interpretability."
             )
 
-        no_text = [e for e in entities if isinstance(e, dict) and not e.get('text')]
+        no_text = [e for e in entities if isinstance(e, dict) and not e.get("text")]
         if no_text:
             recommendations.append(
                 f"{len(no_text)} entit{'y' if len(no_text) == 1 else 'ies'} missing the 'text' field. "
@@ -202,8 +203,7 @@ def generate_recommendations(
             )
 
         short = [
-            e for e in entities
-            if isinstance(e, dict) and len((e.get('text') or '').strip()) < 3
+            e for e in entities if isinstance(e, dict) and len((e.get("text") or "").strip()) < 3
         ]
         if short:
             recommendations.append(
@@ -213,7 +213,7 @@ def generate_recommendations(
 
     # -- Granularity recommendations ---------------------------------------
     if granularity < 0.7:
-        prop_counts = [len(e.get('properties', {})) for e in entities if isinstance(e, dict)]
+        prop_counts = [len(e.get("properties", {})) for e in entities if isinstance(e, dict)]
         avg_props = sum(prop_counts) / max(len(prop_counts), 1)
         if avg_props < 1.0:
             recommendations.append(
@@ -231,8 +231,8 @@ def generate_recommendations(
 
     # -- Relationship coherence recommendations ----------------------------
     if relationship_coherence < 0.7:
-        _GENERIC_RELS = {'relates_to', 'related_to', 'links', 'connected', 'associated', 'rel'}
-        rel_types = [r.get('type', '') for r in relationships if isinstance(r, dict)]
+        _GENERIC_RELS = {"relates_to", "related_to", "links", "connected", "associated", "rel"}
+        rel_types = [r.get("type", "") for r in relationships if isinstance(r, dict)]
         generic_count = sum(1 for rt in rel_types if rt.lower() in _GENERIC_RELS)
 
         if generic_count > len(rel_types) * 0.3:
@@ -247,7 +247,7 @@ def generate_recommendations(
                 "All relationships use the same type. Add variety by using domain-specific relationship types."
             )
 
-        no_type = [r for r in relationships if isinstance(r, dict) and not r.get('type')]
+        no_type = [r for r in relationships if isinstance(r, dict) and not r.get("type")]
         if no_type:
             recommendations.append(
                 f"{len(no_type)} relationship(s) missing type field. "
@@ -256,7 +256,7 @@ def generate_recommendations(
 
     # -- Domain alignment recommendations ---------------------------------
     if domain_alignment < 0.7:
-        domain = (getattr(context, 'domain', None) or ontology.get('domain', 'general')).lower()
+        domain = (getattr(context, "domain", None) or ontology.get("domain", "general")).lower()
         recommendations.append(
             f"Many entity/relationship types don't align with '{domain}' domain vocabulary. "
             "Review type names and replace generic labels with domain-specific terms."

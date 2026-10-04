@@ -99,32 +99,28 @@ def test_manifest_retains_complete_failure_evidence(
     remediation = build_no_eligible_remediation_manifest(ROOT)["remediation"]
     arms = remediation["arms"]
 
-    assert remediation["classification"] == (
-        "all_preregistered_arms_failed_selection_eligibility"
-    )
+    assert remediation["classification"] == ("all_preregistered_arms_failed_selection_eligibility")
     assert remediation["arm_count"] == len(arms) == 30
     assert remediation["eligible_arm_count"] == 0
     assert sum(arm["coordinate_count"] for arm in arms.values()) == 670
     assert remediation["gate_evidence"] == {
         "source_copy_exclusion": {
             "affected_arm_count": 15,
-            "affected_arm_ids": remediation["gate_evidence"][
-                "source_copy_exclusion"
-            ]["affected_arm_ids"],
+            "affected_arm_ids": remediation["gate_evidence"]["source_copy_exclusion"][
+                "affected_arm_ids"
+            ],
             "failed_coordinate_count": 271,
         },
         "polarity_preservation": {
             "affected_arm_count": 28,
-            "affected_arm_ids": remediation["gate_evidence"][
-                "polarity_preservation"
-            ]["affected_arm_ids"],
+            "affected_arm_ids": remediation["gate_evidence"]["polarity_preservation"][
+                "affected_arm_ids"
+            ],
             "failed_coordinate_count": 579,
         },
         "full_coverage": {
             "affected_arm_count": 21,
-            "affected_arm_ids": remediation["gate_evidence"][
-                "full_coverage"
-            ]["affected_arm_ids"],
+            "affected_arm_ids": remediation["gate_evidence"]["full_coverage"]["affected_arm_ids"],
             "failed_coordinate_count": 350,
         },
     }
@@ -139,9 +135,7 @@ def test_manifest_retains_complete_failure_evidence(
         "invalid_output": 5,
         "post_schedule_capability_unavailable": 260,
     }
-    assert remediation["terminal_failure_stage_counts"] == {
-        "unspecified_stage": 350
-    }
+    assert remediation["terminal_failure_stage_counts"] == {"unspecified_stage": 350}
     for arm in arms.values():
         assert set(arm["affected_case_ids_by_gate"]) == {
             "source_copy_exclusion",
@@ -223,9 +217,7 @@ def test_builder_rejects_a_stale_supplied_gate(
 ) -> None:
     _use_gate(monkeypatch, srt014_gate)
     stale = copy.deepcopy(srt014_gate)
-    stale["report_raw_cid"] = (
-        "bafkreiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    )
+    stale["report_raw_cid"] = "bafkreiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
     with pytest.raises(
         NoEligibleRemediationError,
@@ -240,9 +232,7 @@ def test_manifest_validation_rejects_tampering_even_with_a_recomputed_cid(
 ) -> None:
     _use_gate(monkeypatch, srt014_gate)
     forged = build_no_eligible_remediation_manifest(ROOT)
-    forged["remediation"]["recommended_task_inputs"][-1][
-        "protocol_action"
-    ] = "mutate_srt014"
+    forged["remediation"]["recommended_task_inputs"][-1]["protocol_action"] = "mutate_srt014"
     cid_payload = dict(forged)
     del cid_payload["manifest_cid"]
     forged["manifest_cid"] = cid_for_dag_json(cid_payload)

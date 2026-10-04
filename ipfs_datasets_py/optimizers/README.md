@@ -422,8 +422,8 @@ from ipfs_datasets_py.optimizers.graphrag import (
 
 # ── 1. Create shared objects ─────────────────────────────────────────────────
 generator = OntologyGenerator()
-critic     = OntologyCritic()
-mediator   = OntologyMediator(generator=generator, critic=critic)
+critic = OntologyCritic()
+mediator = OntologyMediator(generator=generator, critic=critic)
 
 # ── 2. Describe the task ─────────────────────────────────────────────────────
 context = OntologyGenerationContext(
@@ -435,14 +435,14 @@ context = OntologyGenerationContext(
 
 # ── 3. One-shot generation + scoring ─────────────────────────────────────────
 text = "Alice is an employee of Acme Corp. She must complete annual training."
-result = generator.generate_ontology(text, context)          # EntityExtractionResult
-score  = critic.evaluate_ontology(result, context, text)     # CriticScore
+result = generator.generate_ontology(text, context)  # EntityExtractionResult
+score = critic.evaluate_ontology(result, context, text)  # CriticScore
 print(f"entities={len(result.entities)}  score={score.overall:.2f}")
 
 # ── 4. Iterative refinement via mediator (up to 5 rounds) ───────────────────
 mediator.max_rounds = 5
 refined_ontology = mediator.run_refinement_cycle(text, context)
-final_score       = mediator.get_last_score()
+final_score = mediator.get_last_score()
 print(f"Final overall={final_score.overall:.2f}  rounds={mediator.current_round}")
 
 # ── 5. Pipeline for multi-run tracking ───────────────────────────────────────

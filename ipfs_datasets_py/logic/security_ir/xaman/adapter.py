@@ -62,22 +62,16 @@ def _string_tuple(
     *,
     identifiers: bool = False,
 ) -> tuple[str, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise XamanAdapterError(f"{name} must be a sequence")
     result: list[str] = []
     for value in values:
         if not isinstance(value, str) or not value.strip():
             raise XamanAdapterError(f"{name} must contain non-empty strings")
         if value != value.strip():
-            raise XamanAdapterError(
-                f"{name} values must not have surrounding whitespace"
-            )
+            raise XamanAdapterError(f"{name} values must not have surrounding whitespace")
         if identifiers and not _STABLE_ID_RE.fullmatch(value):
-            raise XamanAdapterError(
-                f"{name} must contain stable identifiers"
-            )
+            raise XamanAdapterError(f"{name} must contain stable identifiers")
         result.append(value)
     if len(result) != len(set(result)):
         raise XamanAdapterError(f"{name} must contain unique values")
@@ -103,19 +97,12 @@ class XamanEvidenceRequirement:
     def __post_init__(self) -> None:
         for name in ("requirement_id", "assumption_id"):
             value = getattr(self, name)
-            if (
-                not isinstance(value, str)
-                or not _STABLE_ID_RE.fullmatch(value)
-            ):
-                raise XamanAdapterError(
-                    f"{name} must be a stable identifier"
-                )
+            if not isinstance(value, str) or not _STABLE_ID_RE.fullmatch(value):
+                raise XamanAdapterError(f"{name} must be a stable identifier")
         object.__setattr__(
             self,
             "claim_ids",
-            _string_tuple(
-                self.claim_ids, "claim_ids", identifiers=True
-            ),
+            _string_tuple(self.claim_ids, "claim_ids", identifiers=True),
         )
         object.__setattr__(
             self,
@@ -125,9 +112,7 @@ class XamanEvidenceRequirement:
         object.__setattr__(
             self,
             "source_ids",
-            _string_tuple(
-                self.source_ids, "source_ids", identifiers=True
-            ),
+            _string_tuple(self.source_ids, "source_ids", identifiers=True),
         )
         if not self.claim_ids:
             raise XamanAdapterError("claim_ids must not be empty")
@@ -137,8 +122,7 @@ class XamanEvidenceRequirement:
             raise XamanAdapterError("blocking must be a boolean")
         if self.schema_version != XAMAN_EVIDENCE_REQUIREMENT_VERSION:
             raise XamanAdapterError(
-                f"unsupported evidence requirement version: "
-                f"{self.schema_version!r}"
+                f"unsupported evidence requirement version: {self.schema_version!r}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -153,13 +137,9 @@ class XamanEvidenceRequirement:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "XamanEvidenceRequirement":
+    def from_dict(cls, value: Mapping[str, Any]) -> "XamanEvidenceRequirement":
         if not isinstance(value, Mapping):
-            raise XamanAdapterError(
-                "Xaman evidence requirement must be a mapping"
-            )
+            raise XamanAdapterError("Xaman evidence requirement must be a mapping")
         allowed = {
             "assumption_id",
             "blocking",
@@ -172,8 +152,7 @@ class XamanEvidenceRequirement:
         unknown = sorted(set(value) - allowed)
         if unknown:
             raise XamanAdapterError(
-                "unknown Xaman evidence requirement field(s): "
-                + ", ".join(unknown)
+                "unknown Xaman evidence requirement field(s): " + ", ".join(unknown)
             )
         return cls(
             requirement_id=value.get("requirement_id", ""),
@@ -182,9 +161,7 @@ class XamanEvidenceRequirement:
             required_evidence=tuple(value.get("required_evidence", ())),
             blocking=value.get("blocking"),
             source_ids=tuple(value.get("source_ids", ())),
-            schema_version=value.get(
-                "schema_version", XAMAN_EVIDENCE_REQUIREMENT_VERSION
-            ),
+            schema_version=value.get("schema_version", XAMAN_EVIDENCE_REQUIREMENT_VERSION),
         )
 
 
@@ -195,9 +172,7 @@ class XamanAdapterResult:
     declaration: SecurityIR
     configuration: XamanAdapterConfig
     evidence_requirements: tuple[XamanEvidenceRequirement, ...]
-    verification_data: LegacyVerificationData = field(
-        default_factory=LegacyVerificationData
-    )
+    verification_data: LegacyVerificationData = field(default_factory=LegacyVerificationData)
     diagnostics: tuple[Diagnostic, ...] = ()
     legacy_payload: Mapping[str, Any] = field(default_factory=dict, repr=False)
     adapter_version: str = XAMAN_ADAPTER_VERSION
@@ -210,28 +185,17 @@ class XamanAdapterResult:
         if not isinstance(self.declaration, SecurityIR):
             raise XamanAdapterError("declaration must be a SecurityIR")
         if not isinstance(self.configuration, XamanAdapterConfig):
-            raise XamanAdapterError(
-                "configuration must be a XamanAdapterConfig"
-            )
+            raise XamanAdapterError("configuration must be a XamanAdapterConfig")
         requirements = tuple(self.evidence_requirements)
-        if any(
-            not isinstance(item, XamanEvidenceRequirement)
-            for item in requirements
-        ):
-            raise XamanAdapterError(
-                "evidence_requirements must contain XamanEvidenceRequirement"
-            )
+        if any(not isinstance(item, XamanEvidenceRequirement) for item in requirements):
+            raise XamanAdapterError("evidence_requirements must contain XamanEvidenceRequirement")
         object.__setattr__(self, "evidence_requirements", requirements)
         if not isinstance(self.verification_data, LegacyVerificationData):
-            raise XamanAdapterError(
-                "verification_data must be LegacyVerificationData"
-            )
+            raise XamanAdapterError("verification_data must be LegacyVerificationData")
         diagnostics = tuple(self.diagnostics)
         for diagnostic in diagnostics:
             if not isinstance(diagnostic, Diagnostic):
-                raise XamanAdapterError(
-                    "diagnostics must contain Diagnostic records"
-                )
+                raise XamanAdapterError("diagnostics must contain Diagnostic records")
             diagnostic.validate()
         object.__setattr__(self, "diagnostics", diagnostics)
         try:
@@ -269,24 +233,18 @@ def _copy_payload(
     elif isinstance(legacy, Mapping):
         raw = legacy
     else:
-        raise TypeError(
-            "legacy must be a SecurityModelIR or JSON-like mapping"
-        )
+        raise TypeError("legacy must be a SecurityModelIR or JSON-like mapping")
     try:
         payload = thaw_json(freeze_json_mapping(raw))
     except ProvenanceValidationError as exc:
         raise XamanAdapterError(f"Xaman input: {exc}") from exc
     unknown = sorted(set(payload) - set(LEGACY_TOP_LEVEL_FIELDS))
     if unknown:
-        raise XamanAdapterError(
-            "unknown Xaman legacy field(s): " + ", ".join(unknown)
-        )
+        raise XamanAdapterError("unknown Xaman legacy field(s): " + ", ".join(unknown))
     return payload
 
 
-def _validate_source_binding(
-    payload: Mapping[str, Any], config: XamanAdapterConfig
-) -> None:
+def _validate_source_binding(payload: Mapping[str, Any], config: XamanAdapterConfig) -> None:
     metadata = payload.get("metadata", {})
     if not isinstance(metadata, Mapping):
         raise XamanAdapterError("Xaman metadata must be a mapping")
@@ -296,21 +254,14 @@ def _validate_source_binding(
     source_url = corpus.get("source_url")
     revision = corpus.get("pinned_commit")
     if not isinstance(source_url, str) or not source_url:
-        raise XamanAdapterError(
-            "Xaman input must declare metadata.corpus.source_url"
-        )
+        raise XamanAdapterError("Xaman input must declare metadata.corpus.source_url")
     if not isinstance(revision, str) or not revision:
-        raise XamanAdapterError(
-            "Xaman input must declare metadata.corpus.pinned_commit"
-        )
+        raise XamanAdapterError("Xaman input must declare metadata.corpus.pinned_commit")
     if source_url != config.source.uri:
-        raise XamanAdapterError(
-            "configured source URI does not match metadata.corpus.source_url"
-        )
+        raise XamanAdapterError("configured source URI does not match metadata.corpus.source_url")
     if revision != config.source.revision:
         raise XamanAdapterError(
-            "configured source revision does not match "
-            "metadata.corpus.pinned_commit"
+            "configured source revision does not match metadata.corpus.pinned_commit"
         )
 
 
@@ -338,19 +289,14 @@ def _requirements(
     blocking_assumptions: set[str] = set()
     for claim in declaration.claims:
         for assumption_id in claim.assumption_ids:
-            claims_by_assumption.setdefault(assumption_id, []).append(
-                claim.claim_id
-            )
+            claims_by_assumption.setdefault(assumption_id, []).append(claim.claim_id)
             if claim.severity == "blocking":
                 blocking_assumptions.add(assumption_id)
 
-    missing = sorted(
-        set(claims_by_assumption) - set(config.evidence_requirements)
-    )
+    missing = sorted(set(claims_by_assumption) - set(config.evidence_requirements))
     if missing:
         raise XamanAdapterError(
-            "missing evidence requirements for Xaman assumption(s): "
-            + ", ".join(missing)
+            "missing evidence requirements for Xaman assumption(s): " + ", ".join(missing)
         )
 
     requirements: list[XamanEvidenceRequirement] = []
@@ -361,9 +307,7 @@ def _requirements(
                 requirement_id=f"requirement:xaman:{slug}",
                 assumption_id=assumption_id,
                 claim_ids=tuple(sorted(claim_ids)),
-                required_evidence=tuple(
-                    config.evidence_requirements[assumption_id]
-                ),
+                required_evidence=tuple(config.evidence_requirements[assumption_id]),
                 blocking=assumption_id in blocking_assumptions,
                 source_ids=(config.source.source_id,),
             )
@@ -389,8 +333,7 @@ def _xaman_declaration(
     unsupported = sorted(domains - XAMAN_SECURITY_DOMAINS)
     if unsupported:
         raise XamanAdapterError(
-            "claim domains are outside Xaman vocabulary: "
-            + ", ".join(unsupported)
+            "claim domains are outside Xaman vocabulary: " + ", ".join(unsupported)
         )
     if not domains - {"ledger"}:
         raise XamanAdapterError(
@@ -404,9 +347,7 @@ def _xaman_declaration(
         "config_binding": {"config_id": config.config_id},
         "domains": sorted(domains),
         "events": legacy_values.get("events", []),
-        "evidence_requirements": [
-            item.to_dict() for item in requirements
-        ],
+        "evidence_requirements": [item.to_dict() for item in requirements],
         "invariants": legacy_values.get("invariants", []),
         "roles": legacy_values.get("roles", []),
         "schema_version": XAMAN_VOCABULARY_SCHEMA_VERSION,
@@ -431,49 +372,28 @@ def _xaman_declaration(
             "config_id": config.config_id,
         },
     )
-    existing_sources = tuple(
-        item for item in base.sources if item.source_id != source.source_id
-    )
+    existing_sources = tuple(item for item in base.sources if item.source_id != source.source_id)
 
     return SecurityIR(
         declaration_id=base.declaration_id,
-        principals=tuple(
-            _bind_source(item, source.source_id) for item in base.principals
-        ),
-        assets=tuple(
-            _bind_source(item, source.source_id) for item in base.assets
-        ),
-        trust_zones=tuple(
-            _bind_source(item, source.source_id) for item in base.trust_zones
-        ),
-        channels=tuple(
-            _bind_source(item, source.source_id) for item in base.channels
-        ),
-        resources=tuple(
-            _bind_source(item, source.source_id) for item in base.resources
-        ),
-        policies=tuple(
-            _bind_source(item, source.source_id) for item in base.policies
-        ),
-        state_machines=tuple(
-            _bind_source(item, source.source_id)
-            for item in base.state_machines
-        ),
+        principals=tuple(_bind_source(item, source.source_id) for item in base.principals),
+        assets=tuple(_bind_source(item, source.source_id) for item in base.assets),
+        trust_zones=tuple(_bind_source(item, source.source_id) for item in base.trust_zones),
+        channels=tuple(_bind_source(item, source.source_id) for item in base.channels),
+        resources=tuple(_bind_source(item, source.source_id) for item in base.resources),
+        policies=tuple(_bind_source(item, source.source_id) for item in base.policies),
+        state_machines=tuple(_bind_source(item, source.source_id) for item in base.state_machines),
         assumptions=tuple(
             _bind_source(
                 replace(
                     item,
-                    statement=XAMAN_ASSUMPTIONS.get(
-                        item.assumption_id, item.statement
-                    ),
+                    statement=XAMAN_ASSUMPTIONS.get(item.assumption_id, item.statement),
                 ),
                 source.source_id,
             )
             for item in base.assumptions
         ),
-        claims=tuple(
-            _bind_source(item, source.source_id) for item in base.claims
-        ),
+        claims=tuple(_bind_source(item, source.source_id) for item in base.claims),
         sources=(*existing_sources, source),
         extensions=(xaman_extension,),
     )
@@ -485,15 +405,9 @@ def validate_xaman_security_ir(declaration: SecurityIR) -> SecurityIR:
     if not isinstance(declaration, SecurityIR):
         raise XamanAdapterError("declaration must be a SecurityIR")
     declaration.validate()
-    extensions = [
-        item
-        for item in declaration.extensions
-        if item.vocabulary == XAMAN_VOCABULARY
-    ]
+    extensions = [item for item in declaration.extensions if item.vocabulary == XAMAN_VOCABULARY]
     if len(extensions) != 1 or len(declaration.extensions) != 1:
-        raise XamanAdapterError(
-            "Xaman declarations require exactly one Xaman extension"
-        )
+        raise XamanAdapterError("Xaman declarations require exactly one Xaman extension")
     extension = extensions[0]
     if (
         extension.extension_id != XAMAN_EXTENSION_ID
@@ -525,41 +439,26 @@ def validate_xaman_security_ir(declaration: SecurityIR) -> SecurityIR:
             details.append("unknown: " + ", ".join(unknown))
         if missing:
             details.append("missing: " + ", ".join(missing))
-        raise XamanAdapterError(
-            "invalid Xaman extension fields (" + "; ".join(details) + ")"
-        )
-    if (
-        extension.payload["schema_version"]
-        != XAMAN_VOCABULARY_SCHEMA_VERSION
-    ):
+        raise XamanAdapterError("invalid Xaman extension fields (" + "; ".join(details) + ")")
+    if extension.payload["schema_version"] != XAMAN_VOCABULARY_SCHEMA_VERSION:
         raise XamanAdapterError("Xaman extension schema version mismatch")
     domains = extension.payload["domains"]
-    if isinstance(domains, (str, bytes, bytearray)) or not isinstance(
-        domains, Sequence
-    ):
+    if isinstance(domains, (str, bytes, bytearray)) or not isinstance(domains, Sequence):
         raise XamanAdapterError("Xaman domains must be a sequence")
-    domain_values = _string_tuple(
-        tuple(domains), "Xaman domains", identifiers=True
-    )
-    if set(domain_values) != {
-        claim.domain for claim in declaration.claims
-    }:
-        raise XamanAdapterError(
-            "Xaman extension domains must match declaration claims"
-        )
+    domain_values = _string_tuple(tuple(domains), "Xaman domains", identifiers=True)
+    if set(domain_values) != {claim.domain for claim in declaration.claims}:
+        raise XamanAdapterError("Xaman extension domains must match declaration claims")
     unsupported = sorted(set(domain_values) - XAMAN_SECURITY_DOMAINS)
     if unsupported:
         raise XamanAdapterError(
-            "claim domains are outside Xaman vocabulary: "
-            + ", ".join(unsupported)
+            "claim domains are outside Xaman vocabulary: " + ", ".join(unsupported)
         )
     source_binding = extension.payload["source_binding"]
     config_binding = extension.payload["config_binding"]
     if (
         not isinstance(source_binding, Mapping)
         or set(source_binding) != {"source_id"}
-        or source_binding["source_id"]
-        not in {source.source_id for source in declaration.sources}
+        or source_binding["source_id"] not in {source.source_id for source in declaration.sources}
     ):
         raise XamanAdapterError("Xaman source binding is invalid")
     if (
@@ -570,45 +469,33 @@ def validate_xaman_security_ir(declaration: SecurityIR) -> SecurityIR:
     ):
         raise XamanAdapterError("Xaman config binding is invalid")
 
-    assumption_ids = {
-        assumption.assumption_id for assumption in declaration.assumptions
-    }
+    assumption_ids = {assumption.assumption_id for assumption in declaration.assumptions}
     claim_ids = {claim.claim_id for claim in declaration.claims}
     raw_requirements = extension.payload["evidence_requirements"]
-    if isinstance(
-        raw_requirements, (str, bytes, bytearray)
-    ) or not isinstance(raw_requirements, Sequence):
-        raise XamanAdapterError(
-            "Xaman evidence_requirements must be a sequence"
-        )
+    if isinstance(raw_requirements, (str, bytes, bytearray)) or not isinstance(
+        raw_requirements, Sequence
+    ):
+        raise XamanAdapterError("Xaman evidence_requirements must be a sequence")
     parsed_items: list[XamanEvidenceRequirement] = []
     for item in raw_requirements:
         parsed_items.append(XamanEvidenceRequirement.from_dict(item))
     parsed = tuple(parsed_items)
     if len({item.requirement_id for item in parsed}) != len(parsed):
-        raise XamanAdapterError(
-            "Xaman evidence requirement identifiers must be unique"
-        )
+        raise XamanAdapterError("Xaman evidence requirement identifiers must be unique")
     for item in parsed:
         if item.assumption_id not in assumption_ids:
             raise XamanAdapterError(
-                f"evidence requirement {item.requirement_id!r} references "
-                "an unknown assumption"
+                f"evidence requirement {item.requirement_id!r} references an unknown assumption"
             )
         if set(item.claim_ids) - claim_ids:
             raise XamanAdapterError(
-                f"evidence requirement {item.requirement_id!r} references "
-                "an unknown claim"
+                f"evidence requirement {item.requirement_id!r} references an unknown claim"
             )
     required_assumption_ids = {
-        assumption_id
-        for claim in declaration.claims
-        for assumption_id in claim.assumption_ids
+        assumption_id for claim in declaration.claims for assumption_id in claim.assumption_ids
     }
     if {item.assumption_id for item in parsed} != required_assumption_ids:
-        raise XamanAdapterError(
-            "Xaman evidence requirements must cover every claim assumption"
-        )
+        raise XamanAdapterError("Xaman evidence requirements must cover every claim assumption")
     return declaration
 
 
@@ -627,9 +514,7 @@ def adapt_xaman_security_ir(
     except LegacyAdapterError as exc:
         raise XamanAdapterError(str(exc)) from exc
     requirements = _requirements(generic.declaration, config)
-    declaration = _xaman_declaration(
-        generic.declaration, config, requirements
-    )
+    declaration = _xaman_declaration(generic.declaration, config, requirements)
     validate_xaman_security_ir(declaration)
     return XamanAdapterResult(
         declaration=declaration,
@@ -657,9 +542,7 @@ def to_legacy_xaman_security_ir(
         model = SecurityModelIR.from_untrusted_dict(payload, strict=True)
         return validate_legacy_ir(model)
     except (TypeError, ValueError) as exc:
-        raise XamanAdapterError(
-            f"captured legacy payload is invalid: {exc}"
-        ) from exc
+        raise XamanAdapterError(f"captured legacy payload is invalid: {exc}") from exc
 
 
 class XamanSecurityAdapter:
@@ -669,18 +552,14 @@ class XamanSecurityAdapter:
 
     def __init__(self, config: XamanAdapterConfig) -> None:
         if not isinstance(config, XamanAdapterConfig):
-            raise XamanAdapterError(
-                "config must be an explicit XamanAdapterConfig"
-            )
+            raise XamanAdapterError("config must be an explicit XamanAdapterConfig")
         self._config = config
 
     @property
     def config(self) -> XamanAdapterConfig:
         return self._config
 
-    def adapt(
-        self, legacy: SecurityModelIR | Mapping[str, Any]
-    ) -> XamanAdapterResult:
+    def adapt(self, legacy: SecurityModelIR | Mapping[str, Any]) -> XamanAdapterResult:
         return adapt_xaman_security_ir(legacy, config=self._config)
 
     def to_legacy(self, adapted: XamanAdapterResult) -> dict[str, Any]:

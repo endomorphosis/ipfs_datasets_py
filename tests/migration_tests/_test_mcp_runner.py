@@ -9,6 +9,7 @@ import unittest
 import importlib.util
 from pathlib import Path
 
+
 def run_test_file(test_file_path):
     """Run a single test file and return results."""
     try:
@@ -22,7 +23,11 @@ def run_test_file(test_file_path):
         test_classes = []
         for name in dir(test_module):
             obj = getattr(test_module, name)
-            if isinstance(obj, type) and issubclass(obj, unittest.TestCase) and obj != unittest.TestCase:
+            if (
+                isinstance(obj, type)
+                and issubclass(obj, unittest.TestCase)
+                and obj != unittest.TestCase
+            ):
                 test_classes.append(obj)
 
         if not test_classes:
@@ -32,7 +37,7 @@ def run_test_file(test_file_path):
         results = []
         for test_class in test_classes:
             suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
-            runner = unittest.TextTestRunner(stream=open(os.devnull, 'w'), verbosity=0)
+            runner = unittest.TextTestRunner(stream=open(os.devnull, "w"), verbosity=0)
             result = runner.run(suite)
 
             test_name = test_class.__name__
@@ -41,7 +46,9 @@ def run_test_file(test_file_path):
             else:
                 failures = len(result.failures)
                 errors = len(result.errors)
-                results.append(f"✗ {test_name}: {failures} failures, {errors} errors out of {result.testsRun} tests")
+                results.append(
+                    f"✗ {test_name}: {failures} failures, {errors} errors out of {result.testsRun} tests"
+                )
 
                 # Show first error/failure for debugging
                 if result.failures:
@@ -53,6 +60,7 @@ def run_test_file(test_file_path):
 
     except Exception as e:
         return f"✗ Failed to run {test_file_path}: {str(e)}"
+
 
 def main():
     """Run all MCP tool tests."""
@@ -90,6 +98,7 @@ def main():
     print(f"Summary: {successful_files}/{total_files} test files passed successfully")
 
     return successful_files == total_files
+
 
 if __name__ == "__main__":
     success = main()

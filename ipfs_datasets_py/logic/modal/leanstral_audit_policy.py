@@ -361,7 +361,10 @@ def leanstral_policy_report_with_cache_hits(
     selected_ids: list[str] = []
     order = 0
     for decision in report.decisions:
-        if decision.candidate_id in cache_hits and decision.outcome == LeanstralAuditPolicyOutcome.SELECTED:
+        if (
+            decision.candidate_id in cache_hits
+            and decision.outcome == LeanstralAuditPolicyOutcome.SELECTED
+        ):
             decisions.append(
                 replace(
                     decision,
@@ -373,7 +376,9 @@ def leanstral_policy_report_with_cache_hits(
             continue
         if decision.outcome == LeanstralAuditPolicyOutcome.SELECTED:
             order += 1
-            family_counts[decision.semantic_family] = family_counts.get(decision.semantic_family, 0) + 1
+            family_counts[decision.semantic_family] = (
+                family_counts.get(decision.semantic_family, 0) + 1
+            )
             selected_ids.append(decision.candidate_id)
             decisions.append(
                 replace(
@@ -428,7 +433,9 @@ def _candidate_from_cluster(
     records_by_evidence_id: Mapping[str, Mapping[str, Any]],
 ) -> Dict[str, Any]:
     payload = _cluster_mapping(cluster)
-    evidence_ids = tuple(str(value) for value in payload.get("evidence_ids", []) or [] if str(value))
+    evidence_ids = tuple(
+        str(value) for value in payload.get("evidence_ids", []) or [] if str(value)
+    )
     gap_payloads = _gap_payloads(payload)
     related_records = tuple(
         dict(records_by_evidence_id[evidence_id])
@@ -443,14 +450,15 @@ def _candidate_from_cluster(
             else ""
         )
     if not candidate_id:
-        candidate_id = f"{payload.get('semantic_signature', '')}:{payload.get('compiler_surface', '')}"
+        candidate_id = (
+            f"{payload.get('semantic_signature', '')}:{payload.get('compiler_surface', '')}"
+        )
     confidence = _finite_float(payload.get("confidence"), 0.0)
     uncertainty = max(
         0.0,
         min(
             1.0,
-            _max_record_uncertainty(related_records, gap_payloads)
-            or (1.0 - confidence),
+            _max_record_uncertainty(related_records, gap_payloads) or (1.0 - confidence),
         ),
     )
     return {
@@ -461,7 +469,9 @@ def _candidate_from_cluster(
         "gap_payloads": gap_payloads,
         "heldout_impact": _finite_float(payload.get("heldout_impact"), 0.0),
         "mean_normalized_score": _finite_float(payload.get("mean_normalized_score"), 0.0),
-        "owned_code_paths": tuple(str(value) for value in payload.get("owned_code_paths", []) or [] if str(value)),
+        "owned_code_paths": tuple(
+            str(value) for value in payload.get("owned_code_paths", []) or [] if str(value)
+        ),
         "rank_score": _finite_float(payload.get("rank_score"), 0.0),
         "records": related_records,
         "recurrence": int(_finite_float(payload.get("recurrence"), 0.0)),
@@ -488,7 +498,8 @@ def _selection_triggers(
     if (
         not triggers
         and float(candidate["heldout_impact"]) >= _threshold(cfg.min_heldout_impact, 0.12)
-        and float(candidate["mean_normalized_score"]) >= _threshold(cfg.min_mean_normalized_score, 0.05)
+        and float(candidate["mean_normalized_score"])
+        >= _threshold(cfg.min_mean_normalized_score, 0.05)
         and float(candidate["rank_score"]) >= _threshold(cfg.min_rank_score, 0.24)
     ):
         triggers.append("ranked_information_gain")
@@ -546,18 +557,19 @@ def _hammer_unsolved(candidate: Mapping[str, Any]) -> bool:
 
 def _proof_status(record: Mapping[str, Any]) -> Dict[str, bool]:
     root = _root_record(record)
-    proof = _mapping(root.get("proof_route_status") or root.get("hammer_status") or root.get("prover_signal"))
+    proof = _mapping(
+        root.get("proof_route_status") or root.get("hammer_status") or root.get("prover_signal")
+    )
     if not proof:
         return {"attempted": False, "solved": False}
     attempted_count = int(_finite_float(proof.get("attempted_count"), 0.0))
     valid_count = int(_finite_float(proof.get("valid_count"), 0.0))
     failure_count = int(_finite_float(proof.get("failure_count"), 0.0))
-    status = str(
-        proof.get("route_status")
-        or proof.get("status")
-        or proof.get("hammer_status")
-        or ""
-    ).strip().lower()
+    status = (
+        str(proof.get("route_status") or proof.get("status") or proof.get("hammer_status") or "")
+        .strip()
+        .lower()
+    )
     attempted = attempted_count > 0 or bool(status)
     solved_statuses = {"accepted", "compiled", "proved", "success", "valid", "verified"}
     failed_statuses = {

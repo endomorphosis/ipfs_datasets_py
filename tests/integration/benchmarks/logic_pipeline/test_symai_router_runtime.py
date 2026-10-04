@@ -25,9 +25,7 @@ def _structured_response() -> str:
     return json.dumps(
         {
             "candidate_ir": {
-                "propositions": [
-                    "Every runtime receipt has exactly one effective identity."
-                ],
+                "propositions": ["Every runtime receipt has exactly one effective identity."],
             },
             "normalized_predicates": ["RuntimeReceipt", "HasOneIdentity"],
             "quantifiers": ["forall"],
@@ -61,9 +59,7 @@ class _SmokeEngine:
                 "effective_provider_name": self.provider,
                 "effective_model_name": self.model,
                 "resolved_provider_name": "leanstral_local",
-                "resolved_model_name": (
-                    "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
-                ),
+                "resolved_model_name": ("Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"),
                 "service_endpoint": "http://127.0.0.1:8080/v1",
                 "routing_backend": "existing_leanstral_service",
             },
@@ -136,9 +132,7 @@ def test_lock_rejects_unknown_fields_and_unsafe_policy(tmp_path: Path) -> None:
 
 def test_install_plan_is_exact_noninteractive_and_shell_free() -> None:
     lock = provision.load_lock()
-    command = provision.provisioning_command(
-        lock, python_executable="/isolated/venv/bin/python"
-    )
+    command = provision.provisioning_command(lock, python_executable="/isolated/venv/bin/python")
 
     assert command == (
         "/isolated/venv/bin/python",
@@ -236,9 +230,7 @@ def test_symai_import_uses_isolated_prefix_and_restores_process_state(
     def importer(name: str) -> object:
         observed["name"] = name
         observed["prefix"] = sys.prefix
-        observed["config_exists"] = (
-            Path(sys.prefix) / ".symai" / "symai.config.json"
-        ).is_file()
+        observed["config_exists"] = (Path(sys.prefix) / ".symai" / "symai.config.json").is_file()
         return SimpleNamespace(__version__=lock.version)
 
     provision.prepare_symai_import(lock, tmp_path, importer=importer)
@@ -365,9 +357,7 @@ def test_bounded_structured_smoke_uses_existing_router_identity_once() -> None:
     assert config.max_retries == 0
     assert config.cache_enabled is False
     assert config.expected_inner_provider == "leanstral_local"
-    assert config.expected_inner_model == (
-        "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
-    )
+    assert config.expected_inner_model == ("Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4")
     assert config.expected_inner_endpoint == "http://127.0.0.1:8080/v1"
     assert config.expected_inner_backend == "existing_leanstral_service"
     assert len(engine.arguments) == 1
@@ -420,10 +410,7 @@ def test_actual_engine_adapter_uses_pinned_service_and_schema(
                 "validation_errors",
             }
             assert (
-                schema["properties"]["candidate_ir"]["properties"][
-                    "propositions"
-                ]["maxItems"]
-                == 12
+                schema["properties"]["candidate_ir"]["properties"]["propositions"]["maxItems"] == 12
             )
             assert payload["messages"][0] == {
                 "role": "system",
@@ -456,10 +443,7 @@ def test_actual_engine_adapter_uses_pinned_service_and_schema(
         provision.configure_symai(lock, tmp_path)
         provision.prepare_symai_import(lock, tmp_path)
         router = importlib.import_module("ipfs_datasets_py.llm_router")
-        assert (
-            router._PINNED_SYMAI_RESPONSE_FORMAT
-            == adapters.SYMAI_RESPONSE_FORMAT
-        )
+        assert router._PINNED_SYMAI_RESPONSE_FORMAT == adapters.SYMAI_RESPONSE_FORMAT
         router_deps = importlib.import_module("ipfs_datasets_py.router_deps")
         router_deps.set_default_router_deps(router_deps.RouterDeps())
         monkeypatch.setattr(router, "_pinned_symai_urlopen", urlopen)
@@ -494,9 +478,7 @@ def test_private_binding_bypasses_text_cache_and_preserves_route_receipt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     router = importlib.import_module("ipfs_datasets_py.llm_router")
-    manager_module = importlib.import_module(
-        "ipfs_datasets_py.ml.accelerate_integration.manager"
-    )
+    manager_module = importlib.import_module("ipfs_datasets_py.ml.accelerate_integration.manager")
     monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE", "1")
 
     def forbidden_manager(*_args: object, **_kwargs: object) -> object:
@@ -584,8 +566,7 @@ def test_private_binding_bypasses_text_cache_and_preserves_route_receipt(
     assert len(http_calls) == 4
     for receipt in receipts:
         assert {
-            key: receipt[key]
-            for key in router._PINNED_SYMAI_TRACE_KEYS
+            key: receipt[key] for key in router._PINNED_SYMAI_TRACE_KEYS
         } == router._PINNED_SYMAI_ROUTE_BINDING
 
 
@@ -593,9 +574,7 @@ def test_route_trace_is_thread_local_across_concurrent_calls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     router = importlib.import_module("ipfs_datasets_py.llm_router")
-    manager_module = importlib.import_module(
-        "ipfs_datasets_py.ml.accelerate_integration.manager"
-    )
+    manager_module = importlib.import_module("ipfs_datasets_py.ml.accelerate_integration.manager")
     monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE", "0")
 
     class Manager:
@@ -688,8 +667,7 @@ def test_route_trace_is_thread_local_across_concurrent_calls(
     assert pinned_output == _structured_response()
     assert generic_output == "generic-output"
     assert {
-        key: pinned_trace[key]
-        for key in router._PINNED_SYMAI_TRACE_KEYS
+        key: pinned_trace[key] for key in router._PINNED_SYMAI_TRACE_KEYS
     } == router._PINNED_SYMAI_ROUTE_BINDING
     assert generic_trace["routing_backend"] == "generic-manager"
     assert generic_trace["resolved_model_name"] == "generic-resolved-model"
@@ -735,9 +713,7 @@ def test_pinned_symai_http_opener_disables_ambient_proxies(
 
     assert router._pinned_symai_urlopen(request, timeout=1.0) is response
     proxy_handlers = [
-        handler
-        for handler in captured_handlers
-        if isinstance(handler, urllib.request.ProxyHandler)
+        handler for handler in captured_handlers if isinstance(handler, urllib.request.ProxyHandler)
     ]
     assert len(proxy_handlers) == 1
     assert proxy_handlers[0].proxies == {}
@@ -938,9 +914,7 @@ def test_pinned_service_types_length_without_fallback_or_cache_write(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     router = importlib.import_module("ipfs_datasets_py.llm_router")
-    manager_module = importlib.import_module(
-        "ipfs_datasets_py.ml.accelerate_integration.manager"
-    )
+    manager_module = importlib.import_module("ipfs_datasets_py.ml.accelerate_integration.manager")
     exact_model = router._PINNED_SYMAI_LEANSTRAL_MODEL
     calls: list[str] = []
 
@@ -968,7 +942,7 @@ def test_pinned_service_types_length_without_fallback_or_cache_write(
                 "choices": [
                     {
                         "finish_reason": "length",
-                        "message": {"content": "{\"candidate_ir\":"},
+                        "message": {"content": '{"candidate_ir":'},
                     }
                 ],
             }
@@ -1004,9 +978,7 @@ def test_pinned_service_types_length_without_fallback_or_cache_write(
         )
 
     assert exc.value.safe_failure_class == "output_token_limit"
-    assert str(exc.value) == (
-        "pinned SyMAI completion failed: output_token_limit"
-    )
+    assert str(exc.value) == ("pinned SyMAI completion failed: output_token_limit")
     assert calls == [
         "http://127.0.0.1:8080/v1/models",
         "http://127.0.0.1:8080/v1/chat/completions",
@@ -1022,12 +994,8 @@ def test_symai_engine_preserves_typed_completion_failure(
     provision.configure_symai(lock, tmp_path)
     provision.prepare_symai_import(lock, tmp_path)
     router = importlib.import_module("ipfs_datasets_py.llm_router")
-    engine_module = importlib.import_module(
-        "ipfs_datasets_py.utils.symai_ipfs_engine"
-    )
-    error = router.PinnedSymaiCompletionError(
-        router.PinnedSymaiCompletionError.OUTPUT_TOKEN_LIMIT
-    )
+    engine_module = importlib.import_module("ipfs_datasets_py.utils.symai_ipfs_engine")
+    error = router.PinnedSymaiCompletionError(router.PinnedSymaiCompletionError.OUTPUT_TOKEN_LIMIT)
 
     def raise_limit(*_args: object, **_kwargs: object) -> str:
         raise error
@@ -1101,33 +1069,23 @@ def test_adapter_itself_fails_closed_on_identity_drift() -> None:
     record = adapter.run(request)
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
-    )
+    assert record.failure_code is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
     assert "identity mismatch" in (record.failure_detail or "")
     assert record.telemetry.retries == 0
 
 
 def test_symai_engine_forbids_default_model_retry_on_pinned_route() -> None:
     source = (
-        provision.REPOSITORY_ROOT
-        / "ipfs_datasets_py"
-        / "utils"
-        / "symai_ipfs_engine.py"
+        provision.REPOSITORY_ROOT / "ipfs_datasets_py" / "utils" / "symai_ipfs_engine.py"
     ).read_text(encoding="utf-8")
 
     assert "disable_model_retry=not allow_local_fallback" in source
     assert "allow_local_fallback=allow_local_fallback" in source
 
 
-def test_pinned_symai_route_does_not_eagerly_import_optional_cli_cache_stack(
-) -> None:
+def test_pinned_symai_route_does_not_eagerly_import_optional_cli_cache_stack() -> None:
     sources = (
-        provision.REPOSITORY_ROOT
-        / "ipfs_datasets_py"
-        / "utils"
-        / "symai_ipfs_engine.py",
+        provision.REPOSITORY_ROOT / "ipfs_datasets_py" / "utils" / "symai_ipfs_engine.py",
         provision.REPOSITORY_ROOT / "ipfs_datasets_py" / "llm_router.py",
     )
 
@@ -1140,15 +1098,10 @@ def test_pinned_symai_route_does_not_eagerly_import_optional_cli_cache_stack(
             for alias in node.names
         }
         top_level_imports.update(
-            node.module or ""
-            for node in module.body
-            if isinstance(node, ast.ImportFrom)
+            node.module or "" for node in module.body if isinstance(node, ast.ImportFrom)
         )
 
-        assert not any(
-            name.endswith("utils.cli_tools.copilot")
-            for name in top_level_imports
-        )
+        assert not any(name.endswith("utils.cli_tools.copilot") for name in top_level_imports)
         assert "cachetools" not in top_level_imports
 
 
@@ -1158,9 +1111,7 @@ def test_receipt_is_canonical_create_only_and_cli_check_is_hermetic(
     receipt_path = tmp_path / "runtime.json"
     receipt = {"z": 1, "a": {"safe": True}}
     provision.write_receipt(receipt_path, receipt)
-    assert receipt_path.read_text(encoding="utf-8") == (
-        '{"a":{"safe":true},"z":1}\n'
-    )
+    assert receipt_path.read_text(encoding="utf-8") == ('{"a":{"safe":true},"z":1}\n')
     with pytest.raises(provision.ProvisioningError) as exc:
         provision.write_receipt(receipt_path, receipt)
     assert exc.value.code == "receipt_already_exists"

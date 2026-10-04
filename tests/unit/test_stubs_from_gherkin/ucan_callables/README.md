@@ -95,21 +95,23 @@ def ucan_manager_class_is_imported():
     Given the UCANManager class is imported
     """
     from ipfs_datasets_py.ucan import UCANManager
+
     return UCANManager
+
 
 def test_first_call_to_get_instance_returns_ucan_manager_instance(ucan_manager_class_is_imported):
     """
     Scenario: First call to get_instance returns UCANManager instance
-    
+
     Given the UCANManager class is imported
     When get_instance() is called for the first time
     Then a UCANManager instance is returned
     """
     UCANManager = ucan_manager_class_is_imported
-    
+
     # When
     instance = UCANManager.get_instance()
-    
+
     # Then
     assert isinstance(instance, UCANManager)
 ```

@@ -217,17 +217,27 @@ def run_held_out_comparison(
         "top_k": top_k,
         "baseline": {
             "selection_method": DETERMINISTIC_BASELINE_METHOD,
-            "mean_recall_at_k": round(statistics.mean(baseline_recalls), 4) if baseline_recalls else 0.0,
-            "mean_reciprocal_rank": round(statistics.mean(baseline_mrrs), 4) if baseline_mrrs else 0.0,
+            "mean_recall_at_k": round(statistics.mean(baseline_recalls), 4)
+            if baseline_recalls
+            else 0.0,
+            "mean_reciprocal_rank": round(statistics.mean(baseline_mrrs), 4)
+            if baseline_mrrs
+            else 0.0,
             "latency": _summarize_latency(baseline_latencies),
         },
         "learned": {
             "selection_method_prefix": LEARNED_SELECTION_METHOD_PREFIX,
-            "mean_recall_at_k": round(statistics.mean(learned_recalls), 4) if learned_recalls else 0.0,
-            "mean_reciprocal_rank": round(statistics.mean(learned_mrrs), 4) if learned_mrrs else 0.0,
+            "mean_recall_at_k": round(statistics.mean(learned_recalls), 4)
+            if learned_recalls
+            else 0.0,
+            "mean_reciprocal_rank": round(statistics.mean(learned_mrrs), 4)
+            if learned_mrrs
+            else 0.0,
             "latency": _summarize_latency(learned_latencies),
             "fallback_count": learned_fallback_count,
-            "fallback_rate": round(learned_fallback_count / len(per_theorem), 4) if per_theorem else 0.0,
+            "fallback_rate": round(learned_fallback_count / len(per_theorem), 4)
+            if per_theorem
+            else 0.0,
         },
         "per_theorem": per_theorem,
     }

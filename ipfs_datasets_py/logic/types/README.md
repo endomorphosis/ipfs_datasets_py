@@ -113,14 +113,16 @@ The type system now includes Protocol classes for duck typing:
 ```python
 from ipfs_datasets_py.logic.types import Formula, Prover, Converter
 
+
 # Any class implementing these protocols can be used
 class MyCustomProver:
     def prove(self, formula: str, timeout: int = 30) -> ProofResult:
         # Implementation
         pass
-    
+
     def get_name(self) -> str:
         return "MyProver"
+
 
 # MyCustomProver automatically satisfies the Prover protocol
 prover: Prover = MyCustomProver()
@@ -133,10 +135,12 @@ Convenient type aliases for common patterns:
 ```python
 from ipfs_datasets_py.logic.types import ConfidenceScore, ComplexityScore
 
+
 # Clear, self-documenting type hints
 def calculate_confidence(formula: str) -> ConfidenceScore:
     # Returns float between 0.0 and 1.0
     return 0.85
+
 
 def estimate_complexity(formula: str) -> ComplexityScore:
     # Returns int between 0 and 100
@@ -187,7 +191,10 @@ Types are tested indirectly through the comprehensive test suite in `tests/unit_
 ### Using Common Types
 ```python
 from ipfs_datasets_py.logic.types import (
-    LogicOperator, Quantifier, ComplexityMetrics, ConfidenceScore
+    LogicOperator,
+    Quantifier,
+    ComplexityMetrics,
+    ConfidenceScore,
 )
 
 # Build a formula with typed operators
@@ -196,10 +203,7 @@ quantifiers = [Quantifier.UNIVERSAL]
 
 # Calculate complexity
 metrics = ComplexityMetrics(
-    quantifier_depth=2,
-    nesting_level=3,
-    operator_count=5,
-    complexity_score=42
+    quantifier_depth=2, nesting_level=3, operator_count=5, complexity_score=42
 )
 
 # Type-safe confidence score
@@ -209,7 +213,10 @@ confidence: ConfidenceScore = 0.85
 ### Using Bridge Types
 ```python
 from ipfs_datasets_py.logic.types import (
-    BridgeCapability, BridgeMetadata, ConversionResult, ConversionStatus
+    BridgeCapability,
+    BridgeMetadata,
+    ConversionResult,
+    ConversionStatus,
 )
 
 # Define bridge capabilities
@@ -217,12 +224,9 @@ bridge = BridgeMetadata(
     name="TDFOL-CEC Bridge",
     version="1.0.0",
     target_system="CEC",
-    capabilities=[
-        BridgeCapability.BIDIRECTIONAL_CONVERSION,
-        BridgeCapability.INCREMENTAL_PROVING
-    ],
+    capabilities=[BridgeCapability.BIDIRECTIONAL_CONVERSION, BridgeCapability.INCREMENTAL_PROVING],
     requires_external_prover=False,
-    description="Bridges TDFOL to CEC theorem prover"
+    description="Bridges TDFOL to CEC theorem prover",
 )
 
 # Check capabilities
@@ -237,7 +241,7 @@ result = ConversionResult(
     target_formula="(forall x (implies (P x) (Q x)))",
     source_format="TDFOL",
     target_format="CEC",
-    confidence=0.95
+    confidence=0.95,
 )
 
 if result.is_successful() and not result.has_warnings():
@@ -247,9 +251,7 @@ if result.is_successful() and not result.has_warnings():
 
 ### Using FOL Types
 ```python
-from ipfs_datasets_py.logic.types import (
-    FOLFormula, Predicate, PredicateCategory, FOLOutputFormat
-)
+from ipfs_datasets_py.logic.types import FOLFormula, Predicate, PredicateCategory, FOLOutputFormat
 
 # Create predicates
 dog = Predicate(name="Dog", arity=1, category=PredicateCategory.ENTITY)
@@ -260,7 +262,7 @@ formula = FOLFormula(
     formula_string="∀x (Dog(x) → Mammal(x))",
     predicates=[dog, mammal],
     quantifiers=[Quantifier.UNIVERSAL],
-    confidence=0.9
+    confidence=0.9,
 )
 
 # Check properties

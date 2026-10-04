@@ -138,7 +138,11 @@ class ProofRoutingPolicy:
             raise ValueError("total_timeout_seconds must be positive and finite")
         normalized: Dict[ProofRouteStage, float] = {}
         for raw_stage, raw_budget in self.stage_timeout_seconds.items():
-            stage = raw_stage if isinstance(raw_stage, ProofRouteStage) else ProofRouteStage(str(raw_stage))
+            stage = (
+                raw_stage
+                if isinstance(raw_stage, ProofRouteStage)
+                else ProofRouteStage(str(raw_stage))
+            )
             budget = float(raw_budget)
             if not math.isfinite(budget) or budget <= 0:
                 raise ValueError(f"stage budget for {stage.value} must be positive and finite")
@@ -193,7 +197,9 @@ class ProofRouteRequest:
     prior_hammer_result: Optional[HammerResult] = None
 
 
-ProofRouteRunner = Callable[[ProofRouteRequest], ProofRouteOutcome | HammerResult | Mapping[str, Any] | bool]
+ProofRouteRunner = Callable[
+    [ProofRouteRequest], ProofRouteOutcome | HammerResult | Mapping[str, Any] | bool
+]
 
 
 @dataclass(frozen=True)
@@ -257,15 +263,13 @@ class LegalIRProofRouteResult:
 
     @property
     def skipped_routes(self) -> tuple[str, ...]:
-        return tuple(item.route for item in self.attempts if item.status == ProofRouteStatus.SKIPPED)
+        return tuple(
+            item.route for item in self.attempts if item.status == ProofRouteStatus.SKIPPED
+        )
 
     @property
     def cancellation_reasons(self) -> tuple[str, ...]:
-        return tuple(
-            item.cancellation_reason
-            for item in self.attempts
-            if item.cancellation_reason
-        )
+        return tuple(item.cancellation_reason for item in self.attempts if item.cancellation_reason)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -344,7 +348,11 @@ class LegalIRProofRouter:
             if cancellation_reason:
                 attempts.extend(self._cancel_remaining(index, started, cancellation_reason))
                 stop_reason = cancellation_reason
-                terminal_status = ProofRouteStatus.CANCELLED if cancellation_reason == "caller_cancelled" else ProofRouteStatus.TIMEOUT
+                terminal_status = (
+                    ProofRouteStatus.CANCELLED
+                    if cancellation_reason == "caller_cancelled"
+                    else ProofRouteStatus.TIMEOUT
+                )
                 break
             if self.policy.enabled_routes and route not in self.policy.enabled_routes:
                 attempts.append(self._skipped(stage, route, started, "route_disabled_by_policy"))
@@ -449,7 +457,10 @@ class LegalIRProofRouter:
                     terminal_status = ProofRouteStatus.PROVED
                     attempts.extend(self._skip_remaining(index + 1, started, stop_reason))
                     break
-            elif outcome.status == ProofRouteStatus.THEOREM_FAILED and self.policy.stop_on_theorem_failure:
+            elif (
+                outcome.status == ProofRouteStatus.THEOREM_FAILED
+                and self.policy.stop_on_theorem_failure
+            ):
                 best = outcome
                 stop_reason = "conclusive_theorem_failure"
                 terminal_status = ProofRouteStatus.THEOREM_FAILED
@@ -485,16 +496,19 @@ class LegalIRProofRouter:
         )
 
     def _runner(self, route: str) -> ProofRouteRunner:
-        return self.route_runners.get(route) or {
-            "deterministic_syntax": self._deterministic_syntax,
-            "deterministic_graph": self._deterministic_graph,
-            "deterministic_contract": self._deterministic_contract,
-            "native_tdfol": self._native_logic,
-            "native_cec": self._native_logic,
-            "native_flogic": self._native_flogic,
-            "smt_atp_portfolio": self._smt_atp,
-            "native_lean_reconstruction": self._lean_reconstruction,
-        }[route]
+        return (
+            self.route_runners.get(route)
+            or {
+                "deterministic_syntax": self._deterministic_syntax,
+                "deterministic_graph": self._deterministic_graph,
+                "deterministic_contract": self._deterministic_contract,
+                "native_tdfol": self._native_logic,
+                "native_cec": self._native_logic,
+                "native_flogic": self._native_flogic,
+                "smt_atp_portfolio": self._smt_atp,
+                "native_lean_reconstruction": self._lean_reconstruction,
+            }[route]
+        )
 
     def _applicability(
         self, route: str, obligation: LegalIRProofObligation, portfolio: Optional[HammerResult]
@@ -503,7 +517,9 @@ class LegalIRProofRouter:
         legal_ir_view = obligation.legal_ir_view.lower()
         family = f"{logic_family} {legal_ir_view}"
         if route == "deterministic_graph" and not (
-            "graph" in obligation.kind.lower() or "knowledge_graph" in family or obligation.logic_family.lower() == "frame"
+            "graph" in obligation.kind.lower()
+            or "knowledge_graph" in family
+            or obligation.logic_family.lower() == "frame"
         ):
             return "not_a_graph_obligation"
         if route == "deterministic_contract" and not obligation.metadata.get("contract_id"):
@@ -526,10 +542,7 @@ class LegalIRProofRouter:
             return "logic_family_not_supported_by_tdfol"
         if route == "native_cec" and not (
             legal_ir_view == "cec.native"
-            or any(
-                token in logic_family
-                for token in ("cec", "event", "lifecycle", "cognitive")
-            )
+            or any(token in logic_family for token in ("cec", "event", "lifecycle", "cognitive"))
         ):
             return "logic_family_not_supported_by_cec"
         if route == "native_flogic" and not any(
@@ -545,16 +558,22 @@ class LegalIRProofRouter:
     def _deterministic_syntax(self, request: ProofRouteRequest) -> ProofRouteOutcome:
         statement = request.obligation.statement.strip()
         if not statement:
-            return ProofRouteOutcome(ProofRouteStatus.THEOREM_FAILED, reason="empty_obligation_statement")
-        pairs = {')': '(', ']': '[', '}': '{'}
+            return ProofRouteOutcome(
+                ProofRouteStatus.THEOREM_FAILED, reason="empty_obligation_statement"
+            )
+        pairs = {")": "(", "]": "[", "}": "{"}
         stack: list[str] = []
         for char in statement:
             if char in "([{":
                 stack.append(char)
             elif char in pairs and (not stack or stack.pop() != pairs[char]):
-                return ProofRouteOutcome(ProofRouteStatus.THEOREM_FAILED, reason="unbalanced_obligation_syntax")
+                return ProofRouteOutcome(
+                    ProofRouteStatus.THEOREM_FAILED, reason="unbalanced_obligation_syntax"
+                )
         if stack:
-            return ProofRouteOutcome(ProofRouteStatus.THEOREM_FAILED, reason="unbalanced_obligation_syntax")
+            return ProofRouteOutcome(
+                ProofRouteStatus.THEOREM_FAILED, reason="unbalanced_obligation_syntax"
+            )
         explicit = request.obligation.metadata.get("deterministic_syntax_valid")
         if explicit is not None:
             return ProofRouteOutcome(
@@ -588,8 +607,7 @@ class LegalIRProofRouter:
                 )
             expected = tuple(self._atom(part) for part in match.groups()) if match else ()
             actual = tuple(
-                self._atom(self._value(triple, key))
-                for key in ("subject", "predicate", "object")
+                self._atom(self._value(triple, key)) for key in ("subject", "predicate", "object")
             )
             valid = bool(expected and expected == actual and all(actual))
             return ProofRouteOutcome(
@@ -640,7 +658,9 @@ class LegalIRProofRouter:
                 ProofRouteStatus.THEOREM_FAILED,
                 reason=f"contract_metadata_missing:{','.join(missing)}",
             )
-        return ProofRouteOutcome(ProofRouteStatus.PASSED, reason="contract_registry_precheck_passed")
+        return ProofRouteOutcome(
+            ProofRouteStatus.PASSED, reason="contract_registry_precheck_passed"
+        )
 
     def _native_logic(self, request: ProofRouteRequest) -> ProofRouteOutcome:
         key = "native_tdfol_result" if request.route == "native_tdfol" else "native_cec_result"
@@ -656,7 +676,10 @@ class LegalIRProofRouter:
                 metadata={"capability": request.route},
             )
         normalized = self._normalize_outcome(raw, request.route)
-        if normalized.status == ProofRouteStatus.PROVED and normalized.trust_level == ProofTrustLevel.NONE:
+        if (
+            normalized.status == ProofRouteStatus.PROVED
+            and normalized.trust_level == ProofTrustLevel.NONE
+        ):
             normalized = replace(normalized, trust_level=ProofTrustLevel.NATIVE)
         return normalized
 
@@ -682,9 +705,7 @@ class LegalIRProofRouter:
                 metadata={"capability": request.route},
             )
 
-        candidate_atoms = self._parse_flogic_candidate(
-            request.obligation.statement
-        )
+        candidate_atoms = self._parse_flogic_candidate(request.obligation.statement)
         if not candidate_atoms:
             return ProofRouteOutcome(
                 ProofRouteStatus.UNSUPPORTED_TRANSLATION,
@@ -720,12 +741,8 @@ class LegalIRProofRouter:
             )
         for atom in premise_atoms:
             wrapper.add_rule(self._render_ergo_atom(atom) + ".")
-        candidate_body = ", ".join(
-            self._render_ergo_atom(atom) for atom in candidate_atoms
-        )
-        wrapper.add_rule(
-            f"legal_ir_candidate_proved(yes) :- {candidate_body}."
-        )
+        candidate_body = ", ".join(self._render_ergo_atom(atom) for atom in candidate_atoms)
+        wrapper.add_rule(f"legal_ir_candidate_proved(yes) :- {candidate_body}.")
         query = wrapper.query(
             "legal_ir_candidate_proved(?Proof)",
             timeout_seconds=request.timeout_seconds,
@@ -922,8 +939,7 @@ class LegalIRProofRouter:
             if metadata.get("premise_kind") != "compiler_candidate_fact":
                 continue
             family = (
-                f"{metadata.get('logic_family', '')} "
-                f"{metadata.get('legal_ir_view', '')}"
+                f"{metadata.get('logic_family', '')} {metadata.get('legal_ir_view', '')}"
             ).lower()
             if route == "native_tdfol" and not any(
                 token in family
@@ -1023,9 +1039,7 @@ class LegalIRProofRouter:
         if not all(hasattr(request.pipeline, name) for name in required_attributes):
             # Compatibility for protocol-style injected pipelines.  Full
             # HammerPipeline instances take the separated path below.
-            return self._from_hammer_result(
-                request.pipeline.prove(request.goal, request.premises)
-            )
+            return self._from_hammer_result(request.pipeline.prove(request.goal, request.premises))
         pipeline = HammerPipeline(
             premise_selector=request.pipeline.premise_selector,
             translator=request.pipeline.translator,
@@ -1053,7 +1067,9 @@ class LegalIRProofRouter:
             )
         winner = next((item for item in result.backend_results if item.proved), None)
         if winner is None:
-            return ProofRouteOutcome(ProofRouteStatus.UNKNOWN, reason="no_backend_candidate", hammer_result=result)
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNKNOWN, reason="no_backend_candidate", hammer_result=result
+            )
         reconstruction = request.pipeline.reconstructor.reconstruct(
             goal=result.goal,
             selected_premises=result.premise_selection.selected,
@@ -1061,7 +1077,9 @@ class LegalIRProofRouter:
             verify=True,
             verifier=request.pipeline.kernel_verifier,
         )
-        status = HammerStatus.PROVED if reconstruction.verified else HammerStatus.RECONSTRUCTION_FAILED
+        status = (
+            HammerStatus.PROVED if reconstruction.verified else HammerStatus.RECONSTRUCTION_FAILED
+        )
         rebuilt = HammerResult(
             status=status,
             goal=result.goal,
@@ -1070,13 +1088,16 @@ class LegalIRProofRouter:
             backend_results=result.backend_results,
             reconstruction=reconstruction,
             fallback_plan=result.fallback_plan,
-            elapsed_seconds=result.elapsed_seconds + float(getattr(reconstruction.verification, "elapsed_seconds", 0.0) or 0.0),
+            elapsed_seconds=result.elapsed_seconds
+            + float(getattr(reconstruction.verification, "elapsed_seconds", 0.0) or 0.0),
             metadata={**result.metadata, "winner_backend": winner.backend},
         )
         return ProofRouteOutcome(
             ProofRouteStatus.PROVED if reconstruction.verified else ProofRouteStatus.THEOREM_FAILED,
             ProofTrustLevel.KERNEL if reconstruction.verified else ProofTrustLevel.NONE,
-            reason="native_lean_kernel_accepted" if reconstruction.verified else "native_lean_kernel_rejected",
+            reason="native_lean_kernel_accepted"
+            if reconstruction.verified
+            else "native_lean_kernel_rejected",
             hammer_result=rebuilt,
             metadata={"checker": str(getattr(reconstruction.verification, "checker", "") or "")},
         )
@@ -1107,14 +1128,22 @@ class LegalIRProofRouter:
             status = aliases.get(status_text)
             if status is None:
                 status = ProofRouteStatus(status_text)
-            trust = ProofTrustLevel.parse(data.get("trust_level") or data.get("trust") or (
-                self._default_trust(route) if status == ProofRouteStatus.PROVED else ProofTrustLevel.NONE
-            ))
+            trust = ProofTrustLevel.parse(
+                data.get("trust_level")
+                or data.get("trust")
+                or (
+                    self._default_trust(route)
+                    if status == ProofRouteStatus.PROVED
+                    else ProofTrustLevel.NONE
+                )
+            )
             return ProofRouteOutcome(
                 status=status,
                 trust_level=trust,
                 reason=str(data.get("reason") or data.get("error") or ""),
-                hammer_result=data.get("hammer_result") if isinstance(data.get("hammer_result"), HammerResult) else None,
+                hammer_result=data.get("hammer_result")
+                if isinstance(data.get("hammer_result"), HammerResult)
+                else None,
                 metadata=dict(data.get("metadata") or {}),
             )
         raw_result = getattr(raw, "result", None)
@@ -1173,7 +1202,9 @@ class LegalIRProofRouter:
                 hammer_result=result,
                 metadata=diagnostics,
             )
-        if result.backend_results and all(item.status == HammerBackendStatus.TIMEOUT for item in result.backend_results):
+        if result.backend_results and all(
+            item.status == HammerBackendStatus.TIMEOUT for item in result.backend_results
+        ):
             return ProofRouteOutcome(
                 ProofRouteStatus.TIMEOUT,
                 reason="portfolio_timeout",
@@ -1204,8 +1235,14 @@ class LegalIRProofRouter:
     def _synthetic_hammer_result(
         self, goal: HammerGoal, premises: Sequence[Any], status: ProofRouteStatus, reason: str
     ) -> HammerResult:
-        hammer_status = HammerStatus.PROVED if status == ProofRouteStatus.PROVED else (
-            HammerStatus.TRANSLATION_FAILED if status == ProofRouteStatus.UNSUPPORTED_TRANSLATION else HammerStatus.UNPROVED
+        hammer_status = (
+            HammerStatus.PROVED
+            if status == ProofRouteStatus.PROVED
+            else (
+                HammerStatus.TRANSLATION_FAILED
+                if status == ProofRouteStatus.UNSUPPORTED_TRANSLATION
+                else HammerStatus.UNPROVED
+            )
         )
         backend_results = []
         if hammer_status == HammerStatus.PROVED:
@@ -1227,7 +1264,9 @@ class LegalIRProofRouter:
             translations={},
             backend_results=backend_results,
             elapsed_seconds=0.0,
-            fallback_plan=[] if hammer_status == HammerStatus.PROVED else [f"proof_router:{reason or status.value}"],
+            fallback_plan=[]
+            if hammer_status == HammerStatus.PROVED
+            else [f"proof_router:{reason or status.value}"],
         )
 
     def _fallback_outcome(
@@ -1257,7 +1296,9 @@ class LegalIRProofRouter:
             or self._synthetic_hammer_result(goal, premises, status, status.value),
         )
 
-    def _skipped(self, stage: ProofRouteStage, route: str, started: float, reason: str) -> ProofRouteAttempt:
+    def _skipped(
+        self, stage: ProofRouteStage, route: str, started: float, reason: str
+    ) -> ProofRouteAttempt:
         return ProofRouteAttempt(
             stage=stage,
             route=route,
@@ -1268,10 +1309,16 @@ class LegalIRProofRouter:
             skip_reason=reason,
         )
 
-    def _skip_remaining(self, start_index: int, started: float, reason: str) -> list[ProofRouteAttempt]:
-        return [self._skipped(stage, route, started, reason) for stage, route in _ROUTES[start_index:]]
+    def _skip_remaining(
+        self, start_index: int, started: float, reason: str
+    ) -> list[ProofRouteAttempt]:
+        return [
+            self._skipped(stage, route, started, reason) for stage, route in _ROUTES[start_index:]
+        ]
 
-    def _cancel_remaining(self, start_index: int, started: float, reason: str) -> list[ProofRouteAttempt]:
+    def _cancel_remaining(
+        self, start_index: int, started: float, reason: str
+    ) -> list[ProofRouteAttempt]:
         return [
             ProofRouteAttempt(
                 stage=stage,

@@ -70,7 +70,9 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
 ```python
 # integration/deontic_logic_converter.py
 from ..tools.deontic_logic_core import (  # ❌ Uses tools/
-    DeonticFormula, DeonticOperator, LegalAgent
+    DeonticFormula,
+    DeonticOperator,
+    LegalAgent,
 )
 from ..tools.logic_translation_core import LogicTranslator  # ❌ Uses tools/
 
@@ -104,13 +106,15 @@ from ..tools.modal_logic_extension import ModalLogicSymbol  # ❌ Uses tools/
 # common/converters.py (base - already exists)
 class LogicConverter(ABC, Generic[InputType, OutputType]):
     """Base with caching, validation, batch, monitoring."""
+
     pass
+
 
 # fol/converter.py (NEW)
 class FOLConverter(LogicConverter[str, FOLFormula]):
     """
     Unified FOL converter with all features integrated.
-    
+
     Features:
     - ✅ Caching (local + IPFS)
     - ✅ Batch processing (5-8x speedup)
@@ -119,62 +123,63 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
     - ✅ Real-time monitoring
     - ✅ Type safety from logic/types/
     """
-    
+
     def __init__(
         self,
         use_cache: bool = True,
         use_ipfs: bool = False,
         use_ml: bool = True,
         use_nlp: bool = True,
-        enable_monitoring: bool = True
+        enable_monitoring: bool = True,
     ):
         super().__init__(enable_caching=use_cache)
         self.use_nlp = use_nlp
         # ... initialize all features
-    
+
     def validate_input(self, text: str) -> ValidationResult:
         """Validate input text."""
         result = ValidationResult(valid=True)
         if not text or not text.strip():
             result.add_error("Input text cannot be empty")
         return result
-    
+
     def _convert_impl(self, text: str, options: Dict[str, Any]) -> FOLFormula:
         """Core conversion logic (from text_to_fol.py)."""
         # Use existing logic from text_to_fol.py
         # Add monitoring, ML confidence, etc.
         pass
-    
+
     async def convert_async(self, text: str, **kwargs) -> ConversionResult[FOLFormula]:
         """Async wrapper for backward compatibility."""
         return self.convert(text, kwargs)
-    
+
     def convert_batch(
-        self, 
-        texts: List[str], 
-        max_workers: int = 4
+        self, texts: List[str], max_workers: int = 4
     ) -> List[ConversionResult[FOLFormula]]:
         """Batch conversion with parallelization."""
         from ..batch_processing import BatchProcessor
+
         processor = BatchProcessor()
         return processor.process(texts, self.convert, max_workers=max_workers)
+
 
 # fol/text_to_fol.py (REFACTORED)
 # Keep async interface for backward compatibility
 async def convert_text_to_fol(text_input, **kwargs):
     """
     Backward compatible async interface.
-    
+
     Deprecated: Use FOLConverter.convert_async() instead.
     This function will be removed in v2.0.
     """
     import warnings
+
     warnings.warn(
         "convert_text_to_fol() is deprecated. Use FOLConverter instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
-    
+
     converter = FOLConverter(**kwargs)
     result = await converter.convert_async(text_input)
     return result.to_dict()  # Convert to legacy format
@@ -185,7 +190,9 @@ async def convert_text_to_fol(text_input, **kwargs):
 # deontic/converter.py (NEW)
 class DeonticConverter(LogicConverter[str, DeonticFormula]):
     """Unified deontic converter with all features."""
+
     # ... same structure as FOLConverter
+
 
 # deontic/legal_text_to_deontic.py (REFACTORED)
 async def convert_legal_text_to_deontic(legal_text, **kwargs):
@@ -220,14 +227,14 @@ from .circuits import LogicCircuit, TheoremCircuit
 from .integration import ZKPProofCache, PrivateProofExecutionEngine
 
 __all__ = [
-    'ZKPProver',
-    'ZKPVerifier', 
-    'LogicCircuit',
-    'TheoremCircuit',
-    'ProofCircuit',
-    'VerificationKey',
-    'ZKPProofCache',
-    'PrivateProofExecutionEngine'
+    "ZKPProver",
+    "ZKPVerifier",
+    "LogicCircuit",
+    "TheoremCircuit",
+    "ProofCircuit",
+    "VerificationKey",
+    "ZKPProofCache",
+    "PrivateProofExecutionEngine",
 ]
 ```
 
@@ -256,9 +263,7 @@ private_axioms = ["P", "P -> Q"]  # Keep secret
 theorem = "Q"
 
 proof = prover.generate_proof(
-    theorem=theorem,
-    private_axioms=private_axioms,
-    public_statement="I can prove Q"
+    theorem=theorem, private_axioms=private_axioms, public_statement="I can prove Q"
 )
 
 # Share proof (small, ~200 bytes) instead of axioms
@@ -277,7 +282,7 @@ engine = PrivateProofExecutionEngine()
 result = engine.prove_private(
     theorem="Q",
     axioms_commitment="0x123abc...",  # Hash of axioms
-    proof_method="zkp"
+    proof_method="zkp",
 )
 
 # Result confirms validity but reveals nothing about axioms
@@ -294,8 +299,7 @@ cache = ZKPProofCache(ipfs_backend=get_global_ipfs_cache())
 
 # Store proof on IPFS without revealing logic
 cid = cache.store_private_proof(
-    proof=proof,
-    public_metadata={"theorem": "Q", "timestamp": "2026-02-13"}
+    proof=proof, public_metadata={"theorem": "Q", "timestamp": "2026-02-13"}
 )
 
 # Anyone can verify from IPFS without seeing axioms
@@ -308,7 +312,7 @@ from ipfs_datasets_py.logic.zkp import MultiPartyLogicComputation
 
 # Three parties want to combine their axioms without revealing them
 party1_axioms = ["P"]
-party2_axioms = ["P -> Q"]  
+party2_axioms = ["P -> Q"]
 party3_axioms = ["Q -> R"]
 
 mpc = MultiPartyLogicComputation()
@@ -320,8 +324,7 @@ commitment3 = mpc.commit_axioms(party3_axioms)
 
 # Prove "R" can be derived without revealing individual axioms
 joint_proof = mpc.compute_joint_proof(
-    theorem="R",
-    commitments=[commitment1, commitment2, commitment3]
+    theorem="R", commitments=[commitment1, commitment2, commitment3]
 )
 
 assert joint_proof.verify()
@@ -343,59 +346,61 @@ import json
 try:
     from py_ecc.bn128 import G1, G2, pairing, multiply, add, neg
     from py_ecc.fields import bn128_FQ, bn128_FQ2
+
     ZKP_AVAILABLE = True
 except ImportError:
     ZKP_AVAILABLE = False
-    
+
 
 @dataclass
 class ProofCircuit:
     """
     Arithmetic circuit representing logic proof.
-    
+
     Converts logic formulas into arithmetic constraints that can be
     proven with zkSNARKs (Groth16).
     """
+
     constraints: List[str]
     public_inputs: List[str]
     private_witnesses: List[str]
     circuit_hash: str
-    
+
     @classmethod
-    def from_logic_formula(cls, theorem: str, axioms: List[str]) -> 'ProofCircuit':
+    def from_logic_formula(cls, theorem: str, axioms: List[str]) -> "ProofCircuit":
         """Convert logic formula to arithmetic circuit."""
         # Encode logic as arithmetic constraints
         # Example: P ∧ Q becomes multiplication constraint
         # P → Q becomes (1 - P + PQ) = 1
         constraints = []
-        
+
         # Convert each axiom to constraint
         for axiom in axioms:
             constraint = cls._logic_to_arithmetic(axiom)
             constraints.append(constraint)
-        
+
         # Convert theorem to constraint
         theorem_constraint = cls._logic_to_arithmetic(theorem)
-        
+
         circuit_hash = hashlib.sha256(
             json.dumps(constraints + [theorem_constraint]).encode()
         ).hexdigest()
-        
+
         return cls(
             constraints=constraints,
             public_inputs=[theorem],
             private_witnesses=axioms,
-            circuit_hash=circuit_hash
+            circuit_hash=circuit_hash,
         )
-    
+
     @staticmethod
     def _logic_to_arithmetic(formula: str) -> str:
         """
         Convert logical formula to arithmetic constraint.
-        
+
         Logic Operations → Arithmetic:
         - P ∧ Q → P * Q
-        - P ∨ Q → P + Q - P*Q  
+        - P ∨ Q → P + Q - P*Q
         - ¬P → 1 - P
         - P → Q → 1 - P + P*Q
         - P ↔ Q → P*Q + (1-P)*(1-Q)
@@ -407,20 +412,22 @@ class ProofCircuit:
         return formula
 
 
-@dataclass  
+@dataclass
 class ZKProof:
     """Zero-knowledge proof for logic theorem."""
+
     proof_data: bytes  # Groth16 proof (π_a, π_b, π_c)
     public_inputs: List[str]
     circuit_hash: str
     verification_key_hash: str
-    
+
     def verify(self) -> bool:
         """Verify the proof."""
         from .zkp_verifier import ZKPVerifier
+
         verifier = ZKPVerifier()
         return verifier.verify_proof(self)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize proof."""
         return {
@@ -428,20 +435,20 @@ class ZKProof:
             "public_inputs": self.public_inputs,
             "circuit_hash": self.circuit_hash,
             "verification_key_hash": self.verification_key_hash,
-            "proof_size_bytes": len(self.proof_data)
+            "proof_size_bytes": len(self.proof_data),
         }
 
 
 class ZKPProver:
     """
     Zero-knowledge proof generator for logic theorems.
-    
+
     Uses Groth16 zkSNARKs to generate succinct proofs that:
     - Confirm a theorem can be proven
     - Don't reveal the axioms used
     - Are small (~200-500 bytes)
     - Are fast to verify (~5-10ms)
-    
+
     Example:
         >>> prover = ZKPProver()
         >>> proof = prover.generate_proof(
@@ -451,66 +458,64 @@ class ZKPProver:
         >>> assert proof.verify()
         >>> assert len(proof.proof_data) < 500
     """
-    
+
     def __init__(self):
         if not ZKP_AVAILABLE:
-            raise ImportError(
-                "py_ecc not installed. Install with: pip install py_ecc"
-            )
+            raise ImportError("py_ecc not installed. Install with: pip install py_ecc")
         self._setup_keys()
-    
+
     def _setup_keys(self):
         """Setup proving and verification keys."""
         # In production, use trusted setup ceremony
         # For now, generate keys deterministically
         self.proving_key = self._generate_proving_key()
         self.verification_key = self._generate_verification_key()
-    
+
     def _generate_proving_key(self):
         """Generate proving key (simplified)."""
         # Real implementation: QAP-based key generation
         return {"alpha": G1, "beta": G2, "delta": G1}
-    
+
     def _generate_verification_key(self):
         """Generate verification key (simplified)."""
         return {"alpha_beta": pairing(G1, G2), "delta": G2}
-    
+
     def generate_proof(
         self,
         theorem: str,
         private_axioms: List[str],
         public_statement: Optional[str] = None,
-        circuit: Optional[ProofCircuit] = None
+        circuit: Optional[ProofCircuit] = None,
     ) -> ZKProof:
         """
         Generate zero-knowledge proof for theorem.
-        
+
         Args:
             theorem: The theorem to prove (public)
             private_axioms: Axioms used in proof (kept private)
             public_statement: Optional public description
             circuit: Optional pre-built circuit
-            
+
         Returns:
             ZKProof that can be verified without revealing axioms
         """
         # Convert logic to arithmetic circuit
         if circuit is None:
             circuit = ProofCircuit.from_logic_formula(theorem, private_axioms)
-        
+
         # Compute witness (private values satisfying constraints)
         witness = self._compute_witness(circuit, private_axioms)
-        
+
         # Generate Groth16 proof
         proof_data = self._groth16_prove(circuit, witness)
-        
+
         return ZKProof(
             proof_data=proof_data,
             public_inputs=[theorem],
             circuit_hash=circuit.circuit_hash,
-            verification_key_hash=self._hash_verification_key()
+            verification_key_hash=self._hash_verification_key(),
         )
-    
+
     def _compute_witness(self, circuit: ProofCircuit, axioms: List[str]) -> Dict[str, int]:
         """Compute witness values for circuit."""
         # Assign values to private wires
@@ -518,41 +523,41 @@ class ZKPProver:
         for i, axiom in enumerate(axioms):
             witness[f"axiom_{i}"] = self._evaluate_formula(axiom)
         return witness
-    
+
     def _evaluate_formula(self, formula: str) -> int:
         """Evaluate formula to boolean (0 or 1)."""
         # Simplified evaluation
         return 1 if formula else 0
-    
+
     def _groth16_prove(self, circuit: ProofCircuit, witness: Dict[str, int]) -> bytes:
         """
         Generate Groth16 proof.
-        
+
         Groth16 proof consists of three group elements: (π_a, π_b, π_c)
         Total size: ~200 bytes (32 bytes per coordinate, 3 elements)
         """
         # Simplified proof generation
         # Real implementation: QAP evaluation, pairing operations
-        
+
         # π_a ∈ G1 (proof element a)
         pi_a = multiply(G1, hash(str(circuit)) % (2**256))
-        
-        # π_b ∈ G2 (proof element b)  
+
+        # π_b ∈ G2 (proof element b)
         pi_b = multiply(G2, hash(str(witness)) % (2**256))
-        
+
         # π_c ∈ G1 (proof element c)
         pi_c = multiply(G1, (hash(str(circuit)) + hash(str(witness))) % (2**256))
-        
+
         # Serialize proof
         proof_bytes = self._serialize_proof_elements(pi_a, pi_b, pi_c)
-        
+
         return proof_bytes
-    
+
     def _serialize_proof_elements(self, pi_a, pi_b, pi_c) -> bytes:
         """Serialize proof elements to bytes."""
         # Convert group elements to bytes
         return b"PROOF_PLACEHOLDER"  # Simplified
-    
+
     def _hash_verification_key(self) -> str:
         """Hash verification key for identification."""
         return hashlib.sha256(str(self.verification_key).encode()).hexdigest()
@@ -567,6 +572,7 @@ from dataclasses import dataclass
 
 try:
     from py_ecc.bn128 import pairing
+
     ZKP_AVAILABLE = True
 except ImportError:
     ZKP_AVAILABLE = False
@@ -575,65 +581,65 @@ except ImportError:
 class ZKPVerifier:
     """
     Zero-knowledge proof verifier.
-    
+
     Verifies Groth16 proofs in ~5-10ms without needing:
     - Private axioms
     - Proof search details
     - Intermediate steps
-    
+
     Only needs:
     - Public theorem
     - Proof data (200-500 bytes)
     - Verification key
     """
-    
+
     def __init__(self, verification_key: Optional[dict] = None):
         if not ZKP_AVAILABLE:
             raise ImportError("py_ecc not installed")
-        
+
         self.verification_key = verification_key or self._load_default_vk()
-    
+
     def _load_default_vk(self) -> dict:
         """Load default verification key."""
         # In production, load from trusted setup
         return {"alpha_beta": None, "delta": None}
-    
-    def verify_proof(self, proof: 'ZKProof') -> bool:
+
+    def verify_proof(self, proof: "ZKProof") -> bool:
         """
         Verify zero-knowledge proof.
-        
+
         Checks pairing equation:
         e(π_a, π_b) = e(α, β) · e(public_inputs, γ) · e(π_c, δ)
-        
+
         If equation holds, proof is valid (with overwhelming probability).
-        
+
         Args:
             proof: The ZKProof to verify
-            
+
         Returns:
             True if proof is valid, False otherwise
         """
         # Deserialize proof elements
         pi_a, pi_b, pi_c = self._deserialize_proof(proof.proof_data)
-        
+
         # Compute public input commitment
         public_commit = self._compute_public_commitment(proof.public_inputs)
-        
+
         # Check pairing equation
         lhs = pairing(pi_a, pi_b)
         rhs = (
-            self.verification_key["alpha_beta"] 
+            self.verification_key["alpha_beta"]
             * pairing(public_commit, self.verification_key["gamma"])
             * pairing(pi_c, self.verification_key["delta"])
         )
-        
+
         return lhs == rhs
-    
+
     def _deserialize_proof(self, proof_data: bytes):
         """Deserialize proof elements."""
         # Simplified deserialization
         return (None, None, None)  # (π_a, π_b, π_c)
-    
+
     def _compute_public_commitment(self, public_inputs):
         """Compute commitment to public inputs."""
         return None  # Simplified
@@ -642,16 +648,22 @@ class ZKPVerifier:
 # zkp/circuits.py
 """Pre-defined circuits for common logic operations."""
 
+
 class LogicCircuit:
     """Base class for logic circuits."""
+
     pass
+
 
 class TheoremCircuit(LogicCircuit):
     """Circuit for theorem proving."""
+
     pass
+
 
 class FormulaTransformCircuit(LogicCircuit):
     """Circuit for formula transformations."""
+
     pass
 ```
 
@@ -660,31 +672,33 @@ class FormulaTransformCircuit(LogicCircuit):
 ```python
 # integration/proof_execution_engine.py (UPDATED)
 
+
 class ProofExecutionEngine:
     """Execute proofs with optional ZKP privacy."""
-    
+
     def __init__(
         self,
         use_cache: bool = True,
         use_zkp: bool = False,  # NEW
-        **kwargs
+        **kwargs,
     ):
         self.use_zkp = use_zkp
         if use_zkp:
             from ..zkp import ZKPProver, ZKPVerifier
+
             self.zkp_prover = ZKPProver()
             self.zkp_verifier = ZKPVerifier()
-    
+
     def prove(
         self,
         theorem: str,
         axioms: List[str],
         method: str = "auto",
-        private: bool = False  # NEW
+        private: bool = False,  # NEW
     ) -> ProofResult:
         """
         Prove theorem with optional privacy.
-        
+
         Args:
             theorem: Theorem to prove
             axioms: Axioms to use
@@ -694,13 +708,13 @@ class ProofExecutionEngine:
         if private and self.use_zkp:
             # Generate zero-knowledge proof
             zkp_proof = self.zkp_prover.generate_proof(theorem, axioms)
-            
+
             return ProofResult(
                 is_proved=zkp_proof.verify(),
                 method="zkp",
                 zkp_proof=zkp_proof,
                 axioms_revealed=False,
-                proof_size_bytes=len(zkp_proof.proof_data)
+                proof_size_bytes=len(zkp_proof.proof_data),
             )
         else:
             # Standard proof (axioms revealed)
@@ -984,15 +998,12 @@ Continue with original refactoring plan phases:
    ```python
    # Company has proprietary axioms
    # Wants to prove theorems without revealing axioms
-   
-   proof = prover.generate_proof(
-       theorem="CompanyKnowledge(X)",
-       private_axioms=company_trade_secrets
-   )
-   
+
+   proof = prover.generate_proof(theorem="CompanyKnowledge(X)", private_axioms=company_trade_secrets)
+
    # Share proof publicly
    ipfs_cid = cache.store_proof(proof)
-   
+
    # Anyone can verify without seeing axioms
    assert verifier.verify_from_ipfs(ipfs_cid)
    ```
@@ -1000,12 +1011,11 @@ Continue with original refactoring plan phases:
 2. **Regulatory Compliance**
    ```python
    # Prove legal compliance without revealing internal policies
-   
+
    proof = prover.generate_proof(
-       theorem="CompliesWithGDPR(DataProcessing)",
-       private_axioms=internal_compliance_rules
+       theorem="CompliesWithGDPR(DataProcessing)", private_axioms=internal_compliance_rules
    )
-   
+
    # Auditor verifies compliance
    assert proof.verify()  # No access to internal rules!
    ```
@@ -1014,16 +1024,16 @@ Continue with original refactoring plan phases:
    ```python
    # Multiple parties want to combine knowledge
    # Without revealing their individual contributions
-   
+
    party1_commitment = mpc.commit(party1_axioms)
    party2_commitment = mpc.commit(party2_axioms)
    party3_commitment = mpc.commit(party3_axioms)
-   
+
    joint_proof = mpc.compute_joint(
        theorem="CollectiveKnowledge(X)",
-       commitments=[party1_commitment, party2_commitment, party3_commitment]
+       commitments=[party1_commitment, party2_commitment, party3_commitment],
    )
-   
+
    # Proof confirms collective knowledge
    # No party learns others' axioms
    ```

@@ -119,7 +119,10 @@ def test_hammer_evidence_receipt_and_ast_binding_are_present() -> None:
 
     assert record.stage is contracts.StageName.HAMMER
     assert record.status is contracts.StageStatus.SUCCESS
-    assert record.provenance.effective_identity == {"request_id": "hammer-request-1", "implementation": "test"}
+    assert record.provenance.effective_identity == {
+        "request_id": "hammer-request-1",
+        "implementation": "test",
+    }
     assert record.data["schema"] == adapters.HAMMER_EVIDENCE_SCHEMA
     assert record.data["request"]["request_id"] == "hammer-request-1"
     assert record.data["portfolio"]["request_id"] == "hammer-request-1"
@@ -166,8 +169,13 @@ def test_solver_allowlist_and_named_ranking_variant_are_enforced() -> None:
     "mutator",
     [
         lambda data: data | {"portfolio": replace(data["portfolio"], request_id="other-request")},
-        lambda data: data | {"proof_candidate": replace(data["proof_candidate"], request_id="other-request")},
-        lambda data: data | {"reconstruction": replace(data["reconstruction"], candidate_id="other-candidate")},
+        lambda data: (
+            data | {"proof_candidate": replace(data["proof_candidate"], request_id="other-request")}
+        ),
+        lambda data: (
+            data
+            | {"reconstruction": replace(data["reconstruction"], candidate_id="other-candidate")}
+        ),
     ],
 )
 def test_request_candidate_and_reconstruction_identity_mismatches_fail_closed(mutator) -> None:
@@ -179,7 +187,10 @@ def test_request_candidate_and_reconstruction_identity_mismatches_fail_closed(mu
 
 
 def test_serialized_records_are_accepted_and_unavailable_backend_stays_explicit() -> None:
-    payload = {key: value.to_dict() if hasattr(value, "to_dict") else value for key, value in _records().items()}
+    payload = {
+        key: value.to_dict() if hasattr(value, "to_dict") else value
+        for key, value in _records().items()
+    }
     record = _run(payload)
     assert record.status is contracts.StageStatus.SUCCESS
 

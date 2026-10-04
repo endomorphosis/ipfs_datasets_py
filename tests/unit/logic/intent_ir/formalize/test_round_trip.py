@@ -261,30 +261,17 @@ def test_bounded_obligations_are_explicit_grounded_and_non_authorizing() -> None
     assert all(item.bounds == bounds for item in packet.requests)
     assert all(item.query_kind is QueryKind.THEOREM_PROOF for item in packet.requests)
     assert all(item.source_refs for item in packet.obligations)
-    assert all(
-        item.metadata["retrieved_premises_excluded"] is True
-        for item in packet.obligations
-    )
-    assert all(
-        item.metadata.get("authority") != "context_only"
-        for item in packet.assumptions
-    )
-    assert not any(
-        item.metadata.get("proof_authority") is False
-        for item in packet.assumptions
-    )
+    assert all(item.metadata["retrieved_premises_excluded"] is True for item in packet.obligations)
+    assert all(item.metadata.get("authority") != "context_only" for item in packet.assumptions)
+    assert not any(item.metadata.get("proof_authority") is False for item in packet.assumptions)
     assert IntentProofPacket.from_dict(packet.to_dict()).to_dict() == packet.to_dict()
 
     with pytest.raises(IntentProofObligationError, match="exceeding"):
-        IntentProofObligations(
-            IntentProofAuthorityPolicy(max_obligations=1)
-        ).generate(artifact)
+        IntentProofObligations(IntentProofAuthorityPolicy(max_obligations=1)).generate(artifact)
 
 
 def test_positive_and_counterexample_results_keep_exact_theorem_authority() -> None:
-    packet = IntentProofObligations().generate(
-        _artifact(), requested_backend_id="intent-test"
-    )
+    packet = IntentProofObligations().generate(_artifact(), requested_backend_id="intent-test")
 
     positive = IntentProofObligations().execute(
         packet, ProofBackendRegistry((_backend(stdout="unsat\n"),))
@@ -305,9 +292,7 @@ def test_positive_and_counterexample_results_keep_exact_theorem_authority() -> N
     rejected_policy_packet = IntentProofObligations().generate(
         _artifact(),
         requested_backend_id="intent-test",
-        authority_policy=IntentProofAuthorityPolicy(
-            accepted_backend_ids=("different-backend",)
-        ),
+        authority_policy=IntentProofAuthorityPolicy(accepted_backend_ids=("different-backend",)),
     )
     rejected = IntentProofObligations().execute(
         rejected_policy_packet,
@@ -322,45 +307,26 @@ def test_unsupported_unavailable_timeout_and_opaque_paths_fail_closed() -> None:
     packet = obligations.generate(_artifact())
 
     unsupported = obligations.execute(packet, ProofBackendRegistry())
-    assert {
-        item.disposition for item in unsupported.outcomes
-    } == {IntentProofDisposition.UNSUPPORTED}
+    assert {item.disposition for item in unsupported.outcomes} == {
+        IntentProofDisposition.UNSUPPORTED
+    }
     assert all(item.attempt is None for item in unsupported.outcomes)
 
-    requested = obligations.generate(
-        _artifact(), requested_backend_id="intent-test"
-    )
-    unavailable = obligations.execute(
-        requested, ProofBackendRegistry((_backend(available=False),))
-    )
-    assert {
-        item.disposition for item in unavailable.outcomes
-    } == {IntentProofDisposition.UNAVAILABLE}
-    assert all(
-        item.attempt.status is AttemptStatus.UNAVAILABLE
-        for item in unavailable.outcomes
-    )
+    requested = obligations.generate(_artifact(), requested_backend_id="intent-test")
+    unavailable = obligations.execute(requested, ProofBackendRegistry((_backend(available=False),)))
+    assert {item.disposition for item in unavailable.outcomes} == {
+        IntentProofDisposition.UNAVAILABLE
+    }
+    assert all(item.attempt.status is AttemptStatus.UNAVAILABLE for item in unavailable.outcomes)
 
-    timed_out = obligations.execute(
-        requested, ProofBackendRegistry((_backend(timeout=True),))
-    )
-    assert {
-        item.disposition for item in timed_out.outcomes
-    } == {IntentProofDisposition.TIMEOUT}
-    assert all(
-        item.attempt.status is AttemptStatus.TIMED_OUT
-        for item in timed_out.outcomes
-    )
+    timed_out = obligations.execute(requested, ProofBackendRegistry((_backend(timeout=True),)))
+    assert {item.disposition for item in timed_out.outcomes} == {IntentProofDisposition.TIMEOUT}
+    assert all(item.attempt.status is AttemptStatus.TIMED_OUT for item in timed_out.outcomes)
 
-    opaque = obligations.generate(
-        _artifact(opaque_goal=True), requested_backend_id="intent-test"
-    )
-    opaque_execution = obligations.execute(
-        opaque, ProofBackendRegistry((_backend(),))
-    )
+    opaque = obligations.generate(_artifact(opaque_goal=True), requested_backend_id="intent-test")
+    opaque_execution = obligations.execute(opaque, ProofBackendRegistry((_backend(),)))
     assert any(
-        item.disposition is IntentProofDisposition.UNSUPPORTED
-        and item.attempt is None
+        item.disposition is IntentProofDisposition.UNSUPPORTED and item.attempt is None
         for item in opaque_execution.outcomes
     )
     assert not opaque_execution.passed
@@ -393,9 +359,7 @@ def _mutate_expression(artifact, view_id, semantic_id, transform):
     for formula in artifact.formulas:
         ids = tuple(formula.metadata.get("intent_node_ids", ()))
         if formula.view_id == view_id and semantic_id in ids:
-            formulas.append(
-                replace(formula, expression=transform(formula.expression.to_dict()))
-            )
+            formulas.append(replace(formula, expression=transform(formula.expression.to_dict())))
         else:
             formulas.append(formula)
     return replace(artifact, formulas=tuple(formulas))
@@ -451,14 +415,10 @@ def _mutate_expression(artifact, view_id, semantic_id, transform):
         ),
     ),
 )
-def test_decompiler_detects_semantic_mutations(
-    kind, view_id, semantic_id, transform
-) -> None:
+def test_decompiler_detects_semantic_mutations(kind, view_id, semantic_id, transform) -> None:
     document = _document()
     artifact = IntentFormalizationCompiler().compile(document)
-    mutated = _mutate_expression(
-        artifact, view_id, semantic_id, transform
-    )
+    mutated = _mutate_expression(artifact, view_id, semantic_id, transform)
 
     report = IntentDecompiler().compare(document, mutated)
 
@@ -473,10 +433,7 @@ def test_decompiler_detects_source_grounding_and_unsupported_mutations() -> None
     formulas = []
     for formula in artifact.formulas:
         ids = tuple(formula.metadata.get("intent_node_ids", ()))
-        if (
-            formula.view_id == INTENT_ACTION_VIEW_ID
-            and "action:publish" in ids
-        ):
+        if formula.view_id == INTENT_ACTION_VIEW_ID and "action:publish" in ids:
             formulas.append(
                 replace(
                     formula,
@@ -488,18 +445,14 @@ def test_decompiler_detects_source_grounding_and_unsupported_mutations() -> None
             formulas.append(formula)
     # Preserve the compiler's required opaque diagnostic by using an artifact
     # that was originally opaque for the unsupported assertion.
-    source_mutated = replace(artifact, formulas=tuple(
-        replace(item, opaque=False) if item.opaque else item
-        for item in formulas
-    ))
+    source_mutated = replace(
+        artifact,
+        formulas=tuple(replace(item, opaque=False) if item.opaque else item for item in formulas),
+    )
     source_report = IntentDecompiler().compare(document, source_mutated)
     assert IntentSemanticMutationKind.SOURCE_GROUNDING in source_report.mutation_kinds
 
-    opaque_artifact = IntentFormalizationCompiler().compile(
-        _document(opaque_goal=True)
-    )
-    opaque_report = IntentDecompiler().compare(
-        _document(opaque_goal=True), opaque_artifact
-    )
+    opaque_artifact = IntentFormalizationCompiler().compile(_document(opaque_goal=True))
+    opaque_report = IntentDecompiler().compare(_document(opaque_goal=True), opaque_artifact)
     assert IntentSemanticMutationKind.UNSUPPORTED in opaque_report.mutation_kinds
     assert not opaque_report.passed

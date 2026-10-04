@@ -35,11 +35,11 @@ Full UCAN delegation chain management with support for:
 Key operations (v1–v39 complete):
 ```python
 mgr = DelegationManager()
-cid = mgr.add(token)                              # Add token → returns CID
-active = list(mgr.active_tokens_by_actor("alice")) # All tokens where audience == "alice"
-by_res = list(mgr.active_tokens_by_resource("*")) # Wildcard resource matching
-merge_result = mgr.merge(other_manager)           # Merge two stores
-mgr.revoke(cid)                                   # Revoke by CID
+cid = mgr.add(token)  # Add token → returns CID
+active = list(mgr.active_tokens_by_actor("alice"))  # All tokens where audience == "alice"
+by_res = list(mgr.active_tokens_by_resource("*"))  # Wildcard resource matching
+merge_result = mgr.merge(other_manager)  # Merge two stores
+mgr.revoke(cid)  # Revoke by CID
 ```
 
 ### NL UCAN Policy Compiler (`nl_ucan_policy.py`)
@@ -57,13 +57,13 @@ results_with_explain = compiler.compile_batch_with_explain(texts, fail_fast=Fals
 PubSub message bus for P2P communication:
 ```python
 bus = PubSubBus()
-sid = bus.subscribe("topic", handler)      # → subscription ID
+sid = bus.subscribe("topic", handler)  # → subscription ID
 bus.publish("topic", {"msg": "hello"})
-topics = bus.topics()                      # All active topics
-count = bus.total_subscriptions()          # Total subscription count (SIDs, not unique handlers)
-ranked = bus.topics_with_count()           # [(topic, count), ...] sorted by count desc
+topics = bus.topics()  # All active topics
+count = bus.total_subscriptions()  # Total subscription count (SIDs, not unique handlers)
+ranked = bus.topics_with_count()  # [(topic, count), ...] sorted by count desc
 replaced = bus.resubscribe(old_h, new_h, topic=None)  # Replace handler in-place → count
-topic_map = bus.topic_sid_map()            # {topic: sorted_sid_list}
+topic_map = bus.topic_sid_map()  # {topic: sorted_sid_list}
 ```
 
 ### Compliance Checker (`compliance_checker.py`)
@@ -76,12 +76,12 @@ summary = checker.backup_summary("/path/to/data")
 bak_files = checker.list_bak_files("/path/to/data")
 newest = checker.newest_backup_name("/path/to/data")  # basename or None
 oldest = checker.oldest_backup_name("/path/to/data")  # basename or None
-names = checker.backup_names("/path/to/data")         # list of basenames
+names = checker.backup_names("/path/to/data")  # list of basenames
 
 # Merge compliance states
 merge = ComplianceMergeResult(added=1, skipped_protected=0, skipped_duplicate=0)
-d = merge.to_dict()                        # {"added", "skipped_protected", "skipped_duplicate", "total"}
-m2 = ComplianceMergeResult.from_dict(d)   # classmethod; missing keys → 0; ignores "total" key
+d = merge.to_dict()  # {"added", "skipped_protected", "skipped_duplicate", "total"}
+m2 = ComplianceMergeResult.from_dict(d)  # classmethod; missing keys → 0; ignores "total" key
 ```
 
 ### Policy Audit Log (`policy_audit_log.py`)
@@ -159,6 +159,7 @@ The server supports two integration methods with IPFS Kit Python:
 
 ```python
 from ipfs_datasets_py.mcp_server import start_server
+
 start_server(host="0.0.0.0", port=8000)
 ```
 

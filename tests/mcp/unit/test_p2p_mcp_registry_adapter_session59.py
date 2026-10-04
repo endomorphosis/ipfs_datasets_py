@@ -14,6 +14,7 @@ Coverage targets (p2p_mcp_registry_adapter.py):
 - _detect_runtime: AttributeError in module check, exception in module check
 - tools property: non-dict host_tools early return
 """
+
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
@@ -35,6 +36,7 @@ from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _adapter(**kwargs) -> P2PMCPRegistryAdapter:
     """Create a fresh adapter with a minimal mock host."""
@@ -248,7 +250,9 @@ class TestProcessCategoryTools:
         """GIVEN valid tool WHEN processed THEN descriptor has hierarchical=True."""
         adapter = _adapter()
         out: dict = {}
-        with patch(_ANYIO_COMPAT_RUN, return_value={"tools": [{"name": "ht", "description": "hi"}]}):
+        with patch(
+            _ANYIO_COMPAT_RUN, return_value={"tools": [{"name": "ht", "description": "hi"}]}
+        ):
             adapter._process_category_tools(MagicMock(), "the_cat", out)
         assert out["ht"]["runtime_metadata"]["hierarchical"] is True
         assert out["ht"]["runtime_metadata"]["category"] == "the_cat"
@@ -272,9 +276,7 @@ class TestGetHierarchicalTools:
     def test_p2p_service_error_reraises(self):
         """GIVEN _get_tool_manager_safely raises P2PServiceError WHEN called THEN re-raised."""
         adapter = _adapter()
-        with patch.object(
-            adapter, "_get_tool_manager_safely", side_effect=P2PServiceError("p2p")
-        ):
+        with patch.object(adapter, "_get_tool_manager_safely", side_effect=P2PServiceError("p2p")):
             with pytest.raises(P2PServiceError):
                 adapter._get_hierarchical_tools()
 
@@ -292,9 +294,7 @@ class TestGetHierarchicalTools:
     def test_generic_outer_exception_swallowed(self):
         """GIVEN _get_tool_manager_safely raises unexpected error WHEN called THEN returns {}."""
         adapter = _adapter()
-        with patch.object(
-            adapter, "_get_tool_manager_safely", side_effect=RuntimeError("boom")
-        ):
+        with patch.object(adapter, "_get_tool_manager_safely", side_effect=RuntimeError("boom")):
             result = adapter._get_hierarchical_tools()
         assert result == {}
 
@@ -318,8 +318,12 @@ class TestGetHierarchicalTools:
 
         with patch.object(adapter, "_get_tool_manager_safely", return_value=mock_manager):
             with patch.object(adapter, "_discover_categories", return_value=["cat_x", "cat_y"]):
+
                 def _fake_process(manager, category, out):
-                    out[f"tool_from_{category}"] = {"function": lambda: None, "runtime": RUNTIME_FASTAPI}
+                    out[f"tool_from_{category}"] = {
+                        "function": lambda: None,
+                        "runtime": RUNTIME_FASTAPI,
+                    }
 
                 with patch.object(adapter, "_process_category_tools", side_effect=_fake_process):
                     result = adapter._get_hierarchical_tools()
@@ -338,12 +342,18 @@ class TestIsAsyncFunctionEdgeCases:
 
     def test_async_function_returns_true(self):
         """GIVEN an async def function WHEN called THEN True."""
-        async def _a(): pass
+
+        async def _a():
+            pass
+
         assert _adapter()._is_async_function(_a) is True
 
     def test_sync_function_returns_false(self):
         """GIVEN a regular function WHEN called THEN False."""
-        def _s(): pass
+
+        def _s():
+            pass
+
         assert _adapter()._is_async_function(_s) is False
 
     def test_non_callable_returns_false(self):
@@ -353,18 +363,21 @@ class TestIsAsyncFunctionEdgeCases:
     def test_inspect_raises_type_error_returns_false(self):
         """GIVEN inspect.iscoroutinefunction raises TypeError WHEN called THEN False."""
         import inspect
+
         with patch.object(inspect, "iscoroutinefunction", side_effect=TypeError("bad")):
             assert _adapter()._is_async_function(lambda: None) is False
 
     def test_inspect_raises_attribute_error_returns_false(self):
         """GIVEN inspect.iscoroutinefunction raises AttributeError WHEN called THEN False."""
         import inspect
+
         with patch.object(inspect, "iscoroutinefunction", side_effect=AttributeError("bad")):
             assert _adapter()._is_async_function(lambda: None) is False
 
     def test_inspect_raises_generic_exception_returns_false(self):
         """GIVEN inspect.iscoroutinefunction raises RuntimeError WHEN called THEN False."""
         import inspect
+
         with patch.object(inspect, "iscoroutinefunction", side_effect=RuntimeError("bad")):
             assert _adapter()._is_async_function(lambda: None) is False
 
@@ -395,6 +408,7 @@ class TestBuildToolWrapper:
     def test_wrapper_is_coroutine_function(self):
         """GIVEN wrapper built THEN it is async."""
         import inspect
+
         fn = _adapter()._build_tool_wrapper("cat", "tool")
         assert inspect.iscoroutinefunction(fn)
 
@@ -436,6 +450,7 @@ class TestDetectRuntimeEdgeCases:
     def test_explicit_fastapi_marker_overrides(self):
         """GIVEN fn._mcp_runtime='fastapi' WHEN detected THEN RUNTIME_FASTAPI."""
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import RUNTIME_FASTAPI
+
         adapter = _adapter()
         fn = MagicMock()
         fn._mcp_runtime = RUNTIME_FASTAPI
@@ -445,6 +460,7 @@ class TestDetectRuntimeEdgeCases:
     def test_explicit_trio_marker_overrides(self):
         """GIVEN fn._mcp_runtime='trio' WHEN detected THEN RUNTIME_TRIO."""
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import RUNTIME_TRIO
+
         adapter = _adapter()
         fn = MagicMock()
         fn._mcp_runtime = RUNTIME_TRIO

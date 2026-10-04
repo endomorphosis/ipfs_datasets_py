@@ -73,10 +73,7 @@ def _source_input_sha256(case: BenchmarkCase) -> str:
 
 
 def _frontend_capabilities() -> dict[str, object]:
-    return {
-        key: {"status": "available", "reason": ""}
-        for key in frontend_report.CAPABILITY_KEYS
-    }
+    return {key: {"status": "available", "reason": ""} for key in frontend_report.CAPABILITY_KEYS}
 
 
 def _semantic_terms(case: BenchmarkCase) -> tuple[str, ...]:
@@ -117,61 +114,39 @@ def _stage_payload(
     expected_ir = dict(case.expected_ir)
     if stage is StageName.COMPILER:
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"),
             "modal_ir": expected_ir,
             "modal_ir_sha256": _sha(expected_ir),
         }
     if stage is StageName.SPACY:
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"),
             "modal_ir": expected_ir,
             "tokens": [
-                {"text": term, "lemma": term, "lower": term}
-                for term in _semantic_terms(case)
+                {"text": term, "lemma": term, "lower": term} for term in _semantic_terms(case)
             ],
-            "entities": [
-                {"text": entity} for entity in case.required_entities
-            ],
-            "semantic_roles": [
-                {"predicate": predicate}
-                for predicate in case.required_predicates
-            ],
+            "entities": [{"text": entity} for entity in case.required_entities],
+            "semantic_roles": [{"predicate": predicate} for predicate in case.required_predicates],
             "modal_cues": [{"family": expected_ir["logic"]}],
         }
     if stage is StageName.SYMAI and suppress_symai:
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"),
             "stage": "symai",
             "invoked": False,
             "reason": "frontend_ambiguity_gate_closed",
             "invocation_index": 2,
         }
     if stage is StageName.SYMAI:
-        candidate = (
-            {"logic": "fol", "target": "wrong_target"}
-            if wrong_symai
-            else expected_ir
-        )
+        candidate = {"logic": "fol", "target": "wrong_target"} if wrong_symai else expected_ir
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"),
             "candidate_ir": candidate,
             "candidate_ir_sha256": _sha(candidate),
-            "normalized_predicates": (
-                [] if wrong_symai else list(case.required_predicates)
-            ),
+            "normalized_predicates": ([] if wrong_symai else list(case.required_predicates)),
             "entities": [] if wrong_symai else list(case.required_entities),
             "ambiguity_flags": (
-                ["semantic_ambiguity"]
-                if case.expected_class is ExpectedClass.AMBIGUOUS
-                else []
+                ["semantic_ambiguity"] if case.expected_class is ExpectedClass.AMBIGUOUS else []
             ),
             "validation_errors": (
                 ["unsupported_construct"]
@@ -205,9 +180,7 @@ def _case_result(
     stages: list[StageRecord] = []
     for stage_name in route:
         terminal = not stages and (unavailable or failed)
-        graph_invoked = not (
-            stage_name is StageName.SYMAI and suppress_symai
-        )
+        graph_invoked = not (stage_name is StageName.SYMAI and suppress_symai)
         effective_identity: dict[str, object] = {
             "component": stage_name.value,
         }
@@ -240,9 +213,7 @@ def _case_result(
                     effective_identity=effective_identity,
                     input_sha256=_source_input_sha256(case),
                     environment_sha256=ENVIRONMENT_SHA256,
-                    upstream_stage_digests=tuple(
-                        stage.digest for stage in stages
-                    ),
+                    upstream_stage_digests=tuple(stage.digest for stage in stages),
                 ),
                 telemetry=TelemetryRecord(
                     wall_time_ms=2.0,
@@ -253,8 +224,7 @@ def _case_result(
                     model_calls=int(
                         not terminal
                         and graph_invoked
-                        and stage_name
-                        in {StageName.SYMAI, StageName.LEANSTRAL}
+                        and stage_name in {StageName.SYMAI, StageName.LEANSTRAL}
                     ),
                     resource_lane=_LANES[stage_name],
                 ),
@@ -266,10 +236,7 @@ def _case_result(
                         variant_id,
                         cache_mode,
                     )
-                    if (
-                        stage_name is StageName.KERNEL
-                        and not omit_graph_invoked
-                    )
+                    if (stage_name is StageName.KERNEL and not omit_graph_invoked)
                     else _stage_payload(
                         stage_name,
                         case,
@@ -357,10 +324,7 @@ def test_builds_complete_source_bound_receipts_with_gated_zero_calls(
     assert evidence.report["execution_mode"] == "measured"
     assert all(
         receipt["matrix_artifact_sha256"] == MATRIX_SHA256
-        and receipt["evaluation_boundary"][
-            "validator_invoked_adapter_or_model"
-        ]
-        is False
+        and receipt["evaluation_boundary"]["validator_invoked_adapter_or_model"] is False
         and receipt["holdout_accessed"] is False
         for receipt in evidence.receipts
     )
@@ -380,21 +344,22 @@ def test_builds_complete_source_bound_receipts_with_gated_zero_calls(
     receipt = next(
         row
         for row in evidence.receipts
-        if tuple(row["coordinate"][key] for key in (
-            "split",
-            "cache_mode",
-            "variant_id",
-            "case_id",
-        ))
+        if tuple(
+            row["coordinate"][key]
+            for key in (
+                "split",
+                "cache_mode",
+                "variant_id",
+                "case_id",
+            )
+        )
         == coordinate
     )
     assert observation["symai_invoked"] is False
     assert observation["symai_model_calls"] == 0
     assert receipt["semantic_source"]["selected_stage"] == "spacy"
     symai_binding = next(
-        binding
-        for binding in receipt["front_end_stage_bindings"]
-        if binding["stage"] == "symai"
+        binding for binding in receipt["front_end_stage_bindings"] if binding["stage"] == "symai"
     )
     assert symai_binding["graph_invoked"] is False
 
@@ -415,8 +380,7 @@ def test_semantic_observations_include_symai_setup_cost_once(
             setup
             if stage.stage is StageName.SYMAI
             and stage.cache_mode is CacheMode.WARM
-            and stage.provenance.effective_identity.get("graph_invoked")
-            is True
+            and stage.provenance.effective_identity.get("graph_invoked") is True
             else None
         )
 
@@ -445,18 +409,10 @@ def test_semantic_observations_include_symai_setup_cost_once(
     warm_result = CaseResultRecord.from_dict(warm["case_result"])
     assert warm["symai_model_calls"] == 3
     assert warm["model_calls"] == (
-        sum(
-            stage.telemetry.model_calls
-            for stage in warm_result.stages
-        )
-        + 2
+        sum(stage.telemetry.model_calls for stage in warm_result.stages) + 2
     )
     assert warm["total_wall_time_ms"] == (
-        sum(
-            stage.telemetry.wall_time_ms
-            for stage in warm_result.stages
-        )
-        + 11.0
+        sum(stage.telemetry.wall_time_ms for stage in warm_result.stages) + 11.0
     )
     cold = next(
         row
@@ -470,9 +426,7 @@ def test_semantic_observations_include_symai_setup_cost_once(
         == ("pilot", "cold", "A5", "pilot-p01")
     )
     cold_result = CaseResultRecord.from_dict(cold["case_result"])
-    assert cold["model_calls"] == sum(
-        stage.telemetry.model_calls for stage in cold_result.stages
-    )
+    assert cold["model_calls"] == sum(stage.telemetry.model_calls for stage in cold_result.stages)
 
 
 def test_distinguishes_incorrect_semantics_from_capability_missingness(
@@ -501,25 +455,22 @@ def test_distinguishes_incorrect_semantics_from_capability_missingness(
 
     evidence = _evaluate(changed)
     by_coordinate = {
-        tuple(receipt["coordinate"][key] for key in (
-            "split",
-            "cache_mode",
-            "variant_id",
-            "case_id",
-        )): receipt
+        tuple(
+            receipt["coordinate"][key]
+            for key in (
+                "split",
+                "cache_mode",
+                "variant_id",
+                "case_id",
+            )
+        ): receipt
         for receipt in evidence.receipts
     }
-    incorrect = by_coordinate[
-        ("pilot", "cold", "A5", "pilot-p01")
-    ]
-    missing = by_coordinate[
-        ("development", "warm", "A1", "development-d01")
-    ]
+    incorrect = by_coordinate[("pilot", "cold", "A5", "pilot-p01")]
+    missing = by_coordinate[("development", "warm", "A1", "development-d01")]
     assert incorrect["evaluation"]["status"] == "semantically_incorrect"
     assert incorrect["evaluation"]["normalized_ir_exact_match"] is False
-    assert incorrect["evaluation"]["structured_coverage"][
-        "missing_predicates"
-    ]
+    assert incorrect["evaluation"]["structured_coverage"]["missing_predicates"]
     assert missing["evaluation"]["status"] == "unavailable"
     assert missing["evaluation"]["structured_coverage"] is None
     assert missing["evaluation"]["missing_reason"]
@@ -530,13 +481,9 @@ def test_rejects_duplicate_incomplete_unbound_and_unrepresentable_inputs(
     cases: tuple[BenchmarkCase, ...],
     results: tuple[CaseResultRecord, ...],
 ) -> None:
-    with pytest.raises(
-        SemanticReassessmentError, match="duplicate coordinates"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="duplicate coordinates"):
         _evaluate((*results, results[0]))
-    with pytest.raises(
-        SemanticReassessmentError, match="complete 240-coordinate"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="complete 240-coordinate"):
         _evaluate(results[:-1])
 
     first = cases[0]
@@ -549,9 +496,7 @@ def test_rejects_duplicate_incomplete_unbound_and_unrepresentable_inputs(
             omit_graph_invoked=True,
         ),
     )
-    with pytest.raises(
-        SemanticReassessmentError, match="explicit graph_invoked"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="explicit graph_invoked"):
         _evaluate(no_invocation_receipt)
 
     rejected_without_semantics = _replace(
@@ -583,9 +528,7 @@ def test_persists_write_once_index_and_detects_receipt_tampering(
         repository_root=tmp_path,
         benchmark_root=benchmark_root,
     )
-    layout = ReassessmentRunLayout.for_run(
-        RUN_ID, benchmark_root=benchmark_root
-    )
+    layout = ReassessmentRunLayout.for_run(RUN_ID, benchmark_root=benchmark_root)
 
     assert index["scope"]["coordinate_count"] == 240
     assert len(index["receipts"]) == 240
@@ -593,21 +536,21 @@ def test_persists_write_once_index_and_detects_receipt_tampering(
     assert layout.frontend_receipt_index.is_file()
     assert layout.frontend_receipt_directory.is_dir()
     assert all(
-        str(ref["path"]).startswith("receipts/semantic-validation/")
-        for ref in index["receipts"]
+        str(ref["path"]).startswith("receipts/semantic-validation/") for ref in index["receipts"]
     )
     assert str(tmp_path) not in canonical_json(index)
-    assert validate_semantic_reassessment(
-        run_id=RUN_ID,
-        capabilities=_frontend_capabilities(),
-        case_results=results,
-        matrix_binding=MATRIX_BINDING,
-        repository_root=tmp_path,
-        benchmark_root=benchmark_root,
-    ) == index
-    with pytest.raises(
-        SemanticReassessmentError, match="already exists"
-    ):
+    assert (
+        validate_semantic_reassessment(
+            run_id=RUN_ID,
+            capabilities=_frontend_capabilities(),
+            case_results=results,
+            matrix_binding=MATRIX_BINDING,
+            repository_root=tmp_path,
+            benchmark_root=benchmark_root,
+        )
+        == index
+    )
+    with pytest.raises(SemanticReassessmentError, match="already exists"):
         build_semantic_reassessment(
             run_id=RUN_ID,
             capabilities=_frontend_capabilities(),
@@ -618,17 +561,13 @@ def test_persists_write_once_index_and_detects_receipt_tampering(
         )
 
     receipt_directory = layout.frontend_receipt_directory
-    real_receipt_directory = receipt_directory.with_name(
-        "semantic-validation-real"
-    )
+    real_receipt_directory = receipt_directory.with_name("semantic-validation-real")
     receipt_directory.rename(real_receipt_directory)
     receipt_directory.symlink_to(
         real_receipt_directory,
         target_is_directory=True,
     )
-    with pytest.raises(
-        SemanticReassessmentError, match="must not use a symlink"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="must not use a symlink"):
         validate_semantic_reassessment(
             run_id=RUN_ID,
             capabilities=_frontend_capabilities(),
@@ -648,9 +587,7 @@ def test_persists_write_once_index_and_detects_receipt_tampering(
         canonical_json(receipt) + "\n",
         encoding="utf-8",
     )
-    with pytest.raises(
-        SemanticReassessmentError, match="receipt changed"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="receipt changed"):
         validate_semantic_reassessment(
             run_id=RUN_ID,
             capabilities=_frontend_capabilities(),
@@ -660,9 +597,7 @@ def test_persists_write_once_index_and_detects_receipt_tampering(
             benchmark_root=benchmark_root,
         )
 
-    with pytest.raises(
-        SemanticReassessmentError, match="published immutable evidence"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="published immutable evidence"):
         build_semantic_reassessment(
             run_id="reassessment-v2",
             capabilities=_frontend_capabilities(),
@@ -685,18 +620,19 @@ def test_external_matrix_results_are_confined_to_the_matrix_namespace(
     index_path = result_root / "matrix-execution-v2.json"
     index_path.write_text("{}\n", encoding="utf-8")
 
-    assert semantic._safe_matrix_result_path(
-        repository=repository,
-        index_path=index_path,
-        relative_path="matrix/pilot/cold/A0/pilot-p01.json",
-    ) == result_path
+    assert (
+        semantic._safe_matrix_result_path(
+            repository=repository,
+            index_path=index_path,
+            relative_path="matrix/pilot/cold/A0/pilot-p01.json",
+        )
+        == result_path
+    )
 
     real_matrix = result_root / "matrix-real"
     (result_root / "matrix").rename(real_matrix)
     (result_root / "matrix").symlink_to(real_matrix, target_is_directory=True)
-    with pytest.raises(
-        SemanticReassessmentError, match="must not use a symlink"
-    ):
+    with pytest.raises(SemanticReassessmentError, match="must not use a symlink"):
         semantic._safe_matrix_result_path(
             repository=repository,
             index_path=index_path,

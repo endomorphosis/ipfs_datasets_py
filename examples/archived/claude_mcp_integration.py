@@ -3,6 +3,7 @@ Example of using the IPFS Datasets MCP server with Claude.
 
 This example demonstrates how Claude can interact with IPFS datasets through the MCP server.
 """
+
 import anyio
 import json
 import os
@@ -23,9 +24,13 @@ def start_mcp_server_background():
 
     # Start the server as a subprocess
     process = subprocess.Popen(
-        [sys.executable, "-c", "from ipfs_datasets_py.mcp_server import start_server; start_server(host='localhost', port=8123)"],
+        [
+            sys.executable,
+            "-c",
+            "from ipfs_datasets_py.mcp_server import start_server; start_server(host='localhost', port=8123)",
+        ],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
     # Give the server some time to start

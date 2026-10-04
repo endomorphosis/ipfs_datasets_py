@@ -18,15 +18,21 @@ class ArkansasScraper(BaseStateScraper):
 
     _AR_JUSTIA_TITLE_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/?$", re.IGNORECASE)
     _AR_JUSTIA_VERSION_RE = re.compile(r"/codes/arkansas/\d{4}/?$", re.IGNORECASE)
-    _AR_JUSTIA_INTERMEDIATE_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/(?!.*section-)[^?#]+/?$", re.IGNORECASE)
-    _AR_JUSTIA_SECTION_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/.*/section-[^/]+/?$", re.IGNORECASE)
+    _AR_JUSTIA_INTERMEDIATE_RE = re.compile(
+        r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/(?!.*section-)[^?#]+/?$", re.IGNORECASE
+    )
+    _AR_JUSTIA_SECTION_RE = re.compile(
+        r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/.*/section-[^/]+/?$", re.IGNORECASE
+    )
     _AR_SECTION_NUMBER_RE = re.compile(r"/section-([^/]+)/?$", re.IGNORECASE)
     _AR_CLOUDFLARE_CHALLENGE_RE = re.compile(
         r"(cf-mitigated|challenge-platform|enable javascript and cookies|just a moment)",
         re.IGNORECASE,
     )
 
-    def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+    def _filter_non_code_results(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []
         for statute in statutes:
             url = str(statute.source_url or "").lower()
@@ -78,15 +84,21 @@ class ArkansasScraper(BaseStateScraper):
         except asyncio.TimeoutError:
             payload = b""
         if self._looks_like_challenge_page(payload):
-            self._record_fetch_event(provider="requests_direct", success=False, error="cloudflare_challenge")
+            self._record_fetch_event(
+                provider="requests_direct", success=False, error="cloudflare_challenge"
+            )
             return b""
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
         return payload
 
     async def _fetch_justia_html(self, url: str, timeout_seconds: int = 18) -> bytes:
-        payload = await self._fetch_direct_html(url, timeout_seconds=min(8, max(1, int(timeout_seconds or 18))))
+        payload = await self._fetch_direct_html(
+            url, timeout_seconds=min(8, max(1, int(timeout_seconds or 18)))
+        )
         if payload:
             return payload
 
@@ -94,7 +106,9 @@ class ArkansasScraper(BaseStateScraper):
         try:
             from playwright.async_api import async_playwright
         except Exception as exc:
-            self._record_fetch_event(provider="playwright_justia", success=False, error=f"playwright_unavailable: {exc}")
+            self._record_fetch_event(
+                provider="playwright_justia", success=False, error=f"playwright_unavailable: {exc}"
+            )
             return b""
 
         try:
@@ -117,23 +131,21 @@ class ArkansasScraper(BaseStateScraper):
 
         payload = content.encode("utf-8", errors="ignore")
         if self._looks_like_challenge_page(payload):
-            self._record_fetch_event(provider="playwright_justia", success=False, error="cloudflare_challenge")
+            self._record_fetch_event(
+                provider="playwright_justia", success=False, error="cloudflare_challenge"
+            )
             return b""
         self._record_fetch_event(provider="playwright_justia", success=bool(payload))
         return payload
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Arkansas's legislative website."""
         return "https://www.arkleg.state.ar.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Arkansas."""
-        return [{
-            "name": "Arkansas Code",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "Arkansas Code", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -141,11 +153,11 @@ class ArkansasScraper(BaseStateScraper):
         max_statutes: int | None = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Arkansas's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -187,7 +199,9 @@ class ArkansasScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=limit or 1000000)
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Ark. Code Ann.", max_sections=limit or 1000000
+            )
             statutes = self._filter_non_code_results(statutes)
             _merge(statutes)
             if limit is not None and len(merged) >= limit:
@@ -195,7 +209,9 @@ class ArkansasScraper(BaseStateScraper):
 
         return merged[:limit] if limit is not None else merged
 
-    async def _scrape_justia_titles(self, code_name: str, max_statutes: Optional[int]) -> List[NormalizedStatute]:
+    async def _scrape_justia_titles(
+        self, code_name: str, max_statutes: Optional[int]
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -230,7 +246,9 @@ class ArkansasScraper(BaseStateScraper):
             if title_index_url == index_url:
                 title_soup = soup
             else:
-                title_index_payload = await self._fetch_justia_html(title_index_url, timeout_seconds=18)
+                title_index_payload = await self._fetch_justia_html(
+                    title_index_url, timeout_seconds=18
+                )
                 if not title_index_payload:
                     continue
                 title_soup = BeautifulSoup(title_index_payload, "html.parser")
@@ -264,27 +282,41 @@ class ArkansasScraper(BaseStateScraper):
             for anchor in title_soup.find_all("a", href=True):
                 href = urljoin(title_url, str(anchor.get("href") or "").strip())
                 if not self._AR_JUSTIA_SECTION_RE.search(href):
-                    if self._AR_JUSTIA_INTERMEDIATE_RE.search(href) and href not in seen_intermediate and href != title_url:
+                    if (
+                        self._AR_JUSTIA_INTERMEDIATE_RE.search(href)
+                        and href not in seen_intermediate
+                        and href != title_url
+                    ):
                         seen_intermediate.add(href)
                         intermediate_urls.append(href)
                     continue
                 if href not in seen_sections:
                     seen_sections.add(href)
                     section_urls.append(href)
-                if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
+                if section_limit is not None and len(section_urls) >= max(
+                    1, int(section_limit * 4)
+                ):
                     break
-            if section_limit is not None and len(intermediate_urls) >= max(1, int(section_limit * 2)):
+            if section_limit is not None and len(intermediate_urls) >= max(
+                1, int(section_limit * 2)
+            ):
                 break
             if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
                 break
 
-        intermediate_scan = intermediate_urls[: max(1, int(section_limit * 2))] if section_limit is not None else intermediate_urls
+        intermediate_scan = (
+            intermediate_urls[: max(1, int(section_limit * 2))]
+            if section_limit is not None
+            else intermediate_urls
+        )
         self.logger.info(
             "Arkansas Justia: discovered %d direct section urls and %d intermediate urls",
             len(section_urls),
             len(intermediate_urls),
         )
-        heartbeat_seconds = max(15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60)))
+        heartbeat_seconds = max(
+            15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60))
+        )
         last_heartbeat = time.monotonic()
         for idx, page_url in enumerate(intermediate_scan, start=1):
             try:
@@ -302,7 +334,9 @@ class ArkansasScraper(BaseStateScraper):
                     continue
                 seen_sections.add(href)
                 section_urls.append(href)
-                if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
+                if section_limit is not None and len(section_urls) >= max(
+                    1, int(section_limit * 4)
+                ):
                     break
             now = time.monotonic()
             if now - last_heartbeat >= heartbeat_seconds:
@@ -321,15 +355,24 @@ class ArkansasScraper(BaseStateScraper):
 
         async def _fetch_one(section_url: str, index: int) -> NormalizedStatute | None:
             async with sem:
-                return await self._build_justia_statute(code_name=code_name, section_url=section_url, fallback_number=str(index))
+                return await self._build_justia_statute(
+                    code_name=code_name, section_url=section_url, fallback_number=str(index)
+                )
 
         statutes: List[NormalizedStatute] = []
-        urls_to_fetch = section_urls[: max(1, int(section_limit * 4))] if section_limit is not None else section_urls
+        urls_to_fetch = (
+            section_urls[: max(1, int(section_limit * 4))]
+            if section_limit is not None
+            else section_urls
+        )
         batch_size = 24
         last_heartbeat = time.monotonic()
         for offset in range(0, len(urls_to_fetch), batch_size):
             batch = urls_to_fetch[offset : offset + batch_size]
-            jobs = [_fetch_one(section_url, offset + idx) for idx, section_url in enumerate(batch, start=1)]
+            jobs = [
+                _fetch_one(section_url, offset + idx)
+                for idx, section_url in enumerate(batch, start=1)
+            ]
             for result in await asyncio.gather(*jobs, return_exceptions=True):
                 if isinstance(result, Exception) or result is None:
                     continue
@@ -348,7 +391,9 @@ class ArkansasScraper(BaseStateScraper):
 
         return statutes
 
-    async def _build_justia_statute(self, *, code_name: str, section_url: str, fallback_number: str) -> NormalizedStatute | None:
+    async def _build_justia_statute(
+        self, *, code_name: str, section_url: str, fallback_number: str
+    ) -> NormalizedStatute | None:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -361,7 +406,11 @@ class ArkansasScraper(BaseStateScraper):
         if not payload:
             return None
 
-        html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+        html = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, bytes)
+            else str(payload)
+        )
         soup = BeautifulSoup(html, "html.parser")
         content_node = (
             soup.select_one("div.wrapper")

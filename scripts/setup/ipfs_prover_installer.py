@@ -299,7 +299,9 @@ def ensure_z3(*, yes: bool, strict: bool) -> bool:
                     executable_name="z3",
                     dest_path=dest,
                 ):
-                    rc = subprocess.run([str(dest), "--version"], capture_output=True, text=True, timeout=10)
+                    rc = subprocess.run(
+                        [str(dest), "--version"], capture_output=True, text=True, timeout=10
+                    )
                     if rc.returncode == 0:
                         print(f"Installed Z3 to {dest}")
                         return True
@@ -408,7 +410,9 @@ def ensure_coq(*, yes: bool, strict: bool, allow_sudo: bool = False) -> bool:
                         print("Installed Coq via sudo apt-get.")
                         return True
                 elif _sudo_non_interactive_ok():
-                    print("Attempting to install Coq via sudo apt-get (passwordless sudo detected)...")
+                    print(
+                        "Attempting to install Coq via sudo apt-get (passwordless sudo detected)..."
+                    )
                     _run(["sudo", "-n", "apt-get", "update"], check=False)
                     rc = _run(["sudo", "-n", "apt-get", "install", "-y", "coq"], check=False)
                     if rc == 0 and _which("coqc"):
@@ -418,7 +422,13 @@ def ensure_coq(*, yes: bool, strict: bool, allow_sudo: bool = False) -> bool:
                 # Don't block on an interactive sudo prompt; this installer is used in non-interactive contexts.
                 pass
 
-        if have_apt and not is_root and have_sudo and (not allow_sudo) and not _sudo_non_interactive_ok():
+        if (
+            have_apt
+            and not is_root
+            and have_sudo
+            and (not allow_sudo)
+            and not _sudo_non_interactive_ok()
+        ):
             print(
                 "Coq not found. Auto-install via apt-get requires root or passwordless sudo.\n"
                 "You can install manually with:\n"
@@ -455,14 +465,21 @@ def _ensure_symai_config_for_import() -> None:
         home = Path.home()
     except (OSError, RuntimeError):
         home = Path(tempfile.gettempdir())
-    prefix = Path(os.environ.get("IPFS_DATASETS_PY_SYMAI_PREFIX", home / ".local" / "share" / "ipfs_datasets_py" / "symai"))
+    prefix = Path(
+        os.environ.get(
+            "IPFS_DATASETS_PY_SYMAI_PREFIX",
+            home / ".local" / "share" / "ipfs_datasets_py" / "symai",
+        )
+    )
     config_dir = prefix / ".symai"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / "symai.config.json"
     if not config_path.exists():
         config = {
             "NEUROSYMBOLIC_ENGINE_API_KEY": os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs"),
-            "NEUROSYMBOLIC_ENGINE_MODEL": os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL", "ipfs:default"),
+            "NEUROSYMBOLIC_ENGINE_MODEL": os.environ.get(
+                "NEUROSYMBOLIC_ENGINE_MODEL", "ipfs:default"
+            ),
             "SYMBOLIC_ENGINE_API_KEY": "",
             "SYMBOLIC_ENGINE": "ipfs",
             "FORMAL_ENGINE_API_KEY": "",
@@ -526,18 +543,27 @@ def ensure_symbolicai(*, yes: bool, strict: bool) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Best-effort installer for optional theorem provers")
+    parser = argparse.ArgumentParser(
+        description="Best-effort installer for optional theorem provers"
+    )
     parser.add_argument("--z3", action="store_true", help="Install/ensure Z3")
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean 4")
-    parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument(
+        "--coq",
+        "--rocq",
+        action="store_true",
+        help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)",
+    )
     parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
     parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
     parser.add_argument("--maude", action="store_true", help="Install/ensure Maude")
     parser.add_argument("--proverif", action="store_true", help="Install/ensure headless ProVerif")
     parser.add_argument("--cvc5-cli", action="store_true", help="Install/ensure the CVC5 CLI")
     parser.add_argument("--vampire", action="store_true", help="Install/ensure Vampire")
-    parser.add_argument("--eprover", "--e-prover", action="store_true", help="Install/ensure E prover")
+    parser.add_argument(
+        "--eprover", "--e-prover", action="store_true", help="Install/ensure E prover"
+    )
     parser.add_argument(
         "--isabelle",
         action="store_true",
@@ -579,9 +605,15 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="Exclude a solver inherited from a selected portfolio; repeatable.",
     )
-    parser.add_argument("--check-updates", action="store_true", help="Report managed solver version drift")
-    parser.add_argument("--update", action="store_true", help="Manually refresh selected managed solvers")
-    parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
+    parser.add_argument(
+        "--check-updates", action="store_true", help="Report managed solver version drift"
+    )
+    parser.add_argument(
+        "--update", action="store_true", help="Manually refresh selected managed solvers"
+    )
+    parser.add_argument(
+        "--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI"
+    )
     parser.add_argument("--yes", action="store_true", help="Non-interactive / accept defaults")
     parser.add_argument(
         "--allow-sudo",

@@ -37,9 +37,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
 )
 
 
-FEATURE_TRANSFER_CANARY_SCHEMA_VERSION = (
-    "modal-autoencoder-feature-transfer-canary-v1"
-)
+FEATURE_TRANSFER_CANARY_SCHEMA_VERSION = "modal-autoencoder-feature-transfer-canary-v1"
 BRIDGE_NAMES = (
     "modal_frame_logic",
     "deontic_norms",
@@ -411,34 +409,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     transfer_report = _load_json(paths["transfer_report"])
     transfer_digest = _verify_report_digest(transfer_report)
     artifacts = _mapping(transfer_report.get("artifacts"))
-    if _mapping(artifacts.get("output_state")).get("sha256") != _sha256_file(
-        paths["candidate"]
-    ):
+    if _mapping(artifacts.get("output_state")).get("sha256") != _sha256_file(paths["candidate"]):
         raise SystemExit("candidate checkpoint does not match transfer report")
-    if _mapping(artifacts.get("target_state")).get("sha256") != _sha256_file(
-        paths["target"]
-    ):
+    if _mapping(artifacts.get("target_state")).get("sha256") != _sha256_file(paths["target"]):
         raise SystemExit("target checkpoint does not match transfer report")
 
     baseline_summary = _load_json(paths["baseline_summary"])
-    indices = tuple(
-        int(value)
-        for value in baseline_summary.get("validation_canary_indices", [])
-    )
+    indices = tuple(int(value) for value in baseline_summary.get("validation_canary_indices", []))
     if len(indices) != 8 or len(set(indices)) != 8:
         raise SystemExit("baseline summary must bind exactly eight unique canary rows")
-    params = _mapping(
-        _mapping(transfer_report.get("selection_lineage")).get("params")
-    )
+    params = _mapping(_mapping(transfer_report.get("selection_lineage")).get("params"))
     family_scale = float(params.get("fam", 1.0))
     embedding_scale = float(params.get("emb", 0.5))
 
     dataset_started = time.monotonic()
     laws_table = load_laws_table()
-    samples = [
-        row_to_sample(laws_table.take([index]).to_pylist()[0])
-        for index in indices
-    ]
+    samples = [row_to_sample(laws_table.take([index]).to_pylist()[0]) for index in indices]
     dataset_seconds = time.monotonic() - dataset_started
     targets_started = time.monotonic()
     target_payload = _legal_ir_target_payload(

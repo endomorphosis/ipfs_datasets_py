@@ -66,7 +66,7 @@ schema = await manager.get_tool_schema("legal_dataset_tools", "multi_engine_lega
 result = await manager.dispatch_tool(
     category="legal_dataset_tools",
     tool="multi_engine_legal_search",
-    params={"query": "EPA regulations", "engines": ["brave", "duckduckgo"]}
+    params={"query": "EPA regulations", "engines": ["brave", "duckduckgo"]},
 )
 ```
 
@@ -84,7 +84,7 @@ Enhancement 12 provides 8 comprehensive legal search tools.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.multi_engine_legal_search import (
-    multi_engine_legal_search
+    multi_engine_legal_search,
 )
 
 # Basic search
@@ -93,7 +93,7 @@ result = await multi_engine_legal_search(
     engines=["brave", "duckduckgo"],
     max_results=20,
     parallel_enabled=True,
-    fallback_enabled=True
+    fallback_enabled=True,
 )
 
 print(f"Status: {result['status']}")
@@ -117,7 +117,7 @@ print(f"Engines used: {result['engines_used']}")
     "results": [...],
     "total_results": 45,
     "engines_used": ["brave", "duckduckgo"],
-    "metadata": {...}
+    "metadata": {...},
 }
 ```
 
@@ -131,7 +131,7 @@ print(f"Engines used: {result['engines_used']}")
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.enhanced_query_expander import (
-    expand_legal_query
+    expand_legal_query,
 )
 
 # Expand query
@@ -141,7 +141,7 @@ result = await expand_legal_query(
     max_expansions=10,
     include_synonyms=True,
     include_related=True,
-    domains=["environmental", "administrative"]
+    domains=["environmental", "administrative"],
 )
 
 print(f"Original: {result['original_query']}")
@@ -169,9 +169,7 @@ print(f"Expansions: {result['expanded_queries']}")
 **Usage**:
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.result_filter import (
-    filter_legal_results
-)
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.result_filter import filter_legal_results
 
 # Filter results
 result = await filter_legal_results(
@@ -181,7 +179,7 @@ result = await filter_legal_results(
     jurisdictions=["federal", "state"],
     min_quality_score=0.7,
     enable_fuzzy_dedup=True,
-    similarity_threshold=0.85
+    similarity_threshold=0.85,
 )
 
 print(f"Filtered from {result['total_input']} to {result['total_output']}")
@@ -205,7 +203,7 @@ print(f"Removed: {result['removed_total']}")
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.citation_extraction_tool import (
     extract_legal_citations,
-    export_citations
+    export_citations,
 )
 
 # Extract citations
@@ -213,7 +211,7 @@ result = await extract_legal_citations(
     results=search_results,
     build_network=True,
     rank_by="importance",  # importance, frequency, or recency
-    citation_types=["case", "statute", "regulation"]
+    citation_types=["case", "statute", "regulation"],
 )
 
 print(f"Found {result['total_citations']} citations")
@@ -221,9 +219,9 @@ print(f"Types: {result['citation_types_found']}")
 
 # Export citations
 export_result = await export_citations(
-    citations=result['citations'],
+    citations=result["citations"],
     format="graphml",  # json, csv, graphml, or dot
-    output_path="/tmp/citations.graphml"
+    output_path="/tmp/citations.graphml",
 )
 ```
 
@@ -238,13 +236,13 @@ export_result = await export_citations(
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_graphrag_tool import (
     create_legal_knowledge_graph,
-    search_legal_graph
+    search_legal_graph,
 )
 
 # Create knowledge graph
 documents = [
     {"id": "1", "title": "Case A", "content": "..."},
-    {"id": "2", "title": "Statute B", "content": "..."}
+    {"id": "2", "title": "Statute B", "content": "..."},
 ]
 
 graph_result = await create_legal_knowledge_graph(
@@ -252,15 +250,15 @@ graph_result = await create_legal_knowledge_graph(
     extract_entities=True,
     extract_relationships=True,
     entity_types=["case", "statute", "party"],
-    min_confidence=0.7
+    min_confidence=0.7,
 )
 
 # Search graph
 search_result = await search_legal_graph(
-    graph_id=graph_result['graph_id'],
+    graph_id=graph_result["graph_id"],
     query="regulations on water pollution",
     search_type="semantic",  # semantic, keyword, structural, or hybrid
-    include_subgraph=True
+    include_subgraph=True,
 )
 ```
 
@@ -276,20 +274,16 @@ search_result = await search_legal_graph(
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.multilanguage_support_tool import (
     detect_query_language,
     translate_legal_query,
-    cross_language_legal_search
+    cross_language_legal_search,
 )
 
 # Detect language
-lang_result = await detect_query_language(
-    query="Was sind die EPA-Vorschriften?"
-)
+lang_result = await detect_query_language(query="Was sind die EPA-Vorschriften?")
 print(f"Detected: {lang_result['detected_language']}")  # "de"
 
 # Translate query
 trans_result = await translate_legal_query(
-    query="EPA water regulations",
-    target_language="de",
-    preserve_legal_terms=True
+    query="EPA water regulations", target_language="de", preserve_legal_terms=True
 )
 print(f"Translation: {trans_result['translated_query']}")
 
@@ -298,7 +292,7 @@ search_result = await cross_language_legal_search(
     query="water pollution regulations",
     languages=["en", "de", "fr"],
     max_results_per_language=10,
-    translate_results=True
+    translate_results=True,
 )
 ```
 
@@ -314,7 +308,7 @@ search_result = await cross_language_legal_search(
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.regulation_version_tracker_tool import (
     track_regulation_version,
     get_regulation_at_date,
-    get_regulation_changes
+    get_regulation_changes,
 )
 
 # Track a new version
@@ -322,21 +316,15 @@ track_result = await track_regulation_version(
     regulation_id="40-CFR-122.1",
     content="Full regulation text...",
     effective_date="2024-01-15",
-    title="Water Pollution Standards"
+    title="Water Pollution Standards",
 )
 
 # Get version at specific date
-version_result = await get_regulation_at_date(
-    regulation_id="40-CFR-122.1",
-    query_date="2023-06-15"
-)
+version_result = await get_regulation_at_date(regulation_id="40-CFR-122.1", query_date="2023-06-15")
 
 # Get changes between dates
 changes_result = await get_regulation_changes(
-    regulation_id="40-CFR-122.1",
-    from_date="2023-01-01",
-    to_date="2024-01-01",
-    include_diff=True
+    regulation_id="40-CFR-122.1", from_date="2023-01-01", to_date="2024-01-01", include_diff=True
 )
 ```
 
@@ -351,7 +339,7 @@ changes_result = await get_regulation_changes(
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.legal_report_generator_tool import (
     generate_legal_report,
-    export_legal_report
+    export_legal_report,
 )
 
 # Generate report
@@ -360,14 +348,14 @@ report = await generate_legal_report(
     template="compliance",  # compliance, research, or monitoring
     title="EPA Water Regulations Compliance Report",
     include_summary=True,
-    include_citations=True
+    include_citations=True,
 )
 
 # Export report
 export_result = await export_legal_report(
     report_data=report,
     format="markdown",  # markdown, html, pdf, docx, or json
-    output_path="/tmp/report.md"
+    output_path="/tmp/report.md",
 )
 ```
 
@@ -418,7 +406,7 @@ All tools return standardized error responses:
 {
     "status": "error",
     "message": "Description of the error",
-    "context": {...}  # Optional error context
+    "context": {...},  # Optional error context
 }
 ```
 
@@ -427,12 +415,7 @@ All tools return standardized error responses:
 All tools return standardized success responses:
 
 ```python
-{
-    "status": "success",
-    "result_field": "result_data",
-    "metadata": {...},
-    "mcp_tool": "tool_name"
-}
+{"status": "success", "result_field": "result_data", "metadata": {...}, "mcp_tool": "tool_name"}
 ```
 
 ## Error Handling
@@ -443,24 +426,18 @@ All tools return standardized success responses:
    ```python
    {
        "status": "error",
-       "message": "Required module not found: langdetect. Install with: pip install ipfs-datasets-py[legal]"
+       "message": "Required module not found: langdetect. Install with: pip install ipfs-datasets-py[legal]",
    }
    ```
 
 2. **ValidationError**: Invalid input
    ```python
-   {
-       "status": "error",
-       "message": "query must be a non-empty string"
-   }
+   {"status": "error", "message": "query must be a non-empty string"}
    ```
 
 3. **ProcessingError**: Processing failure
    ```python
-   {
-       "status": "error",
-       "message": "Failed to process documents: <details>"
-   }
+   {"status": "error", "message": "Failed to process documents: <details>"}
    ```
 
 ### Handling Errors in Code
@@ -501,6 +478,7 @@ Follow the GIVEN-WHEN-THEN pattern:
 ```python
 import pytest
 
+
 class TestYourTool:
     """Test your MCP tool"""
 
@@ -512,9 +490,9 @@ class TestYourTool:
         THEN it should return success status
         """
         from ipfs_datasets_py.mcp_server.tools.category.your_tool import your_tool
-        
+
         result = await your_tool(param1="value1", param2="value2")
-        
+
         assert result["status"] == "success"
         assert "result_field" in result
 ```
@@ -547,63 +525,51 @@ from typing import Dict, List, Any, Optional
 logger = logging.getLogger(__name__)
 
 
-async def tool_function(
-    param1: str,
-    param2: Optional[int] = None
-) -> Dict[str, Any]:
+async def tool_function(param1: str, param2: Optional[int] = None) -> Dict[str, Any]:
     """
     Tool function description.
-    
+
     This is a thin wrapper around CoreClass.method().
     All business logic is in ipfs_datasets_py.processors.module_name
-    
+
     Args:
         param1: Description of param1
         param2: Description of param2 (optional)
-    
+
     Returns:
         Dictionary containing:
         - status: "success" or "error"
         - result: Result data
         - metadata: Additional metadata
-    
+
     Example:
         >>> result = await tool_function(param1="value")
         >>> print(result['status'])
     """
     try:
         from ipfs_datasets_py.processors import CoreClass
-        
+
         # Validate inputs
         if not param1:
-            return {
-                "status": "error",
-                "message": "param1 is required"
-            }
-        
+            return {"status": "error", "message": "param1 is required"}
+
         # Initialize core class
         processor = CoreClass()
-        
+
         # Call core method
         result = processor.core_method(param1, param2)
-        
+
         # Add MCP metadata
         result["mcp_tool"] = "tool_function"
-        
+
         return result
-        
+
     except ImportError as e:
         logger.error(f"Import error: {e}")
-        return {
-            "status": "error",
-            "message": f"Required module not found: {e}"
-        }
+        return {"status": "error", "message": f"Required module not found: {e}"}
     except Exception as e:
         logger.error(f"Error: {e}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
 ```
 
 ### Best Practices

@@ -17,9 +17,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import Log
 def test_legal_modal_parser_prefers_negated_permission_cue() -> None:
     parser = LegalModalParser()
 
-    cues = parser.extract_cues(
-        "The requirements for serving as a director may not discriminate."
-    )
+    cues = parser.extract_cues("The requirements for serving as a director may not discriminate.")
 
     cue_labels = {(cue.operator.symbol, cue.cue.lower()) for cue in cues}
     assert ("F", "may not") in cue_labels
@@ -43,7 +41,7 @@ _USCODE_46_8906_TEXT = (
     "Historical and Revision Notes Revised section Source section (U.S. Code) "
     "8906 46:390d Section 8906 prescribes the penalties for violations of this "
     "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
-    "\"not more than $25,000\" for \"$1,000\"."
+    '"not more than $25,000" for "$1,000".'
 )
 _USCODE_36_110105_TODO_TEXT = (
     "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS 36 U.S.C. United States Co"
@@ -73,8 +71,8 @@ _USCODE_25_5396_TODO_TEXT = (
     "6 - Application of other sections of this chapter From the U.S. Government Publishing Office, www.gpo.gov §539"
     "6. Application of other sections of this chapter (a) Mandatory application All provisions of sections 5305(b),"
     " 5306, 5307, 5321(c) and (d), 5323, 5324(k) and (l), 5325(a) through (k), and 5332 of this title and section 3"
-    "14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the \"Federal Tort Claims A"
-    "ct\"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho"
+    '14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the "Federal Tort Claims A'
+    'ct"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho'
     "rized by this subchapter. (b) Discretionary application At the request of a participating Indian tribe, any ot"
     "her provision of subchapter I of this chapter, to the extent such provision is not in conflict with this subch"
     "apter, shall be made a part of a funding agreement or compact entered into under this subchapter. The Secretar"
@@ -85,7 +83,7 @@ _USCODE_25_5396_TODO_TEXT = (
     "lting compact and funding agreement. (Pub. L. 93–638, title V, §516, as added Pub. L. 106–260, §4, Aug. 18, 20"
     "00, 114 Stat. 729.) Editorial Notes References in Text Section 314 of Pub. L. 101–512, referred to in subsec. "
     "(a), is section 314 of Pub. L. 101–512, which is set out as a note under section 5321 of this title. Subchapte"
-    "r I of this chapter, referred to in subsec. (b), was in the original \"title I\", meaning title I of Pub. L. 93–"
+    'r I of this chapter, referred to in subsec. (b), was in the original "title I", meaning title I of Pub. L. 93–'
     "638, known as the Indian Self-Determination Act, which is classified principally to subchapter I (§5321 et seq"
     ".) of this chapter. For complete classification of title I to the Code, see Short Title note set out under sec"
     "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
@@ -144,8 +142,7 @@ _USCODE_36_170307_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for this subchapter."
 )
 _USCODE_36_21110_TODO_TEXT = (
-    "Sec. 21110 - Administrative notice and hearing activities. "
-    "Historical and Revision Notes."
+    "Sec. 21110 - Administrative notice and hearing activities. Historical and Revision Notes."
 )
 _USCODE_10_1095C_TODO_TEXT = (
     "Administrative review procedures are established for health care collection actions."
@@ -164,11 +161,11 @@ _USCODE_25_57_RESIDUAL_SPAN_TODO_TEXT = (
 )
 _USCODE_42_8502_DEFINITION_RESIDUAL_TEXT = (
     "§8502. Definitions For purposes of this chapter— (1) The term "
-    "\"severe energy supply interruption\" means a shortage which the President "
+    '"severe energy supply interruption" means a shortage which the President '
     "determines— (A) may cause major adverse impact; and (B) results from an "
-    "interruption. (2) The term \"international energy program\" has the meaning "
+    'interruption. (2) The term "international energy program" has the meaning '
     "given that term in section 6202(7) of this title. (3) The term "
-    "\"motor fuel\" means gasoline and diesel fuel."
+    '"motor fuel" means gasoline and diesel fuel.'
 )
 _USCODE_7_7913_TEXT = (
     "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
@@ -214,10 +211,10 @@ _USCODE_7_7913_TEXT = (
     "amount of the advance payment, as determined by the Secretary. (Pub. L. "
     "107–171, title I, §1103, May 13, 2002, 116 Stat. 149; Pub. L. 109–171, "
     "title I, §1102(a), Feb. 8, 2006, 120 Stat. 5.) Editorial Notes Amendments "
-    "2006 —Subsec. (d)(2). Pub. L. 109–171 substituted \"2005 crop years, up "
+    '2006 —Subsec. (d)(2). Pub. L. 109–171 substituted "2005 crop years, up '
     "to 40 percent of the direct payment for a covered commodity for the 2006 "
     "crop year, and up to 22 percent of the direct payment for a covered "
-    "commodity for the 2007 crop year,\" for \"2007 crop years\"."
+    'commodity for the 2007 crop year," for "2007 crop years".'
 )
 _USCODE_16_6410_SYMBOLIC_VALIDITY_TEXT = (
     "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
@@ -417,7 +414,9 @@ _USCODE_42_18791_TODO_TEXT = "Sec. 18791 - Administrative provisions. Additional
 _USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
 _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
-_USCODE_6_314_TODO_TEXT = "National planning scenarios, preparedness targets, and implementation guidance."
+_USCODE_6_314_TODO_TEXT = (
+    "National planning scenarios, preparedness targets, and implementation guidance."
+)
 _USCODE_35_4_TODO_TEXT = "Officers, employees, and attorneys."
 _USCODE_7_7316_TODO_TEXT = "Report."
 _USCODE_46_55318_TODO_TEXT = (
@@ -425,7 +424,7 @@ _USCODE_46_55318_TODO_TEXT = (
     "(Pub. L. 109–304, §8(c), Oct. 6, 2006, 120 Stat. 1648.) Historical and Revision "
     "Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 55318 46 "
     "App.:1241p. Pub. L. 99–198, title XI, §1143, Dec. 23, 1985, 99 Stat. 1496. The "
-    "words \"section 1707a(b)(8) of title 7\" are omitted because the provision referred "
+    'words "section 1707a(b)(8) of title 7" are omitted because the provision referred '
     "to has been repealed."
 )
 _USCODE_8_606_TODO_TEXT = (
@@ -437,7 +436,7 @@ _USCODE_8_606_TODO_TEXT = (
     "section 1407 of this title."
 )
 _USCODE_46_115_TODO_TEXT = (
-    "§115. Vessel In this title, the term \"vessel\" has the meaning given that term in "
+    '§115. Vessel In this title, the term "vessel" has the meaning given that term in '
     "section 3 of title 1. (Pub. L. 109–304, §4, Oct. 6, 2006, 120 Stat. 1487.) Historical "
     "and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 115 "
     "46:2101(45)."
@@ -518,9 +517,7 @@ def test_parser_ignores_passive_agent_and_amount_by_cues() -> None:
         citation="18 U.S.C. 2263",
     )
 
-    by_formulas = [
-        formula for formula in document.formulas if formula.metadata.get("cue") == "by"
-    ]
+    by_formulas = [formula for formula in document.formulas if formula.metadata.get("cue") == "by"]
     assert by_formulas == []
 
 
@@ -578,14 +575,11 @@ def test_parser_covers_duplicated_uscode_catchlines() -> None:
     catchline_formulas = [
         formula
         for formula in document.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_section_catchline_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_section_catchline_coverage_v1"
     ]
     assert len(catchline_formulas) == 2
     assert {
-        document.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ]
+        document.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
         for formula in catchline_formulas
     } == {
         "United States contributions to the North Atlantic Treaty Organization "
@@ -613,12 +607,9 @@ def test_parser_covers_untyped_uscode_section_markers_between_catchlines() -> No
     )
 
     marker_spans = [
-        document.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ]
+        document.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
         for formula in document.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_section_marker_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_section_marker_coverage_v1"
     ]
     assert " Sec. 2263 -" in marker_spans
     assert " §2263." in marker_spans
@@ -673,18 +664,13 @@ def test_parser_preserves_uscode_definition_residual_tail() -> None:
         formula
         for formula in document.formulas
         if "The term common-funded budgets of NATO means the Military Budget"
-        in document.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ]
+        in document.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
     )
     covered_text = document.normalized_text[
         definition_formula.provenance.start_char : definition_formula.provenance.end_char
     ]
     assert covered_text.strip().startswith("(b) Definitions")
-    assert (
-        definition_formula.metadata["fallback_rule"]
-        == "uscode_residual_span_coverage_v1"
-    )
+    assert definition_formula.metadata["fallback_rule"] == "uscode_residual_span_coverage_v1"
 
 
 def test_parser_covers_compact_editorial_note_residual_headings() -> None:
@@ -703,9 +689,7 @@ def test_parser_covers_compact_editorial_note_residual_headings() -> None:
     )
 
     covered_spans = [
-        document.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ]
+        document.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
         for formula in document.formulas
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     ]
@@ -731,14 +715,11 @@ def test_parser_routes_prior_provisions_editorial_heading_to_frame_not_temporal(
     editorial_note_formulas = [
         formula
         for formula in document.formulas
-        if "Editorial Notes Prior Provisions" in document.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ]
+        if "Editorial Notes Prior Provisions"
+        in document.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
     ]
     assert editorial_note_formulas
-    assert all(
-        formula.operator.family == "frame" for formula in editorial_note_formulas
-    )
+    assert all(formula.operator.family == "frame" for formula in editorial_note_formulas)
     assert all(
         formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
         for formula in editorial_note_formulas
@@ -789,7 +770,9 @@ def test_parser_adds_uscode_codification_fallback_for_known_zero_formula_case() 
     assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
 
 
-def test_parser_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> None:
+def test_parser_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> (
+    None
+):
     parser = LegalModalParser()
     document = parser.parse(
         _USCODE_50_2523B_RESIDUAL_SPAN_TEXT,
@@ -809,10 +792,7 @@ def test_parser_adds_residual_span_coverage_before_codification_fallback_for_50_
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     ]
     assert residual_formulas
-    assert all(
-        formula.provenance.citation == "50 U.S.C. 2523b."
-        for formula in document.formulas
-    )
+    assert all(formula.provenance.citation == "50 U.S.C. 2523b." for formula in document.formulas)
 
 
 def test_parser_replays_transferred_heading_zero_formula_sample_for_15_688() -> None:
@@ -1156,9 +1136,9 @@ def test_parser_replays_uscode_declarative_statement_zero_formula_cases() -> Non
                 "TRANSITION SUBCHAPTER VII - COMMISSION ON 21st CENTURY PRODUCTION "
                 "AGRICULTURE Sec. 7311 - Establishment From the U.S. Government "
                 "Publishing Office, www.gpo.gov \u00a77311. Establishment There is "
-                "established a commission to be known as the \"Commission on 21st "
-                "Century Production Agriculture\" (in this subchapter referred to as "
-                "the \"Commission\"). (Pub. L. 104\u2013127, title I, \u00a7181, Apr. 4, "
+                'established a commission to be known as the "Commission on 21st '
+                'Century Production Agriculture" (in this subchapter referred to as '
+                'the "Commission"). (Pub. L. 104\u2013127, title I, \u00a7181, Apr. 4, '
                 "1996, 110 Stat. 938.)"
             ),
             "establishment_clause",
@@ -1310,10 +1290,7 @@ def test_parser_replays_packet_todo_symbolic_validity_sample_for_25_5396() -> No
     assert document.document_id == "us-code-25-5396-17291bf2fa3ae3f6"
     assert document.formulas
     assert any(formula.operator.family == "deontic" for formula in document.formulas)
-    assert all(
-        formula.provenance.citation == "25 U.S.C. 5396"
-        for formula in document.formulas
-    )
+    assert all(formula.provenance.citation == "25 U.S.C. 5396" for formula in document.formulas)
 
 
 def test_parser_replays_packet_todo_samples_for_25_507_10_167_and_38_8112() -> None:
@@ -1483,9 +1460,7 @@ def test_parser_adds_residual_span_coverage_for_25_57_todo_shape() -> None:
         ].strip()
         for formula in residual_formulas
     }
-    assert any(
-        "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
-    )
+    assert any("U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans)
     assert any("43 Stat." in span for span in residual_text_spans)
 
 
@@ -1620,10 +1595,16 @@ def test_parser_treats_may_date_literals_as_temporal_context_for_7_7913() -> Non
     ]
     # `May 13, 2002` should not be parsed as permission cues.
     assert len(deontic_may_formulas) == 2
-    assert all("be_any_month_during_the_period" in formula.predicate.name or "change_the_selected_month_for_a" in formula.predicate.name for formula in deontic_may_formulas)
+    assert all(
+        "be_any_month_during_the_period" in formula.predicate.name
+        or "change_the_selected_month_for_a" in formula.predicate.name
+        for formula in deontic_may_formulas
+    )
 
 
-def test_parser_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_614_and_7_7656() -> None:
+def test_parser_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_614_and_7_7656() -> (
+    None
+):
     parser = LegalModalParser()
     cases = [
         (
@@ -1663,13 +1644,12 @@ def test_parser_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_6
 
         assert document.document_id == document_id
         assert document.formulas
-        assert all(
-            formula.provenance.citation == citation
-            for formula in document.formulas
-        )
+        assert all(formula.provenance.citation == citation for formula in document.formulas)
 
 
-def test_parser_replays_long_embedded_section_heading_samples_for_8_1365b_34_50108_and_19_3702() -> None:
+def test_parser_replays_long_embedded_section_heading_samples_for_8_1365b_34_50108_and_19_3702() -> (
+    None
+):
     parser = LegalModalParser()
     cases = [
         (
@@ -1706,7 +1686,9 @@ def test_parser_replays_long_embedded_section_heading_samples_for_8_1365b_34_501
         assert fallback.provenance.citation == citation
 
 
-def test_parser_replays_symbolic_validity_todo_samples_with_coarse_section_heading_fallback() -> None:
+def test_parser_replays_symbolic_validity_todo_samples_with_coarse_section_heading_fallback() -> (
+    None
+):
     parser = LegalModalParser()
     cases = [
         (
@@ -1746,7 +1728,9 @@ def test_parser_replays_symbolic_validity_todo_samples_with_coarse_section_headi
         assert fallback.provenance.citation == citation
 
 
-def test_parser_replays_packet_todo_samples_for_7_425_10_2639_and_20_107e_1_with_coarse_procedural_headings() -> None:
+def test_parser_replays_packet_todo_samples_for_7_425_10_2639_and_20_107e_1_with_coarse_procedural_headings() -> (
+    None
+):
     parser = LegalModalParser()
     heading = (
         "administrative notice and hearing procedures for eligibility review and petition records"
@@ -1879,7 +1863,9 @@ def test_parser_replays_packet_todo_long_heading_sample_for_43_2430() -> None:
     assert fallback.provenance.citation == "43 U.S.C. 2430."
 
 
-def test_parser_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> None:
+def test_parser_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> (
+    None
+):
     parser = LegalModalParser()
     cases = [
         (
@@ -1945,8 +1931,14 @@ def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:
     assert result.metrics["modal_profile"] == "deontic:D"
     assert result.metrics["modal_families"] == ["deontic", "temporal"]
     assert all(statement.formalism == "modal" for statement in result.statements)
-    assert all(statement.metadata["deterministic_parser"] == "legal_modal_parser_v1" for statement in result.statements)
-    assert {statement.metadata["modal_family"] for statement in result.statements} >= {"deontic", "temporal"}
+    assert all(
+        statement.metadata["deterministic_parser"] == "legal_modal_parser_v1"
+        for statement in result.statements
+    )
+    assert {statement.metadata["modal_family"] for statement in result.statements} >= {
+        "deontic",
+        "temporal",
+    }
 
 
 def test_logic_critic_collects_modal_extraction_metrics() -> None:
@@ -1987,19 +1979,14 @@ def test_parser_covers_uscode_use_recovery_paragraph_headings() -> None:
 
     parsed = parser.parse(text, citation="54 U.S.C. 100724.", source="us_code")
     residual_spans = {
-        parsed.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ].strip()
+        parsed.normalized_text[formula.provenance.start_char : formula.provenance.end_char].strip()
         for formula in parsed.formulas
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     }
 
     assert "Use of recovered amounts (a) Limitation on Use ." in residual_spans
     assert "(1) Reimbursement ." in residual_spans
-    assert any(
-        span.startswith("(2) Restoration and replacement .")
-        for span in residual_spans
-    )
+    assert any(span.startswith("(2) Restoration and replacement .") for span in residual_spans)
 
 
 def test_parser_covers_uscode_effect_of_act_catchline_for_701e() -> None:
@@ -2018,16 +2005,13 @@ def test_parser_covers_uscode_effect_of_act_catchline_for_701e() -> None:
         citation="33 U.S.C. 701e",
     )
     residual_spans = {
-        parsed.normalized_text[
-            formula.provenance.start_char : formula.provenance.end_char
-        ].strip()
+        parsed.normalized_text[formula.provenance.start_char : formula.provenance.end_char].strip()
         for formula in parsed.formulas
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     }
 
     assert (
-        "Effect of act June 22, 1936, on provisions for Mississippi River "
-        "and other projects."
+        "Effect of act June 22, 1936, on provisions for Mississippi River and other projects."
     ) in residual_spans
 
 
@@ -2063,8 +2047,7 @@ def test_parser_bounds_packet_catchlines_before_body_starters() -> None:
             "charges due connecting commercial facilities In the operation "
             "of telegraph lines, members of the Signal Corps may collect "
             "forwarding charges.",
-            "Radiograms and telegrams: forwarding charges due connecting "
-            "commercial facilities",
+            "Radiograms and telegrams: forwarding charges due connecting commercial facilities",
         ),
     ]
 
@@ -2075,8 +2058,7 @@ def test_parser_bounds_packet_catchlines_before_body_starters() -> None:
                 formula.provenance.start_char : formula.provenance.end_char
             ].strip()
             for formula in parsed.formulas
-            if formula.metadata.get("fallback_rule")
-            == "uscode_section_catchline_coverage_v1"
+            if formula.metadata.get("fallback_rule") == "uscode_section_catchline_coverage_v1"
         }
 
         assert expected_catchline in catchline_spans

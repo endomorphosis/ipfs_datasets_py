@@ -96,20 +96,21 @@ class IPFSGraphDatabase:
         """Create driver compatible with neo4j.GraphDatabase.driver()"""
         pass
 
+
 # neo4j_compat/session.py
 class IPFSSession:
     def run(self, query: str, parameters: dict = None) -> Result:
         """Execute Cypher query"""
         pass
-    
+
     def begin_transaction(self, **kwargs) -> Transaction:
         """Start explicit transaction"""
         pass
-    
+
     def read_transaction(self, func, *args, **kwargs):
         """Read transaction with retry"""
         pass
-    
+
     def write_transaction(self, func, *args, **kwargs):
         """Write transaction with retry"""
         pass
@@ -310,12 +311,28 @@ return_clause: RETURN return_items (ORDER BY order_items)? (LIMIT number)? (SKIP
 # cypher/lexer.py
 class CypherLexer:
     tokens = [
-        'MATCH', 'WHERE', 'RETURN', 'CREATE', 'DELETE', 'SET',
-        'LPAREN', 'RPAREN', 'LBRACKET', 'RBRACKET', 'LBRACE', 'RBRACE',
-        'IDENTIFIER', 'NUMBER', 'STRING',
-        'ARROW_LEFT', 'ARROW_RIGHT', 'COLON', 'COMMA', 'DOT'
+        "MATCH",
+        "WHERE",
+        "RETURN",
+        "CREATE",
+        "DELETE",
+        "SET",
+        "LPAREN",
+        "RPAREN",
+        "LBRACKET",
+        "RBRACKET",
+        "LBRACE",
+        "RBRACE",
+        "IDENTIFIER",
+        "NUMBER",
+        "STRING",
+        "ARROW_LEFT",
+        "ARROW_RIGHT",
+        "COLON",
+        "COMMA",
+        "DOT",
     ]
-    
+
     def tokenize(self, text: str) -> Iterator[Token]:
         """Convert Cypher text to tokens"""
         pass
@@ -402,16 +419,20 @@ class CypherParser:
 @dataclass
 class ASTNode:
     """Base AST node"""
+
     pass
+
 
 @dataclass
 class QueryNode(ASTNode):
     clauses: List[ClauseNode]
 
+
 @dataclass
 class MatchNode(ClauseNode):
     patterns: List[PatternNode]
     where: Optional[WhereNode]
+
 
 @dataclass
 class PatternNode(ASTNode):
@@ -469,7 +490,7 @@ Compiles to IR:
 ```python
 [
     {"op": "ScanType", "type": "Person", "filters": {"name": "Alice"}},
-    {"op": "Project", "fields": ["age"]}
+    {"op": "Project", "fields": ["age"]},
 ]
 ```
 
@@ -620,18 +641,20 @@ class WriteAheadLog:
 ```python
 # transactions/manager.py
 class TransactionManager:
-    def begin(self, isolation_level: IsolationLevel = IsolationLevel.REPEATABLE_READ) -> Transaction:
+    def begin(
+        self, isolation_level: IsolationLevel = IsolationLevel.REPEATABLE_READ
+    ) -> Transaction:
         """Start new transaction"""
         pass
-    
+
     def commit(self, txn: Transaction) -> str:
         """Commit transaction and return root CID"""
         pass
-    
+
     def rollback(self, txn: Transaction):
         """Rollback transaction"""
         pass
-    
+
     def detect_conflicts(self, txn: Transaction) -> bool:
         """Detect write-write conflicts"""
         pass

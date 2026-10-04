@@ -27,14 +27,14 @@ from pathlib import Path
 
 class TestMunicipalCodesScraperDashboard:
     """Test suite for Municipal Codes Scraper dashboard integration."""
-    
+
     @pytest.fixture(autouse=True)
     async def setup_browser(self):
         """Setup browser and navigate to dashboard."""
         self.dashboard_url = "http://localhost:8899/mcp"
         yield
         # Cleanup
-    
+
     async def test_municipal_codes_tab_exists(self):
         """
         GIVEN the MCP dashboard is loaded
@@ -44,7 +44,7 @@ class TestMunicipalCodesScraperDashboard:
         # This test would use playwright-browser tools via MCP
         # For documentation purposes, outlining the test structure
         pass
-    
+
     async def test_municipal_codes_tab_navigation(self):
         """
         GIVEN the MCP dashboard is loaded
@@ -52,7 +52,7 @@ class TestMunicipalCodesScraperDashboard:
         THEN the municipal codes scraper section should be displayed
         """
         pass
-    
+
     async def test_municipal_codes_form_elements(self):
         """
         GIVEN the Municipal Codes Scraper section is displayed
@@ -72,7 +72,7 @@ class TestMunicipalCodesScraperDashboard:
             - Clear Form button
         """
         pass
-    
+
     async def test_municipal_codes_single_jurisdiction(self):
         """
         GIVEN the Municipal Codes Scraper form
@@ -83,7 +83,7 @@ class TestMunicipalCodesScraperDashboard:
         AND results should be displayed with job ID and status
         """
         pass
-    
+
     async def test_municipal_codes_multiple_jurisdictions(self):
         """
         GIVEN the Municipal Codes Scraper form
@@ -93,7 +93,7 @@ class TestMunicipalCodesScraperDashboard:
         AND results should show all 3 jurisdictions
         """
         pass
-    
+
     async def test_municipal_codes_validation(self):
         """
         GIVEN the Municipal Codes Scraper form
@@ -102,7 +102,7 @@ class TestMunicipalCodesScraperDashboard:
         AND the message should indicate that jurisdictions are required
         """
         pass
-    
+
     async def test_municipal_codes_clear_form(self):
         """
         GIVEN the Municipal Codes Scraper form with data entered
@@ -111,7 +111,7 @@ class TestMunicipalCodesScraperDashboard:
         AND the results area should show a "Form cleared" message
         """
         pass
-    
+
     async def test_municipal_codes_custom_parameters(self):
         """
         GIVEN the Municipal Codes Scraper form
@@ -126,7 +126,7 @@ class TestMunicipalCodesScraperDashboard:
         AND the response should reflect the configuration
         """
         pass
-    
+
     async def test_municipal_codes_provider_options(self):
         """
         GIVEN the Municipal Codes Scraper form
@@ -139,7 +139,7 @@ class TestMunicipalCodesScraperDashboard:
             - LexisNexis
         """
         pass
-    
+
     async def test_municipal_codes_output_format_options(self):
         """
         GIVEN the Municipal Codes Scraper form
@@ -150,7 +150,7 @@ class TestMunicipalCodesScraperDashboard:
             - SQL
         """
         pass
-    
+
     async def test_municipal_codes_info_panel(self):
         """
         GIVEN the Municipal Codes Scraper section
@@ -169,7 +169,7 @@ class TestMunicipalCodesScraperDashboard:
 async def test_municipal_codes_scraper_ui_integration():
     """
     Comprehensive test using actual Playwright via MCP browser tools.
-    
+
     This test will:
     1. Navigate to the MCP dashboard
     2. Click on Municipal Codes Scraper tab
@@ -178,11 +178,11 @@ async def test_municipal_codes_scraper_ui_integration():
     5. Verify the results
     6. Take screenshots for validation
     """
-    
+
     # NOTE: This would be implemented using the playwright-browser MCP tools
     # which are exposed via the MCP protocol. For now, this serves as documentation
     # of the expected test behavior.
-    
+
     test_data = {
         "jurisdictions": "Seattle, WA; Portland, OR",
         "provider": "municode",
@@ -190,17 +190,17 @@ async def test_municipal_codes_scraper_ui_integration():
         "rate_limit": 2.0,
         "scraper_type": "playwright",
         "include_metadata": True,
-        "include_text": True
+        "include_text": True,
     }
-    
+
     expected_result = {
         "status": "success",
         "job_id": "municipal_codes_",  # Should start with this prefix
         "jurisdictions": ["Seattle, WA", "Portland, OR"],
         "provider": "municode",
-        "output_format": "json"
+        "output_format": "json",
     }
-    
+
     # Test would verify that the MCP tool call returns expected structure
     assert True  # Placeholder
 

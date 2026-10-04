@@ -21,13 +21,16 @@ from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor,
 from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
 from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
 from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-    MergeClause, RemoveClause, UnaryOpNode,
+    MergeClause,
+    RemoveClause,
+    UnaryOpNode,
 )
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def fresh_executor():
@@ -47,6 +50,7 @@ def mixed_executor():
 # ---------------------------------------------------------------------------
 # Parser / AST
 # ---------------------------------------------------------------------------
+
 
 class TestMergeAST:
     """Parser creates correct AST nodes for MERGE."""
@@ -179,6 +183,7 @@ class TestIsNullAST:
 # Compilation
 # ---------------------------------------------------------------------------
 
+
 class TestMergeCompilation:
     """Compiler emits Merge IR op."""
 
@@ -270,6 +275,7 @@ class TestIsNullCompilation:
 # Execution: MERGE
 # ---------------------------------------------------------------------------
 
+
 class TestMergeExecution:
     """End-to-end execution tests for MERGE."""
 
@@ -342,6 +348,7 @@ class TestMergeExecution:
 # Execution: REMOVE
 # ---------------------------------------------------------------------------
 
+
 class TestRemoveExecution:
     """End-to-end execution tests for REMOVE."""
 
@@ -354,12 +361,10 @@ class TestRemoveExecution:
         # GIVEN (Alice has email from fixture)
 
         # WHEN
-        list(mixed_executor.execute(
-            "MATCH (p:Person) WHERE p.name = 'Alice' REMOVE p.email"
-        ))
-        results = list(mixed_executor.execute(
-            "MATCH (p:Person) WHERE p.name = 'Alice' RETURN p.email"
-        ))
+        list(mixed_executor.execute("MATCH (p:Person) WHERE p.name = 'Alice' REMOVE p.email"))
+        results = list(
+            mixed_executor.execute("MATCH (p:Person) WHERE p.name = 'Alice' RETURN p.email")
+        )
 
         # THEN
         assert results[0].get("p.email") is None
@@ -389,9 +394,7 @@ class TestRemoveExecution:
         THEN: No error raised, node unchanged
         """
         # GIVEN
-        fresh_executor.graph_engine.create_node(
-            labels=["Item"], properties={"x": 1}
-        )
+        fresh_executor.graph_engine.create_node(labels=["Item"], properties={"x": 1})
 
         # WHEN / THEN (must not raise)
         list(fresh_executor.execute("MATCH (n:Item) REMOVE n.missing"))
@@ -400,6 +403,7 @@ class TestRemoveExecution:
 # ---------------------------------------------------------------------------
 # Execution: IS NULL / IS NOT NULL
 # ---------------------------------------------------------------------------
+
 
 class TestIsNullExecution:
     """End-to-end execution tests for IS NULL and IS NOT NULL."""
@@ -413,9 +417,9 @@ class TestIsNullExecution:
         # GIVEN (fixture)
 
         # WHEN
-        results = list(mixed_executor.execute(
-            "MATCH (p:Person) WHERE p.email IS NULL RETURN p.name"
-        ))
+        results = list(
+            mixed_executor.execute("MATCH (p:Person) WHERE p.email IS NULL RETURN p.name")
+        )
 
         # THEN
         assert len(results) == 1
@@ -430,9 +434,9 @@ class TestIsNullExecution:
         # GIVEN (fixture)
 
         # WHEN
-        results = list(mixed_executor.execute(
-            "MATCH (p:Person) WHERE p.email IS NOT NULL RETURN p.name"
-        ))
+        results = list(
+            mixed_executor.execute("MATCH (p:Person) WHERE p.email IS NOT NULL RETURN p.name")
+        )
 
         # THEN
         assert len(results) == 1
@@ -474,6 +478,7 @@ class TestIsNullExecution:
 # Execution: XOR
 # ---------------------------------------------------------------------------
 
+
 class TestXorExecution:
     """End-to-end execution tests for XOR boolean operator."""
 
@@ -484,9 +489,7 @@ class TestXorExecution:
         THEN: Row is returned
         """
         # GIVEN
-        fresh_executor.graph_engine.create_node(
-            labels=["Flag"], properties={"a": True, "b": False}
-        )
+        fresh_executor.graph_engine.create_node(labels=["Flag"], properties={"a": True, "b": False})
 
         # WHEN
         results = list(fresh_executor.execute("MATCH (n:Flag) WHERE n.a XOR n.b RETURN n.a"))
@@ -501,9 +504,7 @@ class TestXorExecution:
         THEN: No rows returned
         """
         # GIVEN
-        fresh_executor.graph_engine.create_node(
-            labels=["Flag"], properties={"a": True, "b": True}
-        )
+        fresh_executor.graph_engine.create_node(labels=["Flag"], properties={"a": True, "b": True})
 
         # WHEN
         results = list(fresh_executor.execute("MATCH (n:Flag) WHERE n.a XOR n.b RETURN n.a"))

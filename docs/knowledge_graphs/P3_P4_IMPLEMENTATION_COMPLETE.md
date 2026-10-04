@@ -129,7 +129,7 @@ relationships = extractor.extract_relationships(text, entities)
 kg = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.9,  # Triggers aggressive extraction
-    structure_temperature=0.9    # Triggers complex inference
+    structure_temperature=0.9,  # Triggers complex inference
 )
 
 # Extracts more entities and relationships using spaCy
@@ -145,7 +145,7 @@ reasoner = CrossDocumentReasoner()
 reasoning = reasoner.reason_across_documents(
     query="How is entity A connected to entity C?",
     documents=[doc1, doc2, doc3],
-    max_hops=3  # Enables multi-hop traversal
+    max_hops=3,  # Enables multi-hop traversal
 )
 
 # Finds paths like A->B->C even if no direct A->C connection
@@ -156,14 +156,14 @@ reasoning = reasoner.reason_across_documents(
 import os
 
 # Set API key for OpenAI or Anthropic
-os.environ['OPENAI_API_KEY'] = 'your-key'
+os.environ["OPENAI_API_KEY"] = "your-key"
 # or
-os.environ['ANTHROPIC_API_KEY'] = 'your-key'
+os.environ["ANTHROPIC_API_KEY"] = "your-key"
 
 reasoning = reasoner.reason_across_documents(
     query="What is the relationship between these concepts?",
     documents=documents,
-    reasoning_depth='deep'  # Enables LLM-based reasoning
+    reasoning_depth="deep",  # Enables LLM-based reasoning
 )
 
 # Uses LLM for sophisticated answer synthesis

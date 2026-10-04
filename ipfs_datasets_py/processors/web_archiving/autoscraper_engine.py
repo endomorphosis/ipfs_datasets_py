@@ -11,6 +11,7 @@ Usage::
         list_autoscraper_models,
     )
 """
+
 import logging
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
@@ -20,11 +21,12 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
+
 async def create_autoscraper_model(
     sample_url: str,
     wanted_data: List[Union[str, Dict[str, str]]],
     model_name: str,
-    wanted_dict: Optional[Dict[str, List[str]]] = None
+    wanted_dict: Optional[Dict[str, List[str]]] = None,
 ) -> Dict[str, Any]:
     """Create an AutoScraper model from sample data.
 
@@ -47,7 +49,7 @@ async def create_autoscraper_model(
         except ImportError:
             return {
                 "status": "error",
-                "error": "autoscraper not installed. Install with: pip install autoscraper"
+                "error": "autoscraper not installed. Install with: pip install autoscraper",
             }
 
         # Initialize AutoScraper
@@ -64,18 +66,18 @@ async def create_autoscraper_model(
             if not result:
                 return {
                     "status": "error",
-                    "error": "Failed to learn scraping rules from the provided sample"
+                    "error": "Failed to learn scraping rules from the provided sample",
                 }
 
             # Save the model
             model_dir = "/tmp/autoscraper_models"
             os.makedirs(model_dir, exist_ok=True)
             model_path = os.path.join(model_dir, f"{model_name}.pkl")
-            
+
             scraper.save(model_path)
 
             # Count learned rules (approximate)
-            learned_rules = len(scraper.stack_list) if hasattr(scraper, 'stack_list') else 0
+            learned_rules = len(scraper.stack_list) if hasattr(scraper, "stack_list") else 0
 
             return {
                 "status": "success",
@@ -84,27 +86,23 @@ async def create_autoscraper_model(
                 "learned_rules": learned_rules,
                 "sample_url": sample_url,
                 "training_result": result,
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now().isoformat(),
             }
 
         except Exception as scraper_error:
             logger.error(f"AutoScraper training failed: {scraper_error}")
             return {
                 "status": "error",
-                "error": f"Failed to train AutoScraper model: {scraper_error}"
+                "error": f"Failed to train AutoScraper model: {scraper_error}",
             }
 
     except Exception as e:
         logger.error(f"Failed to create AutoScraper model: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
+
 
 async def scrape_with_autoscraper(
-    model_path: str,
-    target_urls: List[str],
-    grouped: bool = False
+    model_path: str, target_urls: List[str], grouped: bool = False
 ) -> Dict[str, Any]:
     """Scrape data using a trained AutoScraper model.
 
@@ -126,14 +124,11 @@ async def scrape_with_autoscraper(
         except ImportError:
             return {
                 "status": "error",
-                "error": "autoscraper not installed. Install with: pip install autoscraper"
+                "error": "autoscraper not installed. Install with: pip install autoscraper",
             }
 
         if not os.path.exists(model_path):
-            return {
-                "status": "error",
-                "error": f"AutoScraper model not found: {model_path}"
-            }
+            return {"status": "error", "error": f"AutoScraper model not found: {model_path}"}
 
         # Load the trained model
         scraper = AutoScraper()
@@ -153,7 +148,7 @@ async def scrape_with_autoscraper(
                 results[url] = {
                     "status": "success",
                     "data": scraped_data,
-                    "scraped_at": datetime.now().isoformat()
+                    "scraped_at": datetime.now().isoformat(),
                 }
                 successful_scrapes += 1
 
@@ -162,7 +157,7 @@ async def scrape_with_autoscraper(
                 results[url] = {
                     "status": "error",
                     "error": str(scrape_error),
-                    "scraped_at": datetime.now().isoformat()
+                    "scraped_at": datetime.now().isoformat(),
                 }
                 failed_scrapes += 1
 
@@ -173,21 +168,19 @@ async def scrape_with_autoscraper(
             "successful_scrapes": successful_scrapes,
             "failed_scrapes": failed_scrapes,
             "model_used": model_path,
-            "grouped": grouped
+            "grouped": grouped,
         }
 
     except Exception as e:
         logger.error(f"Failed to scrape with AutoScraper: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
+
 
 async def optimize_autoscraper_model(
     model_path: str,
     new_sample_urls: List[str],
     new_wanted_data: Optional[List[Union[str, Dict[str, str]]]] = None,
-    update_existing: bool = True
+    update_existing: bool = True,
 ) -> Dict[str, Any]:
     """Optimize an existing AutoScraper model with new training data.
 
@@ -210,14 +203,11 @@ async def optimize_autoscraper_model(
         except ImportError:
             return {
                 "status": "error",
-                "error": "autoscraper not installed. Install with: pip install autoscraper"
+                "error": "autoscraper not installed. Install with: pip install autoscraper",
             }
 
         if not os.path.exists(model_path):
-            return {
-                "status": "error",
-                "error": f"AutoScraper model not found: {model_path}"
-            }
+            return {"status": "error", "error": f"AutoScraper model not found: {model_path}"}
 
         # Load existing model
         scraper = AutoScraper()
@@ -238,19 +228,19 @@ async def optimize_autoscraper_model(
                     else:
                         result = None
 
-                optimization_results.append({
-                    "url": sample_url,
-                    "status": "success" if result else "no_data",
-                    "training_result": result
-                })
+                optimization_results.append(
+                    {
+                        "url": sample_url,
+                        "status": "success" if result else "no_data",
+                        "training_result": result,
+                    }
+                )
 
             except Exception as train_error:
                 logger.error(f"Failed to train on {sample_url}: {train_error}")
-                optimization_results.append({
-                    "url": sample_url,
-                    "status": "error",
-                    "error": str(train_error)
-                })
+                optimization_results.append(
+                    {"url": sample_url, "status": "error", "error": str(train_error)}
+                )
 
         # Save the optimized model
         if update_existing:
@@ -268,22 +258,20 @@ async def optimize_autoscraper_model(
             "model_path": final_model_path,
             "optimization_results": optimization_results,
             "training_urls_count": len(new_sample_urls),
-            "optimized_at": datetime.now().isoformat()
+            "optimized_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
         logger.error(f"Failed to optimize AutoScraper model: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
+
 
 async def batch_scrape_with_autoscraper(
     model_path: str,
     urls_file: str,
     output_format: str = "json",
     batch_size: int = 50,
-    delay_seconds: float = 1.0
+    delay_seconds: float = 1.0,
 ) -> Dict[str, Any]:
     """Perform batch scraping using AutoScraper model.
 
@@ -309,39 +297,30 @@ async def batch_scrape_with_autoscraper(
         except ImportError:
             return {
                 "status": "error",
-                "error": "autoscraper not installed. Install with: pip install autoscraper"
+                "error": "autoscraper not installed. Install with: pip install autoscraper",
             }
 
         if not os.path.exists(model_path):
-            return {
-                "status": "error",
-                "error": f"AutoScraper model not found: {model_path}"
-            }
+            return {"status": "error", "error": f"AutoScraper model not found: {model_path}"}
 
         if not os.path.exists(urls_file):
-            return {
-                "status": "error",
-                "error": f"URLs file not found: {urls_file}"
-            }
+            return {"status": "error", "error": f"URLs file not found: {urls_file}"}
 
         # Load model
         scraper = AutoScraper()
         scraper.load(model_path)
 
         # Read URLs
-        with open(urls_file, 'r') as f:
+        with open(urls_file, "r") as f:
             urls = [line.strip() for line in f if line.strip()]
 
         if not urls:
-            return {
-                "status": "error",
-                "error": "No URLs found in file"
-            }
+            return {"status": "error", "error": "No URLs found in file"}
 
         # Prepare output file
         output_dir = "/tmp/autoscraper_results"
         os.makedirs(output_dir, exist_ok=True)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = os.path.join(output_dir, f"scrape_results_{timestamp}.{output_format}")
 
@@ -351,17 +330,17 @@ async def batch_scrape_with_autoscraper(
 
         # Process URLs in batches
         for i in range(0, len(urls), batch_size):
-            batch = urls[i:i + batch_size]
-            
+            batch = urls[i : i + batch_size]
+
             for url in batch:
                 try:
                     scraped_data = scraper.get_result_similar(url)
-                    
+
                     result = {
                         "url": url,
                         "status": "success",
                         "data": scraped_data,
-                        "scraped_at": datetime.now().isoformat()
+                        "scraped_at": datetime.now().isoformat(),
                     }
                     results.append(result)
                     success_count += 1
@@ -371,7 +350,7 @@ async def batch_scrape_with_autoscraper(
                         "url": url,
                         "status": "error",
                         "error": str(scrape_error),
-                        "scraped_at": datetime.now().isoformat()
+                        "scraped_at": datetime.now().isoformat(),
                     }
                     results.append(result)
                     error_count += 1
@@ -381,20 +360,22 @@ async def batch_scrape_with_autoscraper(
 
         # Save results
         if output_format == "json":
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(results, f, indent=2)
         elif output_format == "jsonl":
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 for result in results:
-                    f.write(json.dumps(result) + '\n')
+                    f.write(json.dumps(result) + "\n")
         elif output_format == "csv":
             # Simple CSV implementation - would need pandas for better CSV support
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write("url,status,data,scraped_at,error\n")
                 for result in results:
-                    data_str = json.dumps(result.get('data', '')).replace('"', '""')
-                    error_str = result.get('error', '').replace('"', '""')
-                    f.write(f'"{result["url"]}","{result["status"]}","{data_str}","{result["scraped_at"]}","{error_str}"\n')
+                    data_str = json.dumps(result.get("data", "")).replace('"', '""')
+                    error_str = result.get("error", "").replace('"', '""')
+                    f.write(
+                        f'"{result["url"]}","{result["status"]}","{data_str}","{result["scraped_at"]}","{error_str}"\n'
+                    )
 
         return {
             "status": "success",
@@ -404,15 +385,13 @@ async def batch_scrape_with_autoscraper(
             "error_count": error_count,
             "batch_size": batch_size,
             "output_format": output_format,
-            "model_used": model_path
+            "model_used": model_path,
         }
 
     except Exception as e:
         logger.error(f"Failed batch scraping with AutoScraper: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
+
 
 async def list_autoscraper_models() -> Dict[str, Any]:
     """List available AutoScraper models.
@@ -426,39 +405,34 @@ async def list_autoscraper_models() -> Dict[str, Any]:
     """
     try:
         model_dir = "/tmp/autoscraper_models"
-        
+
         if not os.path.exists(model_dir):
             os.makedirs(model_dir, exist_ok=True)
-            return {
-                "status": "success",
-                "models": [],
-                "count": 0
-            }
+            return {"status": "success", "models": [], "count": 0}
 
         models = []
         for filename in os.listdir(model_dir):
-            if filename.endswith('.pkl'):
+            if filename.endswith(".pkl"):
                 model_path = os.path.join(model_dir, filename)
                 stat = os.stat(model_path)
-                
-                models.append({
-                    "name": filename[:-4],  # Remove .pkl extension
-                    "path": model_path,
-                    "size": stat.st_size,
-                    "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
-                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
-                })
+
+                models.append(
+                    {
+                        "name": filename[:-4],  # Remove .pkl extension
+                        "path": model_path,
+                        "size": stat.st_size,
+                        "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    }
+                )
 
         return {
             "status": "success",
             "models": models,
             "count": len(models),
-            "model_directory": model_dir
+            "model_directory": model_dir,
         }
 
     except Exception as e:
         logger.error(f"Failed to list AutoScraper models: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}

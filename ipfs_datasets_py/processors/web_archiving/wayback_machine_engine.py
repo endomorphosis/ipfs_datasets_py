@@ -9,6 +9,7 @@ Reusable by:
     - CLI commands
     - Direct Python imports
 """
+
 import logging
 import re
 from datetime import datetime
@@ -42,7 +43,9 @@ async def search_wayback_machine(
         try:
             from wayback import WaybackClient
         except ImportError:
-            return await _search_wayback_direct_api(url, from_date, to_date, limit, collapse, output_format)
+            return await _search_wayback_direct_api(
+                url, from_date, to_date, limit, collapse, output_format
+            )
 
         client = WaybackClient()
         start_date = None
@@ -135,7 +138,9 @@ async def _search_wayback_direct_api(
                     "url": record[2] if len(record) > 2 else "",
                     "original_url": record[2] if len(record) > 2 else "",
                     "wayback_url": (
-                        f"https://web.archive.org/web/{record[1]}/{record[2]}" if len(record) > 2 else ""
+                        f"https://web.archive.org/web/{record[1]}/{record[2]}"
+                        if len(record) > 2
+                        else ""
                     ),
                     "mime_type": record[3] if len(record) > 3 else "",
                     "status_code": record[4] if len(record) > 4 else "",

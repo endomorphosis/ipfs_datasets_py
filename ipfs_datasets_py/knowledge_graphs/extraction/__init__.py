@@ -124,65 +124,64 @@ from .finance_graphrag import (
 
 __all__ = [
     # Types (available now)
-    'EntityID',
-    'RelationshipID',
-    'EntityType',
-    'RelationshipType',
-    'DEFAULT_CONFIDENCE',
-    'MIN_CONFIDENCE',
-    'MAX_CONFIDENCE',
-    'HAVE_TRACER',
-    'HAVE_ACCELERATE',
-    'WikipediaKnowledgeGraphTracer',
-    'AccelerateManager',
-    'is_accelerate_available',
-    'get_accelerate_status',
-    
+    "EntityID",
+    "RelationshipID",
+    "EntityType",
+    "RelationshipType",
+    "DEFAULT_CONFIDENCE",
+    "MIN_CONFIDENCE",
+    "MAX_CONFIDENCE",
+    "HAVE_TRACER",
+    "HAVE_ACCELERATE",
+    "WikipediaKnowledgeGraphTracer",
+    "AccelerateManager",
+    "is_accelerate_available",
+    "get_accelerate_status",
     # Classes (Task 3.3 - Entity & Relationship, Task 3.4 - KnowledgeGraph)
-    'Entity',
-    'Relationship',
-    'KnowledgeGraph',  # Task 3.4 ✅
-    'KnowledgeGraphDiff',  # Session 70 — graph diff/patch ✅
-    'GraphEventType',  # Session 71 — graph event subscriptions ✅
-    'GraphEvent',  # Session 71 — graph event subscriptions ✅
-    'KnowledgeGraphVisualizer',  # Session 73 — advanced visualization ✅
-    'ProvenanceChain',  # Session 75 — blockchain-style provenance ✅
-    'ProvenanceEvent',  # Session 75 — blockchain-style provenance ✅
-    'ProvenanceEventType',  # Session 75 — blockchain-style provenance ✅
-    'KnowledgeGraphExtractor',  # Task 3.5a ✅
-    'KnowledgeGraphExtractorWithValidation',  # Task 3.5b ✅
+    "Entity",
+    "Relationship",
+    "KnowledgeGraph",  # Task 3.4 ✅
+    "KnowledgeGraphDiff",  # Session 70 — graph diff/patch ✅
+    "GraphEventType",  # Session 71 — graph event subscriptions ✅
+    "GraphEvent",  # Session 71 — graph event subscriptions ✅
+    "KnowledgeGraphVisualizer",  # Session 73 — advanced visualization ✅
+    "ProvenanceChain",  # Session 75 — blockchain-style provenance ✅
+    "ProvenanceEvent",  # Session 75 — blockchain-style provenance ✅
+    "ProvenanceEventType",  # Session 75 — blockchain-style provenance ✅
+    "KnowledgeGraphExtractor",  # Task 3.5a ✅
+    "KnowledgeGraphExtractorWithValidation",  # Task 3.5b ✅
     # Advanced extractor (Workstream I — relocated from package root)
-    'AdvancedKnowledgeExtractor',
-    'ExtractionContext',
-    'EntityCandidate',
-    'RelationshipCandidate',
+    "AdvancedKnowledgeExtractor",
+    "ExtractionContext",
+    "EntityCandidate",
+    "RelationshipCandidate",
     # SRL extractor — Item 9 (v2.5.0)
-    'SRLExtractor',
-    'SRLFrame',
-    'RoleArgument',
-    'ROLE_AGENT',
-    'ROLE_PATIENT',
-    'ROLE_THEME',
-    'ROLE_INSTRUMENT',
-    'ROLE_LOCATION',
-    'ROLE_TIME',
-    'ROLE_CAUSE',
-    'ROLE_RESULT',
-    'ROLE_RECIPIENT',
-    'ROLE_SOURCE',
+    "SRLExtractor",
+    "SRLFrame",
+    "RoleArgument",
+    "ROLE_AGENT",
+    "ROLE_PATIENT",
+    "ROLE_THEME",
+    "ROLE_INSTRUMENT",
+    "ROLE_LOCATION",
+    "ROLE_TIME",
+    "ROLE_CAUSE",
+    "ROLE_RESULT",
+    "ROLE_RECIPIENT",
+    "ROLE_SOURCE",
     # Finance GraphRAG
-    'ExecutiveProfile',
-    'CompanyPerformance',
-    'HypothesisTest',
-    'GraphRAGNewsAnalyzer',
-    'analyze_news_with_graphrag',
-    'create_financial_knowledge_graph',
-    'analyze_executive_performance',
-    'extract_executive_profiles_from_archives',
-    'GRAPHRAG_AVAILABLE',
+    "ExecutiveProfile",
+    "CompanyPerformance",
+    "HypothesisTest",
+    "GraphRAGNewsAnalyzer",
+    "analyze_news_with_graphrag",
+    "create_financial_knowledge_graph",
+    "analyze_executive_performance",
+    "extract_executive_profiles_from_archives",
+    "GRAPHRAG_AVAILABLE",
 ]
 
 
-__version__ = '0.1.0'
-__phase__ = 'Phase 3 Task 3.5b - KnowledgeGraphExtractorWithValidation Extracted'
-__status__ = 'In Development'
+__version__ = "0.1.0"
+__phase__ = "Phase 3 Task 3.5b - KnowledgeGraphExtractorWithValidation Extracted"
+__status__ = "In Development"

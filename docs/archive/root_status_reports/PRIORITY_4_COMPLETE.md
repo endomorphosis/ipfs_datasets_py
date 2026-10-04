@@ -210,10 +210,7 @@ print(f"API reduction: {stats['cache']['api_call_reduction']:.1%}")
 from ipfs_datasets_py.optimizers.agentic import OptimizationValidator
 
 # Enhanced parallel validation (40-60% faster)
-validator = OptimizationValidator(
-    use_enhanced_parallel=True,
-    max_workers=4
-)
+validator = OptimizationValidator(use_enhanced_parallel=True, max_workers=4)
 
 result = await validator.validate(code, files)
 print(f"Validation time: {result.execution_time:.2f}s")
@@ -225,7 +222,7 @@ print(f"Validation time: {result.execution_time:.2f}s")
 from ipfs_datasets_py.optimizers.common import (
     PerformanceMetricsCollector,
     PerformanceDashboard,
-    get_global_collector
+    get_global_collector,
 )
 
 # Get global collector

@@ -8,6 +8,7 @@ This module mirrors the structure of the French, Spanish, and German parsers
 so that it integrates transparently with ``detect_all_languages()`` and the
 ``_I18N_KEYWORD_LOADERS`` dispatch table.
 """
+
 from __future__ import annotations
 
 import re
@@ -70,6 +71,7 @@ def get_portuguese_deontic_keywords() -> Dict[str, List[str]]:
 # ---------------------------------------------------------------------------
 # Lightweight clause extractor
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PortugueseClause:

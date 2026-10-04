@@ -56,6 +56,7 @@ class SerpStackSearchAPI:
         """
         try:
             import aiohttp  # noqa: F401
+
             aiohttp_installed = True
         except ImportError:
             aiohttp_installed = False
@@ -153,9 +154,7 @@ class SerpStackSearchAPI:
         return {
             "queue_length": len(self.queue),
             "queued_operations": self.queue,
-            "operations_pending": sum(
-                1 for item in self.queue if item["status"] == "queued"
-            ),
+            "operations_pending": sum(1 for item in self.queue if item["status"] == "queued"),
         }
 
     def clear_queue(self) -> Dict[str, Any]:
@@ -222,8 +221,13 @@ async def search_serpstack(
     except ImportError:
         return {"status": "error", "error": "aiohttp required: pip install aiohttp"}
     url = "http://api.serpstack.com/search"
-    params: Dict[str, Any] = {"access_key": api_key, "query": query, "engine": engine,
-                               "num": min(num, 100), "page": page}
+    params: Dict[str, Any] = {
+        "access_key": api_key,
+        "query": query,
+        "engine": engine,
+        "num": min(num, 100),
+        "page": page,
+    }
     if location:
         params["location"] = location
     if device:
@@ -238,15 +242,25 @@ async def search_serpstack(
                     if "error" in data:
                         return {"status": "error", "error": data["error"].get("info", "API error")}
                     results = [
-                        {"title": r.get("title", ""), "url": r.get("url", ""),
-                         "description": r.get("description", ""), "position": r.get("position", 0)}
+                        {
+                            "title": r.get("title", ""),
+                            "url": r.get("url", ""),
+                            "description": r.get("description", ""),
+                            "position": r.get("position", 0),
+                        }
                         for r in data.get("organic_results", [])
                     ]
                     info = data.get("search_information", {})
-                    return {"status": "success", "results": results, "query": query, "engine": engine,
-                            "total_results": info.get("total_results", "N/A"),
-                            "time_taken": info.get("time_taken", 0), "page": page,
-                            "search_timestamp": _datetime.now().isoformat()}
+                    return {
+                        "status": "success",
+                        "results": results,
+                        "query": query,
+                        "engine": engine,
+                        "total_results": info.get("total_results", "N/A"),
+                        "time_taken": info.get("time_taken", 0),
+                        "page": page,
+                        "search_timestamp": _datetime.now().isoformat(),
+                    }
                 elif resp.status == 401:
                     return {"status": "error", "error": "Invalid SerpStack API key"}
                 elif resp.status == 429:
@@ -276,8 +290,13 @@ async def search_serpstack_images(
     except ImportError:
         return {"status": "error", "error": "aiohttp required: pip install aiohttp"}
     url = "http://api.serpstack.com/search"
-    params: Dict[str, Any] = {"access_key": api_key, "query": query, "engine": engine,
-                               "type": "images", "num": min(num, 100)}
+    params: Dict[str, Any] = {
+        "access_key": api_key,
+        "query": query,
+        "engine": engine,
+        "type": "images",
+        "num": min(num, 100),
+    }
     if location:
         params["location"] = location
     try:
@@ -288,13 +307,24 @@ async def search_serpstack_images(
                     if "error" in data:
                         return {"status": "error", "error": data["error"].get("info", "API error")}
                     results = [
-                        {"title": r.get("title", ""), "url": r.get("url", ""),
-                         "image_url": r.get("image_url", ""), "thumbnail": r.get("thumbnail", ""),
-                         "source": r.get("source", ""), "width": r.get("width"), "height": r.get("height")}
+                        {
+                            "title": r.get("title", ""),
+                            "url": r.get("url", ""),
+                            "image_url": r.get("image_url", ""),
+                            "thumbnail": r.get("thumbnail", ""),
+                            "source": r.get("source", ""),
+                            "width": r.get("width"),
+                            "height": r.get("height"),
+                        }
                         for r in data.get("image_results", [])
                     ]
-                    return {"status": "success", "results": results, "query": query,
-                            "total_results": len(results), "search_timestamp": _datetime.now().isoformat()}
+                    return {
+                        "status": "success",
+                        "results": results,
+                        "query": query,
+                        "total_results": len(results),
+                        "search_timestamp": _datetime.now().isoformat(),
+                    }
                 else:
                     return {"status": "error", "error": f"HTTP {resp.status}"}
     except Exception as e:
@@ -315,6 +345,7 @@ async def batch_search_serpstack(
     if not all(isinstance(q, str) for q in queries):
         return {"status": "error", "error": "All queries must be strings"}
     import anyio
+
     results: Dict[str, Any] = {}
     success_count = 0
     error_count = 0
@@ -327,9 +358,15 @@ async def batch_search_serpstack(
             error_count += 1
         if q != queries[-1]:
             await anyio.sleep(delay_seconds)
-    return {"status": "success", "results": results, "engine": engine,
-            "total_queries": len(queries), "success_count": success_count,
-            "error_count": error_count, "batch_completed_at": _datetime.now().isoformat()}
+    return {
+        "status": "success",
+        "results": results,
+        "engine": engine,
+        "total_queries": len(queries),
+        "success_count": success_count,
+        "error_count": error_count,
+        "batch_completed_at": _datetime.now().isoformat(),
+    }
 
 
 __all__ = [

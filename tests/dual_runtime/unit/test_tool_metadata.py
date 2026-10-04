@@ -32,7 +32,7 @@ class TestToolMetadataDataclass:
         THEN: Default values are applied correctly
         """
         metadata = ToolMetadata(name="test_tool")
-        
+
         assert metadata.name == "test_tool"
         assert metadata.runtime == RUNTIME_AUTO
         assert metadata.requires_p2p is False
@@ -59,9 +59,9 @@ class TestToolMetadataDataclass:
             cpu_intensive=False,
             io_intensive=True,
             mcp_schema=schema,
-            mcp_description="Advanced P2P workflow tool"
+            mcp_description="Advanced P2P workflow tool",
         )
-        
+
         assert metadata.name == "advanced_tool"
         assert metadata.runtime == RUNTIME_TRIO
         assert metadata.requires_p2p is True
@@ -90,7 +90,7 @@ class TestToolMetadataDataclass:
         """
         with pytest.raises(ValueError, match="Priority must be 0-10"):
             ToolMetadata(name="test_tool", priority=11)
-        
+
         with pytest.raises(ValueError, match="Priority must be 0-10"):
             ToolMetadata(name="test_tool", priority=-1)
 
@@ -109,15 +109,10 @@ class TestToolMetadataDataclass:
         WHEN: Converting to dictionary
         THEN: All fields are included except internal fields
         """
-        metadata = ToolMetadata(
-            name="test_tool",
-            runtime=RUNTIME_TRIO,
-            category="p2p",
-            priority=7
-        )
-        
+        metadata = ToolMetadata(name="test_tool", runtime=RUNTIME_TRIO, category="p2p", priority=7)
+
         data = metadata.to_dict()
-        
+
         assert data["name"] == "test_tool"
         assert data["runtime"] == RUNTIME_TRIO
         assert data["category"] == "p2p"
@@ -132,7 +127,7 @@ class TestToolMetadataDataclass:
         """
         metadata = ToolMetadata(name="test_tool")
         warnings = metadata.validate_complete()
-        
+
         assert any("description" in w.lower() for w in warnings)
 
     def test_metadata_validate_complete_missing_schema(self):
@@ -143,7 +138,7 @@ class TestToolMetadataDataclass:
         """
         metadata = ToolMetadata(name="test_tool")
         warnings = metadata.validate_complete()
-        
+
         assert any("schema" in w.lower() for w in warnings)
 
     def test_metadata_validate_p2p_runtime_mismatch(self):
@@ -152,13 +147,9 @@ class TestToolMetadataDataclass:
         WHEN: Validating completeness
         THEN: Warning about runtime mismatch
         """
-        metadata = ToolMetadata(
-            name="p2p_tool",
-            requires_p2p=True,
-            runtime=RUNTIME_FASTAPI
-        )
+        metadata = ToolMetadata(name="p2p_tool", requires_p2p=True, runtime=RUNTIME_FASTAPI)
         warnings = metadata.validate_complete()
-        
+
         assert any("p2p" in w.lower() and "trio" in w.lower() for w in warnings)
 
     def test_metadata_validate_complete_all_fields(self):
@@ -172,10 +163,10 @@ class TestToolMetadataDataclass:
             runtime=RUNTIME_TRIO,
             requires_p2p=True,
             mcp_description="Complete tool",
-            mcp_schema={"type": "object"}
+            mcp_schema={"type": "object"},
         )
         warnings = metadata.validate_complete()
-        
+
         assert len(warnings) == 0
 
 
@@ -197,7 +188,7 @@ class TestToolMetadataRegistry:
         """
         metadata = ToolMetadata(name="test_tool", runtime=RUNTIME_FASTAPI)
         registry.register(metadata)
-        
+
         result = registry.get("test_tool")
         assert result is not None
         assert result.name == "test_tool"
@@ -212,7 +203,7 @@ class TestToolMetadataRegistry:
         for i in range(5):
             metadata = ToolMetadata(name=f"tool_{i}", runtime=RUNTIME_FASTAPI)
             registry.register(metadata)
-        
+
         all_tools = registry.list_all()
         assert len(all_tools) == 5
 
@@ -234,7 +225,7 @@ class TestToolMetadataRegistry:
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_FASTAPI))
         registry.register(ToolMetadata(name="tool2", runtime=RUNTIME_TRIO))
         registry.register(ToolMetadata(name="tool3", runtime=RUNTIME_FASTAPI))
-        
+
         fastapi_tools = registry.list_by_runtime(RUNTIME_FASTAPI)
         assert len(fastapi_tools) == 2
         assert all(t.runtime == RUNTIME_FASTAPI for t in fastapi_tools)
@@ -248,7 +239,7 @@ class TestToolMetadataRegistry:
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_FASTAPI))
         registry.register(ToolMetadata(name="tool2", runtime=RUNTIME_TRIO))
         registry.register(ToolMetadata(name="tool3", runtime=RUNTIME_TRIO))
-        
+
         trio_tools = registry.list_by_runtime(RUNTIME_TRIO)
         assert len(trio_tools) == 2
         assert all(t.runtime == RUNTIME_TRIO for t in trio_tools)
@@ -262,7 +253,7 @@ class TestToolMetadataRegistry:
         registry.register(ToolMetadata(name="tool1", category="dataset"))
         registry.register(ToolMetadata(name="tool2", category="p2p"))
         registry.register(ToolMetadata(name="tool3", category="dataset"))
-        
+
         dataset_tools = registry.list_by_category("dataset")
         assert len(dataset_tools) == 2
         assert all(t.category == "dataset" for t in dataset_tools)
@@ -276,9 +267,9 @@ class TestToolMetadataRegistry:
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_FASTAPI, category="dataset"))
         registry.register(ToolMetadata(name="tool2", runtime=RUNTIME_TRIO, requires_p2p=True))
         registry.register(ToolMetadata(name="tool3", runtime=RUNTIME_FASTAPI, category="dataset"))
-        
+
         stats = registry.get_statistics()
-        
+
         assert stats["total_tools"] == 3
         assert stats["by_runtime"][RUNTIME_FASTAPI] == 2
         assert stats["by_runtime"][RUNTIME_TRIO] == 1
@@ -294,7 +285,7 @@ class TestToolMetadataRegistry:
         """
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_FASTAPI))
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_TRIO))
-        
+
         assert "re-registered" in caplog.text.lower()
 
     def test_registry_clear(self, registry):
@@ -305,9 +296,9 @@ class TestToolMetadataRegistry:
         """
         for i in range(5):
             registry.register(ToolMetadata(name=f"tool_{i}"))
-        
+
         registry.clear()
-        
+
         assert len(registry.list_all()) == 0
         assert registry.get_statistics()["total_tools"] == 0
 
@@ -321,11 +312,12 @@ class TestToolMetadataDecorator:
         WHEN: Decorator is applied
         THEN: Function has metadata attached
         """
+
         @tool_metadata(runtime=RUNTIME_TRIO, category="test")
         def test_function():
             """Test function."""
             return "result"
-        
+
         assert hasattr(test_function, "_mcp_metadata")
         assert test_function._mcp_metadata.runtime == RUNTIME_TRIO
         assert test_function._mcp_metadata.category == "test"
@@ -336,11 +328,12 @@ class TestToolMetadataDecorator:
         WHEN: Decorator is applied
         THEN: Function has metadata attached
         """
+
         @tool_metadata(runtime=RUNTIME_TRIO, requires_p2p=True)
         async def async_test_function():
             """Async test function."""
             return "async_result"
-        
+
         assert hasattr(async_test_function, "_mcp_metadata")
         assert async_test_function._mcp_metadata.runtime == RUNTIME_TRIO
         assert async_test_function._mcp_metadata.requires_p2p is True
@@ -352,7 +345,7 @@ class TestToolMetadataDecorator:
         THEN: All metadata fields set correctly
         """
         schema = {"type": "object"}
-        
+
         @tool_metadata(
             runtime=RUNTIME_TRIO,
             requires_p2p=True,
@@ -364,12 +357,12 @@ class TestToolMetadataDecorator:
             cpu_intensive=False,
             io_intensive=True,
             mcp_schema=schema,
-            mcp_description="Full metadata tool"
+            mcp_description="Full metadata tool",
         )
         def full_metadata_function():
             """Function with full metadata."""
             return "result"
-        
+
         metadata = full_metadata_function._mcp_metadata
         assert metadata.runtime == RUNTIME_TRIO
         assert metadata.requires_p2p is True
@@ -389,12 +382,12 @@ class TestToolMetadataDecorator:
         """
         registry = get_registry()
         registry.clear()
-        
+
         @tool_metadata(runtime=RUNTIME_FASTAPI)
         def auto_registered_function():
             """Auto-registered function."""
             return "result"
-        
+
         metadata = registry.get("auto_registered_function")
         assert metadata is not None
         assert metadata.name == "auto_registered_function"
@@ -405,11 +398,12 @@ class TestToolMetadataDecorator:
         WHEN: Decorator is applied
         THEN: Docstring is used as description
         """
+
         @tool_metadata(runtime=RUNTIME_FASTAPI)
         def documented_function():
             """This is the function docstring."""
             return "result"
-        
+
         assert "docstring" in documented_function._mcp_metadata.mcp_description
 
     def test_decorator_explicit_description_overrides_docstring(self):
@@ -418,14 +412,12 @@ class TestToolMetadataDecorator:
         WHEN: Decorator is applied
         THEN: Explicit description is used
         """
-        @tool_metadata(
-            runtime=RUNTIME_FASTAPI,
-            mcp_description="Explicit description"
-        )
+
+        @tool_metadata(runtime=RUNTIME_FASTAPI, mcp_description="Explicit description")
         def function_with_both():
             """This is the docstring."""
             return "result"
-        
+
         assert function_with_both._mcp_metadata.mcp_description == "Explicit description"
 
     def test_get_tool_metadata_from_function(self):
@@ -434,11 +426,12 @@ class TestToolMetadataDecorator:
         WHEN: Getting metadata via get_tool_metadata
         THEN: Metadata is returned
         """
+
         @tool_metadata(runtime=RUNTIME_TRIO)
         def test_function():
             """Test function."""
             return "result"
-        
+
         metadata = get_tool_metadata(test_function)
         assert metadata is not None
         assert metadata.runtime == RUNTIME_TRIO
@@ -449,10 +442,11 @@ class TestToolMetadataDecorator:
         WHEN: Getting metadata via get_tool_metadata
         THEN: None is returned
         """
+
         def plain_function():
             """Plain function."""
             return "result"
-        
+
         metadata = get_tool_metadata(plain_function)
         assert metadata is None
 
@@ -462,16 +456,12 @@ class TestToolMetadataDecorator:
         WHEN: Decorator is applied
         THEN: Legacy attributes (_mcp_runtime, etc.) are set for backward compatibility
         """
-        @tool_metadata(
-            runtime=RUNTIME_TRIO,
-            requires_p2p=True,
-            category="p2p",
-            priority=8
-        )
+
+        @tool_metadata(runtime=RUNTIME_TRIO, requires_p2p=True, category="p2p", priority=8)
         def test_function():
             """Test function."""
             return "result"
-        
+
         assert hasattr(test_function, "_mcp_runtime")
         assert test_function._mcp_runtime == RUNTIME_TRIO
         assert hasattr(test_function, "_mcp_requires_p2p")

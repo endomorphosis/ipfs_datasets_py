@@ -81,24 +81,24 @@ class ZKPVerifier:
         self.backend = backend
         self._backend = get_backend(backend)
         self._stats = {
-            'proofs_verified': 0,
-            'proofs_rejected': 0,
-            'total_verification_time': 0.0,
+            "proofs_verified": 0,
+            "proofs_rejected": 0,
+            "total_verification_time": 0.0,
         }
-    
+
     def verify_proof(self, proof: ZKPProof) -> bool:
         """
         Verify a zero-knowledge proof.
-        
+
         Args:
             proof: The ZKP proof to verify
-        
+
         Returns:
             bool: True if proof is valid, False otherwise
-        
+
         Raises:
             ZKPError: If verification process fails
-        
+
         Example:
             >>> verifier = ZKPVerifier()
             >>> valid = verifier.verify_proof(proof)
@@ -106,30 +106,30 @@ class ZKPVerifier:
             ...     print("Proof verified! Theorem is true.")
         """
         start_time = time.time()
-        
+
         try:
             # Validate proof structure
             if not self._validate_proof_structure(proof):
-                self._stats['proofs_rejected'] += 1
+                self._stats["proofs_rejected"] += 1
                 return False
-            
+
             # Verify proof via backend
             is_valid = self._backend.verify_proof(proof)
-            
+
             # Update stats
             verification_time = time.time() - start_time
-            self._stats['total_verification_time'] += verification_time
-            
+            self._stats["total_verification_time"] += verification_time
+
             if is_valid:
-                self._stats['proofs_verified'] += 1
+                self._stats["proofs_verified"] += 1
             else:
-                self._stats['proofs_rejected'] += 1
-            
+                self._stats["proofs_rejected"] += 1
+
             return is_valid
-            
+
         except Exception as e:
             raise ZKPError(f"Proof verification failed: {e}")
-    
+
     def _validate_proof_structure(self, proof: ZKPProof) -> bool:
         """Validate proof has correct structure."""
         try:
@@ -146,12 +146,14 @@ class ZKPVerifier:
                 metadata=proof.metadata,
             ):
                 return False
-            
+
             # Check proof size bounds.
             # Simulated backend proofs are ~160 bytes; real Groth16 proofs may be larger.
             proof_backend = ""
             if isinstance(getattr(proof, "metadata", None), dict):
-                proof_backend = str(proof.metadata.get("backend") or proof.metadata.get("proof_system") or "")
+                proof_backend = str(
+                    proof.metadata.get("backend") or proof.metadata.get("proof_system") or ""
+                )
 
             max_size = 300
             if proof_backend.lower().startswith("groth16") or "groth16" in proof_backend.lower():
@@ -159,14 +161,14 @@ class ZKPVerifier:
 
             if proof.size_bytes < 100 or proof.size_bytes > max_size:
                 return False
-            
+
             # Check security level
-            proof_security = proof.metadata.get('security_level', 0)
+            proof_security = proof.metadata.get("security_level", 0)
             if proof_security < self.security_level:
                 return False
-            
+
             return True
-            
+
         except (AttributeError, TypeError, KeyError) as e:
             # Proof object doesn't have expected attributes or structure
             logger.warning(f"Invalid proof structure during validation: {e}")
@@ -178,14 +180,8 @@ class ZKPVerifier:
         metadata = getattr(proof, "metadata", None)
         return (
             isinstance(public_inputs, dict)
-            and (
-                "attestation_ref" in public_inputs
-                or "attestation_view_version" in public_inputs
-            )
-        ) or (
-            isinstance(metadata, dict)
-            and isinstance(metadata.get("attestation_view"), dict)
-        )
+            and ("attestation_ref" in public_inputs or "attestation_view_version" in public_inputs)
+        ) or (isinstance(metadata, dict) and isinstance(metadata.get("attestation_view"), dict))
 
     @staticmethod
     def _is_hex_32_bytes(value: object) -> bool:
@@ -254,7 +250,7 @@ class ZKPVerifier:
                 return False
 
         return True
-    
+
     def verify_with_public_inputs(
         self,
         proof: ZKPProof,
@@ -262,14 +258,14 @@ class ZKPVerifier:
     ) -> bool:
         """
         Verify proof and check public inputs match expected values.
-        
+
         Args:
             proof: The proof to verify
             expected_theorem: The theorem we expect to be proven
-        
+
         Returns:
             bool: True if proof valid and inputs match
-        
+
         Example:
             >>> verifier = ZKPVerifier()
             >>> valid = verifier.verify_with_public_inputs(
@@ -280,34 +276,32 @@ class ZKPVerifier:
         # Verify the proof itself
         if not self.verify_proof(proof):
             return False
-        
+
         # Check public inputs match expected
-        actual_theorem = proof.public_inputs.get('theorem', '')
+        actual_theorem = proof.public_inputs.get("theorem", "")
         if actual_theorem != expected_theorem:
             return False
-        
+
         return True
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get verifier statistics."""
-        total_proofs = self._stats['proofs_verified'] + self._stats['proofs_rejected']
-        
+        total_proofs = self._stats["proofs_verified"] + self._stats["proofs_rejected"]
+
         return {
             **self._stats,
-            'avg_verification_time': (
-                self._stats['total_verification_time'] / total_proofs
-                if total_proofs > 0 else 0.0
+            "avg_verification_time": (
+                self._stats["total_verification_time"] / total_proofs if total_proofs > 0 else 0.0
             ),
-            'acceptance_rate': (
-                self._stats['proofs_verified'] / total_proofs
-                if total_proofs > 0 else 0.0
+            "acceptance_rate": (
+                self._stats["proofs_verified"] / total_proofs if total_proofs > 0 else 0.0
             ),
         }
-    
+
     def reset_stats(self):
         """Reset verification statistics."""
         self._stats = {
-            'proofs_verified': 0,
-            'proofs_rejected': 0,
-            'total_verification_time': 0.0,
+            "proofs_verified": 0,
+            "proofs_rejected": 0,
+            "total_verification_time": 0.0,
         }

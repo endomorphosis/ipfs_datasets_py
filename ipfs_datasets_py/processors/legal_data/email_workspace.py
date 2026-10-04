@@ -111,7 +111,11 @@ def _collect_message_text(email_message: EmailMessage) -> str:
 
 
 def _tokenize_text(value: str) -> list[str]:
-    return [token for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9'_-]*", str(value or "").lower()) if len(token) >= 3]
+    return [
+        token
+        for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9'_-]*", str(value or "").lower())
+        if len(token) >= 3
+    ]
 
 
 def build_complaint_terms(
@@ -126,8 +130,12 @@ def build_complaint_terms(
     return [term for term, _count in counts.most_common()]
 
 
-def score_email_relevance(email_message: EmailMessage, complaint_terms: Sequence[str]) -> dict[str, Any]:
-    normalized_terms = [str(term or "").strip().lower() for term in complaint_terms if str(term or "").strip()]
+def score_email_relevance(
+    email_message: EmailMessage, complaint_terms: Sequence[str]
+) -> dict[str, Any]:
+    normalized_terms = [
+        str(term or "").strip().lower() for term in complaint_terms if str(term or "").strip()
+    ]
     if not normalized_terms:
         return {"score": 0.0, "matched_terms": [], "matched_fields": []}
     subject = str(email_message.get("Subject", "") or "")
@@ -135,7 +143,11 @@ def score_email_relevance(email_message: EmailMessage, complaint_terms: Sequence
     subject_tokens = set(_tokenize_text(subject))
     body_tokens = set(_tokenize_text(body_text))
     matched_subject_terms = [term for term in normalized_terms if term in subject_tokens]
-    matched_body_terms = [term for term in normalized_terms if term in body_tokens and term not in matched_subject_terms]
+    matched_body_terms = [
+        term
+        for term in normalized_terms
+        if term in body_tokens and term not in matched_subject_terms
+    ]
     matched_fields: list[str] = []
     if matched_subject_terms:
         matched_fields.append("subject")
@@ -158,9 +170,14 @@ def save_email_bundle(
     sequence_number: int,
 ) -> dict[str, Any]:
     root_path = Path(root_dir).expanduser().resolve()
-    message_key = parsed_email.get("message_id_header") or hashlib.sha256(raw_bytes).hexdigest()[:16]
+    message_key = (
+        parsed_email.get("message_id_header") or hashlib.sha256(raw_bytes).hexdigest()[:16]
+    )
     subject_slug = _slugify(str(parsed_email.get("subject") or "email"), fallback="email")
-    bundle_dir = root_path / f"{int(sequence_number):04d}-{subject_slug}-{_slugify(str(message_key), fallback='message')}"
+    bundle_dir = (
+        root_path
+        / f"{int(sequence_number):04d}-{subject_slug}-{_slugify(str(message_key), fallback='message')}"
+    )
     attachments_dir = bundle_dir / "attachments"
     attachments_dir.mkdir(parents=True, exist_ok=True)
 
@@ -203,7 +220,9 @@ def save_email_bundle(
         **dict(parsed_email),
     }
     parsed_path = bundle_dir / "message.json"
-    parsed_path.write_text(json.dumps(parsed_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    parsed_path.write_text(
+        json.dumps(parsed_payload, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
     return {
         "folder": str(folder_name or ""),
@@ -221,7 +240,8 @@ def save_email_bundle(
         "text_content": parsed_email.get("body_text", ""),
         "attachment_paths": [item["path"] for item in attachment_records],
         "attachments": attachment_records,
-        "evidence_title": parsed_email.get("subject") or f"Email from {parsed_email.get('from', '')}",
+        "evidence_title": parsed_email.get("subject")
+        or f"Email from {parsed_email.get('from', '')}",
     }
 
 
@@ -300,7 +320,11 @@ def import_local_eml_directory(
     }
     manifest_path = run_dir / "email_import_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
-    return {"manifest_path": str(manifest_path), "output_dir": str(run_dir), "email_count": len(records)}
+    return {
+        "manifest_path": str(manifest_path),
+        "output_dir": str(run_dir),
+        "email_count": len(records),
+    }
 
 
 def _merge_terms(manifests: list[dict[str, Any]]) -> list[str]:
@@ -375,7 +399,11 @@ def merge_email_manifests(
         "folders": [str(path.parent) for path in manifest_files],
         "search": "MERGED_EMAIL_MANIFESTS",
         "complaint_terms": _merge_terms(manifests),
-        "min_relevance_score": max(float(manifest.get("min_relevance_score") or 0.0) for manifest in manifests) if manifests else 0.0,
+        "min_relevance_score": max(
+            float(manifest.get("min_relevance_score") or 0.0) for manifest in manifests
+        )
+        if manifests
+        else 0.0,
         "address_targets": [],
         "from_address_targets": [],
         "recipient_address_targets": [],

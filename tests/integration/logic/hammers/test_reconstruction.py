@@ -222,9 +222,7 @@ def make_available_capability(itp: ITPKind, executable_name: str) -> CapabilityE
 class TestReconstructionEvidence:
     def test_validate_requires_checked_source(self):
         with pytest.raises(ValueError):
-            ReconstructionEvidence(
-                request_id="r1", candidate_id="c1", checked_source=""
-            )
+            ReconstructionEvidence(request_id="r1", candidate_id="c1", checked_source="")
 
     def test_digests_computed_automatically(self):
         evidence = ReconstructionEvidence(
@@ -399,12 +397,16 @@ class TestRequireMatchingIds:
 class TestRequireSingleMarker:
     def test_raises_for_no_marker(self):
         with pytest.raises(ReconstructionInputError):
-            require_single_marker(LEAN_COMPLETE_SOURCE, lean_reconstructor_module._SORRY_RE, marker_name="sorry")
+            require_single_marker(
+                LEAN_COMPLETE_SOURCE, lean_reconstructor_module._SORRY_RE, marker_name="sorry"
+            )
 
     def test_raises_for_multiple_markers(self):
         two_sorries = LEAN_GOOD_SOURCE + "\n" + LEAN_HYP_SOURCE
         with pytest.raises(ReconstructionInputError):
-            require_single_marker(two_sorries, lean_reconstructor_module._SORRY_RE, marker_name="sorry")
+            require_single_marker(
+                two_sorries, lean_reconstructor_module._SORRY_RE, marker_name="sorry"
+            )
 
     def test_returns_the_sole_match(self):
         match = require_single_marker(
@@ -503,9 +505,7 @@ class TestLeanReconstructorReal:
 
     def test_rejects_a_corrupted_theorem_statement(self):
         snapshot = self._snapshot(LEAN_CORRUPT_SOURCE, "hammer_recon_corrupt")
-        request = make_request(
-            theorem_id="hammer_recon_corrupt", goal_statement=snapshot.goal_text
-        )
+        request = make_request(theorem_id="hammer_recon_corrupt", goal_statement=snapshot.goal_text)
         candidate = make_candidate(
             candidate_id="corrupt-candidate", request_id=request.request_id, premise_ids=["h"]
         )
@@ -540,9 +540,7 @@ class TestLeanReconstructorReal:
         arbiter."""
 
         snapshot = self._snapshot(LEAN_CORRUPT_SOURCE, "hammer_recon_corrupt")
-        request = make_request(
-            theorem_id="hammer_recon_corrupt", goal_statement=snapshot.goal_text
-        )
+        request = make_request(theorem_id="hammer_recon_corrupt", goal_statement=snapshot.goal_text)
         candidate = make_candidate(
             candidate_id="hallucinated-candidate",
             request_id=request.request_id,

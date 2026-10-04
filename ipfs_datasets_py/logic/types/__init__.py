@@ -70,6 +70,7 @@ def Forall(variable: Variable, formula: Formula) -> Formula:
 def Exists(variable: Variable, formula: Formula) -> Formula:
     return create_existential(variable, formula)
 
+
 from .translation_types import (
     LogicTranslationTarget,
     TranslationResult,
@@ -128,7 +129,6 @@ __all__ = [
     "LogicTranslationTarget",
     "TranslationResult",
     "AbstractLogicFormula",
-
     # TDFOL core term/formula helpers (compat)
     "Formula",
     "Predicate",

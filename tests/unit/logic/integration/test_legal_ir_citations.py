@@ -38,8 +38,14 @@ def _source_map() -> LegalIRSourceMap:
     spans = {
         "doc-citations": (0, len(SOURCE_TEXT)),
         "target:ors-192-001": (0, SOURCE_TEXT.index(".")),
-        "target:ors-192-003": (SOURCE_TEXT.index("ORS 192.003"), SOURCE_TEXT.index(" are incorporated")),
-        "target:ors-192-005": (SOURCE_TEXT.index("ORS 192.003"), SOURCE_TEXT.index(" are incorporated")),
+        "target:ors-192-003": (
+            SOURCE_TEXT.index("ORS 192.003"),
+            SOURCE_TEXT.index(" are incorporated"),
+        ),
+        "target:ors-192-005": (
+            SOURCE_TEXT.index("ORS 192.003"),
+            SOURCE_TEXT.index(" are incorporated"),
+        ),
         "target:ors-192-999": (SOURCE_TEXT.index("Former"), SOURCE_TEXT.index("Section") - 1),
         "ref:internal-subsection": (SOURCE_TEXT.index("Section 192.001"), len(SOURCE_TEXT)),
         "ref:range": (SOURCE_TEXT.index("ORS 192.003"), SOURCE_TEXT.index(" are incorporated")),
@@ -227,7 +233,9 @@ def test_repealed_and_unresolved_references_are_diagnostics_and_fail_closed() ->
     assert LegalIRCitationDiagnosticType.UNRESOLVED_CITATION in missing.diagnostic_types
     assert graph.repealed_references[0].reference_id == "ref:repealed"
     assert graph.unresolved_references[0].reference_id == "ref:missing"
-    assert not legal_ir_citations_allowed_for_use(graph, artifact_use=LegalIRCitationUse.LEARNED_TARGET)
+    assert not legal_ir_citations_allowed_for_use(
+        graph, artifact_use=LegalIRCitationUse.LEARNED_TARGET
+    )
     with pytest.raises(ValueError):
         assert_legal_ir_citations_resolved(graph, artifact_use=LegalIRCitationUse.PROOF_TARGET)
 
@@ -302,9 +310,7 @@ def test_build_citation_graph_extracts_common_legal_ir_shapes() -> None:
     graph = build_legal_ir_citation_graph(sample)
 
     assert graph.resolution_by_reference_id["ref:built"].resolved
-    assert graph.resolution_by_reference_id["ref:built"].target_ids == (
-        "target:built-192-001",
-    )
+    assert graph.resolution_by_reference_id["ref:built"].target_ids == ("target:built-192-001",)
     assert any(
         reference.citation_kind is LegalIRCitationKind.INTERNAL
         for reference in graph.references

@@ -209,8 +209,7 @@ class HammerTranslationRecord:
             "artifact_sha256": self.artifact_sha256,
             "artifact_size_bytes": int(self.artifact_size_bytes),
             "decisions": {
-                decision.name: decision.to_dict()
-                for decision in self.transformation_decisions
+                decision.name: decision.to_dict() for decision in self.transformation_decisions
             },
             "errors": list(self.errors),
             "input_formula_id": self.input_formula_id,
@@ -355,8 +354,7 @@ class HammerReconstructionReceipt:
             errors=tuple(str(item) for item in data.get("errors", []) or []),
             metadata=dict(data.get("metadata") or {}),
             schema_version=str(
-                data.get("schema_version")
-                or LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
+                data.get("schema_version") or LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
             ),
         )
 
@@ -444,10 +442,7 @@ def _translation_record(
     }
     record_payload = {
         "artifact_sha256": _content_hash(content),
-        "decisions": {
-            name: decision.to_dict()
-            for name, decision in sorted(decisions.items())
-        },
+        "decisions": {name: decision.to_dict() for name, decision in sorted(decisions.items())},
         "errors": [str(item) for item in translation.errors],
         "input_formula_id": input_formula_id,
         "obligation_id": obligation_id,
@@ -539,9 +534,7 @@ def translation_records_from_hammer_result(
     """Project all solver translations and a generated Lean script to records."""
 
     resolved_obligation_id = str(
-        obligation_id
-        or result.goal.metadata.get("obligation_id")
-        or result.goal.name
+        obligation_id or result.goal.metadata.get("obligation_id") or result.goal.name
     )
     resolved_formula_id = str(
         input_formula_id
@@ -596,9 +589,7 @@ def reconstruction_receipt_from_hammer_result(
         )
     )
     resolved_obligation_id = str(
-        obligation_id
-        or result.goal.metadata.get("obligation_id")
-        or result.goal.name
+        obligation_id or result.goal.metadata.get("obligation_id") or result.goal.name
     )
     resolved_formula_id = str(
         input_formula_id
@@ -606,18 +597,14 @@ def reconstruction_receipt_from_hammer_result(
         or result.goal.metadata.get("formula_id")
         or ""
     )
-    statuses = {
-        str(item.backend): _enum_value(item.status)
-        for item in result.backend_results
-    }
+    statuses = {str(item.backend): _enum_value(item.status) for item in result.backend_results}
     winner = next((item for item in result.backend_results if item.proved), None)
     backend_proved = winner is not None
     reconstruction = result.reconstruction
     native_reconstruction = reconstruction is not None
     native_verified = bool(reconstruction and reconstruction.verified)
     translation_failed = result.status == HammerStatus.TRANSLATION_FAILED or (
-        bool(result.translations)
-        and not any(item.success for item in result.translations.values())
+        bool(result.translations) and not any(item.success for item in result.translations.values())
     )
     translation_succeeded = bool(result.translations) and any(
         item.success for item in result.translations.values()
@@ -673,9 +660,7 @@ def reconstruction_receipt_from_hammer_result(
         "outcome": outcome.value,
         "translation_record_ids": [item.translation_id for item in records],
         "trust_status": (
-            HammerTrustStatus.TRUSTED.value
-            if trusted_value
-            else HammerTrustStatus.UNTRUSTED.value
+            HammerTrustStatus.TRUSTED.value if trusted_value else HammerTrustStatus.UNTRUSTED.value
         ),
     }
     provenance_value = cache_provenance
@@ -700,9 +685,7 @@ def reconstruction_receipt_from_hammer_result(
         native_reconstruction=native_reconstruction,
         native_reconstruction_verified=native_verified,
         trusted=trusted_value,
-        trust_status=(
-            HammerTrustStatus.TRUSTED if trusted_value else HammerTrustStatus.UNTRUSTED
-        ),
+        trust_status=(HammerTrustStatus.TRUSTED if trusted_value else HammerTrustStatus.UNTRUSTED),
         trust_reason=trust_reason,
         backend=str(getattr(winner, "backend", "") or result.metadata.get("winner_backend") or ""),
         backend_statuses=statuses,
@@ -712,11 +695,7 @@ def reconstruction_receipt_from_hammer_result(
         errors=tuple(dict.fromkeys(errors)),
         metadata={
             "hammer_status": _enum_value(result.status),
-            **(
-                {"proof_cache": normalized_cache_provenance}
-                if normalized_cache_provenance
-                else {}
-            ),
+            **({"proof_cache": normalized_cache_provenance} if normalized_cache_provenance else {}),
             "trusted_requires_reconstruction": bool(trusted_requires_reconstruction),
         },
     )

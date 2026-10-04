@@ -12,7 +12,7 @@ This module provides comprehensive secrets management with:
 
 Example:
     Basic usage:
-    
+
     >>> from ipfs_datasets_py.optimizers.security.secrets_manager import SecretsManager
     >>> manager = SecretsManager("my_encryption_key", "vault.json")
     >>> manager.set_secret("api_key", "secret_value_123")
@@ -44,6 +44,7 @@ DEFAULT_SECRET_EXPIRY_DAYS = 90
 # Enums
 class SecretCategory(Enum):
     """Categories of secrets for organizational purposes."""
+
     DATABASE = "database"
     API_KEY = "api_key"
     ENCRYPTION_KEY = "encryption_key"
@@ -55,6 +56,7 @@ class SecretCategory(Enum):
 
 class SecretAccessLevel(Enum):
     """Access levels for secrets with increasing restrictions."""
+
     PUBLIC = 1
     INTERNAL = 2
     CONFIDENTIAL = 3
@@ -64,21 +66,25 @@ class SecretAccessLevel(Enum):
 # Exceptions
 class SecretsError(Exception):
     """Base exception for all secrets-related errors."""
+
     pass
 
 
 class SecretNotFoundError(SecretsError):
     """Raised when a requested secret does not exist."""
+
     pass
 
 
 class SecretExpiredError(SecretsError):
     """Raised when attempting to access an expired secret."""
+
     pass
 
 
 class InsufficientPermissionsError(SecretsError):
     """Raised when user doesn't have sufficient access level for a secret."""
+
     pass
 
 
@@ -86,6 +92,7 @@ class InsufficientPermissionsError(SecretsError):
 @dataclass
 class SecretMetadata:
     """Metadata for a secret without the actual secret value."""
+
     name: str
     category: SecretCategory = SecretCategory.OTHER
     access_level: SecretAccessLevel = SecretAccessLevel.INTERNAL
@@ -98,7 +105,7 @@ class SecretMetadata:
 
     def is_expired(self) -> bool:
         """Check if the secret has expired.
-        
+
         Returns:
             True if secret is expired, False otherwise.
         """
@@ -110,30 +117,33 @@ class SecretMetadata:
         """Convert metadata to dictionary for serialization."""
         data = asdict(self)
         # Convert datetime objects to ISO format strings
-        data['created_at'] = self.created_at.isoformat()
-        data['updated_at'] = self.updated_at.isoformat()
-        data['expires_at'] = self.expires_at.isoformat() if self.expires_at else None
+        data["created_at"] = self.created_at.isoformat()
+        data["updated_at"] = self.updated_at.isoformat()
+        data["expires_at"] = self.expires_at.isoformat() if self.expires_at else None
         # Convert enums to strings
-        data['category'] = self.category.value
-        data['access_level'] = self.access_level.value
+        data["category"] = self.category.value
+        data["access_level"] = self.access_level.value
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SecretMetadata':
+    def from_dict(cls, data: Dict[str, Any]) -> "SecretMetadata":
         """Create metadata from dictionary."""
         # Convert ISO format strings to datetime objects
-        data['created_at'] = datetime.fromisoformat(data['created_at'])
-        data['updated_at'] = datetime.fromisoformat(data['updated_at'])
-        data['expires_at'] = datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
+        data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+        data["expires_at"] = (
+            datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None
+        )
         # Convert strings to enums
-        data['category'] = SecretCategory(data['category'])
-        data['access_level'] = SecretAccessLevel(data['access_level'])
+        data["category"] = SecretCategory(data["category"])
+        data["access_level"] = SecretAccessLevel(data["access_level"])
         return cls(**data)
 
 
 @dataclass
 class SecretAccessLog:
     """Log entry for secret access audit trail."""
+
     timestamp: datetime
     operation: str  # read, write, delete, rotate
     secret_name: str
@@ -144,13 +154,13 @@ class SecretAccessLog:
     def to_dict(self) -> Dict[str, Any]:
         """Convert log entry to dictionary for serialization."""
         data = asdict(self)
-        data['timestamp'] = self.timestamp.isoformat()
+        data["timestamp"] = self.timestamp.isoformat()
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SecretAccessLog':
+    def from_dict(cls, data: Dict[str, Any]) -> "SecretAccessLog":
         """Create log entry from dictionary."""
-        data['timestamp'] = datetime.fromisoformat(data['timestamp'])
+        data["timestamp"] = datetime.fromisoformat(data["timestamp"])
         return cls(**data)
 
 
@@ -159,7 +169,7 @@ class SecretEncryption:
 
     def __init__(self, master_key: str):
         """Initialize encryption with a master key.
-        
+
         Args:
             master_key: Master key used for encryption/decryption.
         """
@@ -168,10 +178,10 @@ class SecretEncryption:
 
     def _create_fernet(self, master_key: str) -> Fernet:
         """Create a Fernet instance from a master key.
-        
+
         Args:
             master_key: The master key to derive Fernet key from.
-            
+
         Returns:
             Fernet instance for encryption/decryption.
         """
@@ -179,7 +189,7 @@ class SecretEncryption:
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b'secrets_manager_salt',  # In production, use random salt per installation
+            salt=b"secrets_manager_salt",  # In production, use random salt per installation
             iterations=100000,
         )
         key = base64.urlsafe_b64encode(kdf.derive(master_key.encode()))
@@ -187,10 +197,10 @@ class SecretEncryption:
 
     def encrypt(self, plaintext: str) -> str:
         """Encrypt a plaintext string.
-        
+
         Args:
             plaintext: The text to encrypt.
-            
+
         Returns:
             Encrypted text as a string.
         """
@@ -199,10 +209,10 @@ class SecretEncryption:
 
     def decrypt(self, encrypted: str) -> str:
         """Decrypt an encrypted string.
-        
+
         Args:
             encrypted: The encrypted text to decrypt.
-            
+
         Returns:
             Decrypted plaintext string.
         """
@@ -212,7 +222,7 @@ class SecretEncryption:
     @staticmethod
     def generate_key() -> str:
         """Generate a new random Fernet key.
-        
+
         Returns:
             Base64-encoded Fernet key as a string.
         """
@@ -224,13 +234,10 @@ class SecretsManager:
     """Main class for managing secrets with encryption, persistence, and audit logging."""
 
     def __init__(
-        self,
-        encryption_key: str,
-        storage_path: Path | str,
-        enable_audit_log: bool = True
+        self, encryption_key: str, storage_path: Path | str, enable_audit_log: bool = True
     ):
         """Initialize the secrets manager.
-        
+
         Args:
             encryption_key: Master key for encrypting secrets.
             storage_path: Path to JSON file for persistent storage.
@@ -257,10 +264,10 @@ class SecretsManager:
         description: str = "",
         tags: Optional[List[str]] = None,
         expires_in_days: Optional[int] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ) -> SecretMetadata:
         """Set or update a secret.
-        
+
         Args:
             name: Name/key for the secret.
             value: The secret value to store.
@@ -270,7 +277,7 @@ class SecretsManager:
             tags: Optional list of tags for organization.
             expires_in_days: Optional expiration in days from now.
             user_id: Optional user ID for audit logging.
-            
+
         Returns:
             Metadata for the created/updated secret.
         """
@@ -296,7 +303,7 @@ class SecretsManager:
                 access_level=access_level,
                 description=description,
                 tags=tags or [],
-                version=1
+                version=1,
             )
 
         # Set expiration if specified
@@ -317,18 +324,18 @@ class SecretsManager:
         self,
         name: str,
         required_access: Optional[SecretAccessLevel] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ) -> str:
         """Retrieve a secret value.
-        
+
         Args:
             name: Name of the secret to retrieve.
             required_access: Required access level (for permission checks).
             user_id: Optional user ID for audit logging.
-            
+
         Returns:
             The decrypted secret value.
-            
+
         Raises:
             SecretNotFoundError: If secret doesn't exist.
             SecretExpiredError: If secret has expired.
@@ -369,11 +376,11 @@ class SecretsManager:
 
     def delete_secret(self, name: str, user_id: Optional[str] = None) -> None:
         """Delete a secret.
-        
+
         Args:
             name: Name of the secret to delete.
             user_id: Optional user ID for audit logging.
-            
+
         Raises:
             SecretNotFoundError: If secret doesn't exist.
         """
@@ -391,21 +398,18 @@ class SecretsManager:
         self._save_secrets()
 
     def rotate_secret(
-        self,
-        name: str,
-        new_value: str,
-        user_id: Optional[str] = None
+        self, name: str, new_value: str, user_id: Optional[str] = None
     ) -> SecretMetadata:
         """Rotate a secret to a new value.
-        
+
         Args:
             name: Name of the secret to rotate.
             new_value: New secret value.
             user_id: Optional user ID for audit logging.
-            
+
         Returns:
             Updated metadata with incremented version.
-            
+
         Raises:
             SecretNotFoundError: If secret doesn't exist.
         """
@@ -433,16 +437,14 @@ class SecretsManager:
         return meta
 
     def list_secrets(
-        self,
-        category: Optional[SecretCategory] = None,
-        include_expired: bool = False
+        self, category: Optional[SecretCategory] = None, include_expired: bool = False
     ) -> List[SecretMetadata]:
         """List all secrets with optional filtering.
-        
+
         Args:
             category: Optional filter by category.
             include_expired: Whether to include expired secrets.
-            
+
         Returns:
             List of secret metadata matching the criteria.
         """
@@ -463,13 +465,13 @@ class SecretsManager:
 
     def get_metadata(self, name: str) -> SecretMetadata:
         """Get metadata for a secret without retrieving the value.
-        
+
         Args:
             name: Name of the secret.
-            
+
         Returns:
             Secret metadata.
-            
+
         Raises:
             SecretNotFoundError: If secret doesn't exist.
         """
@@ -482,15 +484,15 @@ class SecretsManager:
         self,
         secret_name: Optional[str] = None,
         user_id: Optional[str] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> List[SecretAccessLog]:
         """Retrieve audit log entries with optional filtering.
-        
+
         Args:
             secret_name: Optional filter by secret name.
             user_id: Optional filter by user ID.
             limit: Optional limit on number of entries returned.
-            
+
         Returns:
             List of audit log entries matching criteria.
         """
@@ -519,10 +521,10 @@ class SecretsManager:
         secret_name: str,
         user_id: Optional[str] = None,
         success: bool = True,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> None:
         """Log an access operation to the audit log.
-        
+
         Args:
             operation: Type of operation (read, write, delete, rotate).
             secret_name: Name of the secret accessed.
@@ -539,7 +541,7 @@ class SecretsManager:
             secret_name=secret_name,
             user_id=user_id,
             success=success,
-            error_message=error_message
+            error_message=error_message,
         )
 
         self._audit_log.append(log_entry)
@@ -551,21 +553,17 @@ class SecretsManager:
 
         # Prepare data for serialization
         data = {
-            'secrets': self._secrets,
-            'metadata': {
-                name: meta.to_dict()
-                for name, meta in self._metadata.items()
-            },
-            'audit_log': [
-                log.to_dict()
-                for log in self._audit_log
-            ]
+            "secrets": self._secrets,
+            "metadata": {name: meta.to_dict() for name, meta in self._metadata.items()},
+            "audit_log": [log.to_dict() for log in self._audit_log],
         }
 
         # Write to file
         base_dir = self.storage_path.parent if self.storage_path.is_absolute() else None
-        safe_path = validate_output_path(str(self.storage_path), allow_overwrite=True, base_dir=base_dir)
-        with open(safe_path, 'w') as f:
+        safe_path = validate_output_path(
+            str(self.storage_path), allow_overwrite=True, base_dir=base_dir
+        )
+        with open(safe_path, "w") as f:
             json.dump(data, f, indent=2)
 
         # Set restrictive file permissions (owner read/write only)
@@ -578,26 +576,25 @@ class SecretsManager:
 
         try:
             base_dir = self.storage_path.parent if self.storage_path.is_absolute() else None
-            safe_path = validate_input_path(str(self.storage_path), must_exist=True, base_dir=base_dir)
-            with open(safe_path, 'r') as f:
+            safe_path = validate_input_path(
+                str(self.storage_path), must_exist=True, base_dir=base_dir
+            )
+            with open(safe_path, "r") as f:
                 data = json.load(f)
 
             # Load secrets
-            self._secrets = data.get('secrets', {})
+            self._secrets = data.get("secrets", {})
 
             # Load metadata
-            metadata_dict = data.get('metadata', {})
+            metadata_dict = data.get("metadata", {})
             self._metadata = {
                 name: SecretMetadata.from_dict(meta_data)
                 for name, meta_data in metadata_dict.items()
             }
 
             # Load audit log
-            audit_log_data = data.get('audit_log', [])
-            self._audit_log = [
-                SecretAccessLog.from_dict(log_data)
-                for log_data in audit_log_data
-            ]
+            audit_log_data = data.get("audit_log", [])
+            self._audit_log = [SecretAccessLog.from_dict(log_data) for log_data in audit_log_data]
 
         except (json.JSONDecodeError, KeyError) as e:
             # If file is corrupted, start fresh
@@ -609,16 +606,16 @@ class SecretsManager:
 # Convenience Functions
 def load_secrets_from_env(prefix: str = "SECRET_") -> Dict[str, str]:
     """Load secrets from environment variables with a given prefix.
-    
+
     Args:
         prefix: Prefix to filter environment variables (e.g., "SECRET_").
-        
+
     Returns:
         Dictionary mapping secret names to values.
-        
+
     Example:
         With env vars SECRET_API_KEY=abc123, SECRET_DB_PASSWORD=pass456:
-        
+
         >>> secrets = load_secrets_from_env("SECRET_")
         >>> secrets
         {'api_key': 'abc123', 'db_password': 'pass456'}
@@ -628,7 +625,7 @@ def load_secrets_from_env(prefix: str = "SECRET_") -> Dict[str, str]:
     for key, value in os.environ.items():
         if key.startswith(prefix):
             # Remove prefix and convert to lowercase with underscores
-            secret_name = key[len(prefix):].lower()
+            secret_name = key[len(prefix) :].lower()
             secrets[secret_name] = value
 
     return secrets
@@ -640,10 +637,10 @@ def validate_secret_strength(
     require_uppercase: bool = True,
     require_lowercase: bool = True,
     require_digits: bool = True,
-    require_special: bool = True
+    require_special: bool = True,
 ) -> bool:
     """Validate that a secret meets strength requirements.
-    
+
     Args:
         secret: The secret to validate.
         min_length: Minimum length required.
@@ -651,10 +648,10 @@ def validate_secret_strength(
         require_lowercase: Whether to require lowercase letters.
         require_digits: Whether to require digits.
         require_special: Whether to require special characters.
-        
+
     Returns:
         True if secret meets all requirements, False otherwise.
-        
+
     Example:
         >>> validate_secret_strength("MyStr0ng!P@ssw0rd")
         True

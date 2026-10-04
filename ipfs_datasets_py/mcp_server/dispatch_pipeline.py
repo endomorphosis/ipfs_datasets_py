@@ -310,7 +310,9 @@ class PipelineMetricsRecorder:
         self._total_denied = 0
 
     def __repr__(self) -> str:
-        return f"PipelineMetricsRecorder(namespace={self.namespace!r}, total_runs={self._total_runs})"
+        return (
+            f"PipelineMetricsRecorder(namespace={self.namespace!r}, total_runs={self._total_runs})"
+        )
 
 
 @dataclass
@@ -826,6 +828,7 @@ def make_full_pipeline(
             return {"allowed": True, "reason": "no_delegation_required"}
         try:
             from .ucan_delegation import get_delegation_evaluator
+
             evaluator = get_delegation_evaluator()
             actor = intent.get("actor", "")
             tool = intent.get("tool", "")
@@ -844,15 +847,20 @@ def make_full_pipeline(
         """Evaluate temporal deontic policy (Profile D)."""
         try:
             from .temporal_policy import get_policy_evaluator
+
             evaluator = get_policy_evaluator()
             tool = intent.get("tool", "")
             actor = intent.get("actor", "*")
             policy_cid = intent.get("policy_cid")
-            decision = evaluator.evaluate(
-                intent=None,  # Will construct from tool/actor
-                policy=policy_cid,
-                actor=actor,
-            ) if policy_cid else None
+            decision = (
+                evaluator.evaluate(
+                    intent=None,  # Will construct from tool/actor
+                    policy=policy_cid,
+                    actor=actor,
+                )
+                if policy_cid
+                else None
+            )
 
             if decision is None:
                 return {"allowed": True, "reason": "no_policy_specified"}

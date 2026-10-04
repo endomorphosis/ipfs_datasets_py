@@ -193,7 +193,9 @@ def _run_version(command: Sequence[str]) -> dict[str, Any]:
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {"status": "error", "command": list(command), "error": exc.__class__.__name__}
-    output = "\n".join(value.strip() for value in (completed.stdout, completed.stderr) if value.strip())
+    output = "\n".join(
+        value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
+    )
     version = next((line.strip() for line in output.splitlines() if line.strip()), None)
     return {
         "status": "present" if completed.returncode == 0 else "error",
@@ -242,7 +244,9 @@ def _normalize_leanstral_config() -> dict[str, Any]:
                 "env_var": name,
                 "value": value,
                 "approved_route": approved,
-                "detected_route": next((route for route in LEANSTRAL_APPROVED_ROUTES if route in normalized), None),
+                "detected_route": next(
+                    (route for route in LEANSTRAL_APPROVED_ROUTES if route in normalized), None
+                ),
             }
         )
 
@@ -281,13 +285,18 @@ def _probe_leanstral_lane(
 ) -> dict[str, Any]:
     del path_env
     leanstral_config = _normalize_leanstral_config()
-    lean_report = _load_json(root / DEFAULT_LEAN_REPORT) if (root / DEFAULT_LEAN_REPORT).is_file() else {}
+    lean_report = (
+        _load_json(root / DEFAULT_LEAN_REPORT) if (root / DEFAULT_LEAN_REPORT).is_file() else {}
+    )
     lean_ready = (
         bool(lean_report.get("overall_status") == "ready")
         if isinstance(lean_report, Mapping)
         else False
     )
-    if lean_report.get("summary", {}).get("lean_present") is not True or lean_report.get("summary", {}).get("lake_present") is not True:
+    if (
+        lean_report.get("summary", {}).get("lean_present") is not True
+        or lean_report.get("summary", {}).get("lake_present") is not True
+    ):
         lean_ready = False
 
     if leanstral_config["status"] == "blocked-unapproved-route":
@@ -352,7 +361,10 @@ def _managed_executable_for_group(
     executable_basename = Path(managed_executable).name.lower()
     if executable_basename == executable_name.lower():
         return managed_executable
-    if executable_basename.lower() == "runergo" and executable_name.lower() in {"runergo", "runergo.sh"}:
+    if executable_basename.lower() == "runergo" and executable_name.lower() in {
+        "runergo",
+        "runergo.sh",
+    }:
         return managed_executable
     return None
 
@@ -387,7 +399,9 @@ def _probe_lane(
             resolved = shutil.which(executable_name, path=path_env)
             if resolved is None:
                 resolved = _managed_executable_for_group(managed_status, executable_name)
-            version_report = _run_version(_version_command(executable_name, resolved)) if resolved else None
+            version_report = (
+                _run_version(_version_command(executable_name, resolved)) if resolved else None
+            )
             executable_reports.append(
                 {
                     "name": executable_name,
@@ -400,7 +414,9 @@ def _probe_lane(
             group_present = group_present or resolved is not None
         groups_ready = groups_ready and group_present
 
-    module_reports = [_probe_python_module(str(module)) for module in config.get("python_modules", [])]
+    module_reports = [
+        _probe_python_module(str(module)) for module in config.get("python_modules", [])
+    ]
     modules_ready = all(item["status"] == "present" for item in module_reports)
     current = bool(groups_ready and modules_ready)
     any_executable = any(item["status"] == "present" for item in executable_reports)
@@ -472,7 +488,13 @@ def _run_installer_steps(
                     "Leanstral model credentials/weights and keep a verified Lean proof-kernel ready."
                 )
                 on_progress("blocked", message)
-                step_results.append({"step": "non_installable_advisory_lane", "ok": False, "error": "not_installable"})
+                step_results.append(
+                    {
+                        "step": "non_installable_advisory_lane",
+                        "ok": False,
+                        "error": "not_installable",
+                    }
+                )
                 results[lane_name] = {
                     "requested": True,
                     "operation": "update" if update else "install",
@@ -484,7 +506,9 @@ def _run_installer_steps(
         for step_name in config.get("installer_steps", []):
             ensure = getattr(installer, str(step_name), None)
             if ensure is None:
-                step_results.append({"step": step_name, "ok": False, "error": "installer_function_missing"})
+                step_results.append(
+                    {"step": step_name, "ok": False, "error": "installer_function_missing"}
+                )
                 continue
             kwargs: dict[str, Any] = {
                 "yes": True,
@@ -499,7 +523,9 @@ def _run_installer_steps(
                 ok = bool(ensure(**kwargs))
                 step_results.append({"step": step_name, "ok": ok})
             except Exception as exc:
-                step_results.append({"step": step_name, "ok": False, "error": f"{exc.__class__.__name__}: {exc}"})
+                step_results.append(
+                    {"step": step_name, "ok": False, "error": f"{exc.__class__.__name__}: {exc}"}
+                )
         results[lane_name] = {
             "requested": True,
             "operation": "update" if update else "install",
@@ -593,7 +619,9 @@ def build_report(
 
     warnings: list[dict[str, Any]] = []
     if solver_probe is None:
-        warnings.append({"code": "SOLVER_DEPENDENCY_PROBE_MISSING", "path": _relative(root, solver_probe_abs)})
+        warnings.append(
+            {"code": "SOLVER_DEPENDENCY_PROBE_MISSING", "path": _relative(root, solver_probe_abs)}
+        )
     if load_error:
         warnings.append({"code": "PACKAGE_INSTALLER_UNAVAILABLE", "message": load_error})
     for lane in lanes:
@@ -617,8 +645,12 @@ def build_report(
         "solver_probe": {
             "path": _relative(root, solver_probe_abs),
             "exists": solver_probe_abs.is_file(),
-            "overall_status": solver_probe.get("overall_status") if isinstance(solver_probe, Mapping) else None,
-            "security_decision": solver_probe.get("security_decision") if isinstance(solver_probe, Mapping) else None,
+            "overall_status": solver_probe.get("overall_status")
+            if isinstance(solver_probe, Mapping)
+            else None,
+            "security_decision": solver_probe.get("security_decision")
+            if isinstance(solver_probe, Mapping)
+            else None,
         },
         "installer_mode": operation,
         "platform": platform_key,
@@ -637,21 +669,50 @@ def build_report(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Probe or run managed optional theorem-prover installers.")
+    parser = argparse.ArgumentParser(
+        description="Probe or run managed optional theorem-prover installers."
+    )
     parser.add_argument("--solver-probe", default=str(DEFAULT_SOLVER_PROBE))
     parser.add_argument("--out", default=str(DEFAULT_OUT))
     parser.add_argument("--repo-root", default=".")
-    parser.add_argument("--solver", action="append", choices=sorted(SOLVER_LANES), help="Solver lane to install or update; repeat as needed.")
+    parser.add_argument(
+        "--solver",
+        action="append",
+        choices=sorted(SOLVER_LANES),
+        help="Solver lane to install or update; repeat as needed.",
+    )
     operation = parser.add_mutually_exclusive_group()
-    operation.add_argument("--install", action="store_true", help="Install selected solvers into the user-local managed root.")
-    operation.add_argument("--update", action="store_true", help="Refresh selected solvers to reviewed managed versions.")
-    parser.add_argument("--yes", action="store_true", help="Acknowledge that install/update can download or build tools.")
-    parser.add_argument("--allow-sudo", action="store_true", help="Allow an OPAM bootstrap through the platform package manager when needed.")
-    parser.add_argument("--strict", action="store_true", help="Return non-zero when a requested install/update step fails.")
+    operation.add_argument(
+        "--install",
+        action="store_true",
+        help="Install selected solvers into the user-local managed root.",
+    )
+    operation.add_argument(
+        "--update",
+        action="store_true",
+        help="Refresh selected solvers to reviewed managed versions.",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Acknowledge that install/update can download or build tools.",
+    )
+    parser.add_argument(
+        "--allow-sudo",
+        action="store_true",
+        help="Allow an OPAM bootstrap through the platform package manager when needed.",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return non-zero when a requested install/update step fails.",
+    )
     args = parser.parse_args(argv)
 
     if (args.install or args.update) and not args.yes:
-        parser.error("--install and --update require --yes because they can download, build, or replace user-local solvers")
+        parser.error(
+            "--install and --update require --yes because they can download, build, or replace user-local solvers"
+        )
 
     root = Path(args.repo_root).resolve()
     report = build_report(

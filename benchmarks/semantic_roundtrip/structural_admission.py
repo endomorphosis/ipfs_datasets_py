@@ -49,9 +49,7 @@ from benchmarks.semantic_roundtrip.selective_repair import (
 STRUCTURAL_ADMISSION_INTERFACE: Final = "StructuralAdmission@1"
 STRUCTURAL_ADMISSION_RECEIPT_INTERFACE: Final = "StructuralAdmissionReceipt@1"
 STRUCTURAL_ADMISSION_METRICS_INTERFACE: Final = "StructuralAdmissionMetrics@1"
-STRUCTURAL_ADMISSION_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-structural-admission.v1"
-)
+STRUCTURAL_ADMISSION_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-structural-admission.v1"
 
 VALIDATOR_REJECT: Final = "validator_reject"
 DEFAULT_ADMISSION_TIMEOUT_SECONDS: Final = 5.0
@@ -96,9 +94,7 @@ def _finite_positive(value: object, field: str) -> float:
         or not math.isfinite(float(value))
         or float(value) <= 0.0
     ):
-        raise StructuralAdmissionError(
-            f"{field} must be a positive finite number"
-        )
+        raise StructuralAdmissionError(f"{field} must be a positive finite number")
     return float(value)
 
 
@@ -137,15 +133,11 @@ class StructuralAdmissionPolicy:
             _finite_positive(self.timeout_seconds, "timeout_seconds"),
         )
         if self.timeout_seconds > 60.0:
-            raise StructuralAdmissionError(
-                "timeout_seconds exceeds the admission bound of 60s"
-            )
+            raise StructuralAdmissionError("timeout_seconds exceeds the admission bound of 60s")
         try:
             tools = tuple(StructuralTool(item) for item in self.tools)
         except (TypeError, ValueError) as exc:
-            raise StructuralAdmissionError(
-                "tools must be StructuralTool values"
-            ) from exc
+            raise StructuralAdmissionError("tools must be StructuralTool values") from exc
         if not tools or len(set(tools)) != len(tools):
             raise StructuralAdmissionError(
                 "tools must be a nonempty unique sequence of StructuralTool"
@@ -162,10 +154,7 @@ class StructuralAdmissionPolicy:
         if (
             not constraints
             or len(set(constraints)) != len(constraints)
-            or any(
-                item not in DECLARED_STRUCTURAL_CONSTRAINTS
-                for item in constraints
-            )
+            or any(item not in DECLARED_STRUCTURAL_CONSTRAINTS for item in constraints)
         ):
             raise StructuralAdmissionError(
                 "structural_constraints must be a unique nonempty subset "
@@ -213,19 +202,11 @@ class AdmissionCheckReceipt:
             try:
                 object.__setattr__(self, "tool", StructuralTool(self.tool))
             except (TypeError, ValueError) as exc:
-                raise StructuralAdmissionError(
-                    "admission check tool is invalid"
-                ) from exc
-        if not isinstance(self.passed, bool) or not isinstance(
-            self.timed_out, bool
-        ):
-            raise StructuralAdmissionError(
-                "passed and timed_out must be booleans"
-            )
+                raise StructuralAdmissionError("admission check tool is invalid") from exc
+        if not isinstance(self.passed, bool) or not isinstance(self.timed_out, bool):
+            raise StructuralAdmissionError("passed and timed_out must be booleans")
         if self.timed_out and self.passed:
-            raise StructuralAdmissionError(
-                "a timed-out check cannot pass"
-            )
+            raise StructuralAdmissionError("a timed-out check cannot pass")
         elapsed = self.elapsed_seconds
         if (
             isinstance(elapsed, bool)
@@ -233,9 +214,7 @@ class AdmissionCheckReceipt:
             or not math.isfinite(float(elapsed))
             or float(elapsed) < 0.0
         ):
-            raise StructuralAdmissionError(
-                "elapsed_seconds must be a nonnegative finite number"
-            )
+            raise StructuralAdmissionError("elapsed_seconds must be a nonnegative finite number")
         object.__setattr__(self, "elapsed_seconds", float(elapsed))
         if self.semantic_authority is not False:
             raise StructuralAdmissionError(
@@ -243,9 +222,7 @@ class AdmissionCheckReceipt:
             )
         object.__setattr__(self, "constraints", tuple(self.constraints))
         if self.detail is not None and not str(self.detail).strip():
-            raise StructuralAdmissionError(
-                "admission check detail must be nonblank when present"
-            )
+            raise StructuralAdmissionError("admission check detail must be nonblank when present")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -290,87 +267,56 @@ class StructuralAdmissionResult:
                     AdmissionDisposition(self.disposition),
                 )
             except (TypeError, ValueError) as exc:
-                raise StructuralAdmissionError(
-                    "admission disposition is invalid"
-                ) from exc
+                raise StructuralAdmissionError("admission disposition is invalid") from exc
         if self.disposition.value not in _ADMISSION_DISPOSITIONS:
-            raise StructuralAdmissionError(
-                f"unknown admission disposition: {self.disposition!r}"
-            )
+            raise StructuralAdmissionError(f"unknown admission disposition: {self.disposition!r}")
         if not isinstance(self.prior_l1, CanonicalRuleIR):
             raise StructuralAdmissionError("prior_l1 must be CanonicalRuleIR")
-        if self.candidate_l1 is not None and not isinstance(
-            self.candidate_l1, CanonicalRuleIR
-        ):
-            raise StructuralAdmissionError(
-                "candidate_l1 must be CanonicalRuleIR or None"
-            )
+        if self.candidate_l1 is not None and not isinstance(self.candidate_l1, CanonicalRuleIR):
+            raise StructuralAdmissionError("candidate_l1 must be CanonicalRuleIR or None")
         if not isinstance(self.admitted_l1, CanonicalRuleIR):
-            raise StructuralAdmissionError(
-                "admitted_l1 must be CanonicalRuleIR"
-            )
+            raise StructuralAdmissionError("admitted_l1 must be CanonicalRuleIR")
         if not isinstance(self.prior_l1_unchanged, bool):
-            raise StructuralAdmissionError(
-                "prior_l1_unchanged must be boolean"
-            )
+            raise StructuralAdmissionError("prior_l1_unchanged must be boolean")
         object.__setattr__(self, "check_receipts", tuple(self.check_receipts))
         object.__setattr__(self, "field_changes", tuple(self.field_changes))
-        if not all(
-            isinstance(item, AdmissionCheckReceipt)
-            for item in self.check_receipts
-        ):
+        if not all(isinstance(item, AdmissionCheckReceipt) for item in self.check_receipts):
             raise StructuralAdmissionError("check_receipts are invalid")
-        if not all(
-            isinstance(item, CanonicalFieldChange)
-            for item in self.field_changes
-        ):
+        if not all(isinstance(item, CanonicalFieldChange) for item in self.field_changes):
             raise StructuralAdmissionError("field_changes are invalid")
         if not isinstance(self.policy_digest, str) or not self.policy_digest:
             raise StructuralAdmissionError("policy_digest must be nonblank")
 
         if self.disposition is AdmissionDisposition.ACCEPTED:
             if self.candidate_l1 is None:
-                raise StructuralAdmissionError(
-                    "accepted admission requires a candidate L1"
-                )
+                raise StructuralAdmissionError("accepted admission requires a candidate L1")
             if self.admitted_l1 != self.candidate_l1:
-                raise StructuralAdmissionError(
-                    "accepted admission must admit the candidate L1"
-                )
+                raise StructuralAdmissionError("accepted admission must admit the candidate L1")
             if self.prior_l1_unchanged and self.candidate_l1 != self.prior_l1:
                 raise StructuralAdmissionError(
                     "accepted non-identity repair cannot claim prior unchanged"
                 )
             if self.rejection_reason is not None:
-                raise StructuralAdmissionError(
-                    "accepted admission cannot carry a rejection_reason"
-                )
+                raise StructuralAdmissionError("accepted admission cannot carry a rejection_reason")
         elif self.disposition is AdmissionDisposition.NOT_APPLICABLE:
             if self.admitted_l1 != self.prior_l1:
-                raise StructuralAdmissionError(
-                    "not_applicable must retain prior L1"
-                )
+                raise StructuralAdmissionError("not_applicable must retain prior L1")
             if not self.prior_l1_unchanged:
-                raise StructuralAdmissionError(
-                    "not_applicable must leave prior L1 unchanged"
-                )
+                raise StructuralAdmissionError("not_applicable must leave prior L1 unchanged")
         else:
             # Reject / timeout / error: fail-closed retention of prior L1.
             if self.admitted_l1 != self.prior_l1:
                 raise StructuralAdmissionError(
-                    "rejected or fail-closed admission must leave prior L1 "
-                    "unchanged as admitted_l1"
+                    "rejected or fail-closed admission must leave prior L1 unchanged as admitted_l1"
                 )
             if not self.prior_l1_unchanged:
                 raise StructuralAdmissionError(
-                    "rejected or fail-closed admission must set "
-                    "prior_l1_unchanged"
+                    "rejected or fail-closed admission must set prior_l1_unchanged"
                 )
             if self.disposition is AdmissionDisposition.VALIDATOR_REJECT:
                 if self.rejection_reason != VALIDATOR_REJECT:
                     raise StructuralAdmissionError(
-                        "validator reject must record "
-                        f"{VALIDATOR_REJECT!r}"
+                        f"validator reject must record {VALIDATOR_REJECT!r}"
                     )
             elif self.disposition is AdmissionDisposition.TIMEOUT:
                 if self.rejection_reason not in {
@@ -385,9 +331,7 @@ class StructuralAdmissionResult:
                     VALIDATOR_REJECT,
                     "error",
                 }:
-                    raise StructuralAdmissionError(
-                        "error fail-closed must record a reject reason"
-                    )
+                    raise StructuralAdmissionError("error fail-closed must record a reject reason")
 
     @property
     def accepted(self) -> bool:
@@ -429,13 +373,9 @@ class StructuralAdmissionResult:
             "accepted_repair_delta": self.accepted_repair_delta,
             "admitted_l1": self.admitted_l1.to_dict(),
             "candidate_l1": (
-                self.candidate_l1.to_dict()
-                if self.candidate_l1 is not None
-                else None
+                self.candidate_l1.to_dict() if self.candidate_l1 is not None else None
             ),
-            "check_receipts": [
-                item.to_dict() for item in self.check_receipts
-            ],
+            "check_receipts": [item.to_dict() for item in self.check_receipts],
             "detail": self.detail,
             "disposition": self.disposition.value,
             "end_to_end_loss": None,
@@ -483,27 +423,17 @@ class StructuralAdmissionMetrics:
             "total_accepted_field_changes",
         ):
             value = getattr(self, name)
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
-            ):
-                raise StructuralAdmissionError(
-                    f"{name} must be a non-negative integer"
-                )
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise StructuralAdmissionError(f"{name} must be a non-negative integer")
         applicable = self.accepted + self.rejected
         if self.attempts != applicable + self.not_applicable:
             raise StructuralAdmissionError(
                 "attempts must equal accepted + rejected + not_applicable"
             )
         if self.timeouts + self.errors > self.rejected:
-            raise StructuralAdmissionError(
-                "timeouts and errors cannot exceed rejected"
-            )
+            raise StructuralAdmissionError("timeouts and errors cannot exceed rejected")
         if self.accepted == 0 and self.total_accepted_field_changes != 0:
-            raise StructuralAdmissionError(
-                "accepted field changes require accepted attempts"
-            )
+            raise StructuralAdmissionError("accepted field changes require accepted attempts")
 
     @property
     def reject_rate(self) -> float:
@@ -556,12 +486,8 @@ def aggregate_structural_admission_metrics(
 ) -> StructuralAdmissionMetrics:
     """Aggregate admission results into reject-rate and repair-delta metrics."""
 
-    if isinstance(results, (str, bytes, bytearray)) or not isinstance(
-        results, Sequence
-    ):
-        raise StructuralAdmissionError(
-            "results must be a sequence of StructuralAdmissionResult"
-        )
+    if isinstance(results, (str, bytes, bytearray)) or not isinstance(results, Sequence):
+        raise StructuralAdmissionError("results must be a sequence of StructuralAdmissionResult")
     accepted = 0
     rejected = 0
     timeouts = 0
@@ -570,9 +496,7 @@ def aggregate_structural_admission_metrics(
     total_delta = 0
     for item in results:
         if not isinstance(item, StructuralAdmissionResult):
-            raise StructuralAdmissionError(
-                "results must contain StructuralAdmissionResult records"
-            )
+            raise StructuralAdmissionError("results must contain StructuralAdmissionResult records")
         if item.disposition is AdmissionDisposition.ACCEPTED:
             accepted += 1
             total_delta += item.accepted_repair_delta
@@ -608,10 +532,7 @@ def _local_structural_reasons(
     constraint_set = set(constraints)
     if "non_vacuous_candidate" in constraint_set and candidate.is_empty:
         reasons.append("vacuous_candidate")
-    if (
-        "rule_cardinality_preserved" in constraint_set
-        and len(candidate.rules) != len(prior.rules)
-    ):
+    if "rule_cardinality_preserved" in constraint_set and len(candidate.rules) != len(prior.rules):
         reasons.append("rule_cardinality_changed")
     changes = canonical_field_changes(prior, candidate)
     if "untriggered_projection_preserved" in constraint_set:
@@ -621,8 +542,7 @@ def _local_structural_reasons(
             if "*" not in allowed:
                 for change in changes:
                     path = (
-                        f"rules[{change.baseline_rule_index}]."
-                        f"{change.canonical_field}"
+                        f"rules[{change.baseline_rule_index}].{change.canonical_field}"
                         if change.baseline_rule_index is not None
                         else change.path
                     )
@@ -630,16 +550,11 @@ def _local_structural_reasons(
                         continue
                     bare = change.canonical_field
                     alt = (
-                        f"rules[{change.guided_rule_index}]."
-                        f"{change.canonical_field}"
+                        f"rules[{change.guided_rule_index}].{change.canonical_field}"
                         if change.guided_rule_index is not None
                         else path
                     )
-                    if (
-                        path not in allowed
-                        and bare not in allowed
-                        and alt not in allowed
-                    ):
+                    if path not in allowed and bare not in allowed and alt not in allowed:
                         reasons.append(f"untriggered_field_changed:{path}")
                         break
     return tuple(reasons)
@@ -658,20 +573,11 @@ def _run_validator_bounded(
     def _invoke() -> StructuralValidationReceipt:
         receipt = binding.validate(request)
         if not isinstance(receipt, StructuralValidationReceipt):
-            raise StructuralAdmissionError(
-                "validator returned a non-StructuralValidationReceipt"
-            )
-        if (
-            receipt.validator_id != binding.validator_id
-            or receipt.tool is not binding.tool
-        ):
-            raise StructuralAdmissionError(
-                "validator receipt drifted from its binding"
-            )
+            raise StructuralAdmissionError("validator returned a non-StructuralValidationReceipt")
+        if receipt.validator_id != binding.validator_id or receipt.tool is not binding.tool:
+            raise StructuralAdmissionError("validator receipt drifted from its binding")
         if receipt.semantic_authority is not False:
-            raise StructuralAdmissionError(
-                "validator cannot claim semantic authority"
-            )
+            raise StructuralAdmissionError("validator cannot claim semantic authority")
         return receipt
 
     try:
@@ -743,22 +649,13 @@ class StructuralAdmissionGate:
     ) -> None:
         self._policy = policy or StructuralAdmissionPolicy()
         if not isinstance(self._policy, StructuralAdmissionPolicy):
-            raise StructuralAdmissionError(
-                "policy must be StructuralAdmissionPolicy"
-            )
+            raise StructuralAdmissionError("policy must be StructuralAdmissionPolicy")
         self._validators = tuple(validators)
-        if not all(
-            isinstance(item, StructuralValidatorBinding)
-            for item in self._validators
-        ):
-            raise StructuralAdmissionError(
-                "validators must be StructuralValidatorBinding records"
-            )
+        if not all(isinstance(item, StructuralValidatorBinding) for item in self._validators):
+            raise StructuralAdmissionError("validators must be StructuralValidatorBinding records")
         identities = [item.validator_id for item in self._validators]
         if len(set(identities)) != len(identities):
-            raise StructuralAdmissionError(
-                "structural validator identities must be unique"
-            )
+            raise StructuralAdmissionError("structural validator identities must be unique")
         tool_set = {item.tool for item in self._validators}
         for required in self._policy.tools:
             if required not in tool_set and self._validators:
@@ -783,10 +680,10 @@ class StructuralAdmissionGate:
 
     @property
     def identity(self) -> str:
-        validators = ",".join(
-            f"{item.tool.value}:{item.validator_id}"
-            for item in self._validators
-        ) or "local_constraints_only"
+        validators = (
+            ",".join(f"{item.tool.value}:{item.validator_id}" for item in self._validators)
+            or "local_constraints_only"
+        )
         return f"{self.interface}:{self._policy.digest}:{validators}"
 
     def admit(
@@ -807,12 +704,8 @@ class StructuralAdmissionGate:
 
         if not isinstance(prior_l1, CanonicalRuleIR):
             raise StructuralAdmissionError("prior_l1 must be CanonicalRuleIR")
-        if candidate_l1 is not None and not isinstance(
-            candidate_l1, CanonicalRuleIR
-        ):
-            raise StructuralAdmissionError(
-                "candidate_l1 must be CanonicalRuleIR or None"
-            )
+        if candidate_l1 is not None and not isinstance(candidate_l1, CanonicalRuleIR):
+            raise StructuralAdmissionError("candidate_l1 must be CanonicalRuleIR or None")
 
         if candidate_l1 is None or candidate_l1 == prior_l1:
             return StructuralAdmissionResult(
@@ -846,8 +739,7 @@ class StructuralAdmissionGate:
                 check_receipts=(),
                 field_changes=changes,
                 policy_digest=self._policy.digest,
-                detail="local structural constraints failed: "
-                + ",".join(local_reasons),
+                detail="local structural constraints failed: " + ",".join(local_reasons),
             )
 
         if not self._validators:
@@ -1019,12 +911,8 @@ def make_passing_binding(
 ) -> StructuralValidatorBinding:
     """Test/helper binding that always passes (optionally after a delay)."""
 
-    resolved_tool = (
-        tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
-    )
-    resolved_constraints = tuple(
-        constraints or DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    resolved_tool = tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
+    resolved_constraints = tuple(constraints or DECLARED_STRUCTURAL_CONSTRAINTS)
 
     def validate(
         request: StructuralValidationRequest,
@@ -1057,12 +945,8 @@ def make_rejecting_binding(
 ) -> StructuralValidatorBinding:
     """Test/helper binding that always rejects."""
 
-    resolved_tool = (
-        tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
-    )
-    resolved_constraints = tuple(
-        constraints or DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    resolved_tool = tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
+    resolved_constraints = tuple(constraints or DECLARED_STRUCTURAL_CONSTRAINTS)
 
     def validate(
         request: StructuralValidationRequest,
@@ -1093,12 +977,8 @@ def make_timeout_binding(
 ) -> StructuralValidatorBinding:
     """Test/helper binding that sleeps past any reasonable admission budget."""
 
-    resolved_tool = (
-        tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
-    )
-    resolved_constraints = tuple(
-        constraints or DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    resolved_tool = tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
+    resolved_constraints = tuple(constraints or DECLARED_STRUCTURAL_CONSTRAINTS)
 
     def validate(
         request: StructuralValidationRequest,
@@ -1130,12 +1010,8 @@ def make_error_binding(
 ) -> StructuralValidatorBinding:
     """Test/helper binding that raises, for fail-closed error coverage."""
 
-    resolved_tool = (
-        tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
-    )
-    resolved_constraints = tuple(
-        constraints or DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    resolved_tool = tool if isinstance(tool, StructuralTool) else StructuralTool(tool)
+    resolved_constraints = tuple(constraints or DECLARED_STRUCTURAL_CONSTRAINTS)
 
     def validate(
         request: StructuralValidationRequest,
@@ -1179,24 +1055,19 @@ def default_hammer_cvc5_binding(
     semantic loss.
     """
 
-    resolved_constraints = tuple(
-        constraints or DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    resolved_constraints = tuple(constraints or DECLARED_STRUCTURAL_CONSTRAINTS)
 
     def validate(
         request: StructuralValidationRequest,
     ) -> StructuralValidationReceipt:
-        local_reasons = _constraint_reasons_from_request(
-            request, resolved_constraints
-        )
+        local_reasons = _constraint_reasons_from_request(request, resolved_constraints)
         if local_reasons:
             return StructuralValidationReceipt(
                 validator_id=validator_id,
                 tool=StructuralTool.HAMMER_CVC5,
                 constraints=resolved_constraints,
                 passed=False,
-                detail="structural constraints failed: "
-                + ",".join(local_reasons),
+                detail="structural constraints failed: " + ",".join(local_reasons),
             )
         from benchmarks.bench_semantic_logic_roundtrip import (
             hammer_cvc5_equivalence,
@@ -1208,10 +1079,7 @@ def default_hammer_cvc5_binding(
         payload = hammer_cvc5_equivalence(
             candidate,
             candidate,
-            request_id=(
-                f"admission-{validator_id}-"
-                f"{_sha(request.to_dict())[:16]}"
-            ),
+            request_id=(f"admission-{validator_id}-{_sha(request.to_dict())[:16]}"),
         )
         status = str(payload.get("status", "unavailable"))
         if status != "success":
@@ -1233,8 +1101,7 @@ def default_hammer_cvc5_binding(
             constraints=resolved_constraints,
             passed=solver_ok,
             detail=_detail(
-                f"hammer_cvc5 self_consistent={solver_ok} "
-                f"nonvacuous={nonvacuous}",
+                f"hammer_cvc5 self_consistent={solver_ok} nonvacuous={nonvacuous}",
                 "hammer_cvc5 result",
             ),
         )
@@ -1263,25 +1130,20 @@ def default_lean_binding(
 
     import shutil
 
-    resolved_constraints = tuple(
-        constraints or DECLARED_STRUCTURAL_CONSTRAINTS
-    )
+    resolved_constraints = tuple(constraints or DECLARED_STRUCTURAL_CONSTRAINTS)
     resolved_lean = lean_path if lean_path is not None else shutil.which("lean")
 
     def validate(
         request: StructuralValidationRequest,
     ) -> StructuralValidationReceipt:
-        local_reasons = _constraint_reasons_from_request(
-            request, resolved_constraints
-        )
+        local_reasons = _constraint_reasons_from_request(request, resolved_constraints)
         if local_reasons:
             return StructuralValidationReceipt(
                 validator_id=validator_id,
                 tool=StructuralTool.LEAN,
                 constraints=resolved_constraints,
                 passed=False,
-                detail="structural constraints failed: "
-                + ",".join(local_reasons),
+                detail="structural constraints failed: " + ",".join(local_reasons),
             )
         if resolved_lean is None:
             return StructuralValidationReceipt(

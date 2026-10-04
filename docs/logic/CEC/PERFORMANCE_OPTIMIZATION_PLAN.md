@@ -217,6 +217,7 @@ def query(self, pattern: Formula) -> List[Statement]:
 ```python
 from collections import defaultdict
 
+
 class IndexedKnowledgeBase:
     def __init__(self):
         self.statements: List[Statement] = []
@@ -224,23 +225,24 @@ class IndexedKnowledgeBase:
         self.by_predicate: Dict[str, Set[int]] = defaultdict(set)
         self.by_operator: Dict[str, Set[int]] = defaultdict(set)
         self.by_agent: Dict[str, Set[int]] = defaultdict(set)
-    
+
     def add_statement(self, stmt: Statement):
         idx = len(self.statements)
         self.statements.append(stmt)
-        
+
         # Update indexes
         self.by_predicate[stmt.formula.predicate].add(idx)
         self.by_operator[stmt.formula.operator].add(idx)
         # ... extract and index agents ...
-    
+
     def query(self, pattern: Formula) -> List[Statement]:
         # Use index for fast filtering
         candidates = self.by_predicate.get(pattern.predicate, set())
-        
+
         # Filter candidates (much smaller set)
-        return [self.statements[i] for i in candidates 
-                if matches(self.statements[i].formula, pattern)]
+        return [
+            self.statements[i] for i in candidates if matches(self.statements[i].formula, pattern)
+        ]
 ```
 
 **Expected Improvement:** 10-20x faster for large KBs
@@ -261,13 +263,13 @@ class Formula:
 **Optimization:**
 ```python
 class Formula:
-    __slots__ = ('operator', 'args', '_hash')
-    
+    __slots__ = ("operator", "args", "_hash")
+
     def __init__(self, operator: Operator, args: tuple):
         self.operator = operator
         self.args = args  # Use tuple, not list
         self._hash = None  # Cache hash
-    
+
     def __hash__(self):
         if self._hash is None:
             self._hash = hash((self.operator, self.args))
@@ -283,13 +285,14 @@ class Formula:
 ```python
 class FormulaFactory:
     _intern_cache: Dict[tuple, Formula] = {}
-    
+
     @classmethod
     def create(cls, operator: Operator, *args) -> Formula:
         key = (operator, args)
         if key not in cls._intern_cache:
             cls._intern_cache[key] = Formula(operator, args)
         return cls._intern_cache[key]
+
 
 # Now formula comparison is O(1) pointer comparison
 formula1 = FormulaFactory.create(op, args)
@@ -333,15 +336,18 @@ class ProofState:
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=10000)
 def unify(term1: Term, term2: Term, bindings: FrozenDict) -> Optional[FrozenDict]:
     # Expensive unification cached
     pass
 
+
 @lru_cache(maxsize=5000)
 def type_check(formula: Formula, context: TypeContext) -> bool:
     # Type checking cached
     pass
+
 
 @lru_cache(maxsize=1000)
 def parse_formula(text: str) -> Formula:
@@ -384,21 +390,22 @@ class CachedProver:
 ```python
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
 class ParallelProver:
     def prove(self, conjecture: Formula, axioms: List[Formula]) -> ProofResult:
         strategies = [
-            ('forward_chaining', self.forward_chain),
-            ('backward_chaining', self.backward_chain),
-            ('resolution', self.resolution),
-            ('tableaux', self.tableaux)
+            ("forward_chaining", self.forward_chain),
+            ("backward_chaining", self.backward_chain),
+            ("resolution", self.resolution),
+            ("tableaux", self.tableaux),
         ]
-        
+
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {
                 executor.submit(strategy[1], conjecture, axioms): strategy[0]
                 for strategy in strategies
             }
-            
+
             for future in as_completed(futures, timeout=30):
                 try:
                     result = future.result()
@@ -409,7 +416,7 @@ class ParallelProver:
                         return result
                 except Exception:
                     pass
-        
+
         return ProofResult(success=False)
 ```
 
@@ -420,6 +427,7 @@ class ParallelProver:
 
 ```python
 import asyncio
+
 
 async def batch_convert(texts: List[str]) -> List[ConversionResult]:
     tasks = [convert_nl_to_dcec_async(text) for text in texts]
@@ -436,10 +444,12 @@ async def batch_convert(texts: List[str]) -> List[ConversionResult]:
 ```python
 from numba import jit
 
+
 @jit(nopython=True)
 def fast_unification_check(term1_type: int, term2_type: int) -> bool:
     # Simple numeric operations compiled to native code
     return term1_type == term2_type or term1_type == 0 or term2_type == 0
+
 
 # Use in unification
 def unify(term1: Term, term2: Term) -> bool:
@@ -472,6 +482,7 @@ cdef class FastUnifier:
 
 ```python
 import weakref
+
 
 class ProofTree:
     def __init__(self, root: Formula):
@@ -508,6 +519,7 @@ class TermPool:
 
 ```python
 from memory_profiler import profile
+
 
 @profile
 def process_large_kb():
@@ -635,16 +647,18 @@ import pytest
 from time import perf_counter
 from ipfs_datasets_py.logic.CEC.native import Formula, TheoremProver
 
+
 @pytest.mark.benchmark
 def test_proof_performance(benchmark):
     prover = TheoremProver()
     prover.add_axiom("A → B")
     prover.add_axiom("A")
-    
+
     result = benchmark(prover.prove, "B")
-    
+
     assert result.success
     assert result.time_ms < 1.0  # Target: <1ms
+
 
 @pytest.mark.benchmark
 def test_kb_query_performance(benchmark):
@@ -652,9 +666,9 @@ def test_kb_query_performance(benchmark):
     # Add 10,000 statements
     for i in range(10000):
         kb.add_statement(f"stmt_{i}")
-    
+
     result = benchmark(kb.query, "pattern")
-    
+
     assert result.time_ms < 10.0  # Target: <10ms
 ```
 

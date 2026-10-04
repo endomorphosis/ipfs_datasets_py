@@ -11,6 +11,7 @@ Terminology:
 - method_parameter_provision: Attempting to pass parameters to parameterless method
 - invalid_calling_context: Calling method in inappropriate context or state
 """
+
 import pytest
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperIsAvailableInvalidInputs:
     """
     Invalid usage scenarios for FFmpegWrapper.is_available method.
-    
+
     Tests the is_available method with invalid calling patterns
     to ensure robust error handling.
     """
@@ -31,9 +32,9 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         """
         # Since is_available() has a working implementation, test parameter validation
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         # Test that method properly rejects parameters
         with pytest.raises(TypeError):
             wrapper.is_available("unexpected_parameter")
@@ -46,9 +47,9 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         """
         # Since is_available() has a working implementation, test keyword argument validation
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         # Test that method properly rejects keyword arguments
         with pytest.raises(TypeError):
             wrapper.is_available(check_path=True)
@@ -61,7 +62,7 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         """
         # Since is_available() has a working implementation, test class vs instance access
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         # Test that method requires instance, not class access
         with pytest.raises((AttributeError, TypeError)):
             FFmpegWrapper.is_available()  # Should fail - no instance

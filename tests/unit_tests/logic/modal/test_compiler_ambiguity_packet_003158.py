@@ -88,9 +88,7 @@ def test_packet_003158_pair_is_registered_across_ambiguity_policies() -> None:
     predicted_family = ModalLogicFamily.FRAME.value
     target_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
 
-    assert COMPILER_AMBIGUITY_PACKET_003158_FAMILY_PAIRS == (
-        (predicted_family, target_family),
-    )
+    assert COMPILER_AMBIGUITY_PACKET_003158_FAMILY_PAIRS == ((predicted_family, target_family),)
     assert target_family in compiler_ambiguity_policy_targets(predicted_family)
     assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
     assert is_compiler_required_adaptive_ambiguity_pair(
@@ -112,9 +110,7 @@ def test_compiler_exposes_packet_003158_signal_free_adaptive_ambiguities() -> No
     predicted_family = ModalLogicFamily.FRAME.value
     target_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
     evidence_margins = (-0.327303573273, -0.296748400059)
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     encoding = SpaCyLegalEncoding(
         document_id="compiler-ambiguity-packet-003158",
         text="Secs. 1 to 5 - Repealed.",
@@ -136,8 +132,7 @@ def test_compiler_exposes_packet_003158_signal_free_adaptive_ambiguities() -> No
             family_margin=family_margin,
         )
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._adaptive_family_margin_ambiguities(
             encoding,
@@ -158,8 +153,6 @@ def test_compiler_exposes_packet_003158_signal_free_adaptive_ambiguities() -> No
             "adaptive_frame_conditional_normative_outvoted_margin_low"
         )
         assert ambiguity.severity == "requires_rule"
-        assert ambiguity.metadata.get("ambiguity_policy_bundle") == (
-            "compiler_ambiguity"
-        )
+        assert ambiguity.metadata.get("ambiguity_policy_bundle") == ("compiler_ambiguity")
         assert ambiguity.metadata.get("signal_free_pair_policy_applied") is True
         assert ambiguity.metadata.get("adaptive_margin_direction") == "outvoted"

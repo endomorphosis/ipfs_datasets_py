@@ -4,6 +4,7 @@ Methods under test:
   - OntologyCritic.top_improving_dimension(before, after)
   - OntologyGenerator.compact_result(result)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -12,11 +13,17 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -24,16 +31,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, properties=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="Test", text=eid, properties=properties or {})
 
 
 def _make_result(entities, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=relationships or [],
@@ -45,12 +55,14 @@ def _make_result(entities, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyCritic.top_improving_dimension
 # ---------------------------------------------------------------------------
+
 
 class TestTopImprovingDimension:
     @pytest.mark.parametrize(
@@ -106,6 +118,7 @@ class TestTopImprovingDimension:
 # OntologyGenerator.compact_result
 # ---------------------------------------------------------------------------
 
+
 class TestCompactResult:
     @pytest.mark.parametrize(
         "entities,predicate",
@@ -116,7 +129,13 @@ class TestCompactResult:
                 lambda compacted: len(compacted.entities) == 1 and compacted.entities[0].id == "e1",
             ),
             (
-                [_make_entity("e0"), _make_entity("e1"), _make_entity("e2"), _make_entity("e3"), _make_entity("e4")],
+                [
+                    _make_entity("e0"),
+                    _make_entity("e1"),
+                    _make_entity("e2"),
+                    _make_entity("e3"),
+                    _make_entity("e4"),
+                ],
                 lambda compacted: compacted.entities == [],
             ),
             (

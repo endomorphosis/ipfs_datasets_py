@@ -18,13 +18,19 @@ def wikipediagraphragbudgetmanager_instance():
     try:
         instance = WikipediaGraphRAGBudgetManager()
         if instance is None:
-            raise FixtureError("Failed to create WikipediaGraphRAGBudgetManager instance: instance is None")
+            raise FixtureError(
+                "Failed to create WikipediaGraphRAGBudgetManager instance: instance is None"
+            )
         return instance
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture wikipediagraphragbudgetmanager_instance: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture wikipediagraphragbudgetmanager_instance: {e}"
+        ) from e
 
 
-def test_initialize_with_default_budget_default_budget_contains_category_traversal_ms_as_5000(wikipediagraphragbudgetmanager_instance):
+def test_initialize_with_default_budget_default_budget_contains_category_traversal_ms_as_5000(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Initialize with default budget default_budget contains category_traversal_ms as 5000
 
@@ -37,7 +43,9 @@ def test_initialize_with_default_budget_default_budget_contains_category_travers
     pass
 
 
-def test_initialize_with_default_budget_default_budget_contains_topic_expansion_ms_as_3000(wikipediagraphragbudgetmanager_instance):
+def test_initialize_with_default_budget_default_budget_contains_topic_expansion_ms_as_3000(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Initialize with default budget default_budget contains topic_expansion_ms as 3000
 
@@ -50,7 +58,9 @@ def test_initialize_with_default_budget_default_budget_contains_topic_expansion_
     pass
 
 
-def test_initialize_with_default_budget_default_budget_contains_max_categories_as_20(wikipediagraphragbudgetmanager_instance):
+def test_initialize_with_default_budget_default_budget_contains_max_categories_as_20(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Initialize with default budget default_budget contains max_categories as 20
 
@@ -63,7 +73,9 @@ def test_initialize_with_default_budget_default_budget_contains_max_categories_a
     pass
 
 
-def test_initialize_with_default_budget_default_budget_contains_max_topics_as_15(wikipediagraphragbudgetmanager_instance):
+def test_initialize_with_default_budget_default_budget_contains_max_topics_as_15(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Initialize with default budget default_budget contains max_topics as 15
 
@@ -76,7 +88,9 @@ def test_initialize_with_default_budget_default_budget_contains_max_topics_as_15
     pass
 
 
-def test_allocate_budget_for_normal_priority_budget_contains_category_traversal_ms(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_normal_priority_budget_contains_category_traversal_ms(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for normal priority budget contains category_traversal_ms
 
@@ -92,7 +106,9 @@ def test_allocate_budget_for_normal_priority_budget_contains_category_traversal_
     pass
 
 
-def test_allocate_budget_for_normal_priority_budget_contains_topic_expansion_ms(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_normal_priority_budget_contains_topic_expansion_ms(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for normal priority budget contains topic_expansion_ms
 
@@ -108,7 +124,9 @@ def test_allocate_budget_for_normal_priority_budget_contains_topic_expansion_ms(
     pass
 
 
-def test_allocate_budget_for_normal_priority_budget_contains_max_categories(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_normal_priority_budget_contains_max_categories(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for normal priority budget contains max_categories
 
@@ -124,7 +142,9 @@ def test_allocate_budget_for_normal_priority_budget_contains_max_categories(wiki
     pass
 
 
-def test_allocate_budget_for_normal_priority_budget_contains_max_topics(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_normal_priority_budget_contains_max_topics(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for normal priority budget contains max_topics
 
@@ -140,7 +160,9 @@ def test_allocate_budget_for_normal_priority_budget_contains_max_topics(wikipedi
     pass
 
 
-def test_allocate_budget_with_category_focus_category_traversal_ms_is_increased_by_factor_15(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_with_category_focus_category_traversal_ms_is_increased_by_factor_15(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget with category focus category_traversal_ms is increased by factor 1.5
 
@@ -156,7 +178,9 @@ def test_allocate_budget_with_category_focus_category_traversal_ms_is_increased_
     pass
 
 
-def test_allocate_budget_with_category_focus_max_categories_is_increased_by_factor_15(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_with_category_focus_max_categories_is_increased_by_factor_15(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget with category focus max_categories is increased by factor 1.5
 
@@ -172,7 +196,9 @@ def test_allocate_budget_with_category_focus_max_categories_is_increased_by_fact
     pass
 
 
-def test_allocate_budget_with_topic_expansion_topic_expansion_ms_is_increased_by_factor_15(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_with_topic_expansion_topic_expansion_ms_is_increased_by_factor_15(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget with topic expansion topic_expansion_ms is increased by factor 1.5
 
@@ -189,7 +215,9 @@ def test_allocate_budget_with_topic_expansion_topic_expansion_ms_is_increased_by
     pass
 
 
-def test_allocate_budget_with_topic_expansion_max_topics_is_increased_by_factor_15(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_with_topic_expansion_max_topics_is_increased_by_factor_15(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget with topic expansion max_topics is increased by factor 1.5
 
@@ -206,7 +234,9 @@ def test_allocate_budget_with_topic_expansion_max_topics_is_increased_by_factor_
     pass
 
 
-def test_allocate_budget_for_hierarchical_strategy_graph_traversal_ms_is_increased_by_factor_13(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_hierarchical_strategy_graph_traversal_ms_is_increased_by_factor_13(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for hierarchical strategy graph_traversal_ms is increased by factor 1.3
 
@@ -222,7 +252,9 @@ def test_allocate_budget_for_hierarchical_strategy_graph_traversal_ms_is_increas
     pass
 
 
-def test_allocate_budget_for_hierarchical_strategy_max_nodes_is_increased_by_factor_13(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_hierarchical_strategy_max_nodes_is_increased_by_factor_13(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for hierarchical strategy max_nodes is increased by factor 1.3
 
@@ -254,7 +286,9 @@ def test_allocate_budget_for_topic_focused_strategy(wikipediagraphragbudgetmanag
     pass
 
 
-def test_allocate_budget_for_comparison_strategy_vector_search_ms_is_increased_by_factor_12(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_comparison_strategy_vector_search_ms_is_increased_by_factor_12(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for comparison strategy vector_search_ms is increased by factor 1.2
 
@@ -270,7 +304,9 @@ def test_allocate_budget_for_comparison_strategy_vector_search_ms_is_increased_b
     pass
 
 
-def test_allocate_budget_for_comparison_strategy_graph_traversal_ms_is_increased_by_factor_12(wikipediagraphragbudgetmanager_instance):
+def test_allocate_budget_for_comparison_strategy_graph_traversal_ms_is_increased_by_factor_12(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Allocate budget for comparison strategy graph_traversal_ms is increased by factor 1.2
 
@@ -336,7 +372,9 @@ def test_suggest_early_stopping_with_good_category_matches(wikipediagraphragbudg
     pass
 
 
-def test_suggest_early_stopping_with_insufficient_category_matches(wikipediagraphragbudgetmanager_instance):
+def test_suggest_early_stopping_with_insufficient_category_matches(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Suggest early stopping with insufficient category matches
 
@@ -354,7 +392,9 @@ def test_suggest_early_stopping_with_insufficient_category_matches(wikipediagrap
     pass
 
 
-def test_suggest_early_stopping_with_low_budget_consumption(wikipediagraphragbudgetmanager_instance):
+def test_suggest_early_stopping_with_low_budget_consumption(
+    wikipediagraphragbudgetmanager_instance,
+):
     """
     Scenario: Suggest early stopping with low budget consumption
 
@@ -423,4 +463,3 @@ def test_suggest_early_stopping_with_empty_results(wikipediagraphragbudgetmanage
         result is based on base class logic
     """
     pass
-

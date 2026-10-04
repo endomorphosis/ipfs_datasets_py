@@ -23,19 +23,13 @@ SNAPSHOT = REPOSITORY_ROOT / gate.DEFAULT_HOLDOUT_REASSESSMENT_SNAPSHOT
 
 @pytest.fixture(scope="module")
 def holdout_report() -> dict[str, object]:
-    return gate.load_holdout_reassessment_report(
-        ARTIFACT, repository_root=REPOSITORY_ROOT
-    )
+    return gate.load_holdout_reassessment_report(ARTIFACT, repository_root=REPOSITORY_ROOT)
 
 
 def _redigest(value: dict[str, object]) -> dict[str, object]:
     value["artifact_sha256"] = hashlib.sha256(
         canonical_json(
-            {
-                key: item
-                for key, item in value.items()
-                if key != "artifact_sha256"
-            }
+            {key: item for key, item in value.items() if key != "artifact_sha256"}
         ).encode("utf-8")
     ).hexdigest()
     return value
@@ -62,9 +56,7 @@ def test_hssl_g150_evidence_symbol_is_ast_visible_and_complete() -> None:
 def test_exact_hssl_g140_source_is_revalidated(
     holdout_report: dict[str, object],
 ) -> None:
-    source = (
-        REPOSITORY_ROOT / gate.DEFAULT_PILOT_REASSESSMENT_PATH
-    )
+    source = REPOSITORY_ROOT / gate.DEFAULT_PILOT_REASSESSMENT_PATH
     pilot = json.loads(source.read_text(encoding="utf-8"))
     binding = holdout_report["source_binding"]
     prerequisite = holdout_report["prerequisite"]
@@ -72,10 +64,7 @@ def test_exact_hssl_g140_source_is_revalidated(
     assert binding == {
         "kind": "hssl_g140_pilot_authorization",
         "path": gate.DEFAULT_PILOT_REASSESSMENT_PATH.as_posix(),
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "reassessment-pilot-shortlist.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.reassessment-pilot-shortlist.v1"),
         "bytes_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "semantic_sha256": pilot["artifact_sha256"],
         "deep_freeze_sha256": pilot["deep_freeze"]["freeze_sha256"],
@@ -192,9 +181,7 @@ def test_all_candidate_dispositions_remain_unscheduled(
 ) -> None:
     dispositions = holdout_report["candidate_dispositions"]
 
-    assert [item["variant_id"] for item in dispositions] == [
-        f"A{index}" for index in range(1, 13)
-    ]
+    assert [item["variant_id"] for item in dispositions] == [f"A{index}" for index in range(1, 13)]
     assert all(item["eligible"] is False for item in dispositions)
     assert all(item["scheduled"] is False for item in dispositions)
     assert all(item["ineligibility_reasons"] for item in dispositions)
@@ -226,12 +213,11 @@ def test_artifact_and_snapshot_are_canonical_and_cross_bound(
 
     assert artifact_text == canonical_json(holdout_report) + "\n"
     assert snapshot_text == canonical_json(snapshot) + "\n"
-    assert snapshot["results"]["artifact"]["bytes_sha256"] == hashlib.sha256(
-        ARTIFACT.read_bytes()
-    ).hexdigest()
-    assert snapshot["results"]["artifact"]["semantic_sha256"] == (
-        holdout_report["artifact_sha256"]
+    assert (
+        snapshot["results"]["artifact"]["bytes_sha256"]
+        == hashlib.sha256(ARTIFACT.read_bytes()).hexdigest()
     )
+    assert snapshot["results"]["artifact"]["semantic_sha256"] == (holdout_report["artifact_sha256"])
     assert snapshot["results"]["holdout_authorized"] is False
     assert snapshot["results"]["activity"] == {
         "scheduled_pair_count": 0,
@@ -246,12 +232,8 @@ def test_digest_and_redigested_state_invention_are_rejected(
 ) -> None:
     changed = copy.deepcopy(holdout_report)
     changed["access"]["backend_call_count"] = 1
-    with pytest.raises(
-        gate.HoldoutReassessmentError, match="digest changed"
-    ):
-        gate.validate_holdout_reassessment_report(
-            changed, repository_root=REPOSITORY_ROOT
-        )
+    with pytest.raises(gate.HoldoutReassessmentError, match="digest changed"):
+        gate.validate_holdout_reassessment_report(changed, repository_root=REPOSITORY_ROOT)
 
     redigested = copy.deepcopy(holdout_report)
     redigested["decision"]["holdout_untouched"] = False

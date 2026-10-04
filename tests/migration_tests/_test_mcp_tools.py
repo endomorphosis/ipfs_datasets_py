@@ -9,6 +9,7 @@ sample data, and results are validated against expected outcomes.
 Usage:
     python test_mcp_tools.py [--category CATEGORY]
 """
+
 import os
 import sys
 import json
@@ -36,6 +37,7 @@ logger = logging.getLogger("mcp_tool_test")
 try:
     import ipfs_datasets_py
     from ipfs_datasets_py import mcp_server
+
     # We'll import the individual tools dynamically later
     MCP_AVAILABLE = True
 except ImportError as e:
@@ -55,26 +57,22 @@ SAMPLE_DATASET = {
         "name": "Test Dataset",
         "description": "A sample dataset for testing",
         "version": "1.0.0",
-        "created_at": "2025-05-21T00:00:00Z"
+        "created_at": "2025-05-21T00:00:00Z",
     },
     "data": [
         {"id": 1, "text": "Sample text 1", "value": 10.5},
         {"id": 2, "text": "Sample text 2", "value": 20.3},
-        {"id": 3, "text": "Sample text 3", "value": 15.8}
-    ]
+        {"id": 3, "text": "Sample text 3", "value": 15.8},
+    ],
 }
 
 SAMPLE_VECTOR_DATA = {
-    "vectors": [
-        [0.1, 0.2, 0.3, 0.4, 0.5],
-        [0.6, 0.7, 0.8, 0.9, 1.0],
-        [0.2, 0.4, 0.6, 0.8, 1.0]
-    ],
+    "vectors": [[0.1, 0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9, 1.0], [0.2, 0.4, 0.6, 0.8, 1.0]],
     "metadata": [
         {"id": 1, "text": "Vector 1"},
         {"id": 2, "text": "Vector 2"},
-        {"id": 3, "text": "Vector 3"}
-    ]
+        {"id": 3, "text": "Vector 3"},
+    ],
 }
 
 SAMPLE_AUDIT_EVENT = {
@@ -83,20 +81,20 @@ SAMPLE_AUDIT_EVENT = {
     "timestamp": "2025-05-21T12:34:56Z",
     "resource": "test_dataset",
     "action": "read",
-    "status": "success"
+    "status": "success",
 }
 
 SAMPLE_GRAPH_DATA = {
     "nodes": [
         {"id": "n1", "label": "Node 1", "type": "entity"},
         {"id": "n2", "label": "Node 2", "type": "concept"},
-        {"id": "n3", "label": "Node 3", "type": "entity"}
+        {"id": "n3", "label": "Node 3", "type": "entity"},
     ],
     "edges": [
         {"source": "n1", "target": "n2", "label": "relates_to"},
         {"source": "n2", "target": "n3", "label": "contains"},
-        {"source": "n1", "target": "n3", "label": "references"}
-    ]
+        {"source": "n1", "target": "n3", "label": "references"},
+    ],
 }
 
 SAMPLE_PROVENANCE_DATA = {
@@ -105,12 +103,13 @@ SAMPLE_PROVENANCE_DATA = {
     "timestamp": "2025-05-21T12:34:56Z",
     "actions": [
         {"type": "creation", "agent": "user_1", "timestamp": "2025-05-20T10:00:00Z"},
-        {"type": "modification", "agent": "user_2", "timestamp": "2025-05-21T09:30:00Z"}
+        {"type": "modification", "agent": "user_2", "timestamp": "2025-05-21T09:30:00Z"},
     ],
-    "sources": ["source_1", "source_2"]
+    "sources": ["source_1", "source_2"],
 }
 
 SAMPLE_CID = "QmV9tSDx9UiPeWExXEeH6aoDvmihvx6jD5eLb4jbTaKGps"
+
 
 # Initialize test environment
 def setup_test_environment():
@@ -139,14 +138,17 @@ def setup_test_environment():
         "dataset_file": str(dataset_file),
         "vector_file": str(vector_file),
         "graph_file": str(graph_file),
-        "test_dir": str(TEST_DATA_DIR)
+        "test_dir": str(TEST_DATA_DIR),
     }
+
 
 def cleanup_test_environment():
     """Clean up the test environment."""
     logger.info(f"Cleaning up test environment in {TEST_DATA_DIR}")
     import shutil
+
     shutil.rmtree(TEST_DATA_DIR)
+
 
 # Helper functions for module import
 def import_tool(category: str, tool_name: str):
@@ -158,6 +160,7 @@ def import_tool(category: str, tool_name: str):
         logger.warning(f"Could not import tool {tool_name} from {category}: {e}")
         return None
 
+
 def get_tools_in_category(category: str) -> List[str]:
     """Get all tool names in a category."""
     category_path = TOOLS_PATH / category
@@ -167,8 +170,9 @@ def get_tools_in_category(category: str) -> List[str]:
     return [
         f.stem
         for f in category_path.iterdir()
-        if f.is_file() and f.name.endswith('.py') and not f.name.startswith('__')
+        if f.is_file() and f.name.endswith(".py") and not f.name.startswith("__")
     ]
+
 
 # Tool test functions
 class DatasetToolTests(unittest.TestCase):
@@ -180,7 +184,7 @@ class DatasetToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.hf_load_dataset')
+    @patch("ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.hf_load_dataset")
     async def test_load_dataset(self, mock_hf_load_dataset):
         """Test the load_dataset tool."""
         load_dataset_module = import_tool("dataset_tools", "load_dataset")
@@ -190,12 +194,11 @@ class DatasetToolTests(unittest.TestCase):
         mock_hf_load_dataset.return_value = MagicMock(
             num_rows=3,
             features={"id": "int", "text": "string", "value": "float"},
-            info=MagicMock(to_dict=lambda: {"description": "Mock Dataset"})
+            info=MagicMock(to_dict=lambda: {"description": "Mock Dataset"}),
         )
 
         result = await load_dataset_module.load_dataset(
-            source=self.test_env["dataset_file"],
-            format="json"
+            source=self.test_env["dataset_file"], format="json"
         )
 
         self.assertIsNotNone(result)
@@ -203,7 +206,7 @@ class DatasetToolTests(unittest.TestCase):
         self.assertEqual(result["summary"]["num_records"], 3)
         self.assertIn("id", result["summary"]["schema"])
 
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset.save_dataset_to_file')
+    @patch("ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset.save_dataset_to_file")
     async def test_save_dataset(self, mock_save_dataset_to_file):
         """Test the save_dataset tool."""
         save_dataset_module = import_tool("dataset_tools", "save_dataset")
@@ -214,16 +217,14 @@ class DatasetToolTests(unittest.TestCase):
         mock_save_dataset_to_file.return_value = {"status": "success", "path": output_path}
 
         result = await save_dataset_module.save_dataset(
-            dataset=SAMPLE_DATASET,
-            destination=output_path,
-            format="json"
+            dataset=SAMPLE_DATASET, destination=output_path, format="json"
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["path"], output_path)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset.process_dataset_data')
+    @patch("ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset.process_dataset_data")
     async def test_process_dataset(self, mock_process_dataset_data):
         """Test the process_dataset tool."""
         process_dataset_module = import_tool("dataset_tools", "process_dataset")
@@ -234,22 +235,20 @@ class DatasetToolTests(unittest.TestCase):
             "status": "success",
             "dataset": {
                 "data": [SAMPLE_DATASET["data"][1], SAMPLE_DATASET["data"][2]],
-                "metadata": SAMPLE_DATASET["metadata"]
-            }
+                "metadata": SAMPLE_DATASET["metadata"],
+            },
         }
 
         result = await process_dataset_module.process_dataset(
             dataset=SAMPLE_DATASET,
-            operations=[
-                {"type": "filter", "field": "value", "condition": "gt", "value": 15}
-            ]
+            operations=[{"type": "filter", "field": "value", "condition": "gt", "value": 15}],
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(len(result["dataset"]["data"]), 2)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format.convert_dataset')
+    @patch("ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format.convert_dataset")
     async def test_convert_dataset_format(self, mock_convert_dataset):
         """Test the convert_dataset_format tool."""
         convert_dataset_module = import_tool("dataset_tools", "convert_dataset_format")
@@ -263,12 +262,13 @@ class DatasetToolTests(unittest.TestCase):
             source=self.test_env["dataset_file"],
             source_format="json",
             target_format="csv",
-            output_path=output_path
+            output_path=output_path,
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["path"], output_path)
+
 
 class IPFSToolTests(unittest.TestCase):
     """Test cases for IPFS tools."""
@@ -279,7 +279,7 @@ class IPFSToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs.ipfs_kit_py')
+    @patch("ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs.ipfs_kit_py")
     async def test_get_from_ipfs(self, mock_ipfs_kit_py):
         """Test the get_from_ipfs tool."""
         get_from_ipfs_module = import_tool("ipfs_tools", "get_from_ipfs")
@@ -293,11 +293,9 @@ class IPFSToolTests(unittest.TestCase):
         mock_ipfs_kit_py.cat_async = AsyncMock(return_value=b'{"key": "value"}')
 
         # Test with output_path
-        with patch('os.path.exists', return_value=True), \
-             patch('os.path.getsize', return_value=100):
+        with patch("os.path.exists", return_value=True), patch("os.path.getsize", return_value=100):
             result = await get_from_ipfs_module.get_from_ipfs(
-                cid=SAMPLE_CID,
-                output_path=output_path
+                cid=SAMPLE_CID, output_path=output_path
             )
             self.assertIsNotNone(result)
             self.assertEqual(result["status"], "success")
@@ -309,15 +307,13 @@ class IPFSToolTests(unittest.TestCase):
         mock_ipfs_kit_py.cat_async.reset_mock()
 
         # Test without output_path (cat)
-        result = await get_from_ipfs_module.get_from_ipfs(
-            cid=SAMPLE_CID
-        )
+        result = await get_from_ipfs_module.get_from_ipfs(cid=SAMPLE_CID)
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["content"], '{"key": "value"}')
         mock_ipfs_kit_py.cat_async.assert_called_once_with(SAMPLE_CID, timeout=60)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs.ipfs_kit_py')
+    @patch("ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs.ipfs_kit_py")
     async def test_pin_to_ipfs(self, mock_ipfs_kit_py):
         """Test the pin_to_ipfs tool."""
         pin_to_ipfs_module = import_tool("ipfs_tools", "pin_to_ipfs")
@@ -325,9 +321,11 @@ class IPFSToolTests(unittest.TestCase):
             self.skipTest("pin_to_ipfs tool not found")
 
         # Mock the async method
-        mock_ipfs_kit_py.add_async = AsyncMock(return_value={"Hash": SAMPLE_CID, "Size": 123, "Name": "test_dataset.json"})
+        mock_ipfs_kit_py.add_async = AsyncMock(
+            return_value={"Hash": SAMPLE_CID, "Size": 123, "Name": "test_dataset.json"}
+        )
 
-        with patch('os.path.exists', return_value=True):
+        with patch("os.path.exists", return_value=True):
             result = await pin_to_ipfs_module.pin_to_ipfs(
                 content_path=self.test_env["dataset_file"]
             )
@@ -338,8 +336,9 @@ class IPFSToolTests(unittest.TestCase):
                 self.test_env["dataset_file"],
                 recursive=True,
                 wrap_with_directory=False,
-                hash="sha2-256"
+                hash="sha2-256",
             )
+
 
 class VectorToolTests(unittest.TestCase):
     """Test cases for vector tools."""
@@ -350,7 +349,7 @@ class VectorToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index.IPFSKnnIndex')
+    @patch("ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index.IPFSKnnIndex")
     async def test_create_vector_index(self, mock_ipfs_knn_index):
         """Test the create_vector_index tool."""
         create_vector_index_module = import_tool("vector_tools", "create_vector_index")
@@ -365,7 +364,7 @@ class VectorToolTests(unittest.TestCase):
         result = await create_vector_index_module.create_vector_index(
             vectors=SAMPLE_VECTOR_DATA["vectors"],
             metadata=SAMPLE_VECTOR_DATA["metadata"],
-            metric="cosine"
+            metric="cosine",
         )
 
         self.assertIsNotNone(result)
@@ -373,7 +372,7 @@ class VectorToolTests(unittest.TestCase):
         self.assertEqual(result["index_id"], "test_index_id")
         self.assertEqual(result["num_vectors"], 3)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index.IPFSKnnIndexManager')
+    @patch("ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index.IPFSKnnIndexManager")
     async def test_search_vector_index(self, mock_ipfs_knn_index_manager):
         """Test the search_vector_index tool."""
         search_vector_index_module = import_tool("vector_tools", "search_vector_index")
@@ -386,19 +385,18 @@ class VectorToolTests(unittest.TestCase):
 
         mock_index_instance.search.return_value = [
             MagicMock(id=1, score=0.95, metadata={"id": 1, "text": "Vector 1"}),
-            MagicMock(id=3, score=0.75, metadata={"id": 3, "text": "Vector 3"})
+            MagicMock(id=3, score=0.75, metadata={"id": 3, "text": "Vector 3"}),
         ]
 
         result = await search_vector_index_module.search_vector_index(
-            index_id="test_index_id",
-            query_vector=[0.1, 0.2, 0.3, 0.4, 0.5],
-            top_k=2
+            index_id="test_index_id", query_vector=[0.1, 0.2, 0.3, 0.4, 0.5], top_k=2
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["num_results"], 2)
         self.assertEqual(result["results"][0]["id"], 1)
+
 
 class GraphToolTests(unittest.TestCase):
     """Test cases for graph tools."""
@@ -409,7 +407,7 @@ class GraphToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph.GraphRAGProcessor')
+    @patch("ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph.GraphRAGProcessor")
     async def test_query_knowledge_graph(self, mock_graph_rag_processor):
         """Test the query_knowledge_graph tool."""
         query_knowledge_graph_module = import_tool("graph_tools", "query_knowledge_graph")
@@ -420,19 +418,20 @@ class GraphToolTests(unittest.TestCase):
         mock_processor_instance.load_graph.return_value = MagicMock()
         mock_processor_instance.execute_sparql.return_value = [
             {"id": "n1", "label": "Node 1"},
-            {"id": "n3", "label": "Node 3"}
+            {"id": "n3", "label": "Node 3"},
         ]
 
         result = await query_knowledge_graph_module.query_knowledge_graph(
             graph_id="test_graph_id",
             query="MATCH (n) WHERE n.type = 'entity' RETURN n",
-            query_type="sparql"
+            query_type="sparql",
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["num_results"], 2)
         self.assertEqual(result["results"][0]["id"], "n1")
+
 
 class AuditToolTests(unittest.TestCase):
     """Test cases for audit tools."""
@@ -443,7 +442,7 @@ class AuditToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event.AuditLogger')
+    @patch("ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event.AuditLogger")
     async def test_record_audit_event(self, mock_audit_logger):
         """Test the record_audit_event tool."""
         record_audit_event_module = import_tool("audit_tools", "record_audit_event")
@@ -456,16 +455,18 @@ class AuditToolTests(unittest.TestCase):
         result = await record_audit_event_module.record_audit_event(
             action=SAMPLE_AUDIT_EVENT["action"],
             resource_id=SAMPLE_AUDIT_EVENT["resource"],
-            resource_type="test_resource_type", # Added resource_type
+            resource_type="test_resource_type",  # Added resource_type
             user_id=SAMPLE_AUDIT_EVENT["user_id"],
-            severity="info"
+            severity="info",
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["event_id"], "mock_event_id")
 
-    @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report.AuditReportGenerator')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report.AuditReportGenerator"
+    )
     async def test_generate_audit_report(self, mock_audit_report_generator):
         """Test the generate_audit_report tool."""
         generate_audit_report_module = import_tool("audit_tools", "generate_audit_report")
@@ -473,19 +474,27 @@ class AuditToolTests(unittest.TestCase):
             self.skipTest("generate_audit_report tool not found")
 
         mock_instance = mock_audit_report_generator.return_value
-        mock_instance.generate_comprehensive_report.return_value = {"report_id": "mock_report_id", "timestamp": "mock_timestamp"}
-        mock_instance.export_report.return_value = os.path.join(self.test_env["test_dir"], "audit_report.json")
+        mock_instance.generate_comprehensive_report.return_value = {
+            "report_id": "mock_report_id",
+            "timestamp": "mock_timestamp",
+        }
+        mock_instance.export_report.return_value = os.path.join(
+            self.test_env["test_dir"], "audit_report.json"
+        )
 
         result = await generate_audit_report_module.generate_audit_report(
             report_type="comprehensive",
             output_format="json",
-            output_path=os.path.join(self.test_env["test_dir"], "audit_report.json")
+            output_path=os.path.join(self.test_env["test_dir"], "audit_report.json"),
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["report_type"], "comprehensive")
-        self.assertEqual(result["output_path"], os.path.join(self.test_env["test_dir"], "audit_report.json"))
+        self.assertEqual(
+            result["output_path"], os.path.join(self.test_env["test_dir"], "audit_report.json")
+        )
+
 
 class SecurityToolTests(unittest.TestCase):
     """Test cases for security tools."""
@@ -496,7 +505,9 @@ class SecurityToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission.SecurityManager')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission.SecurityManager"
+    )
     async def test_check_access_permission(self, mock_security_manager):
         """Test the check_access_permission tool."""
         check_access_permission_module = import_tool("security_tools", "check_access_permission")
@@ -507,14 +518,13 @@ class SecurityToolTests(unittest.TestCase):
         mock_instance.check_access.return_value = True
 
         result = await check_access_permission_module.check_access_permission(
-            user_id="test_user",
-            resource_id="test_dataset",
-            permission_type="read"
+            user_id="test_user", resource_id="test_dataset", permission_type="read"
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertTrue(result["allowed"])
+
 
 class ProvenanceToolTests(unittest.TestCase):
     """Test cases for provenance tools."""
@@ -525,7 +535,9 @@ class ProvenanceToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance.EnhancedProvenanceManager')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance.EnhancedProvenanceManager"
+    )
     async def test_record_provenance(self, mock_provenance_manager):
         """Test the record_provenance tool."""
         record_provenance_module = import_tool("provenance_tools", "record_provenance")
@@ -536,7 +548,7 @@ class ProvenanceToolTests(unittest.TestCase):
         mock_instance.record_operation.return_value = "mock_provenance_id"
         mock_instance.get_record.return_value = {
             "provenance_id": "mock_provenance_id",
-            "timestamp": "2025-05-21T12:34:56Z"
+            "timestamp": "2025-05-21T12:34:56Z",
         }
 
         result = await record_provenance_module.record_provenance(
@@ -547,12 +559,13 @@ class ProvenanceToolTests(unittest.TestCase):
             description="Test provenance record",
             agent_id="test_agent",
             timestamp="2025-05-21T12:34:56Z",
-            tags=["tag1", "tag2"]
+            tags=["tag1", "tag2"],
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["provenance_id"], "mock_provenance_id")
+
 
 class WebArchiveToolTests(unittest.TestCase):
     """Test cases for web archive tools."""
@@ -563,7 +576,7 @@ class WebArchiveToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc.WebArchiveProcessor')
+    @patch("ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc.WebArchiveProcessor")
     async def test_create_warc(self, mock_processor):
         """Test the create_warc tool."""
         create_warc_module = import_tool("web_archive_tools", "create_warc")
@@ -571,18 +584,20 @@ class WebArchiveToolTests(unittest.TestCase):
             self.skipTest("create_warc tool not found")
 
         mock_instance = mock_processor.return_value
-        mock_instance.create_warc.return_value = os.path.join(self.test_env["test_dir"], "test.warc")
+        mock_instance.create_warc.return_value = os.path.join(
+            self.test_env["test_dir"], "test.warc"
+        )
 
         result = await create_warc_module.create_warc(
             url="https://example.com",
-            output_path=os.path.join(self.test_env["test_dir"], "test.warc")
+            output_path=os.path.join(self.test_env["test_dir"], "test.warc"),
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["warc_path"], os.path.join(self.test_env["test_dir"], "test.warc"))
 
-    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc.WebArchiveProcessor')
+    @patch("ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc.WebArchiveProcessor")
     async def test_index_warc(self, mock_processor):
         """Test the index_warc tool."""
         index_warc_module = import_tool("web_archive_tools", "index_warc")
@@ -594,14 +609,16 @@ class WebArchiveToolTests(unittest.TestCase):
 
         result = await index_warc_module.index_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc"),
-            output_path=os.path.join(self.test_env["test_dir"], "test.cdxj")
+            output_path=os.path.join(self.test_env["test_dir"], "test.cdxj"),
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["cdxj_path"], os.path.join(self.test_env["test_dir"], "test.cdxj"))
 
-    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj.WebArchiveProcessor')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj.WebArchiveProcessor"
+    )
     async def test_extract_dataset_from_cdxj(self, mock_processor):
         """Test the extract_dataset_from_cdxj tool."""
         extract_dataset_module = import_tool("web_archive_tools", "extract_dataset_from_cdxj")
@@ -612,15 +629,16 @@ class WebArchiveToolTests(unittest.TestCase):
         mock_instance.extract_dataset_from_cdxj.return_value = SAMPLE_DATASET
 
         result = await extract_dataset_module.extract_dataset_from_cdxj(
-            cdxj_path=os.path.join(self.test_env["test_dir"], "test.cdxj"),
-            output_format="dict"
+            cdxj_path=os.path.join(self.test_env["test_dir"], "test.cdxj"), output_format="dict"
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["dataset"], SAMPLE_DATASET)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc.WebArchiveProcessor')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc.WebArchiveProcessor"
+    )
     async def test_extract_text_from_warc(self, mock_processor):
         """Test the extract_text_from_warc tool."""
         extract_text_module = import_tool("web_archive_tools", "extract_text_from_warc")
@@ -628,7 +646,9 @@ class WebArchiveToolTests(unittest.TestCase):
             self.skipTest("extract_text_from_warc tool not found")
 
         mock_instance = mock_processor.return_value
-        mock_instance.extract_text_from_warc.return_value = [{"uri": "http://example.com", "text": "Sample extracted text"}]
+        mock_instance.extract_text_from_warc.return_value = [
+            {"uri": "http://example.com", "text": "Sample extracted text"}
+        ]
 
         result = await extract_text_module.extract_text_from_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
@@ -639,7 +659,9 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertIn("records", result)
         self.assertEqual(len(result["records"]), 1)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc.WebArchiveProcessor')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc.WebArchiveProcessor"
+    )
     async def test_extract_links_from_warc(self, mock_processor):
         """Test the extract_links_from_warc tool."""
         extract_links_module = import_tool("web_archive_tools", "extract_links_from_warc")
@@ -648,7 +670,10 @@ class WebArchiveToolTests(unittest.TestCase):
 
         mock_instance = mock_processor.return_value
         mock_instance.extract_links_from_warc.return_value = [
-            {"uri": "http://example.com", "links": ["http://example.com/page1", "http://example.com/page2"]}
+            {
+                "uri": "http://example.com",
+                "links": ["http://example.com/page1", "http://example.com/page2"],
+            }
         ]
 
         result = await extract_links_module.extract_links_from_warc(
@@ -660,7 +685,9 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertIn("records", result)
         self.assertEqual(len(result["records"]), 1)
 
-    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc.WebArchiveProcessor')
+    @patch(
+        "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc.WebArchiveProcessor"
+    )
     async def test_extract_metadata_from_warc(self, mock_processor):
         """Test the extract_metadata_from_warc tool."""
         extract_metadata_module = import_tool("web_archive_tools", "extract_metadata_from_warc")
@@ -681,6 +708,7 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertIn("records", result)
         self.assertEqual(len(result["records"]), 1)
 
+
 class CLIToolTests(unittest.TestCase):
     """Test cases for CLI tools."""
 
@@ -690,7 +718,7 @@ class CLIToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     async def test_execute_command(self, mock_subprocess_run):
         """Test the execute_command tool."""
         execute_command_module = import_tool("cli", "execute_command")
@@ -698,15 +726,10 @@ class CLIToolTests(unittest.TestCase):
             self.skipTest("execute_command tool not found")
 
         mock_subprocess_run.return_value = MagicMock(
-            returncode=0,
-            stdout="Command executed successfully",
-            stderr=""
+            returncode=0, stdout="Command executed successfully", stderr=""
         )
 
-        result = await execute_command_module.execute_command(
-            command="echo 'test'",
-            timeout=30
-        )
+        result = await execute_command_module.execute_command(command="echo 'test'", timeout=30)
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
@@ -723,7 +746,7 @@ class FunctionToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('builtins.exec')
+    @patch("builtins.exec")
     async def test_execute_python_snippet(self, mock_exec):
         """Test the execute_python_snippet tool."""
         execute_python_snippet_module = import_tool("functions", "execute_python_snippet")
@@ -734,21 +757,19 @@ class FunctionToolTests(unittest.TestCase):
         mock_exec.return_value = None
 
         result = await execute_python_snippet_module.execute_python_snippet(
-            code="result = 2 + 2",
-            globals_dict={},
-            timeout=30
+            code="result = 2 + 2", globals_dict={}, timeout=30
         )
 
         self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
+
 
 # Run tests for all tools
 def run_tool_tests(categories: Optional[List[str]] = None):
     """Run tests for all tools or specified categories."""
     # Determine which categories to test
     all_categories = [
-        d.name for d in TOOLS_PATH.iterdir()
-        if d.is_dir() and not d.name.startswith("__")
+        d.name for d in TOOLS_PATH.iterdir() if d.is_dir() and not d.name.startswith("__")
     ]
 
     categories_to_test = categories if categories else all_categories
@@ -766,7 +787,7 @@ def run_tool_tests(categories: Optional[List[str]] = None):
         "provenance_tools": ProvenanceToolTests,
         "web_archive_tools": WebArchiveToolTests,
         "cli": CLIToolTests,
-        "functions": FunctionToolTests
+        "functions": FunctionToolTests,
     }
 
     # Results tracking
@@ -777,7 +798,7 @@ def run_tool_tests(categories: Optional[List[str]] = None):
         "failed_tests": 0,
         "skipped_tests": 0,
         "by_category": {},
-        "success_rate": 0.0
+        "success_rate": 0.0,
     }
 
     # Run tests for each category
@@ -802,7 +823,7 @@ def run_tool_tests(categories: Optional[List[str]] = None):
             "passed": 0,
             "failed": 0,
             "skipped": 0,
-            "tools": {}
+            "tools": {},
         }
 
         # Create test suite for this category
@@ -815,12 +836,10 @@ def run_tool_tests(categories: Optional[List[str]] = None):
                 tool_name = method_name[5:]  # Remove "test_" prefix
                 if tool_name in tools:
                     suite.addTest(test_class(method_name))
-                    results["by_category"][category]["tools"][tool_name] = {
-                        "status": "pending"
-                    }
+                    results["by_category"][category]["tools"][tool_name] = {"status": "pending"}
 
         # Run the tests for this category
-        runner = unittest.TextTestRunner(verbosity=2, stream=open(os.devnull, 'w'))
+        runner = unittest.TextTestRunner(verbosity=2, stream=open(os.devnull, "w"))
         test_result = runner.run(suite)
 
         # Update results
@@ -863,6 +882,7 @@ def run_tool_tests(categories: Optional[List[str]] = None):
 
     return results
 
+
 def main():
     """Main entry point."""
     # Parse command line arguments
@@ -899,6 +919,7 @@ def main():
 
     # Return overall success status
     return results["failed_tests"] == 0
+
 
 if __name__ == "__main__":
     success = main()

@@ -91,9 +91,7 @@ class GraphSnapshot:
             _require_text(self.graph_cid, "graph_cid")
 
     @classmethod
-    def from_graph(
-        cls, graph: IntentCorpusGraph | SemanticIntentGraph
-    ) -> "GraphSnapshot":
+    def from_graph(cls, graph: IntentCorpusGraph | SemanticIntentGraph) -> "GraphSnapshot":
         if isinstance(graph, IntentCorpusGraph):
             kind = GraphKind.CORPUS
         elif isinstance(graph, SemanticIntentGraph):
@@ -172,17 +170,13 @@ class RetrievalFilters:
             )
         overlap = set(self.source_ref_ids) & set(self.excluded_source_ref_ids)
         if overlap:
-            raise RetrievalValidationError(
-                "source_ref_ids and excluded_source_ref_ids overlap"
-            )
+            raise RetrievalValidationError("source_ref_ids and excluded_source_ref_ids overlap")
 
     def to_dict(self) -> dict[str, list[str]]:
         return {
             "edge_types": list(self.edge_types),
             "excluded_source_digests": list(self.excluded_source_digests),
-            "excluded_source_families": list(
-                self.excluded_source_families
-            ),
+            "excluded_source_families": list(self.excluded_source_families),
             "excluded_source_ref_ids": list(self.excluded_source_ref_ids),
             "node_types": list(self.node_types),
             "source_ref_ids": list(self.source_ref_ids),
@@ -232,23 +226,15 @@ class RetrievalRequest:
         _require_text(self.partition, "partition")
         _require_text(self.source_family, "source_family")
         _bounded_integer(self.k, "k", maximum=MAX_K)
-        _bounded_integer(
-            self.max_bytes, "max_bytes", maximum=MAX_MAX_BYTES
-        )
-        _bounded_integer(
-            self.timeout_ms, "timeout_ms", maximum=MAX_TIMEOUT_MS
-        )
+        _bounded_integer(self.max_bytes, "max_bytes", maximum=MAX_MAX_BYTES)
+        _bounded_integer(self.timeout_ms, "timeout_ms", maximum=MAX_TIMEOUT_MS)
         if not isinstance(self.filters, RetrievalFilters):
-            raise RetrievalValidationError(
-                "filters must be RetrievalFilters"
-            )
+            raise RetrievalValidationError("filters must be RetrievalFilters")
         if not isinstance(self.adversarial, bool):
             raise RetrievalValidationError("adversarial must be a boolean")
         candidates = tuple(self.candidates)
         if any(not isinstance(item, NeighborCandidate) for item in candidates):
-            raise RetrievalValidationError(
-                "candidates must contain NeighborCandidate values"
-            )
+            raise RetrievalValidationError("candidates must contain NeighborCandidate values")
         object.__setattr__(self, "candidates", candidates)
 
 
@@ -285,30 +271,22 @@ class RetrievedPremise:
             _require_text(getattr(self, field_name), field_name)
         if self.graph_cid:
             _require_text(self.graph_cid, "graph_cid")
-        if isinstance(self.score, bool) or not isinstance(
-            self.score, (int, float)
-        ):
+        if isinstance(self.score, bool) or not isinstance(self.score, (int, float)):
             raise RetrievalValidationError("premise score must be numeric")
         score = float(self.score)
         if not math.isfinite(score):
             raise RetrievalValidationError("premise score must be finite")
         object.__setattr__(self, "score", score)
         if self.proof_authority is not False:
-            raise RetrievalValidationError(
-                "retrieved premises cannot have proof authority"
-            )
+            raise RetrievalValidationError("retrieved premises cannot have proof authority")
         if self.authority != RETRIEVAL_AUTHORITY:
-            raise RetrievalValidationError(
-                "retrieved premise authority must be context_only"
-            )
+            raise RetrievalValidationError("retrieved premise authority must be context_only")
         object.__setattr__(
             self,
             "source_ids",
             _canonical_strings(self.source_ids, "source_ids"),
         )
-        object.__setattr__(
-            self, "properties", _freeze_json_mapping(self.properties)
-        )
+        object.__setattr__(self, "properties", _freeze_json_mapping(self.properties))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -356,67 +334,51 @@ class RetrievalResult:
         except (TypeError, ValueError) as exc:
             raise RetrievalValidationError("unsupported retrieval status") from exc
         if self.authority != RETRIEVAL_AUTHORITY:
-            raise RetrievalValidationError(
-                "retrieval results must be context_only"
-            )
+            raise RetrievalValidationError("retrieval results must be context_only")
         if self.schema_version != RETRIEVAL_SCHEMA_VERSION:
-            raise RetrievalValidationError(
-                "unsupported retrieval schema_version"
-            )
+            raise RetrievalValidationError("unsupported retrieval schema_version")
         if not isinstance(self.snapshot, GraphSnapshot):
             raise RetrievalValidationError("snapshot must be a GraphSnapshot")
         _require_text(self.query_node_id, "query_node_id")
         _require_text(self.partition, "partition")
         _bounded_integer(self.requested_k, "requested_k", maximum=MAX_K)
-        _bounded_integer(
-            self.max_bytes, "max_bytes", maximum=MAX_MAX_BYTES
-        )
-        _bounded_integer(
-            self.timeout_ms, "timeout_ms", maximum=MAX_TIMEOUT_MS
-        )
+        _bounded_integer(self.max_bytes, "max_bytes", maximum=MAX_MAX_BYTES)
+        _bounded_integer(self.timeout_ms, "timeout_ms", maximum=MAX_TIMEOUT_MS)
         if (
             isinstance(self.bytes_used, bool)
             or not isinstance(self.bytes_used, int)
             or self.bytes_used < 0
         ):
-            raise RetrievalValidationError(
-                "bytes_used must be a non-negative integer"
-            )
+            raise RetrievalValidationError("bytes_used must be a non-negative integer")
         if (
             isinstance(self.examined_candidates, bool)
             or not isinstance(self.examined_candidates, int)
             or self.examined_candidates < 0
         ):
-            raise RetrievalValidationError(
-                "examined_candidates must be a non-negative integer"
-            )
+            raise RetrievalValidationError("examined_candidates must be a non-negative integer")
         premises = tuple(self.premises)
         if any(not isinstance(item, RetrievedPremise) for item in premises):
-            raise RetrievalValidationError(
-                "premises must contain RetrievedPremise values"
-            )
+            raise RetrievalValidationError("premises must contain RetrievedPremise values")
         if len(premises) > self.requested_k:
             raise RetrievalValidationError("result exceeds requested k")
         if self.bytes_used != sum(len(item.canonical_bytes()) for item in premises):
-            raise RetrievalValidationError(
-                "bytes_used does not match serialized premises"
-            )
+            raise RetrievalValidationError("bytes_used does not match serialized premises")
         if self.bytes_used > self.max_bytes:
             raise RetrievalValidationError("result exceeds max_bytes")
-        if self.status in {
-            RetrievalStatus.EMPTY,
-            RetrievalStatus.BUDGET_EXHAUSTED,
-            RetrievalStatus.UNSUPPORTED,
-        } and premises:
-            raise RetrievalValidationError(
-                f"{self.status.value} results cannot contain premises"
-            )
+        if (
+            self.status
+            in {
+                RetrievalStatus.EMPTY,
+                RetrievalStatus.BUDGET_EXHAUSTED,
+                RetrievalStatus.UNSUPPORTED,
+            }
+            and premises
+        ):
+            raise RetrievalValidationError(f"{self.status.value} results cannot contain premises")
         if self.status is RetrievalStatus.OK and not premises:
             raise RetrievalValidationError("ok result must contain premises")
         if self.status is RetrievalStatus.PARTIAL and not premises:
-            raise RetrievalValidationError(
-                "partial result must contain at least one premise"
-            )
+            raise RetrievalValidationError("partial result must contain at least one premise")
         object.__setattr__(self, "premises", premises)
         object.__setattr__(
             self,
@@ -464,9 +426,7 @@ class IntentGraphRetriever:
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         if not isinstance(graph, (IntentCorpusGraph, SemanticIntentGraph)):
-            raise TypeError(
-                "graph must be an IntentCorpusGraph or SemanticIntentGraph"
-            )
+            raise TypeError("graph must be an IntentCorpusGraph or SemanticIntentGraph")
         if not isinstance(assignments, Mapping):
             raise TypeError("assignments must be a mapping")
         prepared: dict[str, PartitionAssignment] = {}
@@ -661,9 +621,7 @@ class IntentGraphRetriever:
                 continue
             raw_score = edge.properties.get(
                 "score",
-                edge.properties.get(
-                    "similarity", edge.properties.get("weight", 0.0)
-                ),
+                edge.properties.get("similarity", edge.properties.get("weight", 0.0)),
             )
             score = (
                 float(raw_score)
@@ -693,10 +651,7 @@ class IntentGraphRetriever:
             return "candidate_not_in_snapshot"
         if not (
             (edge.source == request.query_node_id and edge.target == node.node_id)
-            or (
-                edge.target == request.query_node_id
-                and edge.source == node.node_id
-            )
+            or (edge.target == request.query_node_id and edge.source == node.node_id)
         ):
             return "candidate_not_adjacent"
         assignment = self.assignments.get(node.node_id)
@@ -791,53 +746,34 @@ def _source_ids(node: _Node) -> tuple[str, ...]:
 
 
 def _source_digest(node: _Node) -> str:
-    return (
-        node.source_digest
-        if isinstance(node, CorpusGraphNode)
-        else node.intent_ir_digest
-    )
+    return node.source_digest if isinstance(node, CorpusGraphNode) else node.intent_ir_digest
 
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value or value != value.strip():
-        raise RetrievalValidationError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise RetrievalValidationError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
 def _bounded_integer(value: Any, field_name: str, *, maximum: int) -> int:
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, int)
-        or value <= 0
-        or value > maximum
-    ):
-        raise RetrievalValidationError(
-            f"{field_name} must be an integer between 1 and {maximum}"
-        )
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0 or value > maximum:
+        raise RetrievalValidationError(f"{field_name} must be an integer between 1 and {maximum}")
     return value
 
 
 def _canonical_strings(values: Iterable[str], field_name: str) -> tuple[str, ...]:
     if isinstance(values, (str, bytes, bytearray)):
-        raise RetrievalValidationError(
-            f"{field_name} must be an iterable of strings"
-        )
+        raise RetrievalValidationError(f"{field_name} must be an iterable of strings")
     try:
         prepared = tuple(_require_text(value, field_name) for value in values)
     except TypeError as exc:
-        raise RetrievalValidationError(
-            f"{field_name} must be an iterable of strings"
-        ) from exc
+        raise RetrievalValidationError(f"{field_name} must be an iterable of strings") from exc
     return tuple(sorted(set(prepared)))
 
 
 def _freeze_json(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze_json(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze_json(item) for key, item in value.items()})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_json(item) for item in value)
     return value

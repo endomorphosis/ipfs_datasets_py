@@ -42,21 +42,26 @@ def strip_whitespace(text: str) -> str:
     """Remove extra whitespace and normalize commas."""
     pass
 
+
 def strip_comments(text: str) -> str:
     """Remove # comments from text."""
     pass
+
 
 def consolidate_parens(text: str) -> str:
     """Remove redundant nested parentheses."""
     pass
 
+
 def check_parens(text: str) -> bool:
     """Validate balanced parentheses."""
     pass
 
+
 def get_matching_close_paren(text: str, start: int) -> int:
     """Find index of matching close paren."""
     pass
+
 
 def tuck_functions(text: str) -> str:
     """Transform B(args) to (B args) format."""
@@ -92,44 +97,53 @@ def tuck_functions(text: str) -> str:
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 
+
 @dataclass
 class ParseToken:
     """Represents a parsed DCEC expression node."""
+
     value: str
-    children: List['ParseToken']
+    children: List["ParseToken"]
     depth: int = 0
-    
+
     def to_s_expression(self) -> str:
         """Convert to S-expression: (func arg1 arg2)"""
         pass
-    
+
     def to_f_expression(self) -> str:
         """Convert to F-expression: func(arg1, arg2)"""
         pass
+
 
 def remove_comments(text: str) -> str:
     """Remove semicolon comments."""
     pass
 
+
 def functorize_symbols(text: str) -> str:
     """Convert operators to function names: ^ → ˆ, * → *, etc."""
     pass
+
 
 def replace_synonyms(text: str) -> str:
     """Replace synonyms: forall→forAll, Time→Moment, etc."""
     pass
 
+
 def prefix_logical_functions(text: str) -> str:
     """Convert infix logic to prefix: A and B → (and A B)"""
     pass
+
 
 def prefix_emdas(text: str) -> str:
     """Convert arithmetic to prefix with PEMDAS."""
     pass
 
+
 def assign_types(text: str, namespace) -> str:
     """Add inline type annotations."""
     pass
+
 
 def tokenize(text: str) -> ParseToken:
     """Parse text into token tree."""
@@ -217,6 +231,7 @@ range(10)                  # ✅
 def func(x, y):
     return x + y
 
+
 # After
 def func(x: int, y: int) -> int:
     """Add two integers."""
@@ -230,10 +245,12 @@ class Token:
     def __init__(self, value):
         self.value = value
 
+
 # After
 @dataclass
 class Token:
     """Token class."""
+
     value: str
 ```
 

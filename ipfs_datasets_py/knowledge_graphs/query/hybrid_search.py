@@ -19,9 +19,9 @@ Features:
 
 Usage:
     from ipfs_datasets_py.knowledge_graphs.query import HybridSearchEngine
-    
+
     engine = HybridSearchEngine(backend=backend, vector_store=vector_store)
-    
+
     results = engine.search(
         query="What is IPFS?",
         k=10,
@@ -49,6 +49,7 @@ def _cancelled_exc_class() -> type:
     except anyio.NoEventLoopError:
         return stdlib_asyncio.CancelledError
 
+
 from ..exceptions import KnowledgeGraphError, QueryExecutionError
 from .semantic_traversal import (
     EmbeddingGuidedTraversal,
@@ -67,7 +68,7 @@ logger = logging.getLogger(__name__)
 class HybridSearchResult:
     """
     Result from hybrid search.
-    
+
     Attributes:
         node_id: Node identifier
         score: Combined score (0-1)
@@ -76,13 +77,14 @@ class HybridSearchResult:
         hop_distance: Distance from seed nodes
         metadata: Additional metadata
     """
+
     node_id: str
     score: float
     vector_score: float = 0.0
     graph_score: float = 0.0
     hop_distance: int = 0
     metadata: Optional[Dict[str, Any]] = None
-    
+
     def __repr__(self) -> str:
         return f"HybridSearchResult(node_id={self.node_id}, score={self.score:.3f})"
 
@@ -90,27 +92,27 @@ class HybridSearchResult:
 class HybridSearchEngine:
     """
     Hybrid search engine combining vector similarity and graph traversal.
-    
+
     This engine provides unified hybrid search functionality, consolidating
     implementations from:
     - processors/graphrag/integration.py (HybridVectorGraphSearch)
     - search/graphrag_integration/graphrag_integration.py (HybridVectorGraphSearch)
-    
+
     The hybrid approach leverages both semantic similarity (via embeddings) and
     structural relationships (via graph traversal) for enhanced retrieval.
-    
+
     Args:
         backend: Graph backend for traversal
         vector_store: Optional vector store for similarity search
         default_vector_weight: Default weight for vector scores (0-1)
         default_graph_weight: Default weight for graph scores (0-1)
         cache_size: Size of result cache
-    
+
     Example:
         engine = HybridSearchEngine(backend, vector_store)
         results = engine.search("query text", k=10)
     """
-    
+
     def __init__(
         self,
         backend: Any,
@@ -125,12 +127,8 @@ class HybridSearchEngine:
         self.vector_store = vector_store
         self.default_vector_weight = default_vector_weight
         self.default_graph_weight = default_graph_weight
-        self.neighbor_provider = (
-            neighbor_provider or ObjectGraphNeighborProvider(backend)
-        )
-        self.embedding_provider = (
-            embedding_provider or ObjectNodeEmbeddingProvider(vector_store)
-        )
+        self.neighbor_provider = neighbor_provider or ObjectGraphNeighborProvider(backend)
+        self.embedding_provider = embedding_provider or ObjectNodeEmbeddingProvider(vector_store)
         self._last_semantic_traversal: Optional[SemanticTraversalResult] = None
         self._cache: Dict[str, List[HybridSearchResult]] = {}
         self._cache_traversals: Dict[
@@ -138,32 +136,29 @@ class HybridSearchEngine:
             Optional[SemanticTraversalResult],
         ] = {}
         self._cache_size = cache_size
-    
+
     def vector_search(
-        self,
-        query: str,
-        k: int = 10,
-        embeddings: Optional[Dict[str, Any]] = None
+        self, query: str, k: int = 10, embeddings: Optional[Dict[str, Any]] = None
     ) -> List[HybridSearchResult]:
         """
         Perform vector similarity search.
-        
+
         Args:
             query: Query text
             k: Number of results to return
             embeddings: Optional pre-computed embeddings
-            
+
         Returns:
             List of search results with vector scores
         """
         if self.vector_store is None:
             logger.warning("No vector store available for vector search")
             return []
-        
+
         try:
             # Get embedding for query
-            if embeddings and 'query_embedding' in embeddings:
-                query_embedding = embeddings['query_embedding']
+            if embeddings and "query_embedding" in embeddings:
+                query_embedding = embeddings["query_embedding"]
             else:
                 # This would call the vector store's embedding method
                 query_embedding = self._get_query_embedding(query)
@@ -171,23 +166,25 @@ class HybridSearchEngine:
             if query_embedding is None:
                 logger.warning("No query embedding available; vector search skipped")
                 return []
-            
+
             # Search vector store
             vector_results = self.vector_store.search(query_embedding, k=k)
-            
+
             # Convert to HybridSearchResult
             results = []
             for node_id, score in vector_results:
-                results.append(HybridSearchResult(
-                    node_id=node_id,
-                    score=score,
-                    vector_score=score,
-                    graph_score=0.0,
-                    hop_distance=0
-                ))
-            
+                results.append(
+                    HybridSearchResult(
+                        node_id=node_id,
+                        score=score,
+                        vector_score=score,
+                        graph_score=0.0,
+                        hop_distance=0,
+                    )
+                )
+
             return results
-            
+
         except KnowledgeGraphError:
             raise
         except _cancelled_exc_class():
@@ -200,13 +197,13 @@ class HybridSearchEngine:
             raise QueryExecutionError(
                 f"Vector search failed: {e}",
                 details={
-                    'query': query,
-                    'k': k,
-                    'error': str(e),
-                    'error_class': type(e).__name__,
-                }
+                    "query": query,
+                    "k": k,
+                    "error": str(e),
+                    "error_class": type(e).__name__,
+                },
             ) from e
-    
+
     def expand_graph(
         self,
         seed_nodes: List[str],
@@ -221,7 +218,7 @@ class HybridSearchEngine:
     ) -> Dict[str, int]:
         """
         Expand from seed nodes via graph traversal.
-        
+
         Args:
             seed_nodes: Initial node IDs to expand from
             max_hops: Maximum number of hops to traverse
@@ -234,7 +231,7 @@ class HybridSearchEngine:
                 Adaptive traversal fetches both directions and lets semantic
                 scoring choose the useful branch.
             semantic_config: Optional stricter semantic traversal budgets.
-            
+
         Returns:
             Dictionary mapping node IDs to hop distance
         """
@@ -248,9 +245,7 @@ class HybridSearchEngine:
         }
         if normalized_strategy in semantic_strategies:
             if query_embedding is None:
-                raise ValueError(
-                    "query_embedding is required for semantic graph traversal"
-                )
+                raise ValueError("query_embedding is required for semantic graph traversal")
             active_config = semantic_config or SemanticTraversalConfig(
                 max_depth=max_hops,
                 max_nodes=max_nodes,
@@ -265,9 +260,7 @@ class HybridSearchEngine:
                 max_nodes=min(active_config.max_nodes, max_nodes),
                 direction=direction or active_config.direction,
                 relationship_types=(
-                    tuple(rel_types)
-                    if rel_types is not None
-                    else active_config.relationship_types
+                    tuple(rel_types) if rel_types is not None else active_config.relationship_types
                 ),
             )
             traversal = EmbeddingGuidedTraversal(
@@ -287,19 +280,19 @@ class HybridSearchEngine:
         self._last_semantic_traversal = None
         visited: Dict[str, int] = {}
         current_level = set(seed_nodes)
-        
+
         for hop in range(max_hops + 1):
             if not current_level or len(visited) >= max_nodes:
                 break
-            
+
             next_level = set()
-            
+
             for node_id in current_level:
                 if node_id in visited:
                     continue
-                
+
                 visited[node_id] = hop
-                
+
                 # Get neighbors from backend
                 try:
                     if direction and direction != "outgoing":
@@ -317,11 +310,11 @@ class HybridSearchEngine:
                             next_level.add(neighbor_id)
                 except (KnowledgeGraphError, AttributeError, TypeError, ValueError, KeyError) as e:
                     logger.warning(f"Failed to get neighbors for {node_id} (continuing): {e}")
-            
+
             current_level = next_level
-        
+
         return visited
-    
+
     def fuse_results(
         self,
         vector_results: List[HybridSearchResult],
@@ -334,7 +327,7 @@ class HybridSearchEngine:
     ) -> List[HybridSearchResult]:
         """
         Fuse vector and graph results using reciprocal rank fusion.
-        
+
         Args:
             vector_results: Results from vector search
             graph_nodes: Node IDs with hop distances from graph expansion
@@ -345,7 +338,7 @@ class HybridSearchEngine:
                 relevance for embedding-guided expansion.
             semantic_metadata: Optional per-node traversal diagnostics copied
                 into result metadata.
-            
+
         Returns:
             Fused and ranked results
         """
@@ -354,14 +347,14 @@ class HybridSearchEngine:
         if total_weight > 0:
             vector_weight = vector_weight / total_weight
             graph_weight = graph_weight / total_weight
-        
+
         # Build combined result set
         all_nodes: Dict[str, HybridSearchResult] = {}
-        
+
         # Add vector results
         for result in vector_results:
             all_nodes[result.node_id] = result
-        
+
         # Add/update with graph results
         max_hop = max(graph_nodes.values()) if graph_nodes else 1
         for node_id, hop_distance in graph_nodes.items():
@@ -374,10 +367,8 @@ class HybridSearchEngine:
                     0.0,
                     min(1.0, (raw_semantic_score + 1.0) / 2.0),
                 )
-                graph_score = (
-                    0.5 * structural_score + 0.5 * normalized_semantic_score
-                )
-            
+                graph_score = 0.5 * structural_score + 0.5 * normalized_semantic_score
+
             if node_id in all_nodes:
                 # Update existing result
                 result = all_nodes[node_id]
@@ -389,8 +380,7 @@ class HybridSearchEngine:
                         "semantic_traversal": dict(semantic_metadata[node_id]),
                     }
                 # Recalculate combined score
-                result.score = (vector_weight * result.vector_score + 
-                               graph_weight * graph_score)
+                result.score = vector_weight * result.vector_score + graph_weight * graph_score
             else:
                 # Create new result
                 all_nodes[node_id] = HybridSearchResult(
@@ -400,25 +390,17 @@ class HybridSearchEngine:
                     graph_score=graph_score,
                     hop_distance=hop_distance,
                     metadata=(
-                        {
-                            "semantic_traversal": dict(
-                                semantic_metadata[node_id]
-                            )
-                        }
+                        {"semantic_traversal": dict(semantic_metadata[node_id])}
                         if semantic_metadata and node_id in semantic_metadata
                         else None
                     ),
                 )
-        
+
         # Sort by combined score and return top k
-        sorted_results = sorted(
-            all_nodes.values(),
-            key=lambda x: x.score,
-            reverse=True
-        )
-        
+        sorted_results = sorted(all_nodes.values(), key=lambda x: x.score, reverse=True)
+
         return sorted_results[:k]
-    
+
     def search(
         self,
         query: str,
@@ -436,7 +418,7 @@ class HybridSearchEngine:
     ) -> List[HybridSearchResult]:
         """
         Perform hybrid search combining vector similarity and graph traversal.
-        
+
         Args:
             query: Query text
             k: Number of results to return
@@ -450,14 +432,14 @@ class HybridSearchEngine:
             semantic_config: Semantic traversal weights and hard budgets.
             rel_types: Optional relationship-type allowlist.
             max_nodes: Hard graph expansion result limit.
-            
+
         Returns:
             List of hybrid search results
         """
         # Use default weights if not provided
         vector_weight = vector_weight if vector_weight is not None else self.default_vector_weight
         graph_weight = graph_weight if graph_weight is not None else self.default_graph_weight
-        
+
         # Check cache
         config_key = repr(semantic_config) if semantic_config is not None else ""
         supplied_query_embedding = (
@@ -473,11 +455,9 @@ class HybridSearchEngine:
         )
         if enable_cache and cache_key in self._cache:
             logger.debug(f"Cache hit for query: {query[:50]}")
-            self._last_semantic_traversal = self._cache_traversals.get(
-                cache_key
-            )
+            self._last_semantic_traversal = self._cache_traversals.get(cache_key)
             return self._cache[cache_key]
-        
+
         # Step 1: Vector search
         logger.debug(f"Performing vector search for: {query[:50]}")
         query_embedding = (
@@ -495,11 +475,11 @@ class HybridSearchEngine:
             k=k * 2,
             embeddings=vector_embeddings,
         )
-        
+
         if not vector_results:
             logger.warning("No vector results found")
             return []
-        
+
         # Step 2: Graph expansion
         logger.debug(f"Expanding graph from {len(vector_results)} seed nodes")
         seed_nodes = [r.node_id for r in vector_results]
@@ -519,19 +499,17 @@ class HybridSearchEngine:
         if self._last_semantic_traversal is not None:
             semantic_scores = {
                 node_id: candidate.score
-                for node_id, candidate in (
-                    self._last_semantic_traversal.candidates.items()
-                )
+                for node_id, candidate in (self._last_semantic_traversal.candidates.items())
             }
             semantic_metadata = {
                 node_id: candidate.to_dict()
-                for node_id, candidate in (
-                    self._last_semantic_traversal.candidates.items()
-                )
+                for node_id, candidate in (self._last_semantic_traversal.candidates.items())
             }
-        
+
         # Step 3: Fuse results
-        logger.debug(f"Fusing {len(vector_results)} vector results with {len(graph_nodes)} graph nodes")
+        logger.debug(
+            f"Fusing {len(vector_results)} vector results with {len(graph_nodes)} graph nodes"
+        )
         fused_results = self.fuse_results(
             vector_results,
             graph_nodes,
@@ -541,7 +519,7 @@ class HybridSearchEngine:
             semantic_scores=semantic_scores,
             semantic_metadata=semantic_metadata,
         )
-        
+
         # Cache results
         if enable_cache:
             self._cache[cache_key] = fused_results
@@ -552,28 +530,28 @@ class HybridSearchEngine:
                 oldest_key = next(iter(self._cache))
                 self._cache.pop(oldest_key)
                 self._cache_traversals.pop(oldest_key, None)
-        
+
         return fused_results
-    
+
     def _get_query_embedding(self, query: str) -> Any:
         """
         Get embedding for query text.
-        
+
         Args:
             query: Query text to embed
-            
+
         Returns:
             Query embedding vector (or None if unavailable)
         """
         if self.vector_store is None:
             logger.debug("No vector store available for embedding")
             return None
-        
+
         try:
             # Try to get embedding from vector store
-            if hasattr(self.vector_store, 'embed_query'):
+            if hasattr(self.vector_store, "embed_query"):
                 return self.vector_store.embed_query(query)
-            elif hasattr(self.vector_store, 'get_embedding'):
+            elif hasattr(self.vector_store, "get_embedding"):
                 return self.vector_store.get_embedding(query)
             else:
                 logger.warning("Vector store does not support embedding generation")
@@ -588,41 +566,41 @@ class HybridSearchEngine:
         except Exception as e:
             logger.error(f"Failed to generate embedding: {e}")
             return None
-    
+
     def _get_neighbors(self, node_id: str, rel_types: Optional[List[str]] = None) -> List[str]:
         """
         Get neighbors of a node from the graph backend.
-        
+
         Args:
             node_id: Node identifier
             rel_types: Optional relationship types to filter by
-            
+
         Returns:
             List of neighbor node IDs
         """
         try:
             # Try different backend methods
-            if hasattr(self.backend, 'get_neighbors'):
+            if hasattr(self.backend, "get_neighbors"):
                 neighbors = self.backend.get_neighbors(node_id, rel_types=rel_types)
                 if isinstance(neighbors, list):
                     return neighbors
-            
-            if hasattr(self.backend, 'get_relationships'):
+
+            if hasattr(self.backend, "get_relationships"):
                 # Get all relationships for this node
                 rels = self.backend.get_relationships(node_id)
                 neighbors = []
                 for rel in rels:
                     # Filter by relationship type if specified
-                    if rel_types is None or rel.get('type') in rel_types:
+                    if rel_types is None or rel.get("type") in rel_types:
                         # Add target node if it's not the source
-                        target = rel.get('target') or rel.get('end_node')
+                        target = rel.get("target") or rel.get("end_node")
                         if target and target != node_id:
                             neighbors.append(target)
                 return neighbors
-            
+
             logger.debug(f"Backend does not support neighbor retrieval for node {node_id}")
             return []
-            
+
         except KnowledgeGraphError:
             raise
         except _cancelled_exc_class():
@@ -633,7 +611,7 @@ class HybridSearchEngine:
         except Exception as e:
             logger.warning(f"Failed to get neighbors for {node_id}: {e}")
             return []
-    
+
     def clear_cache(self) -> None:
         """Clear the result cache."""
         self._cache.clear()
@@ -652,4 +630,4 @@ class HybridSearchEngine:
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
-__all__ = ['HybridSearchEngine', 'HybridSearchResult']
+__all__ = ["HybridSearchEngine", "HybridSearchResult"]

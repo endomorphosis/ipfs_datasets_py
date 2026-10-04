@@ -65,4 +65,3 @@ def test_relationship_stats_monotonicity_under_additional_edges(
     assert 0.0 <= base_stats.relationship_density <= 1.0
     assert 0.0 <= expanded_stats.relationship_density <= 1.0
     assert expanded_stats.relationship_density >= base_stats.relationship_density
-

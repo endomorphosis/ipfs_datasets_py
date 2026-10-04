@@ -15,11 +15,11 @@ if TYPE_CHECKING:
     from ..claims.base import SecurityClaim
 
 
-SMTLIB_SCHEMA_VERSION = 'crypto-exchange-smtlib/v1'
-SMTLIB_QUERY_KIND = 'violation_satisfiability'
-XAMAN_SMTLIB_QUERY_KIND = 'xaman_blocking_acceptance_satisfiability'
-SMTLIB_LOGIC = 'QF_LIA'
-XAMAN_CRITICAL_SEVERITIES = frozenset({'blocking', 'high'})
+SMTLIB_SCHEMA_VERSION = "crypto-exchange-smtlib/v1"
+SMTLIB_QUERY_KIND = "violation_satisfiability"
+XAMAN_SMTLIB_QUERY_KIND = "xaman_blocking_acceptance_satisfiability"
+SMTLIB_LOGIC = "QF_LIA"
+XAMAN_CRITICAL_SEVERITIES = frozenset({"blocking", "high"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,10 +42,10 @@ class SMTLIBCompilation:
 
         return calculate_artifact_cid(
             {
-                'schema_version': SMTLIB_SCHEMA_VERSION,
-                'claim_id': self.claim_id,
-                'model_cid': self.model_cid,
-                'smtlib': self.smtlib,
+                "schema_version": SMTLIB_SCHEMA_VERSION,
+                "claim_id": self.claim_id,
+                "model_cid": self.model_cid,
+                "smtlib": self.smtlib,
             }
         )
 
@@ -53,25 +53,25 @@ class SMTLIBCompilation:
         """Return a JSON-friendly manifest entry for this artifact."""
 
         entry = {
-            'schema_version': SMTLIB_SCHEMA_VERSION,
-            'claim_id': self.claim_id,
-            'claim_version': self.claim_version,
-            'model_id': self.model_id,
-            'model_cid': self.model_cid,
-            'model_schema_version': self.model_schema_version,
-            'modeled': self.modeled,
-            'not_modeled_reason': self.not_modeled_reason,
-            'query_kind': self.metadata['query_kind'],
-            'assertion_count': self.metadata['assertion_count'],
-            'artifact_cid': self.artifact_cid,
+            "schema_version": SMTLIB_SCHEMA_VERSION,
+            "claim_id": self.claim_id,
+            "claim_version": self.claim_version,
+            "model_id": self.model_id,
+            "model_cid": self.model_cid,
+            "model_schema_version": self.model_schema_version,
+            "modeled": self.modeled,
+            "not_modeled_reason": self.not_modeled_reason,
+            "query_kind": self.metadata["query_kind"],
+            "assertion_count": self.metadata["assertion_count"],
+            "artifact_cid": self.artifact_cid,
         }
         if path is not None:
-            entry['path'] = path
+            entry["path"] = path
         return entry
 
 
 def compile_claim_to_smtlib(
-    claim: 'SecurityClaim',
+    claim: "SecurityClaim",
     model: SecurityModelIR | Mapping[str, Any],
     *,
     include_get_model: bool = False,
@@ -96,7 +96,7 @@ def compile_claim_to_smtlib(
 
 def compile_claims_to_smtlib(
     model: SecurityModelIR | Mapping[str, Any],
-    claims: Iterable['SecurityClaim'],
+    claims: Iterable["SecurityClaim"],
     *,
     include_get_model: bool = False,
 ) -> list[SMTLIBCompilation]:
@@ -116,7 +116,7 @@ def compile_claims_to_smtlib(
 def emit_smtlib_artifacts(
     model: SecurityModelIR | Mapping[str, Any],
     output_dir: str | Path,
-    claims: Iterable['SecurityClaim'],
+    claims: Iterable["SecurityClaim"],
     *,
     include_get_model: bool = False,
     include_not_modeled: bool = True,
@@ -134,23 +134,21 @@ def emit_smtlib_artifacts(
     for artifact in artifacts:
         if not artifact.modeled and not include_not_modeled:
             continue
-        filename = f'{_safe_filename(artifact.claim_id)}.smt2'
+        filename = f"{_safe_filename(artifact.claim_id)}.smt2"
         output_path = directory / filename
-        output_path.write_text(artifact.smtlib, encoding='utf-8')
-        manifest_entries.append(
-            artifact.to_manifest_entry(path=filename)
-        )
+        output_path.write_text(artifact.smtlib, encoding="utf-8")
+        manifest_entries.append(artifact.to_manifest_entry(path=filename))
 
     manifest = {
-        'schema_version': SMTLIB_SCHEMA_VERSION,
-        'model_id': as_security_model_ir(model).model_id,
-        'model_cid': _model_cid_for_smtlib(as_security_model_ir(model)),
-        'artifact_count': len(manifest_entries),
-        'artifacts': manifest_entries,
+        "schema_version": SMTLIB_SCHEMA_VERSION,
+        "model_id": as_security_model_ir(model).model_id,
+        "model_cid": _model_cid_for_smtlib(as_security_model_ir(model)),
+        "artifact_count": len(manifest_entries),
+        "artifacts": manifest_entries,
     }
-    (directory / 'manifest.json').write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + '\n',
-        encoding='utf-8',
+    (directory / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
     return manifest
 
@@ -174,11 +172,11 @@ def compile_ir_claim_to_smtlib(
     metadata = _metadata_for_ir_claim(claim_record, normalized_model)
     smtlib = _ir_claim_smtlib(metadata, include_get_model=include_get_model)
     return SMTLIBCompilation(
-        claim_id=metadata['claim_id'],
-        claim_version=metadata['claim_version'],
-        model_id=metadata['model_id'],
-        model_cid=metadata['model_cid'],
-        model_schema_version=metadata['model_schema_version'],
+        claim_id=metadata["claim_id"],
+        claim_version=metadata["claim_version"],
+        model_id=metadata["model_id"],
+        model_cid=metadata["model_cid"],
+        model_schema_version=metadata["model_schema_version"],
         smtlib=smtlib,
         metadata=metadata,
         modeled=True,
@@ -203,7 +201,7 @@ def compile_ir_claims_to_smtlib(
             include_get_model=include_get_model,
         )
         for claim_record in normalized_model.claims
-        if str(claim_record.get('severity', '')).strip().lower() in allowed_severities
+        if str(claim_record.get("severity", "")).strip().lower() in allowed_severities
     ]
 
 
@@ -226,42 +224,46 @@ def emit_ir_smtlib_artifacts(
     )
     manifest_entries: list[dict[str, Any]] = []
     for artifact in artifacts:
-        filename = f'{_safe_filename(artifact.claim_id)}.smt2'
+        filename = f"{_safe_filename(artifact.claim_id)}.smt2"
         output_path = directory / filename
-        output_path.write_text(artifact.smtlib, encoding='utf-8')
+        output_path.write_text(artifact.smtlib, encoding="utf-8")
         entry = artifact.to_manifest_entry(path=filename)
         entry.update(
             {
-                'logic': artifact.metadata['logic'],
-                'severity': artifact.metadata['severity'],
-                'risk': artifact.metadata.get('risk', artifact.metadata['severity']),
-                'domain': artifact.metadata.get('domain'),
-                'xaman_category': artifact.metadata.get('xaman_category'),
-                'blocking_assumption_count': len(artifact.metadata.get('blocking_assumption_ids', [])),
-                'blocking_assumption_ids': list(artifact.metadata.get('blocking_assumption_ids', [])),
-                'supported_theories': list(artifact.metadata.get('supported_theories', [])),
+                "logic": artifact.metadata["logic"],
+                "severity": artifact.metadata["severity"],
+                "risk": artifact.metadata.get("risk", artifact.metadata["severity"]),
+                "domain": artifact.metadata.get("domain"),
+                "xaman_category": artifact.metadata.get("xaman_category"),
+                "blocking_assumption_count": len(
+                    artifact.metadata.get("blocking_assumption_ids", [])
+                ),
+                "blocking_assumption_ids": list(
+                    artifact.metadata.get("blocking_assumption_ids", [])
+                ),
+                "supported_theories": list(artifact.metadata.get("supported_theories", [])),
             }
         )
         manifest_entries.append(entry)
 
     manifest = {
-        'schema_version': SMTLIB_SCHEMA_VERSION,
-        'task_id': 'PORTAL-CXTP-069',
-        'model_id': normalized_model.model_id,
-        'model_cid': _model_cid_for_smtlib(normalized_model),
-        'model_schema_version': normalized_model.schema_version,
-        'query_kind': XAMAN_SMTLIB_QUERY_KIND,
-        'logic': SMTLIB_LOGIC,
-        'claim_scope': {
-            'severities': sorted({severity.strip().lower() for severity in severities}),
-            'selection': 'blocking-and-high-xaman-claims',
+        "schema_version": SMTLIB_SCHEMA_VERSION,
+        "task_id": "PORTAL-CXTP-069",
+        "model_id": normalized_model.model_id,
+        "model_cid": _model_cid_for_smtlib(normalized_model),
+        "model_schema_version": normalized_model.schema_version,
+        "query_kind": XAMAN_SMTLIB_QUERY_KIND,
+        "logic": SMTLIB_LOGIC,
+        "claim_scope": {
+            "severities": sorted({severity.strip().lower() for severity in severities}),
+            "selection": "blocking-and-high-xaman-claims",
         },
-        'artifact_count': len(manifest_entries),
-        'artifacts': manifest_entries,
+        "artifact_count": len(manifest_entries),
+        "artifacts": manifest_entries,
     }
-    (directory / 'manifest.json').write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + '\n',
-        encoding='utf-8',
+    (directory / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
     return manifest
 
@@ -285,15 +287,15 @@ def serialize_z3_compilation_to_smtlib(
             include_get_model=include_get_model,
         )
     return SMTLIBCompilation(
-        claim_id=metadata['claim_id'],
-        claim_version=metadata['claim_version'],
-        model_id=metadata['model_id'],
-        model_cid=metadata['model_cid'],
-        model_schema_version=metadata['model_schema_version'],
+        claim_id=metadata["claim_id"],
+        claim_version=metadata["claim_version"],
+        model_id=metadata["model_id"],
+        model_cid=metadata["model_cid"],
+        model_schema_version=metadata["model_schema_version"],
         smtlib=smtlib,
         metadata=metadata,
-        modeled=bool(metadata['modeled']),
-        not_modeled_reason=metadata['not_modeled_reason'],
+        modeled=bool(metadata["modeled"]),
+        not_modeled_reason=metadata["not_modeled_reason"],
     )
 
 
@@ -301,82 +303,90 @@ def _metadata_for_compilation(compilation: Z3Compilation, model: SecurityModelIR
     claim = compilation.claim
     compiler_artifact = dict(compilation.compiler_artifact)
     return {
-        'schema_version': SMTLIB_SCHEMA_VERSION,
-        'query_kind': SMTLIB_QUERY_KIND,
-        'logic': SMTLIB_LOGIC,
-        'model_id': model.model_id,
-        'model_cid': _model_cid_for_smtlib(model),
-        'model_schema_version': model.schema_version,
-        'claim_id': claim.claim_id,
-        'claim_version': claim.claim_version,
-        'claim_description': claim.description,
-        'severity': claim.severity,
-        'required_assumptions': list(claim.required_assumptions),
-        'modeled': compilation.modeled,
-        'not_modeled_reason': compilation.not_modeled_reason,
-        'assertion_count': len(compilation.assertions),
-        'compiler_artifact_cid': calculate_artifact_cid(compiler_artifact),
-        'compiler_artifact': compiler_artifact,
-        'evidence_refs': list(compilation.evidence_refs),
-        'soundness_notes': list(compilation.soundness_notes),
-        'violation_scope_explanation': compilation.violation_scope_explanation,
+        "schema_version": SMTLIB_SCHEMA_VERSION,
+        "query_kind": SMTLIB_QUERY_KIND,
+        "logic": SMTLIB_LOGIC,
+        "model_id": model.model_id,
+        "model_cid": _model_cid_for_smtlib(model),
+        "model_schema_version": model.schema_version,
+        "claim_id": claim.claim_id,
+        "claim_version": claim.claim_version,
+        "claim_description": claim.description,
+        "severity": claim.severity,
+        "required_assumptions": list(claim.required_assumptions),
+        "modeled": compilation.modeled,
+        "not_modeled_reason": compilation.not_modeled_reason,
+        "assertion_count": len(compilation.assertions),
+        "compiler_artifact_cid": calculate_artifact_cid(compiler_artifact),
+        "compiler_artifact": compiler_artifact,
+        "evidence_refs": list(compilation.evidence_refs),
+        "soundness_notes": list(compilation.soundness_notes),
+        "violation_scope_explanation": compilation.violation_scope_explanation,
     }
 
 
-def _metadata_for_ir_claim(claim_record: Mapping[str, Any], model: SecurityModelIR) -> dict[str, Any]:
-    claim_id = _required_claim_string(claim_record, 'id')
-    severity = str(claim_record.get('severity') or claim_record.get('risk') or 'medium').strip().lower()
-    required_assumptions = _string_list(claim_record.get('required_assumptions', []))
-    blocking_assumption_ids = _string_list(claim_record.get('blocking_assumption_ids', []))
+def _metadata_for_ir_claim(
+    claim_record: Mapping[str, Any], model: SecurityModelIR
+) -> dict[str, Any]:
+    claim_id = _required_claim_string(claim_record, "id")
+    severity = (
+        str(claim_record.get("severity") or claim_record.get("risk") or "medium").strip().lower()
+    )
+    required_assumptions = _string_list(claim_record.get("required_assumptions", []))
+    blocking_assumption_ids = _string_list(claim_record.get("blocking_assumption_ids", []))
     if not blocking_assumption_ids:
         blocking_assumption_ids = list(required_assumptions)
-    evidence_refs = [dict(reference) for reference in claim_record.get('evidence_refs', []) if isinstance(reference, Mapping)]
+    evidence_refs = [
+        dict(reference)
+        for reference in claim_record.get("evidence_refs", [])
+        if isinstance(reference, Mapping)
+    ]
     blocker_symbols = [
         {
-            'assumption_id': assumption_id,
-            'symbol': f'xaman_blocking_assumption_{index}',
+            "assumption_id": assumption_id,
+            "symbol": f"xaman_blocking_assumption_{index}",
         }
         for index, assumption_id in enumerate(blocking_assumption_ids)
     ]
     compiler_artifact = {
-        'claim_id': claim_id,
-        'claim_source_status': claim_record.get('source_status'),
-        'blocking_assumption_ids': blocking_assumption_ids,
-        'required_assumptions': required_assumptions,
-        'evidence_fact_ids': _string_list(claim_record.get('evidence_fact_ids', [])),
-        'proof_obligation_statement': claim_record.get('proof_obligation_statement'),
-        'consumer_policy': claim_record.get('consumer_policy'),
-        'query_semantics': 'sat iff at least one blocking assumption prevents production acceptance',
-        'blocker_symbols': blocker_symbols,
+        "claim_id": claim_id,
+        "claim_source_status": claim_record.get("source_status"),
+        "blocking_assumption_ids": blocking_assumption_ids,
+        "required_assumptions": required_assumptions,
+        "evidence_fact_ids": _string_list(claim_record.get("evidence_fact_ids", [])),
+        "proof_obligation_statement": claim_record.get("proof_obligation_statement"),
+        "consumer_policy": claim_record.get("consumer_policy"),
+        "query_semantics": "sat iff at least one blocking assumption prevents production acceptance",
+        "blocker_symbols": blocker_symbols,
     }
     return {
-        'schema_version': SMTLIB_SCHEMA_VERSION,
-        'query_kind': XAMAN_SMTLIB_QUERY_KIND,
-        'logic': SMTLIB_LOGIC,
-        'supported_theories': [SMTLIB_LOGIC],
-        'model_id': model.model_id,
-        'model_cid': _model_cid_for_smtlib(model),
-        'model_schema_version': model.schema_version,
-        'claim_id': claim_id,
-        'claim_version': str(claim_record.get('claim_version') or '1.0'),
-        'claim_description': str(claim_record.get('description') or ''),
-        'severity': severity,
-        'risk': str(claim_record.get('risk') or severity).strip().lower(),
-        'domain': claim_record.get('domain'),
-        'xaman_category': claim_record.get('xaman_category'),
-        'required_assumptions': required_assumptions,
-        'blocking_assumption_ids': blocking_assumption_ids,
-        'modeled': True,
-        'not_modeled_reason': None,
-        'assertion_count': len(blocker_symbols) + 1,
-        'compiler_artifact_cid': calculate_artifact_cid(compiler_artifact),
-        'compiler_artifact': compiler_artifact,
-        'evidence_refs': evidence_refs,
-        'soundness_notes': [
-            'This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.',
-            'A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked.',
+        "schema_version": SMTLIB_SCHEMA_VERSION,
+        "query_kind": XAMAN_SMTLIB_QUERY_KIND,
+        "logic": SMTLIB_LOGIC,
+        "supported_theories": [SMTLIB_LOGIC],
+        "model_id": model.model_id,
+        "model_cid": _model_cid_for_smtlib(model),
+        "model_schema_version": model.schema_version,
+        "claim_id": claim_id,
+        "claim_version": str(claim_record.get("claim_version") or "1.0"),
+        "claim_description": str(claim_record.get("description") or ""),
+        "severity": severity,
+        "risk": str(claim_record.get("risk") or severity).strip().lower(),
+        "domain": claim_record.get("domain"),
+        "xaman_category": claim_record.get("xaman_category"),
+        "required_assumptions": required_assumptions,
+        "blocking_assumption_ids": blocking_assumption_ids,
+        "modeled": True,
+        "not_modeled_reason": None,
+        "assertion_count": len(blocker_symbols) + 1,
+        "compiler_artifact_cid": calculate_artifact_cid(compiler_artifact),
+        "compiler_artifact": compiler_artifact,
+        "evidence_refs": evidence_refs,
+        "soundness_notes": [
+            "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+            "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked.",
         ],
-        'violation_scope_explanation': 'Blocking assumption satisfiability query for Xaman release-gate claims.',
+        "violation_scope_explanation": "Blocking assumption satisfiability query for Xaman release-gate claims.",
     }
 
 
@@ -387,87 +397,93 @@ def _modeled_smtlib(
     include_get_model: bool,
 ) -> str:
     if compilation.violation_formula is None:
-        raise ValueError('modeled SMT-LIB compilation requires a violation_formula')
+        raise ValueError("modeled SMT-LIB compilation requires a violation_formula")
     z3 = z3_import()
     solver = z3.Solver()
     solver.add(*compilation.assertions)
     solver.add(compilation.violation_formula)
     body = _strip_z3_prelude(solver.to_smt2())
-    if include_get_model and '(get-model)' not in body:
-        body = f'{body.rstrip()}\n(get-model)\n'
-    return _header(metadata) + body.rstrip() + '\n'
+    if include_get_model and "(get-model)" not in body:
+        body = f"{body.rstrip()}\n(get-model)\n"
+    return _header(metadata) + body.rstrip() + "\n"
 
 
 def _ir_claim_smtlib(metadata: Mapping[str, Any], *, include_get_model: bool) -> str:
-    blocker_symbols = metadata['compiler_artifact']['blocker_symbols']
+    blocker_symbols = metadata["compiler_artifact"]["blocker_symbols"]
     lines = [_header(metadata).rstrip()]
     for blocker in blocker_symbols:
-        symbol = blocker['symbol']
-        assumption_id = _smtlib_string(blocker['assumption_id'])
-        lines.append(f'; blocking_assumption: {assumption_id}')
-        lines.append(f'(declare-fun {symbol} () Bool)')
-        lines.append(f'(assert {symbol})')
+        symbol = blocker["symbol"]
+        assumption_id = _smtlib_string(blocker["assumption_id"])
+        lines.append(f"; blocking_assumption: {assumption_id}")
+        lines.append(f"(declare-fun {symbol} () Bool)")
+        lines.append(f"(assert {symbol})")
     if blocker_symbols:
-        disjunction = ' '.join(blocker['symbol'] for blocker in blocker_symbols)
-        lines.append(f'(assert (or {disjunction}))')
+        disjunction = " ".join(blocker["symbol"] for blocker in blocker_symbols)
+        lines.append(f"(assert (or {disjunction}))")
     else:
-        lines.append('(assert false)')
-    lines.append('(check-sat)')
+        lines.append("(assert false)")
+    lines.append("(check-sat)")
     if include_get_model:
-        lines.append('(get-model)')
-    return '\n'.join(lines) + '\n'
+        lines.append("(get-model)")
+    return "\n".join(lines) + "\n"
 
 
 def _not_modeled_smtlib(metadata: Mapping[str, Any]) -> str:
-    reason = str(metadata.get('not_modeled_reason') or 'claim is not modeled')
+    reason = str(metadata.get("not_modeled_reason") or "claim is not modeled")
     lines = [
         _header(metadata).rstrip(),
-        '(set-info :status unknown)',
+        "(set-info :status unknown)",
         f'(echo "{_smtlib_string(f"NOT_MODELED: {reason}")}")',
     ]
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def _header(metadata: Mapping[str, Any]) -> str:
-    metadata_json = json.dumps(metadata, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
-    return '\n'.join(
-        [
-            '; crypto-exchange SMT-LIB2 artifact',
-            f'; cxtp.schema_version: {SMTLIB_SCHEMA_VERSION}',
-            f'; cxtp.model_id: {metadata["model_id"]}',
-            f'; cxtp.model_cid: {metadata["model_cid"]}',
-            f'; cxtp.claim_id: {metadata["claim_id"]}',
-            f'; cxtp.claim_version: {metadata["claim_version"]}',
-            f'; cxtp.modeled: {str(metadata["modeled"]).lower()}',
-            f'; cxtp.metadata: {metadata_json}',
-            '(set-info :smt-lib-version 2.6)',
-            '(set-info :source "ipfs_datasets_py crypto_exchange SMT-LIB2 compiler")',
-            f'(set-logic {SMTLIB_LOGIC})',
-        ]
-    ) + '\n'
+    metadata_json = json.dumps(metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return (
+        "\n".join(
+            [
+                "; crypto-exchange SMT-LIB2 artifact",
+                f"; cxtp.schema_version: {SMTLIB_SCHEMA_VERSION}",
+                f"; cxtp.model_id: {metadata['model_id']}",
+                f"; cxtp.model_cid: {metadata['model_cid']}",
+                f"; cxtp.claim_id: {metadata['claim_id']}",
+                f"; cxtp.claim_version: {metadata['claim_version']}",
+                f"; cxtp.modeled: {str(metadata['modeled']).lower()}",
+                f"; cxtp.metadata: {metadata_json}",
+                "(set-info :smt-lib-version 2.6)",
+                '(set-info :source "ipfs_datasets_py crypto_exchange SMT-LIB2 compiler")',
+                f"(set-logic {SMTLIB_LOGIC})",
+            ]
+        )
+        + "\n"
+    )
 
 
 def _strip_z3_prelude(smtlib: str) -> str:
-    lines = smtlib.replace('\r\n', '\n').replace('\r', '\n').splitlines()
+    lines = smtlib.replace("\r\n", "\n").replace("\r", "\n").splitlines()
     stripped: list[str] = []
     for line in lines:
-        if line == '; benchmark generated from python API':
+        if line == "; benchmark generated from python API":
             continue
-        if line == '(set-info :status unknown)':
+        if line == "(set-info :status unknown)":
             continue
-        if line == f'(set-logic {SMTLIB_LOGIC})':
+        if line == f"(set-logic {SMTLIB_LOGIC})":
             continue
         stripped.append(line)
-    return '\n'.join(stripped).rstrip() + '\n'
+    return "\n".join(stripped).rstrip() + "\n"
 
 
 def _smtlib_string(value: str) -> str:
-    return value.replace('\\', '\\\\').replace('"', '""')
+    return value.replace("\\", "\\\\").replace('"', '""')
 
 
 def _safe_filename(claim_id: str) -> str:
-    safe = ''.join(character if character.isalnum() or character in {'-', '_'} else '_' for character in claim_id)
-    return safe or 'claim'
+    safe = "".join(
+        character if character.isalnum() or character in {"-", "_"} else "_"
+        for character in claim_id
+    )
+    return safe or "claim"
 
 
 def _model_cid_for_smtlib(model: SecurityModelIR | Mapping[str, Any]) -> str:
@@ -491,7 +507,7 @@ def _model_cid_for_smtlib(model: SecurityModelIR | Mapping[str, Any]) -> str:
 def _required_claim_string(claim_record: Mapping[str, Any], field_name: str) -> str:
     value = claim_record.get(field_name)
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f'IR claim record must include a non-empty {field_name}')
+        raise ValueError(f"IR claim record must include a non-empty {field_name}")
     return value
 
 
@@ -502,17 +518,17 @@ def _string_list(value: Any) -> list[str]:
 
 
 __all__ = [
-    'SMTLIBCompilation',
-    'SMTLIB_LOGIC',
-    'SMTLIB_QUERY_KIND',
-    'SMTLIB_SCHEMA_VERSION',
-    'XAMAN_CRITICAL_SEVERITIES',
-    'XAMAN_SMTLIB_QUERY_KIND',
-    'compile_claim_to_smtlib',
-    'compile_claims_to_smtlib',
-    'compile_ir_claim_to_smtlib',
-    'compile_ir_claims_to_smtlib',
-    'emit_ir_smtlib_artifacts',
-    'emit_smtlib_artifacts',
-    'serialize_z3_compilation_to_smtlib',
+    "SMTLIBCompilation",
+    "SMTLIB_LOGIC",
+    "SMTLIB_QUERY_KIND",
+    "SMTLIB_SCHEMA_VERSION",
+    "XAMAN_CRITICAL_SEVERITIES",
+    "XAMAN_SMTLIB_QUERY_KIND",
+    "compile_claim_to_smtlib",
+    "compile_claims_to_smtlib",
+    "compile_ir_claim_to_smtlib",
+    "compile_ir_claims_to_smtlib",
+    "emit_ir_smtlib_artifacts",
+    "emit_smtlib_artifacts",
+    "serialize_z3_compilation_to_smtlib",
 ]

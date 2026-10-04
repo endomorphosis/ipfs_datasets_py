@@ -74,10 +74,7 @@ def _declared_architecture(path: Path) -> str:
     if prefix == CHECKPOINT_MAGIC:
         return ModalAutoencoderTrainingState.load_json(path).architecture_version
     value = _load_json(path)
-    return str(
-        value.get("architecture_version")
-        or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
-    )
+    return str(value.get("architecture_version") or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION)
 
 
 def _verify_selected_target(
@@ -88,13 +85,8 @@ def _verify_selected_target(
     embedded_digest = _verify_embedded_report_digest(selection)
     if selection.get("promotion_eligible") is not True:
         raise ValueError("hparam selection is not promotion eligible")
-    if (
-        selection.get("selection_evidence_mode")
-        != "verified_immutable_posthoc_rescore"
-    ):
-        raise ValueError(
-            "feature transfer requires verified immutable posthoc selection evidence"
-        )
+    if selection.get("selection_evidence_mode") != "verified_immutable_posthoc_rescore":
+        raise ValueError("feature transfer requires verified immutable posthoc selection evidence")
     candidate = _mapping(selection.get("selected_candidate"))
     candidate_id = str(candidate.get("candidate_id") or "")
     primary_seed = int(candidate.get("seed", -1))
@@ -102,8 +94,7 @@ def _verify_selected_target(
     expected_target = Path(str(selected_states.get(str(primary_seed)) or "")).resolve()
     if expected_target != target_path.resolve():
         raise ValueError(
-            "target state must be the selected candidate's primary seed state: "
-            f"{expected_target}"
+            f"target state must be the selected candidate's primary seed state: {expected_target}"
         )
 
     matching_records = [
@@ -128,9 +119,7 @@ def _verify_selected_target(
         "selection_file_sha256": _sha256_file(selection_path),
         "selection_path": str(selection_path),
         "target_state_sha256": observed_target_hash,
-        "training_revision": _mapping(
-            selection.get("rescore_provenance")
-        ).get("training_revision"),
+        "training_revision": _mapping(selection.get("rescore_provenance")).get("training_revision"),
     }
 
 
@@ -216,9 +205,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         target,
         config=LegacyFeatureTransferConfig(
             max_entries_per_group=args.max_entries_per_group,
-            minimum_source_signal_coverage=(
-                args.minimum_source_signal_coverage
-            ),
+            minimum_source_signal_coverage=(args.minimum_source_signal_coverage),
             transfer_source_embedding_weights=args.transfer_legacy_embeddings,
             source_field_allowlist=tuple(sorted(set(args.source_field))),
         ),
@@ -234,16 +221,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         output_state,
         result.state,
         metadata={
-            "feature_transfer_schema_version": (
-                MODAL_AUTOENCODER_FEATURE_TRANSFER_SCHEMA_VERSION
-            ),
+            "feature_transfer_schema_version": (MODAL_AUTOENCODER_FEATURE_TRANSFER_SCHEMA_VERSION),
             "legacy_state_sha256": legacy_hash,
-            "required_max_generalizable_entries_per_group": int(
-                result.report["capacity"]
-            ),
-            "selection_embedded_sha256": selection_lineage[
-                "selection_embedded_sha256"
-            ],
+            "required_max_generalizable_entries_per_group": int(result.report["capacity"]),
+            "selection_embedded_sha256": selection_lineage["selection_embedded_sha256"],
             "target_state_sha256": selection_lineage["target_state_sha256"],
         },
     )
@@ -273,9 +254,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             },
             "required_runtime": {
                 "autoencoder_canonical_warm_start": "off",
-                "autoencoder_max_generalizable_entries_per_group": int(
-                    result.report["capacity"]
-                ),
+                "autoencoder_max_generalizable_entries_per_group": int(result.report["capacity"]),
                 "warm_start_state": str(output_state),
             },
             "selection_lineage": selection_lineage,

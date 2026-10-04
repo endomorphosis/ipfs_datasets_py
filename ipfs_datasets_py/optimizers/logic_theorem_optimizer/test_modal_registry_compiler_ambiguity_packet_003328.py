@@ -32,17 +32,13 @@ _PACKET_003328_FAMILY_PAIRS = (
 
 
 def test_packet_003328_pairs_are_pinned_in_packet_table() -> None:
-    assert tuple(COMPILER_AMBIGUITY_PACKET_003328_FAMILY_PAIRS) == (
-        _PACKET_003328_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_003328_FAMILY_PAIRS) == (_PACKET_003328_FAMILY_PAIRS)
 
 
 def test_packet_003328_pairs_are_supported_across_adaptive_ambiguity_policies() -> None:
     for predicted_family, target_family in _PACKET_003328_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,

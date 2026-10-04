@@ -266,18 +266,18 @@ The HTML pages are in _build/html.
 ```python
 # Key configuration settings
 extensions = [
-    'sphinx.ext.autodoc',      # Auto-generate from docstrings
-    'sphinx.ext.napoleon',     # Google/NumPy docstrings
-    'sphinx.ext.viewcode',     # Source code links
-    'sphinx.ext.intersphinx',  # External documentation links
-    'sphinx.ext.autosummary',  # Automatic summaries
-    'sphinx_rtd_theme',        # Read the Docs theme
+    "sphinx.ext.autodoc",  # Auto-generate from docstrings
+    "sphinx.ext.napoleon",  # Google/NumPy docstrings
+    "sphinx.ext.viewcode",  # Source code links
+    "sphinx.ext.intersphinx",  # External documentation links
+    "sphinx.ext.autosummary",  # Automatic summaries
+    "sphinx_rtd_theme",  # Read the Docs theme
 ]
 
 autodoc_default_options = {
-    'members': True,
-    'undoc-members': True,
-    'show-inheritance': True,
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
 }
 ```
 

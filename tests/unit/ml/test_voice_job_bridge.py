@@ -113,9 +113,7 @@ def _assert_lineage_propagation(workset: VoiceAudioWorkset, jobs) -> None:
     task_id_by_work_id: dict[str, str] = {}
     for item, manifest, job in zip(items, manifests, jobs, strict=True):
         lineage = job.lineage
-        expected_dependencies = {
-            task_id_by_work_id[dependency] for dependency in item.depends_on
-        }
+        expected_dependencies = {task_id_by_work_id[dependency] for dependency in item.depends_on}
         if getattr(job, "source_task_id", ""):
             expected_dependencies.add(job.source_task_id)
         assert lineage.workset_id == workset.workset_id
@@ -143,9 +141,7 @@ def test_jobs_from_workset_preserve_complete_lineage_and_dependency_dag():
     ]
     assert jobs[1].source_task_id == jobs[0].task_id
     assert jobs[2].source_task_id == jobs[0].task_id
-    assert jobs[2].lineage.depends_on_task_ids == tuple(
-        sorted((jobs[0].task_id, jobs[1].task_id))
-    )
+    assert jobs[2].lineage.depends_on_task_ids == tuple(sorted((jobs[0].task_id, jobs[1].task_id)))
 
 
 def test_existing_audio_descriptor_crosses_bridge_without_bytes_or_local_path():

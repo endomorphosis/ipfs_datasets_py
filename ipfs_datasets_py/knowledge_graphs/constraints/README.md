@@ -27,7 +27,7 @@ constraint = ConstraintDefinition(
     name="email_required",
     constraint_type="PROPERTY_EXISTENCE",
     entity_type="User",
-    property_name="email"
+    property_name="email",
 )
 ```
 
@@ -57,11 +57,13 @@ Applies custom validation logic via a function.
 ```python
 from ipfs_datasets_py.knowledge_graphs.constraints import CustomConstraint
 
+
 def validate_email(entity):
-    email = entity['properties'].get('email', '')
-    if '@' not in email:
+    email = entity["properties"].get("email", "")
+    if "@" not in email:
         return "Email must contain '@' symbol"
     return None
+
 
 constraint = CustomConstraint(definition, validator_func=validate_email)
 ```
@@ -94,7 +96,7 @@ manager.remove_constraint("email_required")
 from ipfs_datasets_py.knowledge_graphs.constraints import (
     ConstraintManager,
     ConstraintDefinition,
-    PropertyExistenceConstraint
+    PropertyExistenceConstraint,
 )
 
 # Create manager
@@ -105,17 +107,13 @@ email_def = ConstraintDefinition(
     name="user_email_required",
     constraint_type="PROPERTY_EXISTENCE",
     entity_type="User",
-    property_name="email"
+    property_name="email",
 )
 email_constraint = PropertyExistenceConstraint(email_def)
 manager.add_constraint(email_constraint)
 
 # Validate entity
-user = {
-    "id": "user123",
-    "type": "User",
-    "properties": {"name": "Alice"}
-}
+user = {"id": "user123", "type": "User", "properties": {"name": "Alice"}}
 
 violations = manager.validate_entity(user)
 if violations:
@@ -130,10 +128,7 @@ from ipfs_datasets_py.knowledge_graphs.constraints import TypeConstraint
 
 # Age must be an integer
 age_def = ConstraintDefinition(
-    name="age_type_check",
-    constraint_type="TYPE",
-    entity_type="User",
-    property_name="age"
+    name="age_type_check", constraint_type="TYPE", entity_type="User", property_name="age"
 )
 age_constraint = TypeConstraint(age_def, expected_type=int)
 manager.add_constraint(age_constraint)
@@ -142,7 +137,7 @@ manager.add_constraint(age_constraint)
 user = {
     "id": "user456",
     "type": "User",
-    "properties": {"email": "bob@example.com", "age": "25"}  # String, not int!
+    "properties": {"email": "bob@example.com", "age": "25"},  # String, not int!
 }
 
 violations = manager.validate_entity(user)
@@ -156,19 +151,18 @@ if violations:
 ```python
 from ipfs_datasets_py.knowledge_graphs.constraints import CustomConstraint
 
+
 def validate_age_range(entity):
     """Ensure age is between 0 and 150."""
-    age = entity['properties'].get('age')
+    age = entity["properties"].get("age")
     if age is not None:
         if not (0 <= age <= 150):
             return f"Age {age} is out of valid range (0-150)"
     return None
 
+
 age_range_def = ConstraintDefinition(
-    name="age_range_check",
-    constraint_type="CUSTOM",
-    entity_type="User",
-    property_name="age"
+    name="age_range_check", constraint_type="CUSTOM", entity_type="User", property_name="age"
 )
 age_range_constraint = CustomConstraint(age_range_def, validator_func=validate_age_range)
 manager.add_constraint(age_range_constraint)
@@ -218,8 +212,8 @@ Returned when a constraint is violated:
 @dataclass
 class ConstraintViolation:
     constraint_name: str  # Name of violated constraint
-    entity_id: str        # ID of entity that violated constraint
-    message: str          # Human-readable error message
+    entity_id: str  # ID of entity that violated constraint
+    message: str  # Human-readable error message
 ```
 
 ### ConstraintManager Methods

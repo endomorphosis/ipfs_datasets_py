@@ -4,6 +4,7 @@ Processing pipeline module for the Omni-Converter.
 This module provides the ProcessingPipeline class for orchestrating the conversion
 of files to plaintext.
 """
+
 from __future__ import annotations
 
 
@@ -30,7 +31,7 @@ from types_ import (
 class ProcessingPipeline:
     """
     Processing pipeline for the Omni-Converter.
-    
+
     This class orchestrates the conversion of files to plaintext, using various
     components like the format detector, validator, content extractor, text normalizer,
     and output formatter.
@@ -51,6 +52,7 @@ class ProcessingPipeline:
         _hashlib: The hashlib module for generating content hashes.
         _listeners: A list of status listener functions to notify about processing events.
     """
+
     def __init__(
         self,
         resources: dict[str, Callable] = None,
@@ -58,7 +60,7 @@ class ProcessingPipeline:
     ) -> None:
         """
         Initialize a processing pipeline.
-        
+
         Args:
             configs: A pydantic model containing configuration settings.
             resources: A dictionary of callable classes and functions for the class to use.
@@ -66,26 +68,26 @@ class ProcessingPipeline:
         self.configs = configs
         self.resources = resources
 
-        self._format_detector:   'FileFormatDetector' = self.resources['file_format_detector']
-        self._file_validator:    'FileValidator'      = self.resources['file_validator']
-        self._content_extractor: 'ContentExtractor'   = self.resources['content_extractor']
-        self._text_normalizer:   'TextNormalizer'     = self.resources['text_normalizer']
-        self._output_formatter:  'OutputFormatter'    = self.resources['output_formatter']
-        self._content_sanitizer: 'ContentSanitizer'   = self.resources['content_sanitizer']
-        self._security_monitor:  'SecurityMonitor'    = self.resources['security_monitor']
+        self._format_detector: "FileFormatDetector" = self.resources["file_format_detector"]
+        self._file_validator: "FileValidator" = self.resources["file_validator"]
+        self._content_extractor: "ContentExtractor" = self.resources["content_extractor"]
+        self._text_normalizer: "TextNormalizer" = self.resources["text_normalizer"]
+        self._output_formatter: "OutputFormatter" = self.resources["output_formatter"]
+        self._content_sanitizer: "ContentSanitizer" = self.resources["content_sanitizer"]
+        self._security_monitor: "SecurityMonitor" = self.resources["security_monitor"]
 
-        self._processing_result: ProcessingResult = self.resources['processing_result']
-        self._logger:            Logger           = self.resources['logger']
-        self._status:            PipelineStatus   = self.resources['pipeline_status']
-        self._hashlib:           ModuleType       = self.resources['hashlib']
+        self._processing_result: ProcessingResult = self.resources["processing_result"]
+        self._logger: Logger = self.resources["logger"]
+        self._status: PipelineStatus = self.resources["pipeline_status"]
+        self._hashlib: ModuleType = self.resources["hashlib"]
 
-        self._listeners:         list[StatusListenerFunc] = []
+        self._listeners: list[StatusListenerFunc] = []
 
     def process_file(
         self,
         file_path: str,
         *,
-        output_format: str = 'txt',
+        output_format: str = "txt",
         output_path: Optional[str] = None,
         normalizers: Optional[list[str]] = None,
     ) -> ProcessingResult:
@@ -97,8 +99,8 @@ class ProcessingPipeline:
             output_format: The format to convert the file to. Supported formats are: 'txt', 'md'. Defaults to 'txt'.
             output_path: The path to write the output to.
             - If it's a file path, the output will be written to that file.
-            - If it's a directory, the output will be written to a file in that directory. 
-                The name will be the same as the input file's. 
+            - If it's a directory, the output will be written to a file in that directory.
+                The name will be the same as the input file's.
                 Any extension will be removed and replaced with the one specified in output_format.
             - If None, the text is still extracted but written to a file in the temp directory.
                 The name will be the same as the input file's, with the extension replaced by the one specified in output_format.
@@ -125,16 +127,16 @@ class ProcessingPipeline:
         """
         # Initialize options
         options = {
-            'output_format': output_format,
-            'output_path': output_path,
-            'normalizers': normalizers,
+            "output_format": output_format,
+            "output_path": output_path,
+            "normalizers": normalizers,
         }
 
         # Update status
         self._status.is_processing = True
         self._status.current_file = file_path
         self._status.total_files += 1
-        self._notify_listeners("processing_started", {'file_path': file_path})
+        self._notify_listeners("processing_started", {"file_path": file_path})
         errors: list[str] = []
 
         try:
@@ -144,9 +146,13 @@ class ProcessingPipeline:
             if not format_name:
                 errors.append(f"Unable to detect format for '{file_path}'")
             if category is None:
-                errors.append(f"Format '{format_name}' is not in any supported category for file: {file_path}")
+                errors.append(
+                    f"Format '{format_name}' is not in any supported category for file: {file_path}"
+                )
 
-            self._logger.info(f"Detected format: {format_name} ({category})", {'file_path': file_path})
+            self._logger.info(
+                f"Detected format: {format_name} ({category})", {"file_path": file_path}
+            )
 
             # Validate file
             # NOTE This is NOT a security check. It's meant to ensure the file doesn't immediately crash the pipeline
@@ -159,7 +165,7 @@ class ProcessingPipeline:
                     file_path=file_path,
                     output_path=output_path,
                     format_name=format_name,
-                    errors=errors
+                    errors=errors,
                 )
 
             # Perform security validation
@@ -167,16 +173,18 @@ class ProcessingPipeline:
             if not security_result.is_safe:
                 # Handle security issues
                 error_message = f"Security validation failed: {', '.join(security_result.issues)}"
-                self._logger.warning(error_message, {'file_path': file_path})
+                self._logger.warning(error_message, {"file_path": file_path})
                 return self._make_failure_result(
                     file_path=file_path,
                     output_path=output_path,
-                    format_name=format_name if 'format_name' in locals() else None,
-                    errors=errors
+                    format_name=format_name if "format_name" in locals() else None,
+                    errors=errors,
                 )
 
             # Extract content
-            self._logger.debug(f"File is valid. Extracting content from '{file_path}' with format '{format_name}'")
+            self._logger.debug(
+                f"File is valid. Extracting content from '{file_path}' with format '{format_name}'"
+            )
             content = self._content_extractor.extract_content(file_path, format_name, options)
 
             # Normalize text in content
@@ -191,25 +199,19 @@ class ProcessingPipeline:
             self._logger.debug(f"Formatting output for '{file_path}'")
             try:
                 formatted_output = self._output_formatter.format_output(
-                    sanitized_content.content,
-                    output_format,
-                    options,
-                    output_path
+                    sanitized_content.content, output_format, options, output_path
                 )
             except Exception as e:
-                if self._logger.level == 10: # If debug level is set
+                if self._logger.level == 10:  # If debug level is set
                     self._logger.exception(f"Error formatting output for '{file_path}': {e}")
                 else:
                     self._logger.warning(f"Format error: {e}, falling back to txt format")
                 formatted_output = self._output_formatter.format_output(
-                    normalized_content.content,
-                    'txt',
-                    options,
-                    output_path
+                    normalized_content.content, "txt", options, output_path
                 )
 
             # Calculate content hash for verification # TODO Change to IPFS CID
-            content_hash = self._hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
+            content_hash = self._hashlib.md5(formatted_output.content.encode("utf-8")).hexdigest()
 
             # Write output to file if output_path is provided
             if output_path:
@@ -226,19 +228,18 @@ class ProcessingPipeline:
                 output_path=output_path,
                 format=format_name,
                 metadata={
-                    'category': category,
-                    'normalized_by': normalized_content.normalized_by,
-                    'output_format': output_format,
-                    'content_size': len(formatted_output.content)
+                    "category": category,
+                    "normalized_by": normalized_content.normalized_by,
+                    "output_format": output_format,
+                    "content_size": len(formatted_output.content),
                 },
-                content_hash=content_hash
+                content_hash=content_hash,
             )
             self._status.successful_files += 1
-            self._notify_listeners("processing_succeeded", {
-                'file_path': file_path,
-                'output_path': output_path,
-                'format': format_name
-            })
+            self._notify_listeners(
+                "processing_succeeded",
+                {"file_path": file_path, "output_path": output_path, "format": format_name},
+            )
             self._logger.debug(f"result: {result.to_dict()}")
 
             return result
@@ -249,52 +250,47 @@ class ProcessingPipeline:
             return self._make_failure_result(
                 file_path=file_path,
                 output_path=output_path,
-                format_name=format_name if 'format_name' in locals() else None,
-                errors=errors
+                format_name=format_name if "format_name" in locals() else None,
+                errors=errors,
             )
         finally:
             # Reset status
             self._status.reset()
-            self._notify_listeners("processing_completed", {'file_path': file_path})
+            self._notify_listeners("processing_completed", {"file_path": file_path})
 
+    def _make_failure_result(
+        self, file_path: str, output_path: str, format_name: str, errors: list[Any]
+    ) -> ProcessingResult:
+        str_errors = [str(e) for e in errors if isinstance(e, Exception)]
 
-    def _make_failure_result(self, 
-                               file_path: str, 
-                               output_path: str, 
-                               format_name: str, 
-                               errors: list[Any]
-                               ) -> ProcessingResult:
-            str_errors = [str(e) for e in errors if isinstance(e, Exception)]
-
-            self._logger.error(f"Processing failed: {','.join(str_errors)}", {'file_path': file_path})
-            result = self._processing_result(
-                success=False,
-                file_path=file_path,
-                output_path=output_path,
-                format=format_name,
-                errors=errors
-            )
-            self._status.failed_files += 1
-            self._notify_listeners("processing_failed", {
-                'file_path': file_path,
-                'error': ','.join(str_errors)
-            })
-            return result
+        self._logger.error(f"Processing failed: {','.join(str_errors)}", {"file_path": file_path})
+        result = self._processing_result(
+            success=False,
+            file_path=file_path,
+            output_path=output_path,
+            format=format_name,
+            errors=errors,
+        )
+        self._status.failed_files += 1
+        self._notify_listeners(
+            "processing_failed", {"file_path": file_path, "error": ",".join(str_errors)}
+        )
+        return result
 
     @property
     def status(self) -> dict[str, Any]:
         """
         Get the current status of the pipeline.
-        
+
         Returns:
             The current pipeline status as a dictionary.
         """
         return self._status.to_dict()
-    
+
     def register_listener(self, listener: StatusListenerFunc) -> None:
         """
         Register a status listener.
-        
+
         Args:
             listener: The listener function to register.
         """
@@ -304,7 +300,7 @@ class ProcessingPipeline:
     def _notify_listeners(self, event: str, data: dict[str, Any]) -> None:
         """
         Notify all registered listeners of an event.
-        
+
         Args:
             event: The event type.
             data: The event data.

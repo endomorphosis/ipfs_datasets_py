@@ -38,6 +38,7 @@
 ```python
 import asyncio
 
+
 async def process_batch(items):
     tasks = [process_item(item) for item in items]
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -54,15 +55,17 @@ async def process_batch(items):
 ```python
 import anyio
 
+
 async def process_batch(items):
     results = []
-    
+
     async with anyio.create_task_group() as tg:
         for item in items:
             tg.start_soon(process_and_collect, item, results)
-    
+
     # All tasks guaranteed to complete when exiting context
     return results
+
 
 async def process_and_collect(item, results):
     result = await process_item(item)
@@ -83,6 +86,7 @@ async def process_and_collect(item, results):
 ```python
 import asyncio
 
+
 async def fetch_with_timeout():
     try:
         result = await asyncio.wait_for(fetch_data(), timeout=30.0)
@@ -95,6 +99,7 @@ async def fetch_with_timeout():
 ### ✅ NEW (anyio.fail_after)
 ```python
 import anyio
+
 
 async def fetch_with_timeout():
     try:
@@ -121,6 +126,7 @@ import asyncio
 
 semaphore = asyncio.Semaphore(10)
 
+
 async def limited_operation():
     async with semaphore:
         return await expensive_operation()
@@ -131,6 +137,7 @@ async def limited_operation():
 import anyio
 
 limiter = anyio.CapacityLimiter(10)
+
 
 async def limited_operation():
     async with limiter:
@@ -147,6 +154,7 @@ async def limited_operation():
 ```python
 import asyncio
 
+
 async def run_blocking_code():
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, blocking_function, arg1, arg2)
@@ -156,6 +164,7 @@ async def run_blocking_code():
 ### ✅ NEW (anyio.to_thread)
 ```python
 import anyio
+
 
 async def run_blocking_code():
     result = await anyio.to_thread.run_sync(blocking_function, arg1, arg2)
@@ -175,17 +184,20 @@ async def run_blocking_code():
 ```python
 import asyncio
 
+
 async def producer_consumer():
     queue = asyncio.Queue(maxsize=100)
-    
+
     producer_task = asyncio.create_task(producer(queue))
     consumer_task = asyncio.create_task(consumer(queue))
-    
+
     await asyncio.gather(producer_task, consumer_task)
+
 
 async def producer(queue):
     for i in range(10):
         await queue.put(i)
+
 
 async def consumer(queue):
     while True:
@@ -199,20 +211,21 @@ async def consumer(queue):
 ```python
 import anyio
 
+
 async def producer_consumer():
-    send_stream, receive_stream = anyio.create_memory_object_stream(
-        max_buffer_size=100
-    )
-    
+    send_stream, receive_stream = anyio.create_memory_object_stream(max_buffer_size=100)
+
     async with anyio.create_task_group() as tg:
         tg.start_soon(producer, send_stream)
         tg.start_soon(consumer, receive_stream)
+
 
 async def producer(send_stream):
     async with send_stream:  # Auto-closes on exit
         for i in range(10):
             await send_stream.send(i)
     # Stream closes, consumer will receive end-of-stream
+
 
 async def consumer(receive_stream):
     async with receive_stream:  # Auto-closes on exit
@@ -234,8 +247,9 @@ async def consumer(receive_stream):
 ```python
 import aiofiles
 
+
 async def read_file():
-    async with aiofiles.open('file.txt', 'r') as f:
+    async with aiofiles.open("file.txt", "r") as f:
         content = await f.read()
     return content
 ```
@@ -244,13 +258,15 @@ async def read_file():
 ```python
 import anyio
 
+
 async def read_file():
-    path = anyio.Path('file.txt')
+    path = anyio.Path("file.txt")
     content = await path.read_text()
     return content
 
+
 async def write_file():
-    path = anyio.Path('output.txt')
+    path = anyio.Path("output.txt")
     await path.write_text("Hello, world!")
 ```
 
@@ -267,10 +283,12 @@ async def write_file():
 ```python
 import asyncio
 
+
 # Option 1: run_until_complete (NOT in async context)
 def main():
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(async_function())
+
 
 # Option 2: asyncio.run (Python 3.7+)
 def main():
@@ -281,9 +299,11 @@ def main():
 ```python
 import anyio
 
+
 def main():
     result = anyio.run(async_function)  # Note: no parentheses!
     return result
+
 
 # Or with arguments
 def main():
@@ -304,13 +324,14 @@ def main():
 ```python
 import asyncio
 
+
 async def main():
     # Create background task
     task = asyncio.create_task(background_operation())
-    
+
     # Do other work
     await do_something_else()
-    
+
     # Wait for background task
     await task
 ```
@@ -319,14 +340,15 @@ async def main():
 ```python
 import anyio
 
+
 async def main():
     async with anyio.create_task_group() as tg:
         # Start background task
         tg.start_soon(background_operation)
-        
+
         # Do other work in the same group
         tg.start_soon(do_something_else)
-        
+
         # Both tasks will complete before exiting context
 ```
 
@@ -345,9 +367,10 @@ async def main():
 import asyncio
 import anyio
 
+
 async def broken():
     await asyncio.sleep(1)  # asyncio
-    await anyio.sleep(1)    # anyio
+    await anyio.sleep(1)  # anyio
     # May cause event loop conflicts!
 ```
 
@@ -359,6 +382,7 @@ async def broken():
 ```python
 # ❌ BAD - Tasks may leak
 import anyio
+
 
 async def broken():
     tg = anyio.create_task_group()
@@ -383,6 +407,7 @@ async def fixed():
 ```python
 # ❌ BAD - Don't access event loop
 import asyncio
+
 
 async def broken():
     loop = asyncio.get_event_loop()
@@ -413,11 +438,13 @@ markers =
 import pytest
 import anyio
 
+
 # Option 1: Use @pytest.mark.anyio
 @pytest.mark.anyio
 async def test_async_function():
     result = await my_async_function()
     assert result == expected
+
 
 # Option 2: Use anyio fixture
 async def test_with_fixture(anyio_backend):
@@ -472,44 +499,44 @@ If you encounter issues during migration:
 ### BEFORE (asyncio)
 ```python
 """Example processor using asyncio."""
+
 import asyncio
 import logging
 from typing import List
 
 logger = logging.getLogger(__name__)
 
+
 class OldProcessor:
     def __init__(self, max_concurrent: int = 10):
         self.semaphore = asyncio.Semaphore(max_concurrent)
-    
+
     async def process_batch(self, items: List[str]) -> List[str]:
         """Process items concurrently."""
         tasks = [self._process_item(item) for item in items]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return [r for r in results if not isinstance(r, Exception)]
-    
+
     async def _process_item(self, item: str) -> str:
         """Process single item with rate limiting."""
         async with self.semaphore:
             try:
-                result = await asyncio.wait_for(
-                    self._do_work(item),
-                    timeout=30.0
-                )
+                result = await asyncio.wait_for(self._do_work(item), timeout=30.0)
                 return result
             except asyncio.TimeoutError:
                 logger.error(f"Timeout processing {item}")
                 raise
-    
+
     async def _do_work(self, item: str) -> str:
         """Simulate work."""
         await asyncio.sleep(1)
         return f"processed: {item}"
 
+
 # Usage
 def main():
     processor = OldProcessor()
-    items = ['a', 'b', 'c']
+    items = ["a", "b", "c"]
     results = asyncio.run(processor.process_batch(items))
     print(results)
 ```
@@ -517,26 +544,28 @@ def main():
 ### AFTER (anyio)
 ```python
 """Example processor using anyio."""
+
 import anyio
 import logging
 from typing import List
 
 logger = logging.getLogger(__name__)
 
+
 class NewProcessor:
     def __init__(self, max_concurrent: int = 10):
         self.limiter = anyio.CapacityLimiter(max_concurrent)
-    
+
     async def process_batch(self, items: List[str]) -> List[str]:
         """Process items concurrently."""
         results = []
-        
+
         async with anyio.create_task_group() as tg:
             for item in items:
                 tg.start_soon(self._process_and_collect, item, results)
-        
+
         return results
-    
+
     async def _process_and_collect(self, item: str, results: List[str]):
         """Process item and collect result."""
         try:
@@ -544,7 +573,7 @@ class NewProcessor:
             results.append(result)
         except Exception as e:
             logger.error(f"Error processing {item}: {e}")
-    
+
     async def _process_item(self, item: str) -> str:
         """Process single item with rate limiting."""
         async with self.limiter:
@@ -555,16 +584,17 @@ class NewProcessor:
             except TimeoutError:
                 logger.error(f"Timeout processing {item}")
                 raise
-    
+
     async def _do_work(self, item: str) -> str:
         """Simulate work."""
         await anyio.sleep(1)
         return f"processed: {item}"
 
+
 # Usage
 def main():
     processor = NewProcessor()
-    items = ['a', 'b', 'c']
+    items = ["a", "b", "c"]
     results = anyio.run(processor.process_batch, items)
     print(results)
 ```

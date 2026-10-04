@@ -12,12 +12,14 @@ Methods under test:
   - OntologyPipeline.improvement_count()
   - OntologyPipeline.score_range()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -33,9 +35,14 @@ def _push_opt(o, avg):
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -43,21 +50,25 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_relationship(sid, tid):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=f"{sid}-{tid}", type="r", source_id=sid, target_id=tid)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -65,11 +76,13 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -82,6 +95,7 @@ def _push_run(p, score):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_trimmed_mean
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryTrimmedMean:
     def test_empty_returns_zero(self):
@@ -112,6 +126,7 @@ class TestHistoryTrimmedMean:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_z_scores
 # ---------------------------------------------------------------------------
+
 
 class TestScoreZScores:
     def test_empty_returns_empty(self):
@@ -149,11 +164,18 @@ class TestScoreZScores:
 # OntologyCritic.dimension_entropy
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionEntropy:
     def test_all_zero_returns_zero(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        score = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert critic.dimension_entropy(score) == pytest.approx(0.0)
 
     def test_equal_values_max_entropy(self):
@@ -165,14 +187,21 @@ class TestDimensionEntropy:
 
     def test_concentrated_low_entropy(self):
         critic = _make_critic()
-        score = _make_score(completeness=1.0, consistency=0.0, clarity=0.0,
-                            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        score = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert critic.dimension_entropy(score) == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------
 # OntologyCritic.compare_scores
 # ---------------------------------------------------------------------------
+
 
 class TestCompareScores:
     def test_same_scores_zero_diffs(self):
@@ -199,6 +228,7 @@ class TestCompareScores:
 # OntologyGenerator.top_confidence_fraction
 # ---------------------------------------------------------------------------
 
+
 class TestTopConfidenceFraction:
     def test_empty_returns_empty(self):
         gen = _make_generator()
@@ -206,7 +236,12 @@ class TestTopConfidenceFraction:
 
     def test_top_half(self):
         gen = _make_generator()
-        entities = [_make_entity("e1", 0.9), _make_entity("e2", 0.5), _make_entity("e3", 0.3), _make_entity("e4", 0.1)]
+        entities = [
+            _make_entity("e1", 0.9),
+            _make_entity("e2", 0.5),
+            _make_entity("e3", 0.3),
+            _make_entity("e4", 0.1),
+        ]
         result = gen.top_confidence_fraction(_make_result(entities), 0.5)
         assert len(result) == 2
         assert result[0].id == "e1"
@@ -221,6 +256,7 @@ class TestTopConfidenceFraction:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.relationship_source_set / target_set
 # ---------------------------------------------------------------------------
+
 
 class TestRelationshipSets:
     def test_empty_result(self):
@@ -240,6 +276,7 @@ class TestRelationshipSets:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_std / improvement_count / score_range
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineScoreStats:
     def test_std_empty_returns_zero(self):

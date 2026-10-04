@@ -7,6 +7,7 @@ web_scraping_tools imports from processors.web_archiving which requires pydantic
 bs4, playwright, etc.  We inject a minimal module stub into sys.modules before
 importing the tool functions so the tests work without those heavy deps.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -19,6 +20,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Build the unified_web_scraper module stub before any tool import
 # ---------------------------------------------------------------------------
+
 
 def _build_scraper_stub() -> None:
     """
@@ -36,9 +38,7 @@ def _build_scraper_stub() -> None:
     if "ipfs_datasets_py.processors.web_archiving" not in sys.modules:
         sys.modules["ipfs_datasets_py.processors.web_archiving"] = m.MagicMock()
 
-    mod = types.ModuleType(
-        "ipfs_datasets_py.processors.web_archiving.unified_web_scraper"
-    )
+    mod = types.ModuleType("ipfs_datasets_py.processors.web_archiving.unified_web_scraper")
 
     # ---- ScraperConfig ----
     class _Config:
@@ -116,6 +116,7 @@ _build_scraper_stub()
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _run(coro):  # type: ignore[no-untyped-def]
     return asyncio.run(coro)
 
@@ -123,6 +124,7 @@ def _run(coro):  # type: ignore[no-untyped-def]
 # ---------------------------------------------------------------------------
 # scrape_url_tool
 # ---------------------------------------------------------------------------
+
 
 class TestScrapeUrlTool:
     """Tests for web_scraping_tools.unified_scraper_tool.scrape_url_tool()."""
@@ -132,6 +134,7 @@ class TestScrapeUrlTool:
         from ipfs_datasets_py.mcp_server.tools.web_scraping_tools.unified_scraper_tool import (
             scrape_url_tool,
         )
+
         self.fn = scrape_url_tool
 
     def test_returns_dict(self) -> None:
@@ -159,6 +162,7 @@ class TestScrapeUrlTool:
 # scrape_multiple_urls_tool
 # ---------------------------------------------------------------------------
 
+
 class TestScrapeMultipleUrlsTool:
     """Tests for web_scraping_tools.unified_scraper_tool.scrape_multiple_urls_tool()."""
 
@@ -167,6 +171,7 @@ class TestScrapeMultipleUrlsTool:
         from ipfs_datasets_py.mcp_server.tools.web_scraping_tools.unified_scraper_tool import (
             scrape_multiple_urls_tool,
         )
+
         self.fn = scrape_multiple_urls_tool
 
     def test_returns_dict(self) -> None:
@@ -186,6 +191,7 @@ class TestScrapeMultipleUrlsTool:
 # check_scraper_methods_tool
 # ---------------------------------------------------------------------------
 
+
 class TestCheckScraperMethodsTool:
     """Tests for web_scraping_tools.unified_scraper_tool.check_scraper_methods_tool()."""
 
@@ -194,6 +200,7 @@ class TestCheckScraperMethodsTool:
         from ipfs_datasets_py.mcp_server.tools.web_scraping_tools.unified_scraper_tool import (
             check_scraper_methods_tool,
         )
+
         self.fn = check_scraper_methods_tool
 
     def test_returns_dict(self) -> None:

@@ -10,6 +10,7 @@ from pathlib import Path
 import json
 from datetime import datetime
 
+
 class MCPCompletionPlan:
     def __init__(self):
         self.project_root = Path(__file__).resolve().parent
@@ -20,7 +21,7 @@ class MCPCompletionPlan:
             "implementation_gaps": [],
             "testing_gaps": [],
             "integration_tasks": [],
-            "priority_actions": []
+            "priority_actions": [],
         }
 
     def analyze_current_state(self):
@@ -32,7 +33,7 @@ class MCPCompletionPlan:
             "cli": ["execute_command"],
             "functions": ["execute_python_snippet"],
             "dataset_tools": ["process_dataset"],
-            "web_archive_tools": ["create_warc"]
+            "web_archive_tools": ["create_warc"],
         }
 
         # Tools ready for testing (fixed but not yet tested)
@@ -40,7 +41,7 @@ class MCPCompletionPlan:
             "security_tools": ["check_access_permission"],
             "vector_tools": ["create_vector_index", "search_vector_index"],
             "graph_tools": ["query_knowledge_graph"],
-            "provenance_tools": ["record_provenance"]
+            "provenance_tools": ["record_provenance"],
         }
 
         # Failing tools that need specific fixes
@@ -48,19 +49,19 @@ class MCPCompletionPlan:
             "dataset_tools": {
                 "load_dataset": "Dataset Hub access issues - needs better mocking",
                 "save_dataset": "Missing DatasetManager class implementation",
-                "convert_dataset_format": "libp2p_kit hanging on import"
+                "convert_dataset_format": "libp2p_kit hanging on import",
             },
             "web_archive_tools": {
                 "extract_dataset_from_cdxj": "Returns error status - needs investigation",
                 "extract_links_from_warc": "Returns error status - needs investigation",
                 "extract_metadata_from_warc": "Returns error status - needs investigation",
                 "extract_text_from_warc": "Returns error status - needs investigation",
-                "index_warc": "Returns error status - needs investigation"
+                "index_warc": "Returns error status - needs investigation",
             },
             "ipfs_tools": {
                 "get_from_ipfs": "Import path issues with ipfs_kit_py",
-                "pin_to_ipfs": "Same import issues as get_from_ipfs"
-            }
+                "pin_to_ipfs": "Same import issues as get_from_ipfs",
+            },
         }
 
         return working_tools, ready_for_testing, failing_tools
@@ -77,22 +78,22 @@ class MCPCompletionPlan:
                 "impact": "Prevents convert_dataset_format from working",
                 "solution": "Create stub implementation or mock the problematic imports",
                 "files": ["ipfs_datasets_py/libp2p_kit.py"],
-                "priority": "HIGH"
+                "priority": "HIGH",
             },
             {
                 "issue": "Implement missing DatasetManager class",
                 "impact": "save_dataset tool cannot function",
                 "solution": "Create DatasetManager or refactor to use existing classes",
                 "files": ["ipfs_datasets_py/ipfs_datasets.py"],
-                "priority": "HIGH"
+                "priority": "HIGH",
             },
             {
                 "issue": "Fix ipfs_kit_py import paths",
                 "impact": "IPFS tools are not functional",
                 "solution": "Resolve import path configuration and dependencies",
                 "files": ["ipfs_datasets_py/mcp_server/tools/ipfs_tools/"],
-                "priority": "HIGH"
-            }
+                "priority": "HIGH",
+            },
         ]
 
         # Dependency issues to resolve
@@ -100,18 +101,18 @@ class MCPCompletionPlan:
             {
                 "dependency": "modelcontextprotocol",
                 "status": "May be missing for some environments",
-                "solution": "Ensure proper installation or provide fallback"
+                "solution": "Ensure proper installation or provide fallback",
             },
             {
                 "dependency": "datasets (Hugging Face)",
                 "status": "Required for dataset tools",
-                "solution": "Add to requirements.txt if not present"
+                "solution": "Add to requirements.txt if not present",
             },
             {
                 "dependency": "ipfs_kit_py",
                 "status": "Import path issues",
-                "solution": "Fix configuration or provide mock implementation"
-            }
+                "solution": "Fix configuration or provide mock implementation",
+            },
         ]
 
         # Implementation gaps
@@ -120,14 +121,14 @@ class MCPCompletionPlan:
                 "area": "Web Archive Tools Error Handling",
                 "description": "5 web archive tools return error status",
                 "action": "Investigate actual implementations and fix error conditions",
-                "tools_affected": list(failing["web_archive_tools"].keys())
+                "tools_affected": list(failing["web_archive_tools"].keys()),
             },
             {
                 "area": "Dataset Loading Mock Strategy",
                 "description": "load_dataset needs better mocking for Hub datasets",
                 "action": "Improve mock strategy or use local test datasets",
-                "tools_affected": ["load_dataset"]
-            }
+                "tools_affected": ["load_dataset"],
+            },
         ]
 
         # Testing gaps (tools ready but not yet verified)
@@ -135,23 +136,23 @@ class MCPCompletionPlan:
             {
                 "category": "security_tools",
                 "tools": ready["security_tools"],
-                "action": "Run tests on tools with fixed imports"
+                "action": "Run tests on tools with fixed imports",
             },
             {
                 "category": "vector_tools",
                 "tools": ready["vector_tools"],
-                "action": "Run tests on tools with fixed imports"
+                "action": "Run tests on tools with fixed imports",
             },
             {
                 "category": "graph_tools",
                 "tools": ready["graph_tools"],
-                "action": "Run tests on tools with fixed imports"
+                "action": "Run tests on tools with fixed imports",
             },
             {
                 "category": "provenance_tools",
                 "tools": ready["provenance_tools"],
-                "action": "Run tests on tools with fixed imports"
-            }
+                "action": "Run tests on tools with fixed imports",
+            },
         ]
 
         # Integration tasks
@@ -161,7 +162,7 @@ class MCPCompletionPlan:
             "Create integration tests with actual MCP clients",
             "Validate async/sync compatibility across all tools",
             "Performance testing for working tools",
-            "Documentation updates for completed tools"
+            "Documentation updates for completed tools",
         ]
 
         # Priority action sequence
@@ -170,50 +171,50 @@ class MCPCompletionPlan:
                 "step": 1,
                 "action": "Fix libp2p_kit import hanging issue",
                 "reason": "Blocking convert_dataset_format tool",
-                "estimated_effort": "1-2 hours"
+                "estimated_effort": "1-2 hours",
             },
             {
                 "step": 2,
                 "action": "Implement DatasetManager or refactor save_dataset",
                 "reason": "Critical dataset functionality missing",
-                "estimated_effort": "2-3 hours"
+                "estimated_effort": "2-3 hours",
             },
             {
                 "step": 3,
                 "action": "Fix ipfs_kit_py import configuration",
                 "reason": "IPFS tools are core functionality",
-                "estimated_effort": "1-2 hours"
+                "estimated_effort": "1-2 hours",
             },
             {
                 "step": 4,
                 "action": "Test the 5 tools with fixed imports",
                 "reason": "Quick wins to increase success rate",
-                "estimated_effort": "30 minutes"
+                "estimated_effort": "30 minutes",
             },
             {
                 "step": 5,
                 "action": "Investigate web archive tools error conditions",
                 "reason": "5 tools affected, significant functionality",
-                "estimated_effort": "2-4 hours"
+                "estimated_effort": "2-4 hours",
             },
             {
                 "step": 6,
                 "action": "Improve dataset loading mock strategy",
                 "reason": "Complete dataset tools functionality",
-                "estimated_effort": "1 hour"
+                "estimated_effort": "1 hour",
             },
             {
                 "step": 7,
                 "action": "Run comprehensive integration tests",
                 "reason": "Verify complete system functionality",
-                "estimated_effort": "1 hour"
-            }
+                "estimated_effort": "1 hour",
+            },
         ]
 
     def estimate_completion_time(self):
         """Estimate time to complete remaining work."""
         total_hours = sum(
-            float(action.get("estimated_effort", "1 hour").split('-')[0].split(' ')[0])
+            float(action.get("estimated_effort", "1 hour").split("-")[0].split(" ")[0])
             for action in self.completion_status["priority_actions"]
         )
         return f"{total_hours}-{total_hours + 5} hours"
@@ -227,7 +228,7 @@ class MCPCompletionPlan:
             "🧪 QUICK WIN: Test 5 tools with fixed imports (security, vector, graph, provenance)",
             "🔍 INVESTIGATE: Debug why 5 web archive tools return error status",
             "📊 TESTING: Run comprehensive integration tests after fixes",
-            "📋 VALIDATE: Ensure all library features are exposed via MCP tools"
+            "📋 VALIDATE: Ensure all library features are exposed via MCP tools",
         ]
 
     def save_completion_plan(self):
@@ -241,7 +242,7 @@ class MCPCompletionPlan:
 
         # Save to file
         plan_file = self.project_root / "mcp_completion_plan.json"
-        with open(plan_file, 'w') as f:
+        with open(plan_file, "w") as f:
             json.dump(self.completion_status, f, indent=2)
 
         return plan_file
@@ -273,11 +274,13 @@ class MCPCompletionPlan:
         print("  After web archive investigation: ~95-100% success rate")
         print("  Full completion achievable within 8-12 hours")
 
+
 def main():
     planner = MCPCompletionPlan()
     plan_file = planner.save_completion_plan()
     planner.print_summary()
     print(f"\n📋 Full completion plan saved to: {plan_file}")
+
 
 if __name__ == "__main__":
     main()

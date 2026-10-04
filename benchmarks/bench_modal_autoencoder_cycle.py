@@ -196,14 +196,18 @@ def _load_documents(path: Path) -> list[Mapping[str, Any]]:
     return result
 
 
-def _partition_summaries(paths: Sequence[Path]) -> tuple[list[Mapping[str, Any]], list[Mapping[str, Any]]]:
+def _partition_summaries(
+    paths: Sequence[Path],
+) -> tuple[list[Mapping[str, Any]], list[Mapping[str, Any]]]:
     cold: list[Mapping[str, Any]] = []
     warm: list[Mapping[str, Any]] = []
     for path in paths:
         for summary in _load_documents(path):
-            state = str(
-                summary.get("benchmark_cache_state") or summary.get("cache_state") or ""
-            ).strip().lower()
+            state = (
+                str(summary.get("benchmark_cache_state") or summary.get("cache_state") or "")
+                .strip()
+                .lower()
+            )
             if state == "cold":
                 cold.append(summary)
             elif state == "warm":

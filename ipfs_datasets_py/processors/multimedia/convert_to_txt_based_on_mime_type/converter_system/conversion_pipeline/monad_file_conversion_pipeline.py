@@ -6,7 +6,7 @@ from typing import Any, Callable, Coroutine, Generator, TypeVar, Type
 
 
 T = TypeVar("T")
-NestedDict = TypeVar("NestedDict", dict[str, Any], dict[str,dict[str, Any]])
+NestedDict = TypeVar("NestedDict", dict[str, Any], dict[str, dict[str, Any]])
 
 
 from pydantic import BaseModel, Field
@@ -24,24 +24,21 @@ from .monad_file_writer import file_writer
 from utils.run_in_process_pool import run_in_process_pool, run_pipeline_in_process_pool
 
 import logging
+
 logger = logging.getLogger(__name__)
-
-
-
-
-
 
 
 # define a semaphore with thread-safe counter
 from multiprocessing import Semaphore, Value
-class SafeSemaphore:
 
+
+class SafeSemaphore:
     # constructor
     def __init__(self, value=1):
         # initialize semaphore with given value
         self._semaphore = Semaphore(value)
-        self._counter = Value('i', value)
-    
+        self._counter = Value("i", value)
+
     # acquire the semaphore
     def acquire(self, block=True, timeout=None):
         result = self._semaphore.acquire(block, timeout)
@@ -49,25 +46,26 @@ class SafeSemaphore:
             with self._counter.get_lock():
                 self._counter.value -= 1
         return result
-    
+
     # release the semaphore
     def release(self):
         with self._counter.get_lock():
             self._counter.value += 1
         self._semaphore.release()
-    
+
     # get current semaphore value
     def value(self):
         with self._counter.get_lock():
             return self._counter.value
-            
+
     # context manager support
     def __enter__(self):
         self.acquire()
         return self
-        
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.release()
+
 
 def sync(semaphore):
     with semaphore:
@@ -77,11 +75,6 @@ def sync(semaphore):
 ##############################
 
 
-
-
-
-
-
 #################################
 
 
@@ -89,36 +82,44 @@ def _print(msg):
     print(msg)
     return lambda x: x
 
+
 def apply(func: Callable) -> FileUnit:
     return lambda x: func(x)
+
 
 def emit(msg1: str, msg2: str, type: T, emit_func1: Callable, emit_func2: Callable):
     return lambda x: emit_func1(msg1) if isinstance(x, type) else emit_func2(msg2)
 
+
 def log(on_success: str = "Success", on_failure: str = "Error"):
-    return lambda x: log_success(x, on_success) if not isinstance(x, Exception) else log_failure(x, on_failure)
+    return lambda x: (
+        log_success(x, on_success) if not isinstance(x, Exception) else log_failure(x, on_failure)
+    )
 
 
 def log_success(x, msg: str):
     logger.info(msg)
     return x
 
+
 def log_failure(x, msg: str):
     logger.error(msg)
     return x
 
 
-
-FatalError = TypeVar("FatalError", 
-                     PureError, ValueError,
-                     TypeError, KeyError,
-                    )
+FatalError = TypeVar(
+    "FatalError",
+    PureError,
+    ValueError,
+    TypeError,
+    KeyError,
+)
 
 
 #################################
 
-class Autopsy(ErrorMonad[T]):
 
+class Autopsy(ErrorMonad[T]):
     def __init__(self, work: Any) -> None:
         self._work = work
         self._chained = None
@@ -127,9 +128,9 @@ class Autopsy(ErrorMonad[T]):
     def unit(value):
         return Autopsy(value)
 
-    def bind(self, next_work: Any) -> 'Autopsy':
+    def bind(self, next_work: Any) -> "Autopsy":
         if isinstance(next_work, Exception):
-            return self.left(next_work) # Propagate errors
+            return self.left(next_work)  # Propagate errors
 
         self._chained = next_work
         return self
@@ -149,7 +150,9 @@ class Autopsy(ErrorMonad[T]):
 def find_error(file_unit: FileUnit, monad: Monad) -> Monad:
     return monad(file_unit)
 
+
 import statistics as stats
+
 
 def create_statistics(errors: list[Exception]) -> dict[str, int]:
 
@@ -160,49 +163,60 @@ def create_statistics(errors: list[Exception]) -> dict[str, int]:
         if error_type not in error_types:
             error_types[error_type] = []
         error_types[error_type].append(error)
-    
+
     # Generate statistics
     statistics = {}
     for error_type, type_errors in error_types.items():
         statistics[error_type] = {
-            'count': len(type_errors),
-            'percentage': (len(type_errors) / len(errors)) * 100 if errors else 0
+            "count": len(type_errors),
+            "percentage": (len(type_errors) / len(errors)) * 100 if errors else 0,
         }
-    
+
     # Overall statistics
-    statistics['total'] = len(errors)
-    statistics['unique_types'] = len(error_types)
-    statistics['total_average'] = stats.mean([len(type_errors) for type_errors in error_types.values()]) if error_types else 0
-    statistics['count_fatal_errors'] = len([error for error in errors if isinstance(error, FatalError)])
+    statistics["total"] = len(errors)
+    statistics["unique_types"] = len(error_types)
+    statistics["total_average"] = (
+        stats.mean([len(type_errors) for type_errors in error_types.values()]) if error_types else 0
+    )
+    statistics["count_fatal_errors"] = len(
+        [error for error in errors if isinstance(error, FatalError)]
+    )
 
 
 def what_type_of(error: Exception):
     """Determine the type of error that occurred."""
     return lambda x: x.update(which=type(error))
 
+
 def where(error: Exception):
     """Determine in what file the error occurred."""
     where = error.__traceback__.tb_frame.f_code.co_filename
     return lambda x: x.update(where=where)
 
+
 def when(error: Exception):
     """Determine when the error occurred."""
     return lambda x: x.update(when=error.__traceback__.tb_lineno)
+
 
 def what(error: Exception):
     """Determine what the error was."""
     return lambda x: x.update(what=error.args[0])
 
+
 def why(error: Exception):
     """Determine why the error occurred."""
     return lambda x: x.update(why=error.__cause__)
+
 
 def determine_if_fatal(error: Exception):
     """Determine if the error is something that can be recovered from."""
     return lambda x: x.update(fatal=isinstance(error, FatalError))
 
+
 def end(x):
     return x
+
 
 from queue import Queue
 from datetime import datetime
@@ -213,13 +227,20 @@ def error_pipeline(file_unit: FileUnit) -> dict[str, Any]:
     Setup a pipeline to unpack error data within the file unit.
     """
     error = file_unit.error_data
-    pipeline = start({'file_unit': file_unit,}, ErrorMonad
-    ) >> what(error
-    ) >> what_type_of(error
-    ) >> where(error
-    ) >> why(error
-    ) >> determine_if_fatal(error
-    ) >> end
+    pipeline = (
+        start(
+            {
+                "file_unit": file_unit,
+            },
+            ErrorMonad,
+        )
+        >> what(error)
+        >> what_type_of(error)
+        >> where(error)
+        >> why(error)
+        >> determine_if_fatal(error)
+        >> end
+    )
     return pipeline()
 
 
@@ -237,25 +258,21 @@ def document_errors(errored_units: list[FileUnit]) -> Generator:
     results_dicts = list(map(error_pipeline, errored_units))
 
     # Create statistics from the results
-    statistics = create_statistics([dict['file_unit'].error_data for dict in results_dicts])
+    statistics = create_statistics([dict["file_unit"].error_data for dict in results_dicts])
 
     # Save statistics to a file
-    with open(f'error_statistics_{datetime.now()}.json', 'w') as f:
+    with open(f"error_statistics_{datetime.now()}.json", "w") as f:
         json.dump(statistics, f, indent=4)
 
     for dict_ in results_dicts:
-        if not dict_['fatal']:
-            yield dict_['file_unit']
-        
-
-
-
+        if not dict_["fatal"]:
+            yield dict_["file_unit"]
 
 
 def monad_file_conversion_pipeline(
-        file_batch: list[FileUnit], 
-        configs: dict[str, Any] | BaseModel, 
-        ) -> Generator:
+    file_batch: list[FileUnit],
+    configs: dict[str, Any] | BaseModel,
+) -> Generator:
     """
     Write data to a file using the appropriate function based on the file extension.
 
@@ -275,34 +292,44 @@ def monad_file_conversion_pipeline(
         """
         this_file = file_unit.file_path.stem
 
-        return start(file_unit, Async
-        ) >> _print(
-            f"Begin processing of {this_file}"
-        ) >> file_loader >> _print(
-            f"Begin conversion of {this_file}"
-        ) >> file_converter >> _print(
-            f"Begin writing {this_file} to disk."
-        ) >> file_writer
+        return (
+            start(file_unit, Async)
+            >> _print(f"Begin processing of {this_file}")
+            >> file_loader
+            >> _print(f"Begin conversion of {this_file}")
+            >> file_converter
+            >> _print(f"Begin writing {this_file} to disk.")
+            >> file_writer
+        )
 
-    pipeline_batch = [(conversion_pipeline, file,) for file in file_batch]
+    pipeline_batch = [
+        (
+            conversion_pipeline,
+            file,
+        )
+        for file in file_batch
+    ]
 
     # Run the pipeline in a process pool
-    for input, output in run_pipeline_in_process_pool(pipeline_batch, max_workers=configs.max_workers):
+    for input, output in run_pipeline_in_process_pool(
+        pipeline_batch, max_workers=configs.max_workers
+    ):
         if isinstance(output, Exception):
             log_failure(output, f"Error with {input.file_path.name}: ")
         else:
             log_success(f"Step {input.file_path.stem} successful:")
         yield input, output
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Define the file paths and configurations
     file_paths = [
-        'path/to/file1.txt',
-        'path/to/file2.json',
-        'path/to/file3.csv',
+        "path/to/file1.txt",
+        "path/to/file2.json",
+        "path/to/file3.csv",
     ]
     configs = {
-        'max_workers': 4,
+        "max_workers": 4,
     }
 
     def send_to_error_analyzer():

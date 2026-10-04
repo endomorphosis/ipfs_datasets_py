@@ -135,20 +135,20 @@ Scanner script checks:
 ```python
 # Old imports that need updating
 OLD_IMPORTS = [
-    'from ipfs_datasets_py.mcp_dashboard',
-    'from ipfs_datasets_py.cache',
-    'from ipfs_datasets_py.web_archive',
-    'from ipfs_datasets_py.libp2p_kit',
-    'from ipfs_datasets_py.discord_cli',
-    'from ipfs_datasets_py.graphrag_integration',
-    'from ipfs_datasets_py.p2p_peer_registry',
+    "from ipfs_datasets_py.mcp_dashboard",
+    "from ipfs_datasets_py.cache",
+    "from ipfs_datasets_py.web_archive",
+    "from ipfs_datasets_py.libp2p_kit",
+    "from ipfs_datasets_py.discord_cli",
+    "from ipfs_datasets_py.graphrag_integration",
+    "from ipfs_datasets_py.p2p_peer_registry",
 ]
 
 # Checks for best practices
-has_best_practices = 'best practice' in content.lower()
+has_best_practices = "best practice" in content.lower()
 
 # Checks for examples
-has_examples = bool(re.search(r'```python|```bash|## Example', content))
+has_examples = bool(re.search(r"```python|```bash|## Example", content))
 ```
 
 ---

@@ -6,6 +6,7 @@ Tests cover:
 - check_rate_limit: check if request is within limits
 - manage_rate_limits: manage rate limit configuration
 """
+
 from __future__ import annotations
 
 import pytest
@@ -24,6 +25,7 @@ class TestConfigureRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             configure_rate_limits,
         )
+
         result = await configure_rate_limits(
             limits=[
                 {
@@ -45,6 +47,7 @@ class TestConfigureRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             configure_rate_limits,
         )
+
         result = await configure_rate_limits(
             limits=[{"name": "my_api", "requests_per_second": 5.0}]
         )
@@ -60,6 +63,7 @@ class TestConfigureRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             configure_rate_limits,
         )
+
         result = await configure_rate_limits(limits=[])
         assert result["configured_count"] == 0
         assert result["errors"] == []
@@ -74,6 +78,7 @@ class TestConfigureRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             configure_rate_limits,
         )
+
         result = await configure_rate_limits(limits=[], backup_current=True)
         assert "backup" in result
 
@@ -91,6 +96,7 @@ class TestCheckRateLimit:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             check_rate_limit,
         )
+
         result = await check_rate_limit("default", identifier="user_1")
         assert isinstance(result, dict)
 
@@ -104,6 +110,7 @@ class TestCheckRateLimit:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             check_rate_limit,
         )
+
         result = await check_rate_limit("default", identifier="user_2")
         assert "allowed" in result
         assert isinstance(result["allowed"], bool)
@@ -118,6 +125,7 @@ class TestCheckRateLimit:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             check_rate_limit,
         )
+
         result = await check_rate_limit("default", identifier="user_3")
         assert result["limit_name"] == "default"
 
@@ -135,6 +143,7 @@ class TestManageRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             manage_rate_limits,
         )
+
         result = await manage_rate_limits(action="list")
         assert isinstance(result, dict)
 
@@ -148,6 +157,7 @@ class TestManageRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             manage_rate_limits,
         )
+
         result = await manage_rate_limits(action="stats")
         assert isinstance(result, dict)
 
@@ -161,5 +171,6 @@ class TestManageRateLimits:
         from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import (
             manage_rate_limits,
         )
+
         result = await manage_rate_limits(action="reset")
         assert isinstance(result, dict)

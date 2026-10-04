@@ -6,12 +6,14 @@ Methods under test:
   - OntologyGenerator.entity_avg_confidence(result)
   - OntologyCritic.dimension_delta_summary(before, after)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -26,7 +28,10 @@ def _push_opt(o, avg):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,11 +43,13 @@ def _push_feedback(a, score):
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="Test", text=eid, confidence=confidence)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=[], confidence=1.0, metadata={}, errors=[]
     )
@@ -50,14 +57,20 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -65,12 +78,14 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_below_threshold
 # ---------------------------------------------------------------------------
+
 
 class TestScoreBelowThreshold:
     @pytest.mark.parametrize(
@@ -93,6 +108,7 @@ class TestScoreBelowThreshold:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_trend_direction
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackTrendDirection:
     @pytest.mark.parametrize(
@@ -122,6 +138,7 @@ class TestFeedbackTrendDirection:
 # OntologyGenerator.entity_avg_confidence
 # ---------------------------------------------------------------------------
 
+
 class TestEntityAvgConfidence:
     @pytest.mark.parametrize(
         "confidences,predicate",
@@ -143,12 +160,17 @@ class TestEntityAvgConfidence:
 # OntologyCritic.dimension_delta_summary
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionDeltaSummary:
     @pytest.mark.parametrize(
         "before,after,predicate",
         [
             (_make_score(), _make_score(), lambda summary: len(summary) == 6),
-            (_make_score(), _make_score(), lambda summary: all(v == pytest.approx(0.0) for v in summary.values())),
+            (
+                _make_score(),
+                _make_score(),
+                lambda summary: all(v == pytest.approx(0.0) for v in summary.values()),
+            ),
             (
                 _make_score(completeness=0.3),
                 _make_score(completeness=0.7),

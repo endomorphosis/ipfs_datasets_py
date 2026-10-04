@@ -21,18 +21,10 @@ repos = gh.list_repos(limit=10)
 repo = gh.get_repo("owner", "repo")
 
 # Create pull request
-pr = gh.create_pr(
-    title="Fix bug",
-    body="Description",
-    base="main"
-)
+pr = gh.create_pr(title="Fix bug", body="Description", base="main")
 
 # Create issue
-issue = gh.create_issue(
-    title="Bug report",
-    body="Details",
-    labels=["bug"]
-)
+issue = gh.create_issue(title="Bug report", body="Details", labels=["bug"])
 
 # Get statistics
 stats = gh.get_stats()
@@ -57,7 +49,7 @@ counter.count_call("gh_pr_list", count=1, cached=False)
 counter.count_call("gh_issue_view", count=5, cached=True)
 
 # Run gh commands with tracking
-result = counter.run_gh_command(['gh', 'pr', 'list'])
+result = counter.run_gh_command(["gh", "pr", "list"])
 
 # Get statistics
 stats = counter.get_statistics()
@@ -78,10 +70,7 @@ Monitor and manage GitHub API rate limits:
 ```python
 from ipfs_datasets_py.utils.github import RateLimiter
 
-limiter = RateLimiter(
-    warning_threshold=100,
-    aggressive_threshold=50
-)
+limiter = RateLimiter(warning_threshold=100, aggressive_threshold=50)
 
 # Check rate limit before operations
 try:
@@ -115,8 +104,8 @@ cache = GitHubCache()
 cache.set(
     "repos/owner/repo",
     response_data,
-    etag="W/\"abc123\"",
-    operation_type="get_repo_info"  # Uses configured TTL
+    etag='W/"abc123"',
+    operation_type="get_repo_info",  # Uses configured TTL
 )
 
 # Get cached response
@@ -135,9 +124,9 @@ cache.invalidate_by_operation("list_repos")
 
 ```python
 gh = GitHubCLI(
-    enable_cache=True,           # Uses GitHubCache
-    enable_tracking=True,         # Uses APICounter
-    enable_rate_limiting=True     # Uses RateLimiter
+    enable_cache=True,  # Uses GitHubCache
+    enable_tracking=True,  # Uses APICounter
+    enable_rate_limiting=True,  # Uses RateLimiter
 )
 
 # All operations are cached, tracked, and rate-limited
@@ -172,10 +161,12 @@ rate_limiting:
 ```python
 # Old code
 from ipfs_datasets_py.utils.github_wrapper import GitHubCLI
+
 gh = GitHubCLI()
 
 # New code
 from ipfs_datasets_py.utils.github import GitHubCLI
+
 gh = GitHubCLI()
 
 # Or import from top level (after Phase 2)
@@ -216,9 +207,9 @@ Thin wrapper pattern:
 
 from ipfs_datasets_py.utils.github import APICounter
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     counter = APICounter()
-    counter.run_gh_command(['gh', 'pr', 'list'])
+    counter.run_gh_command(["gh", "pr", "list"])
     print(counter.report())
     counter.save_metrics()
 ```

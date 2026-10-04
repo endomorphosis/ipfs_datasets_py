@@ -42,6 +42,7 @@ from ipfs_datasets_py.logic.CEC.native.inference_rules.cognitive import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_agent(name: str = "alice") -> VariableTerm:
     agent_sort = Sort("agent")
     return VariableTerm(Variable(name, agent_sort))
@@ -82,6 +83,7 @@ def perception(agent, f) -> CognitiveFormula:
 # ---------------------------------------------------------------------------
 # BeliefDistribution: B(a, P∧Q) ⊢ B(a, P) ∧ B(a, Q)
 # ---------------------------------------------------------------------------
+
 
 class TestBeliefDistribution:
     def setup_method(self):
@@ -136,6 +138,7 @@ class TestBeliefDistribution:
 # KnowledgeImpliesBelief: K(a, P) ⊢ B(a, P)
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeImpliesBelief:
     def setup_method(self):
         self.rule = KnowledgeImpliesBelief()
@@ -172,6 +175,7 @@ class TestKnowledgeImpliesBelief:
 # ---------------------------------------------------------------------------
 # BeliefMonotonicity: B(a, P) ∧ (P→Q) ⊢ B(a, Q)
 # ---------------------------------------------------------------------------
+
 
 class TestBeliefMonotonicity:
     def setup_method(self):
@@ -219,6 +223,7 @@ class TestBeliefMonotonicity:
 # IntentionCommitment: I(a, P) ∧ B(a, P→Q) ⊢ I(a, Q)
 # ---------------------------------------------------------------------------
 
+
 class TestIntentionCommitment:
     def setup_method(self):
         self.rule = IntentionCommitment()
@@ -265,6 +270,7 @@ class TestIntentionCommitment:
 # BeliefConjunction: B(a, P) ∧ B(a, Q) ⊢ B(a, P∧Q)
 # ---------------------------------------------------------------------------
 
+
 class TestBeliefConjunction:
     def setup_method(self):
         self.rule = BeliefConjunction()
@@ -304,6 +310,7 @@ class TestBeliefConjunction:
 # KnowledgeDistribution: K(a, P∧Q) ⊢ K(a, P) ∧ K(a, Q)
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeDistribution:
     def setup_method(self):
         self.rule = KnowledgeDistribution()
@@ -339,6 +346,7 @@ class TestKnowledgeDistribution:
 # ---------------------------------------------------------------------------
 # IntentionMeansEnd: I(a, goal) ∧ B(a, action→goal) ⊢ I(a, action)
 # ---------------------------------------------------------------------------
+
 
 class TestIntentionMeansEnd:
     def setup_method(self):
@@ -382,6 +390,7 @@ class TestIntentionMeansEnd:
 # PerceptionImpliesKnowledge: P(a, φ) ⊢ K(a, φ)
 # ---------------------------------------------------------------------------
 
+
 class TestPerceptionImpliesKnowledge:
     def setup_method(self):
         self.rule = PerceptionImpliesKnowledge()
@@ -418,6 +427,7 @@ class TestPerceptionImpliesKnowledge:
 # ---------------------------------------------------------------------------
 # BeliefNegation: B(a, ¬P) ⊢ ¬B(a, P)
 # ---------------------------------------------------------------------------
+
 
 class TestBeliefNegation:
     def setup_method(self):
@@ -463,6 +473,7 @@ class TestBeliefNegation:
 # KnowledgeConjunction: K(a, P) ∧ K(a, Q) ⊢ K(a, P∧Q)
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeConjunction:
     def setup_method(self):
         self.rule = KnowledgeConjunction()
@@ -498,6 +509,7 @@ class TestKnowledgeConjunction:
 # ---------------------------------------------------------------------------
 # IntentionPersistence: I(a, P) ∧ ¬B(a, P) ⊢ I(a, P)
 # ---------------------------------------------------------------------------
+
 
 class TestIntentionPersistence:
     def setup_method(self):
@@ -543,6 +555,7 @@ class TestIntentionPersistence:
 # ---------------------------------------------------------------------------
 # BeliefRevision: B(a, P) ∧ P(a, ¬P) ⊢ B(a, ¬P)
 # ---------------------------------------------------------------------------
+
 
 class TestBeliefRevision:
     def setup_method(self):
@@ -590,6 +603,7 @@ class TestBeliefRevision:
 # KnowledgeMonotonicity: K(a, P) ∧ (P→Q) ⊢ K(a, Q)
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeMonotonicity:
     def setup_method(self):
         self.rule = KnowledgeMonotonicity()
@@ -634,6 +648,7 @@ class TestKnowledgeMonotonicity:
 # ---------------------------------------------------------------------------
 # Chain tests: composing multiple rules
 # ---------------------------------------------------------------------------
+
 
 class TestCognitiveRuleChains:
     def setup_method(self):
@@ -725,13 +740,22 @@ class TestCognitiveRuleChains:
 # Export / name uniqueness tests
 # ---------------------------------------------------------------------------
 
+
 class TestCognitiveRulesExports:
     def test_all_thirteen_rules_importable(self):
         rules = [
-            BeliefDistribution, KnowledgeImpliesBelief, BeliefMonotonicity,
-            IntentionCommitment, BeliefConjunction, KnowledgeDistribution,
-            IntentionMeansEnd, PerceptionImpliesKnowledge, BeliefNegation,
-            KnowledgeConjunction, IntentionPersistence, BeliefRevision,
+            BeliefDistribution,
+            KnowledgeImpliesBelief,
+            BeliefMonotonicity,
+            IntentionCommitment,
+            BeliefConjunction,
+            KnowledgeDistribution,
+            IntentionMeansEnd,
+            PerceptionImpliesKnowledge,
+            BeliefNegation,
+            KnowledgeConjunction,
+            IntentionPersistence,
+            BeliefRevision,
             KnowledgeMonotonicity,
         ]
         assert len(rules) == 13
@@ -739,10 +763,18 @@ class TestCognitiveRulesExports:
     def test_all_rule_names_are_unique(self):
         agent = _make_agent()
         rules = [
-            BeliefDistribution(), KnowledgeImpliesBelief(), BeliefMonotonicity(),
-            IntentionCommitment(), BeliefConjunction(), KnowledgeDistribution(),
-            IntentionMeansEnd(), PerceptionImpliesKnowledge(), BeliefNegation(),
-            KnowledgeConjunction(), IntentionPersistence(), BeliefRevision(),
+            BeliefDistribution(),
+            KnowledgeImpliesBelief(),
+            BeliefMonotonicity(),
+            IntentionCommitment(),
+            BeliefConjunction(),
+            KnowledgeDistribution(),
+            IntentionMeansEnd(),
+            PerceptionImpliesKnowledge(),
+            BeliefNegation(),
+            KnowledgeConjunction(),
+            IntentionPersistence(),
+            BeliefRevision(),
             KnowledgeMonotonicity(),
         ]
         names = [r.name() for r in rules]
@@ -750,6 +782,7 @@ class TestCognitiveRulesExports:
 
     def test_all_rules_in_module_all(self):
         import ipfs_datasets_py.logic.CEC.native.inference_rules.cognitive as cog_mod
+
         all_names = cog_mod.__all__
         assert "BeliefDistribution" in all_names
         assert "KnowledgeImpliesBelief" in all_names
@@ -768,6 +801,7 @@ class TestCognitiveRulesExports:
 
     def test_perception_operator_is_in_enum(self):
         from ipfs_datasets_py.logic.CEC.native.dcec_types import CognitiveOperator
+
         assert CognitiveOperator.PERCEPTION is not None
         assert CognitiveOperator.PERCEPTION.value == "P"
 
@@ -775,10 +809,18 @@ class TestCognitiveRulesExports:
         agent = _make_agent()
         p = atom("p")
         rules = [
-            BeliefDistribution(), KnowledgeImpliesBelief(), BeliefMonotonicity(),
-            IntentionCommitment(), BeliefConjunction(), KnowledgeDistribution(),
-            IntentionMeansEnd(), PerceptionImpliesKnowledge(), BeliefNegation(),
-            KnowledgeConjunction(), IntentionPersistence(), BeliefRevision(),
+            BeliefDistribution(),
+            KnowledgeImpliesBelief(),
+            BeliefMonotonicity(),
+            IntentionCommitment(),
+            BeliefConjunction(),
+            KnowledgeDistribution(),
+            IntentionMeansEnd(),
+            PerceptionImpliesKnowledge(),
+            BeliefNegation(),
+            KnowledgeConjunction(),
+            IntentionPersistence(),
+            BeliefRevision(),
             KnowledgeMonotonicity(),
         ]
         for rule in rules:
@@ -789,10 +831,18 @@ class TestCognitiveRulesExports:
         agent = _make_agent()
         p = atom("p")
         rules = [
-            BeliefDistribution(), KnowledgeImpliesBelief(), BeliefMonotonicity(),
-            IntentionCommitment(), BeliefConjunction(), KnowledgeDistribution(),
-            IntentionMeansEnd(), PerceptionImpliesKnowledge(), BeliefNegation(),
-            KnowledgeConjunction(), IntentionPersistence(), BeliefRevision(),
+            BeliefDistribution(),
+            KnowledgeImpliesBelief(),
+            BeliefMonotonicity(),
+            IntentionCommitment(),
+            BeliefConjunction(),
+            KnowledgeDistribution(),
+            IntentionMeansEnd(),
+            PerceptionImpliesKnowledge(),
+            BeliefNegation(),
+            KnowledgeConjunction(),
+            IntentionPersistence(),
+            BeliefRevision(),
             KnowledgeMonotonicity(),
         ]
         for rule in rules:

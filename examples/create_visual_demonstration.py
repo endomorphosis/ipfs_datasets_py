@@ -7,11 +7,12 @@ Create visual demonstration of the Maps tab functionality.
 from pathlib import Path
 import base64
 
+
 def create_visual_demonstration():
     """Create a visual demonstration of the Maps feature."""
-    
+
     # Create a comprehensive demonstration report
-    demo_content = '''# 🗺️ Enhanced Investigation Dashboard - Maps Tab Implementation
+    demo_content = """# 🗺️ Enhanced Investigation Dashboard - Maps Tab Implementation
 
 ## Visual Demonstration
 
@@ -94,18 +95,20 @@ I've successfully implemented a comprehensive **Maps** tab for the MCP Server da
 - Dashboard integration: Fully functional with real-time updates
 - Query processing: Natural language support working
 
-The Maps tab now provides powerful geospatial analysis capabilities that integrate seamlessly with the existing GraphRAG system, allowing users to investigate large archives of data with both spatial and temporal dimensions while maintaining filtering controls to avoid information overload.'''
-    
+The Maps tab now provides powerful geospatial analysis capabilities that integrate seamlessly with the existing GraphRAG system, allowing users to investigate large archives of data with both spatial and temporal dimensions while maintaining filtering controls to avoid information overload."""
+
     # Save the demonstration
-    output_dir = Path("/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots")
+    output_dir = Path(
+        "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots"
+    )
     output_dir.mkdir(exist_ok=True)
-    
+
     demo_file = output_dir / "VISUAL_DEMONSTRATION.md"
-    with open(demo_file, 'w', encoding='utf-8') as f:
+    with open(demo_file, "w", encoding="utf-8") as f:
         f.write(demo_content)
-    
+
     print(f"✅ Visual demonstration created: {demo_file}")
-    
+
     # Also create a simple summary
     summary = """
 ## 🎉 Maps Tab Implementation Complete!
@@ -127,7 +130,7 @@ The Maps tab now provides powerful geospatial analysis capabilities that integra
 ### **Ready for Use:**
 The Maps tab is fully integrated and provides powerful geospatial analysis capabilities for investigating large archives of data while maintaining the ability to filter scope and avoid information overload.
 """
-    
+
     print(summary)
     return demo_file
 

@@ -29,11 +29,14 @@ from typing import Any, Dict, List, Optional
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_formula(text: str = "O(pay(alice))"):
     """Return a DeonticFormula for testing (from converters/deontic_logic_core.py)."""
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-        create_obligation, LegalAgent
+        create_obligation,
+        LegalAgent,
     )
+
     agent = LegalAgent(identifier="alice", name="Alice", agent_type="person")
     return create_obligation("pay_obligation", agent, source_text=text)
 
@@ -41,8 +44,12 @@ def _make_formula(text: str = "O(pay(alice))"):
 def _make_rule_set(name="TestRules"):
     """Return a small DeonticRuleSet."""
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-        DeonticRuleSet, create_obligation, create_prohibition, LegalAgent
+        DeonticRuleSet,
+        create_obligation,
+        create_prohibition,
+        LegalAgent,
     )
+
     agent = LegalAgent(identifier="bob", name="Bob", agent_type="person")
     f1 = create_obligation("pay_tax", agent, source_text="Bob must pay tax")
     f2 = create_prohibition("evade_tax", agent, source_text="Bob cannot evade tax")
@@ -53,12 +60,16 @@ def _make_rule_set(name="TestRules"):
 # 1. ProofStatus and ProofResult types
 # ===========================================================================
 
+
 class TestProofStatusEnum:
     """Tests for proof_execution_engine_types.ProofStatus"""
 
     def test_all_values(self):
         """GIVEN ProofStatus enum WHEN iterating THEN all 5 values present."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         values = {s.value for s in ProofStatus}
         assert "success" in values
         assert "failure" in values
@@ -72,8 +83,10 @@ class TestProofResultDataclass:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofResult, ProofStatus
+            ProofResult,
+            ProofStatus,
         )
+
         self.ProofResult = ProofResult
         self.ProofStatus = ProofStatus
 
@@ -111,8 +124,16 @@ class TestProofResultDataclass:
         """GIVEN ProofResult WHEN to_dict THEN dict has all expected keys."""
         r = self.ProofResult(prover="coq", statement="R", status=self.ProofStatus.ERROR)
         d = r.to_dict()
-        for key in ("prover", "statement", "status", "proof_output",
-                    "execution_time", "errors", "warnings", "metadata"):
+        for key in (
+            "prover",
+            "statement",
+            "status",
+            "proof_output",
+            "execution_time",
+            "errors",
+            "warnings",
+            "metadata",
+        ):
             assert key in d
 
 
@@ -120,17 +141,22 @@ class TestProofResultDataclass:
 # 2. ProofExecutionEngine construction
 # ===========================================================================
 
+
 class TestProofExecutionEngineInit:
     """Tests for ProofExecutionEngine.__init__ and helpers."""
 
     def _make_engine(self, **kwargs):
         """Create engine with auto-install disabled to avoid hanging."""
-        with patch.dict(os.environ, {
-            "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0",
+            },
+        ):
             from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
-                ProofExecutionEngine
+                ProofExecutionEngine,
             )
+
             return ProofExecutionEngine(**kwargs)
 
     def test_init_defaults(self):
@@ -179,12 +205,16 @@ class TestProofExecutionEngineInit:
 
     def test_env_default_prover(self):
         """GIVEN env var IPFS_DATASETS_PY_PROOF_PROVER=cvc5 WHEN init THEN default_prover is cvc5."""
-        with patch.dict(os.environ, {
-            "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0",
-            "IPFS_DATASETS_PY_PROOF_PROVER": "cvc5",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0",
+                "IPFS_DATASETS_PY_PROOF_PROVER": "cvc5",
+            },
+        ):
             from importlib import reload
             import ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine as pem
+
             engine = pem.ProofExecutionEngine(
                 enable_rate_limiting=False,
                 enable_validation=False,
@@ -196,14 +226,16 @@ class TestProofExecutionEngineInit:
 # 3. ProofExecutionEngine.prove_deontic_formula — mocked provers
 # ===========================================================================
 
+
 class TestProveFormulaMockedProvers:
     """Test prove_deontic_formula with available_provers mocked."""
 
     def _make_engine(self):
         with patch.dict(os.environ, {"IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0"}):
             from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
-                ProofExecutionEngine
+                ProofExecutionEngine,
             )
+
             return ProofExecutionEngine(
                 enable_caching=False,
                 enable_rate_limiting=False,
@@ -215,7 +247,10 @@ class TestProveFormulaMockedProvers:
         engine = self._make_engine()
         engine.available_provers = {}  # empty — no provers
         formula = _make_formula()
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.UNSUPPORTED
 
@@ -224,7 +259,10 @@ class TestProveFormulaMockedProvers:
         engine = self._make_engine()
         engine.available_provers = {"z3": False}
         formula = _make_formula()
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.ERROR
 
@@ -237,7 +275,10 @@ class TestProveFormulaMockedProvers:
         rate_limiter_mock.check_rate_limit.side_effect = Exception("rate limit exceeded")
         engine.rate_limiter = rate_limiter_mock
         formula = _make_formula()
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.ERROR
         assert "Rate limit exceeded" in result.errors[0]
@@ -251,7 +292,10 @@ class TestProveFormulaMockedProvers:
         validator_mock.validate_formula.side_effect = Exception("formula too complex")
         engine.validator = validator_mock
         formula = _make_formula()
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.ERROR
         assert "Validation failed" in result.errors[0]
@@ -261,12 +305,19 @@ class TestProveFormulaMockedProvers:
         engine = self._make_engine()
         engine.available_provers = {"unknown_prover": True}
         formula = _make_formula()
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         result = engine.prove_deontic_formula(formula, prover="unknown_prover")
         assert result.status == ProofStatus.UNSUPPORTED
 
     def _mock_translate(self, engine, prover):
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import TranslationResult, LogicTranslationTarget
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            TranslationResult,
+            LogicTranslationTarget,
+        )
+
         mock_tr = TranslationResult(
             target=LogicTranslationTarget.SMT_LIB,
             translated_formula="(assert true)",
@@ -288,7 +339,10 @@ class TestProveFormulaMockedProvers:
         mock_result.returncode = 0
         mock_result.stdout = "sat\n(model)\n"
         mock_result.stderr = ""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", return_value=mock_result):
             result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.SUCCESS
@@ -304,7 +358,10 @@ class TestProveFormulaMockedProvers:
         mock_result.returncode = 0
         mock_result.stdout = "unsat"
         mock_result.stderr = ""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", return_value=mock_result):
             result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.SUCCESS
@@ -320,7 +377,10 @@ class TestProveFormulaMockedProvers:
         mock_result.returncode = 1
         mock_result.stdout = ""
         mock_result.stderr = "parse error"
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", return_value=mock_result):
             result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.ERROR
@@ -328,12 +388,16 @@ class TestProveFormulaMockedProvers:
     def test_z3_timeout_returns_timeout_status(self):
         """GIVEN z3 subprocess times out WHEN prove THEN TIMEOUT status."""
         import subprocess
+
         engine = self._make_engine()
         engine.available_provers = {"z3": True}
         engine.prover_binaries = {"z3": "z3"}
         formula = _make_formula()
         self._mock_translate(engine, "z3")
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("z3", 60)):
             result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.TIMEOUT
@@ -345,7 +409,10 @@ class TestProveFormulaMockedProvers:
         engine.prover_binaries = {"z3": "z3"}
         formula = _make_formula()
         self._mock_translate(engine, "z3")
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", side_effect=OSError("file not found")):
             result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.ERROR
@@ -361,7 +428,10 @@ class TestProveFormulaMockedProvers:
         mock_result.returncode = 0
         mock_result.stdout = "sat"
         mock_result.stderr = ""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", return_value=mock_result):
             result = engine.prove_deontic_formula(formula, prover="cvc5")
         assert result.status == ProofStatus.SUCCESS
@@ -377,7 +447,10 @@ class TestProveFormulaMockedProvers:
         mock_result.returncode = 0
         mock_result.stdout = "#check statement\n#check deontic_consistency\n"
         mock_result.stderr = ""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", return_value=mock_result):
             result = engine.prove_deontic_formula(formula, prover="lean")
         assert result.status == ProofStatus.SUCCESS
@@ -393,7 +466,10 @@ class TestProveFormulaMockedProvers:
         mock_result.returncode = 1
         mock_result.stdout = ""
         mock_result.stderr = "Error: ..."
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         with patch("subprocess.run", return_value=mock_result):
             result = engine.prove_deontic_formula(formula, prover="coq")
         assert result.status == ProofStatus.ERROR
@@ -403,14 +479,16 @@ class TestProveFormulaMockedProvers:
 # 4. ProofExecutionEngine caching
 # ===========================================================================
 
+
 class TestProveFormulaCaching:
     """Test proof_cache integration."""
 
     def _make_engine_with_cache(self):
         with patch.dict(os.environ, {"IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0"}):
             from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
-                ProofExecutionEngine
+                ProofExecutionEngine,
             )
+
             return ProofExecutionEngine(
                 enable_caching=True,
                 enable_rate_limiting=False,
@@ -420,8 +498,9 @@ class TestProveFormulaCaching:
     def test_cache_hit_returns_cached_result(self):
         """GIVEN result in cache WHEN prove THEN cached result returned without subprocess."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus
+            ProofStatus,
         )
+
         engine = self._make_engine_with_cache()
         formula = _make_formula()
         # Manually populate cache using correct API: set(formula, result, prover_name=...)
@@ -451,7 +530,11 @@ class TestProveFormulaCaching:
         engine.prover_binaries = {"z3": "z3"}
         formula = _make_formula()
         # Mock translation
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import TranslationResult, LogicTranslationTarget
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            TranslationResult,
+            LogicTranslationTarget,
+        )
+
         mock_tr = TranslationResult(
             target=LogicTranslationTarget.SMT_LIB,
             translated_formula="(assert true)",
@@ -474,8 +557,9 @@ class TestProveFormulaCaching:
     def test_cache_invalid_status_string_defaults_to_error(self):
         """GIVEN cache has invalid status string WHEN prove THEN defaults to ERROR."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus
+            ProofStatus,
         )
+
         engine = self._make_engine_with_cache()
         formula = _make_formula()
         formula_str = formula.to_fol_string()
@@ -499,14 +583,16 @@ class TestProveFormulaCaching:
 # 5. ProofExecutionEngine.prove_rule_set and prove_consistency
 # ===========================================================================
 
+
 class TestProveRuleSetAndConsistency:
     """Test higher-level methods."""
 
     def _make_engine(self):
         with patch.dict(os.environ, {"IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0"}):
             from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
-                ProofExecutionEngine
+                ProofExecutionEngine,
             )
+
             return ProofExecutionEngine(
                 enable_caching=False,
                 enable_rate_limiting=False,
@@ -523,7 +609,10 @@ class TestProveRuleSetAndConsistency:
 
     def test_prove_consistency_unsupported_prover(self):
         """GIVEN unsupported prover WHEN prove_consistency THEN UNSUPPORTED result."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         engine = self._make_engine()
         rule_set = _make_rule_set()
         result = engine.prove_consistency(rule_set, prover="lean")
@@ -531,7 +620,10 @@ class TestProveRuleSetAndConsistency:
 
     def test_prove_consistency_z3_sat(self):
         """GIVEN z3 returns 'sat' WHEN prove_consistency THEN SUCCESS (consistent)."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         engine = self._make_engine()
         engine.available_provers = {"z3": True}
         engine.prover_binaries = {"z3": "z3"}
@@ -547,7 +639,10 @@ class TestProveRuleSetAndConsistency:
     def test_prove_consistency_z3_unsat(self):
         """GIVEN z3 returns 'unsat' WHEN prove_consistency THEN FAILURE (inconsistent).
         Fixed: unsat is checked before sat to prevent substring collision."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         engine = self._make_engine()
         engine.available_provers = {"z3": True}
         engine.prover_binaries = {"z3": "z3"}
@@ -563,7 +658,10 @@ class TestProveRuleSetAndConsistency:
 
     def test_prove_consistency_cvc5_sat(self):
         """GIVEN cvc5 returns 'sat' WHEN prove_consistency THEN SUCCESS."""
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         engine = self._make_engine()
         engine.available_provers = {"cvc5": True}
         engine.prover_binaries = {"cvc5": "cvc5"}
@@ -590,6 +688,7 @@ class TestProveRuleSetAndConsistency:
 # 6. ProofExecutionEngine utility functions
 # ===========================================================================
 
+
 class TestProofEngineUtils:
     """Tests for proof_execution_engine_utils."""
 
@@ -597,24 +696,27 @@ class TestProofEngineUtils:
         """GIVEN timeout=30 WHEN create_proof_engine THEN engine with timeout=30."""
         with patch.dict(os.environ, {"IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "0"}):
             from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
-                create_proof_engine
+                create_proof_engine,
             )
+
             engine = create_proof_engine(timeout=30)
             assert engine.timeout == 30
 
     def test_get_lean_template_contains_obligatory(self):
         """GIVEN get_lean_template WHEN called THEN result has 'Obligatory'."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
-            get_lean_template
+            get_lean_template,
         )
+
         tmpl = get_lean_template()
         assert "Obligatory" in tmpl
 
     def test_get_coq_template_contains_obligatory(self):
         """GIVEN get_coq_template WHEN called THEN result has 'Obligatory'."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
-            get_coq_template
+            get_coq_template,
         )
+
         tmpl = get_coq_template()
         assert "Obligatory" in tmpl
 
@@ -623,14 +725,16 @@ class TestProofEngineUtils:
 # 7. DeonticLogicConverter — basic construction
 # ===========================================================================
 
+
 class TestDeonticLogicConverterInit:
     """Tests for DeonticLogicConverter.__init__"""
 
     def test_init_default(self):
         """GIVEN no args WHEN init THEN domain_knowledge set, symbolic_analyzer may be None."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            DeonticLogicConverter
+            DeonticLogicConverter,
         )
+
         conv = DeonticLogicConverter(enable_symbolic_ai=False)
         assert conv.domain_knowledge is not None
         assert conv.symbolic_analyzer is None
@@ -638,8 +742,9 @@ class TestDeonticLogicConverterInit:
     def test_init_statistics_zeroed(self):
         """GIVEN new converter WHEN init THEN all stats are 0."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            DeonticLogicConverter
+            DeonticLogicConverter,
         )
+
         conv = DeonticLogicConverter(enable_symbolic_ai=False)
         assert conv.conversion_stats["total_entities_processed"] == 0
         assert conv.conversion_stats["obligations_extracted"] == 0
@@ -649,14 +754,16 @@ class TestDeonticLogicConverterInit:
 # 8. ConversionContext and ConversionResult
 # ===========================================================================
 
+
 class TestConversionContext:
     """Tests for ConversionContext dataclass."""
 
     def test_creation_and_to_dict(self):
         """GIVEN ConversionContext WHEN to_dict THEN all keys present."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionContext
+            ConversionContext,
         )
+
         ctx = ConversionContext(
             source_document_path="./doc.pdf",
             document_title="Test",
@@ -670,8 +777,9 @@ class TestConversionContext:
     def test_default_flags_all_true(self):
         """GIVEN no explicit flags WHEN create ConversionContext THEN analysis flags True."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionContext
+            ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="./x.pdf")
         assert ctx.enable_temporal_analysis is True
         assert ctx.enable_agent_inference is True
@@ -684,9 +792,10 @@ class TestConversionResult:
     def test_to_dict_has_statistics(self):
         """GIVEN ConversionResult WHEN to_dict THEN statistics key present."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionResult
+            ConversionResult,
         )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         result = ConversionResult(
             deontic_formulas=[],
             rule_set=DeonticRuleSet("Test", []),
@@ -703,13 +812,15 @@ class TestConversionResult:
 # 9. DeonticLogicConverter.convert_entities_to_logic
 # ===========================================================================
 
+
 class TestConvertEntitiesToLogic:
     """Tests for entity conversion path."""
 
     def _make_context(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionContext
+            ConversionContext,
         )
+
         return ConversionContext(
             source_document_path="./test.pdf",
             document_title="Test Contract",
@@ -718,11 +829,17 @@ class TestConvertEntitiesToLogic:
 
     def _make_converter(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            DeonticLogicConverter
+            DeonticLogicConverter,
         )
+
         return DeonticLogicConverter(enable_symbolic_ai=False)
 
-    def _make_entity(self, entity_id="e1", text="The contractor shall deliver the goods", entity_type="obligation"):
+    def _make_entity(
+        self,
+        entity_id="e1",
+        text="The contractor shall deliver the goods",
+        entity_type="obligation",
+    ):
         """Create a mock entity with all expected attributes."""
         entity = MagicMock()
         entity.entity_id = entity_id
@@ -759,7 +876,10 @@ class TestConvertEntitiesToLogic:
     def test_high_confidence_threshold_filters(self):
         """GIVEN confidence_threshold=1.0 WHEN convert THEN no formulas (low confidence text)."""
         conv = self._make_converter()
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         ctx = ConversionContext(
             source_document_path="./test.pdf",
             confidence_threshold=1.0,
@@ -771,7 +891,10 @@ class TestConvertEntitiesToLogic:
     def test_agent_inference_disabled(self):
         """GIVEN enable_agent_inference=False WHEN convert THEN agent is None in formulas."""
         conv = self._make_converter()
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         ctx = ConversionContext(
             source_document_path="./test.pdf",
             confidence_threshold=0.0,
@@ -787,20 +910,23 @@ class TestConvertEntitiesToLogic:
 # 10. DeonticLogicConverter.convert_knowledge_graph_to_logic
 # ===========================================================================
 
+
 class TestConvertKnowledgeGraphToLogic:
     """Tests for the full KG conversion pipeline."""
 
     def _make_converter(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            DeonticLogicConverter
+            DeonticLogicConverter,
         )
+
         return DeonticLogicConverter(enable_symbolic_ai=False)
 
     def _make_context(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionContext
+            ConversionContext,
         )
         from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import LegalDomain
+
         return ConversionContext(
             source_document_path="./contract.pdf",
             document_title="Service Agreement",
@@ -811,13 +937,18 @@ class TestConvertKnowledgeGraphToLogic:
 
     def _make_kg(self, entities=None, relationships=None):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            KnowledgeGraph, Entity, Relationship
+            KnowledgeGraph,
+            Entity,
+            Relationship,
         )
+
         entities = entities or []
         relationships = relationships or []
         return KnowledgeGraph(entities=entities, relationships=relationships)
 
-    def _make_entity(self, entity_id="e1", text="The vendor shall deliver", entity_type="obligation"):
+    def _make_entity(
+        self, entity_id="e1", text="The vendor shall deliver", entity_type="obligation"
+    ):
         """Create a mock entity with all required attributes."""
         entity = MagicMock()
         entity.entity_id = entity_id
@@ -858,6 +989,7 @@ class TestConvertKnowledgeGraphToLogic:
     def test_result_has_rule_set(self):
         """GIVEN valid KG WHEN convert THEN result has a DeonticRuleSet."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         conv = self._make_converter()
         ctx = self._make_context()
         kg = self._make_kg()
@@ -889,13 +1021,15 @@ class TestConvertKnowledgeGraphToLogic:
 # 11. DeonticLogicConverter private helpers
 # ===========================================================================
 
+
 class TestDeonticLogicConverterHelpers:
     """Tests for private helpers of DeonticLogicConverter."""
 
     def _make_converter(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            DeonticLogicConverter
+            DeonticLogicConverter,
         )
+
         return DeonticLogicConverter(enable_symbolic_ai=False)
 
     def _make_entity_mock(self, entity_id="e", text="text", entity_type="agent"):
@@ -947,6 +1081,7 @@ class TestDeonticLogicConverterHelpers:
     def test_update_statistics_obligation(self):
         """GIVEN OBLIGATION operator WHEN _update_statistics THEN obligations_extracted ++."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv = self._make_converter()
         conv._update_statistics(DeonticOperator.OBLIGATION)
         assert conv.conversion_stats["obligations_extracted"] == 1
@@ -954,6 +1089,7 @@ class TestDeonticLogicConverterHelpers:
     def test_update_statistics_permission(self):
         """GIVEN PERMISSION operator WHEN _update_statistics THEN permissions_extracted ++."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv = self._make_converter()
         conv._update_statistics(DeonticOperator.PERMISSION)
         assert conv.conversion_stats["permissions_extracted"] == 1
@@ -961,6 +1097,7 @@ class TestDeonticLogicConverterHelpers:
     def test_update_statistics_prohibition(self):
         """GIVEN PROHIBITION operator WHEN _update_statistics THEN prohibitions_extracted ++."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv = self._make_converter()
         conv._update_statistics(DeonticOperator.PROHIBITION)
         assert conv.conversion_stats["prohibitions_extracted"] == 1
@@ -986,8 +1123,9 @@ class TestDeonticLogicConverterHelpers:
     def test_create_agent_from_entity_id_no_inference(self):
         """GIVEN enable_agent_inference=False WHEN _create_agent_from_entity_id THEN None."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionContext
+            ConversionContext,
         )
+
         conv = self._make_converter()
         ctx = ConversionContext(
             source_document_path="./x.pdf",
@@ -999,8 +1137,9 @@ class TestDeonticLogicConverterHelpers:
     def test_create_agent_from_entity_id_with_inference(self):
         """GIVEN enable_agent_inference=True WHEN _create_agent_from_entity_id THEN LegalAgent."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            ConversionContext
+            ConversionContext,
         )
+
         conv = self._make_converter()
         ctx = ConversionContext(source_document_path="./x.pdf", enable_agent_inference=True)
         agent = conv._create_agent_from_entity_id("alice_corp", ctx)
@@ -1012,13 +1151,16 @@ class TestDeonticLogicConverterHelpers:
 # 12. LogicIPLDStorage
 # ===========================================================================
 
+
 class TestLogicIPLDStorage:
     """Tests for caching/ipld_logic_storage.py (filesystem mode)."""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDStorage, LogicProvenanceTracker
+            LogicIPLDStorage,
+            LogicProvenanceTracker,
         )
+
         self.tmp = tempfile.mkdtemp()
         self.storage = LogicIPLDStorage(storage_path=self.tmp)
         self.Tracker = LogicProvenanceTracker
@@ -1056,8 +1198,10 @@ class TestLogicIPLDStorage:
     def test_store_translation_result(self):
         """GIVEN formula cid WHEN store_translation_result THEN translation_index updated."""
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            LogicTranslationTarget, TranslationResult
+            LogicTranslationTarget,
+            TranslationResult,
         )
+
         formula = _make_formula()
         formula_cid = self.storage.store_logic_formula(formula)
         tr = TranslationResult(
@@ -1074,8 +1218,10 @@ class TestLogicIPLDStorage:
     def test_store_logic_collection(self):
         """GIVEN 3 formulas WHEN store_logic_collection THEN returns collection CID."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_obligation, LegalAgent
+            create_obligation,
+            LegalAgent,
         )
+
         formulas = [
             create_obligation(f"prop{i}", LegalAgent("a", "A", "person"), source_text=f"text{i}")
             for i in range(3)
@@ -1114,13 +1260,16 @@ class TestLogicIPLDStorage:
 # 13. LogicProvenanceTracker
 # ===========================================================================
 
+
 class TestLogicProvenanceTracker:
     """Tests for LogicProvenanceTracker."""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDStorage, LogicProvenanceTracker
+            LogicIPLDStorage,
+            LogicProvenanceTracker,
         )
+
         self.tmp = tempfile.mkdtemp()
         self.storage = LogicIPLDStorage(storage_path=self.tmp)
         self.tracker = LogicProvenanceTracker(self.storage)
@@ -1160,8 +1309,10 @@ class TestLogicProvenanceTracker:
     def test_find_related_formulas_same_document(self):
         """GIVEN two formulas from same doc WHEN find_related_formulas THEN finds the other."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_obligation, LegalAgent
+            create_obligation,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         f1 = create_obligation("pay", agent, source_text="pay")
         f2 = create_obligation("deliver", agent, source_text="deliver")
@@ -1177,14 +1328,16 @@ class TestLogicProvenanceTracker:
 # 14. LogicProvenanceChain and LogicIPLDNode dataclasses
 # ===========================================================================
 
+
 class TestLogicIPLDNodeAndProvenanceChain:
     """Tests for dataclasses."""
 
     def test_logic_provenance_chain_to_dict(self):
         """GIVEN LogicProvenanceChain WHEN to_dict THEN all fields present."""
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicProvenanceChain
+            LogicProvenanceChain,
         )
+
         chain = LogicProvenanceChain(
             source_document_path="./x.pdf",
             source_document_cid="cid123",
@@ -1196,9 +1349,8 @@ class TestLogicIPLDNodeAndProvenanceChain:
 
     def test_logic_ipld_node_to_dict_and_from_dict(self):
         """GIVEN LogicIPLDNode WHEN to_dict/from_dict THEN round-trip correct."""
-        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDNode
-        )
+        from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDNode
+
         formula = _make_formula()
         node = LogicIPLDNode(formula_id="f001", deontic_formula=formula)
         d = node.to_dict()
@@ -1212,11 +1364,13 @@ class TestLogicIPLDNodeAndProvenanceChain:
 # 15. IPFSProofCache (without real IPFS)
 # ===========================================================================
 
+
 class TestIPFSProofCacheBasic:
     """Tests for caching/ipfs_proof_cache.py without a real IPFS node."""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         self.tmp = tempfile.mkdtemp()
         # enable_ipfs=False forces local-only mode
         self.cache = IPFSProofCache(enable_ipfs=False, cache_dir=self.tmp)
@@ -1228,8 +1382,10 @@ class TestIPFSProofCacheBasic:
     def test_put_and_get_local(self):
         """GIVEN formula+prover WHEN set then get THEN result retrieved."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus, ProofResult
+            ProofStatus,
+            ProofResult,
         )
+
         result = {"prover": "z3", "status": "success"}
         self.cache.set("formula_hash_1", result, prover_name="z3")
         retrieved = self.cache.get("formula_hash_1", prover_name="z3")
@@ -1270,14 +1426,16 @@ class TestIPFSProofCacheBasic:
 # 16. demonstrate_deontic_conversion (smoke test)
 # ===========================================================================
 
+
 class TestDemonstrateDeonticConversion:
     """Smoke test for the demonstrate function."""
 
     def test_demonstrate_runs_without_error(self):
         """GIVEN no setup WHEN demonstrate_deontic_conversion THEN completes."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
-            demonstrate_deontic_conversion
+            demonstrate_deontic_conversion,
         )
+
         result = demonstrate_deontic_conversion()
         assert result is not None
         assert hasattr(result, "deontic_formulas")
@@ -1286,6 +1444,7 @@ class TestDemonstrateDeonticConversion:
 # ===========================================================================
 # 17. create_logic_storage_with_provenance factory
 # ===========================================================================
+
 
 class TestCreateLogicStorageWithProvenance:
     """Tests for the factory function."""
@@ -1297,6 +1456,7 @@ class TestCreateLogicStorageWithProvenance:
             LogicIPLDStorage,
             LogicProvenanceTracker,
         )
+
         tmp = tempfile.mkdtemp()
         storage, tracker = create_logic_storage_with_provenance(tmp)
         assert isinstance(storage, LogicIPLDStorage)

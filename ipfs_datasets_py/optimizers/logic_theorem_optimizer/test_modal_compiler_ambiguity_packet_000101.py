@@ -181,9 +181,7 @@ def test_compiler_exposes_packet_000101_explicit_adaptive_ambiguities(
     family_margin: float,
     expected_type: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     ranking = _adaptive_ranking_for_margin(
         predicted_family=predicted_family,
         target_family=target_family,
@@ -220,12 +218,6 @@ def test_compiler_exposes_packet_000101_explicit_adaptive_ambiguities(
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("adaptive_margin_direction") == "outvoted"
     assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     expected_priority = abs(family_margin) + 0.15
-    assert (
-        abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

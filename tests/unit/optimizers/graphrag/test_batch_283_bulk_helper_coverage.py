@@ -139,7 +139,14 @@ def test_optimizer_pipeline_mediator_learning_validator_helper_sets() -> None:
         SimpleNamespace(score=SimpleNamespace(overall=0.6)),
         SimpleNamespace(score=SimpleNamespace(overall=0.8)),
     ]
-    assert pipeline.score_variance() == pytest.approx(((0.2 - 0.5333333333333333) ** 2 + (0.6 - 0.5333333333333333) ** 2 + (0.8 - 0.5333333333333333) ** 2) / 3)
+    assert pipeline.score_variance() == pytest.approx(
+        (
+            (0.2 - 0.5333333333333333) ** 2
+            + (0.6 - 0.5333333333333333) ** 2
+            + (0.8 - 0.5333333333333333) ** 2
+        )
+        / 3
+    )
     assert pipeline.score_stddev() == pytest.approx(pipeline.score_variance() ** 0.5)
     assert pipeline.passing_run_count(0.5) == 2
     rs = pipeline.run_summary()

@@ -27,9 +27,7 @@ def test_isolated_benchmark_bridge_matches_the_shared_reference_utility() -> Non
     payload = {"unicode": "café", "nested": {"z": 2, "a": 1}}
     raw = "A licensed agency shall retain each record.".encode("utf-8")
 
-    assert benchmark_canonical_dag_json_bytes(payload) == (
-        canonical_dag_json_bytes(payload)
-    )
+    assert benchmark_canonical_dag_json_bytes(payload) == (canonical_dag_json_bytes(payload))
     assert benchmark_cid_for_dag_json(payload) == cid_for_dag_json(payload)
     assert benchmark_cid_for_bytes(raw) == cid_for_bytes(raw)
 
@@ -63,10 +61,7 @@ def test_isolated_bridge_fallback_matches_multiformats_reference(
         )
         == expected_dag_json
     )
-    assert (
-        benchmark_validate_cid(expected_raw, codecs=("raw",))
-        == expected_raw
-    )
+    assert benchmark_validate_cid(expected_raw, codecs=("raw",)) == expected_raw
 
 
 def test_raw_and_dag_json_cids_are_canonical_cidv1() -> None:

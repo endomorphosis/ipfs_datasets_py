@@ -138,9 +138,7 @@ def test_compiler_preserves_packet_005045_compiler_ambiguity_evidence_margins() 
             "target_family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             "family_margin": -0.697922526995,
             "priority": 0.847922526995,
-            "expected_type": (
-                "adaptive_frame_conditional_normative_outvoted_margin_low"
-            ),
+            "expected_type": ("adaptive_frame_conditional_normative_outvoted_margin_low"),
             "text": (
                 "In the case of an assigned judge, the court shall proceed "
                 "under the applicable rules."
@@ -155,17 +153,12 @@ def test_compiler_preserves_packet_005045_compiler_ambiguity_evidence_margins() 
             "expected_type": "adaptive_temporal_temporal_contested_margin_low",
             "runner_up_family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             "expected_effective_pair": "temporal->conditional_normative",
-            "text": (
-                "Within 30 days after submission, the Secretary shall publish "
-                "the decision."
-            ),
+            "text": ("Within 30 days after submission, the Secretary shall publish the decision."),
         },
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -175,9 +168,7 @@ def test_compiler_preserves_packet_005045_compiler_ambiguity_evidence_margins() 
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
 
@@ -209,14 +200,8 @@ def test_compiler_preserves_packet_005045_compiler_ambiguity_evidence_margins() 
         assert ambiguity.metadata.get("effective_compiler_ambiguity_policy_pair") == (
             expected_effective_pair
         )
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12

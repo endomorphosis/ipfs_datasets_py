@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def _run_async(coro):
     """Run a coroutine synchronously without importing asyncio in this module."""
 
@@ -40,6 +41,7 @@ def _get_compiler_class():
         NLUCANPolicyCompiler,
         compile_nl_to_ucan_policy,
     )
+
     return NLUCANPolicyCompiler, compile_nl_to_ucan_policy
 
 
@@ -48,6 +50,7 @@ _COMPILED_POLICIES: Dict[str, Any] = {}
 
 
 # ── tool implementations ──────────────────────────────────────────────────────
+
 
 def nl_compile_policy(
     sentences: List[str],
@@ -100,13 +103,15 @@ def nl_compile_policy(
     clauses_out = []
     if result.policy_result and result.policy_result.clauses:
         for c in result.policy_result.clauses:
-            clauses_out.append({
-                "clause_type": getattr(c, "clause_type", None),
-                "actor": getattr(c, "actor", None),
-                "action": getattr(c, "action", None),
-                "resource": getattr(c, "resource", None),
-                "valid_until": getattr(c, "valid_until", None),
-            })
+            clauses_out.append(
+                {
+                    "clause_type": getattr(c, "clause_type", None),
+                    "actor": getattr(c, "actor", None),
+                    "action": getattr(c, "action", None),
+                    "resource": getattr(c, "resource", None),
+                    "valid_until": getattr(c, "valid_until", None),
+                }
+            )
 
     # Serialise UCAN tokens
     tokens_out = []
@@ -114,27 +119,33 @@ def nl_compile_policy(
         for t in result.bridge_result.tokens:
             caps = []
             for cap in getattr(t, "capabilities", []):
-                caps.append({
-                    "resource": getattr(cap, "resource", None),
-                    "ability": getattr(cap, "ability", None),
-                })
-            tokens_out.append({
-                "issuer": getattr(t, "issuer", None),
-                "audience": getattr(t, "audience", None),
-                "capabilities": caps,
-                "expiry": getattr(t, "expiry", None),
-                "cid": t.cid if hasattr(t, "cid") else None,
-            })
+                caps.append(
+                    {
+                        "resource": getattr(cap, "resource", None),
+                        "ability": getattr(cap, "ability", None),
+                    }
+                )
+            tokens_out.append(
+                {
+                    "issuer": getattr(t, "issuer", None),
+                    "audience": getattr(t, "audience", None),
+                    "capabilities": caps,
+                    "expiry": getattr(t, "expiry", None),
+                    "cid": t.cid if hasattr(t, "cid") else None,
+                }
+            )
 
     # Denials
     denials_out = []
     if result.bridge_result and result.bridge_result.denials:
         for d in result.bridge_result.denials:
-            denials_out.append({
-                "resource": getattr(d, "resource", None),
-                "ability": getattr(d, "ability", None),
-                "actor": getattr(d, "actor", None),
-            })
+            denials_out.append(
+                {
+                    "resource": getattr(d, "resource", None),
+                    "ability": getattr(d, "ability", None),
+                    "actor": getattr(d, "actor", None),
+                }
+            )
 
     pid = result.metadata.get("policy_id", policy_id)
 
@@ -257,25 +268,29 @@ def nl_inspect_policy(policy_id: str) -> Dict[str, Any]:
     clauses = []
     if compiled.policy_result and compiled.policy_result.clauses:
         for c in compiled.policy_result.clauses:
-            clauses.append({
-                "clause_type": getattr(c, "clause_type", None),
-                "actor": getattr(c, "actor", None),
-                "action": getattr(c, "action", None),
-                "resource": getattr(c, "resource", None),
-            })
+            clauses.append(
+                {
+                    "clause_type": getattr(c, "clause_type", None),
+                    "actor": getattr(c, "actor", None),
+                    "action": getattr(c, "action", None),
+                    "resource": getattr(c, "resource", None),
+                }
+            )
 
     tokens = []
     if compiled.bridge_result and compiled.bridge_result.tokens:
         for t in compiled.bridge_result.tokens:
-            tokens.append({
-                "issuer": getattr(t, "issuer", None),
-                "audience": getattr(t, "audience", None),
-                "capabilities": [
-                    {"resource": c.resource, "ability": c.ability}
-                    for c in getattr(t, "capabilities", [])
-                ],
-                "cid": t.cid if hasattr(t, "cid") else None,
-            })
+            tokens.append(
+                {
+                    "issuer": getattr(t, "issuer", None),
+                    "audience": getattr(t, "audience", None),
+                    "capabilities": [
+                        {"resource": c.resource, "ability": c.ability}
+                        for c in getattr(t, "capabilities", [])
+                    ],
+                    "cid": t.cid if hasattr(t, "cid") else None,
+                }
+            )
 
     return {
         "success": True,

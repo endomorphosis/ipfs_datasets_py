@@ -90,9 +90,7 @@ _OFFSET_RE = re.compile(
 )
 _DATE_RE = re.compile(r"\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}_\d{1,2}_\d{4})\b")
 _ATOM_RE = re.compile(r"[a-z0-9]+")
-_LOW_INFORMATION = frozenset(
-    {"a", "an", "any", "each", "of", "the", "this", "that", "such"}
-)
+_LOW_INFORMATION = frozenset({"a", "an", "any", "each", "of", "the", "this", "that", "such"})
 
 
 def repair_decompiler_round_trip(
@@ -124,13 +122,12 @@ def repair_decompiler_round_trip(
         {str(item["source_contract_id"]) for item in formula_records if item["source_contract_id"]}
     )
     modality_count = len(
-        {
-            (item["modality"]["family"], item["operator"])
-            for item in formula_records
-        }
+        {(item["modality"]["family"], item["operator"]) for item in formula_records}
     )
     role_counts = {
-        role: sum(1 for item in formula_records if item["reconstructed_structure"]["roles"].get(role))
+        role: sum(
+            1 for item in formula_records if item["reconstructed_structure"]["roles"].get(role)
+        )
         for role in ("actor", "action", "object", "recipient")
     }
     summary = {
@@ -140,8 +137,7 @@ def repair_decompiler_round_trip(
         "modality_signature_count": modality_count,
         "role_counts": role_counts,
         "temporal_anchor_count": sum(
-            len(item["reconstructed_structure"]["temporal_anchors"])
-            for item in formula_records
+            len(item["reconstructed_structure"]["temporal_anchors"]) for item in formula_records
         ),
     }
     identity = {
@@ -211,8 +207,7 @@ def validate_decompiler_round_trip_preservation(
                 dimensions[dimension] = False
             continue
         dimensions["modality"] &= all(
-            observed.get(key) == expected_formula[key]
-            for key in ("operator", "modality")
+            observed.get(key) == expected_formula[key] for key in ("operator", "modality")
         )
         observed_structure = _mapping(observed.get("reconstructed_structure"))
         expected_structure = expected_formula["reconstructed_structure"]
@@ -220,7 +215,9 @@ def validate_decompiler_round_trip_preservation(
         dimensions["temporal_anchors"] &= (
             observed_structure.get("temporal_anchors") == expected_structure["temporal_anchors"]
         )
-        dimensions["exception_scope"] &= observed.get("exceptions") == expected_formula["exceptions"]
+        dimensions["exception_scope"] &= (
+            observed.get("exceptions") == expected_formula["exceptions"]
+        )
         dimensions["citation_provenance"] &= (
             observed.get("citation_provenance") == expected_formula["citation_provenance"]
             and observed.get("provenance_ids") == expected_formula["provenance_ids"]
@@ -274,9 +271,10 @@ def _formula_record(
                 "source_id": source_id,
             }
         )
-    formula_id = _clean_identifier(
-        _get(formula, "formula_id", formula_map.get("formula_id"))
-    ) or f"formula:{_digest([family, symbol, predicate_name, arguments])[:20]}"
+    formula_id = (
+        _clean_identifier(_get(formula, "formula_id", formula_map.get("formula_id")))
+        or f"formula:{_digest([family, symbol, predicate_name, arguments])[:20]}"
+    )
     source_span_hash = _formula_span_hash(document, provenance)
     structure = {
         "exception_scope": exceptions,
@@ -341,9 +339,7 @@ def _argument_records(value: Any, *, predicate_name: str) -> list[dict[str, Any]
             }
         )
     if not any(item["role"] == "action" for item in result) and predicate_name:
-        result.append(
-            {"position": len(result), "role": "action", "value": predicate_name}
-        )
+        result.append({"position": len(result), "role": "action", "value": predicate_name})
     return result
 
 
@@ -541,7 +537,7 @@ def _semantic_atom(value: Any, *, max_tokens: int) -> str:
     tokens = _ATOM_RE.findall(str(value or "").lower())
     while tokens and tokens[0] in _LOW_INFORMATION:
         tokens.pop(0)
-    return "_".join(tokens[:max(1, int(max_tokens))])
+    return "_".join(tokens[: max(1, int(max_tokens))])
 
 
 def _clean_identifier(value: Any) -> str:

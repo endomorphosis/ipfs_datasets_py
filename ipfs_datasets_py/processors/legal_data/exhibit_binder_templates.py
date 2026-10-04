@@ -33,8 +33,7 @@ DEFAULT_BINDER_COURT_CONFIG = BinderCourtConfig(
         "Phone<br/>Email<br/>Party Role"
     ),
     caption_left_html=(
-        "PLAINTIFF OR PETITIONER,<br/>Role,<br/><br/>v.<br/><br/>"
-        "DEFENDANT OR RESPONDENT,<br/>Role."
+        "PLAINTIFF OR PETITIONER,<br/>Role,<br/><br/>v.<br/><br/>DEFENDANT OR RESPONDENT,<br/>Role."
     ),
 )
 
@@ -122,11 +121,29 @@ def render_exhibit_binder_front_sheet(
     md_path = Path(md_path)
     pdf_path = Path(pdf_path)
     styles = getSampleStyleSheet()
-    base = ParagraphStyle("base", parent=styles["Normal"], fontName="Times-Roman", fontSize=11.5, leading=15, spaceAfter=3)
+    base = ParagraphStyle(
+        "base",
+        parent=styles["Normal"],
+        fontName="Times-Roman",
+        fontSize=11.5,
+        leading=15,
+        spaceAfter=3,
+    )
     small = ParagraphStyle("small", parent=base, fontSize=10.2, leading=13)
-    centered = ParagraphStyle("centered", parent=base, alignment=1, fontName="Times-Bold", fontSize=11.5, leading=14)
+    centered = ParagraphStyle(
+        "centered", parent=base, alignment=1, fontName="Times-Bold", fontSize=11.5, leading=14
+    )
     cap = ParagraphStyle("cap", parent=base, fontSize=11, leading=13)
-    h1 = ParagraphStyle("h1", parent=base, fontName="Times-Bold", fontSize=12.5, leading=15.5, spaceBefore=2, spaceAfter=8, alignment=1)
+    h1 = ParagraphStyle(
+        "h1",
+        parent=base,
+        fontName="Times-Bold",
+        fontSize=12.5,
+        leading=15.5,
+        spaceBefore=2,
+        spaceAfter=8,
+        alignment=1,
+    )
 
     def clean(text: str) -> str:
         text = shorten_display_paths(text)
@@ -188,10 +205,27 @@ def render_table_of_exhibits_pdf(
 ) -> Path:
     pdf_path = Path(pdf_path)
     styles = getSampleStyleSheet()
-    base = ParagraphStyle("base", parent=styles["Normal"], fontName="Times-Roman", fontSize=10.3, leading=12.5, spaceAfter=2)
+    base = ParagraphStyle(
+        "base",
+        parent=styles["Normal"],
+        fontName="Times-Roman",
+        fontSize=10.3,
+        leading=12.5,
+        spaceAfter=2,
+    )
     small = ParagraphStyle("small", parent=base, fontSize=9.5, leading=11.5)
-    h1 = ParagraphStyle("h1", parent=base, fontName="Times-Bold", fontSize=12.5, leading=15.5, alignment=1, spaceAfter=8)
-    centered = ParagraphStyle("centered", parent=base, alignment=1, fontName="Times-Bold", fontSize=11.2, leading=13.5)
+    h1 = ParagraphStyle(
+        "h1",
+        parent=base,
+        fontName="Times-Bold",
+        fontSize=12.5,
+        leading=15.5,
+        alignment=1,
+        spaceAfter=8,
+    )
+    centered = ParagraphStyle(
+        "centered", parent=base, alignment=1, fontName="Times-Bold", fontSize=11.2, leading=13.5
+    )
     cap = ParagraphStyle("cap", parent=base, fontSize=10.8, leading=12.5)
 
     story = [
@@ -208,25 +242,31 @@ def render_table_of_exhibits_pdf(
         Spacer(1, 0.08 * inch),
     ]
 
-    rows = [[
-        Paragraph("<b>Exhibit</b>", small),
-        Paragraph("<b>Title</b>", small),
-        Paragraph("<b>Start</b>", small),
-        Paragraph("<b>Range</b>", small),
-    ]]
+    rows = [
+        [
+            Paragraph("<b>Exhibit</b>", small),
+            Paragraph("<b>Title</b>", small),
+            Paragraph("<b>Start</b>", small),
+            Paragraph("<b>Range</b>", small),
+        ]
+    ]
     for exhibit_code in exhibit_order:
         start = int(starts[exhibit_code])
         page_count = int(counts[exhibit_code])
         end = start + page_count - 1
         page_range = f"{start}-{end}" if end != start else f"{start}"
-        rows.append([
-            Paragraph(f"Exhibit {exhibit_code}", small),
-            Paragraph(str(exhibit_titles[exhibit_code]), small),
-            Paragraph(str(start), small),
-            Paragraph(page_range, small),
-        ])
+        rows.append(
+            [
+                Paragraph(f"Exhibit {exhibit_code}", small),
+                Paragraph(str(exhibit_titles[exhibit_code]), small),
+                Paragraph(str(start), small),
+                Paragraph(page_range, small),
+            ]
+        )
 
-    toc_table = Table(rows, colWidths=[1.0 * inch, 4.2 * inch, 0.6 * inch, 0.8 * inch], repeatRows=1)
+    toc_table = Table(
+        rows, colWidths=[1.0 * inch, 4.2 * inch, 0.6 * inch, 0.8 * inch], repeatRows=1
+    )
     toc_table.setStyle(
         TableStyle(
             [

@@ -51,13 +51,9 @@ from .features import (
 )
 
 
-INTENT_ADVISOR_CHECKPOINT_POLICY_VERSION: Final = (
-    "intent-advisor-checkpoint-policy/v1"
-)
+INTENT_ADVISOR_CHECKPOINT_POLICY_VERSION: Final = "intent-advisor-checkpoint-policy/v1"
 INTENT_ADVISOR_HEAD_SCHEMA_VERSION: Final = "intent-advisor-head/v1"
-INTENT_FORMALIZATION_ONTOLOGY_VERSION: Final = (
-    "intent-formalization-ontology/v1"
-)
+INTENT_FORMALIZATION_ONTOLOGY_VERSION: Final = "intent-formalization-ontology/v1"
 
 INTENT_FACT_HEAD_ID: Final = "intent:head:facts"
 INTENT_MODAL_HEAD_ID: Final = "intent:head:intention-deontic"
@@ -91,12 +87,8 @@ INTENT_FORMALIZATION_ONTOLOGY_IDENTITY: Final = canonical_identity(
     domain="intent-formalization-ontology",
     schema_version=INTENT_FORMALIZATION_ONTOLOGY_VERSION,
 ).digest
-INTENT_ADVISOR_ONTOLOGY_IDENTITY: Final = (
-    INTENT_FORMALIZATION_ONTOLOGY_IDENTITY
-)
-INTENT_VIEW_REGISTRY_IDENTITY: Final = (
-    INTENT_FORMALIZATION_VIEW_REGISTRY.identity.digest
-)
+INTENT_ADVISOR_ONTOLOGY_IDENTITY: Final = INTENT_FORMALIZATION_ONTOLOGY_IDENTITY
+INTENT_VIEW_REGISTRY_IDENTITY: Final = INTENT_FORMALIZATION_VIEW_REGISTRY.identity.digest
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,45 +104,32 @@ class IntentAdvisorHead:
     schema_version: str = INTENT_ADVISOR_HEAD_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if not isinstance(self.head_id, str) or not self.head_id.startswith(
-            "intent:head:"
-        ):
+        if not isinstance(self.head_id, str) or not self.head_id.startswith("intent:head:"):
             raise AdvisorValidationError(
                 "Intent advisor head IDs must be namespaced under 'intent:head:'"
             )
         views = tuple(sorted(self.view_ids))
         if not views or len(views) != len(set(views)):
-            raise AdvisorValidationError(
-                "Intent advisor heads require unique view IDs"
-            )
+            raise AdvisorValidationError("Intent advisor heads require unique view IDs")
         unknown = set(views) - set(INTENT_FORMALIZATION_VIEW_REGISTRY.view_ids)
         if unknown:
             raise AdvisorValidationError(
-                "Intent advisor head references unsupported view IDs: "
-                + ", ".join(sorted(unknown))
+                "Intent advisor head references unsupported view IDs: " + ", ".join(sorted(unknown))
             )
         kinds: list[AdviceKind] = []
         for value in self.advice_kinds:
             try:
-                kinds.append(
-                    value if isinstance(value, AdviceKind) else AdviceKind(value)
-                )
+                kinds.append(value if isinstance(value, AdviceKind) else AdviceKind(value))
             except (TypeError, ValueError) as exc:
-                raise AdvisorValidationError(
-                    f"unsupported Intent advice kind: {value!r}"
-                ) from exc
+                raise AdvisorValidationError(f"unsupported Intent advice kind: {value!r}") from exc
         if not kinds or len(kinds) != len(set(kinds)):
-            raise AdvisorValidationError(
-                "Intent advisor heads require unique advice kinds"
-            )
+            raise AdvisorValidationError("Intent advisor heads require unique advice kinds")
         if self.schema_version != INTENT_ADVISOR_HEAD_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported Intent advisor head schema: {self.schema_version!r}"
             )
         object.__setattr__(self, "view_ids", views)
-        object.__setattr__(
-            self, "advice_kinds", tuple(sorted(kinds, key=lambda item: item.value))
-        )
+        object.__setattr__(self, "advice_kinds", tuple(sorted(kinds, key=lambda item: item.value)))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -168,16 +147,14 @@ _HEADS = (
     IntentAdvisorHead(INTENT_WORKFLOW_HEAD_ID, (INTENT_WORKFLOW_VIEW_ID,)),
     IntentAdvisorHead(INTENT_INVARIANT_HEAD_ID, (INTENT_INVARIANT_VIEW_ID,)),
     IntentAdvisorHead(INTENT_FAILURE_HEAD_ID, (INTENT_FAILURE_VIEW_ID,)),
-    IntentAdvisorHead(
-        INTENT_VERIFICATION_HEAD_ID, (INTENT_VERIFICATION_VIEW_ID,)
-    ),
+    IntentAdvisorHead(INTENT_VERIFICATION_HEAD_ID, (INTENT_VERIFICATION_VIEW_ID,)),
     IntentAdvisorHead(
         INTENT_MULTIVIEW_HEAD_ID,
         INTENT_FORMALIZATION_VIEW_REGISTRY.view_ids,
     ),
 )
-INTENT_ADVISOR_HEADS: Final[Mapping[str, IntentAdvisorHead]] = (
-    MappingProxyType({item.head_id: item for item in _HEADS})
+INTENT_ADVISOR_HEADS: Final[Mapping[str, IntentAdvisorHead]] = MappingProxyType(
+    {item.head_id: item for item in _HEADS}
 )
 INTENT_HEAD_ID_BY_VIEW: Final[Mapping[str, str]] = MappingProxyType(
     {
@@ -193,15 +170,11 @@ INTENT_HEAD_ID_BY_VIEW: Final[Mapping[str, str]] = MappingProxyType(
 
 
 def _view_ids(value: Any, field_name: str) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise AdvisorValidationError(f"{field_name} must be a sequence")
     result = tuple(value)
     if any(not isinstance(item, str) or not item for item in result):
-        raise AdvisorValidationError(
-            f"{field_name} must contain non-empty strings"
-        )
+        raise AdvisorValidationError(f"{field_name} must contain non-empty strings")
     if len(result) != len(set(result)):
         raise AdvisorValidationError(f"{field_name} must be unique")
     return tuple(sorted(result))
@@ -218,9 +191,7 @@ class IntentCheckpointPolicy:
 
     def __post_init__(self) -> None:
         if self.policy_version != INTENT_ADVISOR_CHECKPOINT_POLICY_VERSION:
-            raise AdvisorValidationError(
-                f"stale Intent checkpoint policy: {self.policy_version!r}"
-            )
+            raise AdvisorValidationError(f"stale Intent checkpoint policy: {self.policy_version!r}")
         expected = (
             INTENT_FORMALIZATION_ONTOLOGY_IDENTITY,
             INTENT_VIEW_REGISTRY_IDENTITY,
@@ -232,17 +203,13 @@ class IntentCheckpointPolicy:
             self.feature_schema_version,
         )
         if actual != expected:
-            raise AdvisorValidationError(
-                "Intent checkpoint policy dependencies are stale"
-            )
+            raise AdvisorValidationError("Intent checkpoint policy dependencies are stale")
 
     def resolve_head(self, head_id: str) -> IntentAdvisorHead:
         try:
             return INTENT_ADVISOR_HEADS[head_id]
         except KeyError:
-            raise AdvisorValidationError(
-                f"unsupported Intent advisor head: {head_id!r}"
-            ) from None
+            raise AdvisorValidationError(f"unsupported Intent advisor head: {head_id!r}") from None
 
     def validate(
         self,
@@ -266,13 +233,10 @@ class IntentCheckpointPolicy:
 
         head = self.resolve_head(manifest.head_id)
         requested = _view_ids(requested_view_ids, "requested_view_ids")
-        unsupported = set(requested) - set(
-            INTENT_FORMALIZATION_VIEW_REGISTRY.view_ids
-        )
+        unsupported = set(requested) - set(INTENT_FORMALIZATION_VIEW_REGISTRY.view_ids)
         if unsupported:
             raise AdvisorValidationError(
-                "unsupported Intent advisor view IDs: "
-                + ", ".join(sorted(unsupported))
+                "unsupported Intent advisor view IDs: " + ", ".join(sorted(unsupported))
             )
         outside_head = set(requested) - set(head.view_ids)
         if outside_head:
@@ -284,9 +248,7 @@ class IntentCheckpointPolicy:
         if advice_kind is not None:
             try:
                 kind = (
-                    advice_kind
-                    if isinstance(advice_kind, AdviceKind)
-                    else AdviceKind(advice_kind)
+                    advice_kind if isinstance(advice_kind, AdviceKind) else AdviceKind(advice_kind)
                 )
             except (TypeError, ValueError) as exc:
                 raise AdvisorValidationError(
@@ -294,8 +256,7 @@ class IntentCheckpointPolicy:
                 ) from exc
             if kind not in head.advice_kinds:
                 raise AdvisorValidationError(
-                    f"checkpoint head {head.head_id!r} does not support "
-                    f"{kind.value!r}"
+                    f"checkpoint head {head.head_id!r} does not support {kind.value!r}"
                 )
 
         metadata = manifest.metadata.to_dict()
@@ -309,24 +270,17 @@ class IntentCheckpointPolicy:
             "ontology_version": INTENT_FORMALIZATION_ONTOLOGY_VERSION,
             "policy_version": self.policy_version,
         }
-        stale = [
-            name
-            for name, expected in required.items()
-            if metadata.get(name) != expected
-        ]
+        stale = [name for name, expected in required.items() if metadata.get(name) != expected]
         if stale:
             raise AdvisorValidationError(
-                "Intent checkpoint metadata is stale or incomplete: "
-                + ", ".join(sorted(stale))
+                "Intent checkpoint metadata is stale or incomplete: " + ", ".join(sorted(stale))
             )
         declared_views = _view_ids(
             metadata.get("target_view_ids"),
             "checkpoint target_view_ids",
         )
         if declared_views != head.view_ids:
-            raise AdvisorValidationError(
-                "Intent checkpoint target_view_ids do not match its head"
-            )
+            raise AdvisorValidationError("Intent checkpoint target_view_ids do not match its head")
         return manifest
 
     # Descriptive spelling used by callers that treat policies as selectors.
@@ -362,14 +316,11 @@ def create_intent_checkpoint_manifest(
         "target_view_ids": list(head.view_ids),
     }
     conflicts = [
-        name
-        for name, value in protected.items()
-        if name in supplied and supplied[name] != value
+        name for name, value in protected.items() if name in supplied and supplied[name] != value
     ]
     if conflicts:
         raise AdvisorValidationError(
-            "checkpoint metadata cannot override policy fields: "
-            + ", ".join(sorted(conflicts))
+            "checkpoint metadata cannot override policy fields: " + ", ".join(sorted(conflicts))
         )
     supplied.update(protected)
     manifest = CheckpointManifest(

@@ -6,12 +6,14 @@ Methods under test:
   - OntologyOptimizer.window_average(window)
   - OntologyMediator.feedback_history_size()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -25,6 +27,7 @@ def _push_run(p, overall):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -40,6 +43,7 @@ def _push_opt(o, avg):
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     return OntologyMediator(gen, critic)
@@ -48,6 +52,7 @@ def _make_mediator():
 # ---------------------------------------------------------------------------
 # OntologyPipeline.best_run_index
 # ---------------------------------------------------------------------------
+
 
 class TestBestRunIndex:
     @pytest.mark.parametrize(
@@ -71,6 +76,7 @@ class TestBestRunIndex:
 # OntologyPipeline.score_improvement_rate
 # ---------------------------------------------------------------------------
 
+
 class TestScoreImprovementRate:
     @pytest.mark.parametrize(
         "scores,expected",
@@ -93,6 +99,7 @@ class TestScoreImprovementRate:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.window_average
 # ---------------------------------------------------------------------------
+
 
 class TestWindowAverage:
     @pytest.mark.parametrize(
@@ -120,6 +127,7 @@ class TestWindowAverage:
 # ---------------------------------------------------------------------------
 # OntologyMediator.feedback_history_size
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackHistorySize:
     def test_empty_returns_zero(self):

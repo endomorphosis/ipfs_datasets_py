@@ -8,6 +8,7 @@ Reusable by:
 - CLI commands
 - Direct Python imports
 """
+
 from .js_error_reporter_engine import JavaScriptErrorReporter, get_js_error_reporter  # noqa: F401
 
 __all__ = [

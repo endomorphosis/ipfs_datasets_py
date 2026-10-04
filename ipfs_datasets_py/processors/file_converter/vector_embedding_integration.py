@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 try:
     import anyio
     import numpy as np
+
     ANYIO_AVAILABLE = True
 except ImportError:
     ANYIO_AVAILABLE = False
@@ -35,12 +36,9 @@ from .metadata_extractor import extract_metadata
 # Embeddings infrastructure imports
 try:
     from ..embeddings.core import IPFSEmbeddings, EmbeddingConfig
-    from ..embeddings.chunker import (
-        Chunker,
-        ChunkingStrategy,
-        CHUNKING_STRATEGIES
-    )
+    from ..embeddings.chunker import Chunker, ChunkingStrategy, CHUNKING_STRATEGIES
     from ..embeddings.schema import DocumentChunk
+
     HAVE_EMBEDDINGS = True
 except ImportError:
     HAVE_EMBEDDINGS = False
@@ -53,6 +51,7 @@ except ImportError:
 # Vector store imports
 try:
     from ..vector_stores.faiss_store import FAISSVectorStore
+
     HAVE_FAISS = True
 except ImportError:
     HAVE_FAISS = False
@@ -60,6 +59,7 @@ except ImportError:
 
 try:
     from ..vector_stores.qdrant_store import QdrantVectorStore
+
     HAVE_QDRANT = True
 except ImportError:
     HAVE_QDRANT = False
@@ -67,6 +67,7 @@ except ImportError:
 
 try:
     from ..vector_stores.elasticsearch_store import ElasticsearchVectorStore
+
     HAVE_ELASTICSEARCH = True
 except ImportError:
     HAVE_ELASTICSEARCH = False
@@ -78,7 +79,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VectorEmbeddingResult:
     """Result from vector embedding generation."""
-    
+
     file_path: str
     text: str
     chunks: List[Dict[str, Any]] = field(default_factory=list)
@@ -89,7 +90,7 @@ class VectorEmbeddingResult:
     ipfs_embedding_cid: Optional[str] = None
     success: bool = True
     error: Optional[str] = None
-    
+
     def __post_init__(self):
         """Convert embeddings to numpy arrays if needed."""
         if self.embeddings and not isinstance(self.embeddings, list):
@@ -99,7 +100,7 @@ class VectorEmbeddingResult:
 @dataclass
 class SearchResult:
     """Result from semantic search."""
-    
+
     text: str
     score: float
     chunk_index: int
@@ -110,14 +111,14 @@ class SearchResult:
 class VectorEmbeddingPipeline:
     """
     Complete pipeline for generating vector embeddings from any file format.
-    
+
     Pipeline:
     1. File → Text (via FileConverter)
     2. Text → Chunks (via Chunker)
     3. Chunks → Embeddings (via IPFSEmbeddings)
     4. Store embeddings (FAISS/Qdrant/Elasticsearch)
     5. Optional IPFS storage
-    
+
     Usage:
         pipeline = VectorEmbeddingPipeline(
             embedding_model='sentence-transformers/all-MiniLM-L6-v2',
@@ -125,27 +126,27 @@ class VectorEmbeddingPipeline:
             enable_ipfs=True
         )
         result = await pipeline.process('document.pdf')
-        
+
         # Search
         results = await pipeline.search('query text', top_k=5)
     """
-    
+
     def __init__(
         self,
-        backend: str = 'native',
-        embedding_model: str = 'sentence-transformers/all-MiniLM-L6-v2',
-        chunking_strategy: str = 'fixed',
+        backend: str = "native",
+        embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+        chunking_strategy: str = "fixed",
         chunk_size: int = 512,
         chunk_overlap: int = 50,
-        vector_store: str = 'faiss',
+        vector_store: str = "faiss",
         vector_store_path: Optional[str] = None,
         enable_ipfs: bool = False,
         enable_acceleration: bool = False,
-        device: str = 'auto'
+        device: str = "auto",
     ):
         """
         Initialize the vector embedding pipeline.
-        
+
         Args:
             backend: FileConverter backend ('native', 'auto')
             embedding_model: Model for embeddings (HuggingFace model name)
@@ -160,7 +161,7 @@ class VectorEmbeddingPipeline:
         """
         if not HAVE_EMBEDDINGS:
             raise ImportError("Embeddings module not available. Install required dependencies.")
-        
+
         self.backend = backend
         self.embedding_model = embedding_model
         self.chunking_strategy = chunking_strategy
@@ -171,171 +172,155 @@ class VectorEmbeddingPipeline:
         self.enable_ipfs = enable_ipfs
         self.enable_acceleration = enable_acceleration
         self.device = device
-        
+
         # Initialize file converter
         if enable_ipfs or enable_acceleration:
             self.converter = IPFSAcceleratedConverter(
-                backend=backend,
-                enable_ipfs=enable_ipfs,
-                enable_acceleration=enable_acceleration
+                backend=backend, enable_ipfs=enable_ipfs, enable_acceleration=enable_acceleration
             )
         else:
             self.converter = FileConverter(backend=backend)
-        
+
         # Initialize embeddings config
         self.embedding_config = EmbeddingConfig(
             model_name=embedding_model,
             device=device,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            chunking_strategy=chunking_strategy
+            chunking_strategy=chunking_strategy,
         )
-        
+
         # Initialize embeddings engine (lazy)
         self._embeddings_engine = None
-        
+
         # Initialize chunker (lazy)
         self._chunker = None
-        
+
         # Initialize vector store (lazy)
         self._vector_store = None
-        
+
         # Track documents
         self.document_registry: Dict[str, Dict[str, Any]] = {}
-        
-        logger.info(f"Initialized VectorEmbeddingPipeline with {embedding_model} and {vector_store}")
-    
+
+        logger.info(
+            f"Initialized VectorEmbeddingPipeline with {embedding_model} and {vector_store}"
+        )
+
     @property
     def embeddings_engine(self):
         """Lazy-load embeddings engine."""
         if self._embeddings_engine is None:
             self._embeddings_engine = IPFSEmbeddings(
-                resources={},
-                metadata={"model": self.embedding_model}
+                resources={}, metadata={"model": self.embedding_model}
             )
         return self._embeddings_engine
-    
+
     @property
     def chunker(self):
         """Lazy-load text chunker."""
         if self._chunker is None:
             self._chunker = Chunker(config=self.embedding_config)
         return self._chunker
-    
+
     @property
     def vector_store(self):
         """Lazy-load vector store."""
         if self._vector_store is None:
             self._vector_store = self._initialize_vector_store()
         return self._vector_store
-    
+
     def _initialize_vector_store(self):
         """Initialize the appropriate vector store."""
-        if self.vector_store_type == 'faiss' and HAVE_FAISS:
+        if self.vector_store_type == "faiss" and HAVE_FAISS:
             return FAISSVectorStore(
                 dimension=384,  # Default for all-MiniLM-L6-v2
-                index_path=self.vector_store_path
+                index_path=self.vector_store_path,
             )
-        elif self.vector_store_type == 'qdrant' and HAVE_QDRANT:
-            return QdrantVectorStore(
-                collection_name="file_converter_embeddings",
-                dimension=384
-            )
-        elif self.vector_store_type == 'elasticsearch' and HAVE_ELASTICSEARCH:
-            return ElasticsearchVectorStore(
-                index_name="file_converter_embeddings",
-                dimension=384
-            )
+        elif self.vector_store_type == "qdrant" and HAVE_QDRANT:
+            return QdrantVectorStore(collection_name="file_converter_embeddings", dimension=384)
+        elif self.vector_store_type == "elasticsearch" and HAVE_ELASTICSEARCH:
+            return ElasticsearchVectorStore(index_name="file_converter_embeddings", dimension=384)
         else:
-            logger.warning(f"Vector store '{self.vector_store_type}' not available. Using FAISS fallback.")
+            logger.warning(
+                f"Vector store '{self.vector_store_type}' not available. Using FAISS fallback."
+            )
             if HAVE_FAISS:
-                return FAISSVectorStore(
-                    dimension=384,
-                    index_path=self.vector_store_path
-                )
+                return FAISSVectorStore(dimension=384, index_path=self.vector_store_path)
             else:
-                raise ImportError(f"No vector store available. Install faiss, qdrant, or elasticsearch.")
-    
+                raise ImportError(
+                    f"No vector store available. Install faiss, qdrant, or elasticsearch."
+                )
+
     async def process(
-        self,
-        file_path: Union[str, Path],
-        store_embeddings: bool = True,
-        store_on_ipfs: bool = None
+        self, file_path: Union[str, Path], store_embeddings: bool = True, store_on_ipfs: bool = None
     ) -> VectorEmbeddingResult:
         """
         Process a file to generate vector embeddings.
-        
+
         Args:
             file_path: Path to file to process
             store_embeddings: Store embeddings in vector store
             store_on_ipfs: Store on IPFS (uses enable_ipfs if None)
-        
+
         Returns:
             VectorEmbeddingResult with embeddings and metadata
         """
         if not ANYIO_AVAILABLE:
             raise ImportError("anyio is required for async operations")
-        
+
         file_path = str(file_path)
         store_on_ipfs = store_on_ipfs if store_on_ipfs is not None else self.enable_ipfs
-        
+
         try:
             # Step 1: Convert file to text
             logger.info(f"Processing file: {file_path}")
             if isinstance(self.converter, IPFSAcceleratedConverter):
                 conversion_result = await self.converter.convert(
-                    file_path,
-                    store_on_ipfs=store_on_ipfs
+                    file_path, store_on_ipfs=store_on_ipfs
                 )
                 text = conversion_result.text
-                ipfs_cid = getattr(conversion_result, 'ipfs_cid', None)
+                ipfs_cid = getattr(conversion_result, "ipfs_cid", None)
             else:
                 conversion_result = await self.converter.convert(file_path)
                 text = conversion_result.text
                 ipfs_cid = None
-            
+
             if not text or not text.strip():
                 return VectorEmbeddingResult(
-                    file_path=file_path,
-                    text="",
-                    success=False,
-                    error="No text extracted from file"
+                    file_path=file_path, text="", success=False, error="No text extracted from file"
                 )
-            
+
             # Step 2: Chunk text
             logger.info(f"Chunking text ({len(text)} characters)")
             chunks = await anyio.to_thread.run_sync(
-                self.chunker.chunk_text,
-                text,
-                {"file_path": file_path}
+                self.chunker.chunk_text, text, {"file_path": file_path}
             )
-            
+
             if not chunks:
                 return VectorEmbeddingResult(
                     file_path=file_path,
                     text=text,
                     success=False,
-                    error="No chunks generated from text"
+                    error="No chunks generated from text",
                 )
-            
+
             # Step 3: Generate embeddings
             logger.info(f"Generating embeddings for {len(chunks)} chunks")
             chunk_texts = [chunk.text for chunk in chunks]
-            
+
             embeddings = await self.embeddings_engine.generate_embeddings(
-                texts=chunk_texts,
-                config=self.embedding_config
+                texts=chunk_texts, config=self.embedding_config
             )
-            
+
             if embeddings is None or len(embeddings) == 0:
                 return VectorEmbeddingResult(
                     file_path=file_path,
                     text=text,
                     chunks=[{"text": c.text, "metadata": c.metadata} for c in chunks],
                     success=False,
-                    error="Failed to generate embeddings"
+                    error="Failed to generate embeddings",
                 )
-            
+
             # Step 4: Store embeddings in vector store
             vector_store_ids = []
             if store_embeddings and self.vector_store:
@@ -345,32 +330,30 @@ class VectorEmbeddingPipeline:
                         "file_path": file_path,
                         "chunk_index": i,
                         "text": chunk.text,
-                        "chunk_metadata": chunk.metadata
+                        "chunk_metadata": chunk.metadata,
                     }
                     if ipfs_cid:
                         metadata["ipfs_cid"] = ipfs_cid
-                    
+
                     doc_id = await anyio.to_thread.run_sync(
-                        self.vector_store.add_vector,
-                        embedding,
-                        metadata
+                        self.vector_store.add_vector, embedding, metadata
                     )
                     vector_store_ids.append(doc_id)
-            
+
             # Step 5: Optional IPFS storage for embeddings
             ipfs_embedding_cid = None
             if store_on_ipfs and ipfs_cid:
                 # TODO: Store embeddings on IPFS
                 logger.info("IPFS embedding storage not yet implemented")
-            
+
             # Register document
             self.document_registry[file_path] = {
                 "num_chunks": len(chunks),
                 "num_embeddings": len(embeddings),
                 "ipfs_cid": ipfs_cid,
-                "vector_store_ids": vector_store_ids
+                "vector_store_ids": vector_store_ids,
             }
-            
+
             return VectorEmbeddingResult(
                 file_path=file_path,
                 text=text,
@@ -379,142 +362,124 @@ class VectorEmbeddingPipeline:
                 embedding_metadata={
                     "model": self.embedding_model,
                     "num_chunks": len(chunks),
-                    "chunk_strategy": self.chunking_strategy
+                    "chunk_strategy": self.chunking_strategy,
                 },
                 vector_store_ids=vector_store_ids,
                 ipfs_cid=ipfs_cid,
                 ipfs_embedding_cid=ipfs_embedding_cid,
-                success=True
+                success=True,
             )
-            
+
         except Exception as e:
             logger.error(f"Error processing {file_path}: {e}", exc_info=True)
-            return VectorEmbeddingResult(
-                file_path=file_path,
-                text="",
-                success=False,
-                error=str(e)
-            )
-    
+            return VectorEmbeddingResult(file_path=file_path, text="", success=False, error=str(e))
+
     def process_sync(
-        self,
-        file_path: Union[str, Path],
-        store_embeddings: bool = True,
-        store_on_ipfs: bool = None
+        self, file_path: Union[str, Path], store_embeddings: bool = True, store_on_ipfs: bool = None
     ) -> VectorEmbeddingResult:
         """Synchronous wrapper for process()."""
         if not ANYIO_AVAILABLE:
             raise ImportError("anyio is required for sync operations")
-        
-        return anyio.from_thread.run(
-            self.process,
-            file_path,
-            store_embeddings,
-            store_on_ipfs
-        )
-    
+
+        return anyio.from_thread.run(self.process, file_path, store_embeddings, store_on_ipfs)
+
     async def process_batch(
         self,
         file_paths: List[Union[str, Path]],
         max_concurrent: int = 5,
         store_embeddings: bool = True,
-        store_on_ipfs: bool = None
+        store_on_ipfs: bool = None,
     ) -> List[VectorEmbeddingResult]:
         """
         Process multiple files in parallel.
-        
+
         Args:
             file_paths: List of file paths
             max_concurrent: Maximum concurrent processing
             store_embeddings: Store embeddings in vector store
             store_on_ipfs: Store on IPFS
-        
+
         Returns:
             List of VectorEmbeddingResult
         """
         if not ANYIO_AVAILABLE:
             raise ImportError("anyio is required for batch processing")
-        
+
         results = []
         limiter = anyio.CapacityLimiter(max_concurrent)
-        
+
         async def process_with_limit(file_path):
             async with limiter:
                 return await self.process(file_path, store_embeddings, store_on_ipfs)
-        
+
         async with anyio.create_task_group() as tg:
             tasks = []
             for file_path in file_paths:
                 task = tg.start_soon(process_with_limit, file_path)
                 tasks.append(task)
-        
+
         # Collect results in order
         for file_path in file_paths:
             result = await process_with_limit(file_path)
             results.append(result)
-        
+
         return results
-    
+
     async def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        filter_metadata: Optional[Dict[str, Any]] = None
+        self, query: str, top_k: int = 5, filter_metadata: Optional[Dict[str, Any]] = None
     ) -> List[SearchResult]:
         """
         Semantic search over stored embeddings.
-        
+
         Args:
             query: Search query text
             top_k: Number of results to return
             filter_metadata: Optional metadata filters
-        
+
         Returns:
             List of SearchResult
         """
         if not ANYIO_AVAILABLE:
             raise ImportError("anyio is required for search")
-        
+
         if not self.vector_store:
             raise ValueError("Vector store not initialized")
-        
+
         try:
             # Generate query embedding
             query_embeddings = await self.embeddings_engine.generate_embeddings(
-                texts=[query],
-                config=self.embedding_config
+                texts=[query], config=self.embedding_config
             )
-            
+
             if not query_embeddings or len(query_embeddings) == 0:
                 return []
-            
+
             query_embedding = query_embeddings[0]
-            
+
             # Search vector store
             results = await anyio.to_thread.run_sync(
-                self.vector_store.search,
-                query_embedding,
-                top_k,
-                filter_metadata
+                self.vector_store.search, query_embedding, top_k, filter_metadata
             )
-            
+
             # Convert to SearchResult
             search_results = []
             for i, (score, metadata) in enumerate(results):
-                search_results.append(SearchResult(
-                    text=metadata.get("text", ""),
-                    score=float(score),
-                    chunk_index=metadata.get("chunk_index", i),
-                    file_path=metadata.get("file_path"),
-                    metadata=metadata
-                ))
-            
+                search_results.append(
+                    SearchResult(
+                        text=metadata.get("text", ""),
+                        score=float(score),
+                        chunk_index=metadata.get("chunk_index", i),
+                        file_path=metadata.get("file_path"),
+                        metadata=metadata,
+                    )
+                )
+
             return search_results
-            
+
         except Exception as e:
             logger.error(f"Error during search: {e}", exc_info=True)
             return []
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get pipeline status."""
         accelerate_status = {"available": False, "enabled": False}
@@ -535,33 +500,34 @@ class VectorEmbeddingPipeline:
             "num_documents": len(self.document_registry),
             "embeddings_available": HAVE_EMBEDDINGS,
             "vector_store_available": self.vector_store is not None,
-            "accelerate_available": bool(accelerate_status.get("available")) and bool(accelerate_status.get("enabled", True)),
+            "accelerate_available": bool(accelerate_status.get("available"))
+            and bool(accelerate_status.get("enabled", True)),
         }
 
 
 # Convenience functions
 def create_vector_pipeline(
-    embedding_model: str = 'sentence-transformers/all-MiniLM-L6-v2',
-    vector_store: str = 'faiss',
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+    vector_store: str = "faiss",
     enable_ipfs: bool = False,
-    enable_acceleration: bool = False
+    enable_acceleration: bool = False,
 ) -> VectorEmbeddingPipeline:
     """
     Create a vector embedding pipeline with sensible defaults.
-    
+
     Args:
         embedding_model: HuggingFace embedding model name
         vector_store: Vector store type ('faiss', 'qdrant', 'elasticsearch')
         enable_ipfs: Enable IPFS storage
         enable_acceleration: Enable ML acceleration
-    
+
     Returns:
         VectorEmbeddingPipeline instance
     """
     return VectorEmbeddingPipeline(
-        backend='native',
+        backend="native",
         embedding_model=embedding_model,
         vector_store=vector_store,
         enable_ipfs=enable_ipfs,
-        enable_acceleration=enable_acceleration
+        enable_acceleration=enable_acceleration,
     )

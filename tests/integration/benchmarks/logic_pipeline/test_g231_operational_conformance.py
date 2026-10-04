@@ -66,8 +66,7 @@ from tests.integration.benchmarks.logic_pipeline.test_source_orchestration impor
 
 
 TEST_ONLY_COMPOSITION_SCHEMA = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g231-test-only-operational-composition.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g231-test-only-operational-composition.v1"
 )
 
 
@@ -115,18 +114,10 @@ def _test_only_composition_receipt(
     body = {
         "schema": TEST_ONLY_COMPOSITION_SCHEMA,
         "g211_runtime_batch_receipt_cid": batch.receipt_cid,
-        "g240_runtime_namespace_receipt_cid": (
-            source_result.runtime_namespace_receipt.receipt_cid
-        ),
-        "g240_source_orchestration_receipt_cid": (
-            source_result.orchestration_receipt.receipt_cid
-        ),
-        "g238_detached_replay_gate_receipt_cid": (
-            replay_gate["receipt_cid"]
-        ),
-        "source_process_group_reaped": (
-            source_result.process_result.process_group_reaped
-        ),
+        "g240_runtime_namespace_receipt_cid": (source_result.runtime_namespace_receipt.receipt_cid),
+        "g240_source_orchestration_receipt_cid": (source_result.orchestration_receipt.receipt_cid),
+        "g238_detached_replay_gate_receipt_cid": (replay_gate["receipt_cid"]),
+        "source_process_group_reaped": (source_result.process_result.process_group_reaped),
         "source_process_timed_out": source_result.process_result.timed_out,
         "test_only": True,
         "complete": True,
@@ -136,9 +127,7 @@ def _test_only_composition_receipt(
         "holdout_accessed": False,
         "production_promotion_authorized": False,
     }
-    return MappingProxyType(
-        {**body, "receipt_cid": cid_for_dag_json(body)}
-    )
+    return MappingProxyType({**body, "receipt_cid": cid_for_dag_json(body)})
 
 
 @pytest.fixture(scope="module")
@@ -148,23 +137,17 @@ def test_only_operational_chain(
     root = tmp_path_factory.mktemp("g231-test-only-conformance")
     source_result, namespace_set, manifest, profile = _execute(root)
     source_private = source_result.validation_sources
-    orchestration_set = (
-        build_g240_source_orchestration_evidence_set_v2(
-            namespace_set,
-            (source_private,),
-            validator_identity_cid=_authority(
-                "orchestration-validator"
-            ),
-        )
+    orchestration_set = build_g240_source_orchestration_evidence_set_v2(
+        namespace_set,
+        (source_private,),
+        validator_identity_cid=_authority("orchestration-validator"),
     )
     output_root = root / "g211-persisted"
     batch = persist_causal_runtime_batch_v2(
         source_private.plan,
         manifest,
         profile,
-        {
-            source_private.job.job_id: source_result.runtime_evidence
-        },
+        {source_private.job.job_id: source_result.runtime_evidence},
         output_root=output_root,
         runtime_namespace_evidence_set=namespace_set,
         source_orchestration_evidence_set=orchestration_set,
@@ -190,9 +173,7 @@ def test_only_operational_chain(
     )
     source_record = G238ReplaySourceRecordV2.create(
         runtime_evidence=source_runtime,
-        semantic_observation=G238SemanticObservationV2.create(
-            source_runtime
-        ),
+        semantic_observation=G238SemanticObservationV2.create(source_runtime),
         resource_receipt=source_resource,
     )
     source_index = G238ReplaySourceIndexV2.create(
@@ -203,9 +184,7 @@ def test_only_operational_chain(
         route_manifest_cid=_identity("route-manifest"),
         case_index_cid=_identity("case-index"),
         run_plan_cid=_identity("run-plan"),
-        source_worktree_cid=g240_worktree_safety_projection_cid(
-            source_worktree
-        ),
+        source_worktree_cid=g240_worktree_safety_projection_cid(source_worktree),
         source_executor_authority_cid=contract.executor_identity_cid,
         records=(source_record,),
     )
@@ -219,28 +198,16 @@ def test_only_operational_chain(
     replay_execution_request = G240ExecutionRequestV2.create_replay(
         source_request,
         replay_run_id=replay_run_id,
-        replay_process_namespace_cid=str(
-            launch["replay_process_namespace_cid"]
-        ),
-        replay_state_namespace_cid=str(
-            launch["replay_state_namespace_cid"]
-        ),
-        replay_output_namespace_cid=str(
-            launch["replay_output_namespace_cid"]
-        ),
-        replay_cache_namespace_cids=launch[
-            "replay_cache_namespace_cids"
-        ],
+        replay_process_namespace_cid=str(launch["replay_process_namespace_cid"]),
+        replay_state_namespace_cid=str(launch["replay_state_namespace_cid"]),
+        replay_output_namespace_cid=str(launch["replay_output_namespace_cid"]),
+        replay_cache_namespace_cids=launch["replay_cache_namespace_cids"],
         source_runtime_evidence=source_runtime,
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
     replay_executor = _identity("replay-executor")
     replay_observer = _identity("replay-observer")
-    replay_orchestration_observer = _identity(
-        "replay-orchestration-observer"
-    )
+    replay_orchestration_observer = _identity("replay-orchestration-observer")
     (
         replay_runtime,
         replay_namespace,
@@ -261,23 +228,15 @@ def test_only_operational_chain(
         benchmark_root=root / "replay-state",
         replay_executor_identity_cid=replay_executor,
         replay_namespace_observer_identity_cid=replay_observer,
-        orchestration_observer_identity_cid=(
-            replay_orchestration_observer
-        ),
+        orchestration_observer_identity_cid=(replay_orchestration_observer),
         timeout_seconds=20,
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
-    replay_payload = (
-        canonical_dag_json_bytes(replay_runtime.to_dict()) + b"\n"
-    )
+    replay_payload = canonical_dag_json_bytes(replay_runtime.to_dict()) + b"\n"
     replay_private = G240PrivateReplayValidationSourcesV2(
         source_policy=policy,
         executor_contract=contract,
-        source_namespace_receipt=(
-            source_result.runtime_namespace_receipt
-        ),
+        source_namespace_receipt=(source_result.runtime_namespace_receipt),
         namespace_receipt=replay_namespace,
         orchestration_receipt=replay_orchestration,
         source_worktree_safety_receipt=source_worktree,
@@ -297,38 +256,26 @@ def test_only_operational_chain(
         source_record=source_record,
         replay_run_id=replay_run_id,
         replay_worktree_cid=replay_namespace.replay_worktree_cid,
-        source_namespace_receipt_cid=(
-            source_result.runtime_namespace_receipt.receipt_cid
-        ),
+        source_namespace_receipt_cid=(source_result.runtime_namespace_receipt.receipt_cid),
         source_process_namespace_cid=(
             source_result.runtime_namespace_receipt.process_namespace_cid
         ),
-        source_state_namespace_cid=(
-            source_result.runtime_namespace_receipt.state_namespace_cid
-        ),
+        source_state_namespace_cid=(source_result.runtime_namespace_receipt.state_namespace_cid),
         source_cache_namespace_cid=g240_cache_namespace_set_cid(
             source_result.runtime_namespace_receipt.cache_namespace_cids
         ),
-        replay_process_namespace_cid=(
-            replay_namespace.replay_process_namespace_cid
-        ),
-        replay_state_namespace_cid=(
-            replay_namespace.replay_state_namespace_cid
-        ),
+        replay_process_namespace_cid=(replay_namespace.replay_process_namespace_cid),
+        replay_state_namespace_cid=(replay_namespace.replay_state_namespace_cid),
         replay_cache_namespace_cid=g240_cache_namespace_set_cid(
             replay_namespace.replay_cache_namespace_cids
         ),
         replay_executor_authority_cid=replay_executor,
         replay_validator_authority_cid=replay_observer,
         replay_runtime_evidence=replay_runtime,
-        replay_semantic_observation=G238SemanticObservationV2.create(
-            replay_runtime
-        ),
+        replay_semantic_observation=G238SemanticObservationV2.create(replay_runtime),
         replay_resource_receipt=replay_resource,
     )
-    operational_replay_sources = {
-        source_record.record_cid: replay_private
-    }
+    operational_replay_sources = {source_record.record_cid: replay_private}
     replay_gate = build_g238_detached_replay_gate_v2(
         source_index,
         (detached_receipt,),
@@ -376,11 +323,7 @@ def test_g211_g240_g238_test_only_operational_conformance(
             replay_gate,
             chain["source_index"],
             (chain["detached_receipt"],),
-            validator_authority_cid=(
-                chain[
-                    "detached_receipt"
-                ].replay_validator_authority_cid
-            ),
+            validator_authority_cid=(chain["detached_receipt"].replay_validator_authority_cid),
             operational_replay_sources=chain["replay_private"],
         )
         == replay_gate["receipt_cid"]
@@ -398,12 +341,8 @@ def test_g231_production_boundary_rejects_test_only_execution(
     test_only_operational_chain,
 ) -> None:
     chain = test_only_operational_chain
-    assert chain["source_request"].schema == (
-        G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
-    )
-    assert chain["replay_request"].schema == (
-        G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
-    )
+    assert chain["source_request"].schema == (G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2)
+    assert chain["replay_request"].schema == (G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2)
     for request in (
         chain["source_request"],
         chain["replay_request"],
@@ -418,10 +357,7 @@ def test_g231_production_boundary_rejects_test_only_execution(
     # operational sources.  Keep its public failure reason stable.
     with pytest.raises(
         PositiveGateBundleError,
-        match=(
-            "G231 production validation rejects test-only synthetic "
-            "G240 execution"
-        ),
+        match=("G231 production validation rejects test-only synthetic G240 execution"),
     ):
         _validate_g211_g240_operational_sources(
             freeze=None,
@@ -431,12 +367,8 @@ def test_g231_production_boundary_rejects_test_only_execution(
             pilot_runtime_batch=chain["batch"],
             development_runtime_batch=chain["batch"],
             source_orchestration_validation_sources={
-                "pilot": (
-                    chain["source_result"].validation_sources,
-                ),
-                "development": (
-                    chain["source_result"].validation_sources,
-                ),
+                "pilot": (chain["source_result"].validation_sources,),
+                "development": (chain["source_result"].validation_sources,),
             },
             resource_receipts=(),
         )

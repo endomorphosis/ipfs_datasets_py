@@ -127,9 +127,7 @@ def test_model_identity_is_shared_and_second_large_instance_is_bounded() -> None
         )
     second.release()
     first.release()
-    assert ResourceLeaseReceipt.from_dict(
-        scheduler.receipts[0].to_dict()
-    ) == scheduler.receipts[0]
+    assert ResourceLeaseReceipt.from_dict(scheduler.receipts[0].to_dict()) == scheduler.receipts[0]
     assert scheduler.active_model_identities == ()
     assert scheduler.loaded_model_identities == ("leanstral-119b",)
     assert [item.shared_model_instance for item in scheduler.receipts] == [
@@ -154,12 +152,8 @@ def test_oversubscription_queues_and_records_delay_without_cross_lane_borrowing(
             cancellation_grace_seconds=0.05,
         )
     )
-    solver = scheduler.acquire(
-        ResourceLeaseRequest("solver-one", ResourceClass.SOLVER)
-    )
-    kernel = scheduler.acquire(
-        ResourceLeaseRequest("kernel-one", ResourceClass.KERNEL)
-    )
+    solver = scheduler.acquire(ResourceLeaseRequest("solver-one", ResourceClass.SOLVER))
+    kernel = scheduler.acquire(ResourceLeaseRequest("kernel-one", ResourceClass.KERNEL))
     assert solver.request.resource_class is ResourceClass.SOLVER
     assert kernel.request.resource_class is ResourceClass.KERNEL
     kernel.release()
@@ -185,9 +179,7 @@ def test_oversubscription_queues_and_records_delay_without_cross_lane_borrowing(
 
     assert not thread.is_alive()
     assert len(acquired) == 1
-    delayed = next(
-        item for item in scheduler.receipts if item.owner_id == "solver-two"
-    )
+    delayed = next(item for item in scheduler.receipts if item.owner_id == "solver-two")
     assert delayed.queue_delay_ms >= 20
     assert delayed.outcome == "released"
 
@@ -201,16 +193,12 @@ def test_cancellation_wakes_queued_lease_and_releases_active_capacity() -> None:
             cancellation_grace_seconds=0.05,
         )
     )
-    active = scheduler.acquire(
-        ResourceLeaseRequest("active-solver", ResourceClass.SOLVER)
-    )
+    active = scheduler.acquire(ResourceLeaseRequest("active-solver", ResourceClass.SOLVER))
     outcome: list[type[BaseException]] = []
 
     def blocked() -> None:
         try:
-            scheduler.acquire(
-                ResourceLeaseRequest("cancelled-solver", ResourceClass.SOLVER)
-            )
+            scheduler.acquire(ResourceLeaseRequest("cancelled-solver", ResourceClass.SOLVER))
         except BaseException as exc:  # retained for the assertion below
             outcome.append(type(exc))
 
@@ -343,9 +331,7 @@ def test_ablation_acquires_each_stage_lane_and_enforces_zero_solver_cap(
     )
 
     assert execution.results[0].status is OutcomeStatus.NOT_VERIFIED
-    assert tuple(
-        item.resource_class for item in execution.resource_receipts
-    ) == (
+    assert tuple(item.resource_class for item in execution.resource_receipts) == (
         ResourceClass.CPU,
         ResourceClass.CPU,
         ResourceClass.MODEL,
@@ -355,9 +341,7 @@ def test_ablation_acquires_each_stage_lane_and_enforces_zero_solver_cap(
     )
     assert all(item.queue_delay_ms >= 0 for item in execution.resource_receipts)
     model_receipts = [
-        item
-        for item in execution.resource_receipts
-        if item.resource_class is ResourceClass.MODEL
+        item for item in execution.resource_receipts if item.resource_class is ResourceClass.MODEL
     ]
     assert [item.shared_model_instance for item in model_receipts] == [
         False,
@@ -389,10 +373,7 @@ def test_ablation_acquires_each_stage_lane_and_enforces_zero_solver_cap(
         resume=False,
     )
     assert blocked.results[0].status is OutcomeStatus.INFRASTRUCTURE_FAILURE
-    assert (
-        blocked.results[0].failure_code
-        is FailureCode.RESOURCE_LEASE_CANCELLATION
-    )
+    assert blocked.results[0].failure_code is FailureCode.RESOURCE_LEASE_CANCELLATION
 
 
 def test_ablation_lease_uses_remaining_case_time_and_never_invokes_after_expiry(
@@ -418,9 +399,7 @@ def test_ablation_lease_uses_remaining_case_time_and_never_invokes_after_expiry(
             requests.append(request)
             return super().acquire(request)
 
-    scheduler = CapturingScheduler(
-        ResourcePolicy.from_resource_limits(limits)
-    )
+    scheduler = CapturingScheduler(ResourcePolicy.from_resource_limits(limits))
     invocations = 0
 
     def handler(_request: object) -> dict[str, object]:
@@ -450,6 +429,4 @@ def test_ablation_lease_uses_remaining_case_time_and_never_invokes_after_expiry(
     assert requests[0].timeout_seconds == pytest.approx(0.75)
     assert invocations == 0
     assert execution.results[0].status is OutcomeStatus.INFRASTRUCTURE_FAILURE
-    assert execution.results[0].failure_code is (
-        FailureCode.RESOURCE_LEASE_CANCELLATION
-    )
+    assert execution.results[0].failure_code is (FailureCode.RESOURCE_LEASE_CANCELLATION)

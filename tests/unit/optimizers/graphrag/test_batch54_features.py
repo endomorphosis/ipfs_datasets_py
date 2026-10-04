@@ -6,6 +6,7 @@ Covers:
 - LogicValidator.suggest_fixes_for_result()
 - OntologyLearningAdapter.serialize() / deserialize()
 """
+
 from __future__ import annotations
 
 import os
@@ -17,6 +18,7 @@ import pytest
 # ──────────────────────────────────────────────────────────────────────────────
 # ExtractionConfig.from_env()
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestExtractionConfigFromEnv:
     """from_env() should populate fields from environment variables."""
@@ -39,6 +41,7 @@ class TestExtractionConfigFromEnv:
 
     def test_defaults_without_env(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig.from_env()
         default = ExtractionConfig()
         assert cfg.confidence_threshold == default.confidence_threshold
@@ -46,42 +49,49 @@ class TestExtractionConfigFromEnv:
 
     def test_confidence_threshold_from_env(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("EXTRACTION_CONFIDENCE_THRESHOLD", "0.75")
         cfg = ExtractionConfig.from_env()
         assert cfg.confidence_threshold == 0.75
 
     def test_max_entities_from_env(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("EXTRACTION_MAX_ENTITIES", "42")
         cfg = ExtractionConfig.from_env()
         assert cfg.max_entities == 42
 
     def test_include_properties_false_from_env(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("EXTRACTION_INCLUDE_PROPERTIES", "false")
         cfg = ExtractionConfig.from_env()
         assert cfg.include_properties is False
 
     def test_include_properties_true_from_env(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("EXTRACTION_INCLUDE_PROPERTIES", "true")
         cfg = ExtractionConfig.from_env()
         assert cfg.include_properties is True
 
     def test_custom_prefix(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("MY_CONFIDENCE_THRESHOLD", "0.9")
         cfg = ExtractionConfig.from_env(prefix="MY_")
         assert cfg.confidence_threshold == 0.9
 
     def test_max_confidence_from_env(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("EXTRACTION_MAX_CONFIDENCE", "0.8")
         cfg = ExtractionConfig.from_env()
         assert cfg.max_confidence == 0.8
 
     def test_window_size_from_env(self, monkeypatch):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         monkeypatch.setenv("EXTRACTION_WINDOW_SIZE", "10")
         cfg = ExtractionConfig.from_env()
         assert cfg.window_size == 10
@@ -91,36 +101,52 @@ class TestExtractionConfigFromEnv:
 # OntologyCritic.explain_score()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExplainScore:
     """explain_score() should return one explanation per dimension."""
 
     @pytest.fixture
     def critic(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         return OntologyCritic(use_llm=False)
 
     @pytest.fixture
     def high_score(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         return CriticScore(
-            completeness=0.9, consistency=0.9, clarity=0.9,
-            granularity=0.9, relationship_coherence=0.9
-        , domain_alignment=0.9
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
         )
 
     @pytest.fixture
     def low_score(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         return CriticScore(
-            completeness=0.2, consistency=0.2, clarity=0.2,
-            granularity=0.2, relationship_coherence=0.2
-        , domain_alignment=0.2
+            completeness=0.2,
+            consistency=0.2,
+            clarity=0.2,
+            granularity=0.2,
+            relationship_coherence=0.2,
+            domain_alignment=0.2,
         )
 
     def test_returns_dict_with_all_dimensions(self, critic, high_score):
         explanations = critic.explain_score(high_score)
-        for dim in ("completeness", "consistency", "clarity", "granularity",
-                    "domain_alignment", "overall"):
+        for dim in (
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "domain_alignment",
+            "overall",
+        ):
             assert dim in explanations
 
     def test_high_score_uses_positive_language(self, critic, high_score):
@@ -154,12 +180,14 @@ class TestExplainScore:
 # LogicValidator.suggest_fixes_for_result()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestSuggestFixesForResult:
     """suggest_fixes_for_result() should combine contradiction + dangling ID hints."""
 
     @pytest.fixture
     def validator(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         return LogicValidator(use_cache=False)
 
     @pytest.fixture
@@ -212,6 +240,7 @@ class TestSuggestFixesForResult:
 # OntologyLearningAdapter.serialize() / deserialize()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestAdapterSerializeDeserialize:
     """serialize()/deserialize() should round-trip adapter state as bytes."""
 
@@ -220,6 +249,7 @@ class TestAdapterSerializeDeserialize:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         a = OntologyLearningAdapter(domain="legal", base_threshold=0.6)
         for score in [0.8, 0.7, 0.9, 0.75]:
             a.apply_feedback(final_score=score, actions=[{"action": "merge_duplicates"}])
@@ -231,6 +261,7 @@ class TestAdapterSerializeDeserialize:
 
     def test_serialize_is_valid_json(self, adapter_with_feedback):
         import json
+
         data = adapter_with_feedback.serialize()
         parsed = json.loads(data)
         assert isinstance(parsed, dict)
@@ -239,6 +270,7 @@ class TestAdapterSerializeDeserialize:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         data = adapter_with_feedback.serialize()
         restored = OntologyLearningAdapter.deserialize(data)
         assert restored.domain == "legal"
@@ -247,6 +279,7 @@ class TestAdapterSerializeDeserialize:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         data = adapter_with_feedback.serialize()
         restored = OntologyLearningAdapter.deserialize(data)
         assert abs(restored._current_threshold - adapter_with_feedback._current_threshold) < 1e-9
@@ -255,6 +288,7 @@ class TestAdapterSerializeDeserialize:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         data = adapter_with_feedback.serialize()
         restored = OntologyLearningAdapter.deserialize(data)
         assert len(restored._feedback) == len(adapter_with_feedback._feedback)
@@ -263,6 +297,7 @@ class TestAdapterSerializeDeserialize:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         data = adapter_with_feedback.serialize()
         restored = OntologyLearningAdapter.deserialize(data)
         assert restored._action_count == dict(adapter_with_feedback._action_count)
@@ -271,6 +306,7 @@ class TestAdapterSerializeDeserialize:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         a = OntologyLearningAdapter()
         data = a.serialize()
         restored = OntologyLearningAdapter.deserialize(data)

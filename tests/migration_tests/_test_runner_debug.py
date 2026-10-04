@@ -13,7 +13,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 if __name__ == "__main__":
-    from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import run_comprehensive_tests
+    from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import (
+        run_comprehensive_tests,
+    )
+
     try:
         print("Calling run_comprehensive_tests...")
         tool = run_comprehensive_tests(
@@ -22,11 +25,12 @@ if __name__ == "__main__":
             run_type_check=False,
             run_linting=False,
             run_dataset_tests=False,
-            verbose=True
+            verbose=True,
         )
         print(f"Return value type: {type(tool)}")
         print("Test completed successfully!")
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()

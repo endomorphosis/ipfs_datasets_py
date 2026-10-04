@@ -47,7 +47,9 @@ def _make_context() -> OntologyGenerationContext:
     )
 
 
-def _profile_once(generator: OntologyGenerator, text: str, context: OntologyGenerationContext) -> dict[str, object]:
+def _profile_once(
+    generator: OntologyGenerator, text: str, context: OntologyGenerationContext
+) -> dict[str, object]:
     profiler = cProfile.Profile()
     profiler.enable()
     ontology = generator.generate_ontology(text, context)

@@ -39,17 +39,17 @@ from ipfs_datasets_py.processors.file_converter import VectorEmbeddingPipeline
 
 # Create pipeline
 pipeline = VectorEmbeddingPipeline(
-    embedding_model='sentence-transformers/all-MiniLM-L6-v2',
-    vector_store='faiss',
+    embedding_model="sentence-transformers/all-MiniLM-L6-v2",
+    vector_store="faiss",
     enable_ipfs=True,
-    enable_acceleration=True
+    enable_acceleration=True,
 )
 
 # Process file → embeddings
-result = await pipeline.process('document.pdf')
+result = await pipeline.process("document.pdf")
 
 # Semantic search
-results = await pipeline.search('query text', top_k=5)
+results = await pipeline.search("query text", top_k=5)
 ```
 
 ### Key Features
@@ -154,7 +154,7 @@ from ipfs_datasets_py.processors.file_converter import create_vector_pipeline
 pipeline = create_vector_pipeline()
 
 # Process a file
-result = await pipeline.process('document.pdf')
+result = await pipeline.process("document.pdf")
 print(f"Generated {len(result.embeddings)} embeddings")
 ```
 
@@ -162,11 +162,7 @@ print(f"Generated {len(result.embeddings)} embeddings")
 
 ```python
 # Process multiple files
-results = await pipeline.process_batch([
-    'doc1.pdf',
-    'doc2.docx', 
-    'doc3.html'
-], max_concurrent=5)
+results = await pipeline.process_batch(["doc1.pdf", "doc2.docx", "doc3.html"], max_concurrent=5)
 
 print(f"Processed {len(results)} files")
 ```
@@ -175,10 +171,7 @@ print(f"Processed {len(results)} files")
 
 ```python
 # Search across all documents
-search_results = await pipeline.search(
-    'machine learning algorithms',
-    top_k=10
-)
+search_results = await pipeline.search("machine learning algorithms", top_k=10)
 
 for result in search_results:
     print(f"Score: {result.score:.3f}")
@@ -189,15 +182,15 @@ for result in search_results:
 
 ```python
 pipeline = VectorEmbeddingPipeline(
-    backend='native',
-    embedding_model='sentence-transformers/all-mpnet-base-v2',
-    chunking_strategy='semantic',
+    backend="native",
+    embedding_model="sentence-transformers/all-mpnet-base-v2",
+    chunking_strategy="semantic",
     chunk_size=1024,
     chunk_overlap=100,
-    vector_store='qdrant',
+    vector_store="qdrant",
     enable_ipfs=True,
     enable_acceleration=True,
-    device='cuda'
+    device="cuda",
 )
 ```
 
@@ -207,7 +200,7 @@ pipeline = VectorEmbeddingPipeline(
 from ipfs_datasets_py.processors.file_converter import (
     VectorEmbeddingPipeline,
     UniversalKnowledgeGraphPipeline,
-    TextSummarizationPipeline
+    TextSummarizationPipeline,
 )
 
 # Initialize all pipelines
@@ -216,7 +209,7 @@ kg_pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
 summary_pipeline = TextSummarizationPipeline()
 
 # Process a document through all pipelines
-file_path = 'research_paper.pdf'
+file_path = "research_paper.pdf"
 
 # Get embeddings
 embeddings = await embedding_pipeline.process(file_path)
@@ -243,28 +236,19 @@ summary = await summary_pipeline.summarize(file_path)
 ```python
 # Index an entire document collection
 corpus_files = [
-    'papers/paper1.pdf',
-    'papers/paper2.pdf',
-    'papers/paper3.pdf',
+    "papers/paper1.pdf",
+    "papers/paper2.pdf",
+    "papers/paper3.pdf",
     # ... hundreds more
 ]
 
 # Batch process with progress tracking
-pipeline = VectorEmbeddingPipeline(
-    vector_store='qdrant',
-    enable_acceleration=True
-)
+pipeline = VectorEmbeddingPipeline(vector_store="qdrant", enable_acceleration=True)
 
-results = await pipeline.process_batch(
-    corpus_files,
-    max_concurrent=10
-)
+results = await pipeline.process_batch(corpus_files, max_concurrent=10)
 
 # Search the entire corpus
-results = await pipeline.search(
-    'neural network optimization',
-    top_k=20
-)
+results = await pipeline.search("neural network optimization", top_k=20)
 ```
 
 ### Use Case 2: Multi-Format Knowledge Base
@@ -272,11 +256,11 @@ results = await pipeline.search(
 ```python
 # Mixed format collection
 mixed_files = [
-    'docs/manual.pdf',
-    'specs/api.html',
-    'notes/summary.docx',
-    'data/report.xlsx',
-    'readme.md'
+    "docs/manual.pdf",
+    "specs/api.html",
+    "notes/summary.docx",
+    "data/report.xlsx",
+    "readme.md",
 ]
 
 # Process all formats uniformly
@@ -284,7 +268,7 @@ pipeline = VectorEmbeddingPipeline()
 results = await pipeline.process_batch(mixed_files)
 
 # Unified search across all formats
-search_results = await pipeline.search('configuration options')
+search_results = await pipeline.search("configuration options")
 ```
 
 ### Use Case 3: RAG System Data Preparation
@@ -292,14 +276,14 @@ search_results = await pipeline.search('configuration options')
 ```python
 # Prepare data for RAG system
 pipeline = VectorEmbeddingPipeline(
-    embedding_model='sentence-transformers/all-mpnet-base-v2',
-    vector_store='faiss',
-    chunking_strategy='semantic',
-    chunk_size=512
+    embedding_model="sentence-transformers/all-mpnet-base-v2",
+    vector_store="faiss",
+    chunking_strategy="semantic",
+    chunk_size=512,
 )
 
 # Process and store
-docs = ['doc1.pdf', 'doc2.html', 'doc3.txt']
+docs = ["doc1.pdf", "doc2.html", "doc3.txt"]
 for doc in docs:
     result = await pipeline.process(doc, store_embeddings=True)
     print(f"Processed {doc}: {len(result.chunks)} chunks")

@@ -153,66 +153,78 @@ async def system_maintenance(
             return result
 
         if operation == "health_check":
-            return _with_status({
-                "success": True,
-                "operation": operation,
-                "health_status": {
-                    "system": "healthy",
-                    "memory_usage": "45%",
-                    "disk_usage": "78%",
-                    "active_connections": 12,
-                },
-                "timestamp": timestamp,
-            })
+            return _with_status(
+                {
+                    "success": True,
+                    "operation": operation,
+                    "health_status": {
+                        "system": "healthy",
+                        "memory_usage": "45%",
+                        "disk_usage": "78%",
+                        "active_connections": 12,
+                    },
+                    "timestamp": timestamp,
+                }
+            )
 
         if operation == "cleanup":
-            return _with_status({
-                "success": True,
-                "operation": operation,
-                "cleanup_results": {
-                    "cache_cleared": "2.3 GB",
-                    "temp_files_removed": 142,
-                },
-                "target": target or "all",
-                "timestamp": timestamp,
-            })
+            return _with_status(
+                {
+                    "success": True,
+                    "operation": operation,
+                    "cleanup_results": {
+                        "cache_cleared": "2.3 GB",
+                        "temp_files_removed": 142,
+                    },
+                    "target": target or "all",
+                    "timestamp": timestamp,
+                }
+            )
 
         if operation == "restart":
             if not force:
-                return _with_status({
-                    "success": False,
-                    "operation": operation,
-                    "error": "Restart requires force=True for safety",
-                    "warning": "This will restart system services",
-                })
+                return _with_status(
+                    {
+                        "success": False,
+                        "operation": operation,
+                        "error": "Restart requires force=True for safety",
+                        "warning": "This will restart system services",
+                    }
+                )
 
-            return _with_status({
-                "success": True,
-                "operation": operation,
-                "message": "System restart initiated",
-                "target": target or "all_services",
-                "estimated_downtime": "30-60 seconds",
-                "timestamp": timestamp,
-            })
+            return _with_status(
+                {
+                    "success": True,
+                    "operation": operation,
+                    "message": "System restart initiated",
+                    "target": target or "all_services",
+                    "estimated_downtime": "30-60 seconds",
+                    "timestamp": timestamp,
+                }
+            )
 
         if operation == "backup":
-            return _with_status({
-                "success": True,
-                "operation": operation,
-                "backup_info": {
-                    "backup_id": f"backup_{timestamp.replace(':', '').replace('-', '')}",
-                    "size": "1.2 GB",
-                    "backup_location": "/var/backups/ipfs_datasets/",
-                },
-                "timestamp": timestamp,
-            })
+            return _with_status(
+                {
+                    "success": True,
+                    "operation": operation,
+                    "backup_info": {
+                        "backup_id": f"backup_{timestamp.replace(':', '').replace('-', '')}",
+                        "size": "1.2 GB",
+                        "backup_location": "/var/backups/ipfs_datasets/",
+                    },
+                    "timestamp": timestamp,
+                }
+            )
 
-        return _with_status({
-            "success": False,
-            "operation": operation,
-            "error": f"Unknown operation: {operation}",
-            "valid_operations": ["restart", "cleanup", "health_check", "backup"],
-        })
+        return _with_status(
+            {
+                "success": False,
+                "operation": operation,
+                "error": f"Unknown operation: {operation}",
+                "valid_operations": ["restart", "cleanup", "health_check", "backup"],
+            }
+        )
 
     except Exception as e:
         logger.error(f"System maintenance operation '{operation}' failed: {e}")

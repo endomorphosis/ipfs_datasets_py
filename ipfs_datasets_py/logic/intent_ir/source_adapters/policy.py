@@ -172,9 +172,7 @@ class SkillSourcePolicyDecision:
 
     @property
     def secret_pii_decision(self) -> FindingDecision:
-        return self._finding_decision(
-            {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
-        )
+        return self._finding_decision({FindingCategory.SECRET, FindingCategory.PERSONAL_DATA})
 
     # More general spelling retained alongside the acceptance-contract term.
     sensitive_data_decision = secret_pii_decision
@@ -201,21 +199,11 @@ class SkillSourcePolicyDecision:
             return ReviewStatus.QUARANTINED
         return ReviewStatus.UNREVIEWED
 
-    def _findings_for(
-        self, category: FindingCategory
-    ) -> tuple[PolicyFinding, ...]:
-        return tuple(
-            finding
-            for finding in self.findings
-            if finding.category is category
-        )
+    def _findings_for(self, category: FindingCategory) -> tuple[PolicyFinding, ...]:
+        return tuple(finding for finding in self.findings if finding.category is category)
 
-    def _finding_decision(
-        self, categories: set[FindingCategory]
-    ) -> FindingDecision:
-        if any(
-            finding.category in categories for finding in self.findings
-        ):
+    def _finding_decision(self, categories: set[FindingCategory]) -> FindingDecision:
+        if any(finding.category in categories for finding in self.findings):
             return FindingDecision.QUARANTINED
         return FindingDecision.CLEAR
 
@@ -315,9 +303,7 @@ _LICENSE_SCALAR_RE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 _LICENSE_OPERATOR_RE = re.compile(r"\s+(?:AND|OR)\s+", re.IGNORECASE)
-_LICENSE_WITH_RE = re.compile(
-    r"\s+WITH\s+[A-Za-z0-9][A-Za-z0-9.+-]*$", re.IGNORECASE
-)
+_LICENSE_WITH_RE = re.compile(r"\s+WITH\s+[A-Za-z0-9][A-Za-z0-9.+-]*$", re.IGNORECASE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -409,9 +395,7 @@ _DETECTORS = (
     _Detector(
         FindingCategory.PERSONAL_DATA,
         "personal.payment_card",
-        _pattern(
-            r"(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d(?![A-Za-z0-9])"
-        ),
+        _pattern(r"(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d(?![A-Za-z0-9])"),
     ),
     _Detector(
         FindingCategory.PROMPT_INJECTION,
@@ -525,17 +509,13 @@ _TEXT_FIELDS = (
 )
 _METADATA_FIELDS = frozenset(_TEXT_FIELDS) - {"skill_md", "library_md"}
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
-_BASE64_BLOCK_RE = re.compile(
-    r"(?:^|\s)(?:[A-Za-z0-9+/]{256,}={0,2})(?:\s|$)", re.MULTILINE
-)
+_BASE64_BLOCK_RE = re.compile(r"(?:^|\s)(?:[A-Za-z0-9+/]{256,}={0,2})(?:\s|$)", re.MULTILINE)
 
 
 class SkillSourcePolicy:
     """Deterministic, side-effect-free policy for SkillCenter records."""
 
-    def __init__(
-        self, *, max_text_chars: int = DEFAULT_MAX_POLICY_TEXT_CHARS
-    ) -> None:
+    def __init__(self, *, max_text_chars: int = DEFAULT_MAX_POLICY_TEXT_CHARS) -> None:
         if (
             isinstance(max_text_chars, bool)
             or not isinstance(max_text_chars, int)
@@ -544,9 +524,7 @@ class SkillSourcePolicy:
             raise ValueError("max_text_chars must be a positive integer")
         self.max_text_chars = max_text_chars
 
-    def evaluate(
-        self, record: SkillCenterSkillRecord
-    ) -> SkillSourcePolicyDecision:
+    def evaluate(self, record: SkillCenterSkillRecord) -> SkillSourcePolicyDecision:
         """Classify ``record`` without interpreting any field as instructions."""
 
         if not isinstance(record, SkillCenterSkillRecord):
@@ -610,9 +588,7 @@ class SkillSourcePolicy:
             )
 
         typed_classified = [item for item in classified if item is not None]
-        distinct_identifiers = {
-            item[1] for item in typed_classified
-        }
+        distinct_identifiers = {item[1] for item in typed_classified}
         distinct_decisions = {item[0] for item in typed_classified}
         if len(distinct_identifiers) > 1 or len(distinct_decisions) > 1:
             return LicenseDecision(
@@ -621,13 +597,7 @@ class SkillSourcePolicy:
                 allowed_use=AllowedUseDecision.QUARANTINED_UNKNOWN,
                 reason_code="license.contradictory_declarations",
                 recognized_licenses=tuple(
-                    sorted(
-                        {
-                            identifier
-                            for item in typed_classified
-                            for identifier in item[1]
-                        }
-                    )
+                    sorted({identifier for item in typed_classified for identifier in item[1]})
                 ),
             )
 
@@ -644,9 +614,7 @@ class SkillSourcePolicy:
                     recognized_licenses=recognized,
                 )
             risk_decisions.add(risk)
-        if risk_decisions and (
-            len(risk_decisions) > 1 or allowed_use not in risk_decisions
-        ):
+        if risk_decisions and (len(risk_decisions) > 1 or allowed_use not in risk_decisions):
             return LicenseDecision(
                 expression=expression,
                 status=LicenseStatus.CONTRADICTORY,
@@ -681,9 +649,8 @@ class SkillSourcePolicy:
                 continue
             accepted_matches = 0
             for match in detector.pattern.finditer(value):
-                if (
-                    detector.code == "personal.payment_card"
-                    and not _passes_luhn_check(match.group(0))
+                if detector.code == "personal.payment_card" and not _passes_luhn_check(
+                    match.group(0)
                 ):
                     continue
                 if accepted_matches >= MAX_FINDINGS_PER_DETECTOR:
@@ -818,9 +785,7 @@ class SkillSourcePolicy:
                 )
             )
         hostname = (parsed.hostname or "").casefold().rstrip(".")
-        if hostname in {"localhost", "localhost.localdomain"} or hostname.endswith(
-            ".local"
-        ):
+        if hostname in {"localhost", "localhost.localdomain"} or hostname.endswith(".local"):
             findings.append(
                 PolicyFinding(
                     FindingCategory.UNSAFE_METADATA,

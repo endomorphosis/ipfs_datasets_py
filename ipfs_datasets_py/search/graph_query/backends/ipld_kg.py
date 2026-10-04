@@ -53,7 +53,9 @@ class IPLDKnowledgeGraphBackend(GraphBackend):
         # cursor/scope/shard_hints not used for this backend.
         entities = self._kg.get_entities_by_type(entity_type)
         entity_ids = [e.id for e in entities][: max(0, int(limit))]
-        return ScanPage(entity_ids=entity_ids, next_cursor=None, shards_touched=1, shards_touched_ids=["__kg__"])
+        return ScanPage(
+            entity_ids=entity_ids, next_cursor=None, shards_touched=1, shards_touched_ids=["__kg__"]
+        )
 
     def neighbors(
         self,
@@ -76,7 +78,9 @@ class IPLDKnowledgeGraphBackend(GraphBackend):
                     raise ValueError("Cursor entity_id mismatch")
                 if c.get("direction") != direction:
                     raise ValueError("Cursor direction mismatch")
-                expected_types = list(relationship_types) if relationship_types is not None else None
+                expected_types = (
+                    list(relationship_types) if relationship_types is not None else None
+                )
                 if c.get("relationship_types") != expected_types:
                     raise ValueError("Cursor relationship_types mismatch")
                 offset = int(c.get("offset", 0))
@@ -92,7 +96,9 @@ class IPLDKnowledgeGraphBackend(GraphBackend):
         if offset < 0:
             offset = 0
         if offset >= len(rels):
-            return NeighborPage(edges=[], next_cursor=None, shards_touched=1, shards_touched_ids=["__kg__"])
+            return NeighborPage(
+                edges=[], next_cursor=None, shards_touched=1, shards_touched_ids=["__kg__"]
+            )
 
         slice_rels = rels[offset : offset + limit]
 
@@ -115,9 +121,13 @@ class IPLDKnowledgeGraphBackend(GraphBackend):
                     "v": 1,
                     "entity_id": entity_id,
                     "direction": direction,
-                    "relationship_types": list(relationship_types) if relationship_types is not None else None,
+                    "relationship_types": list(relationship_types)
+                    if relationship_types is not None
+                    else None,
                     "offset": next_offset,
                 }
             )
 
-        return NeighborPage(edges=edges, next_cursor=next_cursor, shards_touched=1, shards_touched_ids=["__kg__"])
+        return NeighborPage(
+            edges=edges, next_cursor=next_cursor, shards_touched=1, shards_touched_ids=["__kg__"]
+        )

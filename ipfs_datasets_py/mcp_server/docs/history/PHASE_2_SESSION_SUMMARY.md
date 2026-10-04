@@ -131,8 +131,8 @@ Continue implementation of MCP++ integration Phases 2-4, building on completed P
 **1. Trio-Native Marking**
 All P2P tools marked with `_mcp_runtime='trio'` attribute:
 ```python
-task_submit._mcp_runtime = 'trio'
-task_status._mcp_runtime = 'trio'
+task_submit._mcp_runtime = "trio"
+task_status._mcp_runtime = "trio"
 # ... etc for all 14 tools
 ```
 This enables Phase 3 runtime router to:
@@ -147,7 +147,7 @@ if not MCPLUSPLUS_AVAILABLE or task_queue is None:
     return {
         "success": False,
         "error": "MCP++ task queue not available",
-        "message": "Install ipfs_accelerate_py for full support"
+        "message": "Install ipfs_accelerate_py for full support",
     }
 ```
 Benefits:
@@ -168,10 +168,10 @@ All tools follow same patterns:
 **Leverages Phase 1 Components:**
 ```python
 from ipfs_datasets_py.mcp_server.mcplusplus import (
-    task_queue,                    # Task queue wrapper
-    MCPLUSPLUS_AVAILABLE,          # Availability flag
-    TaskQueueConfig,               # Configuration class
-    create_task_queue_wrapper      # Factory function
+    task_queue,  # Task queue wrapper
+    MCPLUSPLUS_AVAILABLE,  # Availability flag
+    TaskQueueConfig,  # Configuration class
+    create_task_queue_wrapper,  # Factory function
 )
 ```
 

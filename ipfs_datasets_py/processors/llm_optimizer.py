@@ -9,6 +9,7 @@ Optimizes extracted content for LLM consumption by:
 - Handling multi-modal content
 - Accelerate integration for distributed inference
 """
+
 import anyio
 import logging
 import hashlib
@@ -25,18 +26,19 @@ from itertools import batched
 from ipfs_datasets_py.auto_installer import ensure_module
 
 # Install required dependencies
-tiktoken_module = ensure_module('tiktoken', 'tiktoken')
+tiktoken_module = ensure_module("tiktoken", "tiktoken")
 HAVE_TIKTOKEN = tiktoken_module is not None
 
-transformers_module = ensure_module('transformers', 'transformers')
+transformers_module = ensure_module("transformers", "transformers")
 if transformers_module:
     from transformers import AutoTokenizer
+
     HAVE_TRANSFORMERS = True
 else:
     AutoTokenizer = None
     HAVE_TRANSFORMERS = False
 
-numpy = ensure_module('numpy', 'numpy')
+numpy = ensure_module("numpy", "numpy")
 if numpy:
     np = numpy
     HAVE_NUMPY = True
@@ -46,15 +48,18 @@ else:
         @staticmethod
         def array(data):
             return list(data)
+
         @staticmethod
         def zeros(shape):
             return [0] * (shape if isinstance(shape, int) else shape[0])
+
     np = MockNumpy()
     HAVE_NUMPY = False
 
-sentence_transformers_module = ensure_module('sentence_transformers', 'sentence-transformers')
+sentence_transformers_module = ensure_module("sentence_transformers", "sentence-transformers")
 if sentence_transformers_module:
     from sentence_transformers import SentenceTransformer
+
     HAVE_SENTENCE_TRANSFORMERS = True
 else:
     SentenceTransformer = None
@@ -62,13 +67,17 @@ else:
 
 HAVE_ACCELERATE = False
 
-nltk_module = ensure_module('nltk', 'nltk')
+nltk_module = ensure_module("nltk", "nltk")
 if nltk_module:
     import nltk
-    from nltk.tokenize import sent_tokenize as _nltk_sent_tokenize, word_tokenize as _nltk_word_tokenize
+    from nltk.tokenize import (
+        sent_tokenize as _nltk_sent_tokenize,
+        word_tokenize as _nltk_word_tokenize,
+    )
     from nltk.tag import pos_tag
     from nltk.chunk import ne_chunk
     from nltk.tree import Tree
+
     HAVE_NLTK = True
 
     def sent_tokenize(text: str):
@@ -94,41 +103,55 @@ if nltk_module:
             return text.split()
 else:
     nltk = None
+
     # Mock NLTK functions
     def sent_tokenize(text):
-        return text.split('. ')
+        return text.split(". ")
+
     def word_tokenize(text):
         return text.split()
+
     def pos_tag(tokens):
-        return [(token, 'NN') for token in tokens]
+        return [(token, "NN") for token in tokens]
+
     def ne_chunk(tagged):
         return tagged
+
     Tree = None
     HAVE_NLTK = False
 
-pydantic = ensure_module('pydantic', 'pydantic')
+pydantic = ensure_module("pydantic", "pydantic")
 HAVE_PYDANTIC = pydantic is not None
 
 logger = logging.getLogger(__name__)
 missing_deps = []
-if not HAVE_TIKTOKEN: missing_deps.append('tiktoken')
-if not HAVE_TRANSFORMERS: missing_deps.append('transformers')
-if not HAVE_NUMPY: missing_deps.append('numpy')
-if not HAVE_SENTENCE_TRANSFORMERS: missing_deps.append('sentence-transformers')
-if not HAVE_NLTK: missing_deps.append('nltk')
-if not HAVE_PYDANTIC: missing_deps.append('pydantic')
+if not HAVE_TIKTOKEN:
+    missing_deps.append("tiktoken")
+if not HAVE_TRANSFORMERS:
+    missing_deps.append("transformers")
+if not HAVE_NUMPY:
+    missing_deps.append("numpy")
+if not HAVE_SENTENCE_TRANSFORMERS:
+    missing_deps.append("sentence-transformers")
+if not HAVE_NLTK:
+    missing_deps.append("nltk")
+if not HAVE_PYDANTIC:
+    missing_deps.append("pydantic")
 
 if missing_deps:
-    logger.warning(f"LLM optimizer dependencies partially available. Missing: {', '.join(missing_deps)}")
+    logger.warning(
+        f"LLM optimizer dependencies partially available. Missing: {', '.join(missing_deps)}"
+    )
 else:
     logger.info("✅ All LLM optimizer dependencies successfully installed and available")
 
 
 # ===== TypedDict Definitions for Return Types =====
 
+
 class ClassifiedContentDict(TypedDict, total=False):
     """Result of content classification operation.
-    
+
     Fields:
         classification: Primary content classification label
         confidence: Confidence score for classification (0-1)
@@ -136,7 +159,7 @@ class ClassifiedContentDict(TypedDict, total=False):
         metadata: Additional classification metadata
         processing_time: Time taken for classification
     """
-    
+
     classification: str
     confidence: float
     sub_classifications: list
@@ -186,15 +209,15 @@ module_logger.level = logging.DEBUG
 
 from pydantic import (
     AfterValidator as AV,
-    BaseModel, 
+    BaseModel,
     ConfigDict,
-    Field, 
+    Field,
     field_validator,
     NonNegativeInt,
     ValidationError,
     computed_field,
     PositiveFloat,
-    NonNegativeFloat
+    NonNegativeFloat,
 )
 
 
@@ -223,11 +246,11 @@ def extract_embedding_from_chunk(chunk_data: Dict[str, Any]) -> Optional[np.ndar
         >>> print(embedding)
         [0.1 0.2 0.3]
     """
-    if 'embedding' not in chunk_data:
+    if "embedding" not in chunk_data:
         raise KeyError("Chunk data does not contain 'embedding' key")
-    
-    embedding = chunk_data.pop('embedding')
-    
+
+    embedding = chunk_data.pop("embedding")
+
     if isinstance(embedding, np.ndarray):
         return embedding
     elif isinstance(embedding, (list, tuple)):
@@ -239,19 +262,19 @@ def extract_embedding_from_chunk(chunk_data: Dict[str, Any]) -> Optional[np.ndar
 def extract_embeddings_from_chunks(chunks: List[Dict[str, Any]]) -> List[np.ndarray]:
     """
     Extract embedding arrays from a list of chunk dictionaries.
-    
+
     Args:
         chunks (List[Dict[str, Any]]): List of chunk dictionaries, each containing
                                      an 'embedding' key.
-    
+
     Returns:
         List[np.ndarray]: List of embedding arrays extracted from the chunks.
-    
+
     Raises:
         ValueError: If chunks is empty or contains invalid chunk data.
         KeyError: If any chunk doesn't contain an 'embedding' key.
         TypeError: If any embedding value is not a numpy array or convertible to one.
-    
+
     Examples:
         >>> chunks = [
         ...     {'content': 'text1', 'embedding': np.array([0.1, 0.2])},
@@ -263,7 +286,7 @@ def extract_embeddings_from_chunks(chunks: List[Dict[str, Any]]) -> List[np.ndar
     """
     if not chunks:
         raise ValueError("Chunks list is empty")
-    
+
     embeddings = []
     for i, chunk in enumerate(chunks):
         try:
@@ -271,40 +294,42 @@ def extract_embeddings_from_chunks(chunks: List[Dict[str, Any]]) -> List[np.ndar
             embeddings.append(embedding)
         except (KeyError, TypeError) as e:
             raise ValueError(f"Error processing chunk at index {i}: {str(e)}")
-    
+
     return embeddings
 
 
-def extract_embedding_from_nested_data(data: Any, chunks_key: str = 'chunks') -> Union[np.ndarray, List[np.ndarray]]:
+def extract_embedding_from_nested_data(
+    data: Any, chunks_key: str = "chunks"
+) -> Union[np.ndarray, List[np.ndarray]]:
     """
     Extract embedding(s) from nested data structure containing chunks.
-    
+
     This function handles various nested data structures and extracts embeddings
     from chunks. It can return a single embedding if there's only one chunk,
     or a list of embeddings if there are multiple chunks.
-    
+
     Args:
         data (Any): The nested data structure containing chunks with embeddings.
                    Can be a dict with chunks, a list of chunks, or a single chunk.
-        chunks_key (str): The key to look for chunks in dict structures. 
+        chunks_key (str): The key to look for chunks in dict structures.
                          Defaults to 'chunks'.
-    
+
     Returns:
         Union[np.ndarray, List[np.ndarray]]: Single embedding array if one chunk,
                                            list of embedding arrays if multiple chunks.
-    
+
     Raises:
         ValueError: If no chunks or embeddings are found in the data structure.
         KeyError: If expected keys are missing from the data structure.
         TypeError: If the data structure format is unexpected.
-    
+
     Examples:
         >>> # Single chunk
         >>> data = {'chunks': [{'embedding': np.array([0.1, 0.2, 0.3])}]}
         >>> result = extract_embedding_from_nested_data(data)
         >>> print(result)
         [0.1 0.2 0.3]
-        
+
         >>> # Multiple chunks
         >>> data = {'chunks': [
         ...     {'embedding': np.array([0.1, 0.2])},
@@ -319,10 +344,10 @@ def extract_embedding_from_nested_data(data: Any, chunks_key: str = 'chunks') ->
         chunks = data[chunks_key]
         if not isinstance(chunks, list):
             raise TypeError(f"Expected {chunks_key} to be a list, got {type(chunks)}")
-        
+
         embeddings = extract_embeddings_from_chunks(chunks)
         return embeddings[0] if len(embeddings) == 1 else embeddings
-    
+
     # Handle case where data is directly a list of chunks
     elif isinstance(data, list):
         # Check if it's a list of chunk dictionaries
@@ -331,29 +356,33 @@ def extract_embedding_from_nested_data(data: Any, chunks_key: str = 'chunks') ->
             return embeddings[0] if len(embeddings) == 1 else embeddings
         else:
             raise TypeError("Data list contains non-dictionary items")
-    
+
     # Handle case where data is a single chunk dictionary
-    elif isinstance(data, dict) and 'embedding' in data:
+    elif isinstance(data, dict) and "embedding" in data:
         return extract_embedding_from_chunk(data)
-    
+
     else:
-        raise ValueError(f"Unable to find chunks or embeddings in data structure. "
-                        f"Expected dict with '{chunks_key}' key, list of chunks, "
-                        f"or single chunk dict with 'embedding' key.")
+        raise ValueError(
+            f"Unable to find chunks or embeddings in data structure. "
+            f"Expected dict with '{chunks_key}' key, list of chunks, "
+            f"or single chunk dict with 'embedding' key."
+        )
 
 
 # Convenience function for the specific case shown in the example
-def get_embedding_from_llm_document_chunks(document_data: Dict[str, Any]) -> Union[np.ndarray, List[np.ndarray]]:
+def get_embedding_from_llm_document_chunks(
+    document_data: Dict[str, Any],
+) -> Union[np.ndarray, List[np.ndarray]]:
     """
     Extract embedding(s) specifically from LLMDocument chunk data structure.
-    
+
     Args:
         document_data (Dict[str, Any]): Dictionary containing 'chunks' key with
                                       chunk data including embeddings.
-    
+
     Returns:
         Union[np.ndarray, List[np.ndarray]]: The embedding(s) from the chunks.
-    
+
     Examples:
         >>> document = {
         ...     'chunks': [{
@@ -366,42 +395,43 @@ def get_embedding_from_llm_document_chunks(document_data: Dict[str, Any]) -> Uni
         >>> print(embedding)
         [0.1 0.2 0.3 0.4 0.5]
     """
-    return extract_embedding_from_nested_data(document_data, chunks_key='chunks')
+    return extract_embedding_from_nested_data(document_data, chunks_key="chunks")
 
 
 def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) -> bool:
     """
     Compare two numpy arrays for equality, handling None values properly.
-    
+
     Args:
         x: First numpy array or None
         y: Second numpy array or None
-        
+
     Returns:
         bool: True if arrays are equal, False otherwise
     """
     # Both None - they're equal
     if x is None and y is None:
         return True
-    
+
     # One is None, the other isn't - they're not equal
     if x is None or y is None:
         return False
-    
+
     # Neither is a numpy array - they're not equal
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
         return False
-    
+
     # Different shapes - they're not equal
     if x.shape != y.shape:
         return False
-    
+
     try:
         # Check if all elements are equal (within floating point tolerance)
         return np.allclose(x, y, equal_nan=True)
     except Exception as e:
         module_logger.error(f"Unexpected error comparing numpy arrays: {e}")
         return False
+
 
 # def _turn_str_into_list_of_str(s: Any) -> list[str]:
 #     match s:
@@ -413,6 +443,7 @@ def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) 
 #             return s
 #         case _:
 #             raise ValidationError(f"Unsupported type for source_elements: {type(s).__name__}")
+
 
 def _test_set_elements(s: set[str]) -> set[str]:
     """
@@ -429,7 +460,7 @@ def _test_set_elements(s: set[str]) -> set[str]:
             "text", "table", "figure_caption", "header", or "mixed".
 
     Note:
-        The function currently contains a bug where it checks `s not in valid_set` 
+        The function currently contains a bug where it checks `s not in valid_set`
         instead of `item not in valid_set`.
     """
     if s is None:
@@ -445,6 +476,7 @@ def _test_set_elements(s: set[str]) -> set[str]:
 
 class Classification(StrEnum):
     pass
+
 
 # NOTE: From https://huggingface.co/datasets/KnutJaegersberg/wikipedia_categories, 7/25/2025
 WIKIPEDIA_CLASSIFICATIONS = {
@@ -484,7 +516,7 @@ WIKIPEDIA_CLASSIFICATIONS = {
     "Science and technology",
     "Society",
     "Sports",
-    "World"
+    "World",
 }
 
 # TODO Write these examples.
@@ -525,7 +557,7 @@ WIKIPEDIA_EXAMPLES: dict[str, str] = {
     "Science and technology": "",
     "Society": "",
     "Sports": "",
-    "World": ""
+    "World": "",
 }
 
 
@@ -547,23 +579,30 @@ from typing import Any
 
 
 from pydantic import (
-    BaseModel, ConfigDict, Field, field_validator, model_validator, NonNegativeFloat, NonNegativeInt, PositiveInt
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveInt,
 )
 
 
 # ISO 8601 datetime regex pattern
-    # Modified from a JS regex from: 
-    # https://stackoverflow.com/questions/12756159/regex-and-iso8601-formatted-datetime
-    # NOTE: This pattern is designed to match a wide range of ISO 8601 datetime formats,
-    # but it can't include all possible variations. It's apparently an open problem in regex.
-ISO_DATETIME_PATTERN = r'^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
+# Modified from a JS regex from:
+# https://stackoverflow.com/questions/12756159/regex-and-iso8601-formatted-datetime
+# NOTE: This pattern is designed to match a wide range of ISO 8601 datetime formats,
+# but it can't include all possible variations. It's apparently an open problem in regex.
+ISO_DATETIME_PATTERN = r"^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$"
 
 # Compiled regex for better performance
 ISO_DATETIME_REGEX = re.compile(ISO_DATETIME_PATTERN)
 
 UNREALISTIC_TOKEN_WORD_RATIO = 10.0
 
-EMBEDDING_PATTERN = r'embedding=array\([^)]*(?:\([^)]*\)[^)]*)*\)'
+EMBEDDING_PATTERN = r"embedding=array\([^)]*(?:\([^)]*\)[^)]*)*\)"
 
 EMBEDDING_REGEX = re.compile(EMBEDDING_PATTERN)
 
@@ -598,20 +637,20 @@ class LLMChunkMetadata(BaseModel):
         confidence: float  # Extraction confidence (0.0-1.0), defaults to 1.0 for calculated fields
         source_file: str   # Source document identifier, defaults to "unknown" if not provided
         extraction_method: str  # Extraction method, defaults to "llm_optimization"
-        
+
         # Content metrics (automatically calculated from content)
         character_count: int  # Total character count in content (len(content))
         word_count: int       # Number of words in content (len(content.split()))
         sentence_count: int   # Number of sentences detected (count of sentence delimiters)
         token_count: int      # Actual token count from configured tokenizer
-        
+
         # Processing information (automatically set during creation)
         creation_timestamp: float     # Unix timestamp of chunk creation (time.time())
         created_at: str              # ISO format creation timestamp (datetime.now().isoformat())
         processing_method: str       # Processing approach, always "llm_optimization"
         tokenizer_used: str         # Tokenizer model identifier from optimizer config
         semantic_type: str          # Primary semantic classification from source_elements
-        
+
         # Semantic analysis flags (derived from source_elements and content)
         has_mixed_elements: bool    # True if multiple semantic types detected
         contains_table: bool        # True if table elements present in source_elements
@@ -624,30 +663,63 @@ class LLMChunkMetadata(BaseModel):
         page_number: int          # Source page number (from method parameter)
         total_chunks_on_page: int # Number of chunks on same page, defaults to 1 if unknown
     """
+
     # Source provenance fields
-    element_type: str = Field(default="text", min_length=1, max_length=100, description="Original PDF element type")
-    element_id: str = Field(
-        default_factory=lambda: f"element_{hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]}",
-        max_length=255,
-        description="Source element identifier, defaults to hash of instance creation time if unknown"
+    element_type: str = Field(
+        default="text", min_length=1, max_length=100, description="Original PDF element type"
     )
-    section: str = Field(default="unknown", min_length=1, max_length=200, description="Document section name")
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Extraction confidence (0.0-1.0)")
-    source_file: str = Field(default="unknown", min_length=1, max_length=500, description="Source document identifier")
-    extraction_method: str = Field(default="llm_optimization", min_length=1, max_length=50, description="Extraction method")
+    element_id: str = Field(
+        default_factory=lambda: (
+            f"element_{hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]}"
+        ),
+        max_length=255,
+        description="Source element identifier, defaults to hash of instance creation time if unknown",
+    )
+    section: str = Field(
+        default="unknown", min_length=1, max_length=200, description="Document section name"
+    )
+    confidence: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Extraction confidence (0.0-1.0)"
+    )
+    source_file: str = Field(
+        default="unknown", min_length=1, max_length=500, description="Source document identifier"
+    )
+    extraction_method: str = Field(
+        default="llm_optimization", min_length=1, max_length=50, description="Extraction method"
+    )
 
     # Content metrics fields
-    character_count: NonNegativeInt = Field(ge=0, description="Total character count in content (len(content))")
-    word_count: NonNegativeInt = Field(ge=0, description="Number of words in content (len(content.split()))")
-    sentence_count: NonNegativeInt = Field(ge=0, description="Number of sentences detected (count of sentence delimiters)")
-    token_count: NonNegativeInt = Field(ge=0, description="Actual token count from configured tokenizer")
+    character_count: NonNegativeInt = Field(
+        ge=0, description="Total character count in content (len(content))"
+    )
+    word_count: NonNegativeInt = Field(
+        ge=0, description="Number of words in content (len(content.split()))"
+    )
+    sentence_count: NonNegativeInt = Field(
+        ge=0, description="Number of sentences detected (count of sentence delimiters)"
+    )
+    token_count: NonNegativeInt = Field(
+        ge=0, description="Actual token count from configured tokenizer"
+    )
 
     # Processing information fields # NOTE lt = Jan 1, 2100
-    creation_timestamp: NonNegativeFloat = Field(ge=0.0, lt=4102444800.0, description="Unix timestamp of chunk creation (time.time())")
-    created_at: str = Field(min_length=1, description="ISO format creation timestamp (datetime.now().isoformat())")
-    processing_method: str = Field(min_length=1, max_length=50, description="Processing approach, always 'llm_optimization'")
-    tokenizer_used: str = Field(min_length=1, max_length=100, description="Tokenizer model identifier from optimizer config")
-    semantic_type: str = Field(min_length=1, max_length=50, description="Primary semantic classification from source_elements")
+    creation_timestamp: NonNegativeFloat = Field(
+        ge=0.0, lt=4102444800.0, description="Unix timestamp of chunk creation (time.time())"
+    )
+    created_at: str = Field(
+        min_length=1, description="ISO format creation timestamp (datetime.now().isoformat())"
+    )
+    processing_method: str = Field(
+        min_length=1, max_length=50, description="Processing approach, always 'llm_optimization'"
+    )
+    tokenizer_used: str = Field(
+        min_length=1, max_length=100, description="Tokenizer model identifier from optimizer config"
+    )
+    semantic_type: str = Field(
+        min_length=1,
+        max_length=50,
+        description="Primary semantic classification from source_elements",
+    )
 
     # Semantic analysis flags
     has_mixed_elements: bool = Field(description="True if multiple semantic types detected")
@@ -656,13 +728,27 @@ class LLMChunkMetadata(BaseModel):
     is_header: bool = Field(description="True if primary semantic type is header")
 
     # Position and structure fields
-    original_position: str = Field(default='{}', description="JSON string of position coordinates, defaults to '{}' if unknown")
-    chunk_position_in_doc: NonNegativeInt = Field(default=0, ge=0, description="Sequential position of chunk in document")
+    original_position: str = Field(
+        default="{}", description="JSON string of position coordinates, defaults to '{}' if unknown"
+    )
+    chunk_position_in_doc: NonNegativeInt = Field(
+        default=0, ge=0, description="Sequential position of chunk in document"
+    )
     page_number: PositiveInt = Field(ge=1, description="Source page number (from method parameter)")
-    total_chunks_on_page: NonNegativeInt = Field(default=1, ge=0, description="Number of chunks on same page, defaults to 1 if unknown")
+    total_chunks_on_page: NonNegativeInt = Field(
+        default=1, ge=0, description="Number of chunks on same page, defaults to 1 if unknown"
+    )
 
-    @field_validator('element_type', 'element_id', 'section', 'source_file', 'extraction_method', 
-                    'processing_method', 'tokenizer_used', 'semantic_type')
+    @field_validator(
+        "element_type",
+        "element_id",
+        "section",
+        "source_file",
+        "extraction_method",
+        "processing_method",
+        "tokenizer_used",
+        "semantic_type",
+    )
     @classmethod
     def validate_non_whitespace_strings(cls, v: str) -> str:
         """Validate that string fields are not empty or whitespace-only."""
@@ -670,7 +756,7 @@ class LLMChunkMetadata(BaseModel):
             raise ValueError("String field must not be empty or contain only whitespace")
         return v
 
-    @field_validator('confidence')
+    @field_validator("confidence")
     @classmethod
     def validate_confidence_finite(cls, v: float) -> float:
         """Validate that confidence is finite (not inf or nan)."""
@@ -678,7 +764,7 @@ class LLMChunkMetadata(BaseModel):
             raise ValueError("Confidence must be a finite number (not inf or nan)")
         return v
 
-    @field_validator('creation_timestamp')
+    @field_validator("creation_timestamp")
     @classmethod
     def validate_creation_timestamp_reasonable(cls, v: float) -> float:
         """Validate that creation_timestamp is within reasonable bounds."""
@@ -690,13 +776,13 @@ class LLMChunkMetadata(BaseModel):
             raise ValueError("creation_timestamp cannot be in the future (beyond tomorrow)")
         return v
 
-    @field_validator('created_at')
+    @field_validator("created_at")
     @classmethod
     def validate_iso_format(cls, v: str) -> str:
         """Validate that created_at is in valid ISO datetime format."""
         if not v or v.isspace():
             raise ValueError("Created_at field must not be empty or contain only whitespace")
-        
+
         # Parse various ISO 8601 formats
         if not bool(ISO_DATETIME_REGEX.match(v)):
             raise ValueError(f"created_at must be in valid ISO 8601 format, got '{v}'")
@@ -707,19 +793,29 @@ class LLMChunkMetadata(BaseModel):
         except (ValueError, TypeError) as e:
             raise ValueError(f"created_at must be in valid ISO datetime format, got '{v}': {e}")
 
-    @field_validator('semantic_type')
+    @field_validator("semantic_type")
     @classmethod
     def validate_semantic_type_enum(cls, v: str) -> str:
         """Validate that semantic_type is one of the allowed values."""
         allowed_types = {
-            'text', 'paragraph', 'header', 'title', 'table', 'figure', 
-            'caption', 'list', 'footer', 'reference', 'equation', 'code'
+            "text",
+            "paragraph",
+            "header",
+            "title",
+            "table",
+            "figure",
+            "caption",
+            "list",
+            "footer",
+            "reference",
+            "equation",
+            "code",
         }
         if v.lower() not in allowed_types:
             raise ValueError(f"semantic_type must be one of: {', '.join(sorted(allowed_types))}")
         return v
 
-    @field_validator('original_position')
+    @field_validator("original_position")
     @classmethod
     def validate_json_format(cls, v: Any) -> str:
         """Validate that original_position is valid JSON."""
@@ -736,12 +832,14 @@ class LLMChunkMetadata(BaseModel):
                 try:
                     return json.dumps(v)
                 except (TypeError, ValueError) as e:
-                    raise ValueError(f"original_position must be a JSON serializable dict: {e}") from e
+                    raise ValueError(
+                        f"original_position must be a JSON serializable dict: {e}"
+                    ) from e
             case _:
                 raise ValueError("original_position must be a JSON string or dict")
 
-    @model_validator(mode='after')
-    def validate_logical_consistency(self) -> 'LLMChunkMetadata':
+    @model_validator(mode="after")
+    def validate_logical_consistency(self) -> "LLMChunkMetadata":
         """Validate logical consistency between fields."""
         error_msg = ""
 
@@ -772,40 +870,53 @@ class LLMChunkMetadata(BaseModel):
         # Zero character count should imply zero word and sentence counts
         if self.character_count == 0:
             if self.word_count != 0:
-                raise ValueError("Zero character_count must imply zero word_count (logical consistency error)")
+                raise ValueError(
+                    "Zero character_count must imply zero word_count (logical consistency error)"
+                )
             if self.sentence_count != 0:
-                raise ValueError("Zero character_count must imply zero sentence_count (logical consistency error)")
+                raise ValueError(
+                    "Zero character_count must imply zero sentence_count (logical consistency error)"
+                )
 
         # Zero word count should imply zero sentence count
-        if (
-            (self.word_count == 0 and self.sentence_count != 0) or
-            (self.sentence_count == 0 and self.word_count != 0)
+        if (self.word_count == 0 and self.sentence_count != 0) or (
+            self.sentence_count == 0 and self.word_count != 0
         ):
-            raise ValueError("Zero word_count must imply zero sentence_count (logical consistency error)")
+            raise ValueError(
+                "Zero word_count must imply zero sentence_count (logical consistency error)"
+            )
 
         # Semantic type and is_header flag consistency
-        if self.semantic_type.lower() == 'header' and not self.is_header:
-            raise ValueError("semantic_type 'header' must have is_header flag set to True (semantic consistency error)")
+        if self.semantic_type.lower() == "header" and not self.is_header:
+            raise ValueError(
+                "semantic_type 'header' must have is_header flag set to True (semantic consistency error)"
+            )
 
         # Validate timestamp consistency (within 1 second tolerance)
         created_dt = datetime.fromisoformat(self.validate_iso_format(self.created_at))
         created_timestamp = created_dt.timestamp()
         if abs(self.creation_timestamp - created_timestamp) > 2.0:
-            raise ValueError(f"creation_timestamp '{self.creation_timestamp}' and created_at '{created_timestamp}' must represent the same time (timestamp consistency error)")
+            raise ValueError(
+                f"creation_timestamp '{self.creation_timestamp}' and created_at '{created_timestamp}' must represent the same time (timestamp consistency error)"
+            )
 
         # Extraction method and processing method consistency
         if self.extraction_method != self.processing_method:
-            raise ValueError("extraction_method must be compatible with processing_method (method consistency error)")
+            raise ValueError(
+                "extraction_method must be compatible with processing_method (method consistency error)"
+            )
 
         return self
 
     def __str__(self) -> str:
         """String representation with key information"""
-        return (f"LLMChunkMetadata(element_type='{self.element_type}', "
-                f"semantic_type='{self.semantic_type}', "
-                f"source_file='{self.source_file}', "
-                f"character_count={self.character_count}, "
-                f"word_count={self.word_count})")
+        return (
+            f"LLMChunkMetadata(element_type='{self.element_type}', "
+            f"semantic_type='{self.semantic_type}', "
+            f"source_file='{self.source_file}', "
+            f"character_count={self.character_count}, "
+            f"word_count={self.word_count})"
+        )
 
     def __repr__(self) -> str:
         """Detailed representation for debugging"""
@@ -815,7 +926,7 @@ class LLMChunkMetadata(BaseModel):
             value = getattr(self, field_name)
             # Censor sensitive information
             field_values.append(f"{field_name}={repr(value)}")
-        
+
         return f"LLMChunkMetadata({', '.join(field_values)})"
 
     def __hash__(self) -> int:
@@ -833,19 +944,19 @@ class LLMChunkMetadata(BaseModel):
         """Equality comparison."""
         if not isinstance(other, LLMChunkMetadata):
             return False
-        return all(getattr(self, field) == getattr(other, field) 
-                  for field in self.model_dump().keys())
+        return all(
+            getattr(self, field) == getattr(other, field) for field in self.model_dump().keys()
+        )
 
     def __ne__(self, other: Any) -> bool:
         """Inequality comparison."""
         return not self.__eq__(other)
 
 
-
 class ValidSemanticType(StrEnum):
     """
     Enum representing valid semantic types for LLM chunks.
-    
+
     This enum defines the allowed semantic types that can be assigned to an LLMChunk.
     It is used to ensure that only valid types are set, preventing errors during processing.
 
@@ -856,6 +967,7 @@ class ValidSemanticType(StrEnum):
         HEADER: Section or chapter heading
         MIXED: Multiple content types combined
     """
+
     TEXT = "text"
     TABLE = "table"
     FIGURE_CAPTION = "figure_caption"
@@ -895,6 +1007,7 @@ class LLMChunk(BaseModel):
         embedding (Optional[np.ndarray]): Vector embedding representing the semantic content.
             Shape depends on the embedding model used. None if embeddings not generated.
     """
+
     content: str
     chunk_id: str
     source_page: NonNegativeInt
@@ -910,18 +1023,18 @@ class LLMChunk(BaseModel):
     def __eq__(self, other: Any) -> bool:
         """
         Check if this LLMChunk is equal to another object.
-        
+
         Two LLMChunk instances are considered equal if:
         1. The other object is also an LLMChunk instance
         2. Their embedding arrays are equal (using numpy array comparison)
         3. All other fields in their model dictionaries are equal
-        
+
         Args:
             other (Any): The object to compare with this LLMChunk.
-            
+
         Returns:
             bool: True if the objects are equal, False otherwise.
-            
+
         Note:
             Embedding arrays are compared separately using a specialized numpy
             array equality function before comparing other model fields.
@@ -936,8 +1049,8 @@ class LLMChunk(BaseModel):
         self_dict = self.model_dump()
         other_dict = other.model_dump()
         # Remove embeddings from comparison.
-        self_dict.pop('embedding', None)
-        other_dict.pop('embedding', None)
+        self_dict.pop("embedding", None)
+        other_dict.pop("embedding", None)
 
         return self_dict == other_dict
 
@@ -953,12 +1066,17 @@ class LLMChunk(BaseModel):
             str: String representation of the LLMDocument.
         """
         original_string = super().__str__()
-        if self.embedding is not None and 'embedding' in original_string:
-            original_string = re.sub(r'embedding=array\([^]]*\][^)]*\)', 'embedding=<omitted>', original_string, flags=re.DOTALL)
-            #original_string = re.sub(EMBEDDING_REGEX, 'embedding=<omitted>', original_string)
+        if self.embedding is not None and "embedding" in original_string:
+            original_string = re.sub(
+                r"embedding=array\([^]]*\][^)]*\)",
+                "embedding=<omitted>",
+                original_string,
+                flags=re.DOTALL,
+            )
+            # original_string = re.sub(EMBEDDING_REGEX, 'embedding=<omitted>', original_string)
         return original_string
 
-    @field_validator('semantic_types')
+    @field_validator("semantic_types")
     def validate_semantic_types(cls, v: str) -> str:
         """
         Validate that the semantic_types field contains valid semantic_types.
@@ -979,8 +1097,7 @@ class LLMChunk(BaseModel):
             raise ValueError(f"Invalid semantic type: '{v}'. Must be one of {valid_types}")
         return v
 
-
-    @field_validator('content')
+    @field_validator("content")
     def validate_content(cls, v) -> str:
         """
         Validates the content field to ensure it meets required criteria.
@@ -999,7 +1116,7 @@ class LLMChunk(BaseModel):
             ValueError: If content is None or not a string type
 
         Example:
-            This validator will automatically run when a Pydantic model with a 
+            This validator will automatically run when a Pydantic model with a
             content field is instantiated or when the field is set.
         """
         if v is None:
@@ -1007,7 +1124,6 @@ class LLMChunk(BaseModel):
         if not isinstance(v, str):
             raise ValueError("Content must be a string")
         return v
-
 
 
 class LLMDocument(BaseModel):
@@ -1037,6 +1153,7 @@ class LLMDocument(BaseModel):
         document_embedding (Optional[np.ndarray]): Document-level vector embedding representing
             the overall semantic content. Shape depends on the embedding model used.
     """
+
     document_id: str
     title: str
     chunks: list[LLMChunk]
@@ -1047,8 +1164,8 @@ class LLMDocument(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    @model_validator(mode='after')
-    def _stabilize_memory_for_tests(self) -> 'LLMDocument':
+    @model_validator(mode="after")
+    def _stabilize_memory_for_tests(self) -> "LLMDocument":
         # Some test suites assert stability of RSS deltas within a single test.
         # When running the full suite, prior tests may leave significant garbage to be
         # collected later, causing order-dependent RSS swings during that test.
@@ -1088,12 +1205,12 @@ class LLMDocument(BaseModel):
         self_dict = self.model_dump()
         other_dict = other.model_dump()
         # Remove embeddings from comparison.
-        self_dict.pop('document_embedding', None)
-        other_dict.pop('document_embedding', None)
+        self_dict.pop("document_embedding", None)
+        other_dict.pop("document_embedding", None)
 
         # Extract embeddings from nested chunks, otherwise it'll error.
-        _ = extract_embedding_from_nested_data(self_dict, chunks_key='chunks')
-        _ = extract_embedding_from_nested_data(other_dict, chunks_key='chunks')
+        _ = extract_embedding_from_nested_data(self_dict, chunks_key="chunks")
+        _ = extract_embedding_from_nested_data(other_dict, chunks_key="chunks")
 
         return self_dict == other_dict
 
@@ -1109,24 +1226,23 @@ class LLMDocument(BaseModel):
             str: String representation of the LLMDocument.
         """
         original_string = super().__str__()
-        chunk_str_list = ', '.join([
-            f"(chunk_id={chunk.chunk_id}, token_count={chunk.token_count})" 
-            for chunk in self.chunks
-        ])
-        original_string = re.sub(r'chunks=\[.*\]', f'chunks=[{chunk_str_list}]', original_string)
+        chunk_str_list = ", ".join(
+            [
+                f"(chunk_id={chunk.chunk_id}, token_count={chunk.token_count})"
+                for chunk in self.chunks
+            ]
+        )
+        original_string = re.sub(r"chunks=\[.*\]", f"chunks=[{chunk_str_list}]", original_string)
 
         # Replace embedding arrays in string representation to avoid clutter
-        if 'embedding' in original_string:
+        if "embedding" in original_string:
             original_string = re.sub(
-            EMBEDDING_PATTERN, 
-            'embedding=<omitted>', 
-            original_string,
-            flags=re.DOTALL
+                EMBEDDING_PATTERN, "embedding=<omitted>", original_string, flags=re.DOTALL
             )
-        
+
         # If the chunk is still too long, truncate to 499 characters.
         if len(original_string) > 500:
-            original_string = original_string[:496] + '...'
+            original_string = original_string[:496] + "..."
         return original_string
 
     def __repr__(self) -> str:
@@ -1146,14 +1262,17 @@ class LLMDocument(BaseModel):
             value = getattr(self, field_name)
             if isinstance(value, np.ndarray):
                 value = f"array(shape={value.shape}, dtype={value.dtype})"
-            if field_name == 'chunks':
+            if field_name == "chunks":
                 # For chunks, we can summarize them instead of printing all details
-                value = [f"(chunk_id={chunk.chunk_id}, token_count={chunk.token_count})" for chunk in value]
+                value = [
+                    f"(chunk_id={chunk.chunk_id}, token_count={chunk.token_count})"
+                    for chunk in value
+                ]
             field_values.append(f"{field_name}={repr(value)}")
-        
+
         return f"LLMDocument({', '.join(field_values)})"
 
-    @field_validator('document_embedding')
+    @field_validator("document_embedding")
     @classmethod
     def validate_and_copy_embedding(cls, v: Optional[np.ndarray]) -> Optional[np.ndarray]:
         """
@@ -1196,12 +1315,12 @@ class LLMDocumentProcessingMetadata(BaseModel):
         model_used (str): Identifier or name of the LLM model used for processing.
         tokenizer_used (str): Identifier or name of the tokenizer used for text preprocessing.
     """
+
     optimization_timestamp: float
     chunk_count: NonNegativeInt
     total_tokens: NonNegativeInt
     model_used: str
     tokenizer_used: str
-
 
 
 class LLMOptimizer:
@@ -1246,13 +1365,13 @@ class LLMOptimizer:
             max_chunk_size=2048,
             chunk_overlap=200
         )
-        
+
         # Optimize decomposed PDF content
         llm_document = await optimizer.optimize_for_llm(
             decomposed_content=pdf_content,
             document_metadata={"title": "Research Paper", "document_id": "doc123"}
         )
-        
+
         # Access optimized chunks
         for chunk in llm_document.chunks:
             print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
@@ -1264,25 +1383,26 @@ class LLMOptimizer:
         - Cross-chunk relationships preserve narrative flow and document structure
         - All processing is designed to be compatible with major LLM architectures
     """
-    
-    def __init__(self, 
-                 model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
-                 llm_name: str = "gpt-4o-2024-08-06",
-                 tokenizer_name: str = "gpt-3.5-turbo",
-                 max_chunk_size: int = 2048,
-                 chunk_overlap: int = 200,
-                 min_chunk_size: int = 100,
-                 classification_model: Optional[str] = None,
-                 entity_classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
-                 api_key: Optional[str] = os.environ.get("OPENAI_API_KEY"),
-                 async_openai: Any = None,
-                 sentence_transformer: SentenceTransformer = SentenceTransformer,
-                 text_processor: TextProcessor = TextProcessor,
-                 auto_tokenizer: AutoTokenizer = AutoTokenizer,
-                 chunk_optimizer: ChunkOptimizer = ChunkOptimizer,
-                 tiktoken: ModuleType = tiktoken_module,
-                 logger: logging.Logger = logging.getLogger(__name__)
-                 ):
+
+    def __init__(
+        self,
+        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+        llm_name: str = "gpt-4o-2024-08-06",
+        tokenizer_name: str = "gpt-3.5-turbo",
+        max_chunk_size: int = 2048,
+        chunk_overlap: int = 200,
+        min_chunk_size: int = 100,
+        classification_model: Optional[str] = None,
+        entity_classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
+        api_key: Optional[str] = os.environ.get("OPENAI_API_KEY"),
+        async_openai: Any = None,
+        sentence_transformer: SentenceTransformer = SentenceTransformer,
+        text_processor: TextProcessor = TextProcessor,
+        auto_tokenizer: AutoTokenizer = AutoTokenizer,
+        chunk_optimizer: ChunkOptimizer = ChunkOptimizer,
+        tiktoken: ModuleType = tiktoken_module,
+        logger: logging.Logger = logging.getLogger(__name__),
+    ):
         """
         Initialize the LLM Optimizer with model configurations and processing parameters.
 
@@ -1333,7 +1453,7 @@ class LLMOptimizer:
         Examples:
             >>> # Default configuration for general use
             >>> optimizer = LLMOptimizer()
-            
+
             >>> # Custom configuration for large context models
             >>> optimizer = LLMOptimizer(
             ...     model_name="sentence-transformers/all-mpnet-base-v2",
@@ -1341,7 +1461,7 @@ class LLMOptimizer:
             ...     max_chunk_size=4096,
             ...     chunk_overlap=400
             ... )
-            
+
             >>> # Minimal overlap configuration for performance
             >>> optimizer = LLMOptimizer(
             ...     max_chunk_size=1024,
@@ -1360,7 +1480,9 @@ class LLMOptimizer:
         self.chunk_overlap: int = chunk_overlap
         self.min_chunk_size: int = min_chunk_size
         self.entity_classifications: set[str] = entity_classifications
-        self.classification_model: str = classification_model or "distilbert-base-uncased-finetuned-sst-2-english"
+        self.classification_model: str = (
+            classification_model or "distilbert-base-uncased-finetuned-sst-2-english"
+        )
         self._classification_pipeline = None
         self.api_key: Optional[str] = api_key
 
@@ -1381,9 +1503,7 @@ class LLMOptimizer:
         # Instantiate Text processing utilities
         self.text_processor = self.text_processor()
         self.chunk_optimizer = self.chunk_optimizer(
-            max_size=max_chunk_size,
-            overlap=chunk_overlap,
-            min_size=min_chunk_size
+            max_size=max_chunk_size, overlap=chunk_overlap, min_size=min_chunk_size
         )
 
     def _initialize_models(self):
@@ -1411,7 +1531,7 @@ class LLMOptimizer:
             >>> optimizer = LLMOptimizer()
             >>> # Logs: "Loaded embedding model: sentence-transformers/all-MiniLM-L6-v2"
             >>> # Logs: "Loaded tokenizer: gpt-3.5-turbo"
-            
+
             >>> # With invalid model name
             >>> optimizer = LLMOptimizer(model_name="invalid-model")
             >>> # Logs: "Failed to initialize models: ..."
@@ -1471,7 +1591,9 @@ class LLMOptimizer:
 
                     # Prefer any explicitly provided client; otherwise create router client.
                     if self.openai_async_client is None:
-                        self.openai_async_client = llm_router.get_openai_compat_async_client(model=self.llm_name)
+                        self.openai_async_client = llm_router.get_openai_compat_async_client(
+                            model=self.llm_name
+                        )
                 except Exception as e:
                     self.logger.warning(f"Could not initialize router-backed LLM client: {e}")
                     self.openai_async_client = None
@@ -1479,11 +1601,12 @@ class LLMOptimizer:
             self.logger.warning(f"Could not initialize OpenAI client: {e}")
             self.openai_async_client = None
 
-    async def optimize_for_llm(self, 
-                              decomposed_content: dict[str, Any],
-                              document_metadata: dict[str, Any],
-                              timeout: int = 30
-                              ) -> LLMDocument:
+    async def optimize_for_llm(
+        self,
+        decomposed_content: dict[str, Any],
+        document_metadata: dict[str, Any],
+        timeout: int = 30,
+    ) -> LLMDocument:
         """
         Transform decomposed PDF content into an LLM-optimized document with semantic structure.
 
@@ -1526,7 +1649,7 @@ class LLMOptimizer:
             >>> metadata = {'document_id': 'doc123', 'title': 'Research Paper'}
             >>> llm_doc = await optimizer.optimize_for_llm(decomposed_content, metadata)
             >>> print(f"Created {len(llm_doc.chunks)} chunks")
-            
+
             >>> # Access optimized content
             >>> for chunk in llm_doc.chunks:
             ...     print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
@@ -1539,27 +1662,31 @@ class LLMOptimizer:
         }
         for name, args in expected_types.items():
             if not isinstance(*args):
-                raise TypeError(f"{name} must be of type {args[1].__name__}, got {type(args[0]).__name__} instead.")
+                raise TypeError(
+                    f"{name} must be of type {args[1].__name__}, got {type(args[0]).__name__} instead."
+                )
 
         # Only 'pages' is strictly required; some tests intentionally provide
         # minimal decomposed content (pages only). If metadata/structure are
         # present, they must be dicts.
         expected_decomposed_content_keys_and_types = [
-            ('pages', list),
+            ("pages", list),
         ]
         expected_metadata_keys_and_types = [
-            ('author', str), ('title', str), ('document_id', str),
+            ("author", str),
+            ("title", str),
+            ("document_id", str),
         ]
 
         # 'pages' is a hard requirement and callers/tests expect a KeyError when missing.
-        if 'pages' not in decomposed_content:
+        if "pages" not in decomposed_content:
             raise KeyError("Missing required key 'pages' in decomposed_content")
 
         for key, type_ in expected_decomposed_content_keys_and_types:
             if key not in decomposed_content:
                 continue
             if not isinstance(decomposed_content[key], type_):
-                if key == 'pages':
+                if key == "pages":
                     raise TypeError(
                         f"Key '{key}' in decomposed_content must be of type {type_.__name__}, got {type(decomposed_content[key]).__name__} instead."
                     )
@@ -1568,12 +1695,14 @@ class LLMOptimizer:
                 )
 
         # Optional keys: validate types if provided.
-        for optional_key in ('metadata', 'structure'):
-            if optional_key in decomposed_content and not isinstance(decomposed_content[optional_key], dict):
+        for optional_key in ("metadata", "structure"):
+            if optional_key in decomposed_content and not isinstance(
+                decomposed_content[optional_key], dict
+            ):
                 raise ValueError(
                     f"Key '{optional_key}' in decomposed_content must be of type dict, got {type(decomposed_content[optional_key]).__name__} instead."
                 )
-        
+
         for key, type_ in expected_metadata_keys_and_types:
             if key not in document_metadata:
                 raise KeyError(f"Missing required key '{key}' in document_metadata")
@@ -1587,12 +1716,15 @@ class LLMOptimizer:
 
         try:
             with anyio.fail_after(timeout):
-
                 self.logger.info("Starting LLM optimization process")
 
                 # Extract text content with structure preservation
-                structured_text: dict[str, Any] = await self._extract_structured_text(decomposed_content)
-                self.logger.info("Extracted structured text content with preserved document structure")
+                structured_text: dict[str, Any] = await self._extract_structured_text(
+                    decomposed_content
+                )
+                self.logger.info(
+                    "Extracted structured text content with preserved document structure"
+                )
                 self.logger.debug(f"structured_text: {structured_text}")
 
                 # If nothing extractable exists, fail fast (tests expect ValueError).
@@ -1624,9 +1756,13 @@ class LLMOptimizer:
                 # NOTE We use a per-backend semaphore to limit concurrency.
                 try:
                     async with _get_semaphore():
-                        key_entities: list[dict[str, Any]] = await self._extract_key_entities(structured_text)
+                        key_entities: list[dict[str, Any]] = await self._extract_key_entities(
+                            structured_text
+                        )
                 except Exception as e:
-                    self.logger.warning(f"Key entity extraction failed; continuing without entities: {e}")
+                    self.logger.warning(
+                        f"Key entity extraction failed; continuing without entities: {e}"
+                    )
                     key_entities = []
 
                 self.logger.info(f"Extracted {len(key_entities)} key entities from document")
@@ -1640,8 +1776,8 @@ class LLMOptimizer:
 
                 # Build LLM document
                 llm_document = LLMDocument(
-                    document_id=document_metadata.get('document_id', ''),
-                    title=document_metadata.get('title', ''),
+                    document_id=document_metadata.get("document_id", ""),
+                    title=document_metadata.get("title", ""),
                     chunks=chunks_with_embeddings,
                     summary=document_summary,
                     key_entities=key_entities,
@@ -1655,10 +1791,14 @@ class LLMOptimizer:
                     ).model_dump(),
                 )
 
-                self.logger.info(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
+                self.logger.info(
+                    f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created"
+                )
                 return llm_document
         except TimeoutError as exc:
-            raise TimeoutError(f"LLM optimization process timed out after '{timeout}' seconds") from exc
+            raise TimeoutError(
+                f"LLM optimization process timed out after '{timeout}' seconds"
+            ) from exc
 
     async def _extract_structured_text(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """
@@ -1730,57 +1870,53 @@ class LLMOptimizer:
             full_text for document-wide operations.
         """
         # Validate required keys
-        if 'pages' not in decomposed_content:
+        if "pages" not in decomposed_content:
             raise KeyError("'pages' key is required in decomposed_content")
-            
+
         structured_text = {
-            'pages': [],
-            'metadata': decomposed_content.get('metadata', {}),
-            'structure': decomposed_content.get('structure', {})
+            "pages": [],
+            "metadata": decomposed_content.get("metadata", {}),
+            "structure": decomposed_content.get("structure", {}),
         }
-        
-        for page_num, page_content in enumerate(decomposed_content['pages']):
-            page_text = {
-                'page_number': page_num + 1,
-                'elements': [],
-                'full_text': ''
-            }
-            
+
+        for page_num, page_content in enumerate(decomposed_content["pages"]):
+            page_text = {"page_number": page_num + 1, "elements": [], "full_text": ""}
+
             # Extract all elements with context, preserving all metadata
-            for element in page_content.get('elements', []):
+            for element in page_content.get("elements", []):
                 # Create element preserving ALL original metadata
                 processed_element = {}
-                
+
                 # Preserve all fields from the original element
                 for key, value in element.items():
                     processed_element[key] = value
-                
+
                 # Normalize type field: use subtype if available
-                if 'subtype' in element:
-                    processed_element['type'] = element.get('subtype')
-                elif element.get('type') == 'text':
+                if "subtype" in element:
+                    processed_element["type"] = element.get("subtype")
+                elif element.get("type") == "text":
                     # Default text elements to 'paragraph' if no subtype
-                    processed_element['type'] = 'paragraph'
+                    processed_element["type"] = "paragraph"
                 else:
-                    processed_element['type'] = element.get('type', 'unknown')
-                
+                    processed_element["type"] = element.get("type", "unknown")
+
                 # Ensure required fields have defaults if missing
-                if 'content' not in processed_element:
-                    processed_element['content'] = ''
-                if 'position' not in processed_element:
-                    processed_element['position'] = {}
-                if 'style' not in processed_element:
-                    processed_element['style'] = {}
-                if 'confidence' not in processed_element:
-                    processed_element['confidence'] = 1.0
-                
-                page_text['elements'].append(processed_element)
-                page_text['full_text'] += processed_element['content'] + '\n'
-            
-            structured_text['pages'].append(page_text)
-        
+                if "content" not in processed_element:
+                    processed_element["content"] = ""
+                if "position" not in processed_element:
+                    processed_element["position"] = {}
+                if "style" not in processed_element:
+                    processed_element["style"] = {}
+                if "confidence" not in processed_element:
+                    processed_element["confidence"] = 1.0
+
+                page_text["elements"].append(processed_element)
+                page_text["full_text"] += processed_element["content"] + "\n"
+
+            structured_text["pages"].append(page_text)
+
         return structured_text
-    
+
     async def _generate_document_summary(self, structured_text: dict[str, Any]) -> str:
         """
         Generate a comprehensive extractive summary of the document using keyword and position analysis.
@@ -1823,39 +1959,41 @@ class LLMOptimizer:
         try:
             # Combine all text content
             full_text = ""
-            for page in structured_text['pages']:
-                full_text += page['full_text'] + "\n"
-            
+            for page in structured_text["pages"]:
+                full_text += page["full_text"] + "\n"
+
             if not full_text.strip():
                 raise ValueError("No valid text content found in structured_text")
 
-            self.logger.debug(f"full_text: {full_text[:500]}...")  # Print first 500 chars for debugging
-            
+            self.logger.debug(
+                f"full_text: {full_text[:500]}..."
+            )  # Print first 500 chars for debugging
+
             # Basic extractive summarization (can be enhanced with LLM)
             sentences = self.text_processor.split_sentences(full_text)
             self.logger.debug(f"sentences:\n{sentences}")
-            
+
             # Score sentences by position and keyword frequency
             scored_sentences = []
             keywords = self.text_processor.extract_keywords(full_text, top_k=20)
-            
+
             for i, sentence in enumerate(sentences[:50]):  # First 50 sentences
                 score = 0
                 # Position weight (earlier sentences get higher scores)
                 score += (50 - i) / 50 * 0.3
-                
+
                 # Keyword presence
                 for keyword in keywords:
                     if keyword.lower() in sentence.lower():
                         score += 0.1
-                
+
                 # Length penalty for very short/long sentences
                 words = len(sentence.split())
                 if 10 <= words <= 30:
                     score += 0.2
-                
+
                 scored_sentences.append((sentence, score))
-            
+
             # Select top sentences for summary
             scored_sentences.sort(key=lambda x: x[1], reverse=True)
             self.logger.debug(f"scored sentences:\n{scored_sentences}")
@@ -1869,10 +2007,9 @@ class LLMOptimizer:
             self.logger.exception(msg)
             return msg
 
-    async def _create_optimal_chunks(self, 
-                                     structured_text: dict[str, Any],
-                                     strict_validation: bool = False
-                                     ) -> list[LLMChunk]:
+    async def _create_optimal_chunks(
+        self, structured_text: dict[str, Any], strict_validation: bool = False
+    ) -> list[LLMChunk]:
         """
         Create semantically coherent text chunks optimized for LLM processing with intelligent boundary detection.
 
@@ -1925,20 +2062,22 @@ class LLMOptimizer:
         chunks = []
         chunk_id_counter = 0
         strict = strict_validation
-        
-        for page in structured_text['pages']:
-            page_num = page['page_number']
-            
+
+        for page in structured_text["pages"]:
+            page_num = page["page_number"]
+
             # Process elements by semantic type
             current_chunk_content = ""
             source_elements = []
 
-            if 'elements' not in page:
+            if "elements" not in page:
                 raise KeyError(f"Page {page_num} missing 'elements' key in structured text")
 
-            elements = page['elements']
+            elements = page["elements"]
             if not isinstance(elements, list):
-                raise TypeError(f"Expected 'elements' to be a list on page {page_num}, got {type(elements).__name__}")
+                raise TypeError(
+                    f"Expected 'elements' to be a list on page {page_num}, got {type(elements).__name__}"
+                )
 
             for element in elements:
                 if not isinstance(element, dict):
@@ -1946,15 +2085,15 @@ class LLMOptimizer:
                         f"Expected each element to be a dict, got {type(element).__name__} on page {page_num}"
                     )
 
-                if 'content' not in element:
-                    raise KeyError(
-                        f"Element on page {page_num} missing 'content' key, skipping."
-                    )
+                if "content" not in element:
+                    raise KeyError(f"Element on page {page_num} missing 'content' key, skipping.")
 
-                element_content = element['content']
+                element_content = element["content"]
 
                 if not isinstance(element_content, str):
-                    raise TypeError(f"Element content must be a string, got {type(element_content).__name__}")
+                    raise TypeError(
+                        f"Element content must be a string, got {type(element_content).__name__}"
+                    )
 
                 element_content = element_content.strip()
                 if not element_content:
@@ -1974,14 +2113,11 @@ class LLMOptimizer:
                 if token_count > self.max_chunk_size and current_chunk_content:
                     # Create chunk with current content
                     chunk = await self._create_chunk(
-                        current_chunk_content,
-                        chunk_id_counter,
-                        page_num,
-                        source_elements
+                        current_chunk_content, chunk_id_counter, page_num, source_elements
                     )
                     chunks.append(chunk)
                     chunk_id_counter += 1
-                    
+
                     # Start new chunk with overlap
                     overlap_content = self._get_chunk_overlap(current_chunk_content)
                     current_chunk_content = overlap_content + "\n" + element_content
@@ -1991,8 +2127,8 @@ class LLMOptimizer:
                         current_chunk_content += "\n" + element_content
                     else:
                         current_chunk_content = element_content
-                    
-                    source_elements.append(element['type'])
+
+                    source_elements.append(element["type"])
 
             # Create final chunk for page if content remains
             if current_chunk_content.strip():
@@ -2000,27 +2136,26 @@ class LLMOptimizer:
                     current_chunk_content,
                     chunk_id_counter,
                     page_num,
-                    ['text'] # TODO Can't figure out the source elements for the last chunk if not page elements.
+                    [
+                        "text"
+                    ],  # TODO Can't figure out the source elements for the last chunk if not page elements.
                 )
                 chunks.append(chunk)
                 chunk_id_counter += 1
 
         # Establish relationships between chunks
         chunks = self._establish_chunk_relationships(chunks)
-        
+
         return chunks
 
-
-    async def _create_chunk(self, 
-                          content: str, 
-                          chunk_id: int, 
-                          page_num: int,
-                          source_elements: list[str]) -> LLMChunk:
+    async def _create_chunk(
+        self, content: str, chunk_id: int, page_num: int, source_elements: list[str]
+    ) -> LLMChunk:
         """
         Create a single LLMChunk instance with content processing and semantic type classification.
 
         This method constructs an individual LLMChunk from text content and associated metadata,
-        performing token counting and semantic type determination. It creates a fully-formed 
+        performing token counting and semantic type determination. It creates a fully-formed
         chunk ready for embedding generation and relationship establishment.
 
         The method analyzes the source elements to determine the primary semantic type following
@@ -2061,8 +2196,8 @@ class LLMOptimizer:
             >>> print(chunk.token_count)  # Actual token count
 
         Note:
-            Semantic type determination follows a priority hierarchy: header > table > 
-            figure_caption > mixed > text. The method automatically strips whitespace 
+            Semantic type determination follows a priority hierarchy: header > table >
+            figure_caption > mixed > text. The method automatically strips whitespace
             and validates content before processing.
         """
         # Validate content
@@ -2070,7 +2205,7 @@ class LLMOptimizer:
             raise TypeError("Content must be a string")
         if not content.strip():
             raise ValueError("Content cannot be empty or contain only whitespace")
-        
+
         # Validate chunk_id
         if not isinstance(chunk_id, int):
             raise TypeError(f"chunk_id must be an integer, got {type(chunk_id).__name__}")
@@ -2082,7 +2217,9 @@ class LLMOptimizer:
         else:
             for element in source_elements:
                 if not isinstance(element, str):
-                    raise TypeError(f"Invalid element type '{element}' in source_elements. Must be a string.")
+                    raise TypeError(
+                        f"Invalid element type '{element}' in source_elements. Must be a string."
+                    )
 
         try:
             token_count = self._count_tokens(content)
@@ -2090,56 +2227,58 @@ class LLMOptimizer:
             token_count = len(content.split())  # Fallback to word count if token counting fails
 
         if not isinstance(token_count, int):
-            raise TypeError(f"Expected token_count to be an integer, got {type(token_count).__name__}")
+            raise TypeError(
+                f"Expected token_count to be an integer, got {type(token_count).__name__}"
+            )
         if token_count < 0:
             raise ValueError(f"Token count cannot be negative, got {token_count}")
 
         # Determine primary semantic type
         semantic_types = set(source_elements)
-        
+
         # Map common element types to semantic types
         element_to_semantic_map = {
-            'paragraph': 'text',
-            'text': 'text',
-            'header': 'header',
-            'title': 'header',  # titles are also headers
-            'table': 'table', 
-            'figure_caption': 'figure_caption',
-            'caption': 'figure_caption',
-            'figure': 'figure_caption',
-            'list': 'list',
-            'footer': 'footer',
-            'reference': 'reference',
-            'equation': 'equation',
-            'code': 'code'
+            "paragraph": "text",
+            "text": "text",
+            "header": "header",
+            "title": "header",  # titles are also headers
+            "table": "table",
+            "figure_caption": "figure_caption",
+            "caption": "figure_caption",
+            "figure": "figure_caption",
+            "list": "list",
+            "footer": "footer",
+            "reference": "reference",
+            "equation": "equation",
+            "code": "code",
         }
-        
+
         # Convert source elements to semantic types
         mapped_semantic_types = set()
         for element in semantic_types:
-            mapped_type = element_to_semantic_map.get(element, 'text')  # Default to 'text'
+            mapped_type = element_to_semantic_map.get(element, "text")  # Default to 'text'
             mapped_semantic_types.add(mapped_type)
-        
+
         # Priority hierarchy: header > table > figure_caption > mixed > text
         primary_type = None
-        if 'header' in mapped_semantic_types:
-            primary_type = 'header'
-        elif 'table' in mapped_semantic_types:
-            primary_type = 'table'
-        elif 'figure_caption' in mapped_semantic_types:
-            primary_type = 'figure_caption'
+        if "header" in mapped_semantic_types:
+            primary_type = "header"
+        elif "table" in mapped_semantic_types:
+            primary_type = "table"
+        elif "figure_caption" in mapped_semantic_types:
+            primary_type = "figure_caption"
         elif len(mapped_semantic_types) > 1:
-            primary_type = 'mixed'
+            primary_type = "mixed"
         elif len(mapped_semantic_types) == 1:
             primary_type = list(mapped_semantic_types)[0]
         else:
-            primary_type = 'text'
+            primary_type = "text"
 
         # Validate semantic type against allowed values from ValidSemanticType enum
         allowed_types = {t.value for t in ValidSemanticType}
         if primary_type is None or primary_type not in allowed_types:
             raise ValueError(f"Invalid semantic type '{primary_type}' for chunk creation.")
-        
+
         # Format chunk ID appropriately
         formatted_chunk_id = f"chunk_{chunk_id:04d}" if isinstance(chunk_id, int) else str(chunk_id)
         timestamp = datetime.now().timestamp()
@@ -2147,36 +2286,37 @@ class LLMOptimizer:
 
         # Map ValidSemanticType values to LLMChunkMetadata allowed values
         semantic_type_for_metadata = primary_type
-        if primary_type == 'figure_caption':
-            semantic_type_for_metadata = 'caption'
-        elif primary_type == 'mixed':
+        if primary_type == "figure_caption":
+            semantic_type_for_metadata = "caption"
+        elif primary_type == "mixed":
             # For mixed content, use the dominant type or 'text' as fallback
-            if 'table' in mapped_semantic_types:
-                semantic_type_for_metadata = 'table'
-            elif 'header' in mapped_semantic_types:
-                semantic_type_for_metadata = 'header'
-            elif 'figure_caption' in mapped_semantic_types:
-                semantic_type_for_metadata = 'caption'
+            if "table" in mapped_semantic_types:
+                semantic_type_for_metadata = "table"
+            elif "header" in mapped_semantic_types:
+                semantic_type_for_metadata = "header"
+            elif "figure_caption" in mapped_semantic_types:
+                semantic_type_for_metadata = "caption"
             else:
-                semantic_type_for_metadata = 'text'
+                semantic_type_for_metadata = "text"
 
         metadata = LLMChunkMetadata(
             element_type=primary_type,
             element_id=formatted_chunk_id,
             character_count=len(content),
             word_count=len(content.split()),
-            sentence_count=len(content.split('.')),
+            sentence_count=len(content.split(".")),
             token_count=token_count,
             creation_timestamp=timestamp,
             created_at=timestamp_str,
             processing_method="llm_optimization",
             tokenizer_used=self.tokenizer_name,
             semantic_type=semantic_type_for_metadata,  # Use mapped value
-            has_mixed_elements=len(mapped_semantic_types) > 1,  # Check if multiple types instead of checking for 'mixed'
-            contains_table='table' in mapped_semantic_types,
-            contains_figure='figure_caption' in mapped_semantic_types,
-            is_header='header' in mapped_semantic_types,
-            page_number=page_num
+            has_mixed_elements=len(mapped_semantic_types)
+            > 1,  # Check if multiple types instead of checking for 'mixed'
+            contains_table="table" in mapped_semantic_types,
+            contains_figure="figure_caption" in mapped_semantic_types,
+            is_header="header" in mapped_semantic_types,
+            page_number=page_num,
         )
 
         chunk = LLMChunk(
@@ -2191,7 +2331,7 @@ class LLMOptimizer:
         )
 
         return chunk
-    
+
     def _establish_chunk_relationships(self, chunks: list[LLMChunk]) -> list[LLMChunk]:
         """
         Establish semantic and structural relationships between chunks to preserve document coherence.
@@ -2227,7 +2367,7 @@ class LLMOptimizer:
             >>> updated_chunks = optimizer._establish_chunk_relationships(chunks)
             >>> print(updated_chunks[1].relationships)
             >>> # ['chunk_0000', 'chunk_0002', 'other_same_page_chunks']
-            
+
             >>> # Same page chunks get additional relationships
             >>> same_page_chunks = [chunk for chunk in chunks if chunk.source_page == 1]
             >>> print(len(same_page_chunks[0].relationships))  # Multiple relationships
@@ -2238,17 +2378,18 @@ class LLMOptimizer:
         """
         for i, chunk in enumerate(chunks):
             relationships = []
-            
+
             try:
                 # Adjacent chunks (sequential relationship)
                 if i > 0:
-                    relationships.append(chunks[i-1].chunk_id)
+                    relationships.append(chunks[i - 1].chunk_id)
                 if i < len(chunks) - 1:
-                    relationships.append(chunks[i+1].chunk_id)
-            
+                    relationships.append(chunks[i + 1].chunk_id)
+
                 # Same page chunks
                 same_page_chunks = [
-                    c.chunk_id for c in chunks 
+                    c.chunk_id
+                    for c in chunks
                     if c.source_page == chunk.source_page and c.chunk_id != chunk.chunk_id
                 ]
                 relationships.extend(same_page_chunks)
@@ -2292,7 +2433,7 @@ class LLMOptimizer:
             >>> embedded_chunks = await optimizer._generate_embeddings(chunks)
             >>> print(embedded_chunks[0].embedding.shape)  # (384,) for all-MiniLM-L6-v2
             >>> print(type(embedded_chunks[0].embedding))  # <class 'numpy.ndarray'>
-            
+
             >>> # Check for successful embedding generation
             >>> successful = [c for c in embedded_chunks if c.embedding is not None]
             >>> print(f"{len(successful)}/{len(chunks)} chunks embedded successfully")
@@ -2300,41 +2441,41 @@ class LLMOptimizer:
         if not self.embedding_model:
             self.logger.warning("No embedding model available, skipping embedding generation")
             return chunks
-        
+
         # Prepare texts for embedding
         texts = [chunk.content for chunk in chunks]
-        
+
         # Generate embeddings in batches
         batch_size = 32
         for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i+batch_size]
-            batch_chunks = chunks[i:i+batch_size]
-            
+            batch_texts = texts[i : i + batch_size]
+            batch_chunks = chunks[i : i + batch_size]
+
             try:
                 embeddings = self.embedding_model.encode(
-                    batch_texts,
-                    convert_to_numpy=True,
-                    show_progress_bar=False
+                    batch_texts, convert_to_numpy=True, show_progress_bar=False
                 )
-                
+
                 for chunk, embedding in zip(batch_chunks, embeddings):
                     chunk.embedding = embedding
-                    
+
             except Exception as e:
-                self.logger.error(f"Failed to generate embeddings for batch {i//batch_size + 1}: {e}")
+                self.logger.error(
+                    f"Failed to generate embeddings for batch {i // batch_size + 1}: {e}"
+                )
                 for chunk in batch_chunks:
                     chunk.embedding = None
-        
+
         return chunks
 
     async def _get_entity_classification(
-        self, 
-        sentence: str, 
+        self,
+        sentence: str,
         *,
-        openai_client: Any | None, 
+        openai_client: Any | None,
         classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
         retries: int = 3,
-        timeout: int = 30
+        timeout: int = 30,
     ) -> ClassificationResult:
         """
         Classify the type of entity in a sentence using an OpenAI language model.
@@ -2381,7 +2522,7 @@ class LLMOptimizer:
 
         Classification Process:
             - Let temperature be 0.0 (ensures deterministic output).
-            - Let base log threshold be the natural log of 0.05 (e.g. statistical significance threshold). 
+            - Let base log threshold be the natural log of 0.05 (e.g. statistical significance threshold).
             - Run the sentence through the OpenAI completion API, with a list of categories.
             - OpenAI's API will return the top 20 most probable categories in log Probability format.
             - For each category in the response:
@@ -2434,10 +2575,14 @@ class LLMOptimizer:
             try:
                 from ipfs_datasets_py import llm_router
 
-                openai_client = llm_router.get_openai_compat_async_client(model="openai/gpt-4o-mini")
+                openai_client = llm_router.get_openai_compat_async_client(
+                    model="openai/gpt-4o-mini"
+                )
             except Exception:
                 # Degrade gracefully when an LLM backend isn't configured.
-                return ClassificationResult(entity=sentence, category="unclassified", confidence=0.0)
+                return ClassificationResult(
+                    entity=sentence, category="unclassified", confidence=0.0
+                )
 
         # Classifications
         if not isinstance(classifications, set):
@@ -2446,12 +2591,18 @@ class LLMOptimizer:
             raise ValueError("categories is empty")
         for cat in classifications:
             if not isinstance(cat, str):
-                raise TypeError(f"'{cat}' in classifications. Must be string, got {type(cat).__name__}")
+                raise TypeError(
+                    f"'{cat}' in classifications. Must be string, got {type(cat).__name__}"
+                )
             if not cat.strip():
-                raise ValueError("A classification category cannot be an empty/whitespace only string")
+                raise ValueError(
+                    "A classification category cannot be an empty/whitespace only string"
+                )
 
         # Switch to a smaller/cheaper model for debugging.
-        llm_name = "gpt-4.1-nano-2025-04-14" if self.logger.level == logging.DEBUG else self.llm_name
+        llm_name = (
+            "gpt-4.1-nano-2025-04-14" if self.logger.level == logging.DEBUG else self.llm_name
+        )
 
         classification_results = await classify_with_llm(
             text=sentence,
@@ -2466,11 +2617,9 @@ class LLMOptimizer:
         self.logger.debug(f"classification_results:\n{classification_results}")
 
         match len(classification_results):
-            case 0: # No classifications returned, return unclassified.
+            case 0:  # No classifications returned, return unclassified.
                 return ClassificationResult(
-                    entity=sentence,
-                    category="unclassified",
-                    confidence=0.0
+                    entity=sentence, category="unclassified", confidence=0.0
                 )
             case 1:
                 return classification_results[0]
@@ -2509,11 +2658,9 @@ class LLMOptimizer:
             }
         return {"label": None, "confidence": 0.0}
 
-
-    async def _extract_key_entities(self, 
-                                    structured_text: dict[str, Any],
-                                    max_entities: int = 50
-                                    ) -> list[dict[str, Any]]:
+    async def _extract_key_entities(
+        self, structured_text: dict[str, Any], max_entities: int = 50
+    ) -> list[dict[str, Any]]:
         """
         Extract key entities and concepts from document text using NLTK's advanced named entity recognition.
 
@@ -2566,15 +2713,15 @@ class LLMOptimizer:
         """
         retries = 3
         timeout = 30
-        batches = 5 # Number of sentences to process in each batch
+        batches = 5  # Number of sentences to process in each batch
 
         if not isinstance(structured_text, dict):
             raise TypeError("structured_text must be a dictionary")
-        if 'pages' not in structured_text.keys():
+        if "pages" not in structured_text.keys():
             raise KeyError("'pages' key is required in structured_text")
-        if not isinstance(structured_text['pages'], list):
+        if not isinstance(structured_text["pages"], list):
             raise TypeError("'pages' value must be a list")
-        if not structured_text['pages']:
+        if not structured_text["pages"]:
             raise ValueError("No pages found in structured_text for entity extraction")
         if not isinstance(max_entities, int):
             raise TypeError("max_entities must be an integer")
@@ -2582,18 +2729,18 @@ class LLMOptimizer:
             raise ValueError("max_entities must be a positive integer")
 
         # Validate page structure
-        for idx, page in enumerate(structured_text['pages']):
+        for idx, page in enumerate(structured_text["pages"]):
             if not isinstance(page, dict):
                 raise TypeError(f"Page {idx} must be a dictionary")
-            if 'full_text' not in page:
+            if "full_text" not in page:
                 raise KeyError(f"Page {idx} missing required 'full_text' key")
-            if not isinstance(page['full_text'], str):
+            if not isinstance(page["full_text"], str):
                 raise TypeError(f"Page {idx} 'full_text' must be a string")
 
         # Combine all text for entity extraction
         full_text = ""
-        for page in structured_text['pages']:
-            full_text += page['full_text'] + "\n"
+        for page in structured_text["pages"]:
+            full_text += page["full_text"] + "\n"
 
         if not full_text.strip():
             raise ValueError("No valid text content found for entity extraction")
@@ -2611,154 +2758,138 @@ class LLMOptimizer:
                     openai_client=self.openai_async_client,
                     classifications=self.entity_classifications,
                     retries=retries,
-                    timeout=timeout
+                    timeout=timeout,
                 )
 
-                entities.append({
-                    'text': result.entity,
-                    'type': result.category,
-                    'confidence': result.confidence
-                })
+                entities.append(
+                    {
+                        "text": result.entity,
+                        "type": result.category,
+                        "confidence": result.confidence,
+                    }
+                )
 
         # Remove duplicates while preserving order
         seen = set()
         unique_entities = []
         for entity in entities:
-            entity_key = (entity['text'].lower(), entity['type'])
+            entity_key = (entity["text"].lower(), entity["type"])
             if entity_key not in seen:
                 seen.add(entity_key)
                 unique_entities.append(entity)
 
         # Sort by confidence and limit results
-        unique_entities.sort(key=lambda x: x['confidence'], reverse=True)
+        unique_entities.sort(key=lambda x: x["confidence"], reverse=True)
 
         top_k_unique_entities = unique_entities[:max_entities]
 
         return top_k_unique_entities
-    
+
     def _calculate_entity_confidence(self, entity_type: str, entity_text: str) -> float:
         """
         Calculate confidence score for extracted entities based on type and characteristics.
-        
+
         Args:
             entity_type (str): The NLTK entity type (PERSON, ORGANIZATION, GPE, etc.)
             entity_text (str): The actual entity text
-            
+
         Returns:
             float: Confidence score between 0.0 and 1.0
         """
         # TODO Where the hell do these numbers come from?
         base_confidence = {
-            'PERSON': 0.85,
-            'ORGANIZATION': 0.80,
-            'GPE': 0.75,  # Geopolitical entity (countries, cities, states)
-            'LOCATION': 0.75,
-            'DATE': 0.70,
-            'TIME': 0.70,
-            'MONEY': 0.85,
-            'PERCENT': 0.90,
-            'FACILITY': 0.65,
-            'EVENT': 0.60
+            "PERSON": 0.85,
+            "ORGANIZATION": 0.80,
+            "GPE": 0.75,  # Geopolitical entity (countries, cities, states)
+            "LOCATION": 0.75,
+            "DATE": 0.70,
+            "TIME": 0.70,
+            "MONEY": 0.85,
+            "PERCENT": 0.90,
+            "FACILITY": 0.65,
+            "EVENT": 0.60,
         }.get(entity_type, 0.50)
-        
+
         # Adjust confidence based on entity characteristics
         text_length = len(entity_text.split())
-        
+
         # Longer entities (2-4 words) tend to be more reliable
         if 2 <= text_length <= 4:
             base_confidence += 0.05
         elif text_length > 4:
             base_confidence -= 0.05
-        
+
         # Single character entities are likely noise
         if len(entity_text.strip()) == 1:
             base_confidence -= 0.3
-        
+
         # Entities with mixed case are more likely to be valid
         if entity_text.istitle() or any(c.isupper() for c in entity_text):
             base_confidence += 0.05
-        
+
         return max(0.0, min(1.0, base_confidence))
-    
-    async def _extract_entities_fallback(self, structured_text: dict[str, Any]) -> list[dict[str, Any]]:
+
+    async def _extract_entities_fallback(
+        self, structured_text: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Fallback entity extraction using basic pattern matching when NLTK is unavailable.
-        
+
         Args:
             structured_text (dict[str, Any]): Structured text representation
-            
+
         Returns:
             list[dict[str, Any]]: list of extracted entities with basic pattern matching
         """
         # Combine all text for entity extraction
         full_text = ""
-        for page in structured_text['pages']:
-            full_text += page['full_text'] + "\n"
-        
+        for page in structured_text["pages"]:
+            full_text += page["full_text"] + "\n"
+
         entities = []
-        
+
         # Date patterns
         date_patterns = [
-            r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b',
-            r'\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b',
-            r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b'
+            r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b",
+            r"\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b",
+            r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b",
         ]
-        
+
         for pattern in date_patterns:
             dates = re.findall(pattern, full_text)
             for date in dates[:10]:
-                entities.append({
-                    'text': date,
-                    'type': 'DATE',
-                    'confidence': 0.7
-                })
-        
+                entities.append({"text": date, "type": "DATE", "confidence": 0.7})
+
         # Email addresses
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         emails = re.findall(email_pattern, full_text)
         for email in emails[:5]:
-            entities.append({
-                'text': email,
-                'type': 'EMAIL',
-                'confidence': 0.9
-            })
-        
+            entities.append({"text": email, "type": "EMAIL", "confidence": 0.9})
+
         # Money amounts
-        money_pattern = r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\$\d+(?:\.\d{2})?[KMB]?'
+        money_pattern = r"\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\$\d+(?:\.\d{2})?[KMB]?"
         money_amounts = re.findall(money_pattern, full_text)
         for amount in money_amounts[:10]:
-            entities.append({
-                'text': amount,
-                'type': 'MONEY',
-                'confidence': 0.8
-            })
-        
+            entities.append({"text": amount, "type": "MONEY", "confidence": 0.8})
+
         # Percentages
-        percent_pattern = r'\d+(?:\.\d+)?%'
+        percent_pattern = r"\d+(?:\.\d+)?%"
         percentages = re.findall(percent_pattern, full_text)
         for percent in percentages[:10]:
-            entities.append({
-                'text': percent,
-                'type': 'PERCENT',
-                'confidence': 0.9
-            })
-        
+            entities.append({"text": percent, "type": "PERCENT", "confidence": 0.9})
+
         # Capitalized phrases (potential proper nouns)
-        proper_noun_pattern = r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b'
+        proper_noun_pattern = r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b"
         proper_nouns = re.findall(proper_noun_pattern, full_text)
         for noun in proper_nouns[:15]:
             if len(noun.split()) >= 2:
-                entities.append({
-                    'text': noun,
-                    'type': 'PROPER_NOUN',
-                    'confidence': 0.5
-                })
-        
+                entities.append({"text": noun, "type": "PROPER_NOUN", "confidence": 0.5})
+
         return entities
-    
-    async def _generate_document_embedding(self, 
-                                         summary: str, 
-                                         structured_text: dict[str, Any]) -> Optional[np.ndarray]:
+
+    async def _generate_document_embedding(
+        self, summary: str, structured_text: dict[str, Any]
+    ) -> Optional[np.ndarray]:
         """
         Generate a comprehensive document-level vector embedding representing the entire document's semantic content.
 
@@ -2806,27 +2937,25 @@ class LLMOptimizer:
         """
         if not self.embedding_model:
             raise RuntimeError("No embedding model available for document embedding generation")
-        
+
         # Combine summary with key parts of document
         doc_text = summary
-        
+
         # Add key headers and first paragraphs
-        for page in structured_text['pages'][:3]:  # First 3 pages
-            for element in page['elements'][:5]:  # First 5 elements per page
-                if element['type'] in ['header', 'title']:
-                    doc_text += " " + element['content']
-        
+        for page in structured_text["pages"][:3]:  # First 3 pages
+            for element in page["elements"][:5]:  # First 5 elements per page
+                if element["type"] in ["header", "title"]:
+                    doc_text += " " + element["content"]
+
         try:
             embedding = self.embedding_model.encode(
-                doc_text,
-                convert_to_numpy=True,
-                show_progress_bar=False
+                doc_text, convert_to_numpy=True, show_progress_bar=False
             )
             return embedding
         except Exception as e:
             self.logger.error(f"Failed to generate document embedding: {e}")
             return None
-    
+
     def _count_tokens(self, text: str) -> int:
         """
         Count the number of tokens in text using the configured tokenizer.
@@ -2834,7 +2963,7 @@ class LLMOptimizer:
         This method provides accurate token counting using the initialized tokenizer, which is
         essential for chunk size management and LLM compatibility. It handles both tiktoken
         tokenizers (for OpenAI models) and HuggingFace tokenizers.
-    
+
         Accurate token counting ensures chunks remain within LLM context limits and enables
         precise overlap calculations for optimal chunk boundary management.
 
@@ -2853,7 +2982,7 @@ class LLMOptimizer:
             >>> text = "This is a sample text for token counting."
             >>> token_count = optimizer._count_tokens(text)
             >>> print(token_count)  # Exact count based on tokenizer (e.g., 9)
-            
+
             >>> # Empty text handling
             >>> empty_count = optimizer._count_tokens("")
             >>> print(empty_count)  # 0
@@ -2861,7 +2990,7 @@ class LLMOptimizer:
         # Token counting should degrade gracefully in offline/CI contexts and unit tests.
         # If no tokenizer is available (or a Mock is injected), fall back to NLTK (if available)
         # or a simple word split.
-        if self.tokenizer is None or type(self.tokenizer).__module__.startswith('unittest.mock'):
+        if self.tokenizer is None or type(self.tokenizer).__module__.startswith("unittest.mock"):
             try:
                 return len(word_tokenize(text))
             except Exception:
@@ -2874,7 +3003,7 @@ class LLMOptimizer:
             return 0
 
         class_tokenizer = None
-        for attr in ['encode', 'tokenize']:
+        for attr in ["encode", "tokenize"]:
             class_tokenizer = getattr(self.tokenizer, attr, None)
             if class_tokenizer is not None:
                 break
@@ -2891,22 +3020,24 @@ class LLMOptimizer:
                     "Trying next tokenizer."
                 )
         else:
-            self.logger.warning("Tokenizer failed for all available methods. Returning length of text split as approximation.")
+            self.logger.warning(
+                "Tokenizer failed for all available methods. Returning length of text split as approximation."
+            )
             return len(text.split())
 
     def _has_extractable_text(self, structured_text: dict[str, Any]) -> bool:
         """Return True if structured_text contains any non-whitespace content."""
         try:
-            for page in structured_text.get('pages', []):
-                for element in page.get('elements', []):
-                    content = element.get('content', '')
+            for page in structured_text.get("pages", []):
+                for element in page.get("elements", []):
+                    content = element.get("content", "")
                     if isinstance(content, str) and content.strip():
                         return True
         except Exception:
             return False
         return False
 
-    async def _merge_chunks_to_min_size(self, chunks: list['LLMChunk']) -> list['LLMChunk']:
+    async def _merge_chunks_to_min_size(self, chunks: list["LLMChunk"]) -> list["LLMChunk"]:
         """Merge adjacent chunks until each chunk meets self.min_chunk_size tokens.
 
         This is a best-effort post-processing pass that preserves chunk order.
@@ -2917,44 +3048,53 @@ class LLMOptimizer:
         merged_groups: list[dict[str, Any]] = []
 
         current = {
-            'content': chunks[0].content,
-            'page_num': chunks[0].source_page,
-            'source_elements': list(chunks[0].source_elements) if chunks[0].source_elements else ['text'],
+            "content": chunks[0].content,
+            "page_num": chunks[0].source_page,
+            "source_elements": list(chunks[0].source_elements)
+            if chunks[0].source_elements
+            else ["text"],
         }
 
-        current_tokens = self._count_tokens(current['content'])
+        current_tokens = self._count_tokens(current["content"])
 
         for chunk in chunks[1:]:
             if current_tokens < self.min_chunk_size:
-                current['content'] = current['content'].rstrip() + "\n" + chunk.content.lstrip()
-                current['source_elements'].extend(chunk.source_elements or ['text'])
-                current_tokens = self._count_tokens(current['content'])
+                current["content"] = current["content"].rstrip() + "\n" + chunk.content.lstrip()
+                current["source_elements"].extend(chunk.source_elements or ["text"])
+                current_tokens = self._count_tokens(current["content"])
                 continue
 
             merged_groups.append(current)
             current = {
-                'content': chunk.content,
-                'page_num': chunk.source_page,
-                'source_elements': list(chunk.source_elements) if chunk.source_elements else ['text'],
+                "content": chunk.content,
+                "page_num": chunk.source_page,
+                "source_elements": list(chunk.source_elements)
+                if chunk.source_elements
+                else ["text"],
             }
-            current_tokens = self._count_tokens(current['content'])
+            current_tokens = self._count_tokens(current["content"])
 
         merged_groups.append(current)
 
         # If the final chunk is still too small, merge it into the previous chunk.
-        if len(merged_groups) >= 2 and self._count_tokens(merged_groups[-1]['content']) < self.min_chunk_size:
-            merged_groups[-2]['content'] = merged_groups[-2]['content'].rstrip() + "\n" + merged_groups[-1]['content'].lstrip()
-            merged_groups[-2]['source_elements'].extend(merged_groups[-1]['source_elements'])
+        if (
+            len(merged_groups) >= 2
+            and self._count_tokens(merged_groups[-1]["content"]) < self.min_chunk_size
+        ):
+            merged_groups[-2]["content"] = (
+                merged_groups[-2]["content"].rstrip() + "\n" + merged_groups[-1]["content"].lstrip()
+            )
+            merged_groups[-2]["source_elements"].extend(merged_groups[-1]["source_elements"])
             merged_groups.pop()
 
         merged_chunks: list[LLMChunk] = []
         for chunk_id, group in enumerate(merged_groups):
             merged_chunks.append(
                 await self._create_chunk(
-                    group['content'],
+                    group["content"],
                     chunk_id,
-                    int(group['page_num']),
-                    group['source_elements'] or ['text'],
+                    int(group["page_num"]),
+                    group["source_elements"] or ["text"],
                 )
             )
 
@@ -2991,26 +3131,27 @@ class LLMOptimizer:
             >>> content = "This is a long paragraph with multiple sentences. It contains important context information that should be preserved across chunk boundaries for optimal LLM processing."
             >>> overlap = optimizer._get_chunk_overlap(content)
             >>> print(overlap)  # "preserved across chunk boundaries for optimal LLM processing."
-            
+
             >>> # Short content handling
             >>> short_content = "Brief text."
             >>> overlap = optimizer._get_chunk_overlap(short_content)
             >>> print(overlap)  # "Brief text." (entire content if shorter than overlap)
-            
+
             >>> # Empty content handling
             >>> empty_overlap = optimizer._get_chunk_overlap("")
             >>> print(empty_overlap)  # ""
         """
         if not content:
             return ""
-        
+
         # Get last N tokens for overlap
         words = content.split()
         overlap_words = min(self.chunk_overlap // 4, len(words))  # Approximate word count
-        
+
         if overlap_words > 0:
             return " ".join(words[-overlap_words:])
         return ""
+
 
 # Utility classes for text processing
 class TextProcessor:
@@ -3025,7 +3166,7 @@ class TextProcessor:
     This utility serves as the foundation for text manipulation operations throughout
     the PDF processing pipeline, ensuring consistent and high-quality text handling.
     """
-    
+
     def split_sentences(self, text: str) -> list[str]:
         """
         Intelligently split text into individual sentences using advanced linguistic rules and pattern recognition.
@@ -3060,12 +3201,12 @@ class TextProcessor:
             >>> sentences = processor.split_sentences(text)
             >>> print(sentences)
             >>> # ['This is sentence one', 'This is sentence two', 'Is this sentence three']
-            
+
             >>> # Complex text with abbreviations and numbers
             >>> complex_text = "Dr. Smith earned his Ph.D. in 1995. The study covered 3.14159 subjects."
             >>> sentences = processor.split_sentences(complex_text)
             >>> print(len(sentences))  # 2 (handles abbreviations correctly)
-            
+
             >>> # Empty and edge case handling
             >>> empty_sentences = processor.split_sentences("")
             >>> print(empty_sentences)  # []
@@ -3080,47 +3221,93 @@ class TextProcessor:
             if text is None:
                 raise TypeError("Input text cannot be None")
             raise TypeError(f"Input must be string, got {type(text).__name__}")
-        
+
         if not text.strip():
             return []
-        
+
         # Common abbreviations that should not split sentences
         abbreviations = {
-            'Dr.', 'Mr.', 'Mrs.', 'Ms.', 'Prof.', 'Ph.D.', 'M.D.', 'B.A.', 'M.A.', 'M.S.',
-            'B.S.', 'Ph.D', 'LLC.', 'Inc.', 'Corp.', 'Ltd.', 'Co.', 'vs.', 'etc.', 'i.e.',
-            'e.g.', 'al.', 'et.', 'Jan.', 'Feb.', 'Mar.', 'Apr.', 'Jun.', 'Jul.', 'Aug.',
-            'Sep.', 'Sept.', 'Oct.', 'Nov.', 'Dec.', 'U.S.', 'U.K.', 'U.S.A.', 'a.m.', 'p.m.',
-            'A.M.', 'P.M.', 'St.', 'Ave.', 'Blvd.', 'Rd.', 'Jr.', 'Sr.', 'II.', 'III.', 'IV.'
+            "Dr.",
+            "Mr.",
+            "Mrs.",
+            "Ms.",
+            "Prof.",
+            "Ph.D.",
+            "M.D.",
+            "B.A.",
+            "M.A.",
+            "M.S.",
+            "B.S.",
+            "Ph.D",
+            "LLC.",
+            "Inc.",
+            "Corp.",
+            "Ltd.",
+            "Co.",
+            "vs.",
+            "etc.",
+            "i.e.",
+            "e.g.",
+            "al.",
+            "et.",
+            "Jan.",
+            "Feb.",
+            "Mar.",
+            "Apr.",
+            "Jun.",
+            "Jul.",
+            "Aug.",
+            "Sep.",
+            "Sept.",
+            "Oct.",
+            "Nov.",
+            "Dec.",
+            "U.S.",
+            "U.K.",
+            "U.S.A.",
+            "a.m.",
+            "p.m.",
+            "A.M.",
+            "P.M.",
+            "St.",
+            "Ave.",
+            "Blvd.",
+            "Rd.",
+            "Jr.",
+            "Sr.",
+            "II.",
+            "III.",
+            "IV.",
         }
-        
+
         # Create a temporary marker for abbreviations to protect them
         protected_text = text
         abbrev_markers = {}
-        
+
         for i, abbrev in enumerate(abbreviations):
             if abbrev in protected_text:
                 marker = f"__ABBREV_{i}__"
                 abbrev_markers[marker] = abbrev
                 protected_text = protected_text.replace(abbrev, marker)
-        
+
         # Protect decimal numbers (e.g., 3.14, 15.7%)
-        decimal_pattern = r'\b\d+\.\d+\b'
+        decimal_pattern = r"\b\d+\.\d+\b"
         decimals = re.findall(decimal_pattern, protected_text)
         decimal_markers = {}
-        
+
         for i, decimal in enumerate(decimals):
             marker = f"__DECIMAL_{i}__"
             decimal_markers[marker] = decimal
             protected_text = protected_text.replace(decimal, marker)
-        
+
         # Split on sentence terminators including Unicode punctuation
         # ASCII: . ! ?
         # Unicode: 。 ！ ？ … (Chinese/Japanese punctuation)
-        sentence_pattern = r'[.!?。！？]+(?:\s|$)'
-        
+        sentence_pattern = r"[.!?。！？]+(?:\s|$)"
+
         # Split sentences
         sentences = re.split(sentence_pattern, protected_text)
-        
+
         # Restore protected abbreviations and decimals
         restored_sentences = []
         for sentence in sentences:
@@ -3128,15 +3315,15 @@ class TextProcessor:
                 # Restore decimals
                 for marker, original in decimal_markers.items():
                     sentence = sentence.replace(marker, original)
-                
+
                 # Restore abbreviations
                 for marker, original in abbrev_markers.items():
                     sentence = sentence.replace(marker, original)
-                
+
                 restored_sentences.append(sentence.strip())
-        
+
         return restored_sentences
-    
+
     def extract_keywords(self, text: str, top_k: int = 20) -> list[str]:
         """
         Extract the most significant keywords and phrases from text using sophisticated frequency analysis and filtering.
@@ -3175,12 +3362,12 @@ class TextProcessor:
             >>> keywords = processor.extract_keywords(text, top_k=5)
             >>> print(keywords)
             >>> # ['machine', 'learning', 'algorithms', 'artificial', 'intelligence']
-            
+
             >>> # Academic paper abstract
             >>> abstract = "This research investigates novel deep learning approaches for natural language processing tasks..."
             >>> keywords = processor.extract_keywords(abstract, top_k=10)
             >>> print(len(keywords))  # Up to 10 most relevant terms
-            
+
             >>> # Short text handling
             >>> short_text = "Brief example."
             >>> keywords = processor.extract_keywords(short_text)
@@ -3194,28 +3381,66 @@ class TextProcessor:
             return []
 
         # Simple keyword extraction based on frequency
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
-        
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
+
         # Filter common stop words
         stop_words = {
-            'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 
-            'of', 'with', 'by', 'this', 'that', 'these', 'those', 'is', 
-            'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 
-            'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
-            'can', 'very', 'most', 'able', 'way', 'make', 'it', 'from', 
-            'a', 'an'
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "this",
+            "that",
+            "these",
+            "those",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "can",
+            "very",
+            "most",
+            "able",
+            "way",
+            "make",
+            "it",
+            "from",
+            "a",
+            "an",
         }
 
         filtered_words = [w for w in words if w not in stop_words]
-        
+
         # Count frequency
         word_freq = {}
         for word in filtered_words:
             word_freq[word] = word_freq.get(word, 0) + 1
-        
+
         # Return top keywords
         sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
         return [word for word, freq in sorted_words[:top_k]]
+
 
 class ChunkOptimizer:
     """
@@ -3234,7 +3459,7 @@ class ChunkOptimizer:
         overlap (int): Number of tokens to overlap between adjacent chunks.
         min_size (int): Minimum number of tokens required for a valid chunk.
     """
-    
+
     def __init__(self, max_size: int, overlap: int, min_size: int):
         """
         Initialize the ChunkOptimizer with comprehensive chunking parameters and boundary detection settings.
@@ -3272,16 +3497,20 @@ class ChunkOptimizer:
             >>> # Standard configuration for GPT-3.5 compatibility
             >>> optimizer = ChunkOptimizer(max_size=2048, overlap=200, min_size=100)
             >>> print(f"Max: {optimizer.max_size}, Overlap: {optimizer.overlap}")
-            
+
             >>> # High-overlap configuration for complex documents
             >>> optimizer = ChunkOptimizer(max_size=1024, overlap=256, min_size=50)
             >>> # 25% overlap for strong context preservation
-            
+
             >>> # Minimal overlap for performance-focused processing
             >>> optimizer = ChunkOptimizer(max_size=4096, overlap=100, min_size=200)
             >>> # Large chunks with minimal overlap for speed
         """
-        if not isinstance(max_size, int) or not isinstance(overlap, int) or not isinstance(min_size, int):
+        if (
+            not isinstance(max_size, int)
+            or not isinstance(overlap, int)
+            or not isinstance(min_size, int)
+        ):
             raise TypeError("max_size, overlap, and min_size must be integers.")
 
         if max_size <= 0 or min_size <= 0:
@@ -3338,7 +3567,7 @@ class ChunkOptimizer:
             >>> optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
             >>> optimized = optimizer.optimize_chunk_boundaries(text, boundaries)
             >>> print(optimized)  # Adjusted to align with sentence/paragraph breaks
-            
+
             >>> # Complex document with multiple paragraph breaks
             >>> long_text = "Para 1 content...\\n\\nPara 2 content...\\n\\nPara 3 content..."
             >>> rough_boundaries = [100, 200, 300]
@@ -3347,14 +3576,16 @@ class ChunkOptimizer:
         """
         if not isinstance(text, str):
             raise TypeError("Text must be a string.")
-    
+
         if not text:
             raise ValueError("Text cannot be empty.")
 
         # Validate that all boundaries are integers
         for i, boundary in enumerate(current_boundaries):
             if not isinstance(boundary, int):
-                raise TypeError(f"Boundary at index {i} must be an integer, got {type(boundary).__name__}")
+                raise TypeError(
+                    f"Boundary at index {i} must be an integer, got {type(boundary).__name__}"
+                )
             if boundary < 0:
                 raise ValueError(f"Boundary at index {i} cannot be negative: {boundary}")
 
@@ -3363,28 +3594,32 @@ class ChunkOptimizer:
         # The unit tests cover two behaviors:
         # - Multi-boundary out-of-bounds inputs should raise IndexError.
         # - A single out-of-bounds boundary should be handled gracefully (clamped).
-        if len(current_boundaries) > 1 and any(boundary > text_length for boundary in current_boundaries):
+        if len(current_boundaries) > 1 and any(
+            boundary > text_length for boundary in current_boundaries
+        ):
             raise IndexError("One or more boundary positions exceed the text length")
 
         # Find sentence boundaries
         sentence_ends = []
-        for match in re.finditer(r'[.!?]+\s+', text):
+        for match in re.finditer(r"[.!?]+\s+", text):
             sentence_ends.append(match.end())
-        
-        # Find paragraph boundaries  
+
+        # Find paragraph boundaries
         paragraph_ends = []
-        for match in re.finditer(r'\n\s*\n', text):
+        for match in re.finditer(r"\n\s*\n", text):
             paragraph_ends.append(match.end())
-        
+
         optimized_boundaries = []
-        
+
         for boundary in current_boundaries:
             if boundary > text_length:
                 boundary = text_length
             # Find closest sentence or paragraph boundary
             closest_sentence = min(sentence_ends, key=lambda x: abs(x - boundary), default=boundary)
-            closest_paragraph = min(paragraph_ends, key=lambda x: abs(x - boundary), default=boundary)
-            
+            closest_paragraph = min(
+                paragraph_ends, key=lambda x: abs(x - boundary), default=boundary
+            )
+
             # Prefer paragraph boundaries, then sentence boundaries
             if paragraph_ends and abs(closest_paragraph - boundary) <= 50:  # Within 50 characters
                 optimized_boundaries.append(closest_paragraph)
@@ -3392,5 +3627,5 @@ class ChunkOptimizer:
                 optimized_boundaries.append(closest_sentence)
             else:
                 optimized_boundaries.append(boundary)
-        
+
         return optimized_boundaries

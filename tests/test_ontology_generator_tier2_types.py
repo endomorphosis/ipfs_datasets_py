@@ -122,9 +122,7 @@ class TestExtractionStatistics:
 
     def test_extraction_statistics_empty_extraction(self):
         """Test ExtractionStatistics with no entities or relationships."""
-        result = EntityExtractionResult(
-            entities=[], relationships=[], confidence=0.0
-        )
+        result = EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
 
         stats: ExtractionStatistics = result.extraction_statistics()
 
@@ -382,9 +380,7 @@ class TestEntityDictSerialization:
 
     def test_entity_to_dict_none_source_span(self):
         """Test Entity.to_dict() with None source_span."""
-        entity = Entity(
-            id="e1", type="Concept", text="Concept1", confidence=0.7, source_span=None
-        )
+        entity = Entity(id="e1", type="Concept", text="Concept1", confidence=0.7, source_span=None)
 
         result: EntityDictSerialization = entity.to_dict()
 
@@ -469,9 +465,7 @@ class TestRelationshipDictSerialization:
 
     def test_relationship_to_dict_default_direction(self):
         """Test Relationship.to_dict() with default direction."""
-        rel = Relationship(
-            id="r1", source_id="e1", target_id="e2", type="rel"
-        )
+        rel = Relationship(id="r1", source_id="e1", target_id="e2", type="rel")
 
         result: RelationshipDictSerialization = rel.to_dict()
 

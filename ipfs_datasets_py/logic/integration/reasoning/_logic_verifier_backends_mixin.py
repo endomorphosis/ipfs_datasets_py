@@ -26,6 +26,7 @@ try:
 
     ensure_symai_config_for_import()
     from symai import Symbol  # type: ignore
+
     _SYMBOLIC_AI_AVAILABLE = True
 except (ImportError, SystemExit):
     _SYMBOLIC_AI_AVAILABLE = False
@@ -60,7 +61,7 @@ class LogicVerifierBackendsMixin:
                 "Respond with: consistent, inconsistent, or unknown"
             )
 
-            result_text = getattr(consistency_query, 'value', str(consistency_query)).lower()
+            result_text = getattr(consistency_query, "value", str(consistency_query)).lower()
             conflicting: List[Tuple[str, str]] = []
 
             if "consistent" in result_text and "inconsistent" not in result_text:
@@ -84,7 +85,7 @@ class LogicVerifierBackendsMixin:
                 conflicting_formulas=conflicting if not is_consistent else [],
                 confidence=confidence,
                 explanation=explanation,
-                method_used="symbolic_ai"
+                method_used="symbolic_ai",
             )
 
         except Exception as e:
@@ -96,7 +97,7 @@ class LogicVerifierBackendsMixin:
         conflicting_pairs: List[Tuple[str, str]] = []
 
         for i, formula1 in enumerate(formulas):
-            for j, formula2 in enumerate(formulas[i + 1:], i + 1):
+            for j, formula2 in enumerate(formulas[i + 1 :], i + 1):
                 if are_contradictory(formula1, formula2):
                     conflicting_pairs.append((formula1, formula2))
 
@@ -104,8 +105,9 @@ class LogicVerifierBackendsMixin:
         confidence = 0.6 if is_consistent else 0.8
 
         explanation = (
-            "Basic pattern matching found no obvious contradictions" if is_consistent else
-            f"Found {len(conflicting_pairs)} potential contradictions"
+            "Basic pattern matching found no obvious contradictions"
+            if is_consistent
+            else f"Found {len(conflicting_pairs)} potential contradictions"
         )
 
         return ConsistencyCheck(
@@ -113,7 +115,7 @@ class LogicVerifierBackendsMixin:
             conflicting_formulas=conflicting_pairs,
             confidence=confidence,
             explanation=explanation,
-            method_used="pattern_matching"
+            method_used="pattern_matching",
         )
 
     def _find_conflicting_pairs_symbolic(self, formulas: List[str]) -> List[Tuple[str, str]]:
@@ -121,14 +123,14 @@ class LogicVerifierBackendsMixin:
         conflicting: List[Tuple[str, str]] = []
 
         for i, formula1 in enumerate(formulas):
-            for _j, formula2 in enumerate(formulas[i + 1:], i + 1):
+            for _j, formula2 in enumerate(formulas[i + 1 :], i + 1):
                 combined = Symbol(f"({formula1}) ∧ ({formula2})", semantic=True)
                 contradiction_query = combined.query(
                     "Can these two logical statements both be true at the same time? "
                     "Respond with: yes, no, or unknown"
                 )
 
-                result = getattr(contradiction_query, 'value', str(contradiction_query)).lower()
+                result = getattr(contradiction_query, "value", str(contradiction_query)).lower()
                 if "no" in result:
                     conflicting.append((formula1, formula2))
 
@@ -152,7 +154,7 @@ class LogicVerifierBackendsMixin:
                 "Respond with: yes, no, or unknown"
             )
 
-            result_text = getattr(entailment_query, 'value', str(entailment_query)).lower()
+            result_text = getattr(entailment_query, "value", str(entailment_query)).lower()
 
             if "yes" in result_text:
                 entails = True
@@ -174,7 +176,7 @@ class LogicVerifierBackendsMixin:
                 premises=premises,
                 conclusion=conclusion,
                 confidence=confidence,
-                explanation=explanation
+                explanation=explanation,
             )
 
         except Exception as e:
@@ -205,7 +207,7 @@ class LogicVerifierBackendsMixin:
             premises=premises,
             conclusion=conclusion,
             confidence=confidence,
-            explanation=explanation
+            explanation=explanation,
         )
 
     # ------------------------------------------------------------------
@@ -226,7 +228,7 @@ class LogicVerifierBackendsMixin:
                 "Format as: Step 1: [formula] (justification)"
             )
 
-            proof_text = getattr(proof_query, 'value', str(proof_query))
+            proof_text = getattr(proof_query, "value", str(proof_query))
             steps = parse_proof_steps(proof_text)
 
             if not steps and self.fallback_enabled:
@@ -240,7 +242,7 @@ class LogicVerifierBackendsMixin:
                 conclusion=conclusion,
                 steps=steps,
                 confidence=confidence,
-                method_used="symbolic_ai"
+                method_used="symbolic_ai",
             )
 
         except Exception as e:
@@ -252,12 +254,14 @@ class LogicVerifierBackendsMixin:
         steps = []
 
         for i, premise in enumerate(premises):
-            steps.append(ProofStep(
-                step_number=i + 1,
-                formula=premise,
-                justification="Given premise",
-                rule_applied="premise"
-            ))
+            steps.append(
+                ProofStep(
+                    step_number=i + 1,
+                    formula=premise,
+                    justification="Given premise",
+                    rule_applied="premise",
+                )
+            )
 
         for premise in premises:
             if "→" in premise:
@@ -267,20 +271,22 @@ class LogicVerifierBackendsMixin:
                     consequent = parts[1].strip()
 
                     if antecedent in premises and consequent == conclusion:
-                        steps.append(ProofStep(
-                            step_number=len(steps) + 1,
-                            formula=conclusion,
-                            justification=f"Modus ponens from '{antecedent}' and '{premise}'",
-                            rule_applied="modus_ponens",
-                            premises=[antecedent, premise]
-                        ))
+                        steps.append(
+                            ProofStep(
+                                step_number=len(steps) + 1,
+                                formula=conclusion,
+                                justification=f"Modus ponens from '{antecedent}' and '{premise}'",
+                                rule_applied="modus_ponens",
+                                premises=[antecedent, premise],
+                            )
+                        )
 
                         return ProofResult(
                             is_valid=True,
                             conclusion=conclusion,
                             steps=steps,
                             confidence=0.8,
-                            method_used="fallback_modus_ponens"
+                            method_used="fallback_modus_ponens",
                         )
 
         return ProofResult(
@@ -289,5 +295,5 @@ class LogicVerifierBackendsMixin:
             steps=steps,
             confidence=0.1,
             method_used="fallback_failed",
-            errors=["Could not generate proof with available fallback methods"]
+            errors=["Could not generate proof with available fallback methods"],
         )

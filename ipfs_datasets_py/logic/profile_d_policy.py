@@ -233,19 +233,27 @@ def _evaluate_policy(
         elif clause.clause_type == "permission":
             permissions.append(clause)
         elif clause.clause_type == "obligation":
-            obligations.append({
-                "type": "obligation",
-                "action": clause.action,
-                "deadline": clause.obligation_deadline or "",
-                "metadata": dict(clause.metadata),
-            })
+            obligations.append(
+                {
+                    "type": "obligation",
+                    "action": clause.action,
+                    "deadline": clause.obligation_deadline or "",
+                    "metadata": dict(clause.metadata),
+                }
+            )
 
     if prohibitions:
-        return "deny", [], "; ".join(
-            f"Prohibited: actor={actor} action={action}" for _clause in prohibitions
+        return (
+            "deny",
+            [],
+            "; ".join(f"Prohibited: actor={actor} action={action}" for _clause in prohibitions),
         )
     if permissions and obligations:
-        return "allow_with_obligations", obligations, f"Permitted with {len(obligations)} obligation(s)"
+        return (
+            "allow_with_obligations",
+            obligations,
+            f"Permitted with {len(obligations)} obligation(s)",
+        )
     if permissions:
         return "allow", [], f"Explicit permission for actor={actor} action={action}"
     return "deny", [], f"No matching permission for actor={actor} action={action}"
@@ -270,8 +278,10 @@ def _clause_applies(
 
 
 def _matches(pattern: str, value: str) -> bool:
-    return pattern == "*" or pattern == value or (
-        pattern.endswith("/*") and value.startswith(pattern[:-1])
+    return (
+        pattern == "*"
+        or pattern == value
+        or (pattern.endswith("/*") and value.startswith(pattern[:-1]))
     )
 
 
@@ -295,7 +305,9 @@ def _compile_plain_text_policy(
         raise ProfileDPolicyError("policy_text must contain at least one non-empty sentence")
     policy_id = _cid({"policy_text": sentences})[:24]
     try:
-        from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import compile_nl_to_ucan_policy
+        from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
+            compile_nl_to_ucan_policy,
+        )
 
         compiled = compile_nl_to_ucan_policy(
             sentences,
@@ -317,9 +329,15 @@ def _compile_plain_text_policy(
             )
             for item in raw_clauses
         ]
-        formulas = [str(item) for item in list(getattr(compiled.policy_result, "dcec_formulas", []) or [])]
+        formulas = [
+            str(item) for item in list(getattr(compiled.policy_result, "dcec_formulas", []) or [])
+        ]
         if clauses:
-            return PolicyObject(policy_id=policy_id, clauses=clauses), formulas or [_clause_to_formula(item) for item in clauses], "plain_text_dcec"
+            return (
+                PolicyObject(policy_id=policy_id, clauses=clauses),
+                formulas or [_clause_to_formula(item) for item in clauses],
+                "plain_text_dcec",
+            )
     except Exception:
         # The fallback remains deterministic and fail-closed when no modal
         # clause can be recognized. It is only a narrow transport fallback.
@@ -327,8 +345,14 @@ def _compile_plain_text_policy(
 
     clauses = _fallback_text_clauses(sentences, default_actor=actor)
     if not clauses:
-        raise ProfileDPolicyError("plain-text policy did not produce any recognized deontic clauses")
-    return PolicyObject(policy_id=policy_id, clauses=clauses), [_clause_to_formula(item) for item in clauses], "plain_text_fallback"
+        raise ProfileDPolicyError(
+            "plain-text policy did not produce any recognized deontic clauses"
+        )
+    return (
+        PolicyObject(policy_id=policy_id, clauses=clauses),
+        [_clause_to_formula(item) for item in clauses],
+        "plain_text_fallback",
+    )
 
 
 def _normalize_clause(value: Any) -> PolicyClause:
@@ -347,8 +371,12 @@ def _normalize_clause(value: Any) -> PolicyClause:
         resource=str(resource).strip() if resource is not None and str(resource).strip() else None,
         valid_from=_optional_string(value.get("valid_from") or value.get("not_before")),
         valid_until=_optional_string(value.get("valid_until") or value.get("not_after")),
-        obligation_deadline=_optional_string(value.get("obligation_deadline") or value.get("deadline")),
-        metadata=dict(value.get("metadata") or {}) if isinstance(value.get("metadata"), Mapping) else {},
+        obligation_deadline=_optional_string(
+            value.get("obligation_deadline") or value.get("deadline")
+        ),
+        metadata=dict(value.get("metadata") or {})
+        if isinstance(value.get("metadata"), Mapping)
+        else {},
     )
 
 
@@ -367,7 +395,10 @@ def _fallback_text_clauses(sentences: Iterable[str], *, default_actor: str) -> l
             continue
         words = normalized.split()
         clause_actor = words[0].lower() if len(words) > 1 else default_actor
-        action_match = re.search(r"\b(?:must not|shall not|may not|must|shall|may|permitted to|allowed to|authorized to|required to)\s+(.+)$", lower)
+        action_match = re.search(
+            r"\b(?:must not|shall not|may not|must|shall|may|permitted to|allowed to|authorized to|required to)\s+(.+)$",
+            lower,
+        )
         action = action_match.group(1).strip() if action_match else "*"
         clauses.append(PolicyClause(clause_type=clause_type, actor=clause_actor, action=action))
     return clauses
@@ -409,7 +440,10 @@ def _optional_string(value: Any) -> str | None:
 def _normalize_obligation(value: Any) -> dict[str, Any]:
     if isinstance(value, Mapping):
         return dict(value)
-    return {"type": str(getattr(value, "type", "obligation")), "deadline": getattr(value, "deadline", None)}
+    return {
+        "type": str(getattr(value, "type", "obligation")),
+        "deadline": getattr(value, "deadline", None),
+    }
 
 
 def _cid(value: Mapping[str, Any]) -> str:
@@ -418,7 +452,10 @@ def _cid(value: Mapping[str, Any]) -> str:
 
 def _include_artifact_blocks() -> bool:
     return os.environ.get("MCPPLUSPLUS_PROFILE_D_INCLUDE_ARTIFACT_BLOCKS", "").lower() in {
-        "1", "true", "yes", "on"
+        "1",
+        "true",
+        "yes",
+        "on",
     }
 
 

@@ -12,5 +12,5 @@ Migrated from data_transformation.ipfs_formats in v2.0.0 migration.
 from .ipfs_multiformats import *
 
 __all__ = [
-    'ipfs_multiformats',
+    "ipfs_multiformats",
 ]

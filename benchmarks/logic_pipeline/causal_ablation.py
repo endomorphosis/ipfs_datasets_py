@@ -51,19 +51,14 @@ from .runtime import (
 )
 
 
-CAUSAL_RESCUE_CASE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.causal-rescue-case.v2"
-)
+CAUSAL_RESCUE_CASE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.causal-rescue-case.v2"
 CAUSAL_RESCUE_MANIFEST_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-rescue-manifest.v2"
 )
 CAUSAL_RESCUE_COMPONENTS_V2: Final = ("hammer", "leanstral")
-CAUSAL_REFERENCE_FAILURE_CONDITION_V2: Final = (
-    "compiler_reference_absent_or_independently_rejected"
-)
+CAUSAL_REFERENCE_FAILURE_CONDITION_V2: Final = "compiler_reference_absent_or_independently_rejected"
 CAUSAL_EXECUTION_PROFILE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "causal-proof-execution-profile.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.causal-proof-execution-profile.v2"
 )
 CAUSAL_ABLATION_RESULT_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-proof-result.v2"
@@ -83,15 +78,10 @@ def _safe_id(value: object, field: str) -> str:
         or not value
         or len(value) > 128
         or not value[0].isalnum()
-        or any(
-            not (character.isalnum() or character in "._-")
-            for character in value
-        )
+        or any(not (character.isalnum() or character in "._-") for character in value)
         or value in {".", ".."}
     ):
-        raise CausalAblationError(
-            f"{field} must be a safe 1-128 character identifier"
-        )
+        raise CausalAblationError(f"{field} must be a safe 1-128 character identifier")
     return value
 
 
@@ -110,9 +100,7 @@ def _cid(
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise CausalAblationError(f"{field} must be an object")
     return value
 
@@ -146,12 +134,8 @@ def _proof_obligation(
         or not target.strip()
         or len(target.encode("utf-8")) > 4_096
     ):
-        raise CausalAblationError(
-            f"{field} is not a bounded reviewed proof obligation"
-        )
-    return MappingProxyType(
-        {"kind": str(kind), "logic": str(logic), "target": target}
-    )
+        raise CausalAblationError(f"{field} is not a bounded reviewed proof obligation")
+    return MappingProxyType({"kind": str(kind), "logic": str(logic), "target": target})
 
 
 def _components(value: object) -> tuple[str, ...]:
@@ -159,15 +143,9 @@ def _components(value: object) -> tuple[str, ...]:
         raise CausalAblationError("optional_components must be an array")
     components = tuple(value)
     expected_order = tuple(
-        component
-        for component in CAUSAL_RESCUE_COMPONENTS_V2
-        if component in components
+        component for component in CAUSAL_RESCUE_COMPONENTS_V2 if component in components
     )
-    if (
-        not components
-        or components != expected_order
-        or len(components) != len(set(components))
-    ):
+    if not components or components != expected_order or len(components) != len(set(components)):
         raise CausalAblationError(
             "optional_components must be a nonempty canonical subset of "
             f"{CAUSAL_RESCUE_COMPONENTS_V2!r}"
@@ -192,9 +170,7 @@ class CausalRescueCaseV2:
     proof_obligation: Mapping[str, str]
     optional_components: tuple[str, ...]
     review_attestation_cid: str
-    deterministic_reference_condition: str = (
-        CAUSAL_REFERENCE_FAILURE_CONDITION_V2
-    )
+    deterministic_reference_condition: str = CAUSAL_REFERENCE_FAILURE_CONDITION_V2
     selected_before_optional_outcomes: bool = True
     schema: str = CAUSAL_RESCUE_CASE_SCHEMA_V2
 
@@ -203,9 +179,7 @@ class CausalRescueCaseV2:
             raise CausalAblationError("unsupported causal-rescue-case schema")
         object.__setattr__(self, "case_id", _safe_id(self.case_id, "case_id"))
         if self.split not in {Split.PILOT, Split.DEVELOPMENT}:
-            raise CausalAblationError(
-                "causal rescue cases are pilot/development only"
-            )
+            raise CausalAblationError("causal rescue cases are pilot/development only")
         object.__setattr__(
             self,
             "source_cid",
@@ -236,8 +210,7 @@ class CausalRescueCaseV2:
             ),
         )
         if (
-            self.deterministic_reference_condition
-            != CAUSAL_REFERENCE_FAILURE_CONDITION_V2
+            self.deterministic_reference_condition != CAUSAL_REFERENCE_FAILURE_CONDITION_V2
             or self.selected_before_optional_outcomes is not True
         ):
             raise CausalAblationError(
@@ -255,12 +228,8 @@ class CausalRescueCaseV2:
             "proof_obligation": dict(self.proof_obligation),
             "optional_components": list(self.optional_components),
             "review_attestation_cid": self.review_attestation_cid,
-            "deterministic_reference_condition": (
-                self.deterministic_reference_condition
-            ),
-            "selected_before_optional_outcomes": (
-                self.selected_before_optional_outcomes
-            ),
+            "deterministic_reference_condition": (self.deterministic_reference_condition),
+            "selected_before_optional_outcomes": (self.selected_before_optional_outcomes),
         }
 
     @property
@@ -301,34 +270,22 @@ class CausalRescueCaseV2:
         )
         components = data["optional_components"]
         if not isinstance(components, list):
-            raise CausalAblationError(
-                "causal_rescue_case.optional_components must be an array"
-            )
+            raise CausalAblationError("causal_rescue_case.optional_components must be an array")
         try:
             split = Split(data["split"])
         except (TypeError, ValueError) as exc:
-            raise CausalAblationError(
-                "causal_rescue_case.split is unsupported"
-            ) from exc
+            raise CausalAblationError("causal_rescue_case.split is unsupported") from exc
         result = cls(
             schema=data["schema"],  # type: ignore[arg-type]
             case_id=data["case_id"],  # type: ignore[arg-type]
             split=split,
             source_cid=data["source_cid"],  # type: ignore[arg-type]
             obligation_id=data["obligation_id"],  # type: ignore[arg-type]
-            proof_obligation=_mapping(
-                data["proof_obligation"], "proof_obligation"
-            ),  # type: ignore[arg-type]
+            proof_obligation=_mapping(data["proof_obligation"], "proof_obligation"),  # type: ignore[arg-type]
             optional_components=tuple(components),  # type: ignore[arg-type]
-            review_attestation_cid=data[
-                "review_attestation_cid"
-            ],  # type: ignore[arg-type]
-            deterministic_reference_condition=data[
-                "deterministic_reference_condition"
-            ],  # type: ignore[arg-type]
-            selected_before_optional_outcomes=data[
-                "selected_before_optional_outcomes"
-            ],  # type: ignore[arg-type]
+            review_attestation_cid=data["review_attestation_cid"],  # type: ignore[arg-type]
+            deterministic_reference_condition=data["deterministic_reference_condition"],  # type: ignore[arg-type]
+            selected_before_optional_outcomes=data["selected_before_optional_outcomes"],  # type: ignore[arg-type]
         )
         if data["case_cid"] != result.case_cid:
             raise CausalAblationError("causal rescue case CID changed")
@@ -345,18 +302,14 @@ class CausalRescueManifestV2:
     cases: tuple[CausalRescueCaseV2, ...]
     semantic_protocol_cid: str = SEMANTIC_PROTOCOL_V2_CID
     causal_proof_protocol_cid: str = CAUSAL_PROOF_PROTOCOL_V2_CID
-    rescue_population_policy_cid: str = (
-        CAUSAL_PROOF_RESCUE_POPULATION_V2_CID
-    )
+    rescue_population_policy_cid: str = CAUSAL_PROOF_RESCUE_POPULATION_V2_CID
     frozen: bool = True
     holdout_included: bool = False
     schema: str = CAUSAL_RESCUE_MANIFEST_SCHEMA_V2
 
     def __post_init__(self) -> None:
         if self.schema != CAUSAL_RESCUE_MANIFEST_SCHEMA_V2:
-            raise CausalAblationError(
-                "unsupported causal-rescue-manifest schema"
-            )
+            raise CausalAblationError("unsupported causal-rescue-manifest schema")
         for name, expected in (
             ("semantic_protocol_cid", SEMANTIC_PROTOCOL_V2_CID),
             ("causal_proof_protocol_cid", CAUSAL_PROOF_PROTOCOL_V2_CID),
@@ -367,9 +320,7 @@ class CausalRescueManifestV2:
         ):
             actual = _cid(getattr(self, name), name)
             if actual != expected:
-                raise CausalAblationError(
-                    f"{name} differs from the frozen G210 protocol"
-                )
+                raise CausalAblationError(f"{name} differs from the frozen G210 protocol")
         object.__setattr__(
             self,
             "plan_cid",
@@ -383,14 +334,9 @@ class CausalRescueManifestV2:
         if (
             not isinstance(self.case_manifest_sha256, str)
             or len(self.case_manifest_sha256) != 64
-            or any(
-                character not in "0123456789abcdef"
-                for character in self.case_manifest_sha256
-            )
+            or any(character not in "0123456789abcdef" for character in self.case_manifest_sha256)
         ):
-            raise CausalAblationError(
-                "case_manifest_sha256 must retain the legacy source join"
-            )
+            raise CausalAblationError("case_manifest_sha256 must retain the legacy source join")
         cases = tuple(self.cases)
         if (
             not cases
@@ -400,24 +346,17 @@ class CausalRescueManifestV2:
             or len({case.case_id for case in cases}) != len(cases)
             or len({case.case_cid for case in cases}) != len(cases)
         ):
-            raise CausalAblationError(
-                "causal rescue cases must be nonempty, unique, and sorted"
-            )
+            raise CausalAblationError("causal rescue cases must be nonempty, unique, and sorted")
         coverage = {
-            component: sum(
-                component in case.optional_components for case in cases
-            )
+            component: sum(component in case.optional_components for case in cases)
             for component in CAUSAL_RESCUE_COMPONENTS_V2
         }
         if any(count < 1 for count in coverage.values()):
             raise CausalAblationError(
-                "the preregistered rescue population must cover Hammer and "
-                "Leanstral at least once"
+                "the preregistered rescue population must cover Hammer and Leanstral at least once"
             )
         if self.frozen is not True or self.holdout_included is not False:
-            raise CausalAblationError(
-                "the rescue manifest must be frozen and exclude holdout"
-            )
+            raise CausalAblationError("the rescue manifest must be frozen and exclude holdout")
         object.__setattr__(self, "cases", cases)
 
     @property
@@ -433,10 +372,7 @@ class CausalRescueManifestV2:
     def component_case_counts(self) -> Mapping[str, int]:
         return MappingProxyType(
             {
-                component: sum(
-                    component in case.optional_components
-                    for case in self.cases
-                )
+                component: sum(component in case.optional_components for case in self.cases)
                 for component in CAUSAL_RESCUE_COMPONENTS_V2
             }
         )
@@ -446,9 +382,7 @@ class CausalRescueManifestV2:
             "schema": self.schema,
             "semantic_protocol_cid": self.semantic_protocol_cid,
             "causal_proof_protocol_cid": self.causal_proof_protocol_cid,
-            "rescue_population_policy_cid": (
-                self.rescue_population_policy_cid
-            ),
+            "rescue_population_policy_cid": (self.rescue_population_policy_cid),
             "plan_cid": self.plan_cid,
             "source_manifest_cid": self.source_manifest_cid,
             "case_manifest_sha256": self.case_manifest_sha256,
@@ -494,30 +428,16 @@ class CausalRescueManifestV2:
         )
         raw_cases = data["cases"]
         if not isinstance(raw_cases, list):
-            raise CausalAblationError(
-                "causal_rescue_manifest.cases must be an array"
-            )
+            raise CausalAblationError("causal_rescue_manifest.cases must be an array")
         result = cls(
             schema=data["schema"],  # type: ignore[arg-type]
-            semantic_protocol_cid=data[
-                "semantic_protocol_cid"
-            ],  # type: ignore[arg-type]
-            causal_proof_protocol_cid=data[
-                "causal_proof_protocol_cid"
-            ],  # type: ignore[arg-type]
-            rescue_population_policy_cid=data[
-                "rescue_population_policy_cid"
-            ],  # type: ignore[arg-type]
+            semantic_protocol_cid=data["semantic_protocol_cid"],  # type: ignore[arg-type]
+            causal_proof_protocol_cid=data["causal_proof_protocol_cid"],  # type: ignore[arg-type]
+            rescue_population_policy_cid=data["rescue_population_policy_cid"],  # type: ignore[arg-type]
             plan_cid=data["plan_cid"],  # type: ignore[arg-type]
-            source_manifest_cid=data[
-                "source_manifest_cid"
-            ],  # type: ignore[arg-type]
-            case_manifest_sha256=data[
-                "case_manifest_sha256"
-            ],  # type: ignore[arg-type]
-            cases=tuple(
-                CausalRescueCaseV2.from_dict(case) for case in raw_cases
-            ),
+            source_manifest_cid=data["source_manifest_cid"],  # type: ignore[arg-type]
+            case_manifest_sha256=data["case_manifest_sha256"],  # type: ignore[arg-type]
+            cases=tuple(CausalRescueCaseV2.from_dict(case) for case in raw_cases),
             frozen=data["frozen"],  # type: ignore[arg-type]
             holdout_included=data["holdout_included"],  # type: ignore[arg-type]
         )
@@ -529,9 +449,7 @@ class CausalRescueManifestV2:
             "manifest_cid": result.manifest_cid,
         }
         if any(data[key] != expected for key, expected in expected_derived.items()):
-            raise CausalAblationError(
-                "causal rescue manifest derived fields or CID changed"
-            )
+            raise CausalAblationError("causal rescue manifest derived fields or CID changed")
         return result
 
 
@@ -545,32 +463,20 @@ def _plan_source_manifest_cid(plan: AblationPlan) -> str:
             or not isinstance(value.get("text"), str)
             or not str(value["text"]).strip()
         ):
-            raise CausalAblationError(
-                "G210 requires an exact source-only G200 plan"
-            )
+            raise CausalAblationError("G210 requires an exact source-only G200 plan")
         entry = {
             "split": job.case.split.value,
-            "source_cid": cid_for_bytes(
-                str(value["text"]).encode("utf-8")
-            ),
+            "source_cid": cid_for_bytes(str(value["text"]).encode("utf-8")),
         }
         previous = cases.setdefault(job.case.case_id, entry)
         if previous != entry:
-            raise CausalAblationError(
-                "paired jobs changed a case source or split"
-            )
+            raise CausalAblationError("paired jobs changed a case source or split")
     return cid_for_dag_json(
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "causal-rescue-source-manifest.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.causal-rescue-source-manifest.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
-            "cases": [
-                {"case_id": case_id, **cases[case_id]}
-                for case_id in sorted(cases)
-            ],
+            "cases": [{"case_id": case_id, **cases[case_id]} for case_id in sorted(cases)],
             "holdout_included": False,
         }
     )
@@ -592,13 +498,9 @@ def build_causal_rescue_manifest_v2(
     if plan.split is Split.HOLDOUT:
         raise CausalAblationError("G210 cannot build or execute holdout plans")
     if "A0" not in plan.variant_ids:
-        raise CausalAblationError(
-            "equal compiler-reference exposure requires A0"
-        )
+        raise CausalAblationError("equal compiler-reference exposure requires A0")
     if any(variant_id == "S1" for variant_id in plan.variant_ids):
-        raise CausalAblationError(
-            "the legacy S1 diagnostic is outside the G210 causal profile"
-        )
+        raise CausalAblationError("the legacy S1 diagnostic is outside the G210 causal profile")
     try:
         plan_cid = cid_for_dag_json(plan.to_dict())
     except (AblationValidationError, TypeError, ValueError) as exc:
@@ -607,12 +509,8 @@ def build_causal_rescue_manifest_v2(
     by_plan: dict[str, tuple[Split, str]] = {}
     for job in plan.jobs:
         value = job.case.input_data
-        if not isinstance(value, Mapping) or not isinstance(
-            value.get("text"), str
-        ):
-            raise CausalAblationError(
-                "G210 requires source-only G200 plan cases"
-            )
+        if not isinstance(value, Mapping) or not isinstance(value.get("text"), str):
+            raise CausalAblationError("G210 requires source-only G200 plan cases")
         coordinate = (
             job.case.split,
             cid_for_bytes(str(value["text"]).encode("utf-8")),
@@ -626,10 +524,7 @@ def build_causal_rescue_manifest_v2(
         )
     for case in ordered:
         expected_split, expected_source_cid = by_plan[case.case_id]
-        if (
-            case.split is not expected_split
-            or case.source_cid != expected_source_cid
-        ):
+        if case.split is not expected_split or case.source_cid != expected_source_cid:
             raise CausalAblationError(
                 f"rescue case {case.case_id} differs from its source-only plan"
             )
@@ -682,10 +577,8 @@ def validate_semantic_calibration_prerequisite_v2(
         or report.get("semantic_protocol_cid") != SEMANTIC_PROTOCOL_V2_CID
         or report.get("calibration_route_manifest_cid")
         != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-        or report.get("calibration_metric_spec_cid")
-        != SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-        or report.get("reviewed_target_source_cid")
-        != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+        or report.get("calibration_metric_spec_cid") != SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
+        or report.get("reviewed_target_source_cid") != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
         or report.get("status") != "complete"
         or report.get("holdout_authorized") is not False
         or report.get("production_promotion_authorized") is not False
@@ -693,9 +586,7 @@ def validate_semantic_calibration_prerequisite_v2(
         raise CausalAblationError(
             "G210 requires a complete non-authorizing G200 calibration report"
         )
-    coverage = _mapping(
-        report.get("coverage"), "semantic_calibration_report.coverage"
-    )
+    coverage = _mapping(report.get("coverage"), "semantic_calibration_report.coverage")
     required_coverage = (
         "case_population_complete",
         "coordinate_coverage_complete",
@@ -704,74 +595,49 @@ def validate_semantic_calibration_prerequisite_v2(
         "quality_coordinate_complete",
     )
     if any(coverage.get(field) is not True for field in required_coverage):
-        raise CausalAblationError(
-            "G200 calibration coverage is incomplete"
-        )
-    scope = _mapping(
-        report.get("scope"), "semantic_calibration_report.scope"
-    )
+        raise CausalAblationError("G200 calibration coverage is incomplete")
+    scope = _mapping(report.get("scope"), "semantic_calibration_report.scope")
     case_ids = scope.get("case_ids")
     producer_ids = scope.get("producer_ids")
     semantic_fields = scope.get("semantic_fields")
     if (
         scope.get("injected_unsealed_cases_only") is not True
         or scope.get("holdout_case_count") != 0
-        or scope.get("expected_case_count")
-        != SEMANTIC_CALIBRATION_CASE_COUNT_V2
-        or scope.get("observed_case_count")
-        != SEMANTIC_CALIBRATION_CASE_COUNT_V2
-        or scope.get("expected_coordinate_count")
-        != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-        or scope.get("observed_coordinate_count")
-        != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+        or scope.get("expected_case_count") != SEMANTIC_CALIBRATION_CASE_COUNT_V2
+        or scope.get("observed_case_count") != SEMANTIC_CALIBRATION_CASE_COUNT_V2
+        or scope.get("expected_coordinate_count") != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+        or scope.get("observed_coordinate_count") != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
         or not isinstance(case_ids, list)
         or len(case_ids) != SEMANTIC_CALIBRATION_CASE_COUNT_V2
         or len(set(case_ids)) != len(case_ids)
         or any(not isinstance(case_id, str) for case_id in case_ids)
         or producer_ids != list(SEMANTIC_PRODUCER_IDS_V2)
-        or semantic_fields
-        != ["logic_family", "target", "class", "predicates", "entities"]
+        or semantic_fields != ["logic_family", "target", "class", "predicates", "entities"]
     ):
-        raise CausalAblationError(
-            "G200 calibration scope is not the complete frozen 20/100 grid"
-        )
+        raise CausalAblationError("G200 calibration scope is not the complete frozen 20/100 grid")
     observations = report.get("observations")
     if (
         not isinstance(observations, list)
         or len(observations) != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
     ):
-        raise CausalAblationError(
-            "G200 calibration observations are incomplete"
-        )
+        raise CausalAblationError("G200 calibration observations are incomplete")
     observed_coordinates: set[tuple[str, str]] = set()
     for observation in observations:
         coordinate = _mapping(
-            _mapping(
-                observation, "semantic calibration observation"
-            ).get("coordinate"),
+            _mapping(observation, "semantic calibration observation").get("coordinate"),
             "semantic calibration observation.coordinate",
         )
         case_id = coordinate.get("case_id")
         producer_id = coordinate.get("producer_id")
-        if not isinstance(case_id, str) or not isinstance(
-            producer_id, str
-        ):
-            raise CausalAblationError(
-                "G200 calibration observation coordinate is invalid"
-            )
+        if not isinstance(case_id, str) or not isinstance(producer_id, str):
+            raise CausalAblationError("G200 calibration observation coordinate is invalid")
         observed_coordinates.add((case_id, producer_id))
     expected_coordinates = {
-        (case_id, producer_id)
-        for case_id in case_ids
-        for producer_id in SEMANTIC_PRODUCER_IDS_V2
+        (case_id, producer_id) for case_id in case_ids for producer_id in SEMANTIC_PRODUCER_IDS_V2
     }
     if observed_coordinates != expected_coordinates:
-        raise CausalAblationError(
-            "G200 calibration observations differ from the frozen grid"
-        )
-    quality = _mapping(
-        report.get("quality"), "semantic_calibration_report.quality"
-    )
+        raise CausalAblationError("G200 calibration observations differ from the frozen grid")
+    quality = _mapping(report.get("quality"), "semantic_calibration_report.quality")
     absolute_gate = _mapping(
         report.get("absolute_quality_gate"),
         "semantic_calibration_report.absolute_quality_gate",
@@ -781,17 +647,11 @@ def validate_semantic_calibration_prerequisite_v2(
         or quality.get("semantic_quality_millionths") is None
         or absolute_gate.get("passed") is not True
     ):
-        raise CausalAblationError(
-            "G200 calibration is not identified and non-vacuously passing"
-        )
+        raise CausalAblationError("G200 calibration is not identified and non-vacuously passing")
     artifact_cid = _cid(report.get("artifact_cid"), "artifact_cid")
-    body = {
-        key: item for key, item in report.items() if key != "artifact_cid"
-    }
+    body = {key: item for key, item in report.items() if key != "artifact_cid"}
     if cid_for_dag_json(body) != artifact_cid:
-        raise CausalAblationError(
-            "G200 calibration artifact CID changed from its body"
-        )
+        raise CausalAblationError("G200 calibration artifact CID changed from its body")
     return MappingProxyType(dict(report))
 
 
@@ -819,9 +679,7 @@ def revalidate_semantic_calibration_prerequisite_v2(
         TypeError,
         ValueError,
     ) as exc:
-        raise CausalAblationError(
-            "G200 source evidence failed independent revalidation"
-        ) from exc
+        raise CausalAblationError("G200 source evidence failed independent revalidation") from exc
     return validate_semantic_calibration_prerequisite_v2(report)
 
 
@@ -839,38 +697,27 @@ def _reference_population(
         CausalProofCandidate | None,
     ],
 ) -> tuple[dict[str, object], ...]:
-    expected = {
-        _reference_key(job.case.case_id, job.cache_mode)
-        for job in plan.jobs
-    }
+    expected = {_reference_key(job.case.case_id, job.cache_mode) for job in plan.jobs}
     if set(candidates) != expected:
         raise CausalAblationError(
             "compiler candidate population must exactly cover every paired "
             "case/cache coordinate once"
         )
     result: list[dict[str, object]] = []
-    for case_id, cache_mode in sorted(
-        expected, key=lambda item: (item[0], item[1].value)
-    ):
+    for case_id, cache_mode in sorted(expected, key=lambda item: (item[0], item[1].value)):
         candidate = candidates[(case_id, cache_mode)]
         if candidate is not None and (
-            not isinstance(candidate, CausalProofCandidate)
-            or candidate.source != "compiler"
+            not isinstance(candidate, CausalProofCandidate) or candidate.source != "compiler"
         ):
             raise CausalAblationError(
-                "compiler reference population contains a non-compiler "
-                "candidate"
+                "compiler reference population contains a non-compiler candidate"
             )
         result.append(
             {
                 "case_id": case_id,
                 "cache_mode": cache_mode.value,
-                "candidate_cid": (
-                    None if candidate is None else candidate.candidate_cid
-                ),
-                "artifact_cid": (
-                    None if candidate is None else candidate.artifact_cid
-                ),
+                "candidate_cid": (None if candidate is None else candidate.candidate_cid),
+                "artifact_cid": (None if candidate is None else candidate.artifact_cid),
             }
         )
     return tuple(result)
@@ -895,9 +742,7 @@ class CausalExecutionProfileV2:
 
     def __post_init__(self) -> None:
         if self.schema != CAUSAL_EXECUTION_PROFILE_SCHEMA_V2:
-            raise CausalAblationError(
-                "unsupported causal execution profile schema"
-            )
+            raise CausalAblationError("unsupported causal execution profile schema")
         for name, expected in (
             ("semantic_protocol_cid", SEMANTIC_PROTOCOL_V2_CID),
             ("causal_proof_protocol_cid", CAUSAL_PROOF_PROTOCOL_V2_CID),
@@ -926,18 +771,11 @@ class CausalExecutionProfileV2:
         if (
             not isinstance(self.environment_sha256, str)
             or len(self.environment_sha256) != 64
-            or any(
-                character not in "0123456789abcdef"
-                for character in self.environment_sha256
-            )
+            or any(character not in "0123456789abcdef" for character in self.environment_sha256)
         ):
-            raise CausalAblationError(
-                "causal execution requires one pinned environment SHA-256"
-            )
+            raise CausalAblationError("causal execution requires one pinned environment SHA-256")
         if self.holdout_included is not False:
-            raise CausalAblationError(
-                "causal execution profile cannot include holdout"
-            )
+            raise CausalAblationError("causal execution profile cannot include holdout")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -949,12 +787,8 @@ class CausalExecutionProfileV2:
             "plan_cid": self.plan_cid,
             "source_manifest_cid": self.source_manifest_cid,
             "rescue_manifest_cid": self.rescue_manifest_cid,
-            "semantic_calibration_artifact_cid": (
-                self.semantic_calibration_artifact_cid
-            ),
-            "compiler_reference_population_cid": (
-                self.compiler_reference_population_cid
-            ),
+            "semantic_calibration_artifact_cid": (self.semantic_calibration_artifact_cid),
+            "compiler_reference_population_cid": (self.compiler_reference_population_cid),
             "environment_sha256": self.environment_sha256,
             "holdout_included": self.holdout_included,
         }
@@ -989,15 +823,10 @@ class CausalExecutionProfileV2:
             "causal_execution_profile",
         )
         result = cls(
-            **{
-                field: data[field]
-                for field in cls.__dataclass_fields__
-            }  # type: ignore[arg-type]
+            **{field: data[field] for field in cls.__dataclass_fields__}  # type: ignore[arg-type]
         )
         if data["profile_cid"] != result.profile_cid:
-            raise CausalAblationError(
-                "causal execution profile CID changed"
-            )
+            raise CausalAblationError("causal execution profile CID changed")
         return result
 
 
@@ -1023,27 +852,18 @@ class CausalAblationRunResultV2:
     @property
     def receipt(self) -> Mapping[str, object]:
         body = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "causal-proof-run-receipt.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.causal-proof-run-receipt.v2"),
             "plan_cid": self.profile.plan_cid,
             "profile_cid": self.profile.profile_cid,
             "rescue_manifest_cid": self.profile.rescue_manifest_cid,
-            "semantic_calibration_artifact_cid": (
-                self.profile.semantic_calibration_artifact_cid
-            ),
-            "compiler_reference_population_cid": (
-                self.profile.compiler_reference_population_cid
-            ),
+            "semantic_calibration_artifact_cid": (self.profile.semantic_calibration_artifact_cid),
+            "compiler_reference_population_cid": (self.profile.compiler_reference_population_cid),
             "job_ids": [job.job_id for job in self.plan.jobs],
             "result_cids": list(self.result_cids),
             "complete": self.complete,
             "holdout_included": False,
         }
-        return MappingProxyType(
-            {**body, "receipt_cid": cid_for_dag_json(body)}
-        )
+        return MappingProxyType({**body, "receipt_cid": cid_for_dag_json(body)})
 
     @property
     def receipt_cid(self) -> str:
@@ -1086,9 +906,7 @@ def _write_once(path: Path, value: object) -> None:
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
-        raise CausalAblationError(
-            f"refusing to overwrite immutable G210 record: {path}"
-        ) from exc
+        raise CausalAblationError(f"refusing to overwrite immutable G210 record: {path}") from exc
 
 
 def _causal_result_path(root: Path, job: ScheduledCase) -> Path:
@@ -1115,12 +933,8 @@ def _result_envelope(
         "plan_cid": cid_for_dag_json(plan.to_dict()),
         "profile_cid": profile.profile_cid,
         "rescue_manifest_cid": profile.rescue_manifest_cid,
-        "semantic_calibration_artifact_cid": (
-            profile.semantic_calibration_artifact_cid
-        ),
-        "compiler_reference_population_cid": (
-            compiler_reference_population_cid
-        ),
+        "semantic_calibration_artifact_cid": (profile.semantic_calibration_artifact_cid),
+        "compiler_reference_population_cid": (compiler_reference_population_cid),
         "job": job.to_dict(),
         "causal_result": dict(result.receipt),
         "causal_result_cid": result.receipt_cid,
@@ -1150,24 +964,18 @@ def _validate_result_envelope(
         "envelope_cid",
     }
     _exact(data, expected_keys, "causal_result_envelope")
-    body = {
-        key: item for key, item in data.items() if key != "envelope_cid"
-    }
+    body = {key: item for key, item in data.items() if key != "envelope_cid"}
     if (
         data["schema"] != CAUSAL_ABLATION_RESULT_SCHEMA_V2
         or data["plan_cid"] != cid_for_dag_json(plan.to_dict())
         or data["profile_cid"] != profile.profile_cid
         or data["rescue_manifest_cid"] != profile.rescue_manifest_cid
-        or data["semantic_calibration_artifact_cid"]
-        != profile.semantic_calibration_artifact_cid
-        or data["compiler_reference_population_cid"]
-        != profile.compiler_reference_population_cid
+        or data["semantic_calibration_artifact_cid"] != profile.semantic_calibration_artifact_cid
+        or data["compiler_reference_population_cid"] != profile.compiler_reference_population_cid
         or data["job"] != job.to_dict()
         or data["envelope_cid"] != cid_for_dag_json(body)
     ):
-        raise CausalAblationError(
-            "causal result envelope differs from its frozen coordinate"
-        )
+        raise CausalAblationError("causal result envelope differs from its frozen coordinate")
     receipt = _mapping(data["causal_result"], "causal_result")
     result = CausalProofGraphResult(
         receipt=receipt,
@@ -1200,18 +1008,14 @@ def _validate_result_envelope(
         result.receipt.get("run_id") != plan.run_id
         or result.receipt.get("case_id") != job.case.case_id
         or result.receipt.get("variant_id") != job.variant_id
-        or result.receipt.get("source_cid")
-        != cid_for_bytes(str(source_text).encode("utf-8"))
-        or result.receipt.get("protocol_cid")
-        != CAUSAL_PROOF_PROTOCOL_V2_CID
+        or result.receipt.get("source_cid") != cid_for_bytes(str(source_text).encode("utf-8"))
+        or result.receipt.get("protocol_cid") != CAUSAL_PROOF_PROTOCOL_V2_CID
         or any(
             compiler_reference.get(field) != expected
             for field, expected in expected_compiler_identity.items()
         )
     ):
-        raise CausalAblationError(
-            "causal graph result differs from its plan coordinate"
-        )
+        raise CausalAblationError("causal graph result differs from its plan coordinate")
     return result
 
 
@@ -1236,9 +1040,7 @@ def execute_causal_proof_ablation_v2(
     controller_factory: ControllerFactory,
     *,
     semantic_reviewed_cases: Sequence[object],
-    semantic_evidence_sources: Sequence[
-        tuple[AblationPlan, str | Path]
-    ],
+    semantic_evidence_sources: Sequence[tuple[AblationPlan, str | Path]],
     output_root: str | Path,
     resume: bool = True,
 ) -> CausalAblationRunResultV2:

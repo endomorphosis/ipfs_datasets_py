@@ -35,11 +35,7 @@ def load_accelerator_router(module_name: str) -> ModuleType:
                 candidate_text = str(candidate)
                 search_path = [
                     candidate_text,
-                    *(
-                        value
-                        for value in package_path
-                        if value != candidate_text
-                    ),
+                    *(value for value in package_path if value != candidate_text),
                 ]
                 package.__path__ = search_path
                 package_spec = getattr(package, "__spec__", None)

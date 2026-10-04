@@ -9,9 +9,9 @@ from ipfs_datasets_py.processors.file_converter.exports import convert_file
 
 async def convert_file_tool(
     input_path: str,
-    backend: str = 'native',
+    backend: str = "native",
     extract_archives: bool = False,
-    output_format: str = 'text'
+    output_format: str = "text",
 ) -> dict:
     """
     Convert a file or URL to text.

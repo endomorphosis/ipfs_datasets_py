@@ -482,7 +482,7 @@ try:
 except RateLimitExceeded as e:
     print(f"Rate limit: {e.context['limit']}")
     print(f"Retry after: {e.context['retry_after_seconds']}s")
-    time.sleep(e.context['retry_after_seconds'])
+    time.sleep(e.context["retry_after_seconds"])
 ```
 
 **Solutions:**
@@ -565,44 +565,45 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def safe_convert(text: str) -> Optional[str]:
     """Safe conversion with comprehensive error handling."""
     try:
         converter = FOLConverter()
         result = converter.convert(text)
-        
+
         if not result.success:
             logger.warning(f"Conversion failed: {result.error}")
             return None
-            
+
         return result.fol
-        
+
     except ValidationError as e:
         logger.error(f"Validation failed: {e}")
         # Input was invalid, user needs to fix it
         return None
-        
+
     except TimeoutError as e:
         logger.warning(f"Timeout after {e.context['elapsed_seconds']}s")
         # Retry with longer timeout or simpler input
         return None
-        
+
     except MissingDependencyError as e:
         logger.error(f"Missing dependency: {e.context['dependency']}")
         # Install dependency or use fallback
         converter = FOLConverter(use_fallback=True)
         return converter.convert(text).fol if converter.convert(text).success else None
-        
+
     except ConversionError as e:
         logger.error(f"Conversion error: {e}")
         # Log for investigation
         return None
-        
+
     except LogicError as e:
         logger.exception(f"Unexpected logic error: {e}")
         # Something went wrong, investigate
         raise
-        
+
     except Exception as e:
         logger.exception(f"Unexpected error: {e}")
         raise
@@ -614,11 +615,13 @@ Enable detailed error information:
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 # Or environment variable
 import os
-os.environ['LOGIC_DEBUG'] = '1'
+
+os.environ["LOGIC_DEBUG"] = "1"
 
 # Errors will now include stack traces and context
 ```
@@ -640,6 +643,7 @@ os.environ['LOGIC_DEBUG'] = '1'
 ```python
 from ipfs_datasets_py.logic.common import ConversionError
 
+
 def my_converter(text):
     try:
         result = risky_operation(text)
@@ -650,7 +654,7 @@ def my_converter(text):
                 "stage": "custom_processing",
                 "input_length": len(text),
                 "original_error": str(e),
-            }
+            },
         ) from e
 ```
 
@@ -712,13 +716,14 @@ except MissingDependencyError:
 ```python
 import time
 
+
 def convert_with_retry(text, max_retries=3):
     for attempt in range(max_retries):
         try:
             return converter.convert(text)
         except TimeoutError:
             if attempt < max_retries - 1:
-                wait = 2 ** attempt  # Exponential backoff
+                wait = 2**attempt  # Exponential backoff
                 time.sleep(wait)
             else:
                 raise

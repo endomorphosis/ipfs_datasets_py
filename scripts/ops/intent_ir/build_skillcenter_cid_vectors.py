@@ -45,11 +45,7 @@ def _slug(value: str) -> str:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _load_router() -> Callable[..., Any]:
@@ -65,9 +61,7 @@ def _load_router() -> Callable[..., Any]:
                 continue
             sys.path.insert(0, str(candidate))
         try:
-            module = importlib.import_module(
-                "ipfs_accelerate_py.embeddings_router"
-            )
+            module = importlib.import_module("ipfs_accelerate_py.embeddings_router")
             return module.embed_texts_batched
         except (ImportError, AttributeError):
             continue
@@ -101,10 +95,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     corpus_dir = args.corpus_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-corpus"
-        / args.revision
-        / "full"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-corpus" / args.revision / "full"
     )
     embedding_root = args.embedding_dir or (
         data_home
@@ -128,10 +119,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         summary = index.summary
     else:
-        embedding_dirs = sorted(
-            path.parent
-            for path in embedding_root.glob("*/manifest.json")
-        )
+        embedding_dirs = sorted(path.parent for path in embedding_root.glob("*/manifest.json"))
         summary = build_skillcenter_cid_vector_index(
             corpus_dir,
             embedding_dirs,
@@ -158,10 +146,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             show_progress_bar=False,
         )[0]
         payload["smoke_query"] = {
-            "hits": [
-                hit.to_dict()
-                for hit in index.search_vector(vector, k=args.query_k)
-            ],
+            "hits": [hit.to_dict() for hit in index.search_vector(vector, k=args.query_k)],
             "query": query,
         }
     print(json.dumps(payload, indent=2, sort_keys=True))

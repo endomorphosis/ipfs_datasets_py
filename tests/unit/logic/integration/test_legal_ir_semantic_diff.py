@@ -193,9 +193,7 @@ def test_amendment_impact_links_affected_obligations_citations_and_changes() -> 
     assert len(impacts) == 1
     impact = impacts[0].to_dict()
     assert impact["amendment_id"] == "amd-7"
-    assert {"obl-disclose", "obl-retain", "obl-publish"} <= set(
-        impact["affected_obligation_ids"]
-    )
+    assert {"obl-disclose", "obl-retain", "obl-publish"} <= set(impact["affected_obligation_ids"])
     assert {"ORS 192.410", "ORS 192.420"} <= set(impact["affected_citations"])
     assert LegalIRSemanticChangeKind.OBLIGATION_REMOVED.value in impact["change_kinds"]
     assert LegalIRSemanticChangeKind.OBLIGATION_ADDED.value in impact["change_kinds"]

@@ -13,13 +13,16 @@ from interfaces.options import (
     _validate_max_memory,
     _validate_max_vram,
     Options,
-    OutputFormat
+    OutputFormat,
 )
+
 try:
     from pydantic import ValidationError
     import psutil
 except ImportError:
-    raise ImportError("Required modules pydantic and psutil are not installed. Please install them using 'pip install pydantic psutil'.")
+    raise ImportError(
+        "Required modules pydantic and psutil are not installed. Please install them using 'pip install pydantic psutil'."
+    )
 
 # class TestValidateFormat(unittest.TestCase):
 #     """Test the _validate_format function."""
@@ -62,7 +65,7 @@ except ImportError:
 class TestValidateMaxWorkers(unittest.TestCase):
     """Test the _validate_max_workers function."""
 
-    @patch('os.cpu_count')
+    @patch("os.cpu_count")
     def test_validate_max_workers_valid(self, mock_cpu_count):
         """
         GIVEN a max_threads value less than CPU cores
@@ -75,7 +78,7 @@ class TestValidateMaxWorkers(unittest.TestCase):
         result = _validate_max_workers(4)
         self.assertEqual(result, 4)
 
-    @patch('os.cpu_count')
+    @patch("os.cpu_count")
     def test_validate_max_workers_exceeds_cpu_cores(self, mock_cpu_count):
         """
         GIVEN a max_threads value greater than available CPU cores
@@ -93,7 +96,7 @@ class TestValidateMaxWorkers(unittest.TestCase):
 class TestValidateMaxMemory(unittest.TestCase):
     """Test the _validate_max_memory function."""
 
-    @patch('interfaces.options.Hardware.get_total_memory_in_gb')
+    @patch("interfaces.options.Hardware.get_total_memory_in_gb")
     def test_validate_max_memory_valid(self, mock_get_memory):
         """
         GIVEN a max_memory value less than current total memory
@@ -103,11 +106,11 @@ class TestValidateMaxMemory(unittest.TestCase):
             - No ValidationError raised
         """
         mock_get_memory.return_value = 6  # 6 GiB
-        
+
         result = _validate_max_memory(1)
         self.assertEqual(result, 1)
 
-    @patch('interfaces.options.Hardware.get_total_memory_in_gb')
+    @patch("interfaces.options.Hardware.get_total_memory_in_gb")
     def test_validate_max_memory_below_current_usage(self, mock_get_memory):
         """
         GIVEN a max_memory value greater than current total memory
@@ -123,7 +126,7 @@ class TestValidateMaxMemory(unittest.TestCase):
             logger.debug(f"Unexpected success: returned {result}")
         except Exception as e:
             logger.debug(f"Exception raised: {type(e).__name__}: {e}")
-        
+
         with self.assertRaises(ValueError) as context:
             _validate_max_memory(100)
 
@@ -187,7 +190,7 @@ class TestOptionsModel(unittest.TestCase):
         """Create temporary files and directories for testing."""
         self.temp_dir = tempfile.mkdtemp()
         self.temp_file = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.temp_file, 'w') as f:
+        with open(self.temp_file, "w") as f:
             f.write("test content")
 
     def tearDown(self):
@@ -251,7 +254,7 @@ class TestOptionsModel(unittest.TestCase):
             list_formats=True,
             version=True,
             batch_size=50,
-            retries=3
+            retries=3,
         )
         self.assertIsInstance(options, Options)
         self.assertEqual(str(options.input), self.temp_file)
@@ -294,9 +297,9 @@ class TestOptionsModel(unittest.TestCase):
             - All files exist validation passes
         """
         temp_file2 = os.path.join(self.temp_dir, "test_file2.txt")
-        with open(temp_file2, 'w') as f:
+        with open(temp_file2, "w") as f:
             f.write("test content 2")
-        
+
         try:
             options = Options(input=[self.temp_file, temp_file2])
             self.assertIsInstance(options.input, list)
@@ -380,7 +383,7 @@ class TestOptionsToDict(unittest.TestCase):
         """Create temporary file for testing."""
         self.temp_dir = tempfile.mkdtemp()
         self.temp_file = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.temp_file, 'w') as f:
+        with open(self.temp_file, "w") as f:
             f.write("test content")
 
     def tearDown(self):
@@ -404,21 +407,21 @@ class TestOptionsToDict(unittest.TestCase):
             output=self.temp_dir,
             walk=True,
             normalize=False,
-            format=OutputFormat.JSON
+            format=OutputFormat.JSON,
         )
         result_dict = options.to_dict()
         logger.debug(f"Options to_dict result: {result_dict}")
-        
+
         self.assertIsInstance(result_dict, dict)
-        self.assertIn('input', result_dict)
-        self.assertIn('output', result_dict)
-        self.assertIn('walk', result_dict)
-        self.assertIn('normalize', result_dict)
-        self.assertIn('format', result_dict)
+        self.assertIn("input", result_dict)
+        self.assertIn("output", result_dict)
+        self.assertIn("walk", result_dict)
+        self.assertIn("normalize", result_dict)
+        self.assertIn("format", result_dict)
 
         # Check values match instance attributes
-        self.assertEqual(result_dict['walk'], True)
-        self.assertEqual(result_dict['normalize'], False)
+        self.assertEqual(result_dict["walk"], True)
+        self.assertEqual(result_dict["normalize"], False)
 
     def test_to_dict_defaults_only(self):
         """
@@ -430,11 +433,11 @@ class TestOptionsToDict(unittest.TestCase):
         """
         options = Options(input=self.temp_file)
         result_dict = options.to_dict()
-        
+
         self.assertIsInstance(result_dict, dict)
-        self.assertEqual(result_dict['walk'], False)
-        self.assertEqual(result_dict['normalize'], True)
-        self.assertEqual(result_dict['format'], OutputFormat.TXT)
+        self.assertEqual(result_dict["walk"], False)
+        self.assertEqual(result_dict["normalize"], True)
+        self.assertEqual(result_dict["format"], OutputFormat.TXT)
 
 
 class TestOptionsPrintOptions(unittest.TestCase):
@@ -444,7 +447,7 @@ class TestOptionsPrintOptions(unittest.TestCase):
         """Create temporary file for testing."""
         self.temp_dir = tempfile.mkdtemp()
         self.temp_file = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.temp_file, 'w') as f:
+        with open(self.temp_file, "w") as f:
             f.write("test content")
 
     def tearDown(self):
@@ -454,7 +457,7 @@ class TestOptionsPrintOptions(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_print_options_defaults(self, mock_print):
         """
         GIVEN an Options instance
@@ -466,13 +469,13 @@ class TestOptionsPrintOptions(unittest.TestCase):
         """
         options = Options(input=self.temp_file)
         options.print_options(type_="defaults")
-        
+
         mock_print.assert_called()
         # Check that print was called with some expected content
-        printed_content = ''.join([str(call.args[0]) for call in mock_print.call_args_list])
+        printed_content = "".join([str(call.args[0]) for call in mock_print.call_args_list])
         self.assertIn("default", printed_content.lower())
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_print_options_current(self, mock_print):
         """
         GIVEN an Options instance with custom values
@@ -484,9 +487,9 @@ class TestOptionsPrintOptions(unittest.TestCase):
         """
         options = Options(input=self.temp_file, walk=True, normalize=False)
         options.print_options(type_="current")
-        
+
         mock_print.assert_called()
-        printed_content = ''.join([str(call.args[0]) for call in mock_print.call_args_list])
+        printed_content = "".join([str(call.args[0]) for call in mock_print.call_args_list])
         self.assertIn("current", printed_content.lower())
 
     def test_print_options_invalid_type(self):
@@ -510,7 +513,7 @@ class TestOptionsMakeArgparse(unittest.TestCase):
         """Create temporary file and parser for testing."""
         self.temp_dir = tempfile.mkdtemp()
         self.temp_file = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.temp_file, 'w') as f:
+        with open(self.temp_file, "w") as f:
             f.write("test content")
         self.parser = argparse.ArgumentParser()
 
@@ -532,9 +535,9 @@ class TestOptionsMakeArgparse(unittest.TestCase):
         """
         options = Options(input=self.temp_file)
         result_parser = options.add_arguments_to_parser(self.parser)
-        
+
         self.assertIsInstance(result_parser, argparse.ArgumentParser)
-        
+
         # Check that some key arguments were added
         help_text = result_parser.format_help()
         self.assertIn("input", help_text.lower())
@@ -552,7 +555,7 @@ class TestOptionsMakeArgparse(unittest.TestCase):
     #     """
     #     options = Options(input=self.temp_file)
     #     result_parser = options.add_arguments_to_parser(self.parser)
-        
+
     #     help_text = result_parser.format_help()
     #     # Check for aliases
     #     self.assertIn("-o", help_text)  # output alias
@@ -570,11 +573,11 @@ class TestOptionsMakeArgparse(unittest.TestCase):
         """
         options = Options(input=self.temp_file)
         result_parser = options.add_arguments_to_parser(self.parser)
-        
+
         # Parse with minimal required args to get defaults
-        args = result_parser.parse_args(['--input', self.temp_file])
+        args = result_parser.parse_args(["--input", self.temp_file])
         print(f"args: {args}")
-        
+
         # Check all default values
         self.assertEqual(args.input, self.temp_file)  # Required field, provided
         self.assertEqual(str(args.output), str(Path.home()))
@@ -607,5 +610,5 @@ class TestOptionsMakeArgparse(unittest.TestCase):
         self.assertEqual(args.retries, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

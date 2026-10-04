@@ -107,7 +107,9 @@ def test_distributed_cache_p2p_messages_are_encrypted(tmp_path) -> None:
 
 def test_github_cache_task_p2p_remote_hit_populates_local(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
-    monkeypatch.setenv("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test"
+    )
 
     remote_store = {}
 
@@ -144,7 +146,9 @@ def test_github_cache_task_p2p_remote_hit_populates_local(monkeypatch, tmp_path)
 
 def test_github_cache_task_p2p_write_through_is_encrypted(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
-    monkeypatch.setenv("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test"
+    )
 
     remote_store = {}
 
@@ -170,7 +174,9 @@ def test_github_cache_task_p2p_write_through_is_encrypted(monkeypatch, tmp_path)
 
 
 def test_distributed_cache_task_p2p_remote_hit_populates_local(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test"
+    )
 
     remote_store = {}
 
@@ -203,7 +209,9 @@ def test_distributed_cache_task_p2p_remote_hit_populates_local(monkeypatch, tmp_
 
 
 def test_distributed_cache_task_p2p_async_write_through_is_encrypted(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "/ip4/127.0.0.1/tcp/9999/p2p/test"
+    )
 
     remote_store = {}
 

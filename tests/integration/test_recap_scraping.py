@@ -10,6 +10,7 @@ This script tests the RECAP Archive scraper to ensure it can:
 Usage:
     python test_recap_scraping.py
 """
+
 import anyio
 import json
 import os
@@ -19,13 +20,13 @@ from pathlib import Path
 import pytest
 
 # Add project to path
-sys.path.insert(0, str(Path(__file__).parent / '../..'))
+sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
 # Import from the core legal_scrapers module
 from ipfs_datasets_py.processors.legal_scrapers.recap_archive_scraper import (
     search_recap_documents,
     scrape_recap_archive,
-    get_recap_document
+    get_recap_document,
 )
 
 
@@ -38,7 +39,9 @@ def _courtlistener_token_configured() -> bool:
 
 def _is_auth_error(result: dict) -> bool:
     error_text = str((result or {}).get("error") or "")
-    return "Authentication credentials were not provided" in error_text or "status 401" in error_text
+    return (
+        "Authentication credentials were not provided" in error_text or "status 401" in error_text
+    )
 
 
 async def test_search():
@@ -49,36 +52,36 @@ async def test_search():
         print("Status: skipped")
         print("Reason: COURTLISTENER_API_TOKEN is not configured")
         return None
-    
+
     result = await search_recap_documents(
-        court='ca9',  # 9th Circuit
-        document_type='opinion',
-        limit=5
+        court="ca9",  # 9th Circuit
+        document_type="opinion",
+        limit=5,
     )
-    
+
     print(f"Status: {result['status']}")
     print(f"Documents found: {result['count']}")
-    
-    if result['status'] == 'error':
+
+    if result["status"] == "error":
         if _is_auth_error(result):
             print("Status: skipped")
             print("Reason: CourtListener authentication is required for this query")
             return None
         print(f"Error: {result.get('error', 'Unknown error')}")
         return False
-    
-    if result.get('warning'):
+
+    if result.get("warning"):
         print(f"Warning: {result['warning']}")
-    
-    if result['status'] == 'success' and result['documents']:
+
+    if result["status"] == "success" and result["documents"]:
         print("\nFirst document:")
-        doc = result['documents'][0]
+        doc = result["documents"][0]
         print(f"  Case: {doc.get('case_name', 'N/A')}")
         print(f"  Court: {doc.get('court', 'N/A')}")
         print(f"  Filed: {doc.get('date_filed', 'N/A')}")
         print(f"  ID: {doc.get('id', 'N/A')}")
         return True
-    elif result['status'] == 'success' and not result['documents']:
+    elif result["status"] == "success" and not result["documents"]:
         print("\nSearch succeeded but returned 0 documents.")
         print("This is expected if:")
         print("  - Testing in restricted network environment")
@@ -89,7 +92,7 @@ async def test_search():
         print("  2. Try different date ranges (e.g., last 30 days)")
         print("  3. Consider getting an API token for production use")
         return False
-    
+
     return False
 
 
@@ -101,44 +104,40 @@ async def test_get_document():
         print("Status: skipped")
         print("Reason: COURTLISTENER_API_TOKEN is not configured")
         return None
-    
+
     # First search to get a document ID
-    search_result = await search_recap_documents(
-        court='ca9',
-        document_type='opinion',
-        limit=1
-    )
-    
-    if search_result['status'] != 'success' or not search_result['documents']:
+    search_result = await search_recap_documents(court="ca9", document_type="opinion", limit=1)
+
+    if search_result["status"] != "success" or not search_result["documents"]:
         if _is_auth_error(search_result):
             print("Status: skipped")
             print("Reason: CourtListener authentication is required for this query")
             return None
         print("Could not find document for testing")
         return False
-    
-    doc_id = search_result['documents'][0].get('id')
+
+    doc_id = search_result["documents"][0].get("id")
     if not doc_id:
         print("Document has no ID")
         return False
-    
+
     print(f"Fetching document ID: {doc_id}")
-    
+
     result = await get_recap_document(
         document_id=str(doc_id),
         include_text=False,  # Skip text to save bandwidth
-        include_metadata=True
+        include_metadata=True,
     )
-    
+
     print(f"Status: {result['status']}")
-    
-    if result['status'] == 'success' and result.get('document'):
-        doc = result['document']
+
+    if result["status"] == "success" and result.get("document"):
+        doc = result["document"]
         print(f"  Case: {doc.get('case_name', 'N/A')}")
         print(f"  Court: {doc.get('court', 'N/A')}")
         print(f"  Pages: {doc.get('page_count', 'N/A')}")
-    
-    return result['status'] == 'success'
+
+    return result["status"] == "success"
 
 
 async def test_scrape_small():
@@ -149,30 +148,30 @@ async def test_scrape_small():
         print("Status: skipped")
         print("Reason: COURTLISTENER_API_TOKEN is not configured")
         return None
-    
+
     result = await scrape_recap_archive(
-        courts=['ca9'],
-        document_types=['opinion'],
-        filed_after='2024-01-01',
-        filed_before='2024-01-31',
+        courts=["ca9"],
+        document_types=["opinion"],
+        filed_after="2024-01-01",
+        filed_before="2024-01-31",
         include_text=False,  # Skip text to save bandwidth
         include_metadata=True,
         rate_limit_delay=1.0,
         max_documents=3,  # Small test
-        job_id='test_scrape_small'
+        job_id="test_scrape_small",
     )
-    
+
     print(f"Status: {result['status']}")
-    
-    if result['status'] == 'success':
-        metadata = result.get('metadata', {})
+
+    if result["status"] == "success":
+        metadata = result.get("metadata", {})
         print(f"  Documents: {metadata.get('documents_count', 0)}")
         print(f"  Courts: {metadata.get('courts_count', 0)}")
         print(f"  Elapsed time: {metadata.get('elapsed_time_seconds', 0):.2f}s")
         print(f"  Job ID: {result.get('job_id', 'N/A')}")
         print(f"  Source: {metadata.get('source', 'N/A')}")
-        
-        doc_count = metadata.get('documents_count', 0)
+
+        doc_count = metadata.get("documents_count", 0)
         if doc_count == 0:
             print("Warning: Scraping succeeded but fetched 0 documents")
             print("This likely means the search returned no results for the criteria")
@@ -195,30 +194,30 @@ async def test_resume():
         print("Status: skipped")
         print("Reason: COURTLISTENER_API_TOKEN is not configured")
         return None
-    
+
     # Use the same job_id to test resume
     result = await scrape_recap_archive(
-        courts=['ca9'],
-        document_types=['opinion'],
-        filed_after='2024-01-01',
-        filed_before='2024-01-31',
+        courts=["ca9"],
+        document_types=["opinion"],
+        filed_after="2024-01-01",
+        filed_before="2024-01-31",
         include_text=False,
         include_metadata=True,
         rate_limit_delay=1.0,
         max_documents=3,
-        job_id='test_scrape_small',
-        resume=True  # Try to resume
+        job_id="test_scrape_small",
+        resume=True,  # Try to resume
     )
-    
+
     print(f"Status: {result['status']}")
-    
-    if result['status'] == 'success':
-        metadata = result.get('metadata', {})
+
+    if result["status"] == "success":
+        metadata = result.get("metadata", {})
         print(f"  Resumed: {metadata.get('resumed', False)}")
         print(f"  Documents: {metadata.get('documents_count', 0)}")
         print(f"  Job ID: {result.get('job_id', 'N/A')}")
-    
-    return result['status'] == 'success'
+
+    return result["status"] == "success"
 
 
 async def main():
@@ -226,16 +225,16 @@ async def main():
     print("=" * 60)
     print("RECAP Archive Scraper Test Suite")
     print("=" * 60)
-    
+
     tests = [
         ("Search Documents", test_search),
         ("Get Document", test_get_document),
         ("Scrape Small Dataset", test_scrape_small),
         ("Resume Capability", test_resume),
     ]
-    
+
     results = []
-    
+
     for test_name, test_func in tests:
         try:
             success = await test_func()
@@ -243,14 +242,15 @@ async def main():
         except Exception as e:
             print(f"ERROR in {test_name}: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((test_name, False))
-    
+
     # Print summary
     print("\n" + "=" * 60)
     print("Test Summary")
     print("=" * 60)
-    
+
     skipped = 0
     for test_name, success in results:
         if success is None:
@@ -259,16 +259,16 @@ async def main():
         else:
             status = "✓ PASS" if success else "✗ FAIL"
         print(f"{status}: {test_name}")
-    
+
     total = len(results)
     passed = sum(1 for _, success in results if success)
     failed = sum(1 for _, success in results if success is False)
-    
+
     print(f"\nTotal: {passed} passed, {failed} failed, {skipped} skipped")
-    
+
     return 0 if failed == 0 else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit_code = anyio.run(main)
     sys.exit(exit_code)

@@ -118,8 +118,8 @@ def build_ga_gate_assessment(
     slimits = safety_limits or dict(DEFAULT_GA_SAFETY_LIMITS)
     llimits = latency_limits or dict(DEFAULT_GA_LATENCY_LIMITS)
 
-    summary = (candidate_report.get("summary") or {})
-    shadow_summary = (shadow_audit.get("summary") or {})
+    summary = candidate_report.get("summary") or {}
+    shadow_summary = shadow_audit.get("summary") or {}
 
     checks: List[Dict[str, Any]] = []
 

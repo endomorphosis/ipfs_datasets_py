@@ -35,9 +35,7 @@ from ipfs_datasets_py.logic.intent_ir.source_adapters.snapshot import (  # noqa:
 )
 
 
-DEFAULT_MANIFEST = (
-    REPOSITORY_ROOT / "tests/fixtures/intent_ir/skillcenter/manifest.json"
-)
+DEFAULT_MANIFEST = REPOSITORY_ROOT / "tests/fixtures/intent_ir/skillcenter/manifest.json"
 DEFAULT_PROFILES = ("security-lite", "github-lite")
 
 
@@ -55,11 +53,7 @@ def _slug(value: str) -> str:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _load_accelerate_router() -> Callable[..., Any]:
@@ -81,21 +75,15 @@ def _load_accelerate_router() -> Callable[..., Any]:
             sys.path.remove(candidate_text)
         sys.path.insert(0, candidate_text)
         for module_name in tuple(sys.modules):
-            if module_name == "ipfs_accelerate_py" or module_name.startswith(
-                "ipfs_accelerate_py."
-            ):
+            if module_name == "ipfs_accelerate_py" or module_name.startswith("ipfs_accelerate_py."):
                 sys.modules.pop(module_name, None)
         importlib.invalidate_caches()
         try:
-            module = importlib.import_module(
-                "ipfs_accelerate_py.embeddings_router"
-            )
+            module = importlib.import_module("ipfs_accelerate_py.embeddings_router")
             return module.embed_texts_batched
         except (ImportError, AttributeError):
             continue
-    raise RuntimeError(
-        "ipfs_accelerate_py.embeddings_router with embed_texts_batched is required"
-    )
+    raise RuntimeError("ipfs_accelerate_py.embeddings_router with embed_texts_batched is required")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -166,29 +154,18 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     pilot = SkillCenterPilotManifest.from_path(args.manifest)
-    unknown_profiles = set(args.profiles) - {
-        item.profile for item in pilot.bundles
-    }
+    unknown_profiles = set(args.profiles) - {item.profile for item in pilot.bundles}
     if unknown_profiles:
-        raise ValueError(
-            "unknown pilot profile(s): "
-            + ", ".join(sorted(unknown_profiles))
-        )
+        raise ValueError("unknown pilot profile(s): " + ", ".join(sorted(unknown_profiles)))
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     cache_dir = args.cache_dir or (
-        _xdg_path("XDG_CACHE_HOME", "~/.cache")
-        / "ipfs_datasets_py/skillcenter"
+        _xdg_path("XDG_CACHE_HOME", "~/.cache") / "ipfs_datasets_py/skillcenter"
     )
     embedding_base = args.embedding_base_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-embeddings"
-        / pilot.dataset_revision
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-embeddings" / pilot.dataset_revision
     )
     bm25_dir = args.bm25_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-bm25"
-        / pilot.dataset_revision
-        / "pilot"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-bm25" / pilot.dataset_revision / "pilot"
     )
     output_name = _slug(args.model)
     if args.neighbor_backend == "bm25":
@@ -206,33 +183,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         cache = SkillCenterSnapshotCache(
             cache_dir,
-            fetcher=HuggingFaceSkillCenterFetcher(
-                local_files_only=bool(args.offline)
-            ),
+            fetcher=HuggingFaceSkillCenterFetcher(local_files_only=bool(args.offline)),
         )
-        selected = [
-            item for item in pilot.bundles if item.profile in args.profiles
-        ]
-        readers = [
-            cache.open_reader(pilot.snapshot_for(bundle))
-            for bundle in selected
-        ]
+        selected = [item for item in pilot.bundles if item.profile in args.profiles]
+        readers = [cache.open_reader(pilot.snapshot_for(bundle)) for bundle in selected]
         embedding_dirs = [
-            embedding_base / bundle.profile / _slug(args.model)
-            for bundle in selected
+            embedding_base / bundle.profile / _slug(args.model) for bundle in selected
         ]
         summary = build_skillcenter_graphrag_index(
             readers,
             embedding_dirs=embedding_dirs,
             output_dir=output_dir,
-            bm25_dir=(
-                bm25_dir
-                if args.neighbor_backend == "bm25"
-                else None
-            ),
-            config=SkillCenterGraphRAGConfig(
-                neighbor_k=args.neighbor_k
-            ),
+            bm25_dir=(bm25_dir if args.neighbor_backend == "bm25" else None),
+            config=SkillCenterGraphRAGConfig(neighbor_k=args.neighbor_k),
         )
         index = SkillCenterGraphRAGIndex.load(output_dir)
 
@@ -268,8 +231,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if str(index.manifest["neighbor_backend"]) == "bm25-okapi":
             bm25_index = SkillCenterBM25Index.load(bm25_dir)
             payload["smoke_query"]["bm25_hits"] = [
-                hit.to_dict()
-                for hit in bm25_index.search(query, k=args.query_k)
+                hit.to_dict() for hit in bm25_index.search(query, k=args.query_k)
             ]
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

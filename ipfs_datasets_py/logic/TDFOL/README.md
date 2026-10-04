@@ -76,9 +76,12 @@ This unified representation enables seamless integration between symbolic theore
 
 ```python
 from ipfs_datasets_py.logic.TDFOL import (
-    Variable, Predicate, 
-    create_universal, create_implication,
-    create_obligation, create_always
+    Variable,
+    Predicate,
+    create_universal,
+    create_implication,
+    create_obligation,
+    create_always,
 )
 
 # Define variables
@@ -95,7 +98,7 @@ obligation = create_obligation(always_paytax)
 implication = create_implication(person, obligation)
 formula = create_universal(x, implication)
 
-print(formula.to_string())  
+print(formula.to_string())
 # Output: ∀x.(Person(x) → O(□(PayTax(x))))
 ```
 
@@ -117,10 +120,7 @@ formula = parse_tdfol("O(G(Safe))")  # Obligatory that always safe
 ### Theorem Proving
 
 ```python
-from ipfs_datasets_py.logic.TDFOL import (
-    TDFOLProver, TDFOLKnowledgeBase,
-    parse_tdfol
-)
+from ipfs_datasets_py.logic.TDFOL import TDFOLProver, TDFOLKnowledgeBase, parse_tdfol
 
 # Create knowledge base
 kb = TDFOLKnowledgeBase()
@@ -143,12 +143,7 @@ if result.is_proved():
 ### Converting Between Formats
 
 ```python
-from ipfs_datasets_py.logic.TDFOL import (
-    parse_tdfol,
-    tdfol_to_dcec,
-    tdfol_to_fol,
-    tdfol_to_tptp
-)
+from ipfs_datasets_py.logic.TDFOL import parse_tdfol, tdfol_to_dcec, tdfol_to_fol, tdfol_to_tptp
 
 formula = parse_tdfol("O(P(x))")
 
@@ -172,7 +167,7 @@ from ipfs_datasets_py.logic.TDFOL import (
     TDFOLProver,
     FormulaDependencyGraph,
     visualize_proof,
-    analyze_proof_dependencies
+    analyze_proof_dependencies,
 )
 
 # Prove a theorem
@@ -451,15 +446,11 @@ from ipfs_datasets_py.graphrag.integrations import GraphRAGQueryEngine
 from ipfs_datasets_py.logic.TDFOL import TDFOLProver
 
 # Create logic-enhanced GraphRAG
-query_engine = GraphRAGQueryEngine(
-    logic_prover=TDFOLProver(),
-    enable_logical_consistency=True
-)
+query_engine = GraphRAGQueryEngine(logic_prover=TDFOLProver(), enable_logical_consistency=True)
 
 # Query with logical reasoning
 result = query_engine.query(
-    "What are the legal obligations for data privacy?",
-    logical_reasoning=True
+    "What are the legal obligations for data privacy?", logical_reasoning=True
 )
 ```
 
@@ -475,7 +466,7 @@ from ipfs_datasets_py.logic.TDFOL import tdfol_to_fol, parse_tdfol
 # FOL processing
 fol_result = await convert_text_to_fol("All humans are mortal")
 
-# Deontic processing  
+# Deontic processing
 deontic_result = await convert_legal_text_to_deontic("Contractors must pay tax")
 
 # Unified TDFOL representation

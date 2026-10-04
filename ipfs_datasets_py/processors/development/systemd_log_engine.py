@@ -3,6 +3,7 @@ Systemd Log Parsing Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/systemd_log_parser.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -16,8 +17,14 @@ logger = logging.getLogger(__name__)
 _SYSTEMD_PATTERN = r"(\w+\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+(\S+?)(?:\[(\d+)\])?:\s+(.+)"
 
 _PRIORITY_MAP = {
-    "emerg": 0, "alert": 1, "crit": 2, "err": 3,
-    "warning": 4, "notice": 5, "info": 6, "debug": 7,
+    "emerg": 0,
+    "alert": 1,
+    "crit": 2,
+    "err": 3,
+    "warning": 4,
+    "notice": 5,
+    "info": 6,
+    "debug": 7,
 }
 
 
@@ -93,28 +100,34 @@ def parse_systemd_logs(
                 pass
 
             if any(kw in message.lower() for kw in ("failed", "error", "crash")):
-                result["errors"].append({
-                    "service": service,
-                    "message": message[:200],
-                    "timestamp": timestamp,
-                })
+                result["errors"].append(
+                    {
+                        "service": service,
+                        "message": message[:200],
+                        "timestamp": timestamp,
+                    }
+                )
 
         err_count = result["statistics"]["by_priority"].get("err", 0)
         if err_count > 50:
-            result["recommendations"].append({
-                "severity": "high",
-                "message": f"High number of error entries ({err_count}) detected",
-                "action": "Investigate error patterns and root causes",
-            })
+            result["recommendations"].append(
+                {
+                    "severity": "high",
+                    "message": f"High number of error entries ({err_count}) detected",
+                    "action": "Investigate error patterns and root causes",
+                }
+            )
 
         svc_errors: Counter = Counter(e["service"] for e in result["errors"])
         for service, count in svc_errors.most_common(3):
             if count > 10:
-                result["recommendations"].append({
-                    "severity": "medium",
-                    "message": f"Service '{service}' has {count} error entries",
-                    "action": f"Check {service} configuration and logs",
-                })
+                result["recommendations"].append(
+                    {
+                        "severity": "medium",
+                        "message": f"Service '{service}' has {count} error entries",
+                        "action": f"Check {service} configuration and logs",
+                    }
+                )
 
         return result
 
@@ -130,17 +143,15 @@ def analyze_service_health(log_data: Dict[str, Any], service_name: str) -> Dict[
             return {"success": False, "error": "Invalid log data provided"}
 
         entries = [
-            e for e in log_data.get("entries", [])
+            e
+            for e in log_data.get("entries", [])
             if service_name.lower() in e.get("service", "").lower()
         ]
         if not entries:
             return {"success": False, "error": f"No entries found for service '{service_name}'"}
 
         total = len(entries)
-        errors = len([
-            e for e in entries
-            if e.get("priority") in ("err", "crit", "alert", "emerg")
-        ])
+        errors = len([e for e in entries if e.get("priority") in ("err", "crit", "alert", "emerg")])
         error_rate = (errors / total * 100) if total else 0
         health_score = 100 - min(error_rate * 2, 100)
 

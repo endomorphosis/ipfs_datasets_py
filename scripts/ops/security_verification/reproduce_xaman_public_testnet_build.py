@@ -25,17 +25,19 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
 
 
 def _write_text(path: Path, payload: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(payload, encoding='utf-8')
+    path.write_text(payload, encoding="utf-8")
 
 
-def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any], dict[str, Any], str]:
+def generate(
+    repo_root: Path, *, out: Path | None = None
+) -> tuple[dict[str, Any], dict[str, Any], str]:
     environment, reproduction, markdown = generate_public_build_reproduction(repo_root)
     _write_json(repo_root / PUBLIC_BUILD_ENVIRONMENT_PATH, environment)
     _write_json(out or (repo_root / PUBLIC_BUILD_REPRODUCTION_PATH), reproduction)
@@ -46,14 +48,14 @@ def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--repo-root',
+        "--repo-root",
         default=str(ROOT_DIR),
-        help='Repository root containing security_ir_artifacts.',
+        help="Repository root containing security_ir_artifacts.",
     )
     parser.add_argument(
-        '--out',
+        "--out",
         default=PUBLIC_BUILD_REPRODUCTION_PATH,
-        help='Reproduction report output path. The environment JSON and markdown use their standard task paths.',
+        help="Reproduction report output path. The environment JSON and markdown use their standard task paths.",
     )
     args = parser.parse_args(argv)
 
@@ -65,13 +67,17 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'environment_path': PUBLIC_BUILD_ENVIRONMENT_PATH,
-                'environment_cid': environment['artifact_cid'],
-                'reproduction_path': str(out_path.relative_to(repo_root) if out_path.is_relative_to(repo_root) else out_path),
-                'reproduction_cid': reproduction['artifact_cid'],
-                'overall_status': reproduction['overall_status'],
-                'security_decision': reproduction['security_decision'],
-                'doc_path': PUBLIC_BUILD_DOC_PATH,
+                "environment_path": PUBLIC_BUILD_ENVIRONMENT_PATH,
+                "environment_cid": environment["artifact_cid"],
+                "reproduction_path": str(
+                    out_path.relative_to(repo_root)
+                    if out_path.is_relative_to(repo_root)
+                    else out_path
+                ),
+                "reproduction_cid": reproduction["artifact_cid"],
+                "overall_status": reproduction["overall_status"],
+                "security_decision": reproduction["security_decision"],
+                "doc_path": PUBLIC_BUILD_DOC_PATH,
             },
             sort_keys=True,
         )
@@ -79,5 +85,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

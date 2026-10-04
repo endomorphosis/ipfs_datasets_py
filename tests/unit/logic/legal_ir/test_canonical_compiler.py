@@ -67,9 +67,7 @@ def _vocabulary(
 
 
 def _request(
-    source_text: str = (
-        "Company A shall submit backup report within 10 days unless emergency."
-    ),
+    source_text: str = ("Company A shall submit backup report within 10 days unless emergency."),
     *,
     vocabulary: CanonicalAtomVocabulary | None = None,
     allow_explicit_partial: bool = False,
@@ -219,10 +217,7 @@ def test_compiler_success_has_cid_bound_ir_source_map_and_lineage() -> None:
     receipt_cid = receipt_payload.pop("receipt_cid")
     assert receipt_cid == cid_for_dag_json(receipt_payload)
     assert len(receipt["entries"]) == 7
-    assert {
-        entry["field_path"].rsplit("/", 1)[-1]
-        for entry in receipt["entries"]
-    } == {
+    assert {entry["field_path"].rsplit("/", 1)[-1] for entry in receipt["entries"]} == {
         "modality",
         "actor",
         "action",
@@ -249,15 +244,11 @@ def test_compiler_success_has_cid_bound_ir_source_map_and_lineage() -> None:
     assert trace.model_receipt_cid is None
 
     provenance = dict(result.provenance)
-    assert provenance["constructor_adapter_raw_cid"] == (
-        SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
-    )
+    assert provenance["constructor_adapter_raw_cid"] == (SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID)
     assert provenance["implementation_representative_arm_identity_cid"] == (
         IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID
     )
-    assert provenance["compiler_config_cid"] == (
-        TYPED_DEONTIC_COMPILER_CONFIG_CID
-    )
+    assert provenance["compiler_config_cid"] == (TYPED_DEONTIC_COMPILER_CONFIG_CID)
     assert provenance["fallback_used"] is False
     assert provenance["learned_stages"] == ()
     assert provenance["model_call_count"] == 0
@@ -281,26 +272,12 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
         TypedDeonticCanonicalConstructor,
     )
 
-    fixture_path = (
-        ROOT
-        / "tests"
-        / "fixtures"
-        / "semantic_roundtrip"
-        / "pilot_cases.json"
-    )
-    adapter_path = (
-        ROOT
-        / "benchmarks"
-        / "semantic_roundtrip"
-        / "constructors"
-        / "typed_deontic.py"
-    )
+    fixture_path = ROOT / "tests" / "fixtures" / "semantic_roundtrip" / "pilot_cases.json"
+    adapter_path = ROOT / "benchmarks" / "semantic_roundtrip" / "constructors" / "typed_deontic.py"
     assert cid_for_bytes(fixture_path.read_bytes()) == (
         "bafkreidngtg5cojnhkmwj4coijqpoixao25hxfwdzxjpywlusrqhk3hrm4"
     )
-    assert cid_for_bytes(adapter_path.read_bytes()) == (
-        SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
-    )
+    assert cid_for_bytes(adapter_path.read_bytes()) == (SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID)
     cases = json.loads(fixture_path.read_text(encoding="utf-8"))
     assert tuple(case["id"] for case in cases) == (
         "exception_with_window",
@@ -313,13 +290,9 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
     compiler = TypedDeonticCanonicalCompiler()
 
     for case in cases:
-        oracle_vocabulary = AllowedAtomVocabulary.from_dict(
-            case["allowed_atoms"]
-        )
+        oracle_vocabulary = AllowedAtomVocabulary.from_dict(case["allowed_atoms"])
         vocabulary = CanonicalAtomVocabulary.from_dict(case["allowed_atoms"])
-        expected = oracle.construct(
-            ConstructorRequest(case["source_text"], oracle_vocabulary, {})
-        )
+        expected = oracle.construct(ConstructorRequest(case["source_text"], oracle_vocabulary, {}))
         actual = compiler.compile(
             CompilerRequest(
                 source_text=case["source_text"],
@@ -336,16 +309,11 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
         assert actual.status is OperationStatus.SUCCESS, case["id"]
         assert actual.canonical_ir is not None
         assert expected.canonical_ir is not None
-        assert actual.canonical_ir.to_dict() == (
-            expected.canonical_ir.to_dict()
-        ), case["id"]
+        assert actual.canonical_ir.to_dict() == (expected.canonical_ir.to_dict()), case["id"]
 
 
 def test_unmapped_semantics_abstain_or_are_explicitly_partial() -> None:
-    source = (
-        "Company A shall submit backup report. "
-        "Unknown party must invent widgets."
-    )
+    source = "Company A shall submit backup report. Unknown party must invent widgets."
     strict = TypedDeonticCanonicalCompiler().compile(_request(source))
 
     assert strict.status is OperationStatus.ABSTAINED
@@ -354,13 +322,10 @@ def test_unmapped_semantics_abstain_or_are_explicitly_partial() -> None:
     assert strict.error.code.value == "unsupported_semantics"
     assert strict.unsupported_semantics
     assert all(
-        item.disposition is UnsupportedDisposition.ABSTAIN
-        for item in strict.unsupported_semantics
+        item.disposition is UnsupportedDisposition.ABSTAIN for item in strict.unsupported_semantics
     )
 
-    partial = TypedDeonticCanonicalCompiler().compile(
-        _request(source, allow_explicit_partial=True)
-    )
+    partial = TypedDeonticCanonicalCompiler().compile(_request(source, allow_explicit_partial=True))
     assert partial.status is OperationStatus.SUCCESS
     assert partial.canonical_ir is not None
     assert partial.unsupported_semantics
@@ -395,9 +360,7 @@ def test_empty_parser_output_is_typed_and_does_not_fabricate_ir() -> None:
 def test_unmeasured_or_learned_config_is_rejected_without_fallback(
     config: dict[str, object],
 ) -> None:
-    result = TypedDeonticCanonicalCompiler().compile(
-        _request(config=config)
-    )
+    result = TypedDeonticCanonicalCompiler().compile(_request(config=config))
 
     assert result.status is OperationStatus.FAILED
     assert result.error is not None
@@ -430,9 +393,7 @@ def test_configuration_and_protocol_identity_are_stable() -> None:
     assert compiler.identity == CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE
     assert isinstance(compiler, CanonicalStructuredTextCompiler)
     assert compiler.configuration_cid == TYPED_DEONTIC_COMPILER_CONFIG_CID
-    assert cid_for_dag_json(compiler_configuration()) == (
-        TYPED_DEONTIC_COMPILER_CONFIG_CID
-    )
+    assert cid_for_dag_json(compiler_configuration()) == (TYPED_DEONTIC_COMPILER_CONFIG_CID)
     assert isinstance(TYPED_DEONTIC_COMPILER_CONFIG, MappingProxyType)
     assert isinstance(
         TYPED_DEONTIC_COMPILER_CONFIG["converter"],

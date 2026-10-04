@@ -37,9 +37,9 @@ def test_generate_copilot_instruction_help():
         [PYTHON, ".github/scripts/generate_copilot_instruction.py", "--help"],
         capture_output=True,
         text=True,
-        cwd=project_root
+        cwd=project_root,
     )
-    
+
     assert result.returncode == 0, "Help command failed"
     assert "usage:" in result.stdout.lower(), "Help output missing usage"
     assert "analysis_file" in result.stdout, "Help missing analysis_file argument"
@@ -56,26 +56,26 @@ def test_generate_copilot_instruction_with_analysis():
         "recommendations": [
             "Update test assertions to match new behavior",
             "Check for race conditions in async tests",
-            "Verify test data setup is correct"
-        ]
+            "Verify test data setup is correct",
+        ],
     }
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(analysis_data, f)
         temp_file = f.name
-    
+
     try:
         result = subprocess.run(
             [PYTHON, ".github/scripts/generate_copilot_instruction.py", temp_file],
             capture_output=True,
             text=True,
-            cwd=project_root
+            cwd=project_root,
         )
-        
+
         assert result.returncode == 0, f"Script failed: {result.stderr}"
-        
+
         output = result.stdout
-        
+
         # Verify instruction contains key information
         assert "Test Failure" in output, "Missing error type"
         assert "Assertion error in test_example" in output, "Missing root cause"
@@ -84,9 +84,9 @@ def test_generate_copilot_instruction_with_analysis():
         assert "Error Analysis:" in output, "Missing error analysis section"
         assert "Recommended Actions:" in output, "Missing recommendations section"
         assert "Instructions:" in output, "Missing instructions section"
-        
+
         print("✅ Instruction generation works with proper structure")
-        
+
     finally:
         os.unlink(temp_file)
 
@@ -97,9 +97,9 @@ def test_generate_copilot_instruction_missing_file():
         [PYTHON, ".github/scripts/generate_copilot_instruction.py", "/tmp/nonexistent.json"],
         capture_output=True,
         text=True,
-        cwd=project_root
+        cwd=project_root,
     )
-    
+
     # Should return non-zero but provide default instruction
     assert result.returncode != 0, "Should fail with missing file"
     assert "Please analyze and fix" in result.stdout, "Missing fallback instruction"
@@ -112,26 +112,27 @@ def test_invoke_copilot_with_queue_fallback():
         [PYTHON, "scripts/invoke_copilot_with_queue.py", "--status"],
         capture_output=True,
         text=True,
-        cwd=project_root
+        cwd=project_root,
     )
-    
+
     # Should complete successfully (even if Copilot CLI not available)
     # and show fallback mode status
     output = result.stdout + result.stderr
-    
+
     # Check for fallback indicators
-    assert "Fallback" in output or "fallback" in output.lower(), \
+    assert "Fallback" in output or "fallback" in output.lower(), (
         "Fallback mode not indicated in status"
-    
+    )
+
     print("✅ invoke_copilot_with_queue.py shows fallback mode correctly")
 
 
 def test_workflow_yaml_syntax():
     """Test that the workflow YAML is valid."""
     import yaml
-    
+
     workflow_file = project_root / ".github" / "workflows" / "copilot-agent-autofix.yml"
-    
+
     with open(workflow_file) as f:
         try:
             workflow_data = yaml.safe_load(f)
@@ -146,25 +147,25 @@ def test_workflow_yaml_syntax():
 def test_workflow_uses_correct_script():
     """Test that the workflow uses invoke_copilot_on_pr.py, not invoke_copilot_with_queue.py."""
     workflow_file = project_root / ".github" / "workflows" / "copilot-agent-autofix.yml"
-    
+
     with open(workflow_file) as f:
         content = f.read()
-    
+
     # Should use invoke_copilot_on_pr.py for reliability
-    assert "invoke_copilot_on_pr.py" in content, \
-        "Workflow should use invoke_copilot_on_pr.py"
-    
+    assert "invoke_copilot_on_pr.py" in content, "Workflow should use invoke_copilot_on_pr.py"
+
     # Should also reference the new instruction generator
-    assert "generate_copilot_instruction.py" in content, \
+    assert "generate_copilot_instruction.py" in content, (
         "Workflow should use generate_copilot_instruction.py"
-    
+    )
+
     print("✅ Workflow uses correct scripts (invoke_copilot_on_pr.py + generator)")
 
 
 def main():
     """Run all tests."""
     print("🧪 Testing Copilot Auto-Healing Workflow Improvements\n")
-    
+
     tests = [
         test_generate_copilot_instruction_script_exists,
         test_generate_copilot_instruction_help,
@@ -174,7 +175,7 @@ def main():
         test_workflow_yaml_syntax,
         test_workflow_uses_correct_script,
     ]
-    
+
     failed = 0
     for test in tests:
         try:
@@ -186,12 +187,13 @@ def main():
         except Exception as e:
             print(f"❌ ERROR: {e}")
             import traceback
+
             traceback.print_exc()
             failed += 1
-    
-    print(f"\n{'='*60}")
+
+    print(f"\n{'=' * 60}")
     print(f"Tests: {len(tests) - failed}/{len(tests)} passed")
-    
+
     if failed > 0:
         print(f"❌ {failed} test(s) failed")
         sys.exit(1)

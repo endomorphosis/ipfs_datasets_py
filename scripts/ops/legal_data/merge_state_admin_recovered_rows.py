@@ -99,8 +99,12 @@ def recovered_admin_row_to_canonical_row(row: Mapping[str, Any]) -> Dict[str, An
         "text": text,
         "source_url": source_url,
         "jsonld": _json_text(jsonld_source),
-        "legislation_type": _first_text(row, ("legislation_type", "legislationType", "@type")) or "AdministrativeRule",
-        "legislation_jurisdiction": _first_text(row, ("legislation_jurisdiction", "legislationJurisdiction")) or state,
+        "legislation_type": _first_text(row, ("legislation_type", "legislationType", "@type"))
+        or "AdministrativeRule",
+        "legislation_jurisdiction": _first_text(
+            row, ("legislation_jurisdiction", "legislationJurisdiction")
+        )
+        or state,
         "agency": _first_text(row, ("agency", "agency_name", "agencyName")),
         "chapter": _first_text(row, ("chapter", "chapter_number", "chapterNumber")),
         "title_number": _first_text(row, ("title_number", "titleNumber")),
@@ -108,7 +112,9 @@ def recovered_admin_row_to_canonical_row(row: Mapping[str, Any]) -> Dict[str, An
         "recovered_by": _first_text(row, ("recovered_by",)),
         "recovered_at": _first_text(row, ("recovered_at",)),
     }
-    row_without_cid = {key: value for key, value in row_without_cid.items() if value not in ("", None)}
+    row_without_cid = {
+        key: value for key, value in row_without_cid.items() if value not in ("", None)
+    }
     return {
         "ipfs_cid": _safe_cid_for_obj(row_without_cid),
         **row_without_cid,
@@ -186,7 +192,9 @@ def _write_parquet_rows(rows: Sequence[Mapping[str, Any]], path: Path) -> None:
     import pyarrow.parquet as pq
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(rows)), path, compression="snappy")
+    pq.write_table(
+        pa.Table.from_pylist(_normalize_rows_for_parquet(rows)), path, compression="snappy"
+    )
 
 
 def _iter_jsonl_rows(path: Path) -> Iterable[Dict[str, Any]]:
@@ -224,7 +232,11 @@ def discover_recovered_row_files(paths: Sequence[str | Path]) -> List[Path]:
                 payload = json.loads(path.read_text(encoding="utf-8"))
             except Exception:
                 payload = {}
-            candidate = str(payload.get("statutes_jsonl_path") or "").strip() if isinstance(payload, dict) else ""
+            candidate = (
+                str(payload.get("statutes_jsonl_path") or "").strip()
+                if isinstance(payload, dict)
+                else ""
+            )
             if candidate:
                 add(Path(candidate))
             continue
@@ -234,7 +246,11 @@ def discover_recovered_row_files(paths: Sequence[str | Path]) -> List[Path]:
                     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
                 except Exception:
                     payload = {}
-                candidate = str(payload.get("statutes_jsonl_path") or "").strip() if isinstance(payload, dict) else ""
+                candidate = (
+                    str(payload.get("statutes_jsonl_path") or "").strip()
+                    if isinstance(payload, dict)
+                    else ""
+                )
                 if candidate:
                     add(Path(candidate))
             for jsonl_path in sorted(path.rglob("*_statutes.jsonl")):
@@ -331,7 +347,9 @@ def build_state_admin_recovered_parquet_artifacts(
         try:
             from huggingface_hub import HfApi
 
-            repo_files = set(HfApi(token=token).list_repo_files(repo_id=repo_id, repo_type="dataset"))
+            repo_files = set(
+                HfApi(token=token).list_repo_files(repo_id=repo_id, repo_type="dataset")
+            )
         except Exception:
             repo_files = set()
 
@@ -408,16 +426,32 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Merge daemon-recovered state admin rule rows into canonical parquet shards."
     )
-    parser.add_argument("inputs", nargs="+", help="Recovered row JSONL files, manifests, or daemon output directories.")
-    parser.add_argument("--output-dir", required=True, help="Output root for upload-ready artifacts.")
+    parser.add_argument(
+        "inputs",
+        nargs="+",
+        help="Recovered row JSONL files, manifests, or daemon output directories.",
+    )
+    parser.add_argument(
+        "--output-dir", required=True, help="Output root for upload-ready artifacts."
+    )
     parser.add_argument("--parquet-dir", default="", help="Override destination parquet directory.")
     parser.add_argument("--no-merge-existing-local", action="store_true")
-    parser.add_argument("--merge-hf-existing", action="store_true", help="Download and merge existing HF state parquet shards.")
+    parser.add_argument(
+        "--merge-hf-existing",
+        action="store_true",
+        help="Download and merge existing HF state parquet shards.",
+    )
     parser.add_argument("--repo-id", default=_CORPUS.hf_dataset_id)
     parser.add_argument("--hf-token", default="")
     parser.add_argument("--hf-cache-dir", default="")
-    parser.add_argument("--publish-to-hf", action="store_true", help="Upload merged parquet artifacts to Hugging Face.")
-    parser.add_argument("--commit-message", default="Merge recovered state administrative rule rows")
+    parser.add_argument(
+        "--publish-to-hf",
+        action="store_true",
+        help="Upload merged parquet artifacts to Hugging Face.",
+    )
+    parser.add_argument(
+        "--commit-message", default="Merge recovered state administrative rule rows"
+    )
     parser.add_argument("--json", action="store_true")
     return parser
 
@@ -431,7 +465,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.parquet_dir
         else output_dir / _CORPUS.parquet_dir_name
     )
-    token = _resolve_hf_token(str(args.hf_token or "").strip() or None) if (args.merge_hf_existing or args.publish_to_hf) else None
+    token = (
+        _resolve_hf_token(str(args.hf_token or "").strip() or None)
+        if (args.merge_hf_existing or args.publish_to_hf)
+        else None
+    )
 
     build = build_state_admin_recovered_parquet_artifacts(
         input_paths=args.inputs,
@@ -448,7 +486,9 @@ def main(argv: list[str] | None = None) -> int:
             parquet_dir=parquet_dir,
             repo_id=str(args.repo_id or _CORPUS.hf_dataset_id),
             token=token,
-            commit_message=str(args.commit_message or "Merge recovered state administrative rule rows"),
+            commit_message=str(
+                args.commit_message or "Merge recovered state administrative rule rows"
+            ),
         )
 
     report = {

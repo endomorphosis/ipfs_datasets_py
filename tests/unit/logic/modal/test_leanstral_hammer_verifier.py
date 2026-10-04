@@ -181,8 +181,7 @@ def test_leanstral_hammer_verifier_accepts_candidate_only_after_hammer_proof() -
     assert report.candidate_results[0].verified_guidance
     assert translated_problems
     assert (
-        "; conjecture "
-        in translated_problems[0]
+        "; conjecture " in translated_problems[0]
         and "obligation(agency, provide_notice) unless exception(emergency)"
         in translated_problems[0]
     )
@@ -228,9 +227,10 @@ def test_leanstral_candidate_reaches_native_tdfol_and_verified_guidance() -> Non
     assert native_attempt.status.value == "proved"
     assert native_attempt.metadata["lowering"] == "typed_candidate_to_tdfol"
     assert result.verified_guidance[0]["logic_family"] == "temporal_first_order"
-    assert result.verified_guidance[0]["drafted_logic_candidates"][0][
-        "logic_family"
-    ] == "temporal_first_order"
+    assert (
+        result.verified_guidance[0]["drafted_logic_candidates"][0]["logic_family"]
+        == "temporal_first_order"
+    )
 
 
 def test_leanstral_hammer_verifier_rejects_source_copy_before_hammer_execution() -> None:
@@ -340,10 +340,7 @@ def test_audit_candidates_are_recompiled_and_sent_through_hammer() -> None:
     sample = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "The agency shall provide notice unless emergency conditions "
-            "exist within 30 days."
-        ),
+        text=("The agency shall provide notice unless emergency conditions exist within 30 days."),
     )
     obligation = next(
         item
@@ -354,12 +351,8 @@ def test_audit_candidates_are_recompiled_and_sent_through_hammer() -> None:
         evidence={
             "semantic_context": {
                 "accepted": True,
-                "modal_formulas": [
-                    formula.to_dict() for formula in sample.modal_ir.formulas
-                ],
-                "proof_obligations": [
-                    {**obligation.to_dict(), "verified": True}
-                ],
+                "modal_formulas": [formula.to_dict() for formula in sample.modal_ir.formulas],
+                "proof_obligations": [{**obligation.to_dict(), "verified": True}],
                 "sample_id": sample.sample_id,
                 "schema_version": "legal-ir-leanstral-semantic-context-v1",
             }
@@ -399,9 +392,7 @@ def test_audit_candidates_are_recompiled_and_sent_through_hammer() -> None:
             ],
             "missing_semantic_rule": {"rule_id": "exception_scope"},
             "proof_obligation_ids": [obligation.obligation_id],
-            "proposed_compiler_surface": [
-                {"component": obligation.legal_ir_view}
-            ],
+            "proposed_compiler_surface": [{"component": obligation.legal_ir_view}],
             "request_id": request.request_id,
             "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
             "witness": None,

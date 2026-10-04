@@ -326,9 +326,7 @@ def _variant_metadata(path: PurePosixPath) -> dict[str, Any]:
     if base_name != name:
         variant_of = path.with_name(base_name).as_posix()
     return {
-        "is_temporary": any(
-            kind in {"temporary", "compiler-temporary"} for kind in kinds
-        ),
+        "is_temporary": any(kind in {"temporary", "compiler-temporary"} for kind in kinds),
         "is_new_variant": "new" in kinds,
         "is_mutable_alias": "latest" in kinds,
         "variant_kinds": sorted(set(kinds)),
@@ -403,9 +401,7 @@ def _legacy_ids(detected_format: str, data: bytes) -> list[dict[str, str]]:
 
 def _likely_producers(path: PurePosixPath, detected_format: str) -> list[str]:
     value = f"/{path.as_posix()}"
-    producers = [
-        producer for signature, producer in _PRODUCER_RULES if signature in value
-    ]
+    producers = [producer for signature, producer in _PRODUCER_RULES if signature in value]
     if detected_format.startswith("coq-") and "Coq compiler (coqc)" not in producers:
         producers.insert(0, "Coq compiler (coqc)")
     if detected_format == "legacy-identifier":
@@ -432,9 +428,7 @@ def _ambiguity_reasons(
             "The '-latest' suffix is a mutable alias and does not identify an immutable run."
         )
     if "temporary" in variant["variant_kinds"]:
-        reasons.append(
-            "The temporary filename may contain an interrupted or intermediate write."
-        )
+        reasons.append("The temporary filename may contain an interrupted or intermediate write.")
     if "compiler-temporary" in variant["variant_kinds"]:
         reasons.append(
             "The path or suffix identifies tool-generated compiler/model-checker output."
@@ -511,9 +505,7 @@ def _artifact_record(repo_root: Path, path: PurePosixPath) -> dict[str, Any]:
         "is_mutable_alias": variant["is_mutable_alias"],
         "variant_kinds": variant["variant_kinds"],
         "variant_of": variant["variant_of"],
-        "ambiguity_reasons": _ambiguity_reasons(
-            path, classification, detected_format, variant
-        ),
+        "ambiguity_reasons": _ambiguity_reasons(path, classification, detected_format, variant),
         "recommendations": _recommendations(classification, variant),
         "authority_selected": False,
     }
@@ -588,15 +580,9 @@ def build_inventory(
             name: classification_counts.get(name, 0) for name in CLASSIFICATIONS
         },
         "format_counts": dict(sorted(format_counts.items())),
-        "temporary_artifact_count": sum(
-            bool(record["is_temporary"]) for record in records
-        ),
-        "new_variant_count": sum(
-            bool(record["is_new_variant"]) for record in records
-        ),
-        "mutable_alias_count": sum(
-            bool(record["is_mutable_alias"]) for record in records
-        ),
+        "temporary_artifact_count": sum(bool(record["is_temporary"]) for record in records),
+        "new_variant_count": sum(bool(record["is_new_variant"]) for record in records),
+        "mutable_alias_count": sum(bool(record["is_mutable_alias"]) for record in records),
         "authority_decisions_made": 0,
         "legacy_id_extraction": (
             "Explicit top-level JSON fields named id/cid, ending in _id/_ids/_cid/_cids, "

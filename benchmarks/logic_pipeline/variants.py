@@ -32,9 +32,7 @@ from .contracts import (
 from .content_addressing import cid_for_dag_json
 
 
-VARIANT_REGISTRY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.variant-registry.v1"
-)
+VARIANT_REGISTRY_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.variant-registry.v1"
 
 
 def _freeze_profile_json(value: object) -> object:
@@ -42,30 +40,20 @@ def _freeze_profile_json(value: object) -> object:
 
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise ProtocolContractError(
-                "causal profile route keys must be strings"
-            )
+            raise ProtocolContractError("causal profile route keys must be strings")
         return MappingProxyType(
-            {
-                str(key): _freeze_profile_json(member)
-                for key, member in value.items()
-            }
+            {str(key): _freeze_profile_json(member) for key, member in value.items()}
         )
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_profile_json(member) for member in value)
     if value is None or type(value) in {str, bool, int, float}:
         return value
-    raise ProtocolContractError(
-        "causal profile route contains a non-JSON value"
-    )
+    raise ProtocolContractError("causal profile route contains a non-JSON value")
 
 
 def _thaw_profile_json(value: object) -> object:
     if isinstance(value, Mapping):
-        return {
-            str(key): _thaw_profile_json(member)
-            for key, member in value.items()
-        }
+        return {str(key): _thaw_profile_json(member) for key, member in value.items()}
     if isinstance(value, tuple):
         return [_thaw_profile_json(member) for member in value]
     return value
@@ -127,29 +115,20 @@ class VariantDefinition:
     def __post_init__(self) -> None:
         protocol_spec = DEFAULT_PROTOCOL.variant_map.get(self.variant_id)
         if protocol_spec is None:
-            raise ProtocolContractError(
-                f"variant is not preregistered: {self.variant_id!r}"
-            )
+            raise ProtocolContractError(f"variant is not preregistered: {self.variant_id!r}")
         if self.configuration != protocol_spec.configuration:
             raise ProtocolContractError(
                 f"{self.variant_id} configuration differs from frozen protocol"
             )
         if self.purpose != protocol_spec.purpose:
-            raise ProtocolContractError(
-                f"{self.variant_id} purpose differs from frozen protocol"
-            )
+            raise ProtocolContractError(f"{self.variant_id} purpose differs from frozen protocol")
         if self.paired_against != protocol_spec.paired_against:
-            raise ProtocolContractError(
-                f"{self.variant_id} pairing differs from frozen protocol"
-            )
+            raise ProtocolContractError(f"{self.variant_id} pairing differs from frozen protocol")
         if self.primary_candidate is not protocol_spec.primary_candidate:
             raise ProtocolContractError(
                 f"{self.variant_id} primary-candidate flag differs from protocol"
             )
-        if (
-            self.safety_diagnostic_only
-            is not protocol_spec.safety_diagnostic_only
-        ):
+        if self.safety_diagnostic_only is not protocol_spec.safety_diagnostic_only:
             raise ProtocolContractError(
                 f"{self.variant_id} safety flag differs from frozen protocol"
             )
@@ -161,26 +140,17 @@ class VariantDefinition:
             raise ProtocolContractError("variant stages must use StageName values")
         positions = [tuple(StageName).index(stage) for stage in self.stages]
         if positions != sorted(positions):
-            raise ProtocolContractError(
-                "durable variant stages must follow canonical wire order"
-            )
+            raise ProtocolContractError("durable variant stages must follow canonical wire order")
         if StageName.KERNEL in self.stages and self.stages[-1] is not StageName.KERNEL:
             raise ProtocolContractError("kernel must be the terminal stage")
         if not isinstance(self.proof_order, tuple):
             raise ProtocolContractError("proof_order must be a tuple")
         if len(set(self.proof_order)) != len(self.proof_order):
             raise ProtocolContractError("proof_order must not contain duplicates")
-        if any(
-            stage not in {StageName.HAMMER, StageName.LEANSTRAL}
-            for stage in self.proof_order
-        ):
-            raise ProtocolContractError(
-                "proof_order may contain only Hammer and Leanstral"
-            )
+        if any(stage not in {StageName.HAMMER, StageName.LEANSTRAL} for stage in self.proof_order):
+            raise ProtocolContractError("proof_order may contain only Hammer and Leanstral")
         enabled_proof_stages = {
-            stage
-            for stage in self.stages
-            if stage in {StageName.HAMMER, StageName.LEANSTRAL}
+            stage for stage in self.stages if stage in {StageName.HAMMER, StageName.LEANSTRAL}
         }
         if set(self.proof_order) != enabled_proof_stages:
             raise ProtocolContractError(
@@ -194,15 +164,9 @@ class VariantDefinition:
             raise ProtocolContractError("Hammer cannot be routed with policy off")
         if self.hammer_policy is not HammerPolicy.OFF and StageName.HAMMER not in self.stages:
             raise ProtocolContractError("enabled Hammer policy requires its stage")
-        if (
-            self.leanstral_policy is StagePolicy.OFF
-            and StageName.LEANSTRAL in self.stages
-        ):
+        if self.leanstral_policy is StagePolicy.OFF and StageName.LEANSTRAL in self.stages:
             raise ProtocolContractError("Leanstral cannot be routed with policy off")
-        if (
-            self.leanstral_policy is not StagePolicy.OFF
-            and StageName.LEANSTRAL not in self.stages
-        ):
+        if self.leanstral_policy is not StagePolicy.OFF and StageName.LEANSTRAL not in self.stages:
             raise ProtocolContractError("enabled Leanstral policy requires its stage")
         if (
             self.premise_ranking is PremiseRanking.SYMAI_LLM
@@ -244,9 +208,7 @@ class VariantDefinition:
         """Return immutable stage-specific requested identity and policy."""
 
         if stage not in self.stages:
-            raise ProtocolContractError(
-                f"{stage.value} is not routed by {self.variant_id}"
-            )
+            raise ProtocolContractError(f"{stage.value} is not routed by {self.variant_id}")
         common: dict[str, object] = {
             "variant_id": self.variant_id,
             "configuration_sha256": self.digest,
@@ -258,14 +220,10 @@ class VariantDefinition:
             common["premise_ranking"] = self.premise_ranking.value
         elif stage is StageName.HAMMER:
             common["policy"] = self.hammer_policy.value
-            common["proof_order"] = tuple(
-                item.value for item in self.proof_order
-            )
+            common["proof_order"] = tuple(item.value for item in self.proof_order)
         elif stage is StageName.LEANSTRAL:
             common["policy"] = self.leanstral_policy.value
-            common["proof_order"] = tuple(
-                item.value for item in self.proof_order
-            )
+            common["proof_order"] = tuple(item.value for item in self.proof_order)
         elif stage is StageName.KERNEL and self.safety_diagnostic_only:
             common["diagnostic_only"] = True
         return MappingProxyType(common)
@@ -291,9 +249,7 @@ class VariantDefinition:
 
     @property
     def digest(self) -> str:
-        return hashlib.sha256(
-            canonical_json(self.to_dict()).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
 
 
 _C = StageName.COMPILER
@@ -438,9 +394,7 @@ VARIANT_REGISTRY: Final[Mapping[str, VariantDefinition]] = MappingProxyType(
 VARIANTS = VARIANT_REGISTRY
 """Compatibility alias for callers that use the shorter registry name."""
 
-ALL_VARIANT_IDS: Final = tuple(
-    [*(f"A{index}" for index in range(13)), "S1"]
-)
+ALL_VARIANT_IDS: Final = tuple([*(f"A{index}" for index in range(13)), "S1"])
 
 if tuple(VARIANT_REGISTRY) != ALL_VARIANT_IDS:  # pragma: no cover - import invariant
     raise RuntimeError("variant registry order/content is not A0--A12 plus S1")
@@ -448,9 +402,7 @@ if set(VARIANT_REGISTRY) != set(DEFAULT_PROTOCOL.variant_map):  # pragma: no cov
     raise RuntimeError("variant registry differs from frozen protocol")
 
 VARIANT_REGISTRY_SHA256: Final = hashlib.sha256(
-    canonical_json(
-        [VARIANT_REGISTRY[item].to_dict() for item in ALL_VARIANT_IDS]
-    ).encode("utf-8")
+    canonical_json([VARIANT_REGISTRY[item].to_dict() for item in ALL_VARIANT_IDS]).encode("utf-8")
 ).hexdigest()
 
 
@@ -460,9 +412,7 @@ def get_variant_definition(variant_id: str) -> VariantDefinition:
     try:
         return VARIANT_REGISTRY[variant_id]
     except (KeyError, TypeError) as exc:
-        raise ProtocolContractError(
-            f"variant is not registered: {variant_id!r}"
-        ) from exc
+        raise ProtocolContractError(f"variant is not registered: {variant_id!r}") from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -482,72 +432,43 @@ class CausalProofVariantProfile:
 
     def __post_init__(self) -> None:
         base = get_variant_definition(self.variant_id)
-        if (
-            not isinstance(self.optional_routes, tuple)
-            or not all(
-                isinstance(route, Mapping)
-                for route in self.optional_routes
-            )
+        if not isinstance(self.optional_routes, tuple) or not all(
+            isinstance(route, Mapping) for route in self.optional_routes
         ):
-            raise ProtocolContractError(
-                "causal optional routes must be an immutable mapping tuple"
-            )
-        frozen_routes = tuple(
-            _freeze_profile_json(route) for route in self.optional_routes
-        )
+            raise ProtocolContractError("causal optional routes must be an immutable mapping tuple")
+        frozen_routes = tuple(_freeze_profile_json(route) for route in self.optional_routes)
         object.__setattr__(self, "optional_routes", frozen_routes)
         if self.variant_id == "S1":
             raise ProtocolContractError("S1 is outside the causal proof profile")
         if not self.effective_stages or self.effective_stages[-1] is not _K:
-            raise ProtocolContractError(
-                "causal proof routes require a terminal kernel stage"
-            )
-        expected_stages = (
-            (*base.stages, _K) if self.variant_id == "A0" else base.stages
-        )
+            raise ProtocolContractError("causal proof routes require a terminal kernel stage")
+        expected_stages = (*base.stages, _K) if self.variant_id == "A0" else base.stages
         if self.effective_stages != expected_stages:
             raise ProtocolContractError(
                 f"{self.variant_id} causal route changed a non-kernel v1 stage"
             )
-        if set(self.optional_order) != {
-            stage
-            for stage in base.proof_order
-        } or len(self.optional_order) != len(base.proof_order):
-            raise ProtocolContractError(
-                f"{self.variant_id} causal optional stages drifted"
-            )
+        if set(self.optional_order) != {stage for stage in base.proof_order} or len(
+            self.optional_order
+        ) != len(base.proof_order):
+            raise ProtocolContractError(f"{self.variant_id} causal optional stages drifted")
         if tuple(route.get("source") for route in self.optional_routes) != tuple(
             stage.value for stage in self.optional_order
         ):
-            raise ProtocolContractError(
-                f"{self.variant_id} causal trigger order drifted"
-            )
+            raise ProtocolContractError(f"{self.variant_id} causal trigger order drifted")
         if (
-            self.compiler_reference_kernel_policy
-            != "identical_independent_check"
+            self.compiler_reference_kernel_policy != "identical_independent_check"
             or self.proof_authority != "native_kernel"
         ):
-            raise ProtocolContractError(
-                f"{self.variant_id} causal proof authority drifted"
-            )
+            raise ProtocolContractError(f"{self.variant_id} causal proof authority drifted")
 
     def to_dict(self) -> dict[str, object]:
         return {
             "schema": CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2,
             "variant_id": self.variant_id,
-            "effective_stages": [
-                stage.value for stage in self.effective_stages
-            ],
-            "compiler_reference_kernel_policy": (
-                self.compiler_reference_kernel_policy
-            ),
-            "optional_order": [
-                stage.value for stage in self.optional_order
-            ],
-            "optional_routes": [
-                _thaw_profile_json(route)
-                for route in self.optional_routes
-            ],
+            "effective_stages": [stage.value for stage in self.effective_stages],
+            "compiler_reference_kernel_policy": (self.compiler_reference_kernel_policy),
+            "optional_order": [stage.value for stage in self.optional_order],
+            "optional_routes": [_thaw_profile_json(route) for route in self.optional_routes],
             "symai_can_receive_proof_credit": False,
             "terminal_proof_authority": self.proof_authority,
         }
@@ -557,9 +478,7 @@ class CausalProofVariantProfile:
         return cid_for_dag_json(self.to_dict())
 
 
-def _build_causal_proof_variant_profiles() -> Mapping[
-    str, CausalProofVariantProfile
-]:
+def _build_causal_proof_variant_profiles() -> Mapping[str, CausalProofVariantProfile]:
     document = causal_proof_variant_profile_v2()
     profiles = document.get("profiles")
     if not isinstance(profiles, list):
@@ -584,12 +503,8 @@ def _build_causal_proof_variant_profiles() -> Mapping[
             variant_id=variant_id,
             effective_stages=tuple(StageName(item) for item in stages),
             optional_order=tuple(StageName(item) for item in optional_order),
-            optional_routes=tuple(
-                MappingProxyType(dict(item)) for item in optional_routes
-            ),
-            compiler_reference_kernel_policy=str(
-                value.get("compiler_reference_kernel_policy")
-            ),
+            optional_routes=tuple(MappingProxyType(dict(item)) for item in optional_routes),
+            compiler_reference_kernel_policy=str(value.get("compiler_reference_kernel_policy")),
             proof_authority=str(value.get("terminal_proof_authority")),
         )
         if variant_id in result:
@@ -603,9 +518,7 @@ def _build_causal_proof_variant_profiles() -> Mapping[
     return MappingProxyType(result)
 
 
-CAUSAL_PROOF_VARIANT_PROFILES: Final = (
-    _build_causal_proof_variant_profiles()
-)
+CAUSAL_PROOF_VARIANT_PROFILES: Final = _build_causal_proof_variant_profiles()
 
 
 def get_causal_proof_variant_profile(

@@ -28,12 +28,15 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # Item 1 — DelegationManager.merge(dry_run=True) + MergePlan
 # ---------------------------------------------------------------------------
 
-class TestDelegationManagerMergeDryRun(unittest.TestCase):
 
+class TestDelegationManagerMergeDryRun(unittest.TestCase):
     def _make_manager_with_delegation(self, cid: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability,
+            DelegationManager,
+            Delegation,
+            Capability,
         )
+
         mgr = DelegationManager()
         d = Delegation(
             cid=cid,
@@ -47,14 +50,17 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
 
     def test_merge_plan_class_exists(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import MergePlan
+
         self.assertIsNotNone(MergePlan)
 
     def test_merge_plan_in_all(self):
         import ipfs_datasets_py.mcp_server.ucan_delegation as mod
+
         self.assertIn("MergePlan", mod.__all__)
 
     def test_merge_plan_fields(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import MergePlan
+
         plan = MergePlan(would_add=["a", "b"], would_skip_conflicts=["c"])
         self.assertEqual(plan.would_add, ["a", "b"])
         self.assertEqual(plan.would_skip_conflicts, ["c"])
@@ -63,12 +69,14 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
 
     def test_merge_plan_empty(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import MergePlan
+
         plan = MergePlan()
         self.assertEqual(plan.add_count, 0)
         self.assertEqual(plan.conflict_count, 0)
 
     def test_dry_run_returns_merge_plan(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergePlan
+
         src = self._make_manager_with_delegation("bafytest-dry1")
         dst = DelegationManager()
         result = dst.merge(src, dry_run=True)
@@ -78,6 +86,7 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
 
     def test_dry_run_does_not_mutate(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = self._make_manager_with_delegation("bafytest-dry2")
         dst = DelegationManager()
         dst.merge(src, dry_run=True)
@@ -85,6 +94,7 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
 
     def test_dry_run_detects_conflict(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergePlan
+
         src = self._make_manager_with_delegation("bafytest-dry3")
         dst = DelegationManager()
         dst._revocation.revoke("bafytest-dry3")
@@ -96,6 +106,7 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
 
     def test_dry_run_false_is_default(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergeResult
+
         src = self._make_manager_with_delegation("bafytest-dry4")
         dst = DelegationManager()
         result = dst.merge(src)
@@ -103,7 +114,13 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
         self.assertEqual(result, 1)
 
     def test_dry_run_existing_cid_not_in_would_add(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability, MergePlan
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+            MergePlan,
+        )
+
         cid = "bafytest-dry5"
         src = self._make_manager_with_delegation(cid)
         dst = self._make_manager_with_delegation(cid)  # same CID already present
@@ -113,7 +130,13 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
         self.assertEqual(result.conflict_count, 0)
 
     def test_dry_run_mixed_add_and_conflict(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability, MergePlan
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+            MergePlan,
+        )
+
         src = DelegationManager()
         for cid in ["bafy-add1", "bafy-add2", "bafy-conflict"]:
             d = Delegation(
@@ -136,14 +159,16 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
 # Item 2 — IPFSReloadResult structured return type
 # ---------------------------------------------------------------------------
 
-class TestIPFSReloadResult(unittest.TestCase):
 
+class TestIPFSReloadResult(unittest.TestCase):
     def test_ipfs_reload_result_exists(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         self.assertIsNotNone(IPFSReloadResult)
 
     def test_ipfs_reload_result_fields(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         res = IPFSReloadResult(count=5, pin_results={"p1": "cid1", "p2": None})
         self.assertEqual(res.count, 5)
         self.assertEqual(res.pin_results["p1"], "cid1")
@@ -151,6 +176,7 @@ class TestIPFSReloadResult(unittest.TestCase):
 
     def test_ipfs_reload_result_empty(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         res = IPFSReloadResult(count=0, pin_results={})
         self.assertEqual(res.count, 0)
         self.assertEqual(res.pin_results, {})
@@ -158,6 +184,7 @@ class TestIPFSReloadResult(unittest.TestCase):
     def test_file_policy_store_reload_returns_int(self):
         """FilePolicyStore.reload() still returns int (no change)."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             fname = f.name
         try:
@@ -170,17 +197,20 @@ class TestIPFSReloadResult(unittest.TestCase):
     def test_ipfs_reload_result_source_inspection(self):
         """IPFSPolicyStore.reload() docstring mentions IPFSReloadResult."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore
+
         src = inspect.getsource(IPFSPolicyStore.reload)
         self.assertIn("IPFSReloadResult", src)
 
     def test_ipfs_reload_result_is_namedtuple(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         # NamedTuple subclasses tuple
         res = IPFSReloadResult(count=1, pin_results={"x": "y"})
         self.assertIsInstance(res, tuple)
 
     def test_ipfs_reload_result_count_field(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         res = IPFSReloadResult(count=7, pin_results={})
         self.assertEqual(res[0], 7)  # positional access
         self.assertEqual(res.count, 7)
@@ -190,28 +220,33 @@ class TestIPFSReloadResult(unittest.TestCase):
 # Item 3 — PubSubBus.publish_async(priority=0) handler priority ordering
 # ---------------------------------------------------------------------------
 
-class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
 
+class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
     def test_publish_async_has_priority_param(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         self.assertIn("priority", sig.parameters)
 
     def test_priority_param_default_is_zero(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         self.assertEqual(sig.parameters["priority"].default, 0)
 
     def test_priority_param_is_keyword_only(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         p = sig.parameters["priority"]
         import inspect as _inspect
+
         self.assertEqual(p.kind, _inspect.Parameter.KEYWORD_ONLY)
 
     def test_mcp_priority_attribute_respected(self):
         """Handler with __mcp_priority__=10 appears before priority-0 handlers."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         bus = PubSubBus()
         order: List[str] = []
 
@@ -231,6 +266,7 @@ class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
 
     def test_source_inspection_sorts_by_priority(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         src = inspect.getsource(PubSubBus.publish_async)
         self.assertIn("__mcp_priority__", src)
         self.assertIn("priority", src)
@@ -239,6 +275,7 @@ class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
         """Higher-priority handler's result appears first in sorted order."""
         import asyncio
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         bus = PubSubBus()
         call_log: List[str] = []
 
@@ -258,8 +295,10 @@ class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
         # If anyio available, run async call
         try:
             import anyio  # noqa: F401
+
             async def _run():
                 return await bus.publish_async("test_async_prio", {})
+
             asyncio.run(_run())
             # Both handlers should have been called
             self.assertEqual(sorted(call_log), ["default", "high"])
@@ -269,6 +308,7 @@ class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
     def test_publish_async_signature_unchanged(self):
         """Existing params topic/payload/timeout_seconds still present."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         for param in ("topic", "payload", "timeout_seconds", "priority"):
             self.assertIn(param, sig.parameters)
@@ -278,14 +318,16 @@ class TestPubSubBusPublishAsyncPriority(unittest.TestCase):
 # Item 4 — ComplianceChecker.bak_exists(path)
 # ---------------------------------------------------------------------------
 
-class TestComplianceCheckerBakExists(unittest.TestCase):
 
+class TestComplianceCheckerBakExists(unittest.TestCase):
     def test_bak_exists_method_exists(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertTrue(hasattr(ComplianceChecker, "bak_exists"))
 
     def test_bak_exists_is_static(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertIsInstance(
             inspect.getattr_static(ComplianceChecker, "bak_exists"),
             staticmethod,
@@ -293,10 +335,12 @@ class TestComplianceCheckerBakExists(unittest.TestCase):
 
     def test_bak_exists_false_when_missing(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertFalse(ComplianceChecker.bak_exists("/tmp/no_such_file_xyz.bin"))
 
     def test_bak_exists_true_when_present(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.NamedTemporaryFile(suffix=".bak", delete=False) as f:
             bak_path = f.name
         base_path = bak_path[:-4]  # remove .bak suffix
@@ -307,18 +351,21 @@ class TestComplianceCheckerBakExists(unittest.TestCase):
 
     def test_bak_exists_callable_on_instance(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         # Can call on instance too (static method)
         self.assertFalse(checker.bak_exists("/tmp/no_such_file_abc.bin"))
 
     def test_bak_exists_returns_bool(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         result = ComplianceChecker.bak_exists("/tmp/no_such_file_def.bin")
         self.assertIsInstance(result, bool)
 
     def test_bak_exists_complementary_to_restore_from_bak(self):
         """bak_exists False → restore_from_bak returns False."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = "/tmp/no_such_compliance_file.bin"
         self.assertFalse(ComplianceChecker.bak_exists(path))
@@ -331,6 +378,7 @@ class TestComplianceCheckerBakExists(unittest.TestCase):
         except ImportError:
             self.skipTest("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         with tempfile.NamedTemporaryFile(suffix=".enc", delete=False) as f:
             enc_path = f.name
@@ -350,13 +398,17 @@ class TestComplianceCheckerBakExists(unittest.TestCase):
 # Item 5 — Full E2E regression (session 60–68 + session 69 features)
 # ---------------------------------------------------------------------------
 
-class TestE2ESession69(unittest.TestCase):
 
+class TestE2ESession69(unittest.TestCase):
     def test_merge_dry_run_then_real_merge(self):
         """Dry-run preview followed by actual merge; counts agree."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability, MergePlan,
+            DelegationManager,
+            Delegation,
+            Capability,
+            MergePlan,
         )
+
         src = DelegationManager()
         for cid in ["bafye2e-1", "bafye2e-2"]:
             d = Delegation(
@@ -380,18 +432,21 @@ class TestE2ESession69(unittest.TestCase):
     def test_ipfs_reload_result_count_field_roundtrip(self):
         """IPFSReloadResult.count matches number of names in registry."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         res = IPFSReloadResult(count=2, pin_results={"p1": "cid1", "p2": "cid2"})
         self.assertEqual(res.count, len(res.pin_results))
 
     def test_compliance_bak_exists_and_restore_cycle(self):
         """bak_exists → restore_from_bak lifecycle."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
         bak_path = path + ".bak"
         try:
             # Write a .bak
             import shutil
+
             shutil.copy2(path, bak_path)
             self.assertTrue(ComplianceChecker.bak_exists(path))
             checker = ComplianceChecker()
@@ -406,8 +461,12 @@ class TestE2ESession69(unittest.TestCase):
     def test_merge_plan_used_as_guard(self):
         """Use dry_run result to abort a real merge when conflict_count > 0."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability, MergePlan,
+            DelegationManager,
+            Delegation,
+            Capability,
+            MergePlan,
         )
+
         src = DelegationManager()
         cid = "bafye2e-conflict"
         d = Delegation(
@@ -434,13 +493,18 @@ class TestE2ESession69(unittest.TestCase):
         from ipfs_datasets_py.mcp_server.ucan_delegation import MergePlan  # noqa: F401
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult  # noqa: F401
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker  # noqa: F401
+
         self.assertTrue(hasattr(ComplianceChecker, "bak_exists"))
 
     def test_merge_dry_run_with_both_existing_and_new(self):
         """Dry-run correctly classifies existing (skip), new (add), revoked (conflict)."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability, MergePlan,
+            DelegationManager,
+            Delegation,
+            Capability,
+            MergePlan,
         )
+
         src = DelegationManager()
         for cid in ["bafy-new", "bafy-existing", "bafy-revoked"]:
             d = Delegation(

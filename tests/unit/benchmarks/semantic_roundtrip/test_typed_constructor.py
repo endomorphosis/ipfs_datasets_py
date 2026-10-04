@@ -142,9 +142,7 @@ def test_projection_matches_existing_typed_pilot_l1_exactly() -> None:
                 "action_object": "backup report",
                 "conditions": [],
                 "exceptions": [{"type": "exception", "text": "emergency"}],
-                "temporal_constraints": [
-                    {"type": "deadline", "text": "within 10 days"}
-                ],
+                "temporal_constraints": [{"type": "deadline", "text": "within 10 days"}],
             }
         ),
         _Norm(
@@ -207,11 +205,7 @@ def test_projection_supports_all_canonical_modalities(
 def test_constructor_matches_frozen_pilot_l1_for_every_case() -> None:
     repository_root = Path(__file__).resolve().parents[4]
     fixture_path = (
-        repository_root
-        / "tests"
-        / "fixtures"
-        / "semantic_roundtrip"
-        / "pilot_cases.json"
+        repository_root / "tests" / "fixtures" / "semantic_roundtrip" / "pilot_cases.json"
     )
     report_path = (
         repository_root
@@ -224,22 +218,17 @@ def test_constructor_matches_frozen_pilot_l1_for_every_case() -> None:
     cases = json.loads(fixture_path.read_text(encoding="utf-8"))
     report = json.loads(report_path.read_text(encoding="utf-8"))
     pilot_l1_by_case = {
-        case["case_id"]: case["arms"]["typed_deontic"]["l1"]
-        for case in report["cases"]
+        case["case_id"]: case["arms"]["typed_deontic"]["l1"] for case in report["cases"]
     }
     constructor = TypedDeonticCanonicalConstructor()
 
     for case in cases:
         vocabulary = AllowedAtomVocabulary.from_dict(case["allowed_atoms"])
-        result = constructor.construct(
-            ConstructorRequest(case["source_text"], vocabulary, {})
-        )
+        result = constructor.construct(ConstructorRequest(case["source_text"], vocabulary, {}))
 
         assert result.status is ComponentStatus.SUCCESS, case["id"]
         assert result.canonical_ir is not None
-        assert (
-            result.canonical_ir.to_dict() == pilot_l1_by_case[case["id"]]
-        ), case["id"]
+        assert result.canonical_ir.to_dict() == pilot_l1_by_case[case["id"]], case["id"]
         assert result.failure_reason is None
         assert not hasattr(result, "native_payload")
 
@@ -247,9 +236,7 @@ def test_constructor_matches_frozen_pilot_l1_for_every_case() -> None:
 def test_constructor_reports_empty_l1_without_native_payload() -> None:
     constructor = TypedDeonticCanonicalConstructor()
 
-    result = constructor.construct(
-        _request("This paragraph contains no normative rule.")
-    )
+    result = constructor.construct(_request("This paragraph contains no normative rule."))
 
     assert result.status is ComponentStatus.FAILED
     assert result.failure_reason is FailureReason.EMPTY_L1
@@ -261,8 +248,5 @@ def test_identity_and_constructor_protocol_are_stable() -> None:
     constructor = TypedDeonticCanonicalConstructor()
 
     assert constructor.identity == "TypedDeonticCanonicalConstructor@1"
-    assert (
-        constructor.identity
-        == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
-    )
+    assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
     assert isinstance(constructor, RoundTripConstructor)

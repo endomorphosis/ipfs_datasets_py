@@ -69,7 +69,9 @@ def _render_search_text(payload: dict[str, Any], *, title: str) -> str:
     lines.append(f"result_count: {int(payload.get('result_count') or 0)}")
     lines.append(f"group_count: {int(payload.get('group_count') or 0)}")
 
-    grouped_results = [dict(item) for item in list(payload.get("grouped_results") or []) if isinstance(item, dict)]
+    grouped_results = [
+        dict(item) for item in list(payload.get("grouped_results") or []) if isinstance(item, dict)
+    ]
     if grouped_results:
         lines.append("groups:")
         for group in grouped_results:
@@ -80,7 +82,9 @@ def _render_search_text(payload: dict[str, Any], *, title: str) -> str:
                 f" matches={int(group.get('match_count') or 0)}"
                 f" docs={len(list(group.get('document_ids') or []))}"
             )
-            for document in [dict(item) for item in list(group.get("documents") or []) if isinstance(item, dict)]:
+            for document in [
+                dict(item) for item in list(group.get("documents") or []) if isinstance(item, dict)
+            ]:
                 marker = "*" if bool(document.get("is_match")) else "-"
                 lines.append(
                     "    "
@@ -92,8 +96,16 @@ def _render_search_text(payload: dict[str, Any], *, title: str) -> str:
 
 
 def _load_export_workspace_script_module():
-    module_path = Path(__file__).resolve().parents[2] / "scripts" / "ops" / "legal_data" / "export_workspace_dataset_single_bundle.py"
-    spec = importlib.util.spec_from_file_location("workspace_export_single_bundle_under_test", module_path)
+    module_path = (
+        Path(__file__).resolve().parents[2]
+        / "scripts"
+        / "ops"
+        / "legal_data"
+        / "export_workspace_dataset_single_bundle.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "workspace_export_single_bundle_under_test", module_path
+    )
     if spec is None or spec.loader is None:
         raise ImportError(f"Unable to load workspace export script from {module_path}")
     module = importlib.util.module_from_spec(spec)
@@ -136,8 +148,16 @@ def create_parser() -> argparse.ArgumentParser:
         required=False,
         help="Path to the workspace dataset bundle for read actions, or an input source path for --action export/--action package.",
     )
-    parser.add_argument("--input-json", default="", help="For --action export or --action package, path to a workspace JSON payload.")
-    parser.add_argument("--input-directory", default="", help="For --action export or --action package, path to a directory corpus.")
+    parser.add_argument(
+        "--input-json",
+        default="",
+        help="For --action export or --action package, path to a workspace JSON payload.",
+    )
+    parser.add_argument(
+        "--input-directory",
+        default="",
+        help="For --action export or --action package, path to a directory corpus.",
+    )
     parser.add_argument(
         "--input-type",
         choices=[
@@ -152,38 +172,162 @@ def create_parser() -> argparse.ArgumentParser:
         default="",
         help="For --action export or --action package, explicit source type when using --input-path. Omit it to auto-detect supported source shapes.",
     )
-    parser.add_argument("--output-parquet", default="", help="For --action export, path to the output parquet bundle.")
-    parser.add_argument("--output-dir", default="", help="For --action package, directory to write a packaged bundle.")
-    parser.add_argument("--output-hf-records-parquet", default="", help="For --action package-export-hf-records, path to the single flat records parquet.")
-    parser.add_argument("--package-name", default="", help="For --action package, optional package name.")
-    parser.add_argument("--workspace-id", default="", help="For --action export or --action package directory imports, optional workspace id override.")
-    parser.add_argument("--workspace-name", default="", help="For --action export or --action package directory imports, optional workspace name override.")
-    parser.add_argument("--source-type", default="", help="For --action export or --action package, logical workspace source type label.")
-    parser.add_argument("--embeddings-provider", default="", help="For --action export, embeddings router provider override.")
-    parser.add_argument("--embeddings-model", default="", help="For --action export, embeddings model name override.")
-    parser.add_argument("--embeddings-device", default="", help="For --action export, embeddings device override.")
-    parser.add_argument("--embeddings-batch-size", type=int, default=128, help="For --action export, embeddings batch size.")
-    parser.add_argument("--embeddings-parallel-batches", type=int, default=1, help="For --action export, embeddings parallel batches.")
-    parser.add_argument("--embeddings-chunking-strategy", default="", help="For --action export, embeddings chunking strategy.")
-    parser.add_argument("--embeddings-chunk-size", type=int, default=512, help="For --action export, embeddings chunk size.")
-    parser.add_argument("--embeddings-chunk-overlap", type=int, default=50, help="For --action export, embeddings chunk overlap.")
-    parser.add_argument("--strict-evidence-mode", action="store_true", help="For --action export or --action package, restrict to the plain_text+ retrieval subset.")
-    parser.add_argument("--vector-dimension", type=int, default=16, help="For --action export or --action package, local vector dimension.")
-    parser.add_argument("--glob-pattern", default="*", help="For --action export or --action package directory imports, optional file glob.")
-    parser.add_argument("--exclude-dir", action="append", default=[], help="For --action ingest-pdf-dir, directory name to exclude; can be repeated.")
-    parser.add_argument("--max-pdf-pages", type=int, default=0, help="For --action ingest-pdf-dir, optional max pages per PDF.")
-    parser.add_argument("--max-pdf-chars", type=int, default=0, help="For --action ingest-pdf-dir, optional max extracted characters per PDF.")
-    parser.add_argument("--max-logic-documents", type=int, default=0, help="For --action ingest-pdf-dir, optional max documents for formal logic extraction.")
-    parser.add_argument("--enable-ocr", action="store_true", help="For --action ingest-pdf-dir, run Tesseract OCR when PDF text extraction is empty.")
-    parser.add_argument("--ocr-dpi", type=int, default=200, help="For --action ingest-pdf-dir, render DPI used by Tesseract OCR.")
-    parser.add_argument("--ocr-lang", default="eng", help="For --action ingest-pdf-dir, Tesseract language code.")
-    parser.add_argument("--skip-failed-pdf-documents", action="store_true", help="For --action ingest-pdf-dir, omit PDFs that still have no text after extraction/OCR.")
-    parser.add_argument("--no-formal-logic", action="store_true", help="For --action ingest-pdf-dir, skip formal logic/theorem extraction metadata.")
-    parser.add_argument("--write-normalized-json", default="", help="For --action export, optional path to persist normalized dataset JSON.")
-    parser.add_argument("--no-car", action="store_true", help="For --action package, disable CAR emission.")
-    parser.add_argument("--piece-ids", default="", help="For --action components, comma-separated list of piece ids to load.")
+    parser.add_argument(
+        "--output-parquet",
+        default="",
+        help="For --action export, path to the output parquet bundle.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="",
+        help="For --action package, directory to write a packaged bundle.",
+    )
+    parser.add_argument(
+        "--output-hf-records-parquet",
+        default="",
+        help="For --action package-export-hf-records, path to the single flat records parquet.",
+    )
+    parser.add_argument(
+        "--package-name", default="", help="For --action package, optional package name."
+    )
+    parser.add_argument(
+        "--workspace-id",
+        default="",
+        help="For --action export or --action package directory imports, optional workspace id override.",
+    )
+    parser.add_argument(
+        "--workspace-name",
+        default="",
+        help="For --action export or --action package directory imports, optional workspace name override.",
+    )
+    parser.add_argument(
+        "--source-type",
+        default="",
+        help="For --action export or --action package, logical workspace source type label.",
+    )
+    parser.add_argument(
+        "--embeddings-provider",
+        default="",
+        help="For --action export, embeddings router provider override.",
+    )
+    parser.add_argument(
+        "--embeddings-model",
+        default="",
+        help="For --action export, embeddings model name override.",
+    )
+    parser.add_argument(
+        "--embeddings-device", default="", help="For --action export, embeddings device override."
+    )
+    parser.add_argument(
+        "--embeddings-batch-size",
+        type=int,
+        default=128,
+        help="For --action export, embeddings batch size.",
+    )
+    parser.add_argument(
+        "--embeddings-parallel-batches",
+        type=int,
+        default=1,
+        help="For --action export, embeddings parallel batches.",
+    )
+    parser.add_argument(
+        "--embeddings-chunking-strategy",
+        default="",
+        help="For --action export, embeddings chunking strategy.",
+    )
+    parser.add_argument(
+        "--embeddings-chunk-size",
+        type=int,
+        default=512,
+        help="For --action export, embeddings chunk size.",
+    )
+    parser.add_argument(
+        "--embeddings-chunk-overlap",
+        type=int,
+        default=50,
+        help="For --action export, embeddings chunk overlap.",
+    )
+    parser.add_argument(
+        "--strict-evidence-mode",
+        action="store_true",
+        help="For --action export or --action package, restrict to the plain_text+ retrieval subset.",
+    )
+    parser.add_argument(
+        "--vector-dimension",
+        type=int,
+        default=16,
+        help="For --action export or --action package, local vector dimension.",
+    )
+    parser.add_argument(
+        "--glob-pattern",
+        default="*",
+        help="For --action export or --action package directory imports, optional file glob.",
+    )
+    parser.add_argument(
+        "--exclude-dir",
+        action="append",
+        default=[],
+        help="For --action ingest-pdf-dir, directory name to exclude; can be repeated.",
+    )
+    parser.add_argument(
+        "--max-pdf-pages",
+        type=int,
+        default=0,
+        help="For --action ingest-pdf-dir, optional max pages per PDF.",
+    )
+    parser.add_argument(
+        "--max-pdf-chars",
+        type=int,
+        default=0,
+        help="For --action ingest-pdf-dir, optional max extracted characters per PDF.",
+    )
+    parser.add_argument(
+        "--max-logic-documents",
+        type=int,
+        default=0,
+        help="For --action ingest-pdf-dir, optional max documents for formal logic extraction.",
+    )
+    parser.add_argument(
+        "--enable-ocr",
+        action="store_true",
+        help="For --action ingest-pdf-dir, run Tesseract OCR when PDF text extraction is empty.",
+    )
+    parser.add_argument(
+        "--ocr-dpi",
+        type=int,
+        default=200,
+        help="For --action ingest-pdf-dir, render DPI used by Tesseract OCR.",
+    )
+    parser.add_argument(
+        "--ocr-lang", default="eng", help="For --action ingest-pdf-dir, Tesseract language code."
+    )
+    parser.add_argument(
+        "--skip-failed-pdf-documents",
+        action="store_true",
+        help="For --action ingest-pdf-dir, omit PDFs that still have no text after extraction/OCR.",
+    )
+    parser.add_argument(
+        "--no-formal-logic",
+        action="store_true",
+        help="For --action ingest-pdf-dir, skip formal logic/theorem extraction metadata.",
+    )
+    parser.add_argument(
+        "--write-normalized-json",
+        default="",
+        help="For --action export, optional path to persist normalized dataset JSON.",
+    )
+    parser.add_argument(
+        "--no-car", action="store_true", help="For --action package, disable CAR emission."
+    )
+    parser.add_argument(
+        "--piece-ids",
+        default="",
+        help="For --action components, comma-separated list of piece ids to load.",
+    )
     parser.add_argument("--query", default="", help="For search actions, query text.")
-    parser.add_argument("--top-k", type=int, default=10, help="For search actions, maximum results to return.")
+    parser.add_argument(
+        "--top-k", type=int, default=10, help="For search actions, maximum results to return."
+    )
     parser.add_argument(
         "--fields",
         default=None,
@@ -211,7 +355,9 @@ def main(args: list[str] | None = None) -> int:
         input_directory = str(parsed.input_directory or parsed.input_path or "").strip()
         output_parquet = str(parsed.output_parquet or "").strip()
         if not input_directory:
-            parser.error("--input-directory or --input-path is required for --action ingest-pdf-dir.")
+            parser.error(
+                "--input-directory or --input-path is required for --action ingest-pdf-dir."
+            )
         if not output_parquet:
             parser.error("--output-parquet is required for --action ingest-pdf-dir.")
         payload = ingest_workspace_pdf_directory(
@@ -222,7 +368,9 @@ def main(args: list[str] | None = None) -> int:
             source_type=str(parsed.source_type or "pdf_directory"),
             vector_dimension=int(parsed.vector_dimension or 16),
             include_formal_logic=not bool(parsed.no_formal_logic),
-            formal_logic_max_documents=int(parsed.max_logic_documents) if int(parsed.max_logic_documents or 0) > 0 else None,
+            formal_logic_max_documents=int(parsed.max_logic_documents)
+            if int(parsed.max_logic_documents or 0) > 0
+            else None,
             max_pdf_pages=int(parsed.max_pdf_pages) if int(parsed.max_pdf_pages or 0) > 0 else None,
             max_pdf_chars=int(parsed.max_pdf_chars) if int(parsed.max_pdf_chars or 0) > 0 else None,
             enable_ocr=bool(parsed.enable_ocr),
@@ -239,7 +387,11 @@ def main(args: list[str] | None = None) -> int:
         return 0
 
     if parsed.action in {"export", "package"}:
-        export_args: list[str] = ["--output-parquet", str(parsed.output_parquet or "")] if str(parsed.output_parquet or "").strip() else []
+        export_args: list[str] = (
+            ["--output-parquet", str(parsed.output_parquet or "")]
+            if str(parsed.output_parquet or "").strip()
+            else []
+        )
         if str(parsed.input_json or "").strip():
             export_args.extend(["--input-json", str(parsed.input_json)])
         if str(parsed.input_directory or "").strip():
@@ -263,9 +415,13 @@ def main(args: list[str] | None = None) -> int:
         if int(parsed.embeddings_batch_size or 0) > 0:
             export_args.extend(["--embeddings-batch-size", str(parsed.embeddings_batch_size)])
         if int(parsed.embeddings_parallel_batches or 0) > 0:
-            export_args.extend(["--embeddings-parallel-batches", str(parsed.embeddings_parallel_batches)])
+            export_args.extend(
+                ["--embeddings-parallel-batches", str(parsed.embeddings_parallel_batches)]
+            )
         if str(parsed.embeddings_chunking_strategy or "").strip():
-            export_args.extend(["--embeddings-chunking-strategy", str(parsed.embeddings_chunking_strategy)])
+            export_args.extend(
+                ["--embeddings-chunking-strategy", str(parsed.embeddings_chunking_strategy)]
+            )
         if int(parsed.embeddings_chunk_size or 0) > 0:
             export_args.extend(["--embeddings-chunk-size", str(parsed.embeddings_chunk_size)])
         if int(parsed.embeddings_chunk_overlap or 0) >= 0:
@@ -297,7 +453,11 @@ def main(args: list[str] | None = None) -> int:
         except ValueError as exc:
             parser.error(str(exc))
 
-        dataset_dict = dataset_payload.to_dict() if hasattr(dataset_payload, "to_dict") else dict(dataset_payload)
+        dataset_dict = (
+            dataset_payload.to_dict()
+            if hasattr(dataset_payload, "to_dict")
+            else dict(dataset_payload)
+        )
         metadata = dict(dataset_dict.get("metadata") or {})
         artifact_provenance = dict(metadata.get("artifact_provenance") or {})
         artifact_provenance["workspace_input"] = {
@@ -318,7 +478,12 @@ def main(args: list[str] | None = None) -> int:
         if parsed.json:
             print(json.dumps(packaged, indent=2, ensure_ascii=False))
         else:
-            print(render_packaged_workspace_report(str(packaged.get("manifest_json_path") or ""), report_format="text"), end="")
+            print(
+                render_packaged_workspace_report(
+                    str(packaged.get("manifest_json_path") or ""), report_format="text"
+                ),
+                end="",
+            )
         return 0
 
     fields = _parse_fields_arg(parsed.fields)
@@ -406,15 +571,21 @@ def main(args: list[str] | None = None) -> int:
     elif parsed.action == "package-export-hf-records":
         output_path = str(parsed.output_hf_records_parquet or "").strip()
         if not output_path:
-            parser.error("--output-hf-records-parquet is required for --action package-export-hf-records.")
+            parser.error(
+                "--output-hf-records-parquet is required for --action package-export-hf-records."
+            )
         payload = export_packaged_workspace_hf_records_parquet(bundle_path, output_path)
         title = "Packaged Workspace HF Records Export"
     elif parsed.action == "chain":
         payload = iter_packaged_workspace_chain(bundle_path)
         title = "Packaged Workspace Chain"
     elif parsed.action == "components":
-        piece_ids = [item.strip() for item in str(parsed.piece_ids or "").split(",") if item.strip()]
-        payload = load_packaged_workspace_dataset_components(bundle_path, piece_ids=piece_ids or None)
+        piece_ids = [
+            item.strip() for item in str(parsed.piece_ids or "").split(",") if item.strip()
+        ]
+        payload = load_packaged_workspace_dataset_components(
+            bundle_path, piece_ids=piece_ids or None
+        )
         title = "Packaged Workspace Components"
     else:
         payload = load_workspace_dataset_single_parquet(bundle_path)
@@ -423,7 +594,12 @@ def main(args: list[str] | None = None) -> int:
     payload = _select_fields(payload, fields)
     if parsed.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
-    elif parsed.action in {"search-bm25", "search-vector", "package-search-bm25", "package-search-vector"}:
+    elif parsed.action in {
+        "search-bm25",
+        "search-vector",
+        "package-search-bm25",
+        "package-search-vector",
+    }:
         print(_render_search_text(payload, title=title), end="")
     else:
         print(_render_text(payload, title=title), end="")

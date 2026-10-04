@@ -4,6 +4,7 @@ Client implementation for the IPFS Datasets MCP server.
 This module provides a convenient Python client for interacting with
 the IPFS Datasets MCP server from your Python code.
 """
+
 from __future__ import annotations
 
 import anyio
@@ -69,7 +70,9 @@ class IPFSDatasetsMCPClient:
         """
         return await self.mcp_client.get_tool_list()
 
-    async def call_tool(self, tool_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def call_tool(
+        self, tool_name: str, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Call a tool on the server.
 
@@ -79,7 +82,7 @@ class IPFSDatasetsMCPClient:
 
         Returns:
             Tool result
-        """ 
+        """
         if isinstance(params, dict):
             return await self.mcp_client.call_tool(tool_name, params)
         elif params is None:
@@ -90,10 +93,7 @@ class IPFSDatasetsMCPClient:
     # Dataset tools
 
     async def load_dataset(
-        self,
-        source: str,
-        format: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None
+        self, source: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Load a dataset from a source.
@@ -119,7 +119,7 @@ class IPFSDatasetsMCPClient:
         dataset_id: str,
         destination: str,
         format: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None
+        options: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Save a dataset to a destination.
@@ -133,10 +133,7 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the saved dataset
         """
-        params = {
-            "dataset_id": dataset_id,
-            "destination": destination
-        }
+        params = {"dataset_id": dataset_id, "destination": destination}
         if format:
             params["format"] = format
         if options:
@@ -145,10 +142,7 @@ class IPFSDatasetsMCPClient:
         return await self.call_tool("save_dataset", params)
 
     async def process_dataset(
-        self,
-        dataset_id: str,
-        operations: List[Dict[str, Any]],
-        output_id: Optional[str] = None
+        self, dataset_id: str, operations: List[Dict[str, Any]], output_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Process a dataset with a series of operations.
@@ -161,20 +155,14 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the processed dataset
         """
-        params = {
-            "dataset_id": dataset_id,
-            "operations": operations
-        }
+        params = {"dataset_id": dataset_id, "operations": operations}
         if output_id:
             params["output_id"] = output_id
 
         return await self.call_tool("process_dataset", params)
 
     async def convert_dataset_format(
-        self,
-        dataset_id: str,
-        target_format: str,
-        output_path: Optional[str] = None
+        self, dataset_id: str, target_format: str, output_path: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Convert a dataset to a different format.
@@ -187,10 +175,7 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the converted dataset
         """
-        params = {
-            "dataset_id": dataset_id,
-            "target_format": target_format
-        }
+        params = {"dataset_id": dataset_id, "target_format": target_format}
         if output_path:
             params["output_path"] = output_path
 
@@ -198,11 +183,7 @@ class IPFSDatasetsMCPClient:
 
     # IPFS tools
 
-    async def pin_to_ipfs(
-        self,
-        content_path: str,
-        recursive: bool = True
-    ) -> Dict[str, Any]:
+    async def pin_to_ipfs(self, content_path: str, recursive: bool = True) -> Dict[str, Any]:
         """
         Pin content to IPFS.
 
@@ -213,18 +194,11 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the pinned content
         """
-        params = {
-            "content_path": content_path,
-            "recursive": recursive
-        }
+        params = {"content_path": content_path, "recursive": recursive}
 
         return await self.call_tool("pin_to_ipfs", params)
 
-    async def get_from_ipfs(
-        self,
-        cid: str,
-        output_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def get_from_ipfs(self, cid: str, output_path: Optional[str] = None) -> Dict[str, Any]:
         """
         Get content from IPFS.
 
@@ -248,7 +222,7 @@ class IPFSDatasetsMCPClient:
         vectors: List[List[float]],
         dimension: int,
         metric: str = "cosine",
-        metadata: Optional[List[Dict[str, Any]]] = None
+        metadata: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """
         Create a vector index.
@@ -262,21 +236,14 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the created index
         """
-        params = {
-            "vectors": vectors,
-            "dimension": dimension,
-            "metric": metric
-        }
+        params = {"vectors": vectors, "dimension": dimension, "metric": metric}
         if metadata:
             params["metadata"] = metadata
 
         return await self.call_tool("create_vector_index", params)
 
     async def search_vector_index(
-        self,
-        index_id: str,
-        query_vector: List[float],
-        top_k: int = 10
+        self, index_id: str, query_vector: List[float], top_k: int = 10
     ) -> Dict[str, Any]:
         """
         Search a vector index.
@@ -289,11 +256,7 @@ class IPFSDatasetsMCPClient:
         Returns:
             Search results
         """
-        params = {
-            "index_id": index_id,
-            "query_vector": query_vector,
-            "top_k": top_k
-        }
+        params = {"index_id": index_id, "query_vector": query_vector, "top_k": top_k}
 
         return await self.call_tool("search_vector_index", params)
 

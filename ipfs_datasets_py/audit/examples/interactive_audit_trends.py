@@ -10,20 +10,30 @@ import time
 import datetime
 import random
 import os
-from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditLevel, AuditCategory
-)
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditLevel, AuditCategory
 from ipfs_datasets_py.audit.audit_visualization import (
-    AuditMetricsAggregator, create_interactive_audit_trends
+    AuditMetricsAggregator,
+    create_interactive_audit_trends,
 )
+
 
 def generate_sample_audit_events(logger, count=1000, days=30):
     """Generate sample audit events for visualization."""
     categories = [c.name for c in AuditCategory]
     levels = [l.name for l in AuditLevel]
     actions = [
-        "login", "logout", "create", "read", "update", "delete",
-        "upload", "download", "search", "query", "configure", "access"
+        "login",
+        "logout",
+        "create",
+        "read",
+        "update",
+        "delete",
+        "upload",
+        "download",
+        "search",
+        "query",
+        "configure",
+        "access",
     ]
     users = ["user1", "user2", "user3", "admin1", "admin2", "service_account"]
     statuses = ["success", "failure", "error", "denied", "timeout"]
@@ -77,7 +87,7 @@ def generate_sample_audit_events(logger, count=1000, days=30):
         details = {
             "client_ip": f"192.168.1.{random.randint(1, 255)}",
             "endpoint": f"/{action}/{resource_type}" if random.random() > 0.5 else "/api/v1/data",
-            "duration_ms": duration_ms
+            "duration_ms": duration_ms,
         }
 
         # Add compliance details if applicable
@@ -88,14 +98,16 @@ def generate_sample_audit_events(logger, count=1000, days=30):
 
         # Add some error details for failed events
         if status in ["failure", "error"]:
-            details["error"] = random.choice([
-                "Permission denied",
-                "Resource not found",
-                "Invalid input",
-                "Service unavailable",
-                "Connection timeout",
-                "Authentication failed"
-            ])
+            details["error"] = random.choice(
+                [
+                    "Permission denied",
+                    "Resource not found",
+                    "Invalid input",
+                    "Service unavailable",
+                    "Connection timeout",
+                    "Authentication failed",
+                ]
+            )
 
         # Create special patterns: Generate spikes in certain time periods
         hour_of_day = event_datetime.hour
@@ -117,13 +129,14 @@ def generate_sample_audit_events(logger, count=1000, days=30):
             resource_type=resource_type,
             resource_id=resource_id,
             timestamp=event_datetime.isoformat(),
-            details=details
+            details=details,
         )
 
         # Log the event
         logger.log_event(event)
 
     return count
+
 
 def main():
     """Run the interactive audit visualization example."""
@@ -136,7 +149,7 @@ def main():
     logger = AuditLogger()
     metrics = AuditMetricsAggregator(
         window_size=30 * 86400,  # 30 days
-        bucket_size=3600  # 1 hour buckets
+        bucket_size=3600,  # 1 hour buckets
     )
 
     # Register metrics collector with logger
@@ -153,35 +166,35 @@ def main():
     # Create daily trend visualization
     daily_vis = create_interactive_audit_trends(
         metrics_aggregator=metrics,
-        period='daily',
+        period="daily",
         lookback_days=30,
-        output_file=os.path.join(output_dir, "audit_trends_daily.html")
+        output_file=os.path.join(output_dir, "audit_trends_daily.html"),
     )
 
     # Create hourly trend visualization for the last 7 days
     hourly_vis = create_interactive_audit_trends(
         metrics_aggregator=metrics,
-        period='hourly',
+        period="hourly",
         lookback_days=7,
-        output_file=os.path.join(output_dir, "audit_trends_hourly.html")
+        output_file=os.path.join(output_dir, "audit_trends_hourly.html"),
     )
 
     # Create visualization focused on security-related categories
     security_vis = create_interactive_audit_trends(
         metrics_aggregator=metrics,
-        period='daily',
+        period="daily",
         lookback_days=30,
         categories=["AUTHENTICATION", "AUTHORIZATION", "SECURITY"],
-        output_file=os.path.join(output_dir, "security_trends.html")
+        output_file=os.path.join(output_dir, "security_trends.html"),
     )
 
     # Create visualization focused on error and critical levels
     error_vis = create_interactive_audit_trends(
         metrics_aggregator=metrics,
-        period='daily',
+        period="daily",
         lookback_days=30,
         levels=["ERROR", "CRITICAL", "EMERGENCY"],
-        output_file=os.path.join(output_dir, "error_trends.html")
+        output_file=os.path.join(output_dir, "error_trends.html"),
     )
 
     print(f"Interactive visualizations created in {output_dir}/")
@@ -190,8 +203,11 @@ def main():
     print(f"  - {output_dir}/audit_trends_hourly.html (Hourly audit trends for last 7 days)")
     print(f"  - {output_dir}/security_trends.html (Security-related events)")
     print(f"  - {output_dir}/error_trends.html (Error-level events)")
-    print("\nThese HTML files contain interactive visualizations that can be opened in any web browser.")
+    print(
+        "\nThese HTML files contain interactive visualizations that can be opened in any web browser."
+    )
     print("They feature time-based filtering, zooming, tooltips, and other interactive elements.")
+
 
 if __name__ == "__main__":
     main()

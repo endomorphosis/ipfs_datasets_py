@@ -68,9 +68,12 @@ def test_successful_stage_has_bounded_provenance_telemetry_and_stable_digest() -
     assert record.status is contracts.StageStatus.SUCCESS
     assert record.provenance.requested_identity == {"implementation": "injected-test"}
     assert record.telemetry == telemetry
-    assert record.output_sha256 == hashlib.sha256(
-        contracts.canonical_json({"case": "case-001", "ir": "compiled"}).encode()
-    ).hexdigest()
+    assert (
+        record.output_sha256
+        == hashlib.sha256(
+            contracts.canonical_json({"case": "case-001", "ir": "compiled"}).encode()
+        ).hexdigest()
+    )
     encoded = contracts.canonical_json(record.to_dict())
     restored = contracts.StageRecord.from_dict(record.to_dict())
     assert contracts.canonical_json(restored.to_dict()) == encoded
@@ -87,17 +90,13 @@ def test_missing_handler_is_explicitly_unavailable_and_never_falls_back() -> Non
 
 
 def test_resource_lanes_are_bound_to_the_stage() -> None:
-    model_telemetry = replace(
-        _telemetry(), resource_lane=contracts.ResourceLane.MODEL
-    )
+    model_telemetry = replace(_telemetry(), resource_lane=contracts.ResourceLane.MODEL)
     record = adapters.SymaiAdapter(lambda _request: {"ir": "candidate"}).run(
         _request(), telemetry=model_telemetry
     )
     assert record.telemetry.resource_lane is contracts.ResourceLane.MODEL
     with pytest.raises(contracts.ProtocolContractError):
-        adapters.KernelAdapter(lambda _request: {}).run(
-            _request(), telemetry=model_telemetry
-        )
+        adapters.KernelAdapter(lambda _request: {}).run(_request(), telemetry=model_telemetry)
 
 
 def test_non_kernel_claim_is_fail_closed() -> None:

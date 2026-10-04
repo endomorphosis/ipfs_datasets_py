@@ -21,6 +21,7 @@ Comprehensive examples for using the IPLD/IPFS vector search engine.
 import asyncio
 from ipfs_datasets_py.vector_stores import create_vector_store, add_texts_to_store, search_texts
 
+
 async def quick_start():
     # Create IPLD store with router integration
     store = await create_vector_store(
@@ -28,33 +29,34 @@ async def quick_start():
         "documents",
         dimension=768,
         use_embeddings_router=True,  # Auto-generate embeddings
-        use_ipfs_router=True,        # Store to IPFS
-        auto_pin_to_ipfs=False
+        use_ipfs_router=True,  # Store to IPFS
+        auto_pin_to_ipfs=False,
     )
-    
+
     # Create collection
     await store.create_collection()
-    
+
     # Add texts (embeddings auto-generated)
     texts = [
         "IPFS is a distributed file system",
         "IPLD provides data structures for IPFS",
-        "Content addressing enables decentralization"
+        "Content addressing enables decentralization",
     ]
-    
+
     ids = await add_texts_to_store(store, texts)
     print(f"Added {len(ids)} documents")
-    
+
     # Search by text (query embedding auto-generated)
     results = await search_texts(store, "What is IPFS?", top_k=3)
-    
+
     for i, result in enumerate(results):
-        print(f"{i+1}. Score: {result.score:.3f}")
+        print(f"{i + 1}. Score: {result.score:.3f}")
         print(f"   Text: {result.content}")
-    
+
     # Export to IPFS
     cid = await store.export_to_ipld()
     print(f"Collection available at: ipfs://{cid}")
+
 
 # Run
 asyncio.run(quick_start())
@@ -68,11 +70,7 @@ asyncio.run(quick_start())
 from ipfs_datasets_py.vector_stores import create_ipld_config
 
 # Basic configuration
-config = create_ipld_config(
-    collection_name="documents",
-    dimension=768,
-    distance_metric="cosine"
-)
+config = create_ipld_config(collection_name="documents", dimension=768, distance_metric="cosine")
 
 # Full configuration with all options
 config = create_ipld_config(
@@ -83,7 +81,7 @@ config = create_ipld_config(
     use_embeddings_router=True,
     use_ipfs_router=True,
     embeddings_router_provider="openrouter",  # or "gemini", "hf"
-    ipfs_router_backend="kubo",               # or "accelerate", "kit"
+    ipfs_router_backend="kubo",  # or "accelerate", "kit"
     # IPLD settings
     enable_ipld_export=True,
     auto_pin_to_ipfs=False,
@@ -95,7 +93,7 @@ config = create_ipld_config(
     batch_size=1000,
     parallel_workers=4,
     cache_size=10000,
-    prefetch_enabled=True
+    prefetch_enabled=True,
 )
 ```
 
@@ -104,11 +102,7 @@ config = create_ipld_config(
 ```python
 from ipfs_datasets_py.vector_stores import create_faiss_config
 
-config = create_faiss_config(
-    collection_name="documents",
-    dimension=768,
-    distance_metric="cosine"
-)
+config = create_faiss_config(collection_name="documents", dimension=768, distance_metric="cosine")
 ```
 
 ### Qdrant Configuration
@@ -120,7 +114,7 @@ config = create_qdrant_config(
     collection_name="documents",
     dimension=768,
     distance_metric="cosine",
-    qdrant_url="http://localhost:6333"
+    qdrant_url="http://localhost:6333",
 )
 ```
 
@@ -159,7 +153,7 @@ embeddings = [
         chunk_id=f"doc_{i}",
         content=f"Document {i} text",
         embedding=np.random.rand(768).tolist(),
-        metadata={"source": "example", "index": i}
+        metadata={"source": "example", "index": i},
     )
     for i in range(100)
 ]
@@ -179,7 +173,7 @@ results = await store.search(
     query_vector,
     top_k=10,
     collection_name="my_documents",
-    filter_dict={"source": "example"}  # Optional metadata filter
+    filter_dict={"source": "example"},  # Optional metadata filter
 )
 
 for result in results:
@@ -214,7 +208,7 @@ store = await create_vector_store(
     "docs",
     dimension=768,
     use_embeddings_router=True,
-    embeddings_router_provider="openrouter"  # or "gemini", "hf"
+    embeddings_router_provider="openrouter",  # or "gemini", "hf"
 )
 
 await store.create_collection()
@@ -225,7 +219,7 @@ embeddings = [
         chunk_id=f"doc_{i}",
         content=f"This is document {i} about AI and machine learning",
         embedding=None,  # Router will generate this
-        metadata={"topic": "AI"}
+        metadata={"topic": "AI"},
     )
     for i in range(10)
 ]
@@ -243,7 +237,7 @@ store = await create_vector_store(
     dimension=768,
     use_ipfs_router=True,
     ipfs_router_backend="kubo",
-    auto_pin_to_ipfs=True  # Pin vectors to IPFS
+    auto_pin_to_ipfs=True,  # Pin vectors to IPFS
 )
 
 await store.create_collection()
@@ -278,9 +272,7 @@ from ipfs_datasets_py.vector_stores import import_collection_from_ipfs
 
 # Import from CID
 success = await import_collection_from_ipfs(
-    store,
-    root_cid="QmXXXXXXXXX",
-    collection_name="imported_docs"
+    store, root_cid="QmXXXXXXXXX", collection_name="imported_docs"
 )
 
 # Or directly via store
@@ -291,16 +283,10 @@ success = await store.import_from_ipld("QmXXXXXXXXX", "imported_docs")
 
 ```python
 # Export to CAR file
-success = await store.export_to_car(
-    "/path/to/collection.car",
-    "my_documents"
-)
+success = await store.export_to_car("/path/to/collection.car", "my_documents")
 
 # Import from CAR file
-success = await store.import_from_car(
-    "/path/to/collection.car",
-    "restored_docs"
-)
+success = await store.import_from_car("/path/to/collection.car", "restored_docs")
 ```
 
 ## Cross-Store Migration
@@ -323,7 +309,7 @@ count = await migrate_collection(
     "documents",
     target_collection_name="documents_ipld",
     batch_size=1000,
-    verify=True
+    verify=True,
 )
 
 print(f"Migrated {count} vectors")
@@ -339,16 +325,11 @@ bridge = create_bridge(faiss_store, ipld_store)
 
 # Migrate
 count = await bridge.migrate_collection(
-    "documents",
-    target_collection_name="documents_ipld",
-    batch_size=1000
+    "documents", target_collection_name="documents_ipld", batch_size=1000
 )
 
 # Verify migration
-verification = await bridge.verify_migration(
-    "documents",
-    "documents_ipld"
-)
+verification = await bridge.verify_migration("documents", "documents_ipld")
 print(f"Verification: {verification}")
 ```
 
@@ -384,10 +365,7 @@ import numpy as np
 query_vector = np.random.rand(768).tolist()
 
 results = await manager.search_all(
-    query_vector,
-    stores=["ipld_primary", "faiss_cache"],
-    collection_name="documents",
-    top_k=5
+    query_vector, stores=["ipld_primary", "faiss_cache"], collection_name="documents", top_k=5
 )
 
 for store_name, store_results in results.items():
@@ -404,7 +382,7 @@ results = await manager.sync_collections(
     collection_name="documents",
     primary_store="ipld_primary",
     replica_stores=["ipld_backup", "faiss_cache"],
-    batch_size=1000
+    batch_size=1000,
 )
 
 for store, count in results.items():
@@ -420,10 +398,10 @@ health = await manager.get_all_health()
 for store_name, status in health.items():
     print(f"\n{store_name}:")
     print(f"  Healthy: {status['healthy']}")
-    if status['info']:
+    if status["info"]:
         print(f"  Collections: {status['info']['total_collections']}")
         print(f"  Vectors: {status['info']['total_vectors']}")
-    if status['error']:
+    if status["error"]:
         print(f"  Error: {status['error']}")
 ```
 
@@ -459,7 +437,7 @@ config = UnifiedVectorStoreConfig(
     # Multi-store sync
     enable_multi_store_sync=True,
     sync_stores=["ipld_backup", "faiss_cache"],
-    sync_interval=3600
+    sync_interval=3600,
 )
 
 store = IPLDVectorStore(config)
@@ -473,17 +451,17 @@ texts = [...]  # Large list of texts
 batch_size = 1000
 
 for i in range(0, len(texts), batch_size):
-    batch_texts = texts[i:i + batch_size]
+    batch_texts = texts[i : i + batch_size]
     batch_embeddings = [
         EmbeddingResult(
-            chunk_id=f"doc_{i+j}",
+            chunk_id=f"doc_{i + j}",
             content=text,
             embedding=None,  # Auto-generated
-            metadata={"batch": i // batch_size}
+            metadata={"batch": i // batch_size},
         )
         for j, text in enumerate(batch_texts)
     ]
-    
+
     ids = await store.add_embeddings(batch_embeddings)
     print(f"Processed batch {i // batch_size}: {len(ids)} documents")
 ```

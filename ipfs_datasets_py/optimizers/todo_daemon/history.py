@@ -83,7 +83,9 @@ def read_daemon_proposal_records(
 def proposal_record_succeeded(record: Mapping[str, Any]) -> bool:
     """Return whether a proposal-style record represents a successful applied change."""
 
-    return bool(record.get("applied") and record.get("validation_passed") and not record.get("errors"))
+    return bool(
+        record.get("applied") and record.get("validation_passed") and not record.get("errors")
+    )
 
 
 def recent_proposal_failures(

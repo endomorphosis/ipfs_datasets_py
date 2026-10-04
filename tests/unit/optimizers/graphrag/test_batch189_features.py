@@ -11,11 +11,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_trend_slope()
   - OntologyMediator.action_ratio(action)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -28,14 +30,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -43,32 +51,38 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5, props=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     e = Entity(id=eid, type="T", text=eid, confidence=confidence, properties=props or {})
     return e
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(entities=entities, relationships=[], confidence=1.0)
 
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -79,21 +93,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.history_weighted_mean ───────────────────────────────────
+
 
 class TestHistoryWeightedMean:
     def test_empty_returns_zero(self):
@@ -125,6 +145,7 @@ class TestHistoryWeightedMean:
 
 
 # ── OntologyOptimizer.score_consecutive_above ─────────────────────────────────
+
 
 class TestScoreConsecutiveAbove:
     def test_empty_returns_zero(self):
@@ -159,12 +180,17 @@ class TestScoreConsecutiveAbove:
 
 # ── OntologyCritic.dimension_percentile ──────────────────────────────────────
 
+
 class TestDimensionPercentile:
     def test_50th_is_median(self):
         c = _make_critic()
         s = _make_score(
-            completeness=0.2, consistency=0.4, clarity=0.6,
-            granularity=0.8, relationship_coherence=0.9, domain_alignment=1.0,
+            completeness=0.2,
+            consistency=0.4,
+            clarity=0.6,
+            granularity=0.8,
+            relationship_coherence=0.9,
+            domain_alignment=1.0,
         )
         # sorted: [0.2, 0.4, 0.6, 0.8, 0.9, 1.0] — 50th percentile
         result = c.dimension_percentile(s, 50.0)
@@ -172,24 +198,43 @@ class TestDimensionPercentile:
 
     def test_0th_is_min(self):
         c = _make_critic()
-        s = _make_score(completeness=0.1, consistency=0.5, clarity=0.5,
-                        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        s = _make_score(
+            completeness=0.1,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         assert c.dimension_percentile(s, 0.0) == pytest.approx(0.1)
 
     def test_100th_is_max(self):
         c = _make_critic()
-        s = _make_score(completeness=0.5, consistency=0.5, clarity=0.5,
-                        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.9)
+        s = _make_score(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.9,
+        )
         assert c.dimension_percentile(s, 100.0) == pytest.approx(0.9)
 
     def test_uniform_any_percentile_returns_value(self):
         c = _make_critic()
-        s = _make_score(completeness=0.6, consistency=0.6, clarity=0.6,
-                        granularity=0.6, relationship_coherence=0.6, domain_alignment=0.6)
+        s = _make_score(
+            completeness=0.6,
+            consistency=0.6,
+            clarity=0.6,
+            granularity=0.6,
+            relationship_coherence=0.6,
+            domain_alignment=0.6,
+        )
         assert c.dimension_percentile(s, 75.0) == pytest.approx(0.6)
 
 
 # ── OntologyGenerator.entity_min_confidence ──────────────────────────────────
+
 
 class TestEntityMinConfidence:
     def test_empty_returns_zero(self):
@@ -204,15 +249,18 @@ class TestEntityMinConfidence:
 
     def test_multiple_returns_min(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("e1", confidence=0.9),
-            _make_entity("e2", confidence=0.3),
-            _make_entity("e3", confidence=0.6),
-        ])
+        r = _make_result(
+            [
+                _make_entity("e1", confidence=0.9),
+                _make_entity("e2", confidence=0.3),
+                _make_entity("e3", confidence=0.6),
+            ]
+        )
         assert g.entity_min_confidence(r) == pytest.approx(0.3)
 
 
 # ── OntologyGenerator.entity_max_confidence ──────────────────────────────────
+
 
 class TestEntityMaxConfidence:
     def test_empty_returns_zero(self):
@@ -227,15 +275,18 @@ class TestEntityMaxConfidence:
 
     def test_multiple_returns_max(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("e1", confidence=0.9),
-            _make_entity("e2", confidence=0.3),
-            _make_entity("e3", confidence=0.6),
-        ])
+        r = _make_result(
+            [
+                _make_entity("e1", confidence=0.9),
+                _make_entity("e2", confidence=0.3),
+                _make_entity("e3", confidence=0.6),
+            ]
+        )
         assert g.entity_max_confidence(r) == pytest.approx(0.9)
 
 
 # ── LogicValidator.edge_count ─────────────────────────────────────────────────
+
 
 class TestEdgeCount:
     def test_empty_ontology(self):
@@ -248,11 +299,13 @@ class TestEdgeCount:
 
     def test_counts_relationships(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "c"},
-            {"source": "c", "target": "a"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+                {"source": "c", "target": "a"},
+            ]
+        }
         assert v.edge_count(onto) == 3
 
     def test_single_relationship(self):
@@ -262,6 +315,7 @@ class TestEdgeCount:
 
 
 # ── OntologyPipeline.run_score_first ─────────────────────────────────────────
+
 
 class TestRunScoreFirst:
     def test_empty_returns_zero(self):
@@ -282,6 +336,7 @@ class TestRunScoreFirst:
 
 
 # ── OntologyLearningAdapter.feedback_trend_slope ──────────────────────────────
+
 
 class TestFeedbackTrendSlope:
     def test_empty_returns_zero(self):
@@ -313,6 +368,7 @@ class TestFeedbackTrendSlope:
 
 
 # ── OntologyMediator.action_ratio ────────────────────────────────────────────
+
 
 class TestActionRatio:
     def test_no_actions_returns_zero(self):

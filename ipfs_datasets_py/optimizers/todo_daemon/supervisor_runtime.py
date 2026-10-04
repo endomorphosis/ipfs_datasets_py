@@ -106,7 +106,9 @@ def launch_supervised_child(spec: SupervisedChildSpec) -> SupervisedChild:
 
     log_path = spec.resolve(spec.log_path)
     child_pid_path = spec.resolve(spec.child_pid_path)
-    latest_log_path = spec.resolve(spec.latest_log_path) if spec.latest_log_path is not None else None
+    latest_log_path = (
+        spec.resolve(spec.latest_log_path) if spec.latest_log_path is not None else None
+    )
     log_path.parent.mkdir(parents=True, exist_ok=True)
     child_pid_path.parent.mkdir(parents=True, exist_ok=True)
     if latest_log_path is not None:
@@ -143,7 +145,9 @@ def launch_supervised_child(spec: SupervisedChildSpec) -> SupervisedChild:
     )
 
 
-def clear_child_pid_file(child: SupervisedChild | SupervisedChildSpec, *, pid: Optional[int] = None) -> bool:
+def clear_child_pid_file(
+    child: SupervisedChild | SupervisedChildSpec, *, pid: Optional[int] = None
+) -> bool:
     """Remove a child pid file if it still refers to the expected child."""
 
     child_pid_path = child.child_pid_path

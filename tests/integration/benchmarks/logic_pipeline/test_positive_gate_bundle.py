@@ -147,8 +147,7 @@ def _authority_manifest(
     **overrides: str,
 ) -> G202AuthorityRoleManifestV2:
     roles = {
-        role: _identity(f"{prefix}-{role.replace('_', '-')}")
-        for role in G202_AUTHORITY_ROLE_KEYS
+        role: _identity(f"{prefix}-{role.replace('_', '-')}") for role in G202_AUTHORITY_ROLE_KEYS
     }
     roles.update(overrides)
     return G202AuthorityRoleManifestV2(role_identity_cids=roles)
@@ -157,30 +156,20 @@ def _authority_manifest(
 def _component_policy_cids() -> dict[str, str]:
     return {
         "semantic_quality": G202_SEMANTIC_QUALITY_POLICY_V2_CID,
-        "efficacy_evaluation": (
-            G202_EFFICACY_EVALUATION_POLICY_V2_CID
-        ),
-        "shortlist_selection": (
-            G202_SHORTLIST_SELECTION_POLICY_V2_CID
-        ),
+        "efficacy_evaluation": (G202_EFFICACY_EVALUATION_POLICY_V2_CID),
+        "shortlist_selection": (G202_SHORTLIST_SELECTION_POLICY_V2_CID),
         "reviewed_control_safety": REVIEWED_CONTROL_POLICY_V2_CID,
         "resource_measurement": RESOURCE_MEASUREMENT_POLICY_V2_CID,
         "pareto": G202_PARETO_POLICY_V2_CID,
         "detached_replay": G238_REPLAY_POLICY_V2_CID,
-        "resource_replay_tolerance": (
-            RESOURCE_REPLAY_COMPARISON_POLICY_V2_CID
-        ),
+        "resource_replay_tolerance": (RESOURCE_REPLAY_COMPARISON_POLICY_V2_CID),
     }
 
 
 def _gate_policy_bundle() -> G202GatePolicyBundleV2:
     return G202GatePolicyBundleV2(
-        reviewed_control_index_cid=_identity(
-            "selection-policy-control-index"
-        ),
-        statistical_plan_cid=_identity(
-            "selection-policy-statistical-plan"
-        ),
+        reviewed_control_index_cid=_identity("selection-policy-control-index"),
+        statistical_plan_cid=_identity("selection-policy-statistical-plan"),
         component_policy_cids=_component_policy_cids(),
     )
 
@@ -189,22 +178,13 @@ def test_g202_selection_policy_freezes_every_pre_outcome_rule() -> None:
     policy = g202_shortlist_selection_policy_v2()
     requirements = policy["gate_requirements"]
 
-    assert cid_for_dag_json(policy) == (
-        G202_SHORTLIST_SELECTION_POLICY_V2_CID
-    )
+    assert cid_for_dag_json(policy) == (G202_SHORTLIST_SELECTION_POLICY_V2_CID)
     assert tuple(policy["candidate_variant_ids"]) == CANDIDATES
-    assert policy["materiality_thresholds"] == (
-        DEFAULT_PROTOCOL.thresholds.to_dict()
-    )
+    assert policy["materiality_thresholds"] == (DEFAULT_PROTOCOL.thresholds.to_dict())
     assert policy["candidate_min"] == 1
     assert policy["candidate_max"] == 4
     assert policy["nondominated_frontier_required"] is True
-    assert (
-        policy[
-            "all_absolute_paired_safety_resource_replay_gates_required"
-        ]
-        is True
-    )
+    assert policy["all_absolute_paired_safety_resource_replay_gates_required"] is True
     assert set(requirements) == {
         "efficacy",
         "reliability",
@@ -226,13 +206,8 @@ def test_g202_selection_policy_bundle_source_replays_exactly() -> None:
     assert replayed.component_policy_cids["shortlist_selection"] == (
         G202_SHORTLIST_SELECTION_POLICY_V2_CID
     )
-    assert replayed.to_dict()["selection_policy_cid"] == (
-        G202_SHORTLIST_SELECTION_POLICY_V2_CID
-    )
-    assert (
-        replayed.to_dict()["g231_shortlist_selection_permitted"]
-        is False
-    )
+    assert replayed.to_dict()["selection_policy_cid"] == (G202_SHORTLIST_SELECTION_POLICY_V2_CID)
+    assert replayed.to_dict()["g231_shortlist_selection_permitted"] is False
 
 
 def test_g202_selection_policy_rejects_post_freeze_mutation() -> None:
@@ -252,9 +227,7 @@ def test_g202_selection_policy_rejects_post_freeze_mutation() -> None:
 
     substituted = bundle.to_dict()
     policies = dict(substituted["component_policy_cids"])
-    policies["shortlist_selection"] = _identity(
-        "post-outcome-selection-policy"
-    )
+    policies["shortlist_selection"] = _identity("post-outcome-selection-policy")
     substituted["component_policy_cids"] = policies
     with pytest.raises(
         PositiveGateBundleError,
@@ -264,9 +237,7 @@ def test_g202_selection_policy_rejects_post_freeze_mutation() -> None:
 
 
 def _source_only_semantic_plans():
-    targets, manifest = target_population(
-        manifest_sha256=MANIFEST_SHA256
-    )
+    targets, manifest = target_population(manifest_sha256=MANIFEST_SHA256)
     by_id = {target.case_id: target for target in targets}
     split_identities = manifest["reviewed_split_identities"]
     plans = []
@@ -298,11 +269,7 @@ def _source_only_g210_manifests(
     targets,
 ):
     by_split = {
-        split: next(
-            target
-            for target in targets
-            if f"-{split.value}" in target.case_id
-        )
+        split: next(target for target in targets if f"-{split.value}" in target.case_id)
         for split in (Split.PILOT, Split.DEVELOPMENT)
     }
     plans = []
@@ -336,14 +303,10 @@ def _source_only_g210_manifests(
                 "target": target.target,
             },
             optional_components=("hammer", "leanstral"),
-            review_attestation_cid=_identity(
-                f"{split.value}-rescue-review"
-            ),
+            review_attestation_cid=_identity(f"{split.value}-rescue-review"),
         )
         plans.append(plan)
-        manifests.append(
-            build_causal_rescue_manifest_v2(plan, (rescue_case,))
-        )
+        manifests.append(build_causal_rescue_manifest_v2(plan, (rescue_case,)))
     return tuple(plans), tuple(manifests)
 
 
@@ -398,9 +361,7 @@ def _source_only_runtime_identity_policy(
                     stage=stage,
                     adapter_id=f"{stage.value}-adapter",
                     adapter_version="1",
-                    adapter_module=(
-                        "benchmarks.logic_pipeline.adapters"
-                    ),
+                    adapter_module=("benchmarks.logic_pipeline.adapters"),
                     source_provenance=(
                         "benchmarks.logic_pipeline.adapters",
                         "synthetic-g202-preflight",
@@ -415,16 +376,12 @@ def _source_only_runtime_identity_policy(
         environment_cid=environment_cid,
         legacy_environment_sha256=ENVIRONMENT_SHA256,
         allowed_stage_identity_cids=allowed,
-        policy_authority_cid=_identity(
-            "source-only-runtime-policy-authority"
-        ),
+        policy_authority_cid=_identity("source-only-runtime-policy-authority"),
     )
 
 
 def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
-    targets, target_manifest, semantic_plans = (
-        _source_only_semantic_plans()
-    )
+    targets, target_manifest, semantic_plans = _source_only_semantic_plans()
     semantic_input = build_g202_g201_input_plan_v2(
         target_manifest=target_manifest,
         targets=targets,
@@ -432,9 +389,7 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
     )
     environment_cid = _identity("preflight-environment")
     capability_cid = _identity("preflight-capabilities")
-    g210_plans, g210_manifests = _source_only_g210_manifests(
-        targets
-    )
+    g210_plans, g210_manifests = _source_only_g210_manifests(targets)
     g210_input = build_g202_g210_input_plan_v2(
         run_id=CONTROL_RUN_ID,
         plans=g210_plans,
@@ -444,9 +399,7 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
     )
     statistical_plan_cid = cid_for_dag_json(PLAN.to_dict())
     gate_policy = G202GatePolicyBundleV2(
-        reviewed_control_index_cid=_identity(
-            "preflight-reviewed-control"
-        ),
+        reviewed_control_index_cid=_identity("preflight-reviewed-control"),
         statistical_plan_cid=statistical_plan_cid,
         component_policy_cids=_component_policy_cids(),
     )
@@ -489,9 +442,7 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
         },
     )
     route_manifest_cid = g231_route_manifest_cid_v2()
-    orchestration_policy_cid = _identity(
-        "preflight-runtime-orchestration-policy"
-    )
+    orchestration_policy_cid = _identity("preflight-runtime-orchestration-policy")
     run_plan_cid = g231_run_plan_cid_v2(
         run_id=CONTROL_RUN_ID,
         semantic_plan_set_cid=semantic_input["preflight_plan_cid"],
@@ -502,9 +453,7 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
         capability_inventory_cid=capability_cid,
         environment_cid=environment_cid,
         statistical_plan_cid=statistical_plan_cid,
-        reviewed_control_index_cid=(
-            gate_policy.reviewed_control_index_cid
-        ),
+        reviewed_control_index_cid=(gate_policy.reviewed_control_index_cid),
         gate_policy_bundle_cid=gate_policy.bundle_cid,
         cache_policy_cid=cache_policy.policy_cid,
         runtime_orchestration_policy_cid=orchestration_policy_cid,
@@ -517,9 +466,7 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
         source_executor=source_executor,
         freeze_producer=freeze_producer,
         freeze_validator=freeze_validator,
-        runtime_identity_policy_authority=(
-            runtime_policy.policy_authority_cid
-        ),
+        runtime_identity_policy_authority=(runtime_policy.policy_authority_cid),
     )
     freeze = G202FrozenRunInputsV2(
         run_id=CONTROL_RUN_ID,
@@ -552,12 +499,8 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
     assert semantic_input["result_objects_accepted"] is False
     assert g210_input["result_count"] == 0
     assert g210_input["runtime_matrix_accepted"] is False
-    substituted_roles = dict(
-        authority_manifest.role_identity_cids
-    )
-    substituted_roles["source_executor"] = _identity(
-        "post-freeze-substitute-executor"
-    )
+    substituted_roles = dict(authority_manifest.role_identity_cids)
+    substituted_roles["source_executor"] = _identity("post-freeze-substitute-executor")
     with pytest.raises(
         PositiveGateBundleError,
         match="fixed authorities differ",
@@ -568,28 +511,20 @@ def test_g202_freeze_can_be_built_before_any_outcome_object_exists() -> None:
                 role_identity_cids=substituted_roles
             ),
         )
-    duplicate_roles = dict(
-        authority_manifest.role_identity_cids
-    )
-    duplicate_roles["artifact_validator"] = duplicate_roles[
-        "source_executor"
-    ]
+    duplicate_roles = dict(authority_manifest.role_identity_cids)
+    duplicate_roles["artifact_validator"] = duplicate_roles["source_executor"]
     with pytest.raises(
         PositiveGateBundleError,
         match="pairwise distinct",
     ):
-        G202AuthorityRoleManifestV2(
-            role_identity_cids=duplicate_roles
-        )
+        G202AuthorityRoleManifestV2(role_identity_cids=duplicate_roles)
     with pytest.raises(
         PositiveGateBundleError,
         match="run-plan CID changed",
     ):
         replace(
             freeze,
-            runtime_orchestration_policy_cid=_identity(
-                "post-freeze-arbitrary-command-policy"
-            ),
+            runtime_orchestration_policy_cid=_identity("post-freeze-arbitrary-command-policy"),
         )
 
 
@@ -634,10 +569,13 @@ def test_g202_stage_identity_binds_adapter_source_and_both_environments() -> Non
         legacy_environment_sha256=ENVIRONMENT_SHA256,
         environment_cid=environment_cid,
     )
-    assert g202_stage_identity_cid_v2(
-        record,
-        environment_cid=environment_cid,
-    ) == expected
+    assert (
+        g202_stage_identity_cid_v2(
+            record,
+            environment_cid=environment_cid,
+        )
+        == expected
+    )
 
     changed_adapter = replace(
         record,
@@ -664,14 +602,20 @@ def test_g202_stage_identity_binds_adapter_source_and_both_environments() -> Non
         ),
     )
     for tampered in (changed_adapter, changed_source, changed_sha):
-        assert g202_stage_identity_cid_v2(
-            tampered,
-            environment_cid=environment_cid,
-        ) != expected
-    assert g202_stage_identity_cid_v2(
-        record,
-        environment_cid=_identity("other-stage-environment"),
-    ) != expected
+        assert (
+            g202_stage_identity_cid_v2(
+                tampered,
+                environment_cid=environment_cid,
+            )
+            != expected
+        )
+    assert (
+        g202_stage_identity_cid_v2(
+            record,
+            environment_cid=_identity("other-stage-environment"),
+        )
+        != expected
+    )
     with pytest.raises(
         PositiveGateBundleError,
         match="canonical dotted Python name",
@@ -691,9 +635,7 @@ def test_g202_stage_identity_binds_adapter_source_and_both_environments() -> Non
 
 
 def test_g202_g210_input_plan_rejects_unreplayed_plan_provenance() -> None:
-    targets, _target_manifest, _semantic_plans = (
-        _source_only_semantic_plans()
-    )
+    targets, _target_manifest, _semantic_plans = _source_only_semantic_plans()
     plans, manifests = _source_only_g210_manifests(targets)
     tampered_plan = replace(
         plans[0],
@@ -734,9 +676,7 @@ def _semantic_bound_matrix(
             manifest_sha256=MANIFEST_SHA256,
             environment_sha256=ENVIRONMENT_SHA256,
         )
-    calibration_cid = str(
-        semantic_index.calibration_report["artifact_cid"]
-    )
+    calibration_cid = str(semantic_index.calibration_report["artifact_cid"])
     g210_plans = []
     manifest_by_old_cid = {}
     for manifest in base.receipt_matrix.rescue_manifests:
@@ -768,9 +708,7 @@ def _semantic_bound_matrix(
             (
                 replace(
                     profile,
-                    plan_cid=manifest_by_old_cid[
-                        profile.rescue_manifest_cid
-                    ].plan_cid,
+                    plan_cid=manifest_by_old_cid[profile.rescue_manifest_cid].plan_cid,
                     source_manifest_cid=manifest_by_old_cid[
                         profile.rescue_manifest_cid
                     ].source_manifest_cid,
@@ -793,10 +731,7 @@ def _semantic_bound_matrix(
             )
         ),
         execution_profiles=profiles,
-        causal_aggregates=tuple(
-            _plain(item)
-            for item in base.receipt_matrix.causal_aggregates
-        ),
+        causal_aggregates=tuple(_plain(item) for item in base.receipt_matrix.causal_aggregates),
     )
     matrix = G210RuntimeReceiptMatrixV2(
         receipt_matrix=reduced,
@@ -843,9 +778,7 @@ def _runtime_identity_policy(
         environment_cid=environment_cid,
         legacy_environment_sha256=ENVIRONMENT_SHA256,
         allowed_stage_identity_cids=allowed,
-        policy_authority_cid=_identity(
-            "runtime-identity-policy-authority"
-        ),
+        policy_authority_cid=_identity("runtime-identity-policy-authority"),
     )
 
 
@@ -854,9 +787,7 @@ def g231_sources(
     tmp_path_factory: pytest.TempPathFactory,
     reviewed_population,
 ):
-    semantic_index, g210_plans, matrix = _semantic_bound_matrix(
-        tmp_path_factory
-    )
+    semantic_index, g210_plans, matrix = _semantic_bound_matrix(tmp_path_factory)
     efficacy = build_g234_efficacy_gate_v2(matrix, CANDIDATES)
     reliability = build_g234_reliability_gate_v2(matrix, CANDIDATES)
     routing = build_g234_routing_gate_v2(matrix, CANDIDATES)
@@ -918,9 +849,7 @@ def g231_sources(
         targets=semantic_index.targets,
         plans=semantic_index.plans,
     )
-    semantic_plan_set_cid = semantic_input_plan[
-        "preflight_plan_cid"
-    ]
+    semantic_plan_set_cid = semantic_input_plan["preflight_plan_cid"]
     route_manifest_cid = g231_route_manifest_cid_v2()
     capability_inventory_cid = _identity("capability-inventory")
     environment_cid = resources[0].environment_identity_cid
@@ -939,12 +868,9 @@ def g231_sources(
     )
     cache_policy = G202CachePolicyV2(
         run_id=CONTROL_RUN_ID,
-        legacy_protocol_sha256=(
-            matrix.runtime_evidence[0].case_result.protocol_sha256
-        ),
+        legacy_protocol_sha256=(matrix.runtime_evidence[0].case_result.protocol_sha256),
         physical_namespace_cids={
-            mode: cache_namespaces[index]
-            for index, mode in enumerate(("cold", "warm"))
+            mode: cache_namespaces[index] for index, mode in enumerate(("cold", "warm"))
         },
     )
     gate_policy = G202GatePolicyBundleV2(
@@ -981,16 +907,12 @@ def g231_sources(
         },
         frozen=True,
     )
-    orchestration_policy_cid = _identity(
-        "runtime-orchestration-policy"
-    )
+    orchestration_policy_cid = _identity("runtime-orchestration-policy")
     run_plan_cid = g231_run_plan_cid_v2(
         run_id=CONTROL_RUN_ID,
         semantic_plan_set_cid=semantic_plan_set_cid,
         g210_input_plan_cid=g210_input_plan["input_plan_cid"],
-        g210_rescue_plan_set_cid=(
-            g210_input_plan["rescue_plan_set_cid"]
-        ),
+        g210_rescue_plan_set_cid=(g210_input_plan["rescue_plan_set_cid"]),
         case_index_cid=case_index_cid,
         route_manifest_cid=route_manifest_cid,
         capability_inventory_cid=capability_inventory_cid,
@@ -1016,9 +938,7 @@ def g231_sources(
         replay_namespace_observer=replay_validator,
         freeze_producer=freeze_producer,
         freeze_validator=freeze_validator,
-        runtime_identity_policy_authority=(
-            runtime_identity_policy.policy_authority_cid
-        ),
+        runtime_identity_policy_authority=(runtime_identity_policy.policy_authority_cid),
         artifact_validator=artifact_validator,
     )
     freeze = G202FrozenRunInputsV2(
@@ -1028,9 +948,7 @@ def g231_sources(
         recursive_gitlinks_cid=_identity("recursive-gitlinks"),
         semantic_plan_set_cid=semantic_plan_set_cid,
         g210_input_plan_cid=g210_input_plan["input_plan_cid"],
-        g210_rescue_plan_set_cid=(
-            g210_input_plan["rescue_plan_set_cid"]
-        ),
+        g210_rescue_plan_set_cid=(g210_input_plan["rescue_plan_set_cid"]),
         run_plan_cid=run_plan_cid,
         capability_inventory_cid=capability_inventory_cid,
         environment_cid=environment_cid,
@@ -1064,9 +982,7 @@ def g231_sources(
         case_index_cid=freeze.case_index_cid,
         run_plan_cid=freeze.run_plan_cid,
         source_worktree_cid=freeze.source_worktree_cid,
-        source_executor_authority_cid=(
-            freeze.source_executor_authority_cid
-        ),
+        source_executor_authority_cid=(freeze.source_executor_authority_cid),
         records=replay_records,
     )
     replay_receipts = ()
@@ -1117,18 +1033,10 @@ def g231_sources(
 def test_composite_fails_closed_until_namespace_receipts_are_replayed(
     g231_sources,
 ) -> None:
-    assert (
-        g231_sources[
-            "g202_freeze"
-        ].cache_policy.physical_binding_verified
-        is False
-    )
+    assert g231_sources["g202_freeze"].cache_policy.physical_binding_verified is False
     with pytest.raises(
         PositiveGateBundleError,
-        match=(
-            "source_process_state_cache_namespace_binding_receipts_"
-            "unavailable"
-        ),
+        match=("source_process_state_cache_namespace_binding_receipts_unavailable"),
     ):
         build_g231_positive_gate_bundle_v2(**g231_sources)
 
@@ -1165,24 +1073,14 @@ def test_post_run_sources_recompute_frozen_g201_and_g210_inputs(
     causal = build_g202_g210_input_plan_v2(
         run_id=freeze.run_id,
         plans=g231_sources["g210_plans"],
-        rescue_manifests=(
-            g231_sources[
-                "runtime_matrix"
-            ].receipt_matrix.rescue_manifests
-        ),
-        legacy_environment_sha256=(
-            freeze.execution_identities.legacy_environment_sha256
-        ),
+        rescue_manifests=(g231_sources["runtime_matrix"].receipt_matrix.rescue_manifests),
+        legacy_environment_sha256=(freeze.execution_identities.legacy_environment_sha256),
         environment_cid=freeze.environment_cid,
     )
 
-    assert semantic["preflight_plan_cid"] == (
-        freeze.semantic_plan_set_cid
-    )
+    assert semantic["preflight_plan_cid"] == (freeze.semantic_plan_set_cid)
     assert causal["input_plan_cid"] == freeze.g210_input_plan_cid
-    assert causal["rescue_plan_set_cid"] == (
-        freeze.g210_rescue_plan_set_cid
-    )
+    assert causal["rescue_plan_set_cid"] == (freeze.g210_rescue_plan_set_cid)
     assert causal["case_index_cid"] == freeze.case_index_cid
 
 
@@ -1198,17 +1096,13 @@ def test_observed_model_identity_includes_disambiguated_frontend(
 
     assert identity["semantic_frontend_included"] is True
     assert identity["coordinate_disambiguation_required"] is True
-    assert {"semantic_frontend", "case_result"} == {
-        row["record_set"] for row in rows
-    }
+    assert {"semantic_frontend", "case_result"} == {row["record_set"] for row in rows}
     assert len(coordinates) == len(set(coordinates))
     assert all(row["adapter_id"] for row in rows)
     assert all(row["adapter_module"] for row in rows)
     assert all(row["source_provenance"] for row in rows)
     assert all(
-        row["environment_cid"]
-        == g231_sources["g202_freeze"].environment_cid
-        for row in rows
+        row["environment_cid"] == g231_sources["g202_freeze"].environment_cid for row in rows
     )
 
 
@@ -1223,9 +1117,7 @@ def test_cherry_picked_candidate_population_fails_before_children(
             **{
                 **g231_sources,
                 "candidate_variant_ids": tuple(
-                    candidate
-                    for candidate in CANDIDATES
-                    if candidate != "A2"
+                    candidate for candidate in CANDIDATES if candidate != "A2"
                 ),
             }
         )
@@ -1236,9 +1128,7 @@ def test_stale_post_execution_artifact_binding_fails_closed(
 ) -> None:
     artifacts = g231_sources["artifact_bindings"]
     stale_artifact_cids = dict(artifacts.artifact_cids)
-    stale_artifact_cids["g201_semantic_evidence_index"] = _identity(
-        "substituted-g201-index"
-    )
+    stale_artifact_cids["g201_semantic_evidence_index"] = _identity("substituted-g201-index")
     stale_artifacts = G231ArtifactBindingsV2(
         g202_freeze_cid=artifacts.g202_freeze_cid,
         artifact_cids=stale_artifact_cids,
@@ -1262,22 +1152,10 @@ def test_g238_source_records_embed_and_recompute_complete_sources(
     index = g231_sources["replay_source_index"]
     assert len(index.records) == 52
     for record in index.records:
-        assert (
-            record.runtime_evidence_cid
-            == record.runtime_evidence.receipt_cid
-        )
-        assert (
-            record.semantic_observation.runtime_evidence_cid
-            == record.runtime_evidence_cid
-        )
-        assert (
-            record.resource_receipt.runtime_evidence_cid
-            == record.runtime_evidence_cid
-        )
-        assert (
-            record.resource_replay_identity_cid
-            == record.resource_receipt.replay_identity_cid
-        )
+        assert record.runtime_evidence_cid == record.runtime_evidence.receipt_cid
+        assert record.semantic_observation.runtime_evidence_cid == record.runtime_evidence_cid
+        assert record.resource_receipt.runtime_evidence_cid == record.runtime_evidence_cid
+        assert record.resource_replay_identity_cid == record.resource_receipt.replay_identity_cid
 
     rebuilt = build_g231_replay_source_records_v2(
         g231_sources["runtime_matrix"],
@@ -1315,16 +1193,12 @@ def test_rebased_replay_source_identity_fails_closed(
         case_index_cid=current.case_index_cid,
         run_plan_cid=current.run_plan_cid,
         source_worktree_cid=current.source_worktree_cid,
-        source_executor_authority_cid=(
-            current.source_executor_authority_cid
-        ),
+        source_executor_authority_cid=(current.source_executor_authority_cid),
         records=current.records,
     )
     artifacts = g231_sources["artifact_bindings"]
     stale_artifact_cids = dict(artifacts.artifact_cids)
-    stale_artifact_cids["g238_replay_source_index"] = (
-        stale_index.index_cid
-    )
+    stale_artifact_cids["g238_replay_source_index"] = stale_index.index_cid
     stale_artifacts = G231ArtifactBindingsV2(
         g202_freeze_cid=artifacts.g202_freeze_cid,
         artifact_cids=stale_artifact_cids,

@@ -31,4 +31,3 @@ def test_wikipedia_rewriter_pattern_detection_still_works() -> None:
     pattern_type, entities = detected
     assert pattern_type == "definition"
     assert entities == ["quantum entanglement"]
-

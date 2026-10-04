@@ -38,28 +38,14 @@ def canonical_distribution_name(value: str) -> str:
     return re.sub(r"[-_.]+", "-", candidate).lower()
 
 
-_NUMPY_REQUIREMENT = (
-    "numpy>=2.0.0"
-    if sys.version_info >= (3, 14)
-    else "numpy>=1.26.4,<=2.1.3"
-)
-_PYARROW_REQUIREMENTS = (
-    ()
-    if sys.version_info >= (3, 14)
-    else ("pyarrow>=23.0.1,<26.0.0",)
-)
+_NUMPY_REQUIREMENT = "numpy>=2.0.0" if sys.version_info >= (3, 14) else "numpy>=1.26.4,<=2.1.3"
+_PYARROW_REQUIREMENTS = () if sys.version_info >= (3, 14) else ("pyarrow>=23.0.1,<26.0.0",)
 _SURYA_REQUIREMENTS = (
-    ()
-    if sys.version_info >= (3, 14) or sys.platform == "win32"
-    else ("surya-ocr>=0.14.0",)
+    () if sys.version_info >= (3, 14) or sys.platform == "win32" else ("surya-ocr>=0.14.0",)
 )
-_FAISS_REQUIREMENT = (
-    "faiss-cpu>=1.7.0" if sys.platform == "win32" else "faiss-cpu>=1.8.0"
-)
+_FAISS_REQUIREMENT = "faiss-cpu>=1.7.0" if sys.platform == "win32" else "faiss-cpu>=1.8.0"
 _MAGIC_REQUIREMENT = (
-    "python-magic-bin>=0.4.14"
-    if sys.platform == "win32"
-    else "python-magic>=0.4.27"
+    "python-magic-bin>=0.4.14" if sys.platform == "win32" else "python-magic>=0.4.27"
 )
 
 
@@ -390,8 +376,7 @@ def package_candidates() -> dict[str, list[str]]:
     """Return installer-compatible distribution-to-requirement candidates."""
 
     return {
-        dependency.distribution: list(dependency.requirements)
-        for dependency in DEPENDENCY_SPECS
+        dependency.distribution: list(dependency.requirements) for dependency in DEPENDENCY_SPECS
     }
 
 

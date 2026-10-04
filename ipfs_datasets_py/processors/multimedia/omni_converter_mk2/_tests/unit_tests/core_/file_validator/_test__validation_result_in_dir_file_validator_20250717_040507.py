@@ -7,7 +7,6 @@
 # import os
 
 
-
 # home_dir = os.path.expanduser('~')
 # file_path = os.path.join(home_dir, "omni_converter_mk2/core/file_validator/_validation_result.py")
 # md_path = os.path.join(home_dir, "omni_converter_mk2/core/file_validator/_validation_result_stubs.md")

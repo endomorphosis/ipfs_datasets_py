@@ -87,8 +87,7 @@ from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 
 downloader = YtDlpWrapper()
 result = await downloader.download_video(
-    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    quality="720p"
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", quality="720p"
 )
 ```
 
@@ -100,7 +99,7 @@ result = await ytdlp_download_video(
     url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     quality="best",
     audio_only=False,
-    download_thumbnails=True
+    download_thumbnails=True,
 )
 ```
 

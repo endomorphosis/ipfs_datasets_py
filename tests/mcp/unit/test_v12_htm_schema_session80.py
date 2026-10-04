@@ -13,6 +13,7 @@ Tests:
  - HierarchicalToolManager.dispatch_with_trace  — _trace key present
  - Module-level wrappers: tools_get_schema, tools_dispatch
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -30,6 +31,7 @@ pytestmark = pytest.mark.asyncio
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
 
+
 def _make_category(tools: dict) -> Any:
     """Return a ToolCategory-like object with a known set of tools."""
     from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import ToolCategory
@@ -39,10 +41,7 @@ def _make_category(tools: dict) -> Any:
     cat.path = Path("/tmp/test_cat")
     cat.description = "Test category"
     cat._tools = tools
-    cat._tool_metadata = {
-        name: {"name": name, "description": f"{name} tool"}
-        for name in tools
-    }
+    cat._tool_metadata = {name: {"name": name, "description": f"{name} tool"} for name in tools}
     cat._discovered = True
     cat._schema_cache: dict = {}
     cat._cache_hits = 0
@@ -67,8 +66,8 @@ def _make_manager_with_category(cat_name: str, cat):
 
 # ─── ToolCategory.get_tool_schema cache hit/miss ──────────────────────────────
 
-class TestToolCategorySchemaCache:
 
+class TestToolCategorySchemaCache:
     def test_cache_miss_then_hit(self):
         def my_tool(x: int, y: str = "default") -> Dict[str, Any]:
             return {"result": x}
@@ -123,8 +122,8 @@ class TestToolCategorySchemaCache:
 
 # ─── HierarchicalToolManager.get_tool_schema ─────────────────────────────────
 
-class TestHTMGetToolSchema:
 
+class TestHTMGetToolSchema:
     @pytest.mark.asyncio
     async def test_schema_success(self):
         def tool(x: int) -> int:
@@ -139,6 +138,7 @@ class TestHTMGetToolSchema:
     @pytest.mark.asyncio
     async def test_schema_unknown_category(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
+
         mgr = object.__new__(HierarchicalToolManager)
         mgr.tools_root = Path("/tmp/missing")
         mgr.categories = {}
@@ -162,8 +162,8 @@ class TestHTMGetToolSchema:
 
 # ─── get_tool_schema_cid  (AE89) ────────────────────────────────────────────
 
-class TestGetToolSchemaCid:
 
+class TestGetToolSchemaCid:
     @pytest.mark.asyncio
     async def test_returns_sha256_cid(self):
         def add(a: int, b: int) -> int:
@@ -199,13 +199,15 @@ class TestGetToolSchemaCid:
 
 # ─── lazy_register_category + lazy get_category ──────────────────────────────
 
-class TestLazyLoadCategory:
 
+class TestLazyLoadCategory:
     @pytest.mark.asyncio
     async def test_lazy_loader_called_on_first_access(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
-            HierarchicalToolManager, ToolCategory,
+            HierarchicalToolManager,
+            ToolCategory,
         )
+
         mgr = object.__new__(HierarchicalToolManager)
         mgr.tools_root = Path("/tmp/test_tools")
         mgr.categories = {}
@@ -238,6 +240,7 @@ class TestLazyLoadCategory:
     @pytest.mark.asyncio
     async def test_lazy_cat_appears_in_list_categories(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
+
         mgr = object.__new__(HierarchicalToolManager)
         mgr.tools_root = Path("/tmp/test_tools")
         mgr.categories = {}
@@ -255,6 +258,7 @@ class TestLazyLoadCategory:
     @pytest.mark.asyncio
     async def test_lazy_cat_is_marked_lazy_true(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
+
         mgr = object.__new__(HierarchicalToolManager)
         mgr.tools_root = Path("/tmp/test_tools")
         mgr.categories = {}
@@ -272,22 +276,22 @@ class TestLazyLoadCategory:
 
 # ─── _get_result_cache graceful ImportError ──────────────────────────────────
 
-class TestGetResultCache:
 
+class TestGetResultCache:
     def test_graceful_import_error(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
+
         mgr = object.__new__(HierarchicalToolManager)
         mgr._result_cache = None
 
         # Simulate ImportError from result_cache module
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.mcp_server.mcplusplus.result_cache": None
-        }):
+        with patch.dict(sys.modules, {"ipfs_datasets_py.mcp_server.mcplusplus.result_cache": None}):
             result = mgr._get_result_cache()
         assert result is None
 
     def test_cached_on_second_call(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
+
         mgr = object.__new__(HierarchicalToolManager)
         # Pre-seed with a sentinel
         sentinel = object()
@@ -297,8 +301,8 @@ class TestGetResultCache:
 
 # ─── dispatch — shutting_down guard ──────────────────────────────────────────
 
-class TestDispatchShuttingDown:
 
+class TestDispatchShuttingDown:
     @pytest.mark.asyncio
     async def test_shutting_down_returns_error(self):
         cat = _make_category({})
@@ -350,8 +354,8 @@ class TestDispatchShuttingDown:
 
 # ─── dispatch_with_trace  (AF90) ────────────────────────────────────────────
 
-class TestDispatchWithTrace:
 
+class TestDispatchWithTrace:
     @pytest.mark.asyncio
     async def test_trace_key_present(self):
         def greet(name: str = "world") -> dict:
@@ -383,6 +387,7 @@ class TestDispatchWithTrace:
     @pytest.mark.asyncio
     async def test_trace_envelope_is_complete(self):
         from ipfs_datasets_py.mcp_server.cid_artifacts import ExecutionEnvelope
+
         def ok() -> dict:
             return {"ok": True}
 
@@ -399,16 +404,14 @@ class TestDispatchWithTrace:
 
         cat = _make_category({"noop": noop})
         mgr = _make_manager_with_category("cat", cat)
-        result = await mgr.dispatch_with_trace(
-            "cat", "noop", {}, interface_cid="sha256:abcd"
-        )
+        result = await mgr.dispatch_with_trace("cat", "noop", {}, interface_cid="sha256:abcd")
         assert result["_trace"]["interface_cid"] == "sha256:abcd"
 
 
 # ─── module-level wrappers ────────────────────────────────────────────────────
 
-class TestModuleLevelWrappers:
 
+class TestModuleLevelWrappers:
     @pytest.mark.asyncio
     async def test_tools_get_schema_wraps_manager(self):
         from ipfs_datasets_py.mcp_server import hierarchical_tool_manager as htm_mod

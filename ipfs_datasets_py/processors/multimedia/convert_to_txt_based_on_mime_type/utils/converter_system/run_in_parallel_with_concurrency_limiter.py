@@ -8,17 +8,19 @@ async def limiter(task, limit: Semaphore = None):
         if isinstance(limit, int):
             limit = anyio.Semaphore(limit)
         else:
-            raise ValueError(f"The limit must be an instance of anyio.Semaphore or an integer, not {type(limit)}")
+            raise ValueError(
+                f"The limit must be an instance of anyio.Semaphore or an integer, not {type(limit)}"
+            )
     async with limit:
         return await task
 
 
 async def run_in_parallel_with_concurrency_limiter(
-        func: Callable | Coroutine = None,
-        input_list: list[Any] = None,
-        concurrency_limit: int = 2,
-        **kwargs: dict,
-    ) -> list[Any]:
+    func: Callable | Coroutine = None,
+    input_list: list[Any] = None,
+    concurrency_limit: int = 2,
+    **kwargs: dict,
+) -> list[Any]:
     """
     Runs the given function in parallel for each input, with a concurrency limit.
 

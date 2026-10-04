@@ -47,7 +47,7 @@ categories = manager.list_categories()
 # Returns: ['dataset_tools', 'graph_tools', 'ipfs_tools', ...]
 
 # Discover tools in category
-tools = manager.list_tools('graph_tools')
+tools = manager.list_tools("graph_tools")
 # Returns: ['graph_create', 'graph_add_entity', ...]
 ```
 
@@ -63,9 +63,7 @@ result = await load_dataset(source="squad")
 ```python
 # Dispatch through hierarchical manager
 result = await manager.dispatch_tool(
-    category='dataset_tools',
-    tool_name='load_dataset',
-    params={'source': 'squad'}
+    category="dataset_tools", tool_name="load_dataset", params={"source": "squad"}
 )
 ```
 
@@ -100,7 +98,7 @@ result = await manager.dispatch_tool(
 result = await load_dataset("squad")
 
 # New pattern also works
-result = await manager.dispatch_tool('dataset_tools', 'load_dataset', {'source': 'squad'})
+result = await manager.dispatch_tool("dataset_tools", "load_dataset", {"source": "squad"})
 ```
 
 ## Migration Steps
@@ -138,11 +136,7 @@ for category in categories:
 result = await my_tool(param1, param2)
 
 # New
-result = await manager.dispatch_tool(
-    'my_category',
-    'my_tool',
-    {'param1': value1, 'param2': value2}
-)
+result = await manager.dispatch_tool("my_category", "my_tool", {"param1": value1, "param2": value2})
 ```
 
 ### Step 5: Test Thoroughly
@@ -165,7 +159,7 @@ ToolNotFoundError: Tool 'my_tool' not found in category 'my_category'
 **Solution:**
 Verify the tool exists:
 ```python
-tools = manager.list_tools('my_category')
+tools = manager.list_tools("my_category")
 print(tools)
 ```
 
@@ -192,10 +186,10 @@ TypeError: dispatch_tool() expects dict for params
 **Solution:**
 ```python
 # Wrong
-result = await manager.dispatch_tool('cat', 'tool', 'value')
+result = await manager.dispatch_tool("cat", "tool", "value")
 
 # Correct
-result = await manager.dispatch_tool('cat', 'tool', {'param': 'value'})
+result = await manager.dispatch_tool("cat", "tool", {"param": "value"})
 ```
 
 ## Timeline

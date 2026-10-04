@@ -288,10 +288,12 @@ def test_pdf_export():
     """Test PDF export functionality."""
     pass
 
+
 @pytest.mark.skipif(not HAS_TRANSFORMERS, reason="transformers not available")
 def test_neural_extraction():
     """Test neural relationship extraction."""
     pass
+
 
 @pytest.mark.skipif(not HAS_NLTK_DATA, reason="NLTK data not available")
 def test_nltk_features():
@@ -316,57 +318,59 @@ def test_nltk_features():
 import pytest
 from ipfs_datasets_py.knowledge_graphs import KnowledgeGraphExtractor
 
+
 class TestFeatureName:
     """Test suite for specific feature."""
-    
+
     def test_basic_functionality(self):
         """Test basic case - should always pass."""
         # Given
         extractor = KnowledgeGraphExtractor()
         text = "Simple test input."
-        
+
         # When
         result = extractor.extract_knowledge_graph(text)
-        
+
         # Then
         assert result is not None
         assert len(result.entities) > 0
-    
+
     def test_edge_case_empty_input(self):
         """Test edge case - empty input."""
         # Given
         extractor = KnowledgeGraphExtractor()
         text = ""
-        
+
         # When
         result = extractor.extract_knowledge_graph(text)
-        
+
         # Then
         assert result is not None
         assert len(result.entities) == 0
-    
+
     def test_error_handling(self):
         """Test error handling - invalid input."""
         # Given
         extractor = KnowledgeGraphExtractor()
-        
+
         # When/Then
         with pytest.raises(ValueError):
             extractor.extract_knowledge_graph(None)
-    
+
     @pytest.mark.slow
     def test_performance_large_input(self):
         """Test performance with large input."""
         # Given
         extractor = KnowledgeGraphExtractor()
         text = "Large text input " * 10000
-        
+
         # When
         import time
+
         start = time.time()
         result = extractor.extract_knowledge_graph(text)
         duration = time.time() - start
-        
+
         # Then
         assert duration < 10.0  # Should complete in <10 seconds
         assert result is not None
@@ -462,11 +466,14 @@ def test_error_handling():
 ### Pattern 3: Parametrized Tests
 
 ```python
-@pytest.mark.parametrize("input,expected", [
-    ("simple", 1),
-    ("complex text", 2),
-    ("", 0),
-])
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        ("simple", 1),
+        ("complex text", 2),
+        ("", 0),
+    ],
+)
 def test_multiple_cases(input, expected):
     """Test multiple cases with same logic."""
     result = extract_entities(input)
@@ -484,6 +491,7 @@ def sample_graph():
     kg.add_entity(Entity("Bob", "Person"))
     kg.add_relationship(Relationship("Alice", "Bob", "KNOWS"))
     return kg
+
 
 def test_using_fixture(sample_graph):
     """Test using the fixture."""

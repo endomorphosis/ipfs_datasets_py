@@ -380,16 +380,22 @@ query/
 **Old import (still works):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
 **New import (recommended):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 

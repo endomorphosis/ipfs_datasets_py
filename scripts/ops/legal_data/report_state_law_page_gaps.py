@@ -19,11 +19,56 @@ from typing import Dict, List, Sequence
 from urllib.parse import urlparse
 
 STATES_50 = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
 ]
 
 
@@ -161,7 +206,9 @@ def build_payload(rows: Sequence[RowRecord], top_states: int, top_pages: int) ->
                         "short_real_rows": short_n,
                     }
                 )
-        page_problems.sort(key=lambda x: (-(x["synthetic_rows"]), -(x["rows"]), -(x["short_real_rows"]), x["url"]))
+        page_problems.sort(
+            key=lambda x: (-(x["synthetic_rows"]), -(x["rows"]), -(x["short_real_rows"]), x["url"])
+        )
 
         state_rows.append(
             {
@@ -181,7 +228,13 @@ def build_payload(rows: Sequence[RowRecord], top_states: int, top_pages: int) ->
 
     weak_states = sorted(
         state_rows,
-        key=lambda r: (r["real_ratio"], r["real_rows"], r["unique_urls"], -r["total_rows"], r["state"]),
+        key=lambda r: (
+            r["real_ratio"],
+            r["real_rows"],
+            r["unique_urls"],
+            -r["total_rows"],
+            r["state"],
+        ),
     )[: max(1, top_states)]
 
     summary = {
@@ -218,7 +271,9 @@ def to_markdown(payload: Dict[str, object]) -> str:
 
     lines.append("## Weak States")
     lines.append("")
-    lines.append("| State | Total | Real | Synthetic | Real Ratio | Unique URLs | Top URL Share | Short Real Rows |")
+    lines.append(
+        "| State | Total | Real | Synthetic | Real Ratio | Unique URLs | Top URL Share | Short Real Rows |"
+    )
     lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
     for st in weak_states:
         lines.append(
@@ -248,7 +303,9 @@ def main() -> int:
     jsonld_dir = Path(args.jsonld_dir).expanduser().resolve()
 
     rows = load_records(jsonld_dir)
-    payload = build_payload(rows, top_states=max(1, int(args.top_states)), top_pages=max(1, int(args.top_pages)))
+    payload = build_payload(
+        rows, top_states=max(1, int(args.top_states)), top_pages=max(1, int(args.top_pages))
+    )
 
     print(json.dumps(payload["summary"], indent=2, sort_keys=True))
 

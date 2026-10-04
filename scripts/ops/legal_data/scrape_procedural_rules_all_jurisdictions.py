@@ -44,9 +44,15 @@ PROCEDURE_RE = re.compile(
 TERRITORIES: Dict[str, Dict[str, str]] = {
     "PR": {"name": "Puerto Rico", "base_url": "https://law.justia.com/codes/puerto-rico/"},
     "GU": {"name": "Guam", "base_url": "https://law.justia.com/codes/guam/"},
-    "VI": {"name": "U.S. Virgin Islands", "base_url": "https://law.justia.com/codes/virgin-islands/"},
+    "VI": {
+        "name": "U.S. Virgin Islands",
+        "base_url": "https://law.justia.com/codes/virgin-islands/",
+    },
     "AS": {"name": "American Samoa", "base_url": "https://law.justia.com/codes/american-samoa/"},
-    "MP": {"name": "Northern Mariana Islands", "base_url": "https://law.justia.com/codes/northern-mariana-islands/"},
+    "MP": {
+        "name": "Northern Mariana Islands",
+        "base_url": "https://law.justia.com/codes/northern-mariana-islands/",
+    },
 }
 
 
@@ -60,7 +66,9 @@ def _canonical_entry(name: str, url: str) -> Tuple[str, str]:
     return (" ".join((name or "").split()).strip(), (url or "").strip())
 
 
-async def _discover_procedure_links(scraper: BaseStateScraper, base_url: str, max_links: int = 30) -> List[Dict[str, str]]:
+async def _discover_procedure_links(
+    scraper: BaseStateScraper, base_url: str, max_links: int = 30
+) -> List[Dict[str, str]]:
     raw = await scraper._fetch_page_content_with_archival_fallback(base_url, timeout_seconds=35)
     if not raw:
         return []
@@ -167,9 +175,7 @@ async def _run_jurisdiction(
 
     if base_url_override:
         try:
-            scraper.sources = [
-                {"name": "Justia", "base_url": base_url_override, "priority": 1}
-            ]
+            scraper.sources = [{"name": "Justia", "base_url": base_url_override, "priority": 1}]
         except Exception:
             pass
 
@@ -244,7 +250,9 @@ async def run(
                 max_per_jurisdiction=max_per_jurisdiction,
             )
 
-    results = await asyncio.gather(*[_worker(code, name, base) for code, name, base in jurisdictions])
+    results = await asyncio.gather(
+        *[_worker(code, name, base) for code, name, base in jurisdictions]
+    )
 
     out_dir = _output_root(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -273,8 +281,12 @@ async def run(
         "records_total": total_records,
         "output_jsonl": str(jsonl_path),
         "by_jurisdiction": by_jurisdiction,
-        "states_with_records": sorted([k for k, v in by_jurisdiction.items() if int(v.get("records") or 0) > 0]),
-        "states_without_records": sorted([k for k, v in by_jurisdiction.items() if int(v.get("records") or 0) == 0]),
+        "states_with_records": sorted(
+            [k for k, v in by_jurisdiction.items() if int(v.get("records") or 0) > 0]
+        ),
+        "states_without_records": sorted(
+            [k for k, v in by_jurisdiction.items() if int(v.get("records") or 0) == 0]
+        ),
     }
 
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -282,7 +294,9 @@ async def run(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Scrape state + territory civil/criminal procedure rules")
+    parser = argparse.ArgumentParser(
+        description="Scrape state + territory civil/criminal procedure rules"
+    )
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--rate-limit-delay", type=float, default=0.25)
     parser.add_argument("--parallel-workers", type=int, default=8)

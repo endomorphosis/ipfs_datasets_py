@@ -56,11 +56,7 @@ quality_score = processor.assess_quality(cleaned_text)
 from ipfs_datasets_py.utils import ChunkOptimizer
 
 optimizer = ChunkOptimizer()
-chunks = optimizer.optimize_chunks(
-    text=document_text,
-    target_size=512,
-    overlap_ratio=0.1
-)
+chunks = optimizer.optimize_chunks(text=document_text, target_size=512, overlap_ratio=0.1)
 ```
 
 ## Configuration

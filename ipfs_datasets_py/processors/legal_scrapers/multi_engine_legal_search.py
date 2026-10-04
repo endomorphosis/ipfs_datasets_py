@@ -32,19 +32,19 @@ async def multi_engine_legal_search(
     lang: str = "en",
     brave_api_key: Optional[str] = None,
     google_api_key: Optional[str] = None,
-    google_cse_id: Optional[str] = None
+    google_cse_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Search for legal rules using multiple search engines with intelligent fallback.
-    
+
     This is a thin wrapper around MultiEngineLegalSearch from the processors module.
     All business logic is in ipfs_datasets_py.processors.legal_scrapers.multi_engine_legal_search
-    
+
     Engines supported:
     - brave: Brave Search API (requires BRAVE_API_KEY)
     - duckduckgo: DuckDuckGo (no API key required)
     - google_cse: Google Custom Search Engine (requires GOOGLE_API_KEY and GOOGLE_CSE_ID)
-    
+
     Args:
         query: Natural language query about legal rules (e.g., "EPA water regulations in California")
         engines: List of search engines to use (default: ["brave", "duckduckgo"])
@@ -58,7 +58,7 @@ async def multi_engine_legal_search(
         brave_api_key: Brave Search API key (or set BRAVE_API_KEY env var)
         google_api_key: Google API key (or set GOOGLE_API_KEY env var)
         google_cse_id: Google Custom Search Engine ID (or set GOOGLE_CSE_ID env var)
-    
+
     Returns:
         Dictionary containing:
         - status: "success" or "error"
@@ -69,7 +69,7 @@ async def multi_engine_legal_search(
         - entities_matched: Legal entities matched
         - engines_used: List of engines that returned results
         - total_results: Total number of results returned
-    
+
     Example:
         >>> result = await multi_engine_legal_search(
         ...     query="OSHA workplace safety regulations",
@@ -85,43 +85,34 @@ async def multi_engine_legal_search(
             SearchEngineConfig,
             SearchEngineError,
         )
-        
+
         # Validate input
         if not query or not isinstance(query, str):
-            return {
-                "status": "error",
-                "message": "Query must be a non-empty string"
-            }
-        
+            return {"status": "error", "message": "Query must be a non-empty string"}
+
         if engines is None:
             engines = ["brave", "duckduckgo"]
-        
+
         if not isinstance(engines, list) or not engines:
-            return {
-                "status": "error",
-                "message": "Engines must be a non-empty list"
-            }
-        
+            return {"status": "error", "message": "Engines must be a non-empty list"}
+
         valid_engines = ["brave", "duckduckgo", "google_cse"]
         for engine in engines:
             if engine not in valid_engines:
                 return {
                     "status": "error",
-                    "message": f"Invalid engine '{engine}'. Must be one of: {valid_engines}"
+                    "message": f"Invalid engine '{engine}'. Must be one of: {valid_engines}",
                 }
-        
+
         if max_results < 1 or max_results > 100:
-            return {
-                "status": "error",
-                "message": "max_results must be between 1 and 100"
-            }
-        
+            return {"status": "error", "message": "max_results must be between 1 and 100"}
+
         if result_aggregation not in ["merge", "best", "round_robin"]:
             return {
                 "status": "error",
-                "message": "result_aggregation must be 'merge', 'best', or 'round_robin'"
+                "message": "result_aggregation must be 'merge', 'best', or 'round_robin'",
             }
-        
+
         engine_configs: Dict[str, SearchEngineConfig] = {}
         if "brave" in engines:
             engine_configs["brave"] = SearchEngineConfig(
@@ -147,10 +138,7 @@ async def multi_engine_legal_search(
         )
 
         response = orchestrator.search(
-            query=query,
-            max_results=max_results,
-            country=country,
-            lang=lang
+            query=query, max_results=max_results, country=country, lang=lang
         )
 
         results = [
@@ -187,27 +175,23 @@ async def multi_engine_legal_search(
         logger.error(f"Import error in multi_engine_legal_search: {e}")
         return {
             "status": "error",
-            "message": f"Required module not found: {str(e)}. Install with: pip install ipfs-datasets-py[legal]"
+            "message": f"Required module not found: {str(e)}. Install with: pip install ipfs-datasets-py[legal]",
         }
     except Exception as e:
         logger.error(f"Error in multi_engine_legal_search MCP tool: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "query": query
-        }
+        return {"status": "error", "message": str(e), "query": query}
 
 
 async def get_multi_engine_stats() -> Dict[str, Any]:
     """
     Get performance statistics for multi-engine legal search.
-    
+
     Returns aggregated statistics including:
     - Total requests per engine
     - Success/failure rates
     - Average response times
     - Cache hit rates
-    
+
     Returns:
         Dictionary containing statistics for each configured engine
     """
@@ -217,23 +201,17 @@ async def get_multi_engine_stats() -> Dict[str, Any]:
             OrchestratorConfig,
         )
 
-        orchestrator = MultiEngineOrchestrator(
-            OrchestratorConfig(engines=["duckduckgo"])
-        )
+        orchestrator = MultiEngineOrchestrator(OrchestratorConfig(engines=["duckduckgo"]))
         stats = {
-            engine_name: engine.get_stats()
-            for engine_name, engine in orchestrator.engines.items()
+            engine_name: engine.get_stats() for engine_name, engine in orchestrator.engines.items()
         }
-        
+
         return {
             "status": "success",
             "stats": stats,
-            "message": "Multi-engine statistics retrieved successfully"
+            "message": "Multi-engine statistics retrieved successfully",
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting multi-engine stats: {e}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}

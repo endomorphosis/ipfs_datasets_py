@@ -362,6 +362,7 @@ Chapter 2 - Offenses Against the Person
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 ```
 
@@ -372,7 +373,7 @@ from state_scrapers import get_scraper_for_state
 
 scraper = get_scraper_for_state("AL", "Alabama")
 codes = scraper.get_code_list()
-statutes = await scraper.scrape_code(codes[0]['name'], codes[0]['url'])
+statutes = await scraper.scrape_code(codes[0]["name"], codes[0]["url"])
 ```
 
 ### Common Error Messages

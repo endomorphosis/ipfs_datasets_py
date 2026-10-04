@@ -10,6 +10,7 @@ All production modules under test were created or modified in v19:
 * CX160 — Full ``DispatchPipeline`` + ``DelegationManager`` + ``PolicyAuditLog`` E2E
 * CU157 — TDFOL NL pattern tests (``PatternType``, ``Pattern``, ``PatternMatch``)
 """
+
 from __future__ import annotations
 
 import importlib
@@ -27,6 +28,7 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _import(module_path: str) -> Any:
     return importlib.import_module(module_path)
 
@@ -34,6 +36,7 @@ def _import(module_path: str) -> Any:
 # ============================================================================
 # CQ153 — DelegationManager.merge() + merge_and_publish()
 # ============================================================================
+
 
 class TestCQ153DelegationManagerMerge:
     """DelegationManager.merge() and merge_and_publish()."""
@@ -132,6 +135,7 @@ class TestCQ153DelegationManagerMerge:
 # CR154 — ComplianceChecker.diff(other)
 # ============================================================================
 
+
 class TestCR154ComplianceCheckerDiff:
     """ComplianceChecker.diff() returns a structured diff dict."""
 
@@ -200,12 +204,18 @@ class TestCR154ComplianceCheckerDiff:
 
     def test_diff_returns_all_keys(self):
         result = self._checker().diff(self._empty_checker())
-        assert set(result.keys()) == {"added_rules", "removed_rules", "common_rules", "changed_rules"}
+        assert set(result.keys()) == {
+            "added_rules",
+            "removed_rules",
+            "common_rules",
+            "changed_rules",
+        }
 
 
 # ============================================================================
 # CS155 — PolicyAuditLog.export_jsonl() + import_jsonl()
 # ============================================================================
+
 
 class TestCS155AuditLogJsonlIO:
     """PolicyAuditLog bulk JSONL export/import."""
@@ -225,9 +235,7 @@ class TestCS155AuditLogJsonlIO:
     def test_export_returns_entry_count(self):
         log = self._make_log()
         for i in range(5):
-            log.record(
-                policy_cid="p1", intent_cid=f"i{i}", decision="allow", tool="read"
-            )
+            log.record(policy_cid="p1", intent_cid=f"i{i}", decision="allow", tool="read")
         with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
             path = f.name
         try:
@@ -283,6 +291,7 @@ class TestCS155AuditLogJsonlIO:
 
     def test_import_nonexistent_path_returns_zero(self):
         import tempfile
+
         log = self._make_log()
         nonexistent = os.path.join(tempfile.gettempdir(), "nonexistent_v19_test_12345.jsonl")
         count = log.import_jsonl(nonexistent)
@@ -316,6 +325,7 @@ class TestCS155AuditLogJsonlIO:
 # CW159 — NLUCANCompilerResult.explain()
 # ============================================================================
 
+
 class TestCW159CompilerExplain:
     """NLUCANCompilerResult.explain() returns a human-readable explanation."""
 
@@ -326,7 +336,8 @@ class TestCW159CompilerExplain:
             input_sentences=["Alice must not delete records."],
             errors=errors or [],
             warnings=warnings or [],
-            metadata=metadata or {"policy_clauses": 1, "dcec_formulas": 1, "ucan_tokens": 1, "ucan_denials": 0},
+            metadata=metadata
+            or {"policy_clauses": 1, "dcec_formulas": 1, "ucan_tokens": 1, "ucan_denials": 0},
         )
         return r
 
@@ -354,7 +365,9 @@ class TestCW159CompilerExplain:
         assert "1 sentence" in r.explain()
 
     def test_explain_includes_clause_count(self):
-        r = self._result(metadata={"policy_clauses": 3, "dcec_formulas": 3, "ucan_tokens": 2, "ucan_denials": 1})
+        r = self._result(
+            metadata={"policy_clauses": 3, "dcec_formulas": 3, "ucan_tokens": 2, "ucan_denials": 1}
+        )
         assert "3" in r.explain()  # clause count appears
 
     def test_explain_mentions_errors(self):
@@ -386,6 +399,7 @@ class TestCW159CompilerExplain:
 # ============================================================================
 # CT156 — I18NConflictReport + detect_all_languages() in logic/api.py
 # ============================================================================
+
 
 class TestCT156I18NConflictReport:
     """I18NConflictReport dataclass and detect_all_languages() convenience."""
@@ -445,6 +459,7 @@ class TestCT156I18NConflictReport:
 # ============================================================================
 # CX160 — Full DispatchPipeline + DelegationManager + PolicyAuditLog E2E
 # ============================================================================
+
 
 class TestCX160FullPipelineE2E:
     """Full dispatch pipeline + delegation manager + audit log end-to-end smoke test."""
@@ -531,9 +546,7 @@ class TestCX160FullPipelineE2E:
         pipeline, manager, audit_log = self._make_pipeline_and_manager_and_log()
         pipeline.run({"tool": "read", "actor": "alice", "params": {}})
         # Record something manually to ensure entries exist
-        audit_log.record(
-            policy_cid="p1", intent_cid="i1", decision="allow", tool="read"
-        )
+        audit_log.record(policy_cid="p1", intent_cid="i1", decision="allow", tool="read")
         with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
             path = f.name
         try:
@@ -546,6 +559,7 @@ class TestCX160FullPipelineE2E:
 # ============================================================================
 # CU157 — TDFOL NL pattern tests
 # ============================================================================
+
 
 class TestCU157TDFOLNLPatterns:
     """TDFOL NL Pattern dataclasses and enums (no spaCy dependency)."""
@@ -612,6 +626,7 @@ class TestCU157TDFOLNLPatterns:
     def test_nl_parser_raises_without_spacy(self):
         """NLParser should raise ImportError when spaCy is absent."""
         import unittest.mock as um
+
         try:
             mod = _import("ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_api")
             NLParser = mod.NLParser
@@ -620,6 +635,7 @@ class TestCU157TDFOLNLPatterns:
 
         try:
             import spacy  # noqa: F401
+
             pytest.skip("spaCy is installed; testing absent-spaCy branch not possible")
         except ImportError:
             pass

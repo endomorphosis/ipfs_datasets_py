@@ -60,54 +60,53 @@ def _stub_base_run_session(
     )
 
 
-
 class TestLogicTheoremOptimizerStructuredLogging:
     """Tests for LogicTheoremOptimizer.run_session() JSON logging."""
-    
+
     def test_run_session_emits_structured_json_log(self, caplog):
         """LogicTheoremOptimizer.run_session() emits LOGIC_SESSION_RUN JSON log."""
         caplog.set_level(logging.INFO)
-        
+
         optimizer = LogicTheoremOptimizer(
             config=OptimizerConfig(max_iterations=1, target_score=0.5),
             extraction_mode=ExtractionMode.FOL,
-            use_provers=['z3'],
+            use_provers=["z3"],
         )
-        
+
         context = OptimizationContext(
             session_id="test-session-001",
             input_data="All humans are mortal. Socrates is human.",
             domain="general",
         )
-        
+
         with _stub_base_run_session():
             result = optimizer.run_session(
                 input_data="All humans are mortal. Socrates is human.",
                 context=context,
             )
-        
+
         # Find the LOGIC_SESSION_RUN log
         log_records = [r for r in caplog.records if "LOGIC_SESSION_RUN:" in r.message]
         assert len(log_records) == 1, "Expected exactly one LOGIC_SESSION_RUN log"
-        
+
         log_msg = log_records[0].message
         json_str = log_msg.split("LOGIC_SESSION_RUN: ")[1]
         payload = json.loads(json_str)
-        
+
         # Verify schema metadata
         assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
         assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
-        
+
         # Verify event metadata
         assert payload["event"] == "logic_theorem_optimizer_run_session"
         assert payload["optimizer_pipeline"] == "logic_theorem"
         assert payload["session_id"] == "test-session-001"
         assert payload["domain"] == "general"
         assert payload["extraction_mode"] == "fol"
-        assert payload["provers"] == ['z3']
+        assert payload["provers"] == ["z3"]
         _assert_canonical_log_fields(payload, component="unified_optimizer")
         assert payload["run_id"] == "test-session-001"
-        
+
         # Verify result metrics
         assert "score" in payload
         assert "valid" in payload
@@ -115,7 +114,7 @@ class TestLogicTheoremOptimizerStructuredLogging:
         assert "statement_count" in payload
         assert "duration_ms" in payload
         assert "timestamp" in payload
-        
+
         # Type checks
         assert isinstance(payload["score"], (int, float))
         assert isinstance(payload["valid"], bool)
@@ -123,22 +122,22 @@ class TestLogicTheoremOptimizerStructuredLogging:
         assert isinstance(payload["statement_count"], int)
         assert isinstance(payload["duration_ms"], (int, float))
         assert isinstance(payload["timestamp"], str)
-        
+
     def test_run_session_logging_does_not_crash_on_error(self, caplog):
         """Logging errors are suppressed and logged at debug level."""
         caplog.set_level(logging.DEBUG)
-        
+
         optimizer = LogicTheoremOptimizer(
             config=OptimizerConfig(max_iterations=1),
             extraction_mode=ExtractionMode.FOL,
         )
-        
+
         context = OptimizationContext(
             session_id="test-session-002",
             input_data="Test input",
             domain="general",
         )
-        
+
         # Patch with_schema to fail
         with (
             _stub_base_run_session(),
@@ -151,30 +150,30 @@ class TestLogicTheoremOptimizerStructuredLogging:
                 input_data="Test input",
                 context=context,
             )
-        
+
         # Optimizer should still return a result
         assert result is not None
         assert "score" in result
-        
+
         # Check for debug log about logging failure
         debug_msgs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
         assert any("Logic session JSON logging failed" in msg for msg in debug_msgs)
-    
+
     def test_run_session_log_includes_statement_count(self, caplog):
         """LOGIC_SESSION_RUN log includes statement_count from extraction."""
         caplog.set_level(logging.INFO)
-        
+
         optimizer = LogicTheoremOptimizer(
             config=OptimizerConfig(max_iterations=1),
             extraction_mode=ExtractionMode.FOL,
         )
-        
+
         context = OptimizationContext(
             session_id="test-session-003",
             input_data="P implies Q. P. Therefore Q.",
             domain="general",
         )
-        
+
         with _stub_base_run_session(
             {
                 "score": 0.9,
@@ -188,15 +187,15 @@ class TestLogicTheoremOptimizerStructuredLogging:
                 input_data="P implies Q. P. Therefore Q.",
                 context=context,
             )
-        
+
         # Parse the JSON log
         log_records = [r for r in caplog.records if "LOGIC_SESSION_RUN:" in r.message]
         assert len(log_records) == 1
-        
+
         log_msg = log_records[0].message
         json_str = log_msg.split("LOGIC_SESSION_RUN: ")[1]
         payload = json.loads(json_str)
-        
+
         # statement_count should be non-negative
         assert payload["statement_count"] >= 0
         assert isinstance(payload["statement_count"], int)
@@ -232,16 +231,16 @@ class TestLogicTheoremOptimizerStructuredLogging:
 
 class TestLogicOptimizerStructuredLogging:
     """Tests for LogicOptimizer.analyze_batch() JSON logging."""
-    
+
     def test_analyze_batch_emits_structured_json_log(self, caplog):
         """LogicOptimizer.analyze_batch() emits LOGIC_BATCH_ANALYSIS JSON log."""
         caplog.set_level(logging.INFO)
-        
+
         optimizer_logic = LogicOptimizer(
             convergence_threshold=0.85,
             min_improvement_rate=0.01,
         )
-        
+
         # Create mock session results
         mock_results = []
         for i in range(3):
@@ -252,21 +251,21 @@ class TestLogicOptimizerStructuredLogging:
             mock_result.critic_score.weaknesses = ["weak_completeness"]
             mock_result.success = True
             mock_results.append(mock_result)
-        
+
         report = optimizer_logic.analyze_batch(mock_results)
-        
+
         # Find the LOGIC_BATCH_ANALYSIS log
         log_records = [r for r in caplog.records if "LOGIC_BATCH_ANALYSIS:" in r.message]
         assert len(log_records) == 1, "Expected exactly one LOGIC_BATCH_ANALYSIS log"
-        
+
         log_msg = log_records[0].message
         json_str = log_msg.split("LOGIC_BATCH_ANALYSIS: ")[1]
         payload = json.loads(json_str)
-        
+
         # Verify schema metadata
         assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
         assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
-        
+
         # Verify event metadata
         assert payload["event"] == "logic_optimizer_analyze_batch"
         assert payload["optimizer_pipeline"] == "logic_theorem"
@@ -274,7 +273,7 @@ class TestLogicOptimizerStructuredLogging:
         assert payload["session_count"] == 3
         _assert_canonical_log_fields(payload, component="logic_optimizer")
         assert payload["run_id"] == "logic-batch-1"
-        
+
         # Verify metrics
         assert "average_score" in payload
         assert "trend" in payload
@@ -283,7 +282,7 @@ class TestLogicOptimizerStructuredLogging:
         assert "insight_count" in payload
         assert "dimension_count" in payload
         assert "timestamp" in payload
-        
+
         # Type checks
         assert isinstance(payload["average_score"], (int, float))
         assert isinstance(payload["trend"], str)
@@ -292,13 +291,13 @@ class TestLogicOptimizerStructuredLogging:
         assert isinstance(payload["insight_count"], int)
         assert isinstance(payload["dimension_count"], int)
         assert isinstance(payload["timestamp"], str)
-        
+
     def test_analyze_batch_logging_does_not_crash_on_error(self, caplog):
         """Logging errors are suppressed and logged at debug level."""
         caplog.set_level(logging.DEBUG)
-        
+
         optimizer_logic = LogicOptimizer()
-        
+
         # Create minimal mock results
         mock_result = Mock()
         mock_result.critic_score = Mock()
@@ -306,39 +305,42 @@ class TestLogicOptimizerStructuredLogging:
         mock_result.critic_score.dimension_scores = []
         mock_result.critic_score.weaknesses = []
         mock_result.success = True
-        
+
         # Patch with_schema to fail (it's imported inside the function)
-        with patch("ipfs_datasets_py.optimizers.common.structured_logging.with_schema", side_effect=RuntimeError("Schema error")):
+        with patch(
+            "ipfs_datasets_py.optimizers.common.structured_logging.with_schema",
+            side_effect=RuntimeError("Schema error"),
+        ):
             report = optimizer_logic.analyze_batch([mock_result])
-        
+
         # Optimizer should still return a report
         assert report is not None
         assert report.average_score > 0
-        
+
         # Check for debug log about logging failure
         debug_msgs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
         assert any("Logic batch analysis JSON logging failed" in msg for msg in debug_msgs)
-    
+
     def test_analyze_batch_empty_results_no_log_for_insufficient_data(self, caplog):
         """Empty results return early without emitting JSON log."""
         caplog.set_level(logging.INFO)
-        
+
         optimizer_logic = LogicOptimizer()
         report = optimizer_logic.analyze_batch([])
-        
+
         # No LOGIC_BATCH_ANALYSIS log for empty results
         log_records = [r for r in caplog.records if "LOGIC_BATCH_ANALYSIS:" in r.message]
         assert len(log_records) == 0
-        
+
         # But report should still be returned
         assert report.trend == "insufficient_data"
-    
+
     def test_analyze_batch_increments_batch_index(self, caplog):
         """analyze_batch increments batch_index on subsequent calls."""
         caplog.set_level(logging.INFO)
-        
+
         optimizer_logic = LogicOptimizer()
-        
+
         # Create mock results
         mock_result = Mock()
         mock_result.critic_score = Mock()
@@ -346,48 +348,48 @@ class TestLogicOptimizerStructuredLogging:
         mock_result.critic_score.dimension_scores = []
         mock_result.critic_score.weaknesses = []
         mock_result.success = True
-        
+
         # Analyze first batch
         optimizer_logic.analyze_batch([mock_result])
-        
+
         # Analyze second batch
         caplog.clear()
         optimizer_logic.analyze_batch([mock_result])
-        
+
         # Parse the second batch log
         log_records = [r for r in caplog.records if "LOGIC_BATCH_ANALYSIS:" in r.message]
         assert len(log_records) == 1
-        
+
         log_msg = log_records[0].message
         json_str = log_msg.split("LOGIC_BATCH_ANALYSIS: ")[1]
         payload = json.loads(json_str)
-        
+
         # batch_index should be 2 for the second batch
         assert payload["batch_index"] == 2
 
 
 class TestStructuredLoggingSchema:
     """Tests for structured logging schema consistency."""
-    
+
     def test_schema_version_is_consistent(self, caplog):
         """All structured logs use the same schema and version."""
         caplog.set_level(logging.INFO)
-        
+
         # Test LogicTheoremOptimizer
         optimizer = LogicTheoremOptimizer(
             config=OptimizerConfig(max_iterations=1),
             extraction_mode=ExtractionMode.FOL,
         )
-        
+
         context = OptimizationContext(
             session_id="schema-test-001",
             input_data="Test",
             domain="general",
         )
-        
+
         with _stub_base_run_session():
             optimizer.run_session(input_data="Test", context=context)
-        
+
         # Test LogicOptimizer
         optimizer_logic = LogicOptimizer()
         mock_result = Mock()
@@ -397,14 +399,14 @@ class TestStructuredLoggingSchema:
         mock_result.critic_score.weaknesses = []
         mock_result.success = True
         optimizer_logic.analyze_batch([mock_result])
-        
+
         # Find all JSON logs
         log_msgs = [r.message for r in caplog.records if ":" in r.message and "{" in r.message]
-        
+
         schemas = set()
         versions = set()
         pipelines = set()
-        
+
         for msg in log_msgs:
             if "LOGIC_SESSION_RUN:" in msg or "LOGIC_BATCH_ANALYSIS:" in msg:
                 json_str = msg.split(": ", 1)[1]
@@ -412,11 +414,11 @@ class TestStructuredLoggingSchema:
                 schemas.add(payload.get("schema"))
                 versions.add(payload.get("schema_version"))
                 pipelines.add(payload.get("optimizer_pipeline"))
-        
+
         # All logs should use the same schema
         assert len(schemas) == 1
         assert "ipfs_datasets_py.optimizer_log" in schemas
-        
+
         # All logs should use the same version
         assert len(versions) == 1
         assert DEFAULT_SCHEMA_VERSION in versions

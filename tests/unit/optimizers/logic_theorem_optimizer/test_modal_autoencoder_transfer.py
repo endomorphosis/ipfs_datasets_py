@@ -29,9 +29,7 @@ def test_safe_transfer_defers_embedding_tail_to_distillation() -> None:
     )
 
     assert result.state.feature_embedding_weights == {}
-    assert result.state.feature_family_logits == {
-        "legacy-only": {"deontic": 1.0}
-    }
+    assert result.state.feature_family_logits == {"legacy-only": {"deontic": 1.0}}
     assert result.state.decoded_embeddings == {}
     assert result.report["source_embedding_transfer_enabled"] is False
 

@@ -43,10 +43,7 @@ def test_packaged_pip_install_retries_user_install_after_system_failure(monkeypa
 
 def test_setup_installer_accepts_symbolicai_flag(monkeypatch) -> None:
     installer_path = (
-        Path(__file__).resolve().parents[4]
-        / "scripts"
-        / "setup"
-        / "ipfs_prover_installer.py"
+        Path(__file__).resolve().parents[4] / "scripts" / "setup" / "ipfs_prover_installer.py"
     )
     spec = importlib.util.spec_from_file_location("ipfs_prover_installer_test", installer_path)
     assert spec is not None and spec.loader is not None
@@ -68,10 +65,7 @@ def test_setup_installer_delegates_legal_ir_training_portfolio(monkeypatch) -> N
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     installer_path = (
-        Path(__file__).resolve().parents[4]
-        / "scripts"
-        / "setup"
-        / "ipfs_prover_installer.py"
+        Path(__file__).resolve().parents[4] / "scripts" / "setup" / "ipfs_prover_installer.py"
     )
     spec = importlib.util.spec_from_file_location(
         "ipfs_prover_installer_training_test",
@@ -89,10 +83,7 @@ def test_setup_installer_delegates_legal_ir_training_portfolio(monkeypatch) -> N
     )
 
     assert (
-        ipfs_prover_installer.main(
-            ["--portfolio", "legal_ir_training", "--yes", "--strict"]
-        )
-        == 0
+        ipfs_prover_installer.main(["--portfolio", "legal_ir_training", "--yes", "--strict"]) == 0
     )
     assert delegated == [
         "--portfolio",

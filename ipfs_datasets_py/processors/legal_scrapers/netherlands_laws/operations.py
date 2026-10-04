@@ -44,7 +44,12 @@ QUEUE_STATES = (
 TERMINAL_SUCCESS_STATES = {"parsed", "packaged", "uploaded", "verified"}
 COMPLETE_STATES = TERMINAL_SUCCESS_STATES | {"permanently_skipped"}
 RETRYABLE_FAILURE_CATEGORIES = {"temporary_network_failure", "http_transient"}
-NON_RETRYABLE_FAILURE_CATEGORIES = {"http_error", "parser_failure", "malformed_document", "unsupported_document"}
+NON_RETRYABLE_FAILURE_CATEGORIES = {
+    "http_error",
+    "parser_failure",
+    "malformed_document",
+    "unsupported_document",
+}
 LAW_STATUS_VALUES = ("current", "historical", "repealed", "superseded", "unknown")
 STATUS_FIELDS = (
     "law_status",
@@ -219,8 +224,12 @@ def initialize_catalog(catalog_path: Path | None = None) -> dict[str, Any]:
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_bwbr_state ON bwbr_catalog(scrape_state)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_bwbr_law_status ON bwbr_catalog(law_status)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_bwbr_failure_category ON bwbr_catalog(last_error_category)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_events_identifier ON catalog_events(identifier)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_bwbr_failure_category ON bwbr_catalog(last_error_category)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_events_identifier ON catalog_events(identifier)"
+        )
         conn.commit()
     path = Path(catalog_path or DEFAULT_BWBR_CATALOG_PATH)
     return {"catalog_path": str(path), "initialized": True}
@@ -271,9 +280,15 @@ def _transition(
 ) -> None:
     if to_state not in QUEUE_STATES:
         raise ValueError(f"Unknown Netherlands BWBR queue state: {to_state}")
-    row = conn.execute("SELECT scrape_state FROM bwbr_catalog WHERE identifier = ?", (identifier,)).fetchone()
+    row = conn.execute(
+        "SELECT scrape_state FROM bwbr_catalog WHERE identifier = ?", (identifier,)
+    ).fetchone()
     from_state = str(row["scrape_state"]) if row else None
-    assignments = {"scrape_state": to_state, "last_transition_at": utc_now(), "updated_at": utc_now()}
+    assignments = {
+        "scrape_state": to_state,
+        "last_transition_at": utc_now(),
+        "updated_at": utc_now(),
+    }
     assignments.update(extra_updates or {})
     set_clause = ", ".join(f"{key} = ?" for key in assignments)
     conn.execute(
@@ -318,7 +333,9 @@ def import_discovery_catalog(
                 except json.JSONDecodeError:
                     invalid_rows += 1
                     continue
-                identifier = normalize_identifier(row.get("identifier") or row.get("source_url") or row)
+                identifier = normalize_identifier(
+                    row.get("identifier") or row.get("source_url") or row
+                )
                 if not identifier:
                     invalid_rows += 1
                     continue
@@ -326,9 +343,13 @@ def import_discovery_catalog(
                     duplicate_rows += 1
                     continue
                 seen.add(identifier)
-                existing = conn.execute("SELECT identifier FROM bwbr_catalog WHERE identifier = ?", (identifier,)).fetchone()
+                existing = conn.execute(
+                    "SELECT identifier FROM bwbr_catalog WHERE identifier = ?", (identifier,)
+                ).fetchone()
                 document_url = str(row.get("source_url") or official_document_url(identifier))
-                information_url = str(row.get("information_url") or official_information_url(identifier))
+                information_url = str(
+                    row.get("information_url") or official_information_url(identifier)
+                )
                 if existing:
                     updated += 1
                     conn.execute(
@@ -436,7 +457,8 @@ def queue_identifiers(
             candidates = []
             for row in rows:
                 if row["scrape_state"] == "failed" and not (
-                    int(row["failure_is_transient"] or 0) == 1 and int(row["retry_count"] or 0) < int(row["max_retries"] or 0)
+                    int(row["failure_is_transient"] or 0) == 1
+                    and int(row["retry_count"] or 0) < int(row["max_retries"] or 0)
                 ):
                     continue
                 candidates.append(str(row["identifier"]))
@@ -541,16 +563,39 @@ def classify_failure(message: str) -> dict[str, Any]:
     text = str(message or "")
     lowered = text.lower()
     http_match = HTTP_RE.search(text)
-    if any(term in lowered for term in ["timeout", "timed out", "connection", "temporarily", "temporary failure", "ssl"]):
+    if any(
+        term in lowered
+        for term in [
+            "timeout",
+            "timed out",
+            "connection",
+            "temporarily",
+            "temporary failure",
+            "ssl",
+        ]
+    ):
         return {"category": "temporary_network_failure", "retryable": True, "permanent": False}
     if http_match:
         status = int(http_match.group(1))
         if status == 429 or 500 <= status <= 599:
-            return {"category": "http_transient", "retryable": True, "permanent": False, "http_status": status}
-        return {"category": "http_error", "retryable": False, "permanent": True, "http_status": status}
+            return {
+                "category": "http_transient",
+                "retryable": True,
+                "permanent": False,
+                "http_status": status,
+            }
+        return {
+            "category": "http_error",
+            "retryable": False,
+            "permanent": True,
+            "http_status": status,
+        }
     if any(term in lowered for term in ["no law text extracted", "no text", "empty document"]):
         return {"category": "parser_failure", "retryable": False, "permanent": True}
-    if any(term in lowered for term in ["malformed", "not well-formed", "parseerror", "invalid xml", "invalid html"]):
+    if any(
+        term in lowered
+        for term in ["malformed", "not well-formed", "parseerror", "invalid xml", "invalid html"]
+    ):
         return {"category": "malformed_document", "retryable": False, "permanent": True}
     if "unsupported netherlands law url" in lowered or "unsupported" in lowered:
         return {"category": "unsupported_document", "retryable": False, "permanent": True}
@@ -579,12 +624,16 @@ def update_catalog_from_law_rows(
     inserted: list[str] = []
     with _connect(catalog_path) as conn:
         for row in rows:
-            identifier = normalize_identifier(row.get("law_identifier") or row.get("identifier") or row.get("source_url"))
+            identifier = normalize_identifier(
+                row.get("law_identifier") or row.get("identifier") or row.get("source_url")
+            )
             if not identifier:
                 continue
             checksum = _content_checksum(row)
             now = utc_now()
-            existing = conn.execute("SELECT scrape_state FROM bwbr_catalog WHERE identifier = ?", (identifier,)).fetchone()
+            existing = conn.execute(
+                "SELECT scrape_state FROM bwbr_catalog WHERE identifier = ?", (identifier,)
+            ).fetchone()
             current_state = str(existing["scrape_state"]) if existing else "discovered"
             if not existing:
                 inserted.append(identifier)
@@ -674,11 +723,18 @@ def update_catalog_from_law_rows(
                 event_type="parsed",
                 note="Parsed law row synchronized from raw scraper output.",
                 run_id=run_id,
-                details={"checksum_sha256": checksum, "article_extraction_status": row.get("article_extraction_status")},
+                details={
+                    "checksum_sha256": checksum,
+                    "article_extraction_status": row.get("article_extraction_status"),
+                },
             )
             updated.append(identifier)
         conn.commit()
-    return {"updated_count": len(updated), "inserted_count": len(inserted), "updated_identifiers": sorted(set(updated))}
+    return {
+        "updated_count": len(updated),
+        "inserted_count": len(inserted),
+        "updated_identifiers": sorted(set(updated)),
+    }
 
 
 def sync_catalog_from_raw(
@@ -690,8 +746,15 @@ def sync_catalog_from_raw(
     raw_dir = Path(raw_dir or PACKAGE_RAW_OUTPUT_DIR)
     laws_path = raw_dir / "netherlands_laws_index_latest.jsonl"
     if not laws_path.exists():
-        return {"updated_count": 0, "inserted_count": 0, "updated_identifiers": [], "missing_raw_index": str(laws_path)}
-    return update_catalog_from_law_rows(rows=read_jsonl(laws_path), catalog_path=catalog_path, run_id=run_id)
+        return {
+            "updated_count": 0,
+            "inserted_count": 0,
+            "updated_identifiers": [],
+            "missing_raw_index": str(laws_path),
+        }
+    return update_catalog_from_law_rows(
+        rows=read_jsonl(laws_path), catalog_path=catalog_path, run_id=run_id
+    )
 
 
 def _mark_failure(
@@ -702,7 +765,10 @@ def _mark_failure(
     run_id: str = "",
 ) -> None:
     classification = classify_failure(message)
-    row = conn.execute("SELECT retry_count, max_retries, scrape_state FROM bwbr_catalog WHERE identifier = ?", (identifier,)).fetchone()
+    row = conn.execute(
+        "SELECT retry_count, max_retries, scrape_state FROM bwbr_catalog WHERE identifier = ?",
+        (identifier,),
+    ).fetchone()
     if not row:
         return
     retry_count = int(row["retry_count"] or 0)
@@ -876,7 +942,9 @@ def mark_packaged(
                 note="Identifier represented in local CID Hugging Face package.",
                 extra_updates={
                     "packaged_at": utc_now(),
-                    "packaged_checksum_sha256": str(checksum["checksum_sha256"] or "") if checksum else "",
+                    "packaged_checksum_sha256": str(checksum["checksum_sha256"] or "")
+                    if checksum
+                    else "",
                 },
             )
             marked.append(identifier)
@@ -889,7 +957,12 @@ def mark_uploaded(
     catalog_path: Path | None = None,
     identifiers: Iterable[str] | None = None,
 ) -> dict[str, Any]:
-    return _bulk_mark_state(catalog_path=catalog_path, identifiers=identifiers, to_state="uploaded", timestamp_field="uploaded_at")
+    return _bulk_mark_state(
+        catalog_path=catalog_path,
+        identifiers=identifiers,
+        to_state="uploaded",
+        timestamp_field="uploaded_at",
+    )
 
 
 def mark_verified(
@@ -897,7 +970,12 @@ def mark_verified(
     catalog_path: Path | None = None,
     identifiers: Iterable[str] | None = None,
 ) -> dict[str, Any]:
-    return _bulk_mark_state(catalog_path=catalog_path, identifiers=identifiers, to_state="verified", timestamp_field="verified_at")
+    return _bulk_mark_state(
+        catalog_path=catalog_path,
+        identifiers=identifiers,
+        to_state="verified",
+        timestamp_field="verified_at",
+    )
 
 
 def _bulk_mark_state(
@@ -949,8 +1027,12 @@ def coverage_report(
     state_counts = Counter(str(row["scrape_state"]) for row in rows)
     status_counts = Counter(str(row["law_status"] or "unknown") for row in rows)
     parser_status_counts = Counter(str(row["parser_status"] or "unknown") for row in rows)
-    article_status_counts = Counter(str(row["article_extraction_status"] or "unknown") for row in rows)
-    failure_counts = Counter(str(row["last_error_category"] or "none") for row in rows if row["scrape_state"] == "failed")
+    article_status_counts = Counter(
+        str(row["article_extraction_status"] or "unknown") for row in rows
+    )
+    failure_counts = Counter(
+        str(row["last_error_category"] or "none") for row in rows if row["scrape_state"] == "failed"
+    )
     complete_identifiers = [
         str(row["identifier"])
         for row in rows
@@ -991,7 +1073,9 @@ def coverage_report(
             article_status_counts.get("non_article_document", 0)
             + article_status_counts.get("article_extraction_missing", 0)
         ),
-        "article_extraction_missing_count": article_status_counts.get("article_extraction_missing", 0),
+        "article_extraction_missing_count": article_status_counts.get(
+            "article_extraction_missing", 0
+        ),
         "genuine_non_article_laws_count": article_status_counts.get("non_article_document", 0),
         "article_rows_count": sum(int(row["article_rows_count"] or 0) for row in rows),
         "failures_by_category": dict(sorted(failure_counts.items())),
@@ -1046,18 +1130,25 @@ def validate_integrity(
         for row in raw_laws
         if normalize_identifier(row.get("law_identifier") or row.get("identifier"))
     }
-    law_counts = Counter(normalize_identifier(row.get("law_identifier") or row.get("identifier")) for row in raw_laws)
+    law_counts = Counter(
+        normalize_identifier(row.get("law_identifier") or row.get("identifier")) for row in raw_laws
+    )
     issues["duplicate_raw_law_identifiers"] = [
         {"law_identifier": identifier, "count": count}
         for identifier, count in sorted(law_counts.items())
         if identifier and count > 1
     ]
     for article in raw_articles:
-        identifier = normalize_identifier(article.get("law_identifier") or article.get("identifier"))
+        identifier = normalize_identifier(
+            article.get("law_identifier") or article.get("identifier")
+        )
         parent = law_by_id.get(identifier)
         if not parent:
             issues["orphan_article_rows"].append(
-                {"law_identifier": identifier, "article_identifier": article.get("article_identifier")}
+                {
+                    "law_identifier": identifier,
+                    "article_identifier": article.get("article_identifier"),
+                }
             )
             issues["missing_parent_law_rows"].append(identifier)
             continue
@@ -1079,9 +1170,7 @@ def validate_integrity(
         cids = [str(row.get("cid") or "") for row in read_jsonl(cid_index_path)]
         cid_counts = Counter(cid for cid in cids if cid)
         issues["duplicate_cids"] = [
-            {"cid": cid, "count": count}
-            for cid, count in sorted(cid_counts.items())
-            if count > 1
+            {"cid": cid, "count": count} for cid, count in sorted(cid_counts.items()) if count > 1
         ]
 
     nodes_path = graph_dir / "data/nodes/ipfs_netherlands_laws_kg_nodes.jsonl"
@@ -1120,7 +1209,9 @@ def _read_json_file(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
         return {}, {"path": str(path), "error": str(exc)}
 
 
-def _latest_report_path(reports_dir: Path, pattern: str, preferred_name: str | None = None) -> Path | None:
+def _latest_report_path(
+    reports_dir: Path, pattern: str, preferred_name: str | None = None
+) -> Path | None:
     if preferred_name:
         preferred = reports_dir / preferred_name
         if preferred.exists():
@@ -1133,7 +1224,9 @@ def _latest_report_path(reports_dir: Path, pattern: str, preferred_name: str | N
     return candidates[0] if candidates else None
 
 
-def _catalog_reconciliation_summary(catalog_path: Path) -> tuple[dict[str, Any], set[str], set[str], list[dict[str, Any]]]:
+def _catalog_reconciliation_summary(
+    catalog_path: Path,
+) -> tuple[dict[str, Any], set[str], set[str], list[dict[str, Any]]]:
     uri = f"file:{catalog_path.resolve()}?mode=ro"
     with sqlite3.connect(uri, uri=True) as conn:
         conn.row_factory = sqlite3.Row
@@ -1149,7 +1242,9 @@ def _catalog_reconciliation_summary(catalog_path: Path) -> tuple[dict[str, Any],
     state_counts = Counter(str(row["scrape_state"]) for row in rows)
     status_counts = Counter(str(row["law_status"] or "unknown") for row in rows)
     parser_status_counts = Counter(str(row["parser_status"] or "unknown") for row in rows)
-    article_status_counts = Counter(str(row["article_extraction_status"] or "unknown") for row in rows)
+    article_status_counts = Counter(
+        str(row["article_extraction_status"] or "unknown") for row in rows
+    )
     complete_identifiers = {
         str(row["identifier"])
         for row in rows
@@ -1193,7 +1288,9 @@ def _catalog_reconciliation_summary(catalog_path: Path) -> tuple[dict[str, Any],
     return summary, complete_identifiers, package_representable_identifiers, rows
 
 
-def _jsonl_identifier_summary(path: Path, *, identifier_fields: tuple[str, ...]) -> tuple[dict[str, Any], set[str]]:
+def _jsonl_identifier_summary(
+    path: Path, *, identifier_fields: tuple[str, ...]
+) -> tuple[dict[str, Any], set[str]]:
     identifiers: list[str] = []
     parse_errors: list[dict[str, Any]] = []
     row_count = 0
@@ -1271,7 +1368,9 @@ def _add_identifier_mismatch(
         )
 
 
-def _add_parse_error_mismatches(mismatches: list[dict[str, Any]], *, name: str, summary: dict[str, Any]) -> None:
+def _add_parse_error_mismatches(
+    mismatches: list[dict[str, Any]], *, name: str, summary: dict[str, Any]
+) -> None:
     parse_errors = summary.get("parse_errors") or []
     if parse_errors:
         mismatches.append(
@@ -1353,7 +1452,9 @@ def reconcile_milestone(
     complete_identifiers: set[str] = set()
     representable_identifiers: set[str] = set()
     if catalog_path.exists():
-        catalog_summary, complete_identifiers, representable_identifiers, _rows = _catalog_reconciliation_summary(catalog_path)
+        catalog_summary, complete_identifiers, representable_identifiers, _rows = (
+            _catalog_reconciliation_summary(catalog_path)
+        )
         report["summaries"]["catalog"] = catalog_summary
         if catalog_summary["duplicate_identifiers"]:
             mismatches.append(
@@ -1365,8 +1466,16 @@ def reconcile_milestone(
                 }
             )
     else:
-        warnings.append({"type": "missing_required_artifact", "path": str(catalog_path), "message": "Catalog SQLite file is missing."})
-        mismatches.append({"type": "missing_required_artifact", "name": "catalog", "path": str(catalog_path)})
+        warnings.append(
+            {
+                "type": "missing_required_artifact",
+                "path": str(catalog_path),
+                "message": "Catalog SQLite file is missing.",
+            }
+        )
+        mismatches.append(
+            {"type": "missing_required_artifact", "name": "catalog", "path": str(catalog_path)}
+        )
         report["summaries"]["catalog"] = catalog_summary
 
     raw_summary: dict[str, Any] = {"path": str(raw_dir)}
@@ -1375,7 +1484,9 @@ def reconcile_milestone(
     raw_laws_path = raw_dir / "netherlands_laws_index_latest.jsonl"
     raw_articles_path = raw_dir / "netherlands_laws_articles_index_latest.jsonl"
     if raw_laws_path.exists():
-        raw_summary["laws"], raw_law_ids = _jsonl_identifier_summary(raw_laws_path, identifier_fields=("law_identifier", "identifier"))
+        raw_summary["laws"], raw_law_ids = _jsonl_identifier_summary(
+            raw_laws_path, identifier_fields=("law_identifier", "identifier")
+        )
         _add_parse_error_mismatches(mismatches, name="raw laws JSONL", summary=raw_summary["laws"])
         if raw_summary["laws"]["duplicate_law_identifiers"]:
             mismatches.append(
@@ -1387,12 +1498,28 @@ def reconcile_milestone(
                 }
             )
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(raw_laws_path), "message": "Raw laws JSONL is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(raw_laws_path),
+                "message": "Raw laws JSONL is missing.",
+            }
+        )
     if raw_articles_path.exists():
-        raw_summary["articles"], raw_article_parent_ids = _jsonl_identifier_summary(raw_articles_path, identifier_fields=("law_identifier", "identifier"))
-        _add_parse_error_mismatches(mismatches, name="raw articles JSONL", summary=raw_summary["articles"])
+        raw_summary["articles"], raw_article_parent_ids = _jsonl_identifier_summary(
+            raw_articles_path, identifier_fields=("law_identifier", "identifier")
+        )
+        _add_parse_error_mismatches(
+            mismatches, name="raw articles JSONL", summary=raw_summary["articles"]
+        )
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(raw_articles_path), "message": "Raw articles JSONL is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(raw_articles_path),
+                "message": "Raw articles JSONL is missing.",
+            }
+        )
     if raw_law_ids and raw_article_parent_ids:
         _add_identifier_mismatch(
             mismatches,
@@ -1419,27 +1546,52 @@ def reconcile_milestone(
     package_manifest: dict[str, Any] = {}
     if package_manifest_path.exists():
         package_manifest, package_manifest_error = _read_json_file(package_manifest_path)
-        _add_json_artifact_error(mismatches, name="base package manifest", path=package_manifest_path, error=package_manifest_error)
+        _add_json_artifact_error(
+            mismatches,
+            name="base package manifest",
+            path=package_manifest_path,
+            error=package_manifest_error,
+        )
     if package_manifest:
         package_summary["manifest"] = {
             "path": str(package_manifest_path),
             "records": package_manifest.get("records") or {},
         }
     elif not package_manifest_path.exists():
-        warnings.append({"type": "missing_optional_artifact", "path": str(package_manifest_path), "message": "Base package manifest is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(package_manifest_path),
+                "message": "Base package manifest is missing.",
+            }
+        )
     else:
         package_summary["manifest_error"] = {"path": str(package_manifest_path)}
     package_laws_path = package_dir / "data/laws/ipfs_netherlands_laws.jsonl"
     package_articles_path = package_dir / "data/articles/ipfs_netherlands_laws_articles.jsonl"
     package_cid_path = package_dir / "data/cid_index/ipfs_netherlands_laws_cid_index.jsonl"
     if package_laws_path.exists():
-        package_summary["laws"], package_law_ids = _jsonl_identifier_summary(package_laws_path, identifier_fields=("law_identifier", "identifier"))
-        _add_parse_error_mismatches(mismatches, name="base package laws JSONL", summary=package_summary["laws"])
+        package_summary["laws"], package_law_ids = _jsonl_identifier_summary(
+            package_laws_path, identifier_fields=("law_identifier", "identifier")
+        )
+        _add_parse_error_mismatches(
+            mismatches, name="base package laws JSONL", summary=package_summary["laws"]
+        )
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(package_laws_path), "message": "Base package laws JSONL is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(package_laws_path),
+                "message": "Base package laws JSONL is missing.",
+            }
+        )
     if package_articles_path.exists():
-        package_summary["articles"], package_article_parent_ids = _jsonl_identifier_summary(package_articles_path, identifier_fields=("law_identifier", "identifier"))
-        _add_parse_error_mismatches(mismatches, name="base package articles JSONL", summary=package_summary["articles"])
+        package_summary["articles"], package_article_parent_ids = _jsonl_identifier_summary(
+            package_articles_path, identifier_fields=("law_identifier", "identifier")
+        )
+        _add_parse_error_mismatches(
+            mismatches, name="base package articles JSONL", summary=package_summary["articles"]
+        )
         if package_law_ids:
             _add_identifier_mismatch(
                 mismatches,
@@ -1450,19 +1602,56 @@ def reconcile_milestone(
                 actual=package_law_ids,
             )
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(package_articles_path), "message": "Base package articles JSONL is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(package_articles_path),
+                "message": "Base package articles JSONL is missing.",
+            }
+        )
     if package_cid_path.exists():
-        package_summary["cid_index"], _cid_ids = _jsonl_identifier_summary(package_cid_path, identifier_fields=("law_identifier", "identifier"))
-        _add_parse_error_mismatches(mismatches, name="base package CID index JSONL", summary=package_summary["cid_index"])
+        package_summary["cid_index"], _cid_ids = _jsonl_identifier_summary(
+            package_cid_path, identifier_fields=("law_identifier", "identifier")
+        )
+        _add_parse_error_mismatches(
+            mismatches, name="base package CID index JSONL", summary=package_summary["cid_index"]
+        )
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(package_cid_path), "message": "Base package CID index JSONL is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(package_cid_path),
+                "message": "Base package CID index JSONL is missing.",
+            }
+        )
     manifest_records = package_manifest.get("records") or {}
     if "laws" in package_summary and manifest_records:
-        _add_count_mismatch(mismatches, name="base package laws", left_label="base manifest", left_value=manifest_records.get("laws"), right_label="base laws JSONL", right_value=package_summary["laws"]["rows"])
+        _add_count_mismatch(
+            mismatches,
+            name="base package laws",
+            left_label="base manifest",
+            left_value=manifest_records.get("laws"),
+            right_label="base laws JSONL",
+            right_value=package_summary["laws"]["rows"],
+        )
     if "articles" in package_summary and manifest_records:
-        _add_count_mismatch(mismatches, name="base package articles", left_label="base manifest", left_value=manifest_records.get("articles"), right_label="base articles JSONL", right_value=package_summary["articles"]["rows"])
+        _add_count_mismatch(
+            mismatches,
+            name="base package articles",
+            left_label="base manifest",
+            left_value=manifest_records.get("articles"),
+            right_label="base articles JSONL",
+            right_value=package_summary["articles"]["rows"],
+        )
     if "cid_index" in package_summary and manifest_records:
-        _add_count_mismatch(mismatches, name="base package cid_index", left_label="base manifest", left_value=manifest_records.get("cid_index"), right_label="base CID JSONL", right_value=package_summary["cid_index"]["rows"])
+        _add_count_mismatch(
+            mismatches,
+            name="base package cid_index",
+            left_label="base manifest",
+            left_value=manifest_records.get("cid_index"),
+            right_label="base CID JSONL",
+            right_value=package_summary["cid_index"]["rows"],
+        )
     if package_law_ids and representable_identifiers:
         _add_identifier_mismatch(
             mismatches,
@@ -1474,57 +1663,138 @@ def reconcile_milestone(
         )
     report["summaries"]["package"] = package_summary
 
-    coverage_path = Path(coverage_report_path) if coverage_report_path else _latest_report_path(reports_dir, "coverage_report*.json", "coverage_report_latest.json")
+    coverage_path = (
+        Path(coverage_report_path)
+        if coverage_report_path
+        else _latest_report_path(
+            reports_dir, "coverage_report*.json", "coverage_report_latest.json"
+        )
+    )
     coverage: dict[str, Any] = {}
     coverage_error: dict[str, Any] | None = None
     if coverage_path and coverage_path.exists():
         coverage, coverage_error = _read_json_file(coverage_path)
-        _add_json_artifact_error(mismatches, name="coverage report", path=coverage_path, error=coverage_error)
+        _add_json_artifact_error(
+            mismatches, name="coverage report", path=coverage_path, error=coverage_error
+        )
     if coverage:
-        report["summaries"]["coverage_report"] = {"path": str(coverage_path), "counts": coverage.get("counts") or {}, "percent_complete": coverage.get("percent_complete")}
+        report["summaries"]["coverage_report"] = {
+            "path": str(coverage_path),
+            "counts": coverage.get("counts") or {},
+            "percent_complete": coverage.get("percent_complete"),
+        }
         coverage_counts = coverage.get("counts") or {}
         catalog_counts = catalog_summary.get("counts") or {}
         for key in ("total_discovered_identifiers", "complete", "remaining"):
             if key in coverage_counts and key in catalog_counts:
-                _add_count_mismatch(mismatches, name=f"coverage {key}", left_label="catalog", left_value=catalog_counts.get(key), right_label="coverage report", right_value=coverage_counts.get(key))
+                _add_count_mismatch(
+                    mismatches,
+                    name=f"coverage {key}",
+                    left_label="catalog",
+                    left_value=catalog_counts.get(key),
+                    right_label="coverage report",
+                    right_value=coverage_counts.get(key),
+                )
         if "article_rows_count" in coverage and "article_rows_count" in catalog_summary:
-            _add_count_mismatch(mismatches, name="coverage article rows", left_label="catalog", left_value=catalog_summary.get("article_rows_count"), right_label="coverage report", right_value=coverage.get("article_rows_count"))
+            _add_count_mismatch(
+                mismatches,
+                name="coverage article rows",
+                left_label="catalog",
+                left_value=catalog_summary.get("article_rows_count"),
+                right_label="coverage report",
+                right_value=coverage.get("article_rows_count"),
+            )
     elif coverage_error:
         report["summaries"]["coverage_report"] = {"path": str(coverage_path), "malformed": True}
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(coverage_path or reports_dir), "message": "Coverage report is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(coverage_path or reports_dir),
+                "message": "Coverage report is missing.",
+            }
+        )
 
-    integrity_path = Path(integrity_report_path) if integrity_report_path else _latest_report_path(reports_dir, "integrity_report*.json")
+    integrity_path = (
+        Path(integrity_report_path)
+        if integrity_report_path
+        else _latest_report_path(reports_dir, "integrity_report*.json")
+    )
     integrity: dict[str, Any] = {}
     integrity_error: dict[str, Any] | None = None
     if integrity_path and integrity_path.exists():
         integrity, integrity_error = _read_json_file(integrity_path)
-        _add_json_artifact_error(mismatches, name="integrity report", path=integrity_path, error=integrity_error)
+        _add_json_artifact_error(
+            mismatches, name="integrity report", path=integrity_path, error=integrity_error
+        )
     if integrity:
-        report["summaries"]["integrity_report"] = {"path": str(integrity_path), "ok": integrity.get("ok"), "issue_counts": integrity.get("issue_counts") or {}}
+        report["summaries"]["integrity_report"] = {
+            "path": str(integrity_path),
+            "ok": integrity.get("ok"),
+            "issue_counts": integrity.get("issue_counts") or {},
+        }
         if integrity.get("ok") is False:
-            mismatches.append({"type": "integrity_report_failed", "name": "integrity report", "issue_counts": integrity.get("issue_counts") or {}})
+            mismatches.append(
+                {
+                    "type": "integrity_report_failed",
+                    "name": "integrity report",
+                    "issue_counts": integrity.get("issue_counts") or {},
+                }
+            )
     elif integrity_error:
         report["summaries"]["integrity_report"] = {"path": str(integrity_path), "malformed": True}
     else:
-        warnings.append({"type": "missing_optional_artifact", "path": str(integrity_path or reports_dir), "message": "Integrity report is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(integrity_path or reports_dir),
+                "message": "Integrity report is missing.",
+            }
+        )
 
     unified_manifest_path = unified_dir / "dataset_manifest.json"
     unified_manifest: dict[str, Any] = {}
     if unified_manifest_path.exists():
         unified_manifest, unified_manifest_error = _read_json_file(unified_manifest_path)
-        _add_json_artifact_error(mismatches, name="unified package manifest", path=unified_manifest_path, error=unified_manifest_error)
+        _add_json_artifact_error(
+            mismatches,
+            name="unified package manifest",
+            path=unified_manifest_path,
+            error=unified_manifest_error,
+        )
     if unified_manifest:
-        unified_summary = {"path": str(unified_dir), "manifest": {"path": str(unified_manifest_path), "records": unified_manifest.get("records") or {}}}
+        unified_summary = {
+            "path": str(unified_dir),
+            "manifest": {
+                "path": str(unified_manifest_path),
+                "records": unified_manifest.get("records") or {},
+            },
+        }
         report["summaries"]["unified_package"] = unified_summary
         unified_records = unified_manifest.get("records") or {}
         for key in ("laws", "articles", "cid_index"):
             if key in manifest_records and key in unified_records:
-                _add_count_mismatch(mismatches, name=f"unified {key}", left_label="base manifest", left_value=manifest_records.get(key), right_label="unified manifest", right_value=unified_records.get(key))
+                _add_count_mismatch(
+                    mismatches,
+                    name=f"unified {key}",
+                    left_label="base manifest",
+                    left_value=manifest_records.get(key),
+                    right_label="unified manifest",
+                    right_value=unified_records.get(key),
+                )
     elif not unified_manifest_path.exists():
-        warnings.append({"type": "missing_optional_artifact", "path": str(unified_manifest_path), "message": "Unified package manifest is missing."})
+        warnings.append(
+            {
+                "type": "missing_optional_artifact",
+                "path": str(unified_manifest_path),
+                "message": "Unified package manifest is missing.",
+            }
+        )
     else:
-        report["summaries"]["unified_package"] = {"path": str(unified_dir), "manifest_error": {"path": str(unified_manifest_path)}}
+        report["summaries"]["unified_package"] = {
+            "path": str(unified_dir),
+            "manifest_error": {"path": str(unified_manifest_path)},
+        }
 
     report["ok"] = not mismatches
     report["mismatch_count"] = len(mismatches)
@@ -1577,7 +1847,11 @@ def build_incremental_hf_delta(
     raw_dir = Path(raw_dir or PACKAGE_RAW_OUTPUT_DIR)
     run_id = f"delta-{int(time.time())}"
     out_dir = Path(out_dir or RAW_DATA_DIR / "nl_bwb_operations" / "incremental" / run_id)
-    selected = [normalize_identifier(item) for item in identifiers] if identifiers else changed_identifiers_for_incremental_build(catalog_path=catalog_path, limit=limit)
+    selected = (
+        [normalize_identifier(item) for item in identifiers]
+        if identifiers
+        else changed_identifiers_for_incremental_build(catalog_path=catalog_path, limit=limit)
+    )
     selected = [item for item in dict.fromkeys(selected) if item]
     selected_set = set(selected)
 
@@ -1601,7 +1875,9 @@ def build_incremental_hf_delta(
         cid = cid_for_obj(payload)
         payload["cid"] = cid
         payload["content_address"] = f"ipfs://{cid}"
-        identifier = normalize_identifier(payload.get("law_identifier") or payload.get("identifier"))
+        identifier = normalize_identifier(
+            payload.get("law_identifier") or payload.get("identifier")
+        )
         law_cid_by_id[identifier] = cid
         laws.append(payload)
         cid_rows.append(
@@ -1643,7 +1919,9 @@ def build_incremental_hf_delta(
     index_rows: list[dict[str, Any]] = []
     for record_type, rows in [("law", laws), ("article", articles)]:
         for row in rows:
-            text = f"{row.get('title') or row.get('citation') or ''}\n{row.get('text') or ''}".strip()
+            text = (
+                f"{row.get('title') or row.get('citation') or ''}\n{row.get('text') or ''}".strip()
+            )
             index_rows.append(
                 {
                     "cid": row["cid"],

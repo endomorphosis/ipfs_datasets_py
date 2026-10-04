@@ -3,6 +3,7 @@ Pytest configuration for tests/unit directory.
 
 Excludes template/stub directories from test collection.
 """
+
 import builtins
 
 import pytest

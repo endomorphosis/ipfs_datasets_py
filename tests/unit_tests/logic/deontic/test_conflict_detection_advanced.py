@@ -29,17 +29,17 @@ class TestAdvancedConflictDetection:
             "type": DeonticOperator.OBLIGATION,
             "action": "attend_meeting",
             "subject": "employee",
-            "temporal_constraint": {"start": "9:00", "end": "10:00"}
+            "temporal_constraint": {"start": "9:00", "end": "10:00"},
         }
         norm2 = {
             "type": DeonticOperator.OBLIGATION,
             "action": "training_session",
             "subject": "employee",
-            "temporal_constraint": {"start": "9:30", "end": "11:00"}
+            "temporal_constraint": {"start": "9:30", "end": "11:00"},
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should detect temporal conflict
         assert len(conflicts) >= 0
 
@@ -53,17 +53,17 @@ class TestAdvancedConflictDetection:
             "type": DeonticOperator.OBLIGATION,
             "action": "report_incident",
             "subject": "manager",
-            "condition": "emergency_situation"
+            "condition": "emergency_situation",
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "report_incident",
             "subject": "manager",
-            "condition": "emergency_situation"
+            "condition": "emergency_situation",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should detect conflict
         assert len(conflicts) >= 0
 
@@ -76,16 +76,16 @@ class TestAdvancedConflictDetection:
         norm1 = {
             "type": DeonticOperator.PERMISSION,
             "action": "work_remotely",
-            "subject": "employee"
+            "subject": "employee",
         }
         norm2 = {
             "type": DeonticOperator.OBLIGATION,
             "action": "work_remotely",
-            "subject": "employee"
+            "subject": "employee",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Permission + Obligation is not a conflict
         assert all(c.get("severity") != "high" for c in conflicts)
 
@@ -95,19 +95,15 @@ class TestAdvancedConflictDetection:
         WHEN: Detecting conflicts
         THEN: Should consider subject hierarchy
         """
-        norm1 = {
-            "type": DeonticOperator.OBLIGATION,
-            "action": "approve_budget",
-            "subject": "ceo"
-        }
+        norm1 = {"type": DeonticOperator.OBLIGATION, "action": "approve_budget", "subject": "ceo"}
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "approve_budget",
-            "subject": "manager"
+            "subject": "manager",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Different subjects may not conflict
         assert isinstance(conflicts, list)
 
@@ -121,17 +117,17 @@ class TestAdvancedConflictDetection:
             "type": DeonticOperator.PROHIBITION,
             "action": "disclose_information",
             "subject": "employee",
-            "exceptions": ["court_order", "legal_requirement"]
+            "exceptions": ["court_order", "legal_requirement"],
         }
         norm2 = {
             "type": DeonticOperator.OBLIGATION,
             "action": "disclose_information",
             "subject": "employee",
-            "condition": "court_order"
+            "condition": "court_order",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Exception should prevent conflict
         assert isinstance(conflicts, list)
 
@@ -144,16 +140,16 @@ class TestAdvancedConflictDetection:
         norm1 = {
             "type": DeonticOperator.OBLIGATION,
             "action": "submit_report",
-            "subject": "employee"
+            "subject": "employee",
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "submit_reports",  # Plural form
-            "subject": "employee"
+            "subject": "employee",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should detect similarity
         assert isinstance(conflicts, list)
 
@@ -164,30 +160,14 @@ class TestAdvancedConflictDetection:
         THEN: Should identify all conflict pairs
         """
         norms = [
-            {
-                "type": DeonticOperator.OBLIGATION,
-                "action": "action_a",
-                "subject": "person"
-            },
-            {
-                "type": DeonticOperator.PROHIBITION,
-                "action": "action_a",
-                "subject": "person"
-            },
-            {
-                "type": DeonticOperator.PERMISSION,
-                "action": "action_b",
-                "subject": "person"
-            },
-            {
-                "type": DeonticOperator.PROHIBITION,
-                "action": "action_b",
-                "subject": "person"
-            },
+            {"type": DeonticOperator.OBLIGATION, "action": "action_a", "subject": "person"},
+            {"type": DeonticOperator.PROHIBITION, "action": "action_a", "subject": "person"},
+            {"type": DeonticOperator.PERMISSION, "action": "action_b", "subject": "person"},
+            {"type": DeonticOperator.PROHIBITION, "action": "action_b", "subject": "person"},
         ]
-        
+
         conflicts = detect_normative_conflicts(norms)
-        
+
         # Should detect multiple conflicts
         assert isinstance(conflicts, list)
 
@@ -201,19 +181,11 @@ class TestConflictSeverityLevels:
         WHEN: Detecting conflicts
         THEN: Should classify as HIGH severity
         """
-        norm1 = {
-            "type": DeonticOperator.OBLIGATION,
-            "action": "sign_document",
-            "subject": "user"
-        }
-        norm2 = {
-            "type": DeonticOperator.PROHIBITION,
-            "action": "sign_document",
-            "subject": "user"
-        }
-        
+        norm1 = {"type": DeonticOperator.OBLIGATION, "action": "sign_document", "subject": "user"}
+        norm2 = {"type": DeonticOperator.PROHIBITION, "action": "sign_document", "subject": "user"}
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Direct contradiction should be high severity
         if conflicts:
             assert any(c.get("severity") == "high" for c in conflicts)
@@ -224,19 +196,15 @@ class TestConflictSeverityLevels:
         WHEN: Detecting conflicts
         THEN: Should classify as MEDIUM severity
         """
-        norm1 = {
-            "type": DeonticOperator.PERMISSION,
-            "action": "access_resource",
-            "subject": "user"
-        }
+        norm1 = {"type": DeonticOperator.PERMISSION, "action": "access_resource", "subject": "user"}
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "access_resource",
-            "subject": "user"
+            "subject": "user",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Permission conflict typically medium
         assert isinstance(conflicts, list)
 
@@ -250,17 +218,17 @@ class TestConflictSeverityLevels:
             "type": DeonticOperator.OBLIGATION,
             "action": "attend",
             "subject": "member",
-            "condition": "weekend"
+            "condition": "weekend",
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "attend",
             "subject": "member",
-            "condition": "weekday"
+            "condition": "weekday",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Different conditions may result in lower severity
         assert isinstance(conflicts, list)
 
@@ -278,17 +246,17 @@ class TestResolutionStrategies:
             "type": DeonticOperator.OBLIGATION,
             "action": "policy_decision",
             "subject": "board",
-            "authority_level": "high"
+            "authority_level": "high",
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "policy_decision",
             "subject": "manager",
-            "authority_level": "low"
+            "authority_level": "low",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should suggest authority-based resolution
         assert isinstance(conflicts, list)
 
@@ -302,17 +270,17 @@ class TestResolutionStrategies:
             "type": DeonticOperator.OBLIGATION,
             "action": "procedure",
             "subject": "staff",
-            "created_at": "2020-01-01"
+            "created_at": "2020-01-01",
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "procedure",
             "subject": "staff",
-            "created_at": "2023-01-01"
+            "created_at": "2023-01-01",
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should suggest temporal resolution
         assert isinstance(conflicts, list)
 
@@ -326,17 +294,17 @@ class TestResolutionStrategies:
             "type": DeonticOperator.OBLIGATION,
             "action": "report",
             "subject": "employee",
-            "condition": None  # General
+            "condition": None,  # General
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "report",
             "subject": "employee",
-            "condition": "confidential_matter"  # Specific
+            "condition": "confidential_matter",  # Specific
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should suggest specificity-based resolution
         assert isinstance(conflicts, list)
 
@@ -346,19 +314,11 @@ class TestResolutionStrategies:
         WHEN: Requesting resolution strategies
         THEN: Should suggest prohibition_prevails
         """
-        norm1 = {
-            "type": DeonticOperator.PERMISSION,
-            "action": "action_x",
-            "subject": "user"
-        }
-        norm2 = {
-            "type": DeonticOperator.PROHIBITION,
-            "action": "action_x",
-            "subject": "user"
-        }
-        
+        norm1 = {"type": DeonticOperator.PERMISSION, "action": "action_x", "subject": "user"}
+        norm2 = {"type": DeonticOperator.PROHIBITION, "action": "action_x", "subject": "user"}
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Common strategy: prohibition overrides permission
         assert isinstance(conflicts, list)
 
@@ -376,17 +336,17 @@ class TestTemporalConstraints:
             "type": DeonticOperator.OBLIGATION,
             "action": "task_a",
             "subject": "worker",
-            "temporal_constraint": {"start": "08:00", "end": "09:00"}
+            "temporal_constraint": {"start": "08:00", "end": "09:00"},
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "task_a",
             "subject": "worker",
-            "temporal_constraint": {"start": "10:00", "end": "11:00"}
+            "temporal_constraint": {"start": "10:00", "end": "11:00"},
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Non-overlapping times should not conflict
         temporal_conflicts = [c for c in conflicts if "temporal" in str(c).lower()]
         assert len(temporal_conflicts) == 0 or all(
@@ -403,17 +363,17 @@ class TestTemporalConstraints:
             "type": DeonticOperator.OBLIGATION,
             "action": "meeting",
             "subject": "staff",
-            "temporal_constraint": {"start": "14:00", "end": "16:00"}
+            "temporal_constraint": {"start": "14:00", "end": "16:00"},
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "meeting",
             "subject": "staff",
-            "temporal_constraint": {"start": "15:00", "end": "17:00"}
+            "temporal_constraint": {"start": "15:00", "end": "17:00"},
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Overlapping times should conflict
         assert isinstance(conflicts, list)
 
@@ -427,17 +387,17 @@ class TestTemporalConstraints:
             "type": DeonticOperator.OBLIGATION,
             "action": "maintain_safety",
             "subject": "facility",
-            "temporal_constraint": {"start": "2020-01-01", "end": None}
+            "temporal_constraint": {"start": "2020-01-01", "end": None},
         }
         norm2 = {
             "type": DeonticOperator.PROHIBITION,
             "action": "maintain_safety",
             "subject": "facility",
-            "temporal_constraint": {"start": "2023-01-01", "end": "2023-12-31"}
+            "temporal_constraint": {"start": "2023-01-01", "end": "2023-12-31"},
         }
-        
+
         conflicts = detect_normative_conflicts([norm1, norm2])
-        
+
         # Should handle None/infinite constraints
         assert isinstance(conflicts, list)
 
@@ -452,7 +412,7 @@ class TestEdgeCasesAndErrorHandling:
         THEN: Should return empty conflicts list
         """
         conflicts = detect_normative_conflicts([])
-        
+
         assert conflicts == []
 
     def test_single_norm(self):
@@ -461,14 +421,10 @@ class TestEdgeCasesAndErrorHandling:
         WHEN: Detecting conflicts
         THEN: Should return empty conflicts (no pairs to conflict)
         """
-        norm = {
-            "type": DeonticOperator.OBLIGATION,
-            "action": "test",
-            "subject": "user"
-        }
-        
+        norm = {"type": DeonticOperator.OBLIGATION, "action": "test", "subject": "user"}
+
         conflicts = detect_normative_conflicts([norm])
-        
+
         assert conflicts == []
 
     def test_identical_norms(self):
@@ -477,14 +433,10 @@ class TestEdgeCasesAndErrorHandling:
         WHEN: Detecting conflicts
         THEN: Should NOT report as conflict
         """
-        norm = {
-            "type": DeonticOperator.OBLIGATION,
-            "action": "comply",
-            "subject": "entity"
-        }
-        
+        norm = {"type": DeonticOperator.OBLIGATION, "action": "comply", "subject": "entity"}
+
         conflicts = detect_normative_conflicts([norm, norm])
-        
+
         # Identical norms don't conflict
         assert len(conflicts) == 0
 
@@ -502,7 +454,7 @@ class TestEdgeCasesAndErrorHandling:
             "action": "something"
             # Missing type and subject
         }
-        
+
         # Should not crash
         try:
             conflicts = detect_normative_conflicts([norm1, norm2])
@@ -517,17 +469,9 @@ class TestEdgeCasesAndErrorHandling:
         WHEN: Detecting conflicts
         THEN: Should handle None gracefully
         """
-        norm1 = {
-            "type": DeonticOperator.OBLIGATION,
-            "action": None,
-            "subject": "user"
-        }
-        norm2 = {
-            "type": DeonticOperator.PROHIBITION,
-            "action": "test",
-            "subject": None
-        }
-        
+        norm1 = {"type": DeonticOperator.OBLIGATION, "action": None, "subject": "user"}
+        norm2 = {"type": DeonticOperator.PROHIBITION, "action": "test", "subject": None}
+
         try:
             conflicts = detect_normative_conflicts([norm1, norm2])
             assert isinstance(conflicts, list)

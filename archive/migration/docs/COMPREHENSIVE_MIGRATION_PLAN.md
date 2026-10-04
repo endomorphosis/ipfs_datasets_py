@@ -78,11 +78,12 @@ ipfs_datasets_py/
 from docs.ipfs_embeddings_py.ipfs_embeddings_py import ipfs_embeddings_py
 from ipfs_datasets_py.core import DatasetManager
 
+
 class EnhancedDatasetManager(DatasetManager):
     def __init__(self):
         super().__init__()
         self.embeddings_engine = ipfs_embeddings_py()
-    
+
     async def generate_embeddings(self, texts, model="auto"):
         return await self.embeddings_engine.embed_texts(texts, model)
 ```

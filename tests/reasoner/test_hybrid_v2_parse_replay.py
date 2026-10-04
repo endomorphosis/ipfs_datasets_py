@@ -72,10 +72,7 @@ def _condition_ast_signature(condition: ConditionNodeV2) -> Dict[str, Any]:
             if condition.atom is not None
             else None
         ),
-        "children": [
-            _condition_ast_signature(child)
-            for child in condition.children
-        ],
+        "children": [_condition_ast_signature(child) for child in condition.children],
         "var": condition.var,
         "var_type": condition.var_type,
     }
@@ -342,7 +339,10 @@ def test_v2_roundtrip_cnl_generation_preserves_semantics_for_norm_templates() ->
             jurisdiction=case.get("jurisdiction", "us/federal"),
         )
 
-        assert _semantic_signature(ir_roundtrip) == _semantic_signature(ir), (case["id"], regenerated)
+        assert _semantic_signature(ir_roundtrip) == _semantic_signature(ir), (
+            case["id"],
+            regenerated,
+        )
 
 
 @pytest.mark.parametrize(
@@ -381,11 +381,9 @@ def test_v2_cnl_generation_does_not_repeat_condition_marker_prefixes(
     replay_norm = next(iter(replay_ir.norms.values()))
 
     assert forbidden not in regenerated.lower()
-    assert _condition_ast_signature(replay_norm.activation) == _condition_ast_signature(norm.activation)
-    assert [
-        _condition_ast_signature(condition)
-        for condition in replay_norm.exceptions
-    ] == [
-        _condition_ast_signature(condition)
-        for condition in norm.exceptions
+    assert _condition_ast_signature(replay_norm.activation) == _condition_ast_signature(
+        norm.activation
+    )
+    assert [_condition_ast_signature(condition) for condition in replay_norm.exceptions] == [
+        _condition_ast_signature(condition) for condition in norm.exceptions
     ]

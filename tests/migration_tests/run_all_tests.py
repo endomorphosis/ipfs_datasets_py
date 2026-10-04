@@ -11,11 +11,14 @@ import pytest
 import json
 from datetime import datetime
 
+
 def main():
     # Run all tests
     print("Running all MCP tools tests...")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"mcp_tools_test_results_{timestamp}.json")
+    report_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), f"mcp_tools_test_results_{timestamp}.json"
+    )
 
     # Check if there are any test files
     test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test")
@@ -30,6 +33,7 @@ def main():
     # Check if pytest-json-report is installed
     try:
         import pytest_json_report
+
         has_json_report = True
     except ImportError:
         has_json_report = False
@@ -66,7 +70,7 @@ def main():
                 print("=" * 50)
 
                 # Print failures
-                if summary['failed'] > 0:
+                if summary["failed"] > 0:
                     print("\nFAILURES:")
                     for test_path, tests in report["tests"].items():
                         for test in tests:
@@ -78,9 +82,12 @@ def main():
         except Exception as e:
             print(f"Error reading test report: {e}")
     else:
-        print("\nNo detailed test report available. Install pytest-json-report for detailed reporting.")
+        print(
+            "\nNo detailed test report available. Install pytest-json-report for detailed reporting."
+        )
 
     return exit_code
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -40,6 +40,7 @@ try:
         ExtractionStrategy,
         DataType,
     )
+
     HAS_GENERATOR = True
 except ImportError:
     HAS_GENERATOR = False
@@ -533,13 +534,15 @@ class TestOntologyGeneratorProfiling:
             # Profile complete generation
             with BenchmarkTimer(f"generate_ontology_{domain_name}") as timer:
                 result = generator.generate_ontology(text, context)
-            
+
             elapsed_ms = timer.elapsed * 1000  # Convert to ms
-            results_summary.append({
-                "domain": domain_name,
-                "elapsed_ms": elapsed_ms,
-                "entities": len(result.get("entities", [])) if result else 0,
-            })
+            results_summary.append(
+                {
+                    "domain": domain_name,
+                    "elapsed_ms": elapsed_ms,
+                    "entities": len(result.get("entities", [])) if result else 0,
+                }
+            )
 
             logger.info(
                 f"{domain_name.upper()}: {elapsed_ms:.1f}ms "
@@ -567,7 +570,7 @@ class TestHotspotIdentification:
         """Identify top 3 hotspots consuming >20% of execution time."""
         # This test aggregates results from previous profiling tests
         # and identifies the top hotspots for optimization in Part 3
-        
+
         logger.info("\n=== TOP 3 HOTSPOTS IDENTIFIED ===")
         logger.info("(These will be optimized in Batch 234 Part 3)")
         logger.info("")

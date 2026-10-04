@@ -17,7 +17,7 @@ class SupportedTransformersModels(BaseModel):
     model: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
-    def from_json(cls, file_path: str) -> 'SupportedTransformersModels':
+    def from_json(cls, file_path: str) -> "SupportedTransformersModels":
         """
         Load the SupportedTransformersModels from a JSON file.
 
@@ -32,7 +32,7 @@ class SupportedTransformersModels(BaseModel):
             json.JSONDecodeError: If the JSON file is invalid.
         """
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, "r") as file:
                 data = json.load(file)
             return cls(model=data)
         except FileNotFoundError:
@@ -40,12 +40,14 @@ class SupportedTransformersModels(BaseModel):
         except json.JSONDecodeError:
             raise json.JSONDecodeError(f"The file {file_path} contains invalid JSON.")
 
+
 class SupportedProviders(Enum):
     COHERE = "cohere"
     OLLAMA = "ollama"
     TRANSFORMERS = "transformers"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+
 
 class ModelType(Enum):
     LLM = "llm"
@@ -59,16 +61,19 @@ import aiohttp
 from aiohttp import ClientResponse
 
 
-class ApiManager():
-    
-    def __init__(self, resources: dict[str, Callable|Coroutine]=None, configs: BaseModel = None):
+class ApiManager:
+    def __init__(
+        self, resources: dict[str, Callable | Coroutine] = None, configs: BaseModel = None
+    ):
         self.resources = resources
         self.configs = configs
 
         self.max_connections_per_api: int = configs.non_system_resources_max_connections_per_api
         self.available_api_connections: list = []
 
-        self.max_connections_per_api: int = configs.max_connections_per_api if configs.can_use_llm else 0
+        self.max_connections_per_api: int = (
+            configs.max_connections_per_api if configs.can_use_llm else 0
+        )
         self.connections_in_use: int = 0
         self.supported_models: BaseModel = SupportedTransformersModels.from_json(
             Paths.PROJECT_ROOT / "mapped_models.json"
@@ -85,28 +90,24 @@ class ApiManager():
         Returns:
             ApiConnection: An instance of the ApiConnection class.
             The class is a Pydantic BaseModel with the following attributes.
-            - client: The client object for an API. 
-                For external APIs, this is the client object for a specific provider e.g. OpenAI. 
-                For internal APIs, this is a URL to a local host e.g. Ollama, 
+            - client: The client object for an API.
+                For external APIs, this is the client object for a specific provider e.g. OpenAI.
+                For internal APIs, this is a URL to a local host e.g. Ollama,
                     or None if the the Model is loaded directly e.g. Transformers.
-            - model: The model object for an API. 
+            - model: The model object for an API.
                 For external APIs, this is the model's name as a string.
                 For internal APIs, this can be either the model's name as a string or the model object itself.
-            - provider: The provider of the API. Currently supported providers are: 
+            - provider: The provider of the API. Currently supported providers are:
                 Anthropic, Cohere, Ollama, OpenAI, and Transformers.
-            - model_type: The type of the model. Currently supported model types are: 
+            - model_type: The type of the model. Currently supported model types are:
                 LLM, Embedding, Speech-to-text, Multimodal, and Classifier
         """
         pass
 
     def receive_request_from_external_resource_manager(self) -> None:
-        """
-        
-        """
+        """ """
         pass
 
     def out(self) -> list[ApiConnection]:
-        """
-        
-        """
+        """ """
         pass

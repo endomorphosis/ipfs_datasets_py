@@ -181,8 +181,10 @@ Six improvement phases are proposed. Each is **independent** — they can be sta
 async def test_dataset_search_pipeline():
     """Load dataset → embed → index → semantic search."""
 
+
 async def test_p2p_workflow_submission():
     """Submit workflow → check status → retrieve result."""
+
 
 async def test_graph_knowledge_extraction():
     """PDF → extract entities → build graph → query."""

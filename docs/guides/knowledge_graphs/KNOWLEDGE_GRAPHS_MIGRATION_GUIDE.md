@@ -11,7 +11,7 @@ This guide helps you migrate from the old duplicate lineage tracking modules to 
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
     CrossDocumentLineageTracker,
     LineageNode,
-    LineageLink
+    LineageLink,
 )
 
 # Old API
@@ -20,11 +20,7 @@ tracker = CrossDocumentLineageTracker()
 
 ### New Way (Recommended)
 ```python
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    LineageTracker,
-    LineageNode,
-    LineageLink
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker, LineageNode, LineageLink
 
 # New unified API
 tracker = LineageTracker()
@@ -61,7 +57,7 @@ from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
     CrossDocumentLineageTracker,
     LineageNode,
     LineageLink,
-    LineageDomain
+    LineageDomain,
 )
 ```
 
@@ -71,7 +67,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
     LineageTracker,
     LineageNode,
     LineageLink,
-    LineageDomain
+    LineageDomain,
 )
 ```
 
@@ -79,19 +75,14 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
 
 **Before:**
 ```python
-tracker = CrossDocumentLineageTracker(
-    enable_semantic_analysis=True,
-    enable_boundary_detection=True
-)
+tracker = CrossDocumentLineageTracker(enable_semantic_analysis=True, enable_boundary_detection=True)
 ```
 
 **After:**
 ```python
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 
-tracker = EnhancedLineageTracker(
-    enable_temporal_consistency=True
-)
+tracker = EnhancedLineageTracker(enable_temporal_consistency=True)
 # Semantic analysis and boundary detection are built-in
 ```
 
@@ -100,35 +91,21 @@ tracker = EnhancedLineageTracker(
 **Before:**
 ```python
 # Track entities
-tracker.track_entity(
-    entity_id="dataset_1",
-    entity_type="dataset",
-    metadata={"name": "users"}
-)
+tracker.track_entity(entity_id="dataset_1", entity_type="dataset", metadata={"name": "users"})
 
 # Add relationships
 tracker.add_relationship(
-    source_id="dataset_1",
-    target_id="dataset_2",
-    relationship_type="derived_from"
+    source_id="dataset_1", target_id="dataset_2", relationship_type="derived_from"
 )
 ```
 
 **After:**
 ```python
 # Track nodes (entities)
-tracker.track_node(
-    node_id="dataset_1",
-    node_type="dataset",
-    metadata={"name": "users"}
-)
+tracker.track_node(node_id="dataset_1", node_type="dataset", metadata={"name": "users"})
 
 # Track links (relationships)
-tracker.track_link(
-    source_id="dataset_1",
-    target_id="dataset_2",
-    relationship_type="derived_from"
-)
+tracker.track_link(source_id="dataset_1", target_id="dataset_2", relationship_type="derived_from")
 ```
 
 ### Step 4: Update Analysis Code
@@ -210,9 +187,7 @@ If you need these features, please file an issue.
 
 **Before (Old API):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
-    CrossDocumentLineageTracker
-)
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import CrossDocumentLineageTracker
 
 # Create tracker
 tracker = CrossDocumentLineageTracker()
@@ -231,10 +206,7 @@ tracker.visualize("lineage.png")
 
 **After (New API):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    LineageTracker,
-    visualize_lineage
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker, visualize_lineage
 
 # Create tracker
 tracker = LineageTracker()
@@ -258,7 +230,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
     EnhancedLineageTracker,
     ImpactAnalyzer,
     LineageMetrics,
-    visualize_lineage
+    visualize_lineage,
 )
 
 # Create enhanced tracker
@@ -268,8 +240,10 @@ tracker = EnhancedLineageTracker()
 tracker.track_node("ds_prod", "dataset", metadata={"system": "production"})
 tracker.track_node("ds_analytics", "dataset", metadata={"system": "analytics"})
 tracker.track_link_with_analysis(
-    "ds_prod", "ds_analytics", "replicated_to",
-    auto_detect_boundary=True  # Automatically detects system boundary
+    "ds_prod",
+    "ds_analytics",
+    "replicated_to",
+    auto_detect_boundary=True,  # Automatically detects system boundary
 )
 
 # Analyze impact

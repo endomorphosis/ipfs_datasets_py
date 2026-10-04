@@ -12,7 +12,12 @@ def main() -> int:
         os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"),
     )
 
-    p2p_enable = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_ENABLE", "").strip().lower() in {"1", "true", "yes", "on"}
+    p2p_enable = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_ENABLE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     if p2p_enable and not os.environ.get("IPFS_DATASETS_PY_TASK_P2P_LISTEN_PORT"):
         os.environ["IPFS_DATASETS_PY_TASK_P2P_LISTEN_PORT"] = "9711"
 

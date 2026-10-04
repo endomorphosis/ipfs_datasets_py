@@ -49,11 +49,7 @@ def _positive_int(value: str) -> int:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -88,8 +84,7 @@ def _graph_skill_cids(graph: SkillCenterCIDGraphIndex) -> frozenset[str]:
         return frozenset(
             str(row[0])
             for row in connection.execute(
-                "SELECT node_cid FROM nodes "
-                "WHERE node_type = 'SKILL' AND node_cid = entry_cid"
+                "SELECT node_cid FROM nodes WHERE node_type = 'SKILL' AND node_cid = entry_cid"
             )
         )
 
@@ -98,10 +93,7 @@ def _bm25_cids(bm25: SkillCenterCorpusBM25Index) -> frozenset[str]:
     uri = f"{bm25.database_path.as_uri()}?mode=ro&immutable=1"
     with closing(sqlite3.connect(uri, uri=True)) as connection:
         return frozenset(
-            str(row[0])
-            for row in connection.execute(
-                "SELECT entry_cid FROM documents"
-            )
+            str(row[0]) for row in connection.execute("SELECT entry_cid FROM documents")
         )
 
 
@@ -113,24 +105,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     base = data_home / "ipfs_datasets_py/intent-ir"
-    corpus_dir = args.corpus_dir or (
-        base / "skillcenter-corpus" / args.revision / "full"
-    )
-    bm25_dir = args.bm25_dir or (
-        base / "skillcenter-bm25" / args.revision / "full-cid"
-    )
-    graph_dir = args.graph_dir or (
-        base
-        / "skillcenter-graphrag"
-        / args.revision
-        / "full-cid-bm25"
-    )
+    corpus_dir = args.corpus_dir or (base / "skillcenter-corpus" / args.revision / "full")
+    bm25_dir = args.bm25_dir or (base / "skillcenter-bm25" / args.revision / "full-cid")
+    graph_dir = args.graph_dir or (base / "skillcenter-graphrag" / args.revision / "full-cid-bm25")
     vector_dir = args.vector_dir or (
-        base
-        / "skillcenter-vectors"
-        / args.revision
-        / "full-cid"
-        / "thenlper-gte-small-cuda"
+        base / "skillcenter-vectors" / args.revision / "full-cid" / "thenlper-gte-small-cuda"
     )
 
     corpus = SkillCenterCorpusIndex.load(
@@ -144,9 +123,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     expected_cids = corpus.entry_cids
     bm25_cids = _bm25_cids(bm25)
     graph_cids = _graph_skill_cids(graph)
-    vector_cids = frozenset(
-        str(row["entry_cid"]) for row in vectors.metadata_rows
-    )
+    vector_cids = frozenset(str(row["entry_cid"]) for row in vectors.metadata_rows)
     expected_count = int(args.expected_records)
     counts = {
         "bm25": bm25.summary.indexed_entries,
@@ -155,14 +132,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "vectors": vectors.summary.vector_count,
     }
     if set(counts.values()) != {expected_count}:
-        raise ValueError(
-            f"index counts do not all equal {expected_count}: {counts}"
-        )
-    if (
-        bm25_cids != expected_cids
-        or graph_cids != expected_cids
-        or vector_cids != expected_cids
-    ):
+        raise ValueError(f"index counts do not all equal {expected_count}: {counts}")
+    if bm25_cids != expected_cids or graph_cids != expected_cids or vector_cids != expected_cids:
         raise ValueError("entry_cid sets differ across complete indexes")
 
     corpus_manifest_sha256 = _manifest_sha256(corpus.root)
@@ -193,22 +164,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "sqlite_cid": str(bm25.manifest["sqlite"]["cid"]),
     }
     input_bindings = {
-        "bm25_to_corpus": (
-            bm25.manifest.get("corpus_input")
-            == expected_bm25_corpus_input
-        ),
-        "graph_to_bm25": (
-            graph.manifest.get("bm25_input")
-            == expected_graph_bm25_input
-        ),
-        "graph_to_corpus": (
-            graph.manifest.get("corpus_input")
-            == expected_graph_corpus_input
-        ),
-        "vectors_to_corpus": (
-            vectors.manifest.get("corpus_input")
-            == expected_vector_corpus_input
-        ),
+        "bm25_to_corpus": (bm25.manifest.get("corpus_input") == expected_bm25_corpus_input),
+        "graph_to_bm25": (graph.manifest.get("bm25_input") == expected_graph_bm25_input),
+        "graph_to_corpus": (graph.manifest.get("corpus_input") == expected_graph_corpus_input),
+        "vectors_to_corpus": (vectors.manifest.get("corpus_input") == expected_vector_corpus_input),
     }
     if not all(input_bindings.values()):
         raise ValueError(f"artifact input bindings differ: {input_bindings}")

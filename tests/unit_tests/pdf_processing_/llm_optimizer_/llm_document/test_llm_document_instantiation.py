@@ -18,7 +18,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -31,19 +31,23 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
-    LLMDocumentTestDataFactory
+    LLMDocumentTestDataFactory,
 )
 
 
@@ -73,20 +77,13 @@ try:
     from dataclasses import dataclass
     import re
 
-    from pydantic import (
-        BaseModel, 
-        Field, 
-        field_validator,
-        NonNegativeInt,
-        ValidationError
-    )
+    from pydantic import BaseModel, Field, field_validator, NonNegativeInt, ValidationError
     import tiktoken
     from transformers import AutoTokenizer
     import numpy as np
     from sentence_transformers import SentenceTransformer
 except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
-
 
 
 class TestLLMDocumentInstantiation:
@@ -103,10 +100,10 @@ class TestLLMDocumentInstantiation:
         """
         # Given
         document_data = LLMDocumentTestDataFactory.create_valid_baseline_data()
-        
+
         # When
         document = LLMDocument(**document_data)
-        
+
         # Then
         assert document.document_id == document_data["document_id"]
         assert document.title == document_data["title"]
@@ -130,10 +127,10 @@ class TestLLMDocumentInstantiation:
         """
         # Given
         document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
-        
+
         # When - using minimal required fields
         document = LLMDocument(**document_data)
-        
+
         # Then
         assert document.document_id == document_data["document_id"]
         assert document.title == document_data["title"]
@@ -150,16 +147,16 @@ class TestLLMDocumentInstantiation:
         THEN expect ValidationError to be raised for missing required parameters
         """
         from pydantic import ValidationError
-        
+
         # When/Then - missing document_id
         data_missing_id = LLMDocumentTestDataFactory.create_data_missing_field("document_id")
         with pytest.raises(ValueError):
             LLMDocument(**data_missing_id)
-        
+
         # When/Then - missing multiple fields
         with pytest.raises(ValueError):
             LLMDocument(document_id="doc_001")
-        
+
         # When/Then - missing chunks field
         data_missing_chunks = LLMDocumentTestDataFactory.create_data_missing_field("chunks")
         with pytest.raises(ValueError):
@@ -177,10 +174,10 @@ class TestLLMDocumentInstantiation:
         # Given
         document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
         document_data["document_embedding"] = None
-        
+
         # When
         document = LLMDocument(**document_data)
-        
+
         # Then
         assert document.document_embedding is None
 
@@ -197,10 +194,10 @@ class TestLLMDocumentInstantiation:
         document_embedding = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32)
         document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
         document_data["document_embedding"] = document_embedding
-        
+
         # When
         document = LLMDocument(**document_data)
-        
+
         # Then
         assert isinstance(document.document_embedding, np.ndarray)
         assert np.array_equal(document.document_embedding, document_embedding)
@@ -219,10 +216,10 @@ class TestLLMDocumentInstantiation:
         # Given
         document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
         document_data["chunks"] = []
-        
+
         # When
         document = LLMDocument(**document_data)
-        
+
         # Then
         assert isinstance(document.chunks, list)
         assert len(document.chunks) == 0
@@ -239,38 +236,36 @@ class TestLLMDocumentInstantiation:
             - All chunk instances accessible
         """
         from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
-            LLMChunkTestDataFactory
+            LLMChunkTestDataFactory,
         )
-        
+
         # Given
         chunks = [
             LLMChunkTestDataFactory.create_chunk_instance(
-                content="First chunk content",
-                chunk_id="chunk_0001",
-                source_page=1
+                content="First chunk content", chunk_id="chunk_0001", source_page=1
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                relationships=["chunk_0001"]
+                relationships=["chunk_0001"],
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk content",
                 chunk_id="chunk_0003",
                 source_page=2,
-                relationships=["chunk_0002"]
-            )
+                relationships=["chunk_0002"],
+            ),
         ]
-        
+
         # When
         document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Multi-chunk Document",
             chunks=chunks,
-            summary="Document with multiple chunks"
+            summary="Document with multiple chunks",
         )
-        
+
         # Then
         assert isinstance(document.chunks, list)
         assert len(document.chunks) == 3
@@ -278,7 +273,7 @@ class TestLLMDocumentInstantiation:
         assert document.chunks[0].chunk_id == "chunk_0001"
         assert document.chunks[1].chunk_id == "chunk_0002"
         assert document.chunks[2].chunk_id == "chunk_0003"
-        
+
         # Verify all chunks are accessible and correct type
         for i, chunk in enumerate(document.chunks):
             assert isinstance(chunk, LLMChunk)
@@ -295,10 +290,10 @@ class TestLLMDocumentInstantiation:
         # Given
         document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
         document_data["key_entities"] = []
-        
+
         # When
         document = LLMDocument(**document_data)
-        
+
         # Then
         assert isinstance(document.key_entities, list)
         assert len(document.key_entities) == 0
@@ -317,22 +312,22 @@ class TestLLMDocumentInstantiation:
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95, "start": 0, "end": 8},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92, "start": 18, "end": 24},
-            {"type": "GPE", "value": "San Francisco", "confidence": 0.88, "start": 28, "end": 41}
+            {"type": "GPE", "value": "San Francisco", "confidence": 0.88, "start": 28, "end": 41},
         ]
-        
+
         # When
         document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Entity Rich Document",
             summary="Document with multiple entities",
-            key_entities=key_entities
+            key_entities=key_entities,
         )
-        
+
         # Then
         assert isinstance(document.key_entities, list)
         assert len(document.key_entities) == 3
         assert document.key_entities == key_entities
-        
+
         # Verify entity structure
         assert document.key_entities[0]["type"] == "PERSON"
         assert document.key_entities[0]["value"] == "John Doe"
@@ -340,7 +335,7 @@ class TestLLMDocumentInstantiation:
         assert document.key_entities[1]["value"] == "OpenAI"
         assert document.key_entities[2]["type"] == "GPE"
         assert document.key_entities[2]["value"] == "San Francisco"
-        
+
         # Verify all entities have expected keys
         for entity in document.key_entities:
             assert isinstance(entity, dict)

@@ -52,7 +52,9 @@ def test_package_courtlistener_fetch_cache_writes_manifest_and_parquet(tmp_path:
     assert package["summary"]["mirrored_ipfs_entry_count"] == 1
 
 
-def test_courtlistener_cache_bundle_can_roundtrip_from_json_parquet_car_and_zip(tmp_path: Path, monkeypatch) -> None:
+def test_courtlistener_cache_bundle_can_roundtrip_from_json_parquet_car_and_zip(
+    tmp_path: Path, monkeypatch
+) -> None:
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
     cache_dir = tmp_path / "cache"
     index_dir = cache_dir / "courtlistener_json" / "index"
