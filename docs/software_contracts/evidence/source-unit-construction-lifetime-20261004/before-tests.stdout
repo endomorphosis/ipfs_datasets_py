@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-admission-observation-datasets-20261004
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: platformdirs-4.12.1, mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 11 items
+
+tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py F [  9%]
+FF........                                                               [100%]
+
+=================================== FAILURES ===================================
+_______ test_worker_checkpoint_released_before_post_worker_source_fence ________
+tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py:95: in test_worker_checkpoint_released_before_post_worker_source_fence
+    assert case.observations[1]['checkpoint_released']
+E   assert False
+______ test_construction_graphs_released_before_independent_replay[True] _______
+tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py:104: in test_construction_graphs_released_before_independent_replay
+    assert all(a and b for a,b in case.released_at_load)
+E   assert False
+E    +  where False = all(<generator object test_construction_graphs_released_before_independent_replay.<locals>.<genexpr> at 0xeda00bfd1d80>)
+______ test_construction_graphs_released_before_independent_replay[False] ______
+tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py:104: in test_construction_graphs_released_before_independent_replay
+    assert all(a and b for a,b in case.released_at_load)
+E   assert False
+E    +  where False = all(<generator object test_construction_graphs_released_before_independent_replay.<locals>.<genexpr> at 0xeda00be18860>)
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-admission-native-20261004/before-tests.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py::test_worker_checkpoint_released_before_post_worker_source_fence
+FAILED tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py::test_construction_graphs_released_before_independent_replay[True]
+FAILED tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py::test_construction_graphs_released_before_independent_replay[False]
+========================= 3 failed, 8 passed in 0.69s ==========================

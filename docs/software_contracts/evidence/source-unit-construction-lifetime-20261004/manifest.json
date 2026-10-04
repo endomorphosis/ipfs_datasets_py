@@ -1,0 +1,135 @@
+{
+  "files": [
+    {
+      "bytes": 1850,
+      "path": "README.md",
+      "sha256": "6f8ad36c03c83d95ef04f6b5f411251bd10378f056fd89ba747d59577dfbf90a"
+    },
+    {
+      "bytes": 2390,
+      "path": "after-tests-command.json",
+      "sha256": "4305cba35eba9316939349f5bf1535dcd3dc5c96b184be21e98761bfbea045ca"
+    },
+    {
+      "bytes": 87,
+      "path": "after-tests-exit.json",
+      "sha256": "27e47bf6bd16a926111e66cf89f44b2b533fd2079c9d0894e1f4f96758e43437"
+    },
+    {
+      "bytes": 0,
+      "path": "after-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1343,
+      "path": "after-tests.stdout",
+      "sha256": "c4503aeb842916ac285f200752b176edd28f297494439e20bd0077b915d75421"
+    },
+    {
+      "bytes": 3331,
+      "path": "after-tests.xml",
+      "sha256": "f3fae6866b9dfade34d5bdd890618e2ed4a2292479e5c38f8cf2ad90ca61b365"
+    },
+    {
+      "bytes": 2161,
+      "path": "before-tests-command.json",
+      "sha256": "c6b0f8e794e213a0c718682cb709b79318b87d20fef8b5e407ca7787df7d14ab"
+    },
+    {
+      "bytes": 88,
+      "path": "before-tests-exit.json",
+      "sha256": "55c2217395525a76be0295774b1c0ab883a5c853f0de2e32494640ab5ef76688"
+    },
+    {
+      "bytes": 0,
+      "path": "before-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2969,
+      "path": "before-tests.stdout",
+      "sha256": "d69ad105c2dfec28e5a2dcbdb7a087a8da162be7ca404d75974f83665b7db374"
+    },
+    {
+      "bytes": 3681,
+      "path": "before-tests.xml",
+      "sha256": "a437a5034bb2b52ff9c443a9185f4af392baf5c5d59c6aabc4a17fd89949aba8"
+    },
+    {
+      "bytes": 2165,
+      "path": "native-tests-command.json",
+      "sha256": "b6d42f2f9cdcd9e6342d3c0c3a45d73c9ea196504a2f810900552c2702cef3f1"
+    },
+    {
+      "bytes": 87,
+      "path": "native-tests-exit.json",
+      "sha256": "17d74d7067fb1f531a62af1ed31043c5680fa48166f9778db72a5dcb7fb0d907"
+    },
+    {
+      "bytes": 0,
+      "path": "native-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 12305,
+      "path": "native-tests.stdout",
+      "sha256": "b5674da39f00e88533ac3cc074536570e1d3bb0b528e4b8769f061f8ee858d77"
+    },
+    {
+      "bytes": 6721,
+      "path": "native-tests.xml",
+      "sha256": "c2f83e84fbd52a7c08d8b3731faf26702ca49233741575e8c11cb108c6f9902f"
+    },
+    {
+      "bytes": 2031,
+      "path": "native_clean-tests-command.json",
+      "sha256": "25e34ff0e572b488a9630904e6dcf93832bd5f9e78704e25b3634482075d2579"
+    },
+    {
+      "bytes": 88,
+      "path": "native_clean-tests-exit.json",
+      "sha256": "c7b8672f7c10db6a3f0b61cdd6e49b209ebdfc33f93d753685e6d70a13b18623"
+    },
+    {
+      "bytes": 0,
+      "path": "native_clean-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1166,
+      "path": "native_clean-tests.stdout",
+      "sha256": "e9d06860a4ae7cece91869a9061ad5eefa29f2bf64884b72d6e6ad750650c839"
+    },
+    {
+      "bytes": 1496,
+      "path": "native_clean-tests.xml",
+      "sha256": "32657928b4cfc7ef54a9b394b3c618a711efcdbb2ce38f2acea791e8fe723704"
+    },
+    {
+      "bytes": 507,
+      "path": "qualification.json",
+      "sha256": "97c9c96140b3756d8e2428aa369136c6e41970632495d3c14dde39a6adc67299"
+    },
+    {
+      "bytes": 20387,
+      "path": "sources/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "sha256": "32705fefacab10f47fa25da723d7a8ee383f10a484dbbc9e0e6fbdf850d090dd"
+    },
+    {
+      "bytes": 9342,
+      "path": "sources/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+      "sha256": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd"
+    },
+    {
+      "bytes": 4730,
+      "path": "sources/tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py",
+      "sha256": "c1c8fe1db596efc4cdfab80f9fe329eee380e3ce2b60711fb1877f878c9a6d50"
+    },
+    {
+      "bytes": 5990,
+      "path": "sources/tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py",
+      "sha256": "8f653dc1c4ff7f692b6e63b94cbb159962c31ecb69ab7a8d615f6f0b0c423a39"
+    }
+  ],
+  "schema": "source-unit-construction-lifetime-evidence@1"
+}

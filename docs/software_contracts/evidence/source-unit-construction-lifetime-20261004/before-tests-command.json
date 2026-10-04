@@ -1,0 +1,35 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py",
+    "--junitxml=/home/barberb/lift_coding/artifacts/source384-admission-native-20261004/before-tests.xml"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/ir-admission-observation-datasets-20261004",
+  "environment_overrides": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002:/home/barberb/lift_coding/.worktrees/ir-admission-observation-datasets-20261004:/home/barberb/lift_coding/.venvs/terminal-bench-harbor/lib/python3.12/site-packages",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "NUMEXPR_MAX_THREADS": "1",
+    "CUDA_VISIBLE_DEVICES": "",
+    "TOKENIZERS_PARALLELISM": "false",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "IPFS_ACCELERATE_PYTEST_SEAL_DUCKDB": "/home/barberb/lift_coding/artifacts/source384-admission-observation-20261004/datasets-seal.duckdb",
+    "IPFS_DATASETS_PY_SEAL_KEY_STORE_PATH": "/home/barberb/lift_coding/artifacts/source384-admission-native-20261004/before-keys.db",
+    "IPFS_DATASETS_RESOURCE_SCHEDULER_PATH": "/home/barberb/lift_coding/artifacts/source384-admission-native-20261004/before-host-scheduler.json",
+    "CODEBASE384_CHECKPOINT": "/home/barberb/lift_coding/artifacts/distributed384-20261001/run-01/security_ir/coordinator/checkpoints/2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5.json",
+    "CODEBASE384_EMBEDDING_SNAPSHOT": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd"
+  },
+  "source_pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "cad72bdf21e24b947e660f52bba5f1f95983a5f04e82a51425f29fda29198d58",
+    "tests/unit/logic/software_contracts/test_source_unit_inference_lifetime.py": "8f653dc1c4ff7f692b6e63b94cbb159962c31ecb69ab7a8d615f6f0b0c423a39"
+  },
+  "host_sampler": "actual host resources; isolated local ledger"
+}

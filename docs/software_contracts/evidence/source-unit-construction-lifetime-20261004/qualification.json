@@ -1,0 +1,16 @@
+{
+  "actual_checkpoint_controls": 7,
+  "benchmark_result": false,
+  "checkpoint_unchanged": true,
+  "corrected_native_environment_passed": true,
+  "distinct_passing_tests": 24,
+  "docker_qualified": false,
+  "expected_pre_fix_failures": 3,
+  "initial_native_runner_version_refusal_retained": true,
+  "measured_rss_improvement": false,
+  "resource_policy_unchanged": true,
+  "schema": "source-unit-construction-lifetime-controls@1",
+  "skipped": 0,
+  "source_fences_unchanged": true,
+  "unit_controls": 17
+}
