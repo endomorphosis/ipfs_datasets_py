@@ -1,0 +1,9 @@
+{
+  "schema": "alignment-richer-experiment-config/v1",
+  "study_id": "autoformalization-richer-development-v1",
+  "study_config": {
+    "path": "external/ipfs_datasets/configs/autoencoders/alignment_study_development_v1.json",
+    "sha256": "413e7250098d39e3e1ff59405c75c5eca283ec5820828d8be7fb00beb01e2f31"
+  },
+  "max_seconds": 120
+}

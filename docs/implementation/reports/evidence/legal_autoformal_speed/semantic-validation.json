@@ -1,0 +1,63 @@
+{
+  "admitted": false,
+  "working_directory": "external/ipfs_datasets",
+  "baseline_formula_builder_sha256": "db78722aecc1bea3452f218037d340c04024391f876639cc4cb9d0e0db867827",
+  "candidate_formula_builder_sha256": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba",
+  "baseline_gate_command": "PYTHONPATH=\"$PWD\" IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0 python3 -m pytest tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure tests/unit/logic/test_autoformal.py::test_parser_atoms_roundtrip_without_a_hand_written_vocabulary --override-ini addopts='' -q",
+  "baseline_gate_result": {
+    "passed": 2,
+    "failed": 0,
+    "elapsed_seconds": 48.35
+  },
+  "original_regression_tests_before_changes": {
+    "passed": 16,
+    "failed": 0,
+    "elapsed_seconds": 19.3
+  },
+  "candidate_regression_command": "PYTHONPATH=\"$PWD\" IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0 python3 -m pytest tests/unit/logic/test_autoformal_speed_semantics.py --override-ini addopts='' -q",
+  "candidate_regression_result": {
+    "passed": 17,
+    "failed": 0,
+    "elapsed_seconds": 0.49
+  },
+  "new_seventeenth_test": "vocabulary extraction happens exactly once for an unchanged clause; stored-vocabulary and segmentation tests also assert appropriate vocabulary calls",
+  "candidate_broader_command": "PYTHONPATH=\"$PWD\" IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0 python3 -m pytest tests/unit/logic/test_autoformal_speed_semantics.py tests/unit/logic/legal_ir/test_canonical_compiler.py tests/unit/logic/legal_ir/test_canonical_compiler_pipeline.py tests/unit/logic/legal_ir/test_canonical_decompiler.py tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py tests/integration/logic/test_canonical_semantic_roundtrip.py --override-ini addopts='' -q",
+  "candidate_broader_result_before_adding_seventeenth_test": {
+    "passed": 56,
+    "failed": 1,
+    "elapsed_seconds": 5.44
+  },
+  "existing_failure": {
+    "test": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_checked_in_parity_snapshot_matches_live_run",
+    "reason": "historical snapshot decompiler source CID differs from the existing temporal-deduplication edit; decompiler was not edited by this speed change",
+    "snapshot_decompiler_cid": "bafkreih2ju5hvcdwcni3wtxjy2dksmjp5qvo2ipofghkq73ygk2tnnkmke",
+    "live_decompiler_cid": "bafkreigdkstfllt2xefhikbnr4zjc6mbtxylw4rc2ijofvn5ghrs5grpva",
+    "original_formula_builder_reproduction": {
+      "failed": 1,
+      "elapsed_seconds": 0.21
+    },
+    "snapshot_modified": false
+  },
+  "pilot": {
+    "before_receipt": "semantic-pilot-before.json",
+    "after_receipt": "semantic-pilot-after.json",
+    "comparison": "semantic-pilot-comparison.json",
+    "forward_before": 0.915,
+    "forward_after": 0.915,
+    "cycle_before": 1.0,
+    "cycle_after": 1.0,
+    "all_non_timing_fields_identical": true,
+    "before_mean_arm_seconds": 8.854541625,
+    "after_mean_arm_seconds": 0.070564442,
+    "scope": "five typed deontic text round trips, not bridge evaluate speed or proof admission",
+    "candidate_command": "python3 scripts/ops/legal_ir/benchmark_semantic_pilot.py --output /tmp/semantic-pilot-current.json",
+    "baseline_command": "python3 scripts/ops/legal_ir/benchmark_semantic_pilot.py --baseline-source /tmp/legal-autoformal-speed/formula_builder.before.py --output /tmp/semantic-pilot-baseline.json",
+    "original_receipt_command": "PYTHONPATH=/home/barberb/lift_coding/external/ipfs_datasets IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=0 python3 -u /tmp/legal-autoformal-speed/run_semantic_pilot.py --original-formula-builder /tmp/legal-autoformal-speed/formula_builder.before.py --output /tmp/legal-autoformal-speed/semantic-pilot-before.json",
+    "helper_smoke_matches_recorded_candidate_non_timing_fields": true
+  },
+  "gate_records": {
+    "before": "semantic-gates-before.json",
+    "after": "semantic-gates-after.json",
+    "all_fields_identical": true
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "admitted": false,
+  "archive_rebuilt": false,
+  "files": {
+    "descendant-066271fee9b8-test_codebase_inventory_lineage.py": {
+      "bytes": 14692,
+      "sha256": "0a0f2e81bc8e1f02ee6bc46d712c74c246b34a0ddf719ac5f794d9ed4bdff064"
+    },
+    "descendant-21859c6286e1-test_codebase_inventory_successor_model.py": {
+      "bytes": 23101,
+      "sha256": "f89bd2fbf5f9802186dc6414f6e326fb67cadf91cdb7a3cfbbdaae8dd6221c5c"
+    },
+    "descendant-73ba5858ba5e-test_codebase_inventory_lineage.py": {
+      "bytes": 13933,
+      "sha256": "18f1413ac79d64cce90c3da6df37daed0cdf2de36112b320d85cc7dfceb94521"
+    },
+    "descendant-7cb5eb9cf46d-codebase_inventory_lineage.py": {
+      "bytes": 24506,
+      "sha256": "1b99261b1e015c5acc697807d00b2f85474e4d86728f2aa50e2fc04094f46011"
+    },
+    "descendant-82c708579c61-source-advance.diff": {
+      "bytes": 6521,
+      "sha256": "c6405ccc02039cd507953da7fb04c4f5b3fbfae6c635ba7c236a89da0ff0023b"
+    },
+    "descendant-9bd4bea4f2f8-codebase_inventory_lineage.py": {
+      "bytes": 23356,
+      "sha256": "c37d229456cc755dd184e4274a7a8de502364fb65886039738b74b8df4a18a4f"
+    },
+    "descendant-be2c84cf07fe-test_codebase_inventory_successor_model.py": {
+      "bytes": 23481,
+      "sha256": "d53f1aeb0f258e67e640f9321e484bf6ed8385d7013de216fed6c5ea941cb428"
+    },
+    "final_verify_v2.py": {
+      "bytes": 4256,
+      "sha256": "2c883cc8d8ce4e4d32cd2bd138943fb58257d9fd96b3e76311a862e674871c97"
+    },
+    "owned-files.json": {
+      "bytes": 1321,
+      "sha256": "c8350dfcde257961ffdfcabdb21aa902710532437f9c34d9cceafc30bd9bf13a"
+    },
+    "prepare_publication_review_v2.py": {
+      "bytes": 5951,
+      "sha256": "c44191349d6a3249764500172a9b034a1f47dc0026baf7bde28b9f67de403f46"
+    },
+    "prepare_publication_support_v2.py": {
+      "bytes": 3464,
+      "sha256": "2f019312aff5d48d6cbcc05c42b9b0cb195109b703f2d40a90852f79e0e510f2"
+    },
+    "publication-descendant-script-review.json": {
+      "bytes": 130722,
+      "sha256": "fa221c04aa9e3775a0626780a7290ed40a9542fffe51984540012ac819d6793d"
+    },
+    "publication-source-advance-review-attempt1.json": {
+      "bytes": 298122,
+      "sha256": "f57f07d0f9bc6f4b9c10ba6f6c4e7b4f172988e1e0e21729cb0f6114497a93a7"
+    },
+    "publication-source-advance-review-attempt1.log": {
+      "bytes": 347,
+      "sha256": "d7f075d3540bb9162a1ba0a75a7a3b664622fbc29c1cde2777ab3d6f7a4438fd"
+    },
+    "publication-source-advance-review.json": {
+      "bytes": 300916,
+      "sha256": "6aaa7f0fea145685df3f8c36311a4920fd3c7e7f92a13e5a68115411dd9eeca6"
+    },
+    "publication_descendant_support.py": {
+      "bytes": 6352,
+      "sha256": "4b02879470f81db1641766de164ff2f284533f202e15b85e703c368e5370259e"
+    },
+    "publish_v2.py": {
+      "bytes": 15627,
+      "sha256": "0a36d5818ff5d6b0ad874b429558fdc5bd9dbe88808576484f8dcc110cce067d"
+    },
+    "review_descendant_scripts.py": {
+      "bytes": 7999,
+      "sha256": "29b73dec508e27a7822cf97da4193a2ed68cb39ed795e7371b1a185a53a27e29"
+    },
+    "review_publication_source_advance.py": {
+      "bytes": 7758,
+      "sha256": "9ea0ed2d91f74d60788598daba24bb006ad29b7266a5876339057baaf630a18c"
+    },
+    "review_publication_source_advance_r2.py": {
+      "bytes": 8204,
+      "sha256": "fc18b630e2b00f00cb22c1df7fa3a5c1d5aece474c2e06ce3ba2f31a4b3a7a99"
+    }
+  },
+  "frozen_six_fit_reexecuted": false,
+  "immutable_evidence": {
+    "README.md": {
+      "bytes": 8075,
+      "sha256": "57bd056131ccd2d47c439c1df9465619a8cc4681755b3001c09425d30268f0bd"
+    },
+    "evidence.tar.xz.part-001": {
+      "bytes": 48000000,
+      "sha256": "7d5922fb2c6f6c43629fed09f103b5a4c743fc00a276db60e64e79a2f39f5f15"
+    },
+    "evidence.tar.xz.part-002": {
+      "bytes": 48000000,
+      "sha256": "0218ecf6f536ca86829842a558b76516ba2a3b2751f4d7e973f6d5c38cb93bc8"
+    },
+    "evidence.tar.xz.part-003": {
+      "bytes": 12527204,
+      "sha256": "92e949d0c4a13df64cb40b9c02cd33ebdc9907ae8651fb8d6d578cd8787eb17f"
+    },
+    "manifest.json": {
+      "bytes": 931095,
+      "sha256": "1cc27cb2ea62fedd7d004e59c9928e677ece93b366d6d19efe9bae3532c41fef"
+    },
+    "results.json": {
+      "bytes": 5952882,
+      "sha256": "86c25e6dcaf3b793535115ec4983a73b4db44adc5b8fab8190b4303995b6ba48"
+    }
+  },
+  "lake_executed": false,
+  "original_artifact_publication_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/final_verify_v2.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/final_verify_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/owned-files.json": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/owned-files.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/prepare_publication_review_v2.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/prepare_publication_review_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/prepare_publication_support_v2.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/prepare_publication_support_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-descendant-script-review.json": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/publication-descendant-script-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/publication-parent/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-7cb5eb9cf46d-codebase_inventory_lineage.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/publication-parent/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-066271fee9b8-test_codebase_inventory_lineage.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/publication-parent/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-be2c84cf07fe-test_codebase_inventory_successor_model.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/source-advance.diff": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-82c708579c61-source-advance.diff",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/tested-parent/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-9bd4bea4f2f8-codebase_inventory_lineage.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/tested-parent/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-73ba5858ba5e-test_codebase_inventory_lineage.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/tested-parent/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/descendant-21859c6286e1-test_codebase_inventory_successor_model.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-source-advance-review-attempt1.json": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/publication-source-advance-review-attempt1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-source-advance-review-attempt1.log": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/publication-source-advance-review-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-source-advance-review.json": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/publication-source-advance-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication_descendant_support.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/publication_descendant_support.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publish_v2.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/publish_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/review_descendant_scripts.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/review_descendant_scripts.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/review_publication_source_advance.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/review_publication_source_advance.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/review_publication_source_advance_r2.py": "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/review_publication_source_advance_r2.py"
+  },
+  "publication_parent": "5621c0d47963318050dc7c31a299d10735329925",
+  "qualified": false,
+  "schema": "source-modality-publication-supplement/v1",
+  "source_advance": {
+    "archive_unchanged": true,
+    "changed_paths": [
+      "ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py",
+      "tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py",
+      "tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py"
+    ],
+    "protected_path_count": 301,
+    "publication_parent": "5621c0d47963318050dc7c31a299d10735329925",
+    "source_advance_review_sha256": "6aaa7f0fea145685df3f8c36311a4920fd3c7e7f92a13e5a68115411dd9eeca6",
+    "tested_parent": "b11f2514a0180fdbebb4bcd878beef21885cb7db"
+  },
+  "source_paths": {
+    "descendant-066271fee9b8-test_codebase_inventory_lineage.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/publication-parent/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py",
+    "descendant-21859c6286e1-test_codebase_inventory_successor_model.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/tested-parent/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py",
+    "descendant-73ba5858ba5e-test_codebase_inventory_lineage.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/tested-parent/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py",
+    "descendant-7cb5eb9cf46d-codebase_inventory_lineage.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/publication-parent/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py",
+    "descendant-82c708579c61-source-advance.diff": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/source-advance.diff",
+    "descendant-9bd4bea4f2f8-codebase_inventory_lineage.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/tested-parent/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py",
+    "descendant-be2c84cf07fe-test_codebase_inventory_successor_model.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/source-advance-r2/publication-parent/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py",
+    "final_verify_v2.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/final_verify_v2.py",
+    "owned-files.json": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/owned-files.json",
+    "prepare_publication_review_v2.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/prepare_publication_review_v2.py",
+    "prepare_publication_support_v2.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/prepare_publication_support_v2.py",
+    "publication-descendant-script-review.json": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-descendant-script-review.json",
+    "publication-source-advance-review-attempt1.json": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-source-advance-review-attempt1.json",
+    "publication-source-advance-review-attempt1.log": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-source-advance-review-attempt1.log",
+    "publication-source-advance-review.json": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-source-advance-review.json",
+    "publication_descendant_support.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication_descendant_support.py",
+    "publish_v2.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publish_v2.py",
+    "review_descendant_scripts.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/review_descendant_scripts.py",
+    "review_publication_source_advance.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/review_publication_source_advance.py",
+    "review_publication_source_advance_r2.py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/review_publication_source_advance_r2.py"
+  },
+  "tested_parent": "b11f2514a0180fdbebb4bcd878beef21885cb7db",
+  "tests_reexecuted": false
+}

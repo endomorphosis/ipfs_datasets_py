@@ -47,6 +47,7 @@ from ..results import (
     TheoremResult,
     TypedBackendResult,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from .wasm import (
     DEFAULT_MAX_SOURCE_BYTES,
     CapabilityPlane,
@@ -589,7 +590,7 @@ class RocqKernelBackend:
     ) -> None:
         self.backend_version = _text(backend_version, "backend_version")
         self.executable = _text(executable, "executable")
-        self._runner = runner or BoundedToolRunner()
+        self._runner = runner if runner is not None else ResourceAdmittedToolRunner()
         if not isinstance(self._runner, BoundedToolRunner):
             raise RocqKernelError("runner must be a BoundedToolRunner")
         self._wasm_probe = wasm_probe or WasmCapabilityProbe()

@@ -115,8 +115,8 @@ RESULT not attacker(challenge) is false.
 """
 
 PROVERIF_DISAGREE = """\
-RESULT not attacker(challenge[]) is true.
-RESULT event(AcceptChallenge(x)) ==> event(BeginChallenge(x)) is false.
+RESULT not attacker(challenge) is true.
+RESULT inj-event(AcceptChallenge(x)) ==> inj-event(BeginChallenge(x)) is false.
 -> event AcceptChallenge(x)
 """
 
@@ -582,13 +582,15 @@ end
         payload={"encoding": "spthy", "source": single_lemma},
     )
     outcome = backend.run(request)
-    assert outcome.result.status is ResultStatus.ATTACK_FOUND
+    assert outcome.result.status is ResultStatus.UNKNOWN
     assert outcome.receipt.accepted is False
-    attacks = outcome.result.witness.to_dict()["attack_traces"]
-    assert attacks
-    replay = outcome.result.witness.to_dict()["attack_trace_replay"]
-    assert replay and all(isinstance(token, str) for token in replay[0])
-    # Direct parse API also replays deterministically.
+    assert outcome.receipt.quarantine.reason is TamarinQuarantineReason.MALFORMED_OUTPUT
+    assert all(item.attack_trace is None and "validated" in item.reason
+               for item in outcome.receipt.claim_outcomes)
+    assert "attack_traces" not in outcome.result.witness
+    assert "attack_trace_replay" not in outcome.result.witness
+    # The standalone legacy utility still returns structural replay tokens;
+    # canonical result parsing never treats these as a validated native attack.
     trace = parse_tamarin_attack(TAMARIN_ATTACK, claim_id="claim:secrecy")
     assert trace is not None
     assert trace.replay() == tuple(step.replay_token() for step in trace.steps)
@@ -657,6 +659,8 @@ def test_proverif_disagreement_is_quarantined():
     assert (
         outcome.receipt.quarantine.reason is ProVerifQuarantineReason.DISAGREEMENT
     )
+    assert {item.claim_id for item in outcome.receipt.claim_outcomes} == {"secrecy", "auth"}
+    assert set(outcome.receipt.quarantine.claim_ids) == {"secrecy", "auth"}
 
 
 def test_tamarin_inconclusive_is_quarantined():

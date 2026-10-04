@@ -48,6 +48,7 @@ from ..results import (
     TheoremResult,
     TypedBackendResult,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from .wasm import (
     DEFAULT_MAX_SOURCE_BYTES,
     CapabilityPlane,
@@ -66,6 +67,8 @@ LEAN_KERNEL_BACKEND_VERSION: Final = "LeanKernelBackend@1"
 LEAN_KERNEL_RECEIPT_VERSION: Final = "lean-kernel-receipt/v1"
 LEAN_SOURCE_BINDING_VERSION: Final = "lean-source-binding/v1"
 LEAN_AXIOM_REPORT_VERSION: Final = "lean-axiom-report/v1"
+LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024**3
+LEAN_NATIVE_THREAD_STACK_KIB: Final = 65_536
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _SORRY = re.compile(r"(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx)(?![A-Za-z0-9_'])")
@@ -668,7 +671,8 @@ class LeanKernelBackend:
     ) -> None:
         self.backend_version = _text(backend_version, "backend_version")
         self.executable = _text(executable, "executable")
-        self._runner = runner or BoundedToolRunner()
+        self._runner = runner if runner is not None else ResourceAdmittedToolRunner()
+        self._managed_resource_runner = isinstance(self._runner, ResourceAdmittedToolRunner)
         if not isinstance(self._runner, BoundedToolRunner):
             raise LeanKernelError("runner must be a BoundedToolRunner")
         self._wasm_probe = wasm_probe or WasmCapabilityProbe()
@@ -754,6 +758,18 @@ class LeanKernelBackend:
         if request.query_kind is not QueryKind.THEOREM_PROOF:
             raise LeanKernelError("Lean kernel backend only answers theorem_proof queries")
 
+    def _native_resource_arguments(self) -> tuple[str, ...]:
+        if not self._managed_resource_runner:
+            return ()
+        return (f"-s{LEAN_NATIVE_THREAD_STACK_KIB}", f"-j{self._runner.cpu_slots}")
+
+    def _native_resource_environment(self) -> dict[str, str]:
+        if not self._managed_resource_runner:
+            return {}
+        return {"LEAN_NUM_THREADS": str(self._runner.cpu_slots),
+                "LEAN_STACK_SIZE_KB": str(LEAN_NATIVE_THREAD_STACK_KIB),
+                "LEAN_MAIN_USE_THREAD": "0"}
+
     def _tool_request(self, source: str, bounds: ExecutionBounds) -> ToolRunRequest:
         instrumented = instrument_lean_source_for_axioms(
             source, extract_lean_theorem_name(source)
@@ -763,17 +779,25 @@ class LeanKernelBackend:
             len(instrumented.encode("utf-8")) + bounds.max_output_bytes + 1024,
         )
         return ToolRunRequest(
-            argv=(self.executable, "--json", "{workspace}/Main.lean"),
+            argv=(self.executable, *self._native_resource_arguments(),
+                  "--json", "{workspace}/Main.lean"),
             runtime=ToolRuntime.NATIVE,
             limits=ToolRunLimits(
                 timeout_seconds=bounds.timeout_ms / 1000,
                 cpu_seconds=bounds.timeout_ms / 1000,
-                memory_bytes=bounds.max_memory_bytes,
+                # Lean reserves large virtual regions during runtime startup.
+                # Keep a finite AS ceiling and charge the requested RSS ceiling;
+                # the existing process-tree RSS guard remains sampled, not a
+                # kernel-enforced aggregate memory limit.
+                memory_bytes=(max(LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES, bounds.max_memory_bytes)
+                              if self._managed_resource_runner else bounds.max_memory_bytes),
+                resident_memory_bytes=(bounds.max_memory_bytes if self._managed_resource_runner else None),
                 max_output_bytes=bounds.max_output_bytes,
                 max_input_bytes=bounds.max_output_bytes,
                 max_workspace_bytes=max_workspace_bytes,
             ),
             input_files={"Main.lean": instrumented},
+            environment=self._native_resource_environment(),
         )
 
     def _build_result(
@@ -877,7 +901,16 @@ class LeanKernelBackend:
                 plane=CapabilityPlane.NATIVE,
                 executable=plane_state.executable or self.executable,
                 version=plane_state.version or self.backend_version,
-                command_template="{lean} --json {source_file}",
+                command_template=" ".join(("{lean}", *self._native_resource_arguments(),
+                                           "--json", "{source_file}")),
+                metadata=FrozenMap({"native_resource_profile": {
+                    "cpu_slots": self._runner.cpu_slots,
+                    "child_process_slots": self._runner.child_process_slots,
+                    "address_space_bytes": max(LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES, request.bounds.max_memory_bytes),
+                    "resident_memory_bytes": request.bounds.max_memory_bytes,
+                    "environment": self._native_resource_environment(),
+                    "resident_memory_enforcement": "sampled_process_tree_rss",
+                }} if self._managed_resource_runner else {}),
             )
         else:
             plane_state = (

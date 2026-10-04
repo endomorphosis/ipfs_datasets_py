@@ -1,0 +1,961 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 40189141,
+    "compression_level": 1,
+    "format": "ordered split gzip tar",
+    "members": 176,
+    "sha256": "6000799e6cc77394e75f352cfb0711601c681477991b459bba72a65c6db6df5c"
+  },
+  "archive_parts": [
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-001",
+      "sha256": "bd64d0afcc5ac1347f5a6db55d6fac30e341490e6a2e8ef3979ddec35fef9e02"
+    },
+    {
+      "bytes": 189141,
+      "path": "evidence.tar.gz.part-002",
+      "sha256": "225d0bcb7f8327a7fdef1ebf9836b29dbbaeed930688b47db6c50813a5dba5af"
+    }
+  ],
+  "checkpoint_promoted": false,
+  "encoder_weights_trained": false,
+  "external_model_weights_included": false,
+  "inventory_member": "publication/archive-inventory.json",
+  "lake_executed": false,
+  "members": {
+    "documentation/four_width_training.md": {
+      "bytes": 39295,
+      "sha256": "3a8d87cb5224d82aa30a4c7f8409cfb67527d867c55324a010cac16a7c16bab2"
+    },
+    "eight-head-rate/analyze_results.py": {
+      "bytes": 6364,
+      "sha256": "978ecafe1d3873dbb62ffe381cc770017216b722e2407e0ce671f1cd98b4ac3c"
+    },
+    "eight-head-rate/code-files.json": {
+      "bytes": 264,
+      "sha256": "7dfec0067de19ac40a8dd37a4a9f70206a225881546009f5bb6ee509667fb0b3"
+    },
+    "eight-head-rate/diagnosis-before-training.json": {
+      "bytes": 2414,
+      "sha256": "5d49d7dce203e628af4e9749b23090266704cb0e9f72c7d0e2d92579db278803"
+    },
+    "eight-head-rate/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py": {
+      "bytes": 4217,
+      "sha256": "72fda68e0151244d792ea1b909784d10a158cfad2dbe1a13e2729a287d3d8a86"
+    },
+    "eight-head-rate/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py": {
+      "bytes": 14039,
+      "sha256": "74faa67aa9c9790871fadf442fce33ab9dafbc0d4e5d9cb01c8689e6fc8d2e04"
+    },
+    "eight-head-rate/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py": {
+      "bytes": 5377,
+      "sha256": "ef141c3e007e6609ca513c5739d1c9ca09c9227242908b48cc4c4ef61a00aec0"
+    },
+    "eight-head-rate/freeze-receipt.json": {
+      "bytes": 1214,
+      "sha256": "ef399945bbb6964eb2cb3cf1ca5a03ce7f6088745ec6f1be7e71fdd6dee2611c"
+    },
+    "eight-head-rate/independent-head-rate-review.json": {
+      "bytes": 292381,
+      "sha256": "b5453a64ddad0091cccdd16e40e8f98671ab901e3fb985f465a3a2cf39325421"
+    },
+    "eight-head-rate/launch_phase.py": {
+      "bytes": 1234,
+      "sha256": "2c69785cf1b04d9f6ea054fb44ea87e878b6eece9f68b3f4f3a8e346300c5ec3"
+    },
+    "eight-head-rate/owned-source-publication.json": {
+      "bytes": 1426,
+      "sha256": "bd75f387c59dc4bcd8020ee332a5bcc1820778dc3094a24b4fbdf48a8078669e"
+    },
+    "eight-head-rate/postseal-object-distance-diagnostic.json": {
+      "bytes": 11671,
+      "sha256": "c72db414c891f5c27127d32a02641fd0dea9ab9a580e607bcd166e87c50ce57b"
+    },
+    "eight-head-rate/preflight-r1-guardian-exit.json": {
+      "bytes": 315,
+      "sha256": "cd6f70207d462c3fdfc1f654732dcf33f5068499c69be81e855f660aaf710758"
+    },
+    "eight-head-rate/preflight-r1-guardian.log": {
+      "bytes": 5089,
+      "sha256": "2dae110aa07288dc54e9f123c685061e08ac02e009c42b26ec222420c6012ea2"
+    },
+    "eight-head-rate/preflight-r1-lease-observations.jsonl": {
+      "bytes": 18562,
+      "sha256": "d8dfb34246626015f96237cfc8d799c19757a9208073e965348a02ba8277c5e9"
+    },
+    "eight-head-rate/preflight-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "1f9f1915ec4bc02c5b5d9fec8bc4ddfa4b0313b9bcaa63971ff6bcdb58c4bb85"
+    },
+    "eight-head-rate/preflight-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "c34bccff9e0173efe08f2f9ff71af69f7984be410ae6781860b789a79421b425"
+    },
+    "eight-head-rate/preflight-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "b4e7d385eec5f32aa0875f1501464835d5db0c0d5a75138598aea3e4c1a69670"
+    },
+    "eight-head-rate/preflight-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "eight-head-rate/preflight-r1/command.json": {
+      "bytes": 6409,
+      "sha256": "57d872d41b564d1543bb385aa44fab6cedb663b4f49c1f246ed6db95ffc47d28"
+    },
+    "eight-head-rate/preflight-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "de7750fd44eab7ecd8e1164cd2ad928411bcda5d42280cbf9e6a375785834341"
+    },
+    "eight-head-rate/preflight-r1/resources-final.json": {
+      "bytes": 5814,
+      "sha256": "6d8ee56969e742256ae00bcf4723eaf58ba37014887cac377a269c6588bf27f7"
+    },
+    "eight-head-rate/preflight-r1/resources-start.json": {
+      "bytes": 3171,
+      "sha256": "004e84ca7a7711a7ff07e0bfca9f67171269ca69ebf28f4a65768d2a29e66cb5"
+    },
+    "eight-head-rate/preflight-r1/results/head-rate10-baseline/parent-validation.json": {
+      "bytes": 1615769,
+      "sha256": "2122e0f77a5a69361a5c34fc8329a1d4c09c4f1481eba2e2658a298a91bbcae3"
+    },
+    "eight-head-rate/preflight-r1/results/head-rate2-candidate/parent-validation.json": {
+      "bytes": 1615768,
+      "sha256": "713f7aa36fd0cbb22fe5642bd73efbd1f77487224f616803dd28d1b5225ac017"
+    },
+    "eight-head-rate/preflight-r1/results/summary.json": {
+      "bytes": 25084,
+      "sha256": "e7f6e39e5bc23e35aebdbdd93edb491f8fadf10b493fc95333a54d0cdf0fd03e"
+    },
+    "eight-head-rate/prepare_freeze.py": {
+      "bytes": 5086,
+      "sha256": "5e4cf18044e3de4648399dc9057f9c93c5f74aafa1866f670cc1ee6bdf16f2ef"
+    },
+    "eight-head-rate/proposed-guide-append.md": {
+      "bytes": 3686,
+      "sha256": "1c7ffe914e99c499dc76eb5b5866e908afe4e2a56eff1548998042379b458bba"
+    },
+    "eight-head-rate/results.json": {
+      "bytes": 62394,
+      "sha256": "388393b7c105fdf5af6cc9374e7d68701a60127699319766dde73b6d550fdb89"
+    },
+    "eight-head-rate/run_reserved.py": {
+      "bytes": 16707,
+      "sha256": "2291929b78262424dd013df0d2d94fcd263787e3cca4ba5bae1a9adccc84c33a"
+    },
+    "eight-head-rate/test_lazy_scheduler_adoption.py": {
+      "bytes": 1638,
+      "sha256": "d13c6723544c68e8f42669c07bf10f9a44368f89a50004fed8008cea3d0e7370"
+    },
+    "eight-head-rate/tests-focused-final.log": {
+      "bytes": 1180,
+      "sha256": "c9ca8d4d807c381da3bf70827c832bfbd2c40f1aa9f5fd7376daf932413ec31c"
+    },
+    "eight-head-rate/tests-focused-final.xml": {
+      "bytes": 5626,
+      "sha256": "dd1f77ae49aa617b982c37c6f10670f17e1b15d7b6d4fc87dfcebfe4b5269a67"
+    },
+    "eight-head-rate/tests-focused.log": {
+      "bytes": 1174,
+      "sha256": "2c0e5c4f11a5ae0d07037a7635f3d594e661dceaf5a206c37a408f4ffe804086"
+    },
+    "eight-head-rate/tests-focused.xml": {
+      "bytes": 5626,
+      "sha256": "b8afa5d6f0406de66bfc848cc8313b08db32ebce81e20d7a3b0599d84b8b5a44"
+    },
+    "eight-head-rate/training-manifest.json": {
+      "bytes": 181180,
+      "sha256": "e0227184ea238761f7ecd036a758ec6b88299f30227f5fc36e4fca6ada943deb"
+    },
+    "eight-head-rate/training-plan.json": {
+      "bytes": 181678,
+      "sha256": "47f8ac8c81accacc83c17f23ff24569ce0fd10ab1037c137cdc85b8da6bfa0c5"
+    },
+    "eight-head-rate/training-r1-guardian-exit.json": {
+      "bytes": 313,
+      "sha256": "f7fb6683b9472aa67d9536d734e7d5379a2c89ff57adf64936dbe5afd3576441"
+    },
+    "eight-head-rate/training-r1-guardian.log": {
+      "bytes": 5095,
+      "sha256": "b175141567f804ef17aaec7f02e32485878f15ca46dd67455eed25ca497da8f6"
+    },
+    "eight-head-rate/training-r1-lease-observations.jsonl": {
+      "bytes": 100205,
+      "sha256": "bd5ece6c41460b4896a908e84a29966b8ccc7ca27858a1173eae51bdb4324685"
+    },
+    "eight-head-rate/training-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "41e4d93d31ecd5fa60c3a308e7ff269988874801a00306ef8bdd1e6e5481778b"
+    },
+    "eight-head-rate/training-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "e42ee0374e5d7e9ec64b66814afa5c0e2366608fa1a24b8c0be24d41db621642"
+    },
+    "eight-head-rate/training-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "e79355d684066b35fe513ee24033a36ed0351ced8f0ec586ec64af50838c002b"
+    },
+    "eight-head-rate/training-r1/child.log": {
+      "bytes": 1914,
+      "sha256": "4445bfc74b053dc4af5553c4963ee2cafe78a97eeabe99d66749627089d4ebf0"
+    },
+    "eight-head-rate/training-r1/command.json": {
+      "bytes": 6408,
+      "sha256": "89785ab535a491823b4315e2f0dde3f7d3ba4f4ed5d67a3a6d1d6157e1e67ed1"
+    },
+    "eight-head-rate/training-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "4262ed664c1dba244f9b7c4d499bffb8d8f5f5a2ab87398756b92dad5672e78e"
+    },
+    "eight-head-rate/training-r1/resource-observations.json": {
+      "bytes": 3501,
+      "sha256": "96b56d3e342e7b7b3343879e587b2a33b7d6c709a707bab776b0a35daf3f80c4"
+    },
+    "eight-head-rate/training-r1/resources-final.json": {
+      "bytes": 5820,
+      "sha256": "74b96b250666bdc06bf35b12085ab7da9eaa788262f7f147f4403cd3242931d8"
+    },
+    "eight-head-rate/training-r1/resources-start.json": {
+      "bytes": 3167,
+      "sha256": "553f00d0c9a8eec09644aa5ef201e5ed8fafc06ee2941c16c38f634a856a7791"
+    },
+    "eight-head-rate/training-r1/results/8/preprocessing.json": {
+      "bytes": 204737,
+      "sha256": "ab3af09517154fcf074a21d4648fd4b672ad7c657153295edc363d36d337a8fb"
+    },
+    "eight-head-rate/training-r1/results/8/source-contexts.json": {
+      "bytes": 148526,
+      "sha256": "7ebb38207fb90edfa378908fcc320e7afd5a62cc79e434d0c8d937876362e1fb"
+    },
+    "eight-head-rate/training-r1/results/8/training-rows.json": {
+      "bytes": 73176,
+      "sha256": "a49125a8a934b61dbc71c5bef1bbfe7e75dafbcb958643b8d216242b33e039e1"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/initial-state.json": {
+      "bytes": 866517,
+      "sha256": "5f32c266fd679b70fcb7af28e08b6708268690a1d65ed516f0eea22e489e04e8"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt-state.json": {
+      "bytes": 863594,
+      "sha256": "965efba6c8802d7380e4e8051e2b11a18aa2f2ffda9bfeea0b4bcdc862cc7c6c"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 1714177,
+      "sha256": "1d4ac471f2ab90e5c00095cffefefde47446a6bd74393d4516705e7efe754ecd"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 1714160,
+      "sha256": "275f320f3b183aad81b073490d356db94a541c4435da9d1cc138d2e52bee8d98"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 1714171,
+      "sha256": "83b394c0d0b5ebd115247a0d4de960ed3ca031682248c4a9d40d88e951b883d3"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 1714163,
+      "sha256": "fedd8a0a4f3384e56d81ab52ff730bf99b155d88a252b54c790c3d371a04ebbb"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1620036,
+      "sha256": "d152d9405336917c357f7e195f1066b033349546a6d399acc1921fe00bed993e"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1714098,
+      "sha256": "66fb765470f37380aa46f8711036caef2b6f549059566c130483059825bfe219"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-training.json": {
+      "bytes": 1705849,
+      "sha256": "8eb9735448f358755c8555d6292c4613ee702fef49eb15f7376f5a11dcae0e00"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-validation.json": {
+      "bytes": 1713676,
+      "sha256": "c6fe770429c6a609d01dcff37b144925da0e300bf01827997186a47440ccdd9b"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2390148,
+      "sha256": "f84143c137c3c7f00151cd40e3144d4c4ed206a5c9bd0edef7113ac7992e4fe5"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/parent-validation.json": {
+      "bytes": 1615769,
+      "sha256": "4afce7ba8ca16ca487f594f25982561167f94c3a0605fc4edbfa202fd0ad15c3"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected-state.json": {
+      "bytes": 866517,
+      "sha256": "44663cffe68e7512d8c1c738e9e689dc232802b965c0b2097bc233c5093f52d0"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1698366,
+      "sha256": "ab06f0b9438cafde99d4b3bd0ca21784f2f01ff02cb7c53bf4b6ac114c940f83"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-context-reverse.json": {
+      "bytes": 1698368,
+      "sha256": "c06b03a4b6c8739ea1350f5bcc1a5d00d0f5dc85eeea1292887f2e376763db1a"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-context-rotate.json": {
+      "bytes": 1698382,
+      "sha256": "fef91765cfa3323b21fb79f0f2b79545bbaa2e7d4719865d8a5d2868126eebfd"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1698345,
+      "sha256": "f26cb8f7db5d0a398f503a7ce8ad5221f9b3214be5e3509eeac800a561643600"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1608267,
+      "sha256": "cabbc6faf9b821cad65c337dd55cdf8e38369f0502462576c6f383366f38adad"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-source-shuffle.json": {
+      "bytes": 1698295,
+      "sha256": "fb104ef81beba2b041ede4bd149ed2ebeae8bc17573de474a79f528067d09911"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-training.json": {
+      "bytes": 1693923,
+      "sha256": "c420e8082075149dea9f3d9f4b5f33959a17bc4ec46a6df74d82c9b9184fe890"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-validation.json": {
+      "bytes": 1697948,
+      "sha256": "8576b96f106b81dc7b202fd6e742d0ed82ceaf353118e716679802a7ad2f70f5"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-zero-condition.json": {
+      "bytes": 2356645,
+      "sha256": "ede16fc28ce80cec717269e41415b396a9b9de1a8fdcbe93040271008a3fd107"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/summary.json": {
+      "bytes": 315153,
+      "sha256": "efc3051456ff4c7676ac2bc7557ca8a33888660fc27fdb8e2906bb694406eb84"
+    },
+    "eight-head-rate/training-r1/results/head-rate10-baseline/training.json": {
+      "bytes": 18638621,
+      "sha256": "9b380f42b9f29786f1abfe60a8818aa172d7e8273cc1dbd90f98dcf95096e76a"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/initial-state.json": {
+      "bytes": 866516,
+      "sha256": "138c9729c2e0873152295d2706b53aa64e76ac2b3b8689239a0d9f99d798a98e"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt-state.json": {
+      "bytes": 864822,
+      "sha256": "5fa142ddc6e5a63922d247926d9b49be7739b5dd5efd5b1c6782230327fabcc2"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 1696925,
+      "sha256": "83aecee018ca65f097ca046463877394a0bcbaf47b5db636e85cd08bbd9be54f"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 1696926,
+      "sha256": "c10a31bb2013225603b546dc23c5d700d87768b8b9a55fc919b5bf4b2cc49f2b"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 1696934,
+      "sha256": "5c9e7c0ec0f313fe0a62644ce7d086ab2fc2d9a157f905028b60db7c597b532d"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 1696914,
+      "sha256": "b712609f40718096b01fc6ec7c356bafabc2786910b42fb92d1c5866e6457d8c"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1602920,
+      "sha256": "cad2856e39e42b733bc1f657bc70043d3d56f4a869dc8ab1a03676b4668f151e"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1696851,
+      "sha256": "45f675588c0219d77ea8f93f4a815a3dd5bab545c6abf70c57c6372af791e42c"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-training.json": {
+      "bytes": 1691813,
+      "sha256": "3ee7f179f2d8455ce88fbb48119e0528c8451db9a5d7dd8a2d0f660f5447c353"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-validation.json": {
+      "bytes": 1696457,
+      "sha256": "c9289e929ef90fc6f4ac6cd1cd9393dfaa99f35523de7ca785c4396b674b250c"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2364498,
+      "sha256": "b3a636157d3cebd5209b85bbc20ed657bd183f9618929ef46517c8e9a710895c"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/parent-validation.json": {
+      "bytes": 1615770,
+      "sha256": "2f6e06ecb927cca8c360a9650d4addfa440839aa9323c1a4cf5bf813d5052783"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected-state.json": {
+      "bytes": 866516,
+      "sha256": "42558dea34c327be6747e5151599b831e693bcbdfbd97f8b3add569aa4523f11"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1698366,
+      "sha256": "1d0f464aeb5254a468214c2d1f34450b0ae0569d6c6f802fb862cb6851e91589"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-context-reverse.json": {
+      "bytes": 1698368,
+      "sha256": "cc1b7615df1d2812d162dcab82f4d6d2dd42d030f190ba154ba060d1a9219991"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-context-rotate.json": {
+      "bytes": 1698379,
+      "sha256": "99f49dcc784c605a544432492ed07dffca6f8feddefb2fc9315af0c149e06740"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1698342,
+      "sha256": "2b5e3f93c200da9db596279f80e27343d6adea5a849e7bbd2590fdfe313a6a5e"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1608268,
+      "sha256": "421636ef9fb3a6e1802697638140a7161efecaa54f722b91b1c6c5345ca68baf"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-source-shuffle.json": {
+      "bytes": 1698295,
+      "sha256": "a9ca1d7134a82fa16732152da61ef6af26096fafba9f60b12e56e3d157977447"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-training.json": {
+      "bytes": 1693927,
+      "sha256": "dd1a2a2569c90fe6c07dac9e0ac3f76d1164c68d020f529490ed4ae595b8b4d7"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-validation.json": {
+      "bytes": 1697948,
+      "sha256": "0f06ba2e0436314b8749ce97d77b268248c34dceca2867ee4a0bbc67ce47d9ce"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-zero-condition.json": {
+      "bytes": 2356643,
+      "sha256": "bcfd7d17d9a4a0a36c684af83044e262f9630d5394bdf264bece706704084935"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/summary.json": {
+      "bytes": 315153,
+      "sha256": "bf382cb3a765b0c2414d69a0cc53a7fed2a294ec8ed875f2a8dfff2819faa3a9"
+    },
+    "eight-head-rate/training-r1/results/head-rate2-candidate/training.json": {
+      "bytes": 18634853,
+      "sha256": "02db14a1f4dd611d39e1047596d859b9d8804f60c4be240e3705d8d5a9ab278f"
+    },
+    "eight-head-rate/training-r1/results/sealed-recipe.json": {
+      "bytes": 354337,
+      "sha256": "3cf9bd43b593e659973aaf659559c9600f06f1851dcbc1834538031e6219d73d"
+    },
+    "eight-head-rate/training-r1/results/source-geometry.json": {
+      "bytes": 819,
+      "sha256": "a207a84c0d02661a31504342bcd7cf9ddc17cdda26f0fab0d9d490dd0d04f8d1"
+    },
+    "eight-head-rate/training-r1/results/summary.json": {
+      "bytes": 25350,
+      "sha256": "830d50d3971e9ace166e58d4dfb69293275bf24ea0455d1fced80bdbf26d625f"
+    },
+    "exposed-style-review/audit_eight_head_rate.py": {
+      "bytes": 7211,
+      "sha256": "17fcec982a0f0e7ed40351681452b062a5e2c07e0af988ff719e7a21ce2e5a9f"
+    },
+    "exposed-style-review/audit_exposed_style.py": {
+      "bytes": 5099,
+      "sha256": "4c37d34f8b934503cce0c7d3646d05c777c33467834d29b0a891dbeb2ac24eff"
+    },
+    "exposed-style-review/audit_native_conditioning.py": {
+      "bytes": 35538,
+      "sha256": "e671a58436acc819156f9463042227874efd6d1a9b33a93bc227240352cea171"
+    },
+    "exposed-style-review/eight_dimensional-experiment-review.json": {
+      "bytes": 1785,
+      "sha256": "8a726e1bc854fa1de1fac80e3dac5df38474df6b82dfecc3444e4c16505b3e8b"
+    },
+    "exposed-style-review/eight_dimensional-source-review.json": {
+      "bytes": 2608,
+      "sha256": "c47490efaa7d81310983b13bb2a0e70d26b3405600d2770e86e6ce1b5876bf40"
+    },
+    "exposed-style-review/exposed-style-review.json": {
+      "bytes": 25822,
+      "sha256": "6dd9503e0e59168ea8983bcf8270b3e3f5da9441283e9ed4df176a9038a041b1"
+    },
+    "exposed-style-review/native4096-experiment-review.json": {
+      "bytes": 1894,
+      "sha256": "e653a7f8992a6e86ec6144f8cfc2cf75e25f0d01be5fc2f49a26b9645ba2f57b"
+    },
+    "exposed-style-review/native4096-source-review.json": {
+      "bytes": 3246,
+      "sha256": "908431daf09bbf3c3fd116c043970a00219a4892f46bec36ab66281129a5e69d"
+    },
+    "exposed-style-review/prepare_native_audit.py": {
+      "bytes": 7542,
+      "sha256": "df62ba777ff1cf7baced4a54919ddab83cbb7f86970aadfed3bb8602c5898765"
+    },
+    "exposed-style-review/protected-checkpoint-observation.json": {
+      "bytes": 318,
+      "sha256": "cab44e2201690814098b4c005e38a40e030f32137bf7f7f313bd381564ddc6c4"
+    },
+    "exposed-style-review/protected-checkpoint.json": {
+      "bytes": 379,
+      "sha256": "cf0644d968055d598e70449703383e478669a7c79d95c148041a512854ddc749"
+    },
+    "exposed-style-review/review_publication-attempt1.py": {
+      "bytes": 10384,
+      "sha256": "548e4819270e598e02db7b9dcd6c36db8f5d01e6ab6b4dd4ca3678e43da98446"
+    },
+    "exposed-style-review/review_publication-attempt2.py": {
+      "bytes": 10551,
+      "sha256": "754c1d4cc7e406ddb37754606a7c076fdd592ce05dd30d2d031f6bfbed5314b6"
+    },
+    "exposed-style-review/review_publication.py": {
+      "bytes": 10841,
+      "sha256": "2a8eb8ad0d4ca8197bee8964400900780593ac79ccecaf6971145553504af436"
+    },
+    "native-conditioning/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "native-conditioning/conditioning-tests-receipt.json": {
+      "bytes": 463,
+      "sha256": "010041af506bff96dc1e2b14ded095eaf1f8e9242f255cb7c0e677c7b034a104"
+    },
+    "native-conditioning/conditioning-tests.log": {
+      "bytes": 1524,
+      "sha256": "514aac9578b5856a7a4e1db69a5d0b370ce103afc89074b23e2e33d09b2fae9d"
+    },
+    "native-conditioning/conditioning-tests.xml": {
+      "bytes": 11388,
+      "sha256": "561745fb0057bc093a4485c25ec57b02a56c28ac59e51d28edbb049607b193f4"
+    },
+    "native-conditioning/decoded-condition-examples.json": {
+      "bytes": 1627,
+      "sha256": "ced3a8c6daec4f992fbdb7411226b9bdb23a06f3b62706c5fbe6a91d0e8bb8c9"
+    },
+    "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+      "bytes": 37989,
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": {
+      "bytes": 13794,
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py": {
+      "bytes": 11646,
+      "sha256": "143ba73db720b186947e51daa569ac5ee505233894c3b880879bce7f93f4a0ad"
+    },
+    "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_formula_sidecar_experiment.py": {
+      "bytes": 13448,
+      "sha256": "d76e22e6ffa8459e579bc5795d9bb9b742cb679d34e937989f1565071941518a"
+    },
+    "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py": {
+      "bytes": 52313,
+      "sha256": "326ab8504f16d0ec55d8635e620efbe47a826ddca35bb5d0aff1e05143dbb14e"
+    },
+    "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_native_owner.py": {
+      "bytes": 21142,
+      "sha256": "9e7043dd47ead1a8ae8a39711690e5dafc314fa10b7bd74dc5bf33359b766ff3"
+    },
+    "native-conditioning/experiment-source/scripts/ops/autoencoder/benchmark_native4096_conditioning.py": {
+      "bytes": 13821,
+      "sha256": "7c46241ae83dd8901970905841ef0720b6a7fc6a285dffbd1903089a572abd12"
+    },
+    "native-conditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py": {
+      "bytes": 6760,
+      "sha256": "db4ee5aa5dd287cd8ddb47dac280afc99133a9e6a7c7a671a88233f688d40b96"
+    },
+    "native-conditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_runner.py": {
+      "bytes": 9809,
+      "sha256": "37dcd4523dedc05f11f59c8fe4918481657455ce3e59e33dc04c05e5fb438f30"
+    },
+    "native-conditioning/freeze.py": {
+      "bytes": 3268,
+      "sha256": "3d34dc73e058c4c9f1924a52ae1c0522b186fedc672729a9649bc50a0734f250"
+    },
+    "native-conditioning/independent-conditioning-audit.json": {
+      "bytes": 52082,
+      "sha256": "471a4a342aa20eb1a5a210764cfc6f01a3a1f135342f8c648d01804e667abdb9"
+    },
+    "native-conditioning/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "native-conditioning/owned-source-publication.json": {
+      "bytes": 879,
+      "sha256": "f0b9e2445f157e4aac71f634251ddb9f316d395b15f6bd630bb89115e7e19df5"
+    },
+    "native-conditioning/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "native-conditioning/proposed-guide-append.md": {
+      "bytes": 4728,
+      "sha256": "49a5c6dc55c5f3dee60bb9c28e4e77f75913f2f74e70d56fd7730e3f011b8582"
+    },
+    "native-conditioning/run_reserved.py": {
+      "bytes": 17270,
+      "sha256": "5f375eac2af0e09cc8d8e080328f5fcfbabd51a0c9ae98cfa8652ce42bc4ce3c"
+    },
+    "native-conditioning/same-author-conditioning-review.json": {
+      "bytes": 12422,
+      "sha256": "03031b7659ebb97b683829d2a33c0ee22e95cf319a438815f363044e07924c0e"
+    },
+    "native-conditioning/same-author-conditioning-review.log": {
+      "bytes": 8840,
+      "sha256": "802206d4a44fb0ab70aec7d4adec87c63eb7cecf8c8d935e90e4f4679ea1c0c1"
+    },
+    "native-conditioning/same-author-lifecycle-review.json": {
+      "bytes": 982,
+      "sha256": "fe2e648bb568a2c8624cf63808b8a1f49a343aa5a315c9b214f60c87edbf67e8"
+    },
+    "native-conditioning/summarize_saved_conditioning.py": {
+      "bytes": 5814,
+      "sha256": "c8508a90d40b1e75a47815198cd035ec51677aa7e073e766b8b91dbe6682cc86"
+    },
+    "native-conditioning/tests.json": {
+      "bytes": 1409,
+      "sha256": "ff89680e5bc77d7dcbcd04f7412d5589d6633ec4b814f9468cf4f82189b8b51b"
+    },
+    "native-conditioning/training-labels.json": {
+      "bytes": 1041,
+      "sha256": "2401d04ebf02de64136cf5defdfbee00ddaab9d2179f81601a0d94523420b63c"
+    },
+    "native-conditioning/training-manifest.json": {
+      "bytes": 8281,
+      "sha256": "7a900826e4050a0d1717b99f561112b1d5a64cb6256324ea4d97b3e02f63f587"
+    },
+    "native-conditioning/training-plan.json": {
+      "bytes": 9187,
+      "sha256": "8c4228e5fd6d01b710e81e874d30a9b8de853bab0c5cebc32d25856885e12304"
+    },
+    "native-conditioning/training-r1-guardian-exit.json": {
+      "bytes": 63,
+      "sha256": "fc46113dffdd6dbccf811f5bbbcbd440f732a537c2c88ecf05a708b45295593b"
+    },
+    "native-conditioning/training-r1-guardian.log": {
+      "bytes": 5089,
+      "sha256": "c3e4aae4092591a8e5c357c89f01d1d886621bccff1835cfb33586205a144cf1"
+    },
+    "native-conditioning/training-r1-lease-observations.jsonl": {
+      "bytes": 138459,
+      "sha256": "b9887ec87ba0f13912d2e43fbf4fb21fe061e83c88b8c75bb30ff8a59f4f354d"
+    },
+    "native-conditioning/training-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "836116f62b60820ccc422a4aa33190b181db055444537f9371546d9f20791220"
+    },
+    "native-conditioning/training-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "e62e1ee182c9c18f5e0b2e690addb7558e6ffe73eee560a53404973790a0d241"
+    },
+    "native-conditioning/training-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "0671fed1ca6e9130c5a70e369251cd39ebf23fdf87f696967e1b27f664da092d"
+    },
+    "native-conditioning/training-r1/child.log": {
+      "bytes": 28147,
+      "sha256": "9344b2a3f235c174e6f47f7d1a78549ed21c992d6c97563929bdda84b7f68b8d"
+    },
+    "native-conditioning/training-r1/command.json": {
+      "bytes": 6748,
+      "sha256": "06d2e7824c8d0f5acb267d63afecc1671a030195e4b100488a83b9b4deeac619"
+    },
+    "native-conditioning/training-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "317e8cd7da92a05feb115611f4bafc7487c6898af8edd9a9c6dcac6c953170d7"
+    },
+    "native-conditioning/training-r1/resource-observations.json": {
+      "bytes": 4354,
+      "sha256": "7ad992fd828991a0a793d250c64d866cce37d6951fcb592a2eb75445a5d5edee"
+    },
+    "native-conditioning/training-r1/resources-final.json": {
+      "bytes": 5814,
+      "sha256": "5ee6a4097cfc1e7edae296f48955fc105c384195770131616b411a609e9ea3a5"
+    },
+    "native-conditioning/training-r1/resources-start.json": {
+      "bytes": 3168,
+      "sha256": "42a2e048722d642f9c6adb7ec370a314bd89bdd90652436afd28c30946a97511"
+    },
+    "native-conditioning/training-r1/results/native/receipt.json": {
+      "bytes": 295459,
+      "sha256": "7d9d8ff7aecdb33eb9102cdd495719a1ed37b0e0e52a05ca0d49cff223cd5433"
+    },
+    "native-conditioning/training-r1/results/native/stderr.log": {
+      "bytes": 115270,
+      "sha256": "77a3ffb9e765b48371cf481acbb9c761418e9e65331da6a2f5ef5653e198ba43"
+    },
+    "native-conditioning/training-r1/results/native/stdout.log": {
+      "bytes": 294446,
+      "sha256": "1a9ec906e12d01fac6eb2455a9ab509861186419ffad23b3e42f74b0b47bedeb"
+    },
+    "native-conditioning/training-r1/results/reset-control.json": {
+      "bytes": 88,
+      "sha256": "240a4d7f1d28f8c46322a47b299a83cb389f05e38cf5d2cb9876975aeb700549"
+    },
+    "native-conditioning/training-r1/results/source-request.json": {
+      "bytes": 306,
+      "sha256": "a744be04bc669a243898898c4c3eec9e4531534683046d912f1c5ec244d540dd"
+    },
+    "native-conditioning/training-r1/results/summary.json": {
+      "bytes": 108043,
+      "sha256": "4140f47f4cbc96855206d9922591dd99e12456157bc3cb21c9f024fa5b65b649"
+    },
+    "native-conditioning/training-r1/results/training.json": {
+      "bytes": 22376800,
+      "sha256": "d4e2fb8dcb796297b0f69475a170b83bc033072010ca61c96345f9ba30793256"
+    },
+    "publication/archive-inventory.json": {
+      "bytes": 115623,
+      "sha256": "b3c207c9ba861ef51798b65abdf6dd0e3ad64dc1ed4cc818962410888c454a75"
+    },
+    "publication/archive_helpers.py": {
+      "bytes": 2822,
+      "sha256": "5613458f73112f935124c2a6cf85b6cf36a2e151b35c44afea023accb68e3f44"
+    },
+    "publication/build_evidence.py": {
+      "bytes": 9555,
+      "sha256": "bcb86c01c7728778df55a6f9955ee89a8618df6d273a343cb8df5473ca2c837c"
+    },
+    "publication/documentation-review.json": {
+      "bytes": 14014,
+      "sha256": "941f562c24dfea0a80419579fe8bc542533ff412199a79c2f5ced3c77f9b5fdb"
+    },
+    "publication/inventory_evidence.py": {
+      "bytes": 6320,
+      "sha256": "eaa3060ed67c0069acc9e9c5608c4226c8362c32e577499de661a6685107cb57"
+    },
+    "publication/public-readme.txt": {
+      "bytes": 2126,
+      "sha256": "51fa520400fd303ff58c71508197b882e2c90e64a325264eaf24f9a3e376462d"
+    },
+    "publication/publication-readiness.json": {
+      "bytes": 14258,
+      "sha256": "8590e2923e1de32d5469ea5044c525ff095dcfa940baaa0dc5d81730300200ee"
+    },
+    "publication/publish_results.py": {
+      "bytes": 6394,
+      "sha256": "cc9f97997a6f8b91cee5bdba24633ee0790e01e5dde22aa14d04f378f17e60fa"
+    },
+    "publication/results.json": {
+      "bytes": 27951,
+      "sha256": "e32d1e0cdad4b652e2b50f8b92eed9faccea2d99e4d8bfe741fea47591d6e285"
+    },
+    "publication/source-review.json": {
+      "bytes": 6529,
+      "sha256": "b3bcf8b5d6614644e634d6f1d73a4faeaa775beadfdefbae749185225b3d5903"
+    },
+    "publication/source-scope-final.json": {
+      "bytes": 4194,
+      "sha256": "6dec48b7f1f0d8a348fac49d0f38c0da46beb56d273ff2bceb6a60079e23001f"
+    }
+  },
+  "native_external_identity_policy": "exact build/native owner manifests and source Git revisions retained; native binaries and pretrained model content remain external",
+  "numerical_source_policy": "all historical executed frozen snapshots retained; publication candidate source inventory is separate",
+  "original_artifact_archive_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/four_width_training.md": "documentation/four_width_training.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/archive-inventory.json": "publication/archive-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/archive_helpers.py": "publication/archive_helpers.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/build_evidence.py": "publication/build_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/documentation-review.json": "publication/documentation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/inventory_evidence.py": "publication/inventory_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/public-readme.txt": "publication/public-readme.txt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/publication-readiness.json": "publication/publication-readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/publish_results.py": "publication/publish_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/results.json": "publication/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/source-review.json": "publication/source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-conditioning-publication-20261004/source-scope-final.json": "publication/source-scope-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/adopt_shared_scheduler.py": "native-conditioning/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/analyze_results.py": "eight-head-rate/analyze_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/code-files.json": "eight-head-rate/code-files.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/diagnosis-before-training.json": "eight-head-rate/diagnosis-before-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py": "eight-head-rate/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py": "eight-head-rate/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py": "eight-head-rate/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/freeze-receipt.json": "eight-head-rate/freeze-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/independent-head-rate-review.json": "eight-head-rate/independent-head-rate-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/launch_phase.py": "eight-head-rate/launch_phase.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/lazy_scheduler_adoption.py": "native-conditioning/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/owned-source-publication.json": "eight-head-rate/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/owned_lease_watchdog.py": "native-conditioning/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/postseal-object-distance-diagnostic.json": "eight-head-rate/postseal-object-distance-diagnostic.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1-guardian-exit.json": "eight-head-rate/preflight-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1-guardian.log": "eight-head-rate/preflight-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1-lease-observations.jsonl": "eight-head-rate/preflight-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1-scheduler-adoption.json": "eight-head-rate/preflight-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/child-exit.json": "eight-head-rate/preflight-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/child-identity.json": "eight-head-rate/preflight-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/child.log": "eight-head-rate/preflight-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/command.json": "eight-head-rate/preflight-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/lease-binding.json": "eight-head-rate/preflight-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/resources-final.json": "eight-head-rate/preflight-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/resources-start.json": "eight-head-rate/preflight-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/8/preprocessing.json": "eight-head-rate/training-r1/results/8/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/8/source-contexts.json": "eight-head-rate/training-r1/results/8/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/8/training-rows.json": "eight-head-rate/training-r1/results/8/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/head-rate10-baseline/parent-validation.json": "eight-head-rate/preflight-r1/results/head-rate10-baseline/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/head-rate2-candidate/parent-validation.json": "eight-head-rate/preflight-r1/results/head-rate2-candidate/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/sealed-recipe.json": "eight-head-rate/training-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/source-geometry.json": "eight-head-rate/training-r1/results/source-geometry.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/preflight-r1/results/summary.json": "eight-head-rate/preflight-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/prepare_freeze.py": "eight-head-rate/prepare_freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/proposed-guide-append.md": "eight-head-rate/proposed-guide-append.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/results.json": "eight-head-rate/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/run_reserved.py": "eight-head-rate/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/test_lazy_scheduler_adoption.py": "eight-head-rate/test_lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/tests-focused-final.log": "eight-head-rate/tests-focused-final.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/tests-focused-final.xml": "eight-head-rate/tests-focused-final.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/tests-focused.log": "eight-head-rate/tests-focused.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/tests-focused.xml": "eight-head-rate/tests-focused.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-manifest.json": "eight-head-rate/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-plan.json": "eight-head-rate/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1-guardian-exit.json": "eight-head-rate/training-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1-guardian.log": "eight-head-rate/training-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1-lease-observations.jsonl": "eight-head-rate/training-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1-scheduler-adoption.json": "eight-head-rate/training-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/child-exit.json": "eight-head-rate/training-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/child-identity.json": "eight-head-rate/training-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/child.log": "eight-head-rate/training-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/command.json": "eight-head-rate/training-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/lease-binding.json": "eight-head-rate/training-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/resource-observations.json": "eight-head-rate/training-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/resources-final.json": "eight-head-rate/training-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/resources-start.json": "eight-head-rate/training-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/8/preprocessing.json": "eight-head-rate/training-r1/results/8/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/8/source-contexts.json": "eight-head-rate/training-r1/results/8/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/8/training-rows.json": "eight-head-rate/training-r1/results/8/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/initial-state.json": "eight-head-rate/training-r1/results/head-rate10-baseline/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt-state.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-only-shuffle.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-reverse.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-rotate.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-cross-length-shuffle.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-recurrent-residual-off.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-source-shuffle.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-training.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-validation.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/last-attempt/evaluation-zero-condition.json": "eight-head-rate/training-r1/results/head-rate10-baseline/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/parent-validation.json": "eight-head-rate/training-r1/results/head-rate10-baseline/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected-state.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-context-only-shuffle.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-context-reverse.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-context-rotate.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-cross-length-shuffle.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-recurrent-residual-off.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-source-shuffle.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-training.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-validation.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/selected/evaluation-zero-condition.json": "eight-head-rate/training-r1/results/head-rate10-baseline/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/summary.json": "eight-head-rate/training-r1/results/head-rate10-baseline/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate10-baseline/training.json": "eight-head-rate/training-r1/results/head-rate10-baseline/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/initial-state.json": "eight-head-rate/training-r1/results/head-rate2-candidate/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt-state.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-only-shuffle.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-reverse.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-rotate.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-cross-length-shuffle.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-recurrent-residual-off.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-source-shuffle.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-training.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-validation.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/last-attempt/evaluation-zero-condition.json": "eight-head-rate/training-r1/results/head-rate2-candidate/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/parent-validation.json": "eight-head-rate/training-r1/results/head-rate2-candidate/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected-state.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-context-only-shuffle.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-context-reverse.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-context-rotate.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-cross-length-shuffle.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-recurrent-residual-off.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-source-shuffle.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-training.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-validation.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/selected/evaluation-zero-condition.json": "eight-head-rate/training-r1/results/head-rate2-candidate/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/summary.json": "eight-head-rate/training-r1/results/head-rate2-candidate/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/head-rate2-candidate/training.json": "eight-head-rate/training-r1/results/head-rate2-candidate/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/sealed-recipe.json": "eight-head-rate/training-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/source-geometry.json": "eight-head-rate/training-r1/results/source-geometry.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/training-r1/results/summary.json": "eight-head-rate/training-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/audit_eight_head_rate.py": "exposed-style-review/audit_eight_head_rate.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/audit_exposed_style.py": "exposed-style-review/audit_exposed_style.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/audit_native_conditioning.py": "exposed-style-review/audit_native_conditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/eight_dimensional-experiment-review.json": "exposed-style-review/eight_dimensional-experiment-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/eight_dimensional-source-review.json": "exposed-style-review/eight_dimensional-source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/exposed-style-review.json": "exposed-style-review/exposed-style-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/native4096-experiment-review.json": "exposed-style-review/native4096-experiment-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/native4096-source-review.json": "exposed-style-review/native4096-source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/prepare_native_audit.py": "exposed-style-review/prepare_native_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/protected-checkpoint-observation.json": "exposed-style-review/protected-checkpoint-observation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/protected-checkpoint.json": "exposed-style-review/protected-checkpoint.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/review_publication-attempt1.py": "exposed-style-review/review_publication-attempt1.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/review_publication-attempt2.py": "exposed-style-review/review_publication-attempt2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/review_publication.py": "exposed-style-review/review_publication.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/adopt_shared_scheduler.py": "native-conditioning/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/conditioning-tests-receipt.json": "native-conditioning/conditioning-tests-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/conditioning-tests.log": "native-conditioning/conditioning-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/conditioning-tests.xml": "native-conditioning/conditioning-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/decoded-condition-examples.json": "native-conditioning/decoded-condition-examples.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py": "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_formula_sidecar_experiment.py": "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_formula_sidecar_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py": "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_native_owner.py": "native-conditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_native_owner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/scripts/ops/autoencoder/benchmark_native4096_conditioning.py": "native-conditioning/experiment-source/scripts/ops/autoencoder/benchmark_native4096_conditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py": "native-conditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_runner.py": "native-conditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/freeze.py": "native-conditioning/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/independent-conditioning-audit.json": "native-conditioning/independent-conditioning-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/lazy_scheduler_adoption.py": "native-conditioning/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/owned-source-publication.json": "native-conditioning/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/owned_lease_watchdog.py": "native-conditioning/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/proposed-guide-append.md": "native-conditioning/proposed-guide-append.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/run_reserved.py": "native-conditioning/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/same-author-conditioning-review.json": "native-conditioning/same-author-conditioning-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/same-author-conditioning-review.log": "native-conditioning/same-author-conditioning-review.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/same-author-lifecycle-review.json": "native-conditioning/same-author-lifecycle-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/summarize_saved_conditioning.py": "native-conditioning/summarize_saved_conditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/tests.json": "native-conditioning/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-labels.json": "native-conditioning/training-labels.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-manifest.json": "native-conditioning/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-plan.json": "native-conditioning/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1-guardian-exit.json": "native-conditioning/training-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1-guardian.log": "native-conditioning/training-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1-lease-observations.jsonl": "native-conditioning/training-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1-scheduler-adoption.json": "native-conditioning/training-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/child-exit.json": "native-conditioning/training-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/child-identity.json": "native-conditioning/training-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/child.log": "native-conditioning/training-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/command.json": "native-conditioning/training-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/lease-binding.json": "native-conditioning/training-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/resource-observations.json": "native-conditioning/training-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/resources-final.json": "native-conditioning/training-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/resources-start.json": "native-conditioning/training-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/native/receipt.json": "native-conditioning/training-r1/results/native/receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/native/stderr.log": "native-conditioning/training-r1/results/native/stderr.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/native/stdout.log": "native-conditioning/training-r1/results/native/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/reset-control.json": "native-conditioning/training-r1/results/reset-control.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/source-request.json": "native-conditioning/training-r1/results/source-request.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/summary.json": "native-conditioning/training-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/training-labels.json": "native-conditioning/training-labels.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/training.json": "native-conditioning/training-r1/results/training.json"
+  },
+  "prior_published_evidence": {
+    "commit": "0808aa2cee87a9b45db896ebff0af3c8e9cbb464",
+    "path": "docs/implementation/reports/evidence/decoder-four-width-followup-20261004/manifest.json",
+    "sha256": "b82a4cf3de0052421b2565bfe6ddffec258cf88529f5d1d07d481221e58a2009",
+    "transitive_dependencies_required": true
+  },
+  "private_native_backend_trees_or_binaries_included": false,
+  "publication_owned_source_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py": "72fda68e0151244d792ea1b909784d10a158cfad2dbe1a13e2729a287d3d8a86",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py": "143ba73db720b186947e51daa569ac5ee505233894c3b880879bce7f93f4a0ad",
+    "scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py": "74faa67aa9c9790871fadf442fce33ab9dafbc0d4e5d9cb01c8689e6fc8d2e04",
+    "scripts/ops/autoencoder/benchmark_native4096_conditioning.py": "7c46241ae83dd8901970905841ef0720b6a7fc6a285dffbd1903089a572abd12",
+    "tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py": "ef141c3e007e6609ca513c5739d1c9ca09c9227242908b48cc4c4ef61a00aec0",
+    "tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py": "db4ee5aa5dd287cd8ddb47dac280afc99133a9e6a7c7a671a88233f688d40b96",
+    "tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_runner.py": "37dcd4523dedc05f11f59c8fe4918481657455ce3e59e33dc04c05e5fb438f30"
+  },
+  "qualified": false,
+  "schema": "decoder-conditioning-evidence/v1",
+  "source_scope_member": "publication/source-scope-final.json",
+  "terminal_phases": {
+    "eight-head-rate/preflight-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "eight-head-rate/training-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "native-conditioning/training-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    }
+  }
+}

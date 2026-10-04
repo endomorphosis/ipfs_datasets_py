@@ -119,7 +119,7 @@ def test_vampire_is_bounded_source_bound_and_unreconstructed_proof_is_candidate(
     assert invocation.limits.timeout_seconds == 0.25
     assert invocation.limits.memory_bytes == request.bounds.max_memory_bytes
     assert invocation.limits.max_output_bytes == request.bounds.max_output_bytes
-    assert "--output_mode=tptp" in invocation.argv
+    assert invocation.argv[-4:] == ("--output_mode", "szs", "--proof", "tptp")
 
 
 def test_exact_szs_status_replaces_legacy_substring_heuristics():

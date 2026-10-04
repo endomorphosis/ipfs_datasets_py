@@ -1,0 +1,9 @@
+{
+  "schema": "alignment-parser-experiment-config/v1",
+  "study_id": "autoformalization-parser-development-v1",
+  "richer_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/richer-01/report.json",
+    "sha256": "a97ad11b271e6149e1818a476008fba7355fa02d8e5b3cb49fedd462e8886483"
+  },
+  "max_seconds": 120
+}

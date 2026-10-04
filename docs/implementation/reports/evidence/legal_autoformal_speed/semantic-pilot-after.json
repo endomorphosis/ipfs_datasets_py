@@ -1,0 +1,1685 @@
+{
+  "admitted": false,
+  "resolved_logic_tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "formula_builder_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/formula_builder.py",
+  "cases": [
+    {
+      "case_id": "exception_with_window",
+      "result": {
+        "status": "success",
+        "translator": "typed_deontic_codec",
+        "source_withheld_from_realizer": true,
+        "coverage": {
+          "parser_element_count": 1,
+          "gold_rule_count": 1
+        },
+        "l1": {
+          "rules": [
+            {
+              "modality": "O",
+              "actor": "company_a",
+              "action": "submit",
+              "object": "backup_report",
+              "conditions": [],
+              "exceptions": [
+                "emergency"
+              ],
+              "temporal": [
+                "within_10_days"
+              ]
+            }
+          ]
+        },
+        "l1_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+        "realization": "Company A shall submit backup report within 10 days unless emergency.",
+        "realization_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+        "l2": {
+          "rules": [
+            {
+              "modality": "O",
+              "actor": "company_a",
+              "action": "submit",
+              "object": "backup_report",
+              "conditions": [],
+              "exceptions": [
+                "emergency"
+              ],
+              "temporal": [
+                "within_10_days"
+              ]
+            }
+          ]
+        },
+        "l2_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+        "forward_vs_gold": {
+          "reference_rule_count": 1,
+          "candidate_rule_count": 1,
+          "matched_rule_count": 1,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "cycle_l1_vs_l2": {
+          "reference_rule_count": 1,
+          "candidate_rule_count": 1,
+          "matched_rule_count": 1,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "end_to_end_vs_gold": {
+          "reference_rule_count": 1,
+          "candidate_rule_count": 1,
+          "matched_rule_count": 1,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "source_copy": {
+          "exact_normalized_copy": true,
+          "source_token_count": 11,
+          "reconstruction_token_count": 11,
+          "shared_8gram_count": 4,
+          "shared_8gram_precision": 1.0,
+          "shared_8gram_recall": 1.0,
+          "copy_risk": true
+        },
+        "timing": {
+          "forward_seconds": 0.112808736,
+          "recompile_seconds": 0.009044541,
+          "total_seconds": 0.121853277
+        }
+      }
+    },
+    {
+      "case_id": "legal_doc_1",
+      "result": {
+        "status": "success",
+        "translator": "typed_deontic_codec",
+        "source_withheld_from_realizer": true,
+        "coverage": {
+          "parser_element_count": 3,
+          "gold_rule_count": 3
+        },
+        "l1": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "banks",
+              "action": "disclose",
+              "object": "customer_information_to_third_parties",
+              "conditions": [
+                "required_by_law_enforcement_agencies"
+              ],
+              "exceptions": [
+                "explicit_consent",
+                "required_by_law_enforcement_agencies"
+              ],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "banks",
+              "action": "report",
+              "object": "suspicious_activities_to_financial_crimes_enforcement_network",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "financial_institutions",
+              "action": "maintain",
+              "object": "transaction_records",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l1_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq",
+        "realization": "All financial institutions shall maintain records of all transactions exceeding $10,000 for a period of five years. Banks shall report suspicious activities to the Financial Crimes Enforcement Network. Banks shall not disclose customer information to third parties when required by law enforcement agencies except when required by law enforcement agencies and unless explicit consent.",
+        "realization_cid": "bafkreifplhyrwo74noq25lrhvs5t52nlhszrnuh57burvstbt46ynz3jca",
+        "l2": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "banks",
+              "action": "disclose",
+              "object": "customer_information_to_third_parties",
+              "conditions": [
+                "required_by_law_enforcement_agencies"
+              ],
+              "exceptions": [
+                "explicit_consent",
+                "required_by_law_enforcement_agencies"
+              ],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "banks",
+              "action": "report",
+              "object": "suspicious_activities_to_financial_crimes_enforcement_network",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "financial_institutions",
+              "action": "maintain",
+              "object": "transaction_records",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l2_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq",
+        "forward_vs_gold": {
+          "reference_rule_count": 3,
+          "candidate_rule_count": 3,
+          "matched_rule_count": 3,
+          "semantic_score": 0.866666667,
+          "semantic_loss": 0.133333333,
+          "exact_rule_f1": 0.0,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 0.8,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.333333333,
+            "exceptions": 1.0,
+            "temporal": 0.333333333
+          }
+        },
+        "cycle_l1_vs_l2": {
+          "reference_rule_count": 3,
+          "candidate_rule_count": 3,
+          "matched_rule_count": 3,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "end_to_end_vs_gold": {
+          "reference_rule_count": 3,
+          "candidate_rule_count": 3,
+          "matched_rule_count": 3,
+          "semantic_score": 0.866666667,
+          "semantic_loss": 0.133333333,
+          "exact_rule_f1": 0.0,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 0.8,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.333333333,
+            "exceptions": 1.0,
+            "temporal": 0.333333333
+          }
+        },
+        "source_copy": {
+          "exact_normalized_copy": false,
+          "source_token_count": 59,
+          "reconstruction_token_count": 55,
+          "shared_8gram_count": 10,
+          "shared_8gram_precision": 0.208333333,
+          "shared_8gram_recall": 0.192307692,
+          "copy_risk": false
+        },
+        "timing": {
+          "forward_seconds": 0.018899825,
+          "recompile_seconds": 0.018585487,
+          "total_seconds": 0.037485312
+        }
+      }
+    },
+    {
+      "case_id": "exec_order_1",
+      "result": {
+        "status": "success",
+        "translator": "typed_deontic_codec",
+        "source_withheld_from_realizer": true,
+        "coverage": {
+          "parser_element_count": 4,
+          "gold_rule_count": 4
+        },
+        "l1": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "federal_agencies",
+              "action": "use",
+              "object": "chinese_manufactured_telecommunications_equipment",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "federal_agencies",
+              "action": "implement",
+              "object": "zero_trust_cybersecurity_frameworks",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": [
+                "within_90_days"
+              ]
+            },
+            {
+              "modality": "O",
+              "actor": "federal_employees",
+              "action": "receive",
+              "object": "mandatory_cybersecurity_training",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": [
+                "annually"
+              ]
+            },
+            {
+              "modality": "O",
+              "actor": "government_contractors",
+              "action": "report",
+              "object": "cybersecurity_incidents",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l1_cid": "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa",
+        "realization": "Federal agencies shall implement zero-trust cybersecurity frameworks within 90 days. All government contractors shall report cybersecurity incidents. Agencies shall not use Chinese-manufactured telecommunications equipment in any government communications. Federal employees shall receive mandatory cybersecurity training annually.",
+        "realization_cid": "bafkreifraryhtjusew4wif2ltixyrcysoxitnyhuovusb52hjlgac65x34",
+        "l2": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "federal_agencies",
+              "action": "use",
+              "object": "chinese_manufactured_telecommunications_equipment",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "federal_agencies",
+              "action": "implement",
+              "object": "zero_trust_cybersecurity_frameworks",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": [
+                "within_90_days"
+              ]
+            },
+            {
+              "modality": "O",
+              "actor": "federal_employees",
+              "action": "receive",
+              "object": "mandatory_cybersecurity_training",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": [
+                "annually"
+              ]
+            },
+            {
+              "modality": "O",
+              "actor": "government_contractors",
+              "action": "report",
+              "object": "cybersecurity_incidents",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l2_cid": "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa",
+        "forward_vs_gold": {
+          "reference_rule_count": 4,
+          "candidate_rule_count": 4,
+          "matched_rule_count": 4,
+          "semantic_score": 0.95,
+          "semantic_loss": 0.05,
+          "exact_rule_f1": 0.5,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.75,
+            "exceptions": 1.0,
+            "temporal": 0.75
+          }
+        },
+        "cycle_l1_vs_l2": {
+          "reference_rule_count": 4,
+          "candidate_rule_count": 4,
+          "matched_rule_count": 4,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "end_to_end_vs_gold": {
+          "reference_rule_count": 4,
+          "candidate_rule_count": 4,
+          "matched_rule_count": 4,
+          "semantic_score": 0.95,
+          "semantic_loss": 0.05,
+          "exact_rule_f1": 0.5,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.75,
+            "exceptions": 1.0,
+            "temporal": 0.75
+          }
+        },
+        "source_copy": {
+          "exact_normalized_copy": false,
+          "source_token_count": 45,
+          "reconstruction_token_count": 38,
+          "shared_8gram_count": 14,
+          "shared_8gram_precision": 0.451612903,
+          "shared_8gram_recall": 0.368421053,
+          "copy_risk": false
+        },
+        "timing": {
+          "forward_seconds": 0.020854174,
+          "recompile_seconds": 0.020441547,
+          "total_seconds": 0.041295721
+        }
+      }
+    },
+    {
+      "case_id": "corp_policy_1",
+      "result": {
+        "status": "success",
+        "translator": "typed_deontic_codec",
+        "source_withheld_from_realizer": true,
+        "coverage": {
+          "parser_element_count": 4,
+          "gold_rule_count": 4
+        },
+        "l1": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "employees",
+              "action": "accept",
+              "object": "gifts_from_clients_or_vendors",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "employees",
+              "action": "report",
+              "object": "conflicts_of_interest_to_ethics_committee",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "managers",
+              "action": "complete",
+              "object": "ethics_training_and_certifications",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "staff",
+              "action": "maintain",
+              "object": "proprietary_information_and_customer_data",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l1_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+        "realization": "All employees shall report conflicts of interest to the Ethics Committee. Managers shall complete annual ethics training and certifications. Employees shall not accept gifts valued over $25 from clients or vendors. All staff shall maintain confidentiality of proprietary information and customer data at all times.",
+        "realization_cid": "bafkreigj5xo3cvsgu7v4xvz7ewe6ptssqaaqwwhjrwhanzzuqpw4gnuc3a",
+        "l2": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "employees",
+              "action": "accept",
+              "object": "gifts_from_clients_or_vendors",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "employees",
+              "action": "report",
+              "object": "conflicts_of_interest_to_ethics_committee",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "managers",
+              "action": "complete",
+              "object": "ethics_training_and_certifications",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "staff",
+              "action": "maintain",
+              "object": "proprietary_information_and_customer_data",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l2_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+        "forward_vs_gold": {
+          "reference_rule_count": 4,
+          "candidate_rule_count": 4,
+          "matched_rule_count": 4,
+          "semantic_score": 0.9,
+          "semantic_loss": 0.1,
+          "exact_rule_f1": 0.0,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.75,
+            "exceptions": 1.0,
+            "temporal": 0.25
+          }
+        },
+        "cycle_l1_vs_l2": {
+          "reference_rule_count": 4,
+          "candidate_rule_count": 4,
+          "matched_rule_count": 4,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "end_to_end_vs_gold": {
+          "reference_rule_count": 4,
+          "candidate_rule_count": 4,
+          "matched_rule_count": 4,
+          "semantic_score": 0.9,
+          "semantic_loss": 0.1,
+          "exact_rule_f1": 0.0,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.75,
+            "exceptions": 1.0,
+            "temporal": 0.25
+          }
+        },
+        "source_copy": {
+          "exact_normalized_copy": false,
+          "source_token_count": 58,
+          "reconstruction_token_count": 45,
+          "shared_8gram_count": 17,
+          "shared_8gram_precision": 0.447368421,
+          "shared_8gram_recall": 0.333333333,
+          "copy_risk": false
+        },
+        "timing": {
+          "forward_seconds": 0.021681108,
+          "recompile_seconds": 0.02052534,
+          "total_seconds": 0.042206448
+        }
+      }
+    },
+    {
+      "case_id": "construction_contract",
+      "result": {
+        "status": "success",
+        "translator": "typed_deontic_codec",
+        "source_withheld_from_realizer": true,
+        "coverage": {
+          "parser_element_count": 12,
+          "gold_rule_count": 12
+        },
+        "l1": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "contractor",
+              "action": "subcontract",
+              "object": "work",
+              "conditions": [],
+              "exceptions": [
+                "prior_written_approval"
+              ],
+              "temporal": []
+            },
+            {
+              "modality": "F",
+              "actor": "contractor",
+              "action": "use",
+              "object": "materials_not_meeting_specification_requirements",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "client",
+              "action": "pay",
+              "object": "contractor",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "complete",
+              "object": "all_construction_work",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": [
+                "by_december_31_2024"
+              ]
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "complete",
+              "object": "work_in_progress",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "ensure",
+              "object": "work_compliance_with_city_building_codes_and_standards",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "maintain",
+              "object": "comprehensive_insurance_coverage",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "parties",
+              "action": "attempt",
+              "object": "mediation",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "P",
+              "actor": "client",
+              "action": "inspect",
+              "object": "work_compliance_with_city_building_codes_and_standards",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "P",
+              "actor": "client",
+              "action": "withhold",
+              "object": "payment",
+              "conditions": [
+                "work_does_not_meet_specifications"
+              ],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "P",
+              "actor": "either_party",
+              "action": "terminate",
+              "object": "agreement",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l1_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+        "realization": "Contractor shall complete all construction work by December 31, 2024. Contractor shall ensure all work meets city building codes and standards. Contractor shall maintain comprehensive insurance coverage. Client shall pay the Contractor. Client may withhold payment if work does not meet specifications. Client may inspect the work at any time with 24 hours advance notice. Contractor shall not use materials that do not meet specification requirements. Contractor shall not subcontract work unless prior written approval. Either party may terminate this agreement with 30 days written notice. Contractor shall complete all work in progress upon termination notice. All disputes shall be resolved through binding arbitration in Springfield, Illinois. Parties shall attempt mediation.",
+        "realization_cid": "bafkreigxujmf6ulnp2y3t563pcky2tayxaplnymlpwddfejdmh3k6cxia4",
+        "l2": {
+          "rules": [
+            {
+              "modality": "F",
+              "actor": "contractor",
+              "action": "subcontract",
+              "object": "work",
+              "conditions": [],
+              "exceptions": [
+                "prior_written_approval"
+              ],
+              "temporal": []
+            },
+            {
+              "modality": "F",
+              "actor": "contractor",
+              "action": "use",
+              "object": "materials_not_meeting_specification_requirements",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "client",
+              "action": "pay",
+              "object": "contractor",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "complete",
+              "object": "all_construction_work",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": [
+                "by_december_31_2024"
+              ]
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "complete",
+              "object": "work_in_progress",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "ensure",
+              "object": "work_compliance_with_city_building_codes_and_standards",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "contractor",
+              "action": "maintain",
+              "object": "comprehensive_insurance_coverage",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "O",
+              "actor": "parties",
+              "action": "attempt",
+              "object": "mediation",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "P",
+              "actor": "client",
+              "action": "inspect",
+              "object": "work_compliance_with_city_building_codes_and_standards",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "P",
+              "actor": "client",
+              "action": "withhold",
+              "object": "payment",
+              "conditions": [
+                "work_does_not_meet_specifications"
+              ],
+              "exceptions": [],
+              "temporal": []
+            },
+            {
+              "modality": "P",
+              "actor": "either_party",
+              "action": "terminate",
+              "object": "agreement",
+              "conditions": [],
+              "exceptions": [],
+              "temporal": []
+            }
+          ]
+        },
+        "l2_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+        "forward_vs_gold": {
+          "reference_rule_count": 12,
+          "candidate_rule_count": 11,
+          "matched_rule_count": 11,
+          "semantic_score": 0.858333333,
+          "semantic_loss": 0.141666667,
+          "exact_rule_f1": 0.52173913,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 1,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 4,
+              "candidate_index": 4,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 5,
+              "candidate_index": 5,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 6,
+              "candidate_index": 6,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 7,
+              "candidate_index": 7,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 9,
+              "candidate_index": 8,
+              "score": 0.7,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 10,
+              "candidate_index": 9,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 11,
+              "candidate_index": 10,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.818181818,
+            "exceptions": 1.0,
+            "temporal": 0.636363636
+          }
+        },
+        "cycle_l1_vs_l2": {
+          "reference_rule_count": 11,
+          "candidate_rule_count": 11,
+          "matched_rule_count": 11,
+          "semantic_score": 1.0,
+          "semantic_loss": 0.0,
+          "exact_rule_f1": 1.0,
+          "exact_ir": true,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": true,
+          "missing_rule_count": 0,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 4,
+              "candidate_index": 4,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 5,
+              "candidate_index": 5,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 6,
+              "candidate_index": 6,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 7,
+              "candidate_index": 7,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 8,
+              "candidate_index": 8,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 9,
+              "candidate_index": 9,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 10,
+              "candidate_index": 10,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 1.0,
+            "exceptions": 1.0,
+            "temporal": 1.0
+          }
+        },
+        "end_to_end_vs_gold": {
+          "reference_rule_count": 12,
+          "candidate_rule_count": 11,
+          "matched_rule_count": 11,
+          "semantic_score": 0.858333333,
+          "semantic_loss": 0.141666667,
+          "exact_rule_f1": 0.52173913,
+          "exact_ir": false,
+          "nonvacuous": true,
+          "exact_ir_nonvacuous": false,
+          "missing_rule_count": 1,
+          "extra_rule_count": 0,
+          "matches": [
+            {
+              "reference_index": 0,
+              "candidate_index": 0,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 1,
+              "candidate_index": 1,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 2,
+              "candidate_index": 2,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 3,
+              "candidate_index": 3,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 4,
+              "candidate_index": 4,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 5,
+              "candidate_index": 5,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 6,
+              "candidate_index": 6,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 7,
+              "candidate_index": 7,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 9,
+              "candidate_index": 8,
+              "score": 0.7,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": false,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            },
+            {
+              "reference_index": 10,
+              "candidate_index": 9,
+              "score": 1.0,
+              "exact": true,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": true
+            },
+            {
+              "reference_index": 11,
+              "candidate_index": 10,
+              "score": 0.9,
+              "exact": false,
+              "modality_preserved": true,
+              "condition_preserved": true,
+              "exception_preserved": true,
+              "temporal_preserved": false
+            }
+          ],
+          "facet_survival": {
+            "modality": 1.0,
+            "conditions": 0.818181818,
+            "exceptions": 1.0,
+            "temporal": 0.636363636
+          }
+        },
+        "source_copy": {
+          "exact_normalized_copy": false,
+          "source_token_count": 147,
+          "reconstruction_token_count": 111,
+          "shared_8gram_count": 25,
+          "shared_8gram_precision": 0.240384615,
+          "shared_8gram_recall": 0.178571429,
+          "copy_risk": false
+        },
+        "timing": {
+          "forward_seconds": 0.054216017,
+          "recompile_seconds": 0.055765436,
+          "total_seconds": 0.109981453
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "case_count": 5,
+    "success_count": 5,
+    "execution_rate": 1.0,
+    "forward_semantic_coverage_count": 5,
+    "forward_semantic_coverage_rate": 1.0,
+    "full_roundtrip_coverage_count": 5,
+    "full_roundtrip_coverage_rate": 1.0,
+    "semantic_coverage_count": 5,
+    "coverage_rate": 1.0,
+    "mean_forward_semantic_score": 0.915,
+    "mean_cycle_semantic_score": 1.0,
+    "mean_end_to_end_semantic_score": 0.915,
+    "mean_forward_semantic_loss": 0.085,
+    "mean_cycle_semantic_loss": 0.0,
+    "mean_end_to_end_semantic_loss": 0.085,
+    "conditional_mean_forward_semantic_score": 0.915,
+    "conditional_mean_cycle_semantic_score": 1.0,
+    "conditional_mean_end_to_end_semantic_score": 0.915,
+    "mean_total_seconds": 0.070564442,
+    "timing_scope": "arm_reported_wall_time_on_executed_cases",
+    "copy_risk_count": 1,
+    "hammer_equivalent_count": 0,
+    "raw_lean_kernel_accepted_count": 0,
+    "nonvacuous_exact_identity_count": 0,
+    "validation_failure_count": 0
+  }
+}

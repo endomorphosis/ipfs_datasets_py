@@ -87,14 +87,14 @@ from ipfs_datasets_py.logic.software_verification.vc import (
 
 SOURCE_TO_VERIFICATION_PIPELINE_INTERFACE: Final = "SourceToVerificationPipeline@1"
 PIPELINE_SCHEMA_VERSION: Final = "source-to-verification-pipeline/v1"
-PIPELINE_VERSION: Final = "1.0.0"
+PIPELINE_VERSION: Final = "1.0.2"
+SOURCE_SEMANTICS_PROFILE: Final = "typed-straight-line-int-bool-linear@1"
 
 # Solver-facing VC rules that lower into theorem-by-negation SMT queries.
 _SOLVER_RULES: Final[frozenset[VCRuleKind]] = frozenset(
     {
         VCRuleKind.POSTCONDITION_NORMAL,
         VCRuleKind.ASSERT,
-        VCRuleKind.PRECONDITION,
     }
 )
 
@@ -163,14 +163,20 @@ def _mapped(source_ref_id: str, span_ids: Sequence[str] = ()) -> dict[str, tuple
 
 
 def _sort_for_type_ref(type_ref: str) -> SmtSort:
-    lowered = (type_ref or "any").lower()
-    if lowered in {"bool", "boolean"}:
+    if type_ref in {"bool", "boolean"}:
         return BOOL_SORT
-    return INT_SORT
+    if type_ref in {"int", "integer"}:
+        return INT_SORT
+    raise UnsupportedConstructError(
+        f"unsupported type reference {type_ref!r}; an explicit int or bool type is required"
+    )
 
 
 def _symbol_smt_name(symbol: ProgramSymbol) -> str:
-    return smt_sanitize(symbol.name or symbol.symbol_id, prefix="v")
+    # Sanitization is not injective (for example x and x_). Preserve readable
+    # names while binding the complete logical symbol identity independently.
+    digest = hashlib.sha256(symbol.symbol_id.encode("utf-8")).hexdigest()
+    return f"{smt_sanitize(symbol.name or 'symbol', prefix='v')[:64]}_{digest}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,10 +230,12 @@ class SourceBinding:
     language: str
     path: str
     content_sha256: str = ""
+    source_revision: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "content_sha256": self.content_sha256,
+            "source_revision": self.source_revision,
             "language": self.language,
             "path": self.path,
             "program_id": self.program_id,
@@ -334,7 +342,12 @@ class SourceToVerificationResult:
 
     @property
     def proved(self) -> bool:
-        if not self.obligation_results:
+        if (
+            self.status is not PipelineStatus.SUCCESS
+            or self.unsupported_constructs
+            or self.disagreement_quarantined
+            or not self.obligation_results
+        ):
             return False
         for item in self.obligation_results:
             report = item.differential
@@ -396,10 +409,15 @@ class _ExpressionInjector:
             if symbol is not None:
                 self._name_to_symbol[symbol.name] = symbol_id
         self._counter = 0
+        self._expression_ids = {expression.expression_id for expression in self.expressions}
 
     def _next_id(self, kind: str) -> str:
-        self._counter += 1
-        return f"expr:pipeline:{kind}:{self._counter}:{self.function.name}"
+        while True:
+            self._counter += 1
+            candidate = f"expr:pipeline:{kind}:{self._counter}:{self.function.name}"
+            if candidate not in self._expression_ids:
+                self._expression_ids.add(candidate)
+                return candidate
 
     def _mapped(self) -> dict[str, tuple[str, ...]]:
         return _mapped(self.source_ref_id, self.span_ids)
@@ -469,7 +487,7 @@ class _ExpressionInjector:
             elif isinstance(node.op, ast.Not):
                 operator = "not"
             elif isinstance(node.op, ast.UAdd):
-                return operand
+                operator = "pos"
             else:
                 raise UnsupportedConstructError(
                     f"unsupported unary operator {type(node.op).__name__}"
@@ -586,30 +604,132 @@ class _SmtLowering:
         self.commands = {item.command_id: item for item in program.commands}
         self._cache: dict[str, SmtTerm] = {}
         self._fun_decls: dict[str, SmtFunDecl] = {}
+        self._symbol_sorts: dict[str, SmtSort] = {}
+        self._expression_sorts: dict[str, SmtSort] = {}
+        self._sorting: set[str] = set()
+        self._name_owners: dict[str, str] = {}
 
     def fun_decls(self) -> tuple[SmtFunDecl, ...]:
         return tuple(sorted(self._fun_decls.values(), key=lambda item: item.name))
 
-    def declare_symbol(self, symbol_id: str) -> str:
+    def _symbol_sort(self, symbol_id: str) -> SmtSort:
+        if symbol_id in self._symbol_sorts:
+            return self._symbol_sorts[symbol_id]
         symbol = self.symbols.get(symbol_id)
         if symbol is None:
-            # Generated / synthetic symbol: declare as unconstrained Int.
-            name = smt_sanitize(symbol_id, prefix="g")
-            if name not in self._fun_decls:
-                self._fun_decls[name] = SmtFunDecl(
-                    name=name, range=INT_SORT, is_const=True
-                )
-            return name
+            raise UnsupportedConstructError(f"missing typed symbol {symbol_id!r}")
+        sort = _sort_for_type_ref(symbol.type_ref)
+        self._symbol_sorts[symbol_id] = sort
+        return sort
+
+    def _bind_value_symbol(self, symbol_id: str, sort: SmtSort) -> None:
+        symbol = self.symbols.get(symbol_id)
+        if symbol is None:
+            raise UnsupportedConstructError(f"missing typed target symbol {symbol_id!r}")
+        declared = sort if symbol.type_ref == "any" else _sort_for_type_ref(symbol.type_ref)
+        previous = self._symbol_sorts.get(symbol_id, declared)
+        if declared != sort or previous != sort:
+            raise UnsupportedConstructError(
+                f"declared type of {symbol.name!r} disagrees with its assigned value"
+            )
+        self._symbol_sorts[symbol_id] = sort
+
+    def declare_symbol(self, symbol_id: str) -> str:
+        sort = self._symbol_sort(symbol_id)
+        symbol = self.symbols[symbol_id]
         name = _symbol_smt_name(symbol)
+        if name in self._name_owners and self._name_owners[name] != symbol_id:
+            raise UnsupportedConstructError("distinct symbols have conflicting SMT identities")
+        self._name_owners[name] = symbol_id
         if name not in self._fun_decls:
             self._fun_decls[name] = SmtFunDecl(
                 name=name,
-                range=_sort_for_type_ref(symbol.type_ref),
+                range=sort,
                 is_const=True,
             )
         return name
 
+    def expression_sort(self, expression_id: str) -> SmtSort:
+        if expression_id in self._expression_sorts:
+            return self._expression_sorts[expression_id]
+        if expression_id in self._sorting:
+            raise UnsupportedConstructError("cyclic expression type dependencies")
+        expr = self.expressions.get(expression_id)
+        if expr is None:
+            raise PipelineError(f"unknown expression_id {expression_id!r}")
+        self._sorting.add(expression_id)
+        try:
+            sort = self._expression_sort(expr)
+            if expr.type_ref != "any" and _sort_for_type_ref(expr.type_ref) != sort:
+                raise UnsupportedConstructError(
+                    f"expression {expression_id!r} has a conflicting declared type"
+                )
+            self._expression_sorts[expression_id] = sort
+            return sort
+        finally:
+            self._sorting.remove(expression_id)
+
+    def _literal_integer(self, expression_id: str) -> bool:
+        expr = self.expressions[expression_id]
+        if expr.kind is ExpressionKind.LITERAL:
+            return type(expr.attributes.get("value")) is int
+        if expr.kind is ExpressionKind.UNARY and expr.operator in {"pos", "neg"}:
+            return len(expr.operand_ids) == 1 and self._literal_integer(expr.operand_ids[0])
+        return False
+
+    def _expression_sort(self, expr: ProgramExpression) -> SmtSort:
+        if expr.kind is ExpressionKind.LITERAL:
+            if expr.operand_ids or expr.symbol_ids:
+                raise UnsupportedConstructError("a literal cannot conceal additional value dependencies")
+            value = expr.attributes.get("value")
+            if type(value) is bool:
+                return BOOL_SORT
+            if type(value) is int:
+                return INT_SORT
+            raise UnsupportedConstructError(
+                f"literal expression {expr.expression_id} has unsupported value {value!r}"
+            )
+        if expr.kind in {ExpressionKind.SYMBOL, ExpressionKind.RESULT, ExpressionKind.OLD}:
+            if len(expr.symbol_ids) != 1 or expr.operand_ids:
+                raise UnsupportedConstructError("a value expression requires exactly one typed symbol")
+            if expr.kind is ExpressionKind.OLD:
+                raise UnsupportedConstructError("old-state expressions require an explicit state correspondence")
+            return self._symbol_sort(expr.symbol_ids[0])
+        if expr.symbol_ids:
+            raise UnsupportedConstructError("operator expressions cannot conceal extra symbol dependencies")
+        operands = tuple(self.expression_sort(item) for item in expr.operand_ids)
+        if expr.kind is ExpressionKind.UNARY and len(operands) == 1:
+            required = BOOL_SORT if expr.operator == "not" else INT_SORT
+            if expr.operator not in {"not", "pos", "neg"} or operands[0] != required:
+                raise UnsupportedConstructError(f"unsupported operand type for unary {expr.operator!r}")
+            return required
+        if expr.kind is ExpressionKind.BINARY and len(operands) == 2:
+            if expr.operator in {"div", "floordiv", "mod"}:
+                raise UnsupportedConstructError(
+                    f"operator {expr.operator!r} requires qualified division and exception semantics"
+                )
+            if expr.operator in {"eq", "ne"}:
+                if operands[0] != operands[1]:
+                    raise UnsupportedConstructError("equality operands must have the same admitted type")
+                return BOOL_SORT
+            if expr.operator in {"and", "or"}:
+                if operands != (BOOL_SORT, BOOL_SORT):
+                    raise UnsupportedConstructError("boolean operations require boolean operands")
+                return BOOL_SORT
+            if expr.operator in {"add", "sub", "mul", "lt", "le", "gt", "ge", "greater_than", "less_than", "greater_equal", "less_equal"}:
+                if operands != (INT_SORT, INT_SORT):
+                    raise UnsupportedConstructError("integer operations require integer operands")
+                if expr.operator == "mul" and not any(self._literal_integer(item) for item in expr.operand_ids):
+                    raise UnsupportedConstructError("nonlinear multiplication requires a qualified nonlinear profile")
+                return INT_SORT if expr.operator in {"add", "sub", "mul"} else BOOL_SORT
+        if expr.kind is ExpressionKind.CONDITIONAL and len(operands) == 3:
+            if operands[0] != BOOL_SORT or operands[1] != operands[2]:
+                raise UnsupportedConstructError("conditional requires a boolean guard and matching branch types")
+            return operands[1]
+        raise UnsupportedConstructError(f"expression {expr.expression_id!r} is outside {SOURCE_SEMANTICS_PROFILE}")
+
     def term_for_expression(self, expression_id: str) -> SmtTerm:
+        self.expression_sort(expression_id)
         if expression_id in self._cache:
             return self._cache[expression_id]
         expr = self.expressions.get(expression_id)
@@ -627,8 +747,6 @@ class _SmtLowering:
                 return term_true() if value else term_false()
             if isinstance(value, int) and not isinstance(value, bool):
                 return term_int(value)
-            if value is None:
-                return term_int(0)
             raise UnsupportedConstructError(
                 f"literal expression {expr.expression_id} has unsupported value {value!r}"
             )
@@ -685,19 +803,93 @@ class _SmtLowering:
     def body_assumptions(
         self, function: ProgramFunction
     ) -> tuple[SmtNamedAssertion, ...]:
-        """Encode straight-line body facts: assignments and result-return equalities."""
+        """Encode a single-assignment, single-return straight-line fragment.
+
+        This encoder has neither SSA renaming nor path-sensitive execution.
+        Reject those forms before adding equations: simultaneous equalities
+        for sequential writes or alternate returns can be contradictory and
+        make an arbitrary postcondition appear proved by both solvers.
+        """
+
+        if len(function.cfg.blocks) != 1 or function.cfg.edges:
+            raise UnsupportedConstructError(
+                "path-sensitive CFG semantics are not supported by the straight-line SMT body"
+            )
+        if function.cfg.exceptional_exit_block_ids or function.declared_exceptions or function.exception_symbol_ids:
+            raise UnsupportedConstructError("exceptional exits require an explicit exception profile")
+
+        def check_effects(effects, *, reads, writes) -> None:
+            if (effects.allocates or effects.deallocates or effects.raises
+                    or effects.performs_io or effects.nondeterministic or effects.synchronizes):
+                raise UnsupportedConstructError("observable/resource effects are outside the straight-line profile")
+            if not set(effects.reads) <= reads or not set(effects.writes) <= writes:
+                raise UnsupportedConstructError("unmodeled read/write effects are outside the straight-line profile")
+
+        local_targets = {
+            target for command_id in function.cfg.command_ids
+            if command_id in self.commands and self.commands[command_id].kind is CommandKind.ASSIGN
+            for target in self.commands[command_id].target_symbol_ids
+        }
+        if local_targets & set(function.parameter_symbol_ids):
+            raise UnsupportedConstructError("sequential reassignment requires SSA semantics")
+        if not local_targets <= set(function.local_symbol_ids):
+            raise UnsupportedConstructError("assignments must target local symbols in the straight-line profile")
+        check_effects(function.effects,
+                      reads=set(function.parameter_symbol_ids) | set(function.local_symbol_ids),
+                      writes=local_targets)
+        assigned = set(function.parameter_symbol_ids)
+        for symbol_id in function.parameter_symbol_ids:
+            self._symbol_sort(symbol_id)
+        returned = False
+
+        def require_defined_value(expression_id: str) -> None:
+            pending = [expression_id]
+            visited: set[str] = set()
+            while pending:
+                current = pending.pop()
+                if current in visited:
+                    continue
+                visited.add(current)
+                expression = self.expressions.get(current)
+                if expression is None:
+                    raise UnsupportedConstructError("body expression is missing from ProgramIR")
+                if any(symbol_id not in assigned for symbol_id in expression.symbol_ids):
+                    raise UnsupportedConstructError(
+                        "read before local definition or unmodeled global requires binding semantics"
+                    )
+                pending.extend(expression.operand_ids)
 
         assumptions: list[SmtNamedAssertion] = []
         index = 0
         for command_id in function.cfg.command_ids:
             command = self.commands.get(command_id)
             if command is None:
-                continue
+                raise UnsupportedConstructError("body command is missing from ProgramIR")
+            if returned:
+                raise UnsupportedConstructError(
+                    "commands after return require control-flow semantics"
+                )
+            if command.attributes.get("branch_condition") is not None:
+                raise UnsupportedConstructError(
+                    "branch metadata requires path-sensitive CFG semantics"
+                )
+            if command.undefined_behavior:
+                raise UnsupportedConstructError("undefined behavior requires an explicit semantic profile")
+            check_effects(command.effects, reads=assigned,
+                          writes=set(command.target_symbol_ids) if command.kind is CommandKind.ASSIGN else set())
             if command.kind is CommandKind.ASSIGN:
-                if not command.target_symbol_ids or not command.expression_ids:
-                    continue
-                target = self.declare_symbol(command.target_symbol_ids[0])
+                if len(command.target_symbol_ids) != 1 or len(command.expression_ids) != 1:
+                    raise UnsupportedConstructError("assignment must have one target and value")
+                target_id = command.target_symbol_ids[0]
+                if target_id in assigned:
+                    raise UnsupportedConstructError(
+                        "sequential reassignment requires SSA semantics"
+                    )
+                require_defined_value(command.expression_ids[0])
+                self._bind_value_symbol(target_id, self.expression_sort(command.expression_ids[0]))
+                target = self.declare_symbol(target_id)
                 value = self.term_for_expression(command.expression_ids[0])
+                assigned.add(target_id)
                 assumptions.append(
                     SmtNamedAssertion(
                         formula=term_eq(term_symbol(target), value),
@@ -707,7 +899,17 @@ class _SmtLowering:
                 index += 1
             elif command.kind is CommandKind.RETURN:
                 if not command.expression_ids or not function.result_symbol_id:
-                    continue
+                    raise UnsupportedConstructError(
+                        "implicit/null return is outside the integer SMT body fragment"
+                    )
+                if len(command.expression_ids) != 1 or command.target_symbol_ids:
+                    raise UnsupportedConstructError("return must have exactly one value and no write targets")
+                returned = True
+                require_defined_value(command.expression_ids[0])
+                result_sort = self.expression_sort(command.expression_ids[0])
+                if function.return_type != "any" and _sort_for_type_ref(function.return_type) != result_sort:
+                    raise UnsupportedConstructError("declared return type disagrees with its returned value")
+                self._bind_value_symbol(function.result_symbol_id, result_sort)
                 result_name = self.declare_symbol(function.result_symbol_id)
                 value = self.term_for_expression(command.expression_ids[0])
                 assumptions.append(
@@ -718,32 +920,22 @@ class _SmtLowering:
                 )
                 index += 1
             elif command.kind is CommandKind.ASSUME:
-                # Path-condition fragments retained as named assumptions.
-                for expr_id in command.expression_ids:
-                    try:
-                        formula = self.term_for_expression(expr_id)
-                    except UnsupportedConstructError:
-                        continue
-                    assumptions.append(
-                        SmtNamedAssertion(
-                            formula=formula,
-                            name=f"body_assume_{index}",
-                        )
-                    )
-                    index += 1
-            elif command.kind in {
-                CommandKind.CALL,
-                CommandKind.THROW,
-                CommandKind.HAVOC,
-                CommandKind.ALLOCATE,
-                CommandKind.DEALLOCATE,
-                CommandKind.ATOMIC,
-                CommandKind.UNDEFINED,
-            }:
+                raise UnsupportedConstructError(
+                    "body assumptions require independently checked path semantics"
+                )
+            elif command.kind is CommandKind.SKIP and not (
+                command.expression_ids or command.target_symbol_ids or command.attributes
+            ):
+                continue
+            else:
                 raise UnsupportedConstructError(
                     f"command kind {command.kind.value} cannot be encoded in the "
                     "straight-line SMT body fragment"
                 )
+        if not returned:
+            raise UnsupportedConstructError(
+                "body must have one explicit terminal return in the integer SMT fragment"
+            )
         return tuple(assumptions)
 
 
@@ -799,7 +991,7 @@ def attach_contract_specs(
         current = injector.program_with_expressions()
         preconditions = tuple(
             ContractClause(
-                clause_id=_safe_id("clause", "pre", spec.function_name, str(index)),
+                clause_id=_safe_id("clause", "pre", spec.contract_id, spec.function_name, str(index)),
                 kind=ContractClauseKind.PRECONDITION,
                 expression_id=expression_id,
                 statement=f"precondition[{index}] of {spec.function_name}",
@@ -809,7 +1001,7 @@ def attach_contract_specs(
         )
         postconditions = tuple(
             ContractClause(
-                clause_id=_safe_id("clause", "post", spec.function_name, str(index)),
+                clause_id=_safe_id("clause", "post", spec.contract_id, spec.function_name, str(index)),
                 kind=ContractClauseKind.POSTCONDITION,
                 expression_id=expression_id,
                 statement=f"postcondition[{index}] of {spec.function_name}",
@@ -848,6 +1040,11 @@ def lower_vc_obligation_to_smt(
     additional named assumptions so solvers can generate their own witnesses.
     """
 
+    if obligation.rule not in _SOLVER_RULES:
+        raise UnsupportedConstructError(
+            "VC rule requires a separately qualified source verification profile"
+        )
+
     functions = {item.function_id: item for item in program.functions}
     function = functions.get(obligation.function_id)
     if function is None:
@@ -859,10 +1056,11 @@ def lower_vc_obligation_to_smt(
     named: list[SmtNamedAssertion] = []
     body_names: list[str] = []
 
-    if include_body_semantics:
-        for assumption in lowering.body_assumptions(function):
-            named.append(assumption)
-            body_names.append(assumption.name)
+    if type(include_body_semantics) is not bool or not include_body_semantics:
+        raise UnsupportedConstructError("the source semantics profile requires complete body semantics")
+    for assumption in lowering.body_assumptions(function):
+        named.append(assumption)
+        body_names.append(assumption.name)
 
     for index, expression_id in enumerate(obligation.assumption_expression_ids):
         named.append(
@@ -881,12 +1079,17 @@ def lower_vc_obligation_to_smt(
             )
         )
 
-    goal_ids = obligation.goal_expression_ids or obligation.assumption_expression_ids
+    goal_ids = obligation.goal_expression_ids
     if not goal_ids:
-        raise PipelineError(
+        raise UnsupportedConstructError(
             f"obligation {obligation.obligation_id} has no goal expressions to solve"
         )
     goal_terms = [lowering.term_for_expression(item) for item in goal_ids]
+    if any(lowering.expression_sort(item) != BOOL_SORT for item in goal_ids):
+        raise UnsupportedConstructError("verification goals require boolean expressions")
+    for expression_id in (*obligation.assumption_expression_ids, *obligation.path_condition_expression_ids):
+        if lowering.expression_sort(expression_id) != BOOL_SORT:
+            raise UnsupportedConstructError("verification assumptions require boolean expressions")
     goal = goal_terms[0] if len(goal_terms) == 1 else term_and(*goal_terms)
 
     prop = property_id or f"property:{obligation.obligation_id}"
@@ -911,6 +1114,12 @@ def lower_vc_obligation_to_smt(
                 "source_construct_id": obligation.source_construct_id,
                 "source_ref_ids": list(obligation.source_ref_ids),
                 "span_ids": list(obligation.span_ids),
+                "source_semantics_profile": SOURCE_SEMANTICS_PROFILE,
+                "pipeline_version": PIPELINE_VERSION,
+                "symbol_bindings": {
+                    symbol_id: {"name": _symbol_smt_name(lowering.symbols[symbol_id]), "sort": sort.to_dict()}
+                    for symbol_id, sort in sorted(lowering._symbol_sorts.items())
+                },
             }
         ),
     )
@@ -932,12 +1141,15 @@ class SourceToVerificationPipeline:
     bounds: ExecutionBounds | None = None
     fail_on_unsupported: bool = True
     execute_solvers: bool = True
+    include_supervisor_evidence: bool = True
     solver_rules: tuple[VCRuleKind, ...] = (
         VCRuleKind.POSTCONDITION_NORMAL,
         VCRuleKind.ASSERT,
     )
 
     def __post_init__(self) -> None:
+        if type(self.include_supervisor_evidence) is not bool:
+            raise PipelineError("include_supervisor_evidence must be a boolean")
         if self.compiler is None:
             object.__setattr__(self, "compiler", SoftwareVerificationSMTCompiler())
         if self.bounds is None:
@@ -957,6 +1169,10 @@ class SourceToVerificationPipeline:
         )
         if not rules:
             raise PipelineError("solver_rules must not be empty")
+        if not set(rules) <= _SOLVER_RULES:
+            raise UnsupportedConstructError(
+                "solver_rules are outside the admitted source verification profile"
+            )
         object.__setattr__(self, "solver_rules", rules)
 
     def run(
@@ -968,8 +1184,18 @@ class SourceToVerificationPipeline:
         contracts: Sequence[ContractSpec | ProgramContract] | None = None,
         loop_contracts: Sequence[LoopContract] = (),
         revision: str = "workspace:local",
+        mirror: bool = True,
     ) -> SourceToVerificationResult:
-        """Execute the full vertical slice for one source snapshot."""
+        """Execute the full vertical slice for one source snapshot.
+
+        ``mirror=False`` disables the optional supervisor's metadata mirroring
+        for this adaptation, while retaining its source evidence. The default
+        preserves the supervisor's existing behavior. An unsupported explicit
+        opt-out raises; it is never retried with mirroring enabled.
+        """
+
+        if type(mirror) is not bool:
+            raise PipelineError("metadata mirroring must be an exact boolean")
 
         if not isinstance(source, str):
             raise PipelineError("source must be text")
@@ -979,6 +1205,9 @@ class SourceToVerificationPipeline:
             path=path,
             language=language,
             revision=revision,
+            preserve_type_annotations=True,
+            include_supervisor_evidence=self.include_supervisor_evidence,
+            mirror=mirror,
         )
         diagnostics: list[str] = [
             item.message for item in adapter.diagnostics if getattr(item, "message", None)
@@ -1011,7 +1240,15 @@ class SourceToVerificationPipeline:
             program, resolved_contracts = self._resolve_contracts(
                 adapter.program, contracts
             )
-        except (PipelineError, UnsupportedConstructError) as error:
+        except UnsupportedConstructError as error:
+            return SourceToVerificationResult(
+                status=PipelineStatus.UNSUPPORTED,
+                adapter=adapter,
+                program=adapter.program,
+                unsupported_constructs=tuple(unsupported) + (str(error),),
+                diagnostics=tuple(diagnostics) + (str(error),),
+            )
+        except PipelineError as error:
             return SourceToVerificationResult(
                 status=PipelineStatus.ERROR,
                 adapter=adapter,
@@ -1041,6 +1278,10 @@ class SourceToVerificationPipeline:
         obligation_results: list[ObligationSolveResult] = []
         disagreement = False
         try:
+            # Validate every selected translation before starting any solver.
+            # A later unsupported contract must not cause partial checker work
+            # whose scope is hidden by the final unsupported result.
+            prepared = []
             for vc_set, contract in zip(vc_sets, resolved_contracts):
                 for obligation in vc_set.obligations:
                     rule = (
@@ -1060,31 +1301,30 @@ class SourceToVerificationPipeline:
                         property_id=property_id,
                     )
                     compilation = self.compiler.compile(smt_obl)  # type: ignore[union-attr]
-                    differential: SmtDifferentialReport | None = None
-                    if self.execute_solvers:
-                        differential = run_z3_cvc5_differential(
-                            compilation,
-                            bounds=self.bounds,
-                            z3_backend=self.z3_backend,
-                            cvc5_backend=self.cvc5_backend,
-                            compiler=self.compiler,
-                        )
-                        if (
-                            differential.classification
-                            is DifferentialClassification.DISAGREE
-                        ):
-                            disagreement = True
-                    obligation_results.append(
-                        ObligationSolveResult(
-                            vc_obligation=obligation,
-                            smt_obligation=smt_obl,
-                            compilation=compilation,
-                            differential=differential,
-                            property_id=property_id,
-                            body_assumption_names=body_names,
-                            solver_executed=self.execute_solvers,
-                        )
+                    prepared.append((obligation, smt_obl, compilation, property_id, body_names))
+            for obligation, smt_obl, compilation, property_id, body_names in prepared:
+                differential: SmtDifferentialReport | None = None
+                if self.execute_solvers:
+                    differential = run_z3_cvc5_differential(
+                        compilation,
+                        bounds=self.bounds,
+                        z3_backend=self.z3_backend,
+                        cvc5_backend=self.cvc5_backend,
+                        compiler=self.compiler,
                     )
+                    if differential.classification is DifferentialClassification.DISAGREE:
+                        disagreement = True
+                obligation_results.append(
+                    ObligationSolveResult(
+                        vc_obligation=obligation,
+                        smt_obligation=smt_obl,
+                        compilation=compilation,
+                        differential=differential,
+                        property_id=property_id,
+                        body_assumption_names=body_names,
+                        solver_executed=self.execute_solvers,
+                    )
+                )
         except UnsupportedConstructError as error:
             return SourceToVerificationResult(
                 status=PipelineStatus.UNSUPPORTED,
@@ -1175,6 +1415,11 @@ class SourceToVerificationPipeline:
             ready.extend(attached)
         if not ready:
             raise PipelineError("no contracts resolved")
+        if any(not contract.postconditions for contract in ready):
+            # The general VC generator preserves preconditions as a fallback
+            # exit goal. That assumption declaration is not an explicit source
+            # property and cannot stand in for a postcondition on this route.
+            raise UnsupportedConstructError("an explicit postcondition is required by the source profile")
         return program, tuple(ready)
 
     def _bindings(
@@ -1224,6 +1469,7 @@ class SourceToVerificationPipeline:
                 language=adapter.language,
                 path=adapter.path or "",
                 content_sha256=content_sha256,
+                source_revision=program.sources[0].source_revision if program.sources else "",
             ),
             property_ids=property_ids,
             assumption_ids=tuple(dict.fromkeys(assumption_ids)),
@@ -1238,8 +1484,10 @@ class SourceToVerificationPipeline:
         return {
             "execute_solvers": self.execute_solvers,
             "fail_on_unsupported": self.fail_on_unsupported,
+            "include_supervisor_evidence": self.include_supervisor_evidence,
             "interface": self.INTERFACE,
             "pipeline_version": PIPELINE_VERSION,
+            "source_semantics_profile": SOURCE_SEMANTICS_PROFILE,
             "schema_version": PIPELINE_SCHEMA_VERSION,
             "solver_rules": [
                 item.value if isinstance(item, VCRuleKind) else str(item)
@@ -1267,6 +1515,7 @@ def run_source_to_verification_pipeline(
             "bounds",
             "fail_on_unsupported",
             "execute_solvers",
+            "include_supervisor_evidence",
             "solver_rules",
         )
         if key in kwargs
@@ -1284,6 +1533,7 @@ __all__ = [
     "PIPELINE_SCHEMA_VERSION",
     "PIPELINE_VERSION",
     "SOURCE_TO_VERIFICATION_PIPELINE_INTERFACE",
+    "SOURCE_SEMANTICS_PROFILE",
     "ContractSpec",
     "ObligationSolveResult",
     "PipelineError",

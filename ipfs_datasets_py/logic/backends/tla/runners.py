@@ -10,7 +10,7 @@ Both runners:
 
 * require an explicit JVM-hosted executable (or an injected probe/runner);
 * return ``unavailable`` when the tool or JVM is absent — never a silent pass;
-* parse counterexamples and support deterministic replay against source maps;
+* parse counterexamples and validate structural source-symbol mapping;
 * emit :class:`ModelCheckResult` with bounded authority only.
 
 The shared :class:`TLAModelCheckerBackend` base implements the common lifecycle
@@ -21,8 +21,10 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from contextvars import ContextVar
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
@@ -44,11 +46,19 @@ from ..process import (
     ToolRunRequest,
     ToolRunResult,
     ToolRuntime,
+    _is_cancelled,
 )
 from ..results import (
     ModelCheckResult,
     ResultAuthority,
     ResultStatus,
+)
+from ..resource_admission import ResourceAdmittedToolRunner
+from ..smt.operation_budget import (
+    _Signals,
+    current_proof_operation,
+    proof_operation_scope,
+    validate_operation_timeout_ms,
 )
 from .compiler import (
     GeneratedTLAArtifacts,
@@ -56,6 +66,7 @@ from .compiler import (
     TLACompiler,
     TLACompilerError,
     TLASourceMapEntry,
+    _decode_tla_artifact_payload,
 )
 
 TLC_BACKEND_VERSION: Final = "TLCBackend@1"
@@ -66,6 +77,13 @@ TLA_CAPABILITY_VERSION: Final = "tla-model-checker-capability/v1"
 
 DEFAULT_VERSION_TIMEOUT_SECONDS: Final = 3.0
 DEFAULT_MAX_OUTPUT_BYTES: Final = 2 * 1024 * 1024
+JVM_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024 * 1024 * 1024
+_APALACHE_MIN_RESIDENT_BYTES: Final = 256 * 1024 * 1024
+_APALACHE_MAX_FILE_BYTES: Final = 64 * 1024 * 1024
+_APALACHE_MAX_WORKSPACE_BYTES: Final = 128 * 1024 * 1024
+_APALACHE_CHILD_PROCESS_SLOTS: Final = 3
+_APALACHE_RUNTIME_CONFIG_NAME: Final = "apalache-runtime.json"
+_APALACHE_RUN_DIRECTORY: Final = "apalache-run"
 
 _TLC_SUCCESS_MARKERS: Final = (
     "model checking completed. no error has been found",
@@ -89,6 +107,8 @@ _COUNTEREXAMPLE_MARKERS: Final = (
 )
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 
+_MODEL_CHECK_CONTROL = ContextVar("tla_model_check_control", default=None)
+
 
 class TLARunnerError(ValueError):
     """Raised when a model-checker request or receipt violates the contract."""
@@ -111,6 +131,34 @@ class ModelCheckOutcomeStatus(StrEnum):
     UNAVAILABLE = "unavailable"
     ERROR = "error"
     MALFORMED = "malformed"
+
+
+class _ModelCheckControl:
+    """Per-call cooperative stop state; native flags also latch a failed phase."""
+
+    def __init__(self, started: float, timeout_seconds: float, cancellation) -> None:
+        self.started = started
+        self.deadline = started + timeout_seconds
+        self.cancellation = cancellation
+        self.operation = current_proof_operation()
+        if self.operation is not None:
+            self.deadline = min(self.deadline, self.operation.deadline)
+        self.failure = None
+
+    def reject(self, status: ModelCheckOutcomeStatus, reason: str):
+        if self.failure is None:
+            self.failure = (status, reason)
+        return self.failure
+
+    def observe(self):
+        if self.operation is not None:
+            self.operation.checkpoint("TLA model-check boundary")
+        if self.failure is None:
+            if _is_cancelled(self.cancellation):
+                self.reject(ModelCheckOutcomeStatus.ERROR, "bounded model check was cancelled")
+            elif time.monotonic() >= self.deadline:
+                self.reject(ModelCheckOutcomeStatus.TIMED_OUT, "model-check deadline expired")
+        return self.failure
 
 
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
@@ -542,70 +590,326 @@ def _production_executable_finder(name: str) -> str | None:
     return find_executable(name)
 
 
-def parse_counterexample_trace(output: str) -> CounterexampleTrace:
-    """Parse TLC/Apalache state blocks while retaining the exact raw trace."""
+_TRACE_PARSE_FAILURE: Final = "counterexample parse incomplete: "
+_TRACE_STRUCTURAL_SCOPE: Final = (
+    "structural source-symbol mapping only; transitions and invariants were not evaluated"
+)
+_TRACE_MAX_STATES: Final = 512
+_TRACE_MAX_CHARACTERS: Final = 262_144
+_TRACE_MAX_NESTING: Final = 128
+_TRACE_TOKEN = re.compile(
+    r'"(?:\\[^\n]|[^"\\\n])*"|/\\|<<|>>|\|->|:>|@@|'
+    r'-?\d+|[A-Za-z_][A-Za-z0-9_]*|[=,{}\[\]()]'
+)
 
+
+def _mask_trace_comments(text: str) -> tuple[str, tuple[str, ...]]:
+    """Hide comments without shifting offsets or inspecting strings as code."""
+    masked = list(text)
+    position = depth = 0
+    quoted = False
+    errors: list[str] = []
+    while position < len(text):
+        if depth:
+            if text.startswith("(*", position):
+                depth += 1
+                if depth == _TRACE_MAX_NESTING + 1:
+                    errors.append(_TRACE_PARSE_FAILURE + "comment nesting exceeds supported limit")
+                width = 2
+            elif text.startswith("*)", position):
+                depth -= 1
+                width = 2
+            else:
+                width = 1
+            for index in range(position, position + width):
+                if masked[index] not in "\r\n":
+                    masked[index] = " "
+            position += width
+        elif quoted:
+            if text[position] == "\\":
+                position += 2
+            else:
+                if text[position] == '"':
+                    quoted = False
+                position += 1
+        elif text[position] == '"':
+            quoted = True
+            position += 1
+        elif text.startswith("(*", position):
+            depth = 1
+            masked[position:position + 2] = "  "
+            position += 2
+        elif text.startswith("\\*", position):
+            end = text.find("\n", position)
+            end = len(text) if end < 0 else end
+            masked[position:end] = " " * (end - position)
+            position = end
+        else:
+            position += 1
+    if depth:
+        errors.append(_TRACE_PARSE_FAILURE + "unterminated block comment")
+    if quoted:
+        errors.append(_TRACE_PARSE_FAILURE + "unterminated quoted string")
+    return "".join(masked), tuple(errors)
+
+
+def _trace_assignments(body: str, original: str | None = None) -> tuple[dict[str, str], str]:
+    """Read a bounded literal-value subset, not arbitrary TLA expressions.
+
+    Strings, integers/model values, sets, tuples, records and finite function
+    values may span lines. Unsupported syntax is retained in raw evidence and
+    prevents structural replay; it is never evaluated as TLA or Python.
+    """
+    tokens: list[tuple[str, int, int]] = []
+    offset = 0
+    while offset < len(body):
+        if body[offset].isspace():
+            offset += 1
+            continue
+        match = _TRACE_TOKEN.match(body, offset)
+        if match is None:
+            return {}, "unsupported or unfinished assignment syntax"
+        tokens.append((match.group(), offset, match.end()))
+        offset = match.end()
+    position = 0
+    assignments: dict[str, str] = {}
+
+    def peek() -> str:
+        return tokens[position][0] if position < len(tokens) else ""
+
+    def take(expected: str | None = None) -> str:
+        nonlocal position
+        token = peek()
+        if not token or (expected is not None and token != expected):
+            raise ValueError("missing value or unmatched value delimiter")
+        position += 1
+        return token
+
+    def value(depth: int = 0) -> None:
+        if depth > _TRACE_MAX_NESTING:
+            raise ValueError("assignment nesting exceeds supported limit")
+        token = take()
+        if token in {"{", "<<", "["}:
+            closing = {"{": "}", "<<": ">>", "[": "]"}[token]
+            if peek() == closing:
+                take(closing)
+                return
+            while True:
+                if token == "[":
+                    if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*|"(?:\\.|[^"\\])*"', take()):
+                        raise ValueError("unsupported record field")
+                    take("|->")
+                value(depth + 1)
+                if peek() != ",":
+                    break
+                take(",")
+            take(closing)
+        elif token == "(":
+            value(depth + 1)
+            if peek() == ":>":
+                take(":>")
+                value(depth + 1)
+                while peek() == "@@":
+                    take("@@")
+                    value(depth + 1)
+                    take(":>")
+                    value(depth + 1)
+            take(")")
+        elif not re.fullmatch(r'-?\d+|[A-Za-z_][A-Za-z0-9_]*|"(?:\\[^\n]|[^"\\\n])*"', token):
+            raise ValueError("unsupported assignment value")
+
+    try:
+        while position < len(tokens):
+            if peek() == "/\\":
+                take()
+            elif assignments and "\n" not in body[tokens[position - 1][2]:tokens[position][1]]:
+                raise ValueError("missing assignment separator")
+            name = take()
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+                raise ValueError("invalid assignment name")
+            take("=")
+            if position == len(tokens):
+                raise ValueError("assignment has no value")
+            first = tokens[position][1]
+            value()
+            if name in assignments:
+                raise ValueError(f"duplicate assignment: {name}")
+            assignments[name] = (body if original is None else original)[first:tokens[position - 1][2]]
+        if not assignments:
+            raise ValueError("state has no assignments")
+    except ValueError as error:
+        return assignments, str(error)
+    return assignments, ""
+
+
+def parse_counterexample_trace(output: str) -> CounterexampleTrace:
+    """Parse conservative TLC blocks and Apalache StateN definitions.
+
+    Apalache's zero-based labels remain in ``label``/``raw``; positive ordinal
+    indexes satisfy the existing wire schema. Parse failures are explicit notes
+    and forbid replay, even when a valid prefix can still be displayed.
+    """
     text = str(output or "")
-    pattern = re.compile(
-        r"(?ms)^State\s+(\d+):\s*([^\n]*)\n(.*?)(?=^State\s+\d+:|\Z)"
-    )
+    notes: list[str] = []
+    if len(text) > _TRACE_MAX_CHARACTERS:
+        return CounterexampleTrace(raw=text, replay_notes=(
+            _TRACE_PARSE_FAILURE + "trace exceeds supported character limit",))
+    header = re.compile(r"(?m)^State(?:(?:[ \t]+(?P<tlc>\d+):[ \t]*(?P<label>[^\n]*))|"
+                        r"(?P<apalache>\d+)[ \t]*==(?!=)[ \t]*(?P<inline>[^\n]*))")
+    masked, comment_errors = _mask_trace_comments(text)
+    notes.extend(comment_errors)
+    matches = list(header.finditer(masked))
+    module_headers = list(re.finditer(r"(?m)^-{4,}[ \t]+MODULE[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]+-{4,}[ \t]*$", masked))
+    module_markers = list(re.finditer(r"(?m)^-{4,}[ \t]+MODULE\b", masked))
+    if module_markers:
+        footers = list(re.finditer(r"(?m)^={4,}[ \t]*$", masked))
+        if (len(module_headers) != 1 or len(module_markers) != 1 or len(footers) != 1
+                or footers[0].start() < module_headers[0].end()):
+            notes.append(_TRACE_PARSE_FAILURE + "module wrapper is malformed or missing its terminator")
+        elif any(not module_headers[0].end() <= item.start() < footers[0].start() for item in matches):
+            notes.append(_TRACE_PARSE_FAILURE + "state definition lies outside the module wrapper")
+    if len(matches) > _TRACE_MAX_STATES:
+        return CounterexampleTrace(raw=text, replay_notes=(
+            _TRACE_PARSE_FAILURE + "trace exceeds supported state limit",))
+    # A malformed State header must not disappear between otherwise valid ones.
+    starts = {match.start() for match in matches}
+    for candidate in re.finditer(r"(?m)^State[^\n]*(?::|==|=)[^\n]*", masked):
+        if candidate.start() not in starts:
+            notes.append(_TRACE_PARSE_FAILURE + "unrecognized State header")
+            break
+    styles: set[str] = set()
     states: list[CounterexampleState] = []
-    for match in pattern.finditer(text):
-        body = match.group(3).rstrip()
-        assignments: dict[str, str] = {}
-        for assignment in re.finditer(
-            r"(?m)^\s*/?\\?\s*([A-Za-z][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$",
-            body,
-        ):
-            assignments[assignment.group(1)] = assignment.group(2)
-        raw = match.group(0).rstrip()
-        states.append(
-            CounterexampleState(
-                index=int(match.group(1)),
-                label=match.group(2).strip().removeprefix("<").removesuffix(">"),
-                assignments=assignments,
-                raw=raw,
-            )
-        )
-    return CounterexampleTrace(states=tuple(states), raw=text)
+    for ordinal, match in enumerate(matches, 1):
+        apalache = match.group("apalache") is not None
+        style = "apalache" if apalache else "tlc"
+        styles.add(style)
+        digits = match.group(style)
+        if len(digits) > 9:
+            notes.append(_TRACE_PARSE_FAILURE + "state number exceeds supported range")
+            continue
+        number = int(digits)
+        expected = ordinal - 1 if apalache else ordinal
+        if number != expected:
+            notes.append(_TRACE_PARSE_FAILURE + "state numbering is duplicate, missing or reordered")
+        stop = matches[ordinal].start() if ordinal < len(matches) else len(text)
+        body_start = match.start("inline") if apalache else match.end()
+        body = masked[body_start:stop]
+        # Apalache metadata and subsequent operators are not state assignments.
+        # TLC's known completion summaries likewise terminate the last state.
+        boundary = (r"(?m)^[ \t]*(?:={4,}|[A-Za-z_][A-Za-z0-9_]*[ \t]*==)"
+                    if apalache else
+                    r"(?m)^(?:Finished in |\d+ states generated|The depth of |"
+                    r"The average outdegree |Progress\(|Model checking completed\.|"
+                    r"Error: |Back to state |State \d+: Stuttering)")
+        ending = re.search(boundary, body)
+        if ending is not None:
+            stop = body_start + ending.start()
+            body = masked[body_start:stop]
+        assignments, failure = _trace_assignments(body, text[body_start:stop])
+        if failure:
+            notes.append(_TRACE_PARSE_FAILURE + f"state {ordinal}: {failure}")
+        if number < 1 and not apalache:
+            notes.append(_TRACE_PARSE_FAILURE + "TLC state index must be positive")
+            continue
+        states.append(CounterexampleState(
+            index=ordinal if apalache else number,
+            label=f"State{digits}" if apalache else text[match.start("label"):match.end("label")].strip().removeprefix("<").removesuffix(">"),
+            assignments=assignments, raw=text[match.start():stop].rstrip(),
+        ))
+    if len(styles) > 1:
+        notes.append(_TRACE_PARSE_FAILURE + "mixed TLC and Apalache state formats")
+    if not states:
+        notes.append(_TRACE_PARSE_FAILURE + "counterexample contained no parseable State blocks")
+    return CounterexampleTrace(states=tuple(states), raw=text,
+        replay_notes=tuple(dict.fromkeys(notes))[:64])
+
+
+def _counterexample_structure_errors(trace: CounterexampleTrace) -> tuple[str, ...]:
+    """Revalidate raw/state consistency, including caller-supplied legacy flags."""
+    parsed = parse_counterexample_trace(trace.raw)
+    errors = list(parsed.replay_notes)
+    if not trace.states or len(trace.states) > _TRACE_MAX_STATES:
+        errors.append("counterexample requires complete nonempty states within supported limits")
+    elif any(not isinstance(state, CounterexampleState) for state in trace.states):
+        errors.append("counterexample contains an invalid state record")
+    elif [state.to_dict() for state in trace.states] != [state.to_dict() for state in parsed.states]:
+        errors.append("counterexample states do not match the retained raw trace")
+    errors.extend(note for note in trace.replay_notes if note.startswith(_TRACE_PARSE_FAILURE))
+    return tuple(dict.fromkeys(errors))
 
 
 def replay_counterexample(
     trace: CounterexampleTrace,
     source_map: Sequence[TLASourceMapEntry],
 ) -> CounterexampleTrace:
-    """Replay a parsed counterexample against the compiler source map.
+    """Validate complete structural source-symbol mapping, not TLA semantics.
 
-    Replay is structural: each assignment key is matched to a mapped TLA
-    symbol.  Missing symbols become notes; no silent success is invented.
+    The legacy ``replayed`` flag means assignments map to source variables. It
+    does not evaluate Init/Next, invariants, fairness or any transition relation.
     """
-
-    mapped_symbols = {entry.tla_symbol for entry in source_map}
-    notes: list[str] = []
-    if not trace.states:
-        notes.append("counterexample contained no parseable State blocks")
+    notes = list(_counterexample_structure_errors(trace))
+    valid = not notes
+    variables: dict[str, set[str]] = {}
+    for entry in source_map:
+        if entry.role == "variable":
+            variables.setdefault(entry.tla_symbol, set()).add(entry.source_id)
+    expected = set(variables) - {"step"}
+    if not expected:
+        valid = False
+        notes.append("counterexample has no mapped source variables")
     for state in trace.states:
-        unknown = sorted(set(state.assignments) - mapped_symbols - {"step"})
-        if unknown:
-            notes.append(
-                f"state {state.index}: unmapped assignment keys: {', '.join(unknown)}"
-            )
-        known = sorted(set(state.assignments) & mapped_symbols)
-        if known:
-            notes.append(
-                f"state {state.index}: replayed mapped symbols: {', '.join(known)}"
-            )
-    return CounterexampleTrace(
-        states=trace.states,
-        raw=trace.raw,
-        source=trace.source,
-        replayed=True,
-        replay_notes=tuple(notes),
-    )
+        if not isinstance(state, CounterexampleState):
+            valid = False
+            continue
+        keys = set(state.assignments)
+        unknown = sorted(keys - set(variables) - {"step"})
+        missing = sorted(expected - keys)
+        known = sorted(keys & set(variables))
+        if unknown or missing or not known or not keys:
+            valid = False
+            if unknown:
+                notes.append(f"state {state.index}: unmapped assignment keys: {', '.join(unknown)}")
+            if missing:
+                notes.append(f"state {state.index}: missing mapped assignment keys: {', '.join(missing)}")
+            if not known:
+                notes.append(f"state {state.index}: no mapped source assignments")
+        if known and len(trace.states) <= 48:
+            notes.append(f"state {state.index}: replayed mapped symbols: {', '.join(known)}")
+            sources = sorted({source for name in known for source in variables[name]})
+            notes.append(f"state {state.index}: source IDs: {', '.join(sources)}")
+    if len(trace.states) > 48:
+        notes.append(f"source-symbol mapping examined all {len(trace.states)} states; per-state success notes omitted")
+    notes.append(_TRACE_STRUCTURAL_SCOPE)
+    # Bound descriptive detail separately from validation. Every state/map was
+    # checked above; abbreviated human notes neither certify nor invalidate it.
+    if len(notes) > 128 or any(len(note) > 512 for note in notes):
+        notes = [note if len(note) <= 512 else note[:480] + " ... [detail abbreviated]"
+                 for note in notes[:126]] + [
+            "structural replay note detail abbreviated; validation covered all states and mappings",
+            _TRACE_STRUCTURAL_SCOPE]
+    return CounterexampleTrace(states=trace.states, raw=trace.raw,
+        source=trace.source, replayed=valid, replay_notes=tuple(dict.fromkeys(notes)))
 
 
 class TLAModelCheckerBackend:
-    """Shared lifecycle for TLC and Apalache bounded model checking."""
+    """Shared lifecycle for TLC and Apalache bounded model checking.
+
+    Check and version subprocesses share a wall deadline and cancellation signal.
+    The requested memory bound guards sampled Linux process-tree RSS; a separate
+    finite address-space allowance accommodates JVM reservations. Managed
+    Apalache runs configure the reviewed launcher heap and in-process Z3 profile,
+    reserving three process slots for launcher helpers. A requested RSS budget
+    below 256 MiB is refused; larger budgets may still be insufficient for a
+    model. Plain injected runners retain their caller-owned profile. Arbitrary
+    custom launchers remain caller-trusted; admission is not a hard thread or
+    process-count limit. Constructor JVM validation
+    has a separate support-probe budget unless an enclosing proof operation
+    supplies a tighter deadline. Compilation and optional installation are
+    cooperative Python work, checked at their boundaries, not preempted.
+    Resource-owning adapters can
+    inject a validated ``jvm_probe`` and disable ``lazy_install`` to keep setup
+    outside their execution lease. Final publication rejects late conclusions.
+    """
 
     tool: ModelCheckerTool
     backend_id: str
@@ -623,7 +927,17 @@ class TLAModelCheckerBackend:
         java_executable: str | None = None,
         lazy_install: bool = True,
     ) -> None:
-        self._runner = runner or BoundedToolRunner()
+        self._runner = runner if runner is not None else (
+            ResourceAdmittedToolRunner(child_process_slots=(
+                _APALACHE_CHILD_PROCESS_SLOTS if self.tool is ModelCheckerTool.APALACHE else 1))
+        )
+        self._managed_resource_runner = isinstance(self._runner, ResourceAdmittedToolRunner)
+        self._managed_apalache_runner = (
+            self.tool is ModelCheckerTool.APALACHE and self._managed_resource_runner
+        )
+        if (self._managed_apalache_runner
+                and self._runner.child_process_slots < _APALACHE_CHILD_PROCESS_SLOTS):
+            raise TLARunnerError("managed Apalache runner requires at least 3 child_process_slots")
         self._which = which or _production_executable_finder
         self._lazy_install = bool(lazy_install and which is None)
         self._compiler = compiler or TLACompiler()
@@ -727,6 +1041,43 @@ class TLAModelCheckerBackend:
             )
         }
 
+    def _execution_environment(self, bounds: ExecutionBounds) -> dict[str, str]:
+        environment = self._java_environment()
+        if not self._managed_apalache_runner:
+            return environment
+        # The reviewed launcher otherwise selects a 4-GiB heap and G1 GC.
+        # Leave half the requested RSS budget for native Z3 and JVM overhead;
+        # this profile is not a promise that every model fits that budget.
+        heap_mib = bounds.max_memory_bytes // (2 * 1024 * 1024)
+        environment["JVM_ARGS"] = " ".join((
+            "-Xms16m", f"-Xmx{heap_mib}m", "-Xss1m",
+            f"-XX:ActiveProcessorCount={self._runner.cpu_slots}",
+            "-XX:MaxMetaspaceSize=128m", "-XX:ReservedCodeCacheSize=64m",
+            "-XX:-UsePerfData", "-Duser.home=.",
+        ))
+        environment["JVM_GC_ARGS"] = "-XX:+UseSerialGC"
+        # Default runners already omit these variables. An explicitly admitted
+        # runner can carry a custom base environment, whose JVM overrides must
+        # not widen the owned heap/worker profile. Do not mutate that runner.
+        for name in ("JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"):
+            if name in self._runner._base_environment:
+                environment[name] = ""
+        return environment
+
+    def _profile_refusal(self, bounds: ExecutionBounds) -> str | None:
+        if self._managed_apalache_runner and bounds.max_memory_bytes < _APALACHE_MIN_RESIDENT_BYTES:
+            return "managed Apalache requires a requested RSS budget of at least 256 MiB; budget was not increased"
+        return None
+
+    def _profile_limits(self, limits: ToolRunLimits) -> ToolRunLimits:
+        if not self._managed_apalache_runner:
+            return limits
+        # Packaged Z3 JNI extracts a roughly 31-MiB shared library into the
+        # private Java temporary directory. Keep extraction and model outputs
+        # bounded there rather than disabling the file/workspace guards.
+        return replace(limits, max_file_bytes=_APALACHE_MAX_FILE_BYTES,
+            max_workspace_bytes=_APALACHE_MAX_WORKSPACE_BYTES)
+
     def compile_and_check(
         self,
         document: object,
@@ -734,13 +1085,16 @@ class TLAModelCheckerBackend:
         request: BackendRequest | None = None,
         module_name: str = "StateModel",
         cancellation: CancellationSignal | None = None,
+        operation_timeout_ms: int | None = None,
     ) -> ModelCheckOutcome:
-        artifacts = self._compiler.compile(document, module_name=module_name)
-        return self.check(
-            artifacts,
-            request=request,
-            cancellation=cancellation,
-        )
+        """Compile and check under one cooperative aggregate operation budget."""
+        validate_operation_timeout_ms(operation_timeout_ms)
+        timeout = operation_timeout_ms if operation_timeout_ms is not None else (
+            request.bounds.timeout_ms if request is not None else 30_000)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=cancellation) as operation:
+            artifacts = self._compiler.compile(document, module_name=module_name)
+            operation.checkpoint("after TLA compilation")
+            return self.check(artifacts, request=request, cancellation=cancellation)
 
     def check(
         self,
@@ -751,6 +1105,47 @@ class TLAModelCheckerBackend:
     ) -> ModelCheckOutcome:
         if not isinstance(artifacts, GeneratedTLAArtifacts):
             raise TLARunnerError("artifacts must be GeneratedTLAArtifacts")
+        started = time.monotonic()
+        bounds = (request.bounds if request is not None else ExecutionBounds(
+            timeout_ms=30_000, max_steps=artifacts.bounds.max_steps))
+        control = _ModelCheckControl(started, bounds.timeout_ms / 1000.0, cancellation)
+        # Preserve standalone injected-runner signal identity. An enclosing
+        # operation additionally supplies a latched, bool-only native signal.
+        if control.operation is not None:
+            cancellation = _Signals(control.operation, cancellation)
+        token = _MODEL_CHECK_CONTROL.set(control)
+        try:
+            outcome = self._check(artifacts, request=request, cancellation=cancellation)
+            failure = control.observe()
+            if failure is None:
+                return outcome
+            # Parsing, source-map replay and construction are cooperative Python
+            # work. Their late result must not publish a conclusion or witness.
+            status, reason = failure
+            receipt = replace(outcome.receipt, status=status, reason=reason,
+                counterexample=None,
+                checked_safety_properties=(
+                    () if status is ModelCheckOutcomeStatus.UNAVAILABLE else outcome.receipt.checked_safety_properties),
+                checked_liveness_properties=(
+                    () if status is ModelCheckOutcomeStatus.UNAVAILABLE else outcome.receipt.checked_liveness_properties),
+                elapsed_ms=max(0, round((time.monotonic() - started) * 1000)))
+            return ModelCheckOutcome(request_digest=outcome.request_digest,
+                result=self._result_from_receipt(receipt, request=request, bounds=bounds),
+                receipt=receipt, artifacts=outcome.artifacts, interface_version=outcome.interface_version)
+        finally:
+            _MODEL_CHECK_CONTROL.reset(token)
+
+    def _check(
+        self,
+        artifacts: GeneratedTLAArtifacts,
+        *,
+        request: BackendRequest | None = None,
+        cancellation: CancellationSignal | None = None,
+    ) -> ModelCheckOutcome:
+        control = _MODEL_CHECK_CONTROL.get()
+        if control is None:
+            raise TLARunnerError("model-check execution requires its local lifecycle control")
+        started = control.started
         request_digest = (
             request.digest
             if request is not None
@@ -764,7 +1159,51 @@ class TLAModelCheckerBackend:
                 max_steps=artifacts.bounds.max_steps,
             )
         )
+        timeout_seconds = bounds.timeout_ms / 1000.0
+        deadline = control.deadline
+
+        def interrupted() -> ModelCheckOutcome | None:
+            failure = control.observe()
+            if failure is None:
+                return None
+            status, reason = failure
+            receipt = replace(
+                self._unavailable_receipt(
+                    artifacts,
+                    probe=ToolProbe(
+                        runtime=ToolRuntime.JVM,
+                        requested_executable=self.capability.executable_candidates[0],
+                        available=False,
+                        reason=reason,
+                    ),
+                    bounds=bounds,
+                    jvm_available=False,
+                ),
+                status=status,
+                reason=reason,
+                elapsed_ms=max(0, round((time.monotonic() - started) * 1000)),
+            )
+            return ModelCheckOutcome(
+                request_digest=request_digest,
+                result=self._result_from_receipt(receipt, request=request, bounds=bounds),
+                receipt=receipt,
+                artifacts=artifacts,
+                interface_version=self.backend_version,
+            )
+
+        stopped = interrupted()
+        if stopped is not None:
+            return stopped
+        refusal = self._profile_refusal(bounds)
+        if refusal is not None:
+            control.reject(ModelCheckOutcomeStatus.UNKNOWN, refusal)
+        stopped = interrupted()
+        if stopped is not None:
+            return stopped
         probe = self._probe(allow_install=True)
+        stopped = interrupted()
+        if stopped is not None:
+            return stopped
         if not probe.available:
             receipt = self._unavailable_receipt(
                 artifacts, probe=probe, bounds=bounds
@@ -781,7 +1220,6 @@ class TLAModelCheckerBackend:
             )
 
         executable = probe.executable_path
-        timeout_seconds = max(0.001, bounds.timeout_ms / 1000.0)
         config_text = artifacts.configuration_for(self.tool.value)
         config_name = (
             f"{artifacts.module_name}.cfg"
@@ -789,12 +1227,21 @@ class TLAModelCheckerBackend:
             else "apalache.cfg"
         )
         tla_name = f"{artifacts.module_name}.tla"
+        input_files = {tla_name: artifacts.model_text, config_name: config_text}
+        output_paths = ("counterexample.tla", "violation.tla", "example.tla")
+        if self._managed_apalache_runner:
+            # Apalache's application configuration is separate from the TLA
+            # model configuration. An owned empty file blocks ancestor config
+            # discovery; private user.home also excludes the host user config.
+            input_files[_APALACHE_RUNTIME_CONFIG_NAME] = "{}\n"
+            output_paths = tuple(f"{_APALACHE_RUN_DIRECTORY}/{name}" for name in output_paths)
         # Relative paths are resolved against the private workspace cwd.  The
         # bounded runner only expands ``{workspace}`` as a whole argument or
         # argument prefix, so Apalache's ``--config=...`` form uses a relative path.
         if self.tool is ModelCheckerTool.TLC:
             argv = (
                 executable,
+                *(("-workers", str(self._runner.cpu_slots)) if self._managed_resource_runner else ()),
                 "-config",
                 config_name,
                 tla_name,
@@ -803,6 +1250,10 @@ class TLAModelCheckerBackend:
             argv = (
                 executable,
                 "check",
+                *((f"--config-file={_APALACHE_RUNTIME_CONFIG_NAME}",
+                   f"--run-dir={_APALACHE_RUN_DIRECTORY}",
+                   "--out-dir=apalache-out", "--smt-solver=z3")
+                  if self._managed_apalache_runner else ()),
                 f"--config={config_name}",
                 f"--length={artifacts.bounds.max_steps}",
                 "--inv=Safety",
@@ -810,36 +1261,57 @@ class TLAModelCheckerBackend:
                 tla_name,
             )
 
-        limits = ToolRunLimits(
-            timeout_seconds=timeout_seconds,
-            max_output_bytes=min(bounds.max_output_bytes, DEFAULT_MAX_OUTPUT_BYTES),
+        limits = self._profile_limits(self._execution_limits(
+            bounds,
+            timeout_seconds=max(0.000001, deadline - time.monotonic()),
             max_input_bytes=max(
-                len(artifacts.model_text.encode("utf-8")),
-                len(config_text.encode("utf-8")),
+                sum(len(value.encode("utf-8")) for value in input_files.values()),
                 4096,
             ),
-        )
+        ))
         tool_request = ToolRunRequest(
             argv=argv,
             runtime=ToolRuntime.JVM,
             limits=limits,
-            input_files={
-                tla_name: artifacts.model_text,
-                config_name: config_text,
-            },
-            output_paths=(
-                "counterexample.tla",
-                "violation.tla",
-                "example.tla",
-            ),
-            environment=self._java_environment(),
+            input_files=input_files,
+            output_paths=output_paths,
+            environment=self._execution_environment(bounds),
         )
+        stopped = interrupted()
+        if stopped is not None:
+            return stopped
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            control.reject(ModelCheckOutcomeStatus.TIMED_OUT, "model-check deadline expired before process start")
+            return interrupted()
+        tool_request = replace(tool_request, limits=replace(tool_request.limits,
+            timeout_seconds=min(tool_request.limits.timeout_seconds, remaining),
+            cpu_seconds=min(tool_request.limits.cpu_seconds, remaining)))
+        stopped = interrupted()
+        if stopped is not None:
+            return stopped
         process = self._runner.run(tool_request, cancellation=cancellation)
-        version = self._tool_version(executable)
+        failure = self._lifecycle_failure(process)
+        if failure is not None:
+            control.reject(*failure)
+        if (len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
+                > tool_request.limits.max_output_bytes):
+            control.reject(ModelCheckOutcomeStatus.UNKNOWN,
+                "bounded checker combined output exceeded its accepted budget")
+        remaining = deadline - time.monotonic()
+        version = "unavailable"
+        if control.observe() is None and remaining > 0:
+            version = self._tool_version(
+                executable, bounds=bounds, timeout_seconds=remaining,
+                cancellation=cancellation,
+            )
         combined = "\n".join(
             part for part in (process.stdout, process.stderr) if part
         )
         status, reason = self._classify(process, combined)
+        failure = control.observe()
+        if failure is not None:
+            status, reason = failure
         counterexample: CounterexampleTrace | None = None
         if status is ModelCheckOutcomeStatus.COUNTEREXAMPLE:
             supplemental = self._counterexample_from_outputs(process.output_files)
@@ -850,10 +1322,15 @@ class TLAModelCheckerBackend:
                     states=counterexample.states,
                     raw=counterexample.raw,
                     source="checker_counterexample_file",
+                    replay_notes=counterexample.replay_notes,
                 )
             counterexample = replay_counterexample(
                 counterexample, artifacts.source_map
             )
+        failure = control.observe()
+        if failure is not None:
+            status, reason = failure
+            counterexample = None
 
         safety = (
             tuple(artifacts.safety_properties)
@@ -908,7 +1385,7 @@ class TLAModelCheckerBackend:
             returncode=process.returncode,
             stdout=process.stdout,
             stderr=process.stderr,
-            elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
+            elapsed_ms=max(0, round((time.monotonic() - started) * 1000)),
             timeout_seconds=timeout_seconds,
             output_truncated=process.output_truncated,
             reason=reason,
@@ -929,21 +1406,36 @@ class TLAModelCheckerBackend:
         request: BackendRequest,
         *,
         cancellation: CancellationSignal | None = None,
+        operation_timeout_ms: int | None = None,
     ) -> ModelCheckOutcome:
         if not isinstance(request, BackendRequest):
             raise TLARunnerError("request must be a BackendRequest")
+        validate_operation_timeout_ms(operation_timeout_ms)
+        timeout = request.bounds.timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        with proof_operation_scope(timeout_ms=timeout, cancellation=cancellation):
+            return self._run_request(request, cancellation=cancellation,
+                                     operation_timeout_ms=timeout)
+
+    def _run_request(
+        self, request: BackendRequest, *, cancellation=None, operation_timeout_ms=None,
+    ) -> ModelCheckOutcome:
         payload = request.payload.to_dict()
+        current_proof_operation().checkpoint("after TLA request normalization")
         if "artifacts" in payload or "model_text" in payload:
             artifacts = self._artifacts_from_payload(payload)
             return self.check(
                 artifacts, request=request, cancellation=cancellation
             )
         if "document" in payload:
-            return self.compile_and_check(
+            compile_and_check = self.compile_and_check
+            options = ({"operation_timeout_ms": operation_timeout_ms}
+                if getattr(compile_and_check, "__func__", None) is TLAModelCheckerBackend.compile_and_check else {})
+            return compile_and_check(
                 payload["document"],
                 request=request,
                 module_name=str(payload.get("module_name", "StateModel")),
                 cancellation=cancellation,
+                **options,
             )
         if "source" in payload or "tla" in payload:
             source = str(payload.get("tla") or payload.get("source") or "")
@@ -982,33 +1474,11 @@ class TLAModelCheckerBackend:
     def _artifacts_from_payload(
         self, payload: Mapping[str, Any]
     ) -> GeneratedTLAArtifacts:
-        if "artifacts" in payload and isinstance(payload["artifacts"], Mapping):
-            data = dict(payload["artifacts"])
-        else:
-            data = dict(payload)
-        model_text = str(data.get("model_text") or "")
-        if not model_text:
-            raise TLARunnerError("artifacts payload requires model_text")
-        return GeneratedTLAArtifacts(
-            module_name=str(data.get("module_name", "StateModel")),
-            model_text=model_text if model_text.endswith("\n") else model_text + "\n",
-            tlc_config_text=str(
-                data.get("tlc_config_text")
-                or "SPECIFICATION Spec\nINVARIANT Safety\n"
-            ),
-            apalache_config_text=str(
-                data.get("apalache_config_text")
-                or "INIT Init\nNEXT Next\nINVARIANT Safety\n"
-            ),
-            source_map=(),
-            losses=(),
-            bounds=self._compiler.bounds,
-            source_document_id=str(data.get("source_document_id", "raw")),
-            source_kind=str(data.get("source_kind", "payload")),
-            safety_properties=tuple(data.get("safety_properties") or ("Safety",)),
-            liveness_properties=tuple(data.get("liveness_properties") or ()),
-            fairness_limitations=tuple(data.get("fairness_limitations") or ()),
-        )
+        data = payload["artifacts"] if "artifacts" in payload else payload
+        try:
+            return _decode_tla_artifact_payload(data, default_bounds=self._compiler.bounds)
+        except TLACompilerError as error:
+            raise TLARunnerError(f"invalid artifacts payload: {error}") from error
 
     def _unavailable_receipt(
         self,
@@ -1016,8 +1486,11 @@ class TLAModelCheckerBackend:
         *,
         probe: ToolProbe,
         bounds: ExecutionBounds,
+        jvm_available: bool | None = None,
     ) -> ModelCheckReceipt:
-        jvm_ok = self._jvm_probe() if self.capability.requires_jvm else True
+        jvm_ok = (
+            self._jvm_probe() if self.capability.requires_jvm else True
+        ) if jvm_available is None else jvm_available
         reason = probe.reason or (
             f"{self.tool.value} executable unavailable; no model check ran"
         )
@@ -1056,9 +1529,47 @@ class TLAModelCheckerBackend:
             jvm_available=jvm_ok,
         )
 
-    def _tool_version(self, executable: str) -> str:
-        if not executable:
+    @staticmethod
+    def _execution_limits(
+        bounds: ExecutionBounds, *, timeout_seconds: float,
+        max_input_bytes: int = 4096, version_probe: bool = False,
+    ) -> ToolRunLimits:
+        # RLIMIT_AS is virtual address space, not resident memory. Giving a JVM
+        # only the RSS budget prevents it from reserving its heap/class space.
+        # RSS is sampled by BoundedToolRunner and may overshoot between samples;
+        # it is not a kernel-enforced aggregate cgroup memory ceiling.
+        return ToolRunLimits(
+            timeout_seconds=timeout_seconds,
+            cpu_seconds=timeout_seconds,
+            memory_bytes=max(JVM_ADDRESS_SPACE_FLOOR_BYTES, 4 * bounds.max_memory_bytes),
+            resident_memory_bytes=bounds.max_memory_bytes,
+            max_output_bytes=min(
+                bounds.max_output_bytes,
+                64 * 1024 if version_probe else DEFAULT_MAX_OUTPUT_BYTES,
+            ),
+            max_input_bytes=max_input_bytes,
+            max_workspace_bytes=max(16 * 1024 * 1024, max_input_bytes),
+        )
+
+    def _tool_version(
+        self, executable: str, *, bounds: ExecutionBounds | None = None,
+        timeout_seconds: float = DEFAULT_VERSION_TIMEOUT_SECONDS,
+        cancellation: CancellationSignal | None = None,
+    ) -> str:
+        if not executable or timeout_seconds <= 0:
             return ""
+        version_started = time.monotonic()
+        version_timeout = min(DEFAULT_VERSION_TIMEOUT_SECONDS, timeout_seconds)
+        version_deadline = version_started + version_timeout
+        control = _MODEL_CHECK_CONTROL.get() or _ModelCheckControl(
+            version_started, version_timeout, cancellation)
+        if control.observe() is not None:
+            return "unavailable"
+        selected_bounds = bounds or ExecutionBounds()
+        refusal = self._profile_refusal(selected_bounds)
+        if refusal is not None:
+            control.reject(ModelCheckOutcomeStatus.UNKNOWN, refusal)
+            return "unavailable"
         if self.tool is ModelCheckerTool.TLC:
             argv = (executable, "-help")
         else:
@@ -1066,25 +1577,65 @@ class TLAModelCheckerBackend:
         request = ToolRunRequest(
             argv=argv,
             runtime=ToolRuntime.JVM,
-            limits=ToolRunLimits(
-                timeout_seconds=DEFAULT_VERSION_TIMEOUT_SECONDS,
-                max_output_bytes=64 * 1024,
-            ),
-            environment=self._java_environment(),
+            limits=self._profile_limits(self._execution_limits(
+                selected_bounds,
+                timeout_seconds=version_timeout,
+                version_probe=True,
+            )),
+            environment=self._execution_environment(selected_bounds),
         )
+        if control.observe() is not None:
+            return "unavailable"
+        if time.monotonic() >= version_deadline:
+            control.reject(ModelCheckOutcomeStatus.TIMED_OUT, "model-check version probe deadline expired")
+            return "unavailable"
+        remaining = min(version_deadline, control.deadline) - time.monotonic()
+        if remaining <= 0:
+            control.reject(ModelCheckOutcomeStatus.TIMED_OUT, "model-check version probe deadline expired")
+            return "unavailable"
+        request = replace(request, limits=replace(request.limits,
+            timeout_seconds=min(request.limits.timeout_seconds, remaining),
+            cpu_seconds=min(request.limits.cpu_seconds, remaining)))
+        if control.observe() is not None:
+            return "unavailable"
+        if time.monotonic() >= version_deadline:
+            control.reject(ModelCheckOutcomeStatus.TIMED_OUT, "model-check version probe deadline expired")
+            return "unavailable"
         try:
-            result = self._runner.run(request)
+            result = self._runner.run(request, cancellation=cancellation)
         except Exception as exc:  # fail closed
+            control.reject(ModelCheckOutcomeStatus.ERROR,
+                f"model-check version probe failed: {type(exc).__name__}")
             return f"unavailable: {type(exc).__name__}: {exc}"
-        if result.unavailable or result.timed_out:
+        failure = self._lifecycle_failure(result)
+        if failure is not None:
+            control.reject(failure[0], "model-check version probe: " + failure[1])
+        if (len(result.stdout.encode("utf-8")) + len(result.stderr.encode("utf-8"))
+                > request.limits.max_output_bytes):
+            control.reject(ModelCheckOutcomeStatus.UNKNOWN,
+                "model-check version probe combined output exceeded its accepted budget")
+        if time.monotonic() >= version_deadline:
+            control.reject(ModelCheckOutcomeStatus.TIMED_OUT, "model-check version probe deadline expired")
+        if control.observe() is not None:
+            return "unavailable"
+        # TLC's help banner normally exits with code 1; this is descriptive
+        # tool metadata, not an independent successful model-check result.
+        if result.returncode not in ((0, 1) if self.tool is ModelCheckerTool.TLC else (0,)):
             return "unavailable"
         text = (result.stdout or result.stderr).strip()
+        if control.observe() is not None:
+            return "unavailable"
         return text[:512] if text else "unknown"
 
-    def _classify(
-        self, process: ToolRunResult, combined: str
-    ) -> tuple[ModelCheckOutcomeStatus, str]:
-        lower = combined.lower()
+    def _lifecycle_failure(
+        self, process: ToolRunResult,
+    ) -> tuple[ModelCheckOutcomeStatus, str] | None:
+        """Operational failure takes precedence over all semantic markers.
+
+        A complete model counterexample can use a positive nonzero exit code
+        (TLC invariant violations use 12). Missing or signal exits, incomplete
+        cleanup and failed resource observations cannot establish a conclusion.
+        """
         if process.unavailable:
             return (
                 ModelCheckOutcomeStatus.UNAVAILABLE,
@@ -1100,21 +1651,40 @@ class TLAModelCheckerBackend:
                 ModelCheckOutcomeStatus.ERROR,
                 "bounded model check was cancelled",
             )
-        if process.error and process.returncode is None and not process.stdout:
-            return (
-                ModelCheckOutcomeStatus.ERROR,
-                f"bounded model checker failed: {process.error}",
-            )
-        if any(marker in lower for marker in _COUNTEREXAMPLE_MARKERS):
-            return (
-                ModelCheckOutcomeStatus.COUNTEREXAMPLE,
-                "bounded model checker reported a counterexample",
-            )
-        if process.output_truncated or process.resource_exhausted:
+        if process.output_truncated or process.resource_exhausted or process.workspace_limit_exceeded:
             return (
                 ModelCheckOutcomeStatus.UNKNOWN,
                 "bounded checker output was truncated or resource-exhausted; "
                 "success cannot be established",
+            )
+        if process.error:
+            return (
+                ModelCheckOutcomeStatus.ERROR,
+                f"bounded model checker failed: {process.error}",
+            )
+        if process.process_tree_terminated or not process.workspace_cleaned:
+            return (
+                ModelCheckOutcomeStatus.ERROR,
+                "bounded model checker execution or workspace cleanup was incomplete",
+            )
+        if type(process.returncode) is not int or process.returncode < 0:
+            return (
+                ModelCheckOutcomeStatus.ERROR,
+                "bounded model checker did not finish with a complete process exit",
+            )
+        return None
+
+    def _classify(
+        self, process: ToolRunResult, combined: str
+    ) -> tuple[ModelCheckOutcomeStatus, str]:
+        failure = self._lifecycle_failure(process)
+        if failure is not None:
+            return failure
+        lower = combined.lower()
+        if any(marker in lower for marker in _COUNTEREXAMPLE_MARKERS):
+            return (
+                ModelCheckOutcomeStatus.COUNTEREXAMPLE,
+                "bounded model checker reported a counterexample",
             )
         success_markers = (
             _TLC_SUCCESS_MARKERS

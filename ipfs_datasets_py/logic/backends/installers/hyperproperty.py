@@ -50,7 +50,7 @@ from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Any, Final
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from ipfs_datasets_py.logic.backends.installers.registry import (
     DEFAULT_USER_LOCAL_INSTALL_ROOT,
@@ -789,6 +789,28 @@ def _detect_platform() -> str:
     return f"{system}-{machine}"
 
 
+def _safe_version_component(value: object) -> str:
+    if not isinstance(value, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,127}", value) is None:
+        raise HyperpropertyInstallerError("Hyper version must be one bounded, safe path component")
+    return value
+
+
+def _managed_directory(root: Path, directory: Path) -> None:
+    """Create fixed managed components without accepting existing links."""
+    relative = directory.relative_to(root)
+    current = root
+    for component in (None, *relative.parts):
+        if component is not None:
+            current = current / component
+        try:
+            details = current.lstat()
+        except FileNotFoundError:
+            current.mkdir(parents=component is None, exist_ok=True)
+            details = current.lstat()
+        if not stat.S_ISDIR(details.st_mode) or stat.S_ISLNK(details.st_mode):
+            raise HyperpropertyInstallerError("managed install directory must not be symlinked")
+
+
 def pin_for_tool(
     tool_id: str,
     *,
@@ -800,6 +822,7 @@ def pin_for_tool(
     if tool_id not in EXTERNAL_TOOLS:
         raise HyperpropertyInstallerError(f"unknown tool_id {tool_id!r}")
     defaults = dict(DEFAULT_PINS[tool_id])
+    defaults["version"] = _safe_version_component(defaults["version"])
     try:
         lock = load_deployment_lock(repo_root, lock_path=lock_path)
     except InstallerRegistryError:
@@ -808,13 +831,13 @@ def pin_for_tool(
         return defaults
 
     versions = lock.get("versions") if isinstance(lock, Mapping) else None
-    if isinstance(versions, Mapping) and versions.get(tool_id):
-        defaults["version"] = str(versions[tool_id])
+    if isinstance(versions, Mapping) and tool_id in versions:
+        defaults["version"] = _safe_version_component(versions[tool_id])
     managed = (
         lock.get("managed_pin_versions") if isinstance(lock, Mapping) else None
     )
-    if isinstance(managed, Mapping) and managed.get(tool_id):
-        defaults["version"] = str(managed[tool_id])
+    if isinstance(managed, Mapping) and tool_id in managed:
+        defaults["version"] = _safe_version_component(managed[tool_id])
 
     inv = (
         lock.get("checksummed_release_inventory")
@@ -824,8 +847,8 @@ def pin_for_tool(
     if isinstance(inv, Mapping):
         item = inv.get(tool_id)
         if isinstance(item, Mapping):
-            if item.get("version"):
-                defaults["version"] = str(item["version"])
+            if "version" in item:
+                defaults["version"] = _safe_version_component(item["version"])
             if item.get("sha256"):
                 defaults["sha256"] = str(item["sha256"])
             if item.get("url"):
@@ -877,8 +900,8 @@ def pin_for_tool(
         if isinstance(pins, list) and pins:
             pin0 = pins[0]
             if isinstance(pin0, Mapping):
-                if pin0.get("version"):
-                    defaults["version"] = str(pin0["version"])
+                if "version" in pin0:
+                    defaults["version"] = _safe_version_component(pin0["version"])
                 if pin0.get("sha256"):
                     defaults["sha256"] = str(pin0["sha256"])
                 if pin0.get("artifact_url"):
@@ -1036,7 +1059,7 @@ def _lane_root_name(*, vendor: bool) -> str:
 def tool_bin_dir(
     install_root: Path, tool_id: str, version: str, *, vendor: bool = False
 ) -> Path:
-    return install_root / _lane_root_name(vendor=vendor) / tool_id / version / "bin"
+    return install_root / _lane_root_name(vendor=vendor) / tool_id / _safe_version_component(version) / "bin"
 
 
 def identity_manifest_path(
@@ -1046,7 +1069,7 @@ def identity_manifest_path(
         install_root
         / _lane_root_name(vendor=vendor)
         / tool_id
-        / version
+        / _safe_version_component(version)
         / "identity.json"
     )
 
@@ -1073,7 +1096,11 @@ def _publish_managed_vendor_launcher(
         )
     root = _expand_install_root(install_root)
     bin_dir = root / "bin"
-    bin_dir.mkdir(parents=True, exist_ok=True)
+    _managed_directory(root, bin_dir)
+    if bin_dir.is_symlink() or bin_dir.resolve() != bin_dir:
+        raise HyperpropertyInstallerError("managed bin directory must not be symlinked")
+    if identity.tool_id not in EXTERNAL_TOOLS:
+        raise HyperpropertyInstallerError("unknown Hyper launcher tool")
     launcher = bin_dir / identity.tool_id
     target = Path(identity.executable).resolve()
     if not target.is_file():
@@ -1083,8 +1110,8 @@ def _publish_managed_vendor_launcher(
     quoted_target = "'" + str(target).replace("'", "'\"'\"'") + "'"
     env_exports: list[str] = []
     for key, value in identity.runtime_environment or ():
-        if not key or value is None:
-            continue
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key) is None or not isinstance(value, str) or "\x00" in value:
+            raise HyperpropertyInstallerError("invalid Hyper runtime environment")
         quoted_value = "'" + str(value).replace("'", "'\"'\"'") + "'"
         env_exports.append(f"export {key}={quoted_value}")
     # AutoHyper needs DOTNET_ROOT on PATH for the host runtime lookup.
@@ -1092,7 +1119,7 @@ def _publish_managed_vendor_launcher(
         for key, value in identity.runtime_environment or ():
             if key == "DOTNET_ROOT" and value:
                 env_exports.append(
-                    f'export PATH="{value}:${{PATH:-}}"'
+                    'export PATH="${DOTNET_ROOT}:${PATH:-}"'
                 )
                 break
     body = "#!/usr/bin/env bash\nset -euo pipefail\n"
@@ -1103,8 +1130,23 @@ def _publish_managed_vendor_launcher(
         body += f'exec {quoted_target} "$@"\n'
     else:
         body += f'exec {quoted_target} "$@"\n'
-    launcher.write_text(body, encoding="utf-8")
-    launcher.chmod(0o755)
+    from .hyperproperty_transaction import current_transaction
+    transaction = current_transaction()
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{identity.tool_id}-", dir=bin_dir)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(body)
+            stream.flush()
+            os.fchmod(stream.fileno(), 0o755)
+            os.fsync(stream.fileno())
+        if transaction is not None:
+            transaction.replace_file(Path(temporary), launcher)
+        else:
+            if launcher.is_symlink() or (launcher.exists() and not launcher.is_file()):
+                raise HyperpropertyInstallerError("Hyper launcher must be a regular file")
+            os.replace(temporary, launcher)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
     return launcher
 
 
@@ -1372,12 +1414,89 @@ _INTERNAL_ADAPTER_MARKERS: Final = (
 )
 
 
-def _sha256_file(path: Path) -> str:
+def _sha256_file(path: Path, *, max_bytes: int | None = None) -> str:
+    from .install_control import current_install_limits
+    from ..smt.operation_budget import current_proof_operation
+    maximum = current_install_limits().build_workspace_bytes if max_bytes is None else max_bytes
+    if type(maximum) is not int or maximum <= 0:
+        raise HyperpropertyInstallerError("installer hash byte limit must be positive")
+    operation = current_proof_operation()
+    count = 0
     digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+    if operation is not None:
+        operation.checkpoint("before installer file hashing")
+    # Dependency identities may legitimately name a symlink to a regular
+    # executable. Preserve that contract, but never block opening a FIFO or
+    # consume a device stream as though it were a bounded installed file.
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0))
+    try:
+        stream = os.fdopen(descriptor, "rb")
+    except BaseException:
+        os.close(descriptor)
+        raise
+    with stream:
+        before = os.fstat(stream.fileno())
+        if not stat.S_ISREG(before.st_mode) or before.st_size > maximum:
+            raise HyperpropertyInstallBlocked("installer hash requires a bounded regular file", "installer_tree_limit")
+        while True:
+            if operation is not None:
+                operation.checkpoint("installer file hashing")
+            chunk = stream.read(min(1024 * 1024, maximum - count + 1))
+            if not chunk:
+                break
+            count += len(chunk)
+            if count > maximum:
+                raise HyperpropertyInstallBlocked("installer file hashing exceeds limit", "installer_tree_limit")
             digest.update(chunk)
+        after = os.fstat(stream.fileno())
+        if any(getattr(before, name) != getattr(after, name) for name in
+               ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")) or count != after.st_size:
+            raise HyperpropertyInstallBlocked("installer file changed while hashing", "installer_tree_changed")
+    if operation is not None:
+        operation.checkpoint("after installer file hashing")
     return digest.hexdigest()
+
+
+def _bounded_tree_paths(root: Path) -> list[Path]:
+    from .install_control import current_install_limits
+    from ..smt.operation_budget import current_proof_operation
+    limits, operation, values, size = current_install_limits(), current_proof_operation(), [], 0
+    if operation is not None:
+        operation.checkpoint("before installer tree hashing")
+    if not stat.S_ISDIR(root.lstat().st_mode):
+        raise HyperpropertyInstallBlocked("installer tree must be a real directory", "installer_tree_limit")
+    # pathlib's recursive glob can materialize a whole directory internally
+    # before yielding. Incremental scandir applies the cap before collecting
+    # another entry and never descends through an observed symlink.
+    stack = [(os.scandir(root), 0)]
+    try:
+        while stack:
+            if operation is not None:
+                operation.checkpoint("installer tree hashing")
+            iterator, depth = stack[-1]
+            try:
+                entry = next(iterator)
+            except StopIteration:
+                iterator.close()
+                stack.pop()
+                continue
+            if len(values) >= 65_536 or depth + 1 > 64:
+                raise HyperpropertyInstallBlocked("installer tree structure exceeds limit", "installer_tree_limit")
+            details = entry.stat(follow_symlinks=False)
+            if stat.S_ISREG(details.st_mode):
+                size += details.st_size
+            if size > limits.build_workspace_bytes:
+                raise HyperpropertyInstallBlocked("installer tree bytes exceed limit", "installer_tree_limit")
+            path = Path(entry.path)
+            values.append(path)
+            if stat.S_ISDIR(details.st_mode):
+                stack.append((os.scandir(path), depth + 1))
+    finally:
+        for iterator, _ in stack:
+            iterator.close()
+    if operation is not None:
+        operation.checkpoint("after installer tree enumeration")
+    return sorted(values, key=lambda item: item.as_posix())
 
 
 def _tree_sha256(root: Path, *, exclude: Sequence[str] = ()) -> str:
@@ -1385,7 +1504,7 @@ def _tree_sha256(root: Path, *, exclude: Sequence[str] = ()) -> str:
 
     excluded = frozenset(exclude)
     digest = hashlib.sha256()
-    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+    for path in _bounded_tree_paths(root):
         relative = path.relative_to(root).as_posix()
         if relative in excluded:
             continue
@@ -1425,7 +1544,7 @@ def _tree_content_sha256(root: Path, *, exclude: Sequence[str] = ()) -> str:
     excluded = frozenset(exclude)
     digest = hashlib.sha256()
     digest.update(b"hyperproperty-distribution-content-tree/v1\0")
-    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+    for path in _bounded_tree_paths(root):
         relative = path.relative_to(root).as_posix()
         if relative in excluded:
             continue
@@ -1469,7 +1588,7 @@ def _tree_relocation_content_sha256(
     excluded = frozenset(exclude)
     digest = hashlib.sha256()
     digest.update(b"hyperproperty-relocatable-content-tree/v1\0")
-    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+    for path in _bounded_tree_paths(root):
         relative = path.relative_to(root).as_posix()
         if relative in excluded:
             continue
@@ -1578,7 +1697,11 @@ def _sealed_vendor_tree_is_immutable(
             return False
         component = component.parent
 
-    for path in (resolved_version_root, *resolved_version_root.rglob("*")):
+    try:
+        entries = _bounded_tree_paths(resolved_version_root)
+    except (OSError, HyperpropertyInstallerError):
+        return False
+    for path in (resolved_version_root, *entries):
         try:
             details = path.lstat()
         except OSError:
@@ -1604,7 +1727,16 @@ def _sealed_vendor_tree_is_immutable(
 
 def _is_internal_python_adapter(path: Path) -> bool:
     try:
-        prefix = path.read_bytes()[:256 * 1024]
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0))
+        try:
+            stream = os.fdopen(descriptor, "rb")
+        except BaseException:
+            os.close(descriptor)
+            raise
+        with stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                return True
+            prefix = stream.read(256 * 1024)
     except OSError:
         return True
     return any(marker in prefix for marker in _INTERNAL_ADAPTER_MARKERS)
@@ -1653,80 +1785,205 @@ def _assert_reviewed_upstream_pin(
         )
 
 
-def _download_verified_archive(
-    url: str,
-    destination: Path,
-    expected_sha256: str,
-) -> Path:
-    """Fetch one immutable HTTPS archive and fail before use on any mismatch."""
+def _archive_url_allowed(url: str) -> bool:
+    parsed = urlparse(url)
+    return bool(not parsed.username and not parsed.password and parsed.hostname and
+        (parsed.scheme == "https" or (parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "::1"})))
 
+
+def urlopen(request: Request, *, timeout: float):
+    """Validate redirect destinations before urllib opens another connection."""
+    class ArchiveRedirectHandler(HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            if (not _archive_url_allowed(newurl)
+                    or (urlparse(req.full_url).scheme == "https" and urlparse(newurl).scheme != "https")):
+                raise HyperpropertyInstallBlocked("source archive redirect is not permitted", "source_archive_fetch_failed")
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+    return build_opener(ArchiveRedirectHandler()).open(request, timeout=timeout)
+
+
+def _download_verified_archive(url: str, destination: Path, expected_sha256: str) -> Path:
+    """Stream into an owned temporary file; publish only verified bounded data."""
+    from .install_control import current_install_limits, installation_checkpoint, installation_scope
     if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
         raise HyperpropertyInstallerError("archive sha256 must be lowercase hex")
-    if destination.is_file() and _sha256_file(destination) == expected_sha256:
-        return destination
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    partial = destination.with_suffix(destination.suffix + ".partial")
-    try:
-        request = Request(url, headers={"User-Agent": INTERFACE})
-        with urlopen(request, timeout=60) as response, partial.open("wb") as stream:
-            shutil.copyfileobj(response, stream)
-        observed = _sha256_file(partial)
-        if observed != expected_sha256:
+    if not _archive_url_allowed(url):
+        raise HyperpropertyInstallBlocked("source archive URL is not permitted", "source_archive_fetch_failed")
+    destination = Path(destination)
+    with installation_scope():
+        limits = current_install_limits()
+        installation_checkpoint("before source archive access")
+        if destination.is_symlink() or any(parent.is_symlink() for parent in destination.parents):
+            raise HyperpropertyInstallBlocked("source archive cache must not contain symlinks", "source_archive_fetch_failed")
+        if destination.is_file() and destination.stat().st_size <= limits.max_download_bytes:
+            if _sha256_file(destination, max_bytes=limits.max_download_bytes) == expected_sha256:
+                installation_checkpoint("before source archive reuse")
+                return destination
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix="." + destination.name + "-", suffix=".partial", dir=destination.parent)
+        partial = Path(temporary)
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                remaining = installation_checkpoint("before source archive connection")
+                request = Request(url, headers={"User-Agent": INTERFACE})
+                with urlopen(request, timeout=min(limits.io_timeout_seconds, remaining)) as response:
+                    final_url = getattr(response, "geturl", lambda: url)()
+                    if not _archive_url_allowed(final_url) or (urlparse(url).scheme == "https" and urlparse(final_url).scheme != "https"):
+                        raise HyperpropertyInstallBlocked("source archive redirect is not permitted", "source_archive_fetch_failed")
+                    declared = response.headers.get("Content-Length") if hasattr(response, "headers") else None
+                    expected_size = None if declared is None else int(declared)
+                    if expected_size is not None and (expected_size < 0 or expected_size > limits.max_download_bytes):
+                        raise HyperpropertyInstallBlocked("source archive exceeds download limit", "source_archive_download_limit")
+                    count, digest = 0, hashlib.sha256()
+                    while True:
+                        installation_checkpoint("source archive download")
+                        chunk = response.read(65_536)
+                        installation_checkpoint("after source archive read")
+                        if not chunk:
+                            break
+                        count += len(chunk)
+                        if count > limits.max_download_bytes:
+                            raise HyperpropertyInstallBlocked("source archive exceeds download limit", "source_archive_download_limit")
+                        digest.update(chunk)
+                        stream.write(chunk)
+                    if expected_size is not None and count != expected_size:
+                        raise HyperpropertyInstallBlocked("source archive transfer is incomplete", "source_archive_fetch_failed")
+                if digest.hexdigest() != expected_sha256:
+                    raise HyperpropertyInstallBlocked("source archive digest mismatch", "source_archive_digest_mismatch")
+                stream.flush()
+                os.fsync(stream.fileno())
+            installation_checkpoint("before source archive publication")
+            partial.replace(destination)
+            return destination
+        except HyperpropertyInstallerError:
+            raise
+        except Exception as exc:
+            from ..smt.operation_budget import ProofOperationInterrupted
+            if isinstance(exc, ProofOperationInterrupted):
+                raise
             raise HyperpropertyInstallBlocked(
-                f"source archive digest mismatch: {observed} != {expected_sha256}",
-                "source_archive_digest_mismatch",
-            )
-        partial.replace(destination)
-    except HyperpropertyInstallBlocked:
-        partial.unlink(missing_ok=True)
-        raise
-    except Exception as exc:
-        partial.unlink(missing_ok=True)
-        raise HyperpropertyInstallBlocked(
-            f"source archive fetch failed for {url}: {type(exc).__name__}: {exc}",
-            "source_archive_fetch_failed",
-        ) from exc
-    return destination
+                "source archive fetch failed: " + type(exc).__name__, "source_archive_fetch_failed") from exc
+        finally:
+            partial.unlink(missing_ok=True)
 
 
-def _safe_extract_source_archive(
-    archive: Path,
-    destination: Path,
-    git_commit: str,
-) -> Path:
-    """Extract a GitHub archive without links, devices, or path traversal."""
+def _safe_extract_source_archive(archive: Path, destination: Path, git_commit: str) -> Path:
+    """Stream one bounded source tree, refusing links, aliases and special files."""
+    import gzip
+    from .install_control import current_install_limits, installation_checkpoint, installation_scope
+    if not isinstance(git_commit, str) or not re.fullmatch(r"[0-9a-f]{7,64}", git_commit):
+        raise HyperpropertyInstallBlocked("invalid source archive commit", "source_archive_commit_mismatch")
+    archive, destination = Path(archive), Path(destination)
+    with installation_scope():
+        limits = current_install_limits()
+        installation_checkpoint("before source archive extraction")
+        archive_details = archive.stat()
+        if archive.is_symlink() or not stat.S_ISREG(archive_details.st_mode) or archive_details.st_size > limits.max_download_bytes:
+            raise HyperpropertyInstallBlocked("source archive is unsafe or exceeds limit", "source_archive_extraction_limit")
+        if destination.is_symlink() or any(parent.is_symlink() for parent in destination.parents):
+            raise HyperpropertyInstallBlocked("extraction destination contains symlink", "source_archive_extraction_failed")
+        destination.mkdir(parents=True, exist_ok=False)
+        seen, root_name, total, count = set(), None, 0, 0
+        directory_modes = {}
 
-    destination.mkdir(parents=True, exist_ok=False)
-    destination_resolved = destination.resolve()
-    try:
-        with tarfile.open(archive, "r:gz") as bundle:
-            members = bundle.getmembers()
-            for member in members:
-                target = (destination / member.name).resolve()
-                if (
-                    target != destination_resolved
-                    and destination_resolved not in target.parents
-                ):
-                    raise HyperpropertyInstallerError(
-                        f"source archive path escapes extraction root: {member.name!r}"
-                    )
-                if not (member.isfile() or member.isdir()):
-                    raise HyperpropertyInstallerError(
-                        f"source archive contains unsupported object: {member.name!r}"
-                    )
-            bundle.extractall(destination, members=members)
-    except (tarfile.TarError, OSError) as exc:
-        raise HyperpropertyInstallBlocked(
-            f"source archive extraction failed: {type(exc).__name__}: {exc}",
-            "source_archive_extraction_failed",
-        ) from exc
-    roots = [item for item in destination.iterdir() if item.is_dir()]
-    if len(roots) != 1 or not roots[0].name.endswith(f"-{git_commit}"):
-        raise HyperpropertyInstallBlocked(
-            "source archive root is not bound to the pinned git commit",
-            "source_archive_commit_mismatch",
-        )
-    return roots[0]
+        class LimitedTarInfo(tarfile.TarInfo):
+            def _proc_pax(self, bundle):
+                if self.size > 65_536:
+                    raise HyperpropertyInstallBlocked("archive metadata exceeds limit", "source_archive_extraction_limit")
+                return super()._proc_pax(bundle)
+
+            def _proc_gnulong(self, bundle):
+                if self.size > limits.max_path_bytes + 1:
+                    raise HyperpropertyInstallBlocked("archive path metadata exceeds limit", "source_archive_extraction_limit")
+                return super()._proc_gnulong(bundle)
+
+        class BoundedReader:
+            def __init__(self, stream):
+                self.stream, self.count = stream, 0
+            def read(self, size=-1):
+                installation_checkpoint("source archive decompression")
+                if size < 0 or size > 65_536:
+                    size = 65_536
+                value = self.stream.read(size)
+                self.count += len(value)
+                if self.count > limits.max_extract_bytes + limits.max_archive_members * 1024 + 65_536:
+                    raise HyperpropertyInstallBlocked("expanded archive exceeds limit", "source_archive_extraction_limit")
+                return value
+
+        try:
+            with archive.open("rb") as source, gzip.GzipFile(fileobj=source) as decompressed:
+                reader = BoundedReader(decompressed)
+                with tarfile.open(fileobj=reader, mode="r|", tarinfo=LimitedTarInfo) as bundle:
+                    for member in bundle:
+                        installation_checkpoint("source archive member")
+                        count += 1
+                        name = member.name.rstrip("/")
+                        parts = name.split("/")
+                        if count > limits.max_archive_members or len(parts) > limits.max_archive_depth or len(name.encode("utf-8")) > limits.max_path_bytes:
+                            raise HyperpropertyInstallBlocked("source archive structure exceeds limit", "source_archive_extraction_limit")
+                        if not name or any(part in {"", ".", ".."} for part in parts) or "\\" in name or "\x00" in name or name in seen:
+                            raise HyperpropertyInstallBlocked("source archive contains unsafe or duplicate path", "source_archive_extraction_failed")
+                        seen.add(name)
+                        if root_name is None:
+                            root_name = parts[0]
+                        if parts[0] != root_name or not root_name.endswith("-" + git_commit):
+                            raise HyperpropertyInstallBlocked("source archive root differs from pinned commit", "source_archive_commit_mismatch")
+                        if not (member.isfile() or member.isdir()) or member.issparse():
+                            raise HyperpropertyInstallBlocked("source archive contains unsupported object", "source_archive_extraction_failed")
+                        if member.size < 0 or member.size > limits.max_member_bytes:
+                            raise HyperpropertyInstallBlocked("source archive member exceeds limit", "source_archive_extraction_limit")
+                        target = destination.joinpath(*parts)
+                        if member.isdir():
+                            target.mkdir(parents=True, exist_ok=True)
+                            directory_modes[target] = member.mode & 0o777
+                        else:
+                            total += member.size
+                            if total > limits.max_extract_bytes:
+                                raise HyperpropertyInstallBlocked("source archive expanded data exceeds limit", "source_archive_extraction_limit")
+                            target.parent.mkdir(parents=True, exist_ok=True)
+                            stream = bundle.extractfile(member)
+                            if stream is None:
+                                raise HyperpropertyInstallBlocked("source archive member is unreadable", "source_archive_extraction_failed")
+                            with stream, target.open("xb") as output:
+                                remaining = member.size
+                                while remaining:
+                                    installation_checkpoint("source archive member copy")
+                                    chunk = stream.read(min(65_536, remaining))
+                                    if not chunk:
+                                        raise HyperpropertyInstallBlocked("source archive member is truncated", "source_archive_extraction_failed")
+                                    output.write(chunk)
+                                    remaining -= len(chunk)
+                            target.chmod(member.mode & 0o777)
+                        # Streaming traversal must not retain every TarInfo.
+                        bundle.members.clear()
+                # Tar EOF can precede the compressed trailer; consume it under
+                # the same bounds so truncated/invalid gzip is never accepted.
+                while reader.read(65_536):
+                    pass
+            for directory in sorted(directory_modes, key=lambda path: len(path.parts), reverse=True):
+                installation_checkpoint("source archive directory permissions")
+                directory.chmod(directory_modes[directory])
+            if root_name is None or not (destination / root_name).is_dir():
+                raise HyperpropertyInstallBlocked("source archive lacks a single tree", "source_archive_commit_mismatch")
+            installation_checkpoint("before extracted source publication")
+            return destination / root_name
+        except BaseException as exc:
+            # Archive permissions are preserved for pin-compatible tree
+            # identities. Restore only the owned directory traversal bits
+            # before cleanup if publication stops after applying mode000/0555.
+            for directory in sorted(directory_modes, key=lambda path: len(path.parts)):
+                try:
+                    details = directory.lstat()
+                    if stat.S_ISDIR(details.st_mode):
+                        directory.chmod(stat.S_IMODE(details.st_mode) | stat.S_IRWXU)
+                except FileNotFoundError:
+                    pass
+            shutil.rmtree(destination)
+            from ..smt.operation_budget import ProofOperationInterrupted
+            if isinstance(exc, (HyperpropertyInstallerError, ProofOperationInterrupted)) or not isinstance(exc, Exception):
+                raise
+            raise HyperpropertyInstallBlocked(
+                "source archive extraction failed: " + type(exc).__name__, "source_archive_extraction_failed") from exc
 
 
 def _source_tree_sha256(archive: Path, git_commit: str) -> str:
@@ -1795,21 +2052,14 @@ def _capture_dependency_version(
     allow_nonzero: bool = False,
     environment: Mapping[str, str] | None = None,
 ) -> str:
-    env = os.environ.copy()
-    if environment:
-        env.update(environment)
+    from .install_control import InstallControlError, run_install_command
     try:
-        completed = subprocess.run(
-            [executable, *args],
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=15,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+        completed = run_install_command([executable, *args], environment=environment, timeout_seconds=15)
+    except (OSError, InstallControlError):
         return ""
-    output = ((completed.stdout or "") + "\n" + (completed.stderr or "")).strip()
+    if _install_process_failed(completed, allow_nonzero=allow_nonzero):
+        return ""
+    output = (_install_process_text(completed.stdout) + "\n" + _install_process_text(completed.stderr)).strip()
     if completed.returncode and not allow_nonzero:
         return ""
     return output[:4096]
@@ -1875,6 +2125,41 @@ def _dependency_root_path(
     return None
 
 
+def _validated_dependency_roots(
+    dependency_roots: Mapping[str, Path | str] | None,
+) -> dict[str, Path | str]:
+    """Snapshot bounded explicit configuration without probing the host."""
+    if dependency_roots is None:
+        return {}
+    if not isinstance(dependency_roots, Mapping) or len(dependency_roots) > 32:
+        raise HyperpropertyInstallBlocked(
+            "dependency roots must be a mapping of at most 32 paths",
+            "invalid_dependency_roots",
+        )
+    roots = {}
+    for name, value in dependency_roots.items():
+        if (not isinstance(name, str) or not name or name != name.strip()
+                or "\x00" in name or len(name) > 256
+                or not isinstance(value, (str, Path))):
+            raise HyperpropertyInstallBlocked(
+                "dependency root names and paths must be bounded strings or paths",
+                "invalid_dependency_roots",
+            )
+        text = str(value)
+        try:
+            valid = (bool(text) and text == text.strip() and "\x00" not in text
+                     and len(text.encode("utf-8")) <= 4096)
+        except UnicodeError:
+            valid = False
+        if not valid:
+            raise HyperpropertyInstallBlocked(
+                "dependency root paths must be bounded, trimmed UTF-8 paths",
+                "invalid_dependency_roots",
+            )
+        roots[name] = value
+    return roots
+
+
 def _verified_aiger_version_evidence(
     dependency_roots: Mapping[str, Path | str],
 ) -> str:
@@ -1919,28 +2204,46 @@ def _executable_from_dependency_roots(
     candidate_names: Sequence[str],
     dependency_roots: Mapping[str, Path | str],
 ) -> str | None:
+    roots = _validated_dependency_roots(dependency_roots)
     keys = (
         dependency_name,
         *candidate_names,
         *_DEPENDENCY_ROOT_GROUPS.get(dependency_name, ()),
     )
     for key in dict.fromkeys(keys):
-        if key not in dependency_roots:
+        if key not in roots:
             continue
-        configured = Path(
-            os.path.expanduser(str(dependency_roots[key]))
-        ).resolve()
-        if configured.is_file():
-            return str(configured)
-        for candidate_name in candidate_names:
-            for relative in (
-                Path(candidate_name),
-                Path("bin") / candidate_name,
-                Path("sbin") / candidate_name,
-            ):
-                candidate = configured / relative
-                if candidate.is_file():
-                    return str(candidate.resolve())
+        # The first supplied key is authoritative. A broken explicit choice
+        # must not silently select a lower-priority root or a PATH executable.
+        supplied = Path(os.path.expanduser(str(roots[key])))
+        try:
+            configured = supplied.resolve(strict=True)
+            if configured.is_file():
+                direct_key = key == dependency_name or key in candidate_names
+                matching_alias_file = (
+                    supplied.name in candidate_names or configured.name in candidate_names
+                )
+                if (direct_key or matching_alias_file) and os.access(configured, os.X_OK):
+                    return str(configured)
+            elif configured.is_dir():
+                for candidate_name in candidate_names:
+                    for relative in (
+                        Path(candidate_name),
+                        Path("bin") / candidate_name,
+                        Path("sbin") / candidate_name,
+                    ):
+                        try:
+                            candidate = (configured / relative).resolve(strict=True)
+                        except (OSError, RuntimeError):
+                            continue
+                        if candidate.is_file() and os.access(candidate, os.X_OK):
+                            return str(candidate)
+        except (OSError, RuntimeError):
+            pass
+        raise HyperpropertyInstallBlocked(
+            f"explicit dependency root for {dependency_name} does not provide a regular executable",
+            f"invalid_dependency_root:{dependency_name}",
+        )
     return None
 
 
@@ -1948,14 +2251,19 @@ def _resolve_vendor_dependencies(
     tool_id: str,
     dependency_roots: Mapping[str, Path | str] | None = None,
 ) -> tuple[DependencyIdentity, ...]:
-    roots = dependency_roots or {}
+    roots = _validated_dependency_roots(dependency_roots)
     identities: list[DependencyIdentity] = []
     blockers: list[str] = []
     details: list[str] = []
-    for spec in _dependency_specs(tool_id):
-        executable = _executable_from_dependency_roots(
+    specs = _dependency_specs(tool_id)
+    explicit = {
+        str(spec["name"]): _executable_from_dependency_roots(
             str(spec["name"]), spec["candidates"], roots
         )
+        for spec in specs
+    }
+    for spec in specs:
+        executable = explicit[str(spec["name"])]
         if executable is None:
             executable = next(
                 (
@@ -2196,26 +2504,16 @@ def _run_build_command(
     cwd: Path,
     environment: Mapping[str, str] | None = None,
 ) -> None:
-    env = os.environ.copy()
-    if environment:
-        env.update(environment)
+    from .install_control import InstallControlError, run_install_command
     try:
-        completed = subprocess.run(
-            list(argv),
-            cwd=cwd,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=1800,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
+        completed = run_install_command(argv, cwd=cwd, environment=environment, timeout_seconds=1800)
+    except (OSError, InstallControlError) as exc:
         raise HyperpropertyInstallBlocked(
-            f"upstream build command failed to run: {type(exc).__name__}: {exc}",
+            f"upstream build command failed to run: {type(exc).__name__}",
             "upstream_build_failed",
         ) from exc
-    if completed.returncode:
-        output = ((completed.stdout or "") + "\n" + (completed.stderr or "")).strip()
+    if _install_process_failed(completed):
+        output = (_install_process_text(completed.stdout) + "\n" + _install_process_text(completed.stderr)).strip()
         raise HyperpropertyInstallBlocked(
             f"upstream build command exited {completed.returncode}: "
             f"{' '.join(argv)}\n{output[-4000:]}",
@@ -2223,18 +2521,26 @@ def _run_build_command(
         )
 
 
+def _install_process_text(value: bytes | str | None) -> str:
+    return value.decode("utf-8", errors="replace") if isinstance(value, bytes) else value or ""
+
+
+def _install_process_failed(result, *, allow_nonzero: bool = False) -> bool:
+    return (type(result.returncode) is not int or (result.returncode != 0 and not allow_nonzero)
+        or any(getattr(result, field, False) for field in (
+            "timed_out", "cancelled", "unavailable", "output_truncated", "resource_exhausted",
+            "workspace_limit_exceeded", "process_tree_terminated", "error")))
+
+
 def _probe_version(executable: Path) -> str:
+    from .install_control import InstallControlError, run_install_command
     try:
-        completed = subprocess.run(
-            [str(executable), "--version"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+        completed = run_install_command([str(executable), "--version"], timeout_seconds=5)
+    except (OSError, InstallControlError):
         return ""
-    text = (completed.stdout or "") + "\n" + (completed.stderr or "")
+    if _install_process_failed(completed):
+        return ""
+    text = _install_process_text(completed.stdout) + "\n" + _install_process_text(completed.stderr)
     match = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)", text)
     return match.group(1) if match else text.strip().splitlines()[0] if text.strip() else ""
 
@@ -3458,13 +3764,35 @@ def _build_upstream_source(
         lockfiles[
             "upstream/src/AutoHyper/Configuration.fs"
         ] = _patch_autohyper_relocatable_solver_paths(source_root)
+        build_cache = source_root / ".hyper-build-cache"
+        build_cache.mkdir(exist_ok=False)
+        dotnet_environment = {
+            **build_environment,
+            "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+            "DOTNET_NOLOGO": "1",
+            # This pinned console project needs no optional SDK workloads.
+            # .NET 8 workload integrity initialization otherwise writes a
+            # metadata directory into the authenticated SDK dependency tree.
+            "DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK": "true",
+            "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE": "true",
+            # The ordinary restore wrapper enables this on Linux; preserve
+            # signature verification when invoking the MSBuild target directly.
+            "DOTNET_NUGET_SIGNATURE_VERIFICATION": "true",
+            "DOTNET_CLI_HOME": str(build_cache / "home"),
+            "NUGET_PACKAGES": str(build_cache / "packages"),
+            "NUGET_HTTP_CACHE_PATH": str(build_cache / "http"),
+            "TMPDIR": str(build_cache),
+        }
+        # The CLI restore/build wrappers start a workload updater before its
+        # disable flag is checked, mutating the SDK's metadata directory.
+        # Direct MSBuild targets perform the same project work without that
+        # wrapper and keep the authenticated SDK tree unchanged.
         _run_build_command(
-            (dotnet, "restore", "AutoHyper.fsproj", "--use-lock-file"),
-            cwd=project_root,
+            (dotnet, "msbuild", "src/AutoHyper/AutoHyper.fsproj",
+             "-target:Restore", "-property:RestorePackagesWithLockFile=true"),
+            cwd=source_root,
             environment={
-                **build_environment,
-                "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
-                "DOTNET_NOLOGO": "1",
+                **dotnet_environment,
             },
         )
         package_lock = project_root / "packages.lock.json"
@@ -3476,20 +3804,19 @@ def _build_upstream_source(
         _run_build_command(
             (
                 dotnet,
-                "build",
-                "-c",
-                "release",
-                "-o",
-                "../../app",
-                "--no-restore",
+                "msbuild",
+                "src/AutoHyper/AutoHyper.fsproj",
+                "-target:Build",
+                "-property:Configuration=Release",
+                "-property:OutputPath=" + str((source_root / "app").resolve()),
             ),
-            cwd=project_root,
+            cwd=source_root,
             environment={
-                **build_environment,
-                "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
-                "DOTNET_NOLOGO": "1",
+                **dotnet_environment,
             },
         )
+        # This owned scratch cache is excluded from the installed distribution.
+        shutil.rmtree(build_cache)
         paths_file = source_root / "app" / "paths.json"
         paths_file.write_text(
             json.dumps(
@@ -3565,6 +3892,11 @@ def _build_upstream_source(
 
 
 def _replace_install_tree(payload: Path, destination: Path) -> None:
+    from .hyperproperty_transaction import current_transaction
+    transaction = current_transaction()
+    if transaction is not None:
+        transaction.replace_tree(payload, destination)
+        return
     destination.parent.mkdir(parents=True, exist_ok=True)
     backup: Path | None = None
     if destination.exists():
@@ -3588,6 +3920,37 @@ def _replace_install_tree(payload: Path, destination: Path) -> None:
 
 
 def materialize_vendor_engine(
+    tool_id: str,
+    *,
+    install_root: Path | str | None = None,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+    force: bool = False,
+    platform_id: str | None = None,
+    dependency_roots: Mapping[str, Path | str] | None = None,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
+) -> EngineIdentity:
+    """Materialize a vendor tree under bounded, shared transaction ownership."""
+    from .install_control import installation_scope
+    from .hyperproperty_transaction import installation_transaction
+    if tool_id not in EXTERNAL_TOOLS or type(force) is not bool:
+        raise HyperpropertyInstallerError("invalid vendor materialization controls")
+    root = _expand_install_root(install_root)
+    with installation_scope(limits=limits, operation_timeout_ms=operation_timeout_ms,
+                            cancellation=cancellation, scheduler=scheduler, parent_lease=parent_lease):
+        _safe_version_component(pin_for_tool(tool_id, repo_root=repo_root, lock_path=lock_path)["version"])
+        with installation_transaction(root, tool_id):
+            return _materialize_vendor_engine_in_transaction(
+                tool_id, install_root=root, repo_root=repo_root, lock_path=lock_path,
+                force=force, platform_id=platform_id, dependency_roots=dependency_roots,
+            )
+
+
+def _materialize_vendor_engine_in_transaction(
     tool_id: str,
     *,
     install_root: Path | str | None = None,
@@ -3662,6 +4025,7 @@ def materialize_vendor_engine(
         dependency_roots=dependency_roots,
     )
     download_root = root / "hyperproperty-sources" / tool_id
+    _managed_directory(root, download_root)
     archive = _download_verified_archive(
         str(meta["source_archive_url"]),
         download_root / f"{meta['git_commit']}.tar.gz",
@@ -3670,7 +4034,7 @@ def materialize_vendor_engine(
     source_tree_sha = _source_tree_sha256(archive, str(meta["git_commit"]))
 
     version_root = manifest.parent
-    version_root.parent.mkdir(parents=True, exist_ok=True)
+    _managed_directory(root, version_root.parent)
     with tempfile.TemporaryDirectory(
         prefix=f".{tool_id}-{version}-build-",
         dir=version_root.parent,
@@ -3873,6 +4237,11 @@ def ensure_hyperltl(
     capability_discovery: bool = False,
     test_mode: bool | None = None,
     on_progress: ProgressCallback | None = None,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
 ) -> InstallReceipt:
     """Explicit strict installation of the pinned HyperLTL / EAHyper engine."""
 
@@ -3893,6 +4262,8 @@ def ensure_hyperltl(
         capability_discovery=capability_discovery,
         test_mode=test_mode,
         on_progress=on_progress,
+        limits=limits, operation_timeout_ms=operation_timeout_ms, cancellation=cancellation,
+        scheduler=scheduler, parent_lease=parent_lease,
     )
 
 
@@ -3913,6 +4284,11 @@ def ensure_autohyper(
     capability_discovery: bool = False,
     test_mode: bool | None = None,
     on_progress: ProgressCallback | None = None,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
 ) -> InstallReceipt:
     """Explicit strict installation of the pinned AutoHyper engine."""
 
@@ -3933,6 +4309,8 @@ def ensure_autohyper(
         capability_discovery=capability_discovery,
         test_mode=test_mode,
         on_progress=on_progress,
+        limits=limits, operation_timeout_ms=operation_timeout_ms, cancellation=cancellation,
+        scheduler=scheduler, parent_lease=parent_lease,
     )
 
 
@@ -3953,6 +4331,11 @@ def ensure_mchyper(
     capability_discovery: bool = False,
     test_mode: bool | None = None,
     on_progress: ProgressCallback | None = None,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
 ) -> InstallReceipt:
     """Explicit strict installation of the pinned MCHyper engine."""
 
@@ -3973,10 +4356,50 @@ def ensure_mchyper(
         capability_discovery=capability_discovery,
         test_mode=test_mode,
         on_progress=on_progress,
+        limits=limits, operation_timeout_ms=operation_timeout_ms, cancellation=cancellation,
+        scheduler=scheduler, parent_lease=parent_lease,
     )
 
 
 def _ensure_tool(
+    tool_id: str,
+    *,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
+    **kwargs: Any,
+) -> InstallReceipt:
+    from .install_control import installation_scope, installation_checkpoint
+    from .hyperproperty_transaction import installation_transaction
+    for name in ("yes", "strict", "force", "vendor", "import_context", "capability_discovery"):
+        if type(kwargs.get(name)) is not bool:
+            raise HyperpropertyInstallerError(f"{name} must be a boolean")
+    for name in ("hermetic_engine", "checksum_verified", "test_mode"):
+        if kwargs.get(name) is not None and type(kwargs[name]) is not bool:
+            raise HyperpropertyInstallerError(f"{name} must be a boolean or None")
+    with installation_scope(limits=limits, operation_timeout_ms=operation_timeout_ms,
+                            cancellation=cancellation, scheduler=scheduler, parent_lease=parent_lease):
+        installation_checkpoint("Hyper install entry")
+        _safe_version_component(pin_for_tool(tool_id, repo_root=kwargs.get("repo_root"), lock_path=kwargs.get("lock_path"))["version"])
+        # Read-only requests must not create even the transaction lock path.
+        if not kwargs["yes"] or kwargs["import_context"] or kwargs["capability_discovery"]:
+            return _ensure_tool_in_transaction(tool_id, **kwargs)
+        if _gate_install(tool_id, yes=kwargs["yes"], strict=kwargs["strict"],
+                         platform_id=kwargs.get("platform_id") or _detect_platform(),
+                         checksum_verified=kwargs.get("checksum_verified"), test_mode=kwargs.get("test_mode"),
+                         import_context=kwargs["import_context"], capability_discovery=kwargs["capability_discovery"]):
+            return _ensure_tool_in_transaction(tool_id, **kwargs)
+        root = _expand_install_root(kwargs.get("install_root"))
+        with installation_transaction(root, tool_id) as transaction:
+            receipt = _ensure_tool_in_transaction(tool_id, **kwargs)
+            transaction.failed = not receipt.ok
+            installation_checkpoint("Hyper install receipt")
+            return receipt
+
+
+def _ensure_tool_in_transaction(
     tool_id: str,
     *,
     yes: bool,
@@ -3995,6 +4418,7 @@ def _ensure_tool(
     test_mode: bool | None,
     on_progress: ProgressCallback | None,
 ) -> InstallReceipt:
+    from ipfs_datasets_py.logic.backends.smt.operation_budget import ProofOperationInterrupted
     pin = pin_for_tool(tool_id, repo_root=repo_root, lock_path=lock_path)
     selected_version = pin["version"]
     root = _expand_install_root(install_root)
@@ -4095,6 +4519,11 @@ def _ensure_tool(
             raise HyperpropertyInstallerError(detail)
         return receipt
 
+    block_reasons = _gate_install(
+        tool_id, yes=yes, strict=strict, platform_id=host_platform,
+        checksum_verified=checksum_verified, test_mode=test_mode,
+        import_context=import_context, capability_discovery=capability_discovery,
+    )
     existing = _identity_from_disk(tool_id, root, pin, vendor=use_vendor)
     if existing is not None and not force:
         if use_vendor and (
@@ -4108,19 +4537,21 @@ def _ensure_tool(
             f"{tool_id} {existing.version} already present at {existing.executable}",
             on_progress,
         )
-        if use_vendor:
+        publication_failure = ""
+        if use_vendor and not block_reasons:
             try:
                 _publish_managed_vendor_launcher(existing, install_root=root)
-            except (OSError, HyperpropertyInstallerError) as exc:
+            except (OSError, ValueError) as exc:
                 detail = f"managed bin publication failed for {tool_id}: {exc}"
                 if strict:
                     raise HyperpropertyInstallerError(detail) from exc
+                publication_failure = detail
         return InstallReceipt(
             tool_id=tool_id,
-            status="already_present",
+            status="failed" if publication_failure else "already_present",
             identity=existing,
             selected_version=existing.version,
-            detail=(
+            detail=publication_failure or (
                 "pin-bound vendor hyperproperty engine already installed"
                 if use_vendor
                 else "pin-bound hyperproperty engine already installed"
@@ -4133,6 +4564,7 @@ def _ensure_tool(
             task_id=receipt_task,
             platform_id=host_platform,
             is_vendor_path=use_vendor,
+            block_reasons=("managed_launcher_publication_failed",) if publication_failure else (),
         )
 
     block_reasons = _gate_install(
@@ -4212,6 +4644,8 @@ def _ensure_tool(
                 lock_path=lock_path,
                 force=force,
             )
+    except ProofOperationInterrupted:
+        raise
     except HyperpropertyInstallBlocked as exc:
         detail = str(exc)
         if strict:
@@ -4386,19 +4820,21 @@ def _ensure_tool(
         f"installed {tool_id} {identity.version} at {identity.executable}",
         on_progress,
     )
+    publication_failure = ""
     if use_vendor:
         try:
             _publish_managed_vendor_launcher(identity, install_root=root)
-        except (OSError, HyperpropertyInstallerError) as exc:
+        except (OSError, ValueError) as exc:
             detail = f"managed bin publication failed for {tool_id}: {exc}"
             if strict:
                 raise HyperpropertyInstallerError(detail) from exc
+            publication_failure = detail
     return InstallReceipt(
         tool_id=tool_id,
-        status="installed",
+        status="failed" if publication_failure else "installed",
         identity=identity,
         selected_version=selected_version,
-        detail=(
+        detail=publication_failure or (
             "pin-bound vendor hyperproperty engine materialized"
             if use_vendor
             else "pin-bound hermetic hyperproperty engine materialized"
@@ -4411,10 +4847,37 @@ def _ensure_tool(
         task_id=receipt_task,
         platform_id=host_platform,
         is_vendor_path=use_vendor,
+        block_reasons=("managed_launcher_publication_failed",) if publication_failure else (),
     )
 
 
 def ensure_hyperproperty(
+    *,
+    yes: bool = False,
+    strict: bool = True,
+    force: bool = False,
+    install_root: Path | str | None = None,
+    repo_root: Path | str | None = None,
+    lock_path: Path | str | None = None,
+    tools: Sequence[str] | None = None,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
+    **kwargs: Any,
+) -> HyperpropertyInstallBundle:
+    """Install selected engines within one inherited bounded operation."""
+    from .install_control import installation_scope
+    with installation_scope(limits=limits, operation_timeout_ms=operation_timeout_ms,
+                            cancellation=cancellation, scheduler=scheduler, parent_lease=parent_lease):
+        return _ensure_hyperproperty_in_operation(
+            yes=yes, strict=strict, force=force, install_root=install_root,
+            repo_root=repo_root, lock_path=lock_path, tools=tools, **kwargs,
+        )
+
+
+def _ensure_hyperproperty_in_operation(
     *,
     yes: bool = False,
     strict: bool = True,
@@ -4477,6 +4940,11 @@ def ensure_hyperproperty_vendor(
     capability_discovery: bool = False,
     test_mode: bool | None = None,
     on_progress: ProgressCallback | None = None,
+    limits: Any = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: Any = None,
+    scheduler: Any = None,
+    parent_lease: Any = None,
 ) -> HyperpropertyInstallBundle:
     """Install official vendor engines for FVT-G208 (strict selection).
 
@@ -4501,6 +4969,8 @@ def ensure_hyperproperty_vendor(
         capability_discovery=capability_discovery,
         test_mode=test_mode,
         on_progress=on_progress,
+        limits=limits, operation_timeout_ms=operation_timeout_ms, cancellation=cancellation,
+        scheduler=scheduler, parent_lease=parent_lease,
     )
 
 

@@ -1,0 +1,824 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/independent-head-rate-review.json": {
+      "bytes": 292381,
+      "sha256": "b5453a64ddad0091cccdd16e40e8f98671ab901e3fb985f465a3a2cf39325421"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-head-rate-20261004/results.json": {
+      "bytes": 62394,
+      "sha256": "388393b7c105fdf5af6cc9374e7d68701a60127699319766dde73b6d550fdb89"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/exposed-style-review.json": {
+      "bytes": 25822,
+      "sha256": "6dd9503e0e59168ea8983bcf8270b3e3f5da9441283e9ed4df176a9038a041b1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-next-source-review-20261004/protected-checkpoint.json": {
+      "bytes": 379,
+      "sha256": "cf0644d968055d598e70449703383e478669a7c79d95c148041a512854ddc749"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/conditioning-tests-receipt.json": {
+      "bytes": 463,
+      "sha256": "010041af506bff96dc1e2b14ded095eaf1f8e9242f255cb7c0e677c7b034a104"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/decoded-condition-examples.json": {
+      "bytes": 1627,
+      "sha256": "ced3a8c6daec4f992fbdb7411226b9bdb23a06f3b62706c5fbe6a91d0e8bb8c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/independent-conditioning-audit.json": {
+      "bytes": 52082,
+      "sha256": "471a4a342aa20eb1a5a210764cfc6f01a3a1f135342f8c648d01804e667abdb9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/native/receipt.json": {
+      "bytes": 295459,
+      "sha256": "7d9d8ff7aecdb33eb9102cdd495719a1ed37b0e0e52a05ca0d49cff223cd5433"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-conditioning-20261004/training-r1/results/training.json": {
+      "bytes": 22376800,
+      "sha256": "d4e2fb8dcb796297b0f69475a170b83bc033072010ca61c96345f9ba30793256"
+    }
+  },
+  "bridge_names": [],
+  "bridge_on_evaluate_measured": false,
+  "checkpoint_promoted": false,
+  "complete": true,
+  "constitution_formalized": false,
+  "context_tokens": 512,
+  "decoder_output_tokens": 512,
+  "dimensions_preserved": [
+    384,
+    768
+  ],
+  "dimensions_trained": [
+    8,
+    4096
+  ],
+  "eight_dimensional": {
+    "clauses_per_split": 180,
+    "development_rows": 48,
+    "fit_timing_scope": "training call including in-call development evaluations; separate controls and admission excluded",
+    "guardian_seconds": 141.50476534999325,
+    "interpretation": "candidate CE improves but ordered exact and field fidelity fail unchanged selection; preserve original parent",
+    "optimizer_updates": 340,
+    "production_default_changed": false,
+    "runs": [
+      {
+        "arm": "head-rate10-baseline",
+        "decoder_presentations_per_second": 43.37830113062496,
+        "final_development": {
+          "exact": 1,
+          "fields": {
+            "action": 88,
+            "actor": 102,
+            "modality": 137,
+            "object": 97
+          },
+          "full_panel_seconds": 0.4717121279973071,
+          "numerical_evaluation_seconds": 0.3242192109755706,
+          "raw_fields": {
+            "action": {
+              "correct": 99,
+              "cross_entropy": 1.213995274165705,
+              "total": 180
+            },
+            "actor": {
+              "correct": 99,
+              "cross_entropy": 2.7570902239027935,
+              "total": 180
+            },
+            "modality": {
+              "correct": 135,
+              "cross_entropy": 0.48696819226174715,
+              "total": 180
+            },
+            "object": {
+              "correct": 88,
+              "cross_entropy": 0.7165952192569061,
+              "total": 180
+            }
+          },
+          "rows": 48,
+          "syntax_valid": 48,
+          "token_cross_entropy": 0.16349188731738062,
+          "wall_seconds_per_span": 0.006754566895324388
+        },
+        "final_training": {
+          "exact": 12,
+          "fields": {
+            "action": 176,
+            "actor": 180,
+            "modality": 170,
+            "object": 116
+          },
+          "full_panel_seconds": 0.4771101600199472,
+          "numerical_evaluation_seconds": 0.3273293160018511,
+          "raw_fields": {
+            "action": {
+              "correct": 169,
+              "cross_entropy": 0.5002158762690969,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "cross_entropy": 0.047044315530970465,
+              "total": 180
+            },
+            "modality": {
+              "correct": 170,
+              "cross_entropy": 0.14632928751676272,
+              "total": 180
+            },
+            "object": {
+              "correct": 111,
+              "cross_entropy": 0.6394853257606914,
+              "total": 180
+            }
+          },
+          "rows": 48,
+          "syntax_valid": 48,
+          "token_cross_entropy": 0.03873324930170215,
+          "wall_seconds_per_span": 0.006819360750038565
+        },
+        "fit_seconds": 28.124660675995983,
+        "multiplier": 10.0,
+        "row_presentations": 1220,
+        "selected_development": {
+          "exact": 1,
+          "fields": {
+            "action": 79,
+            "actor": 104,
+            "modality": 141,
+            "object": 88
+          },
+          "full_panel_seconds": 0.6906540990166832,
+          "numerical_evaluation_seconds": 0.3364344000001438,
+          "raw_fields": {
+            "action": {
+              "correct": 84,
+              "cross_entropy": 1.4468231548126729,
+              "total": 180
+            },
+            "actor": {
+              "correct": 102,
+              "cross_entropy": 2.0105511693323566,
+              "total": 180
+            },
+            "modality": {
+              "correct": 141,
+              "cross_entropy": 0.4832764613155749,
+              "total": 180
+            },
+            "object": {
+              "correct": 91,
+              "cross_entropy": 0.7041414697899205,
+              "total": 180
+            }
+          },
+          "rows": 48,
+          "syntax_valid": 48,
+          "token_cross_entropy": 0.14907417285113128,
+          "wall_seconds_per_span": 0.007009050000002996
+        }
+      },
+      {
+        "arm": "head-rate2-candidate",
+        "decoder_presentations_per_second": 44.2713426319167,
+        "final_development": {
+          "exact": 1,
+          "fields": {
+            "action": 86,
+            "actor": 106,
+            "modality": 139,
+            "object": 88
+          },
+          "full_panel_seconds": 0.4941355850023683,
+          "numerical_evaluation_seconds": 0.34256039100000635,
+          "raw_fields": {
+            "action": {
+              "correct": 99,
+              "cross_entropy": 1.2136934082410145,
+              "total": 180
+            },
+            "actor": {
+              "correct": 102,
+              "cross_entropy": 2.197681997038416,
+              "total": 180
+            },
+            "modality": {
+              "correct": 141,
+              "cross_entropy": 0.49815720836768757,
+              "total": 180
+            },
+            "object": {
+              "correct": 88,
+              "cross_entropy": 0.7183215640917521,
+              "total": 180
+            }
+          },
+          "rows": 48,
+          "syntax_valid": 48,
+          "token_cross_entropy": 0.1480324064682291,
+          "wall_seconds_per_span": 0.007136674812500132
+        },
+        "final_training": {
+          "exact": 17,
+          "fields": {
+            "action": 176,
+            "actor": 178,
+            "modality": 164,
+            "object": 116
+          },
+          "full_panel_seconds": 0.7581713260151446,
+          "numerical_evaluation_seconds": 0.3436680150043685,
+          "raw_fields": {
+            "action": {
+              "correct": 169,
+              "cross_entropy": 0.49854589993961734,
+              "total": 180
+            },
+            "actor": {
+              "correct": 178,
+              "cross_entropy": 0.07084086814411143,
+              "total": 180
+            },
+            "modality": {
+              "correct": 164,
+              "cross_entropy": 0.1915255275269218,
+              "total": 180
+            },
+            "object": {
+              "correct": 108,
+              "cross_entropy": 0.6614945579955704,
+              "total": 180
+            }
+          },
+          "rows": 48,
+          "syntax_valid": 48,
+          "token_cross_entropy": 0.0410520485294271,
+          "wall_seconds_per_span": 0.007159750312591011
+        },
+        "fit_seconds": 27.557330034993356,
+        "multiplier": 2.0,
+        "row_presentations": 1220,
+        "selected_development": {
+          "exact": 1,
+          "fields": {
+            "action": 79,
+            "actor": 104,
+            "modality": 141,
+            "object": 88
+          },
+          "full_panel_seconds": 0.46718845100258477,
+          "numerical_evaluation_seconds": 0.32001360299182124,
+          "raw_fields": {
+            "action": {
+              "correct": 84,
+              "cross_entropy": 1.4468231548126729,
+              "total": 180
+            },
+            "actor": {
+              "correct": 102,
+              "cross_entropy": 2.0105511693323566,
+              "total": 180
+            },
+            "modality": {
+              "correct": 141,
+              "cross_entropy": 0.4832764613155749,
+              "total": 180
+            },
+            "object": {
+              "correct": 91,
+              "cross_entropy": 0.7041414697899205,
+              "total": 180
+            }
+          },
+          "rows": 48,
+          "syntax_valid": 48,
+          "token_cross_entropy": 0.14907417285113128,
+          "wall_seconds_per_span": 0.006666950062329609
+        }
+      }
+    ],
+    "sampled_max_rss_bytes": 1075511296,
+    "selected_epoch": 0,
+    "training_rows": 48,
+    "warm_source_vectors": true
+  },
+  "encoder_weights_trained": false,
+  "fresh_holdout": false,
+  "global_convergence_proven": false,
+  "historical_teacher_changed": false,
+  "lake_executed": false,
+  "larger_width_exposed_style_review": {
+    "384": {
+      "clauses": 180,
+      "facet_correct": {
+        "action": 178,
+        "actor": 180,
+        "conditions": 180,
+        "exceptions": 180,
+        "modality": 138,
+        "object": 180,
+        "temporal": 180
+      },
+      "family_modality_confusion": {
+        "actor_normative_status/F->F": 20,
+        "actor_normative_status/O->F": 2,
+        "actor_normative_status/O->O": 3,
+        "actor_normative_status/O->P": 15,
+        "actor_normative_status/P->P": 20,
+        "gerund_normative_subject/F->F": 20,
+        "gerund_normative_subject/O->O": 5,
+        "gerund_normative_subject/O->P": 15,
+        "gerund_normative_subject/P->P": 20,
+        "norm_noun_subject/F->F": 20,
+        "norm_noun_subject/O->O": 10,
+        "norm_noun_subject/O->P": 10,
+        "norm_noun_subject/P->P": 20
+      },
+      "modality_confusion": {
+        "F->F": 60,
+        "O->F": 2,
+        "O->O": 18,
+        "O->P": 40,
+        "P->P": 60
+      },
+      "ordered_exact": 20,
+      "pair_status_mismatch": {
+        "seen/correct": 70,
+        "seen/incorrect": 20,
+        "unseen/correct": 66,
+        "unseen/incorrect": 24
+      },
+      "prediction_file_sha256": "03ef9c98f89d4d6054b79e92e37a67a16e73dbc065b706304a57b0e295467b1d",
+      "rows": 48,
+      "score_file_sha256": "83e02d44ef15b5cdeb7653376b75a83e1c1e2de32b4ab16289e2af593a8b784a"
+    },
+    "768": {
+      "clauses": 180,
+      "facet_correct": {
+        "action": 180,
+        "actor": 180,
+        "conditions": 180,
+        "exceptions": 180,
+        "modality": 178,
+        "object": 180,
+        "temporal": 180
+      },
+      "family_modality_confusion": {
+        "actor_normative_status/F->F": 20,
+        "actor_normative_status/O->O": 20,
+        "actor_normative_status/P->O": 2,
+        "actor_normative_status/P->P": 18,
+        "gerund_normative_subject/F->F": 20,
+        "gerund_normative_subject/O->O": 20,
+        "gerund_normative_subject/P->P": 20,
+        "norm_noun_subject/F->F": 20,
+        "norm_noun_subject/O->O": 20,
+        "norm_noun_subject/P->P": 20
+      },
+      "modality_confusion": {
+        "F->F": 60,
+        "O->O": 60,
+        "P->O": 2,
+        "P->P": 58
+      },
+      "ordered_exact": 46,
+      "pair_status_mismatch": {
+        "seen/correct": 89,
+        "seen/incorrect": 1,
+        "unseen/correct": 89,
+        "unseen/incorrect": 1
+      },
+      "prediction_file_sha256": "2675c6f18fe2bbb20daf816ee1b97d7af912d286f2f17ff0e422cd0b24607e17",
+      "rows": 48,
+      "score_file_sha256": "96a4a583028cf29c38e392fcfdbbef85e2c84b8a78552a69b83a59c83c0c240c"
+    }
+  },
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache_used": false,
+  "native4096": {
+    "arms": [
+      {
+        "arm": "joint_unscaled",
+        "fit_seconds": 1.5022407470096368,
+        "observations": [
+          {
+            "condition_preactivation_rms": 0.0,
+            "conditioned": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0,
+            "conditioned_advantage_over_zero_ce": 0.0,
+            "rotated_source": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            },
+            "source_residual_rms": 0.0,
+            "step": 0,
+            "zero_source": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.30605947971343994,
+            "conditioned": {
+              "cross_entropy": 1.56057608127594,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 0.002501845359802246,
+            "conditioned_advantage_over_zero_ce": -1.2185312807559967,
+            "rotated_source": {
+              "cross_entropy": 1.5630779266357422,
+              "exact": 0
+            },
+            "source_residual_rms": 0.18013498187065125,
+            "step": 20,
+            "zero_source": {
+              "cross_entropy": 0.34204480051994324,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.34388241171836853,
+            "conditioned": {
+              "cross_entropy": 0.265986829996109,
+              "exact": 1
+            },
+            "conditioned_advantage_over_rotated_ce": 0.002619922161102295,
+            "conditioned_advantage_over_zero_ce": -0.10991309583187103,
+            "rotated_source": {
+              "cross_entropy": 0.2686067521572113,
+              "exact": 0
+            },
+            "source_residual_rms": 0.21756693720817566,
+            "step": 40,
+            "zero_source": {
+              "cross_entropy": 0.15607373416423798,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.548119306564331,
+            "conditioned": {
+              "cross_entropy": 0.033764440566301346,
+              "exact": 2
+            },
+            "conditioned_advantage_over_rotated_ce": 0.004569560289382935,
+            "conditioned_advantage_over_zero_ce": 0.010468076914548874,
+            "rotated_source": {
+              "cross_entropy": 0.03833400085568428,
+              "exact": 0
+            },
+            "source_residual_rms": 0.14972588419914246,
+            "step": 100,
+            "zero_source": {
+              "cross_entropy": 0.04423251748085022,
+              "exact": 1
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.6322733163833618,
+            "conditioned": {
+              "cross_entropy": 0.018790854141116142,
+              "exact": 2
+            },
+            "conditioned_advantage_over_rotated_ce": 0.029231669381260872,
+            "conditioned_advantage_over_zero_ce": 0.013780618086457253,
+            "rotated_source": {
+              "cross_entropy": 0.048022523522377014,
+              "exact": 0
+            },
+            "source_residual_rms": 0.16275547444820404,
+            "step": 200,
+            "zero_source": {
+              "cross_entropy": 0.032571472227573395,
+              "exact": 1
+            }
+          }
+        ],
+        "rate_changes": [
+          [
+            1,
+            {
+              "copied_prior": 0.001,
+              "source_bias": 0.001,
+              "source_weights": 0.001
+            }
+          ]
+        ],
+        "source_l1_bound": 34.21868896484375
+      },
+      {
+        "arm": "joint_source_scaled",
+        "fit_seconds": 1.369306995999068,
+        "observations": [
+          {
+            "condition_preactivation_rms": 0.0,
+            "conditioned": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0,
+            "conditioned_advantage_over_zero_ce": 0.0,
+            "rotated_source": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            },
+            "source_residual_rms": 0.0,
+            "step": 0,
+            "zero_source": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.015017597004771233,
+            "conditioned": {
+              "cross_entropy": 0.1406749188899994,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 2.652406692504883e-06,
+            "conditioned_advantage_over_zero_ce": -4.678964614868164e-06,
+            "rotated_source": {
+              "cross_entropy": 0.1406775712966919,
+              "exact": 0
+            },
+            "source_residual_rms": 0.0032147022429853678,
+            "step": 20,
+            "zero_source": {
+              "cross_entropy": 0.14067023992538452,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.025766994804143906,
+            "conditioned": {
+              "cross_entropy": 0.07081969827413559,
+              "exact": 1
+            },
+            "conditioned_advantage_over_rotated_ce": 8.64267349243164e-06,
+            "conditioned_advantage_over_zero_ce": 2.51084566116333e-06,
+            "rotated_source": {
+              "cross_entropy": 0.07082834094762802,
+              "exact": 1
+            },
+            "source_residual_rms": 0.005354059860110283,
+            "step": 40,
+            "zero_source": {
+              "cross_entropy": 0.07082220911979675,
+              "exact": 1
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.04327874258160591,
+            "conditioned": {
+              "cross_entropy": 0.03453380614519119,
+              "exact": 2
+            },
+            "conditioned_advantage_over_rotated_ce": 0.00015259534120559692,
+            "conditioned_advantage_over_zero_ce": 5.885213613510132e-05,
+            "rotated_source": {
+              "cross_entropy": 0.03468640148639679,
+              "exact": 0
+            },
+            "source_residual_rms": 0.01101081632077694,
+            "step": 100,
+            "zero_source": {
+              "cross_entropy": 0.034592658281326294,
+              "exact": 1
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.056380704045295715,
+            "conditioned": {
+              "cross_entropy": 0.015291356481611729,
+              "exact": 2
+            },
+            "conditioned_advantage_over_rotated_ce": 0.07046257611364126,
+            "conditioned_advantage_over_zero_ce": 0.01021490152925253,
+            "rotated_source": {
+              "cross_entropy": 0.08575393259525299,
+              "exact": 0
+            },
+            "source_residual_rms": 0.06694205850362778,
+            "step": 200,
+            "zero_source": {
+              "cross_entropy": 0.025506258010864258,
+              "exact": 1
+            }
+          }
+        ],
+        "rate_changes": [
+          [
+            1,
+            {
+              "copied_prior": 0.001,
+              "source_bias": 0.001,
+              "source_weights": 2.922379641801587e-05
+            }
+          ]
+        ],
+        "source_l1_bound": 34.21868896484375
+      },
+      {
+        "arm": "staged_source_scaled_plateau",
+        "fit_seconds": 1.349357795988908,
+        "observations": [
+          {
+            "condition_preactivation_rms": 0.0,
+            "conditioned": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0,
+            "conditioned_advantage_over_zero_ce": 0.0,
+            "rotated_source": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            },
+            "source_residual_rms": 0.0,
+            "step": 0,
+            "zero_source": {
+              "cross_entropy": 2.795950174331665,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.00965165812522173,
+            "conditioned": {
+              "cross_entropy": 1.91949462890625,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0023772716522216797,
+            "conditioned_advantage_over_zero_ce": -0.8187360763549805,
+            "rotated_source": {
+              "cross_entropy": 1.9218719005584717,
+              "exact": 0
+            },
+            "source_residual_rms": 0.0036760566290467978,
+            "step": 20,
+            "zero_source": {
+              "cross_entropy": 1.1007585525512695,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.02137136086821556,
+            "conditioned": {
+              "cross_entropy": 1.4874892234802246,
+              "exact": 0
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0025023221969604492,
+            "conditioned_advantage_over_zero_ce": -0.4303324222564697,
+            "rotated_source": {
+              "cross_entropy": 1.489991545677185,
+              "exact": 0
+            },
+            "source_residual_rms": 0.010125282220542431,
+            "step": 40,
+            "zero_source": {
+              "cross_entropy": 1.0571568012237549,
+              "exact": 0
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.036390479654073715,
+            "conditioned": {
+              "cross_entropy": 0.04758566617965698,
+              "exact": 2
+            },
+            "conditioned_advantage_over_rotated_ce": 6.682425737380981e-05,
+            "conditioned_advantage_over_zero_ce": -5.142390727996826e-05,
+            "rotated_source": {
+              "cross_entropy": 0.04765249043703079,
+              "exact": 0
+            },
+            "source_residual_rms": 0.013613908551633358,
+            "step": 100,
+            "zero_source": {
+              "cross_entropy": 0.047534242272377014,
+              "exact": 1
+            }
+          },
+          {
+            "condition_preactivation_rms": 0.04147296026349068,
+            "conditioned": {
+              "cross_entropy": 0.02648230455815792,
+              "exact": 2
+            },
+            "conditioned_advantage_over_rotated_ce": 0.0008877087384462357,
+            "conditioned_advantage_over_zero_ce": 0.0003994051367044449,
+            "rotated_source": {
+              "cross_entropy": 0.027370013296604156,
+              "exact": 0
+            },
+            "source_residual_rms": 0.014453159645199776,
+            "step": 200,
+            "zero_source": {
+              "cross_entropy": 0.026881709694862366,
+              "exact": 1
+            }
+          }
+        ],
+        "rate_changes": [
+          [
+            1,
+            {
+              "copied_prior": 0.001,
+              "source_bias": 0.001,
+              "source_weights": 2.922379641801587e-05
+            }
+          ]
+        ],
+        "source_l1_bound": 34.21868896484375
+      }
+    ],
+    "claim_scope": "conditioned fitting of two exposed authored permission clauses differing only in object; not production or held-out validation",
+    "decoded_examples": {
+      "admitted": false,
+      "arm": "joint_source_scaled",
+      "checkpoint_promoted": false,
+      "claim_scope": "learned restricted32V rule-codec reconstruction on two exposed authored training clauses; no projection or proof claim",
+      "head_tensor_sha256": "545e6e354aa62d47f326ba479121c108be36905208630c85f9e295c1d41f08ed",
+      "holdout_evaluated": false,
+      "lake_executed": false,
+      "native_receipt_sha256": "7d9d8ff7aecdb33eb9102cdd495719a1ed37b0e0e52a05ca0d49cff223cd5433",
+      "optimizer_step": 200,
+      "qualified": false,
+      "rows": [
+        {
+          "decode_status": "eos",
+          "decoded_rule_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "registrar",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "id": "legal_ir:0:4:4:0",
+          "source_text": "The registrar may deliver the archive.",
+          "target_exact": true
+        },
+        {
+          "decode_status": "eos",
+          "decoded_rule_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "registrar",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "id": "legal_ir:0:4:1:0",
+          "source_text": "The registrar may deliver the notice.",
+          "target_exact": true
+        }
+      ],
+      "schema": "native4096-conditioning-decoded-examples/v1",
+      "training_receipt_sha256": "d4e2fb8dcb796297b0f69475a170b83bc033072010ca61c96345f9ba30793256"
+    },
+    "fit_timing_scope": "updates plus extra loss evaluations and panels at20/40/100/200; initial panel excluded",
+    "guardian_seconds": 255.10087543999543,
+    "native_child_seconds": 33.52732373101753,
+    "native_model_hash_seconds": 88.298942377005,
+    "native_operation_seconds": 121.82766010399791,
+    "native_rows": 3,
+    "native_sampled_combined_max_rss_bytes": 1082535936,
+    "native_seconds_per_requested_row": 40.609220034665974,
+    "native_vectors_equal_previous_operation": true,
+    "old20_actual_parity": true,
+    "optimizer_state_saved": false,
+    "optimizer_updates": 600,
+    "page_cache_warmth": "uncontrolled",
+    "production_default_changed": false,
+    "scheduler_reductions_observed": 0,
+    "sources": 2,
+    "validation_rows": 0
+  },
+  "next_training_gaps": [
+    "4096: balanced source-disjoint native TRAIN/development cohort with preprocessing fitted only on TRAIN",
+    "8D: improve learned sidecar sensitivity to weak object features while preserving historical linguistic teacher and fidelity gates",
+    "384D/768D: balanced TRAIN-tuple paraphrases and separate held-out wording constructions; do not train on exposed evaluation sources"
+  ],
+  "prior_published_commit": "0808aa2cee87a9b45db896ebff0af3c8e9cbb464",
+  "qualified": false,
+  "schema": "decoder-conditioning-public-results/v1",
+  "storage_cap_bytes": 145000000000,
+  "temperature": 0,
+  "total_optimizer_updates": 940,
+  "workers_per_experiment": 1
+}

@@ -6,7 +6,7 @@ substrings or attributes such as ``is_valid``.  This module is the compatibility
 boundary for new callers:
 
 * every invocation starts from an immutable :class:`BackendRequest`;
-* Vampire and E run through :class:`BoundedToolRunner`;
+* Vampire and E use shared resource admission by default;
 * external output is classified only by an exact TPTP SZS status line;
 * an unreconstructed proof/model is a candidate, never theorem authority;
 * native bridges must return :class:`NativeProverResult` exactly; and
@@ -42,6 +42,7 @@ from ..process import (
     ToolRunRequest,
     ToolRunResult,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from ..results import (
     CandidateResult,
     ResultAuthority,
@@ -703,13 +704,16 @@ def _result_metadata(
             "command": list(process.command),
             "error": process.error,
             "output_truncated": process.output_truncated,
+            "process_tree_terminated": process.process_tree_terminated,
             "returncode": process.returncode,
             "resource_exhausted": process.resource_exhausted,
             "stderr_digest": _content_digest(process.stderr),
             "stdout_digest": _content_digest(process.stdout),
             "timed_out": process.timed_out,
+            "termination_reason": process.termination_reason,
             "unavailable": process.unavailable,
             "workspace_cleaned": process.workspace_cleaned,
+            "workspace_limit_exceeded": process.workspace_limit_exceeded,
         }
     if szs_status is not None:
         metadata["szs_status"] = szs_status.value
@@ -825,7 +829,11 @@ def _build_result(
 
 
 class TPTPBackend:
-    """Bounded external TPTP backend shared by Vampire and E."""
+    """External TPTP backend with default shared admission for Vampire and E.
+
+    Explicit runners retain caller-owned admission and execution behavior.
+    Construction and capability discovery do not acquire resources.
+    """
 
     interface_version: Final = ATP_COMPATIBILITY_BACKENDS_VERSION
     accepted_source_formats: Final = frozenset({"tptp", "tptp-fof", "tptp-cnf"})
@@ -851,7 +859,7 @@ class TPTPBackend:
         self.backend_id = _text(backend_id, "backend_id")
         self.backend_version = _text(backend_version, "backend_version")
         self.executable = _text(executable, "executable")
-        self._runner = runner or BoundedToolRunner()
+        self._runner = runner if runner is not None else ResourceAdmittedToolRunner()
         if not isinstance(self._runner, BoundedToolRunner):
             raise ATPAdapterError("runner must be a BoundedToolRunner")
         if proof_reconstructor is not None and not callable(proof_reconstructor):
@@ -874,6 +882,10 @@ class TPTPBackend:
 
     def _argv(self, bounds: ExecutionBounds) -> tuple[str, ...]:
         raise NotImplementedError
+
+    def _nonzero_result_statuses(self, returncode: int | None) -> frozenset[SZSStatus]:
+        """Statuses permitted by a backend's documented nonzero exit convention."""
+        return frozenset()
 
     def _tool_request(self, source: str, bounds: ExecutionBounds) -> ToolRunRequest:
         max_workspace_bytes = max(
@@ -914,6 +926,8 @@ class TPTPBackend:
         usage = _usage_from_process(process)
 
         operational_status: ResultStatus | None = None
+        szs_status: SZSStatus | None = None
+        combined_output: str | None = None
         reason = process.error or process.termination_reason
         if process.unavailable:
             operational_status = ResultStatus.UNAVAILABLE
@@ -923,16 +937,37 @@ class TPTPBackend:
         elif process.timed_out:
             operational_status = ResultStatus.TIMEOUT
             reason = reason or "ATP execution exceeded its wall-clock bound"
-        elif process.resource_exhausted or process.output_truncated:
+        elif (process.resource_exhausted or process.output_truncated
+              or process.workspace_limit_exceeded):
             operational_status = ResultStatus.ERROR
-            reason = reason or "ATP execution exceeded a resource or output bound"
+            reason = process.error or "ATP execution exceeded a resource or output bound"
+        elif (process.error or not process.workspace_cleaned
+              or process.process_tree_terminated):
+            operational_status = ResultStatus.ERROR
+            reason = process.error or "ATP execution did not complete a clean native lifecycle"
+        elif (len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
+              > request.bounds.max_output_bytes):
+            operational_status = ResultStatus.ERROR
+            reason = "ATP execution exceeded its combined output bound"
         elif process.returncode != 0:
-            operational_status = ResultStatus.ERROR
-            reason = reason or (
-                "ATP process did not report an exit status"
-                if process.returncode is None
-                else f"ATP process exited with status {process.returncode}"
-            )
+            allowed_statuses = self._nonzero_result_statuses(process.returncode)
+            if allowed_statuses:
+                # Lifecycle and byte checks above apply even to documented
+                # result exits. Parse once, before allowing any artifact callback.
+                combined_output = "\n".join(
+                    part for part in (process.stdout, process.stderr) if part
+                )
+                try:
+                    szs_status = parse_szs_status(combined_output)
+                except MalformedATPOutput:
+                    pass
+            if szs_status not in allowed_statuses:
+                operational_status = ResultStatus.ERROR
+                reason = (
+                    "ATP process did not report an exit status"
+                    if process.returncode is None
+                    else f"ATP process exited with status {process.returncode}"
+                )
 
         if operational_status is not None:
             result = _build_result(
@@ -952,11 +987,13 @@ class TPTPBackend:
                 result=result,
             )
 
-        combined_output = "\n".join(
-            part for part in (process.stdout, process.stderr) if part
-        )
+        if combined_output is None:
+            combined_output = "\n".join(
+                part for part in (process.stdout, process.stderr) if part
+            )
         try:
-            szs_status = parse_szs_status(combined_output)
+            if szs_status is None:
+                szs_status = parse_szs_status(combined_output)
         except MalformedATPOutput as error:
             message = str(error)
             result = _build_result(
@@ -1119,8 +1156,9 @@ class VampireBackend(TPTPBackend):
         return (
             self.executable,
             "{workspace}/problem.p",
-            f"--time_limit={seconds}",
-            "--output_mode=tptp",
+            "--time_limit", str(seconds),
+            "--output_mode", "szs",
+            "--proof", "tptp",
         )
 
 
@@ -1128,6 +1166,12 @@ class EProverBackend(TPTPBackend):
     """Canonical bounded adapter for E."""
 
     aliases = frozenset({"eprover", "atp.e"})
+
+    def _nonzero_result_statuses(self, returncode: int | None) -> frozenset[SZSStatus]:
+        # E's SATISFIABLE exit code is 1 for both satisfiable status variants.
+        if type(returncode) is int and returncode == 1:
+            return frozenset({SZSStatus.SATISFIABLE, SZSStatus.COUNTER_SATISFIABLE})
+        return frozenset()
 
     def __init__(
         self,

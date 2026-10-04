@@ -827,8 +827,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -892,6 +892,121 @@
       "schema_version": "logic-claim-runtime-audit-row/v1",
       "subject": {
         "provider_id": "apalache",
+        "declared_in_executable_matrix": "true"
+      },
+      "support": "bounded"
+    },
+    {
+      "authority_bearing": true,
+      "authority_ceiling": "bounded",
+      "claim_id": "provider:autohyper",
+      "evidence": [
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/hyperproperties/adapters.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "compilable",
+          "surface": "decoder"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/results.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "compilable",
+          "surface": "decoder"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/matrix.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "matrix"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "elaborated",
+          "surface": "parser"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core/elaboration.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "elaborated",
+          "surface": "parser"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/hyper.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "parsed",
+          "surface": "parser"
+        },
+        {
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
+          "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "registry"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/registry.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "registry"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/hyperproperties/adapters.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "executable",
+          "surface": "runner"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/process.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "executable",
+          "surface": "runner"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/generated_catalog.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "translatable",
+          "surface": "translator"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/translations.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "translatable",
+          "surface": "translator"
+        }
+      ],
+      "executable_claim": true,
+      "gaps": [],
+      "kind": "provider",
+      "lifecycle_stage": "executable",
+      "notes": "Independent AutoHyper engine with its own capability and execution path.",
+      "owner": "LFP2-001",
+      "schema_version": "logic-claim-runtime-audit-row/v1",
+      "subject": {
+        "provider_id": "autohyper",
         "declared_in_executable_matrix": "true"
       },
       "support": "bounded"
@@ -966,8 +1081,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1105,8 +1220,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1236,8 +1351,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1351,8 +1466,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1469,8 +1584,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1533,6 +1648,121 @@
     {
       "authority_bearing": true,
       "authority_ceiling": "bounded",
+      "claim_id": "provider:hyperltl",
+      "evidence": [
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/hyperproperties/adapters.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "compilable",
+          "surface": "decoder"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/results.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "compilable",
+          "surface": "decoder"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/matrix.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "matrix"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "elaborated",
+          "surface": "parser"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core/elaboration.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "elaborated",
+          "surface": "parser"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/hyper.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "parsed",
+          "surface": "parser"
+        },
+        {
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
+          "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "registry"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/registry.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "registry"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/hyperproperties/adapters.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "executable",
+          "surface": "runner"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/process.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "executable",
+          "surface": "runner"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/generated_catalog.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "translatable",
+          "surface": "translator"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/translations.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "translatable",
+          "surface": "translator"
+        }
+      ],
+      "executable_claim": true,
+      "gaps": [],
+      "kind": "provider",
+      "lifecycle_stage": "executable",
+      "notes": "Independent HyperLTL engine; declaration does not establish availability or evidence.",
+      "owner": "LFP2-001",
+      "schema_version": "logic-claim-runtime-audit-row/v1",
+      "subject": {
+        "provider_id": "hyperltl",
+        "declared_in_executable_matrix": "true"
+      },
+      "support": "bounded"
+    },
+    {
+      "authority_bearing": true,
+      "authority_ceiling": "bounded",
       "claim_id": "provider:hyperltl_autohyper_mchyper",
       "evidence": [
         {
@@ -1584,8 +1814,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1636,7 +1866,7 @@
       "gaps": [],
       "kind": "provider",
       "lifecycle_stage": "executable",
-      "notes": "HyperLTL AutoHyper/MCHyper lane.",
+      "notes": "Compatibility hyperproperty entry executing HyperLTL.",
       "owner": "LFP2-001",
       "schema_version": "logic-claim-runtime-audit-row/v1",
       "subject": {
@@ -1715,8 +1945,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1854,8 +2084,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -1925,6 +2155,121 @@
     },
     {
       "authority_bearing": true,
+      "authority_ceiling": "bounded",
+      "claim_id": "provider:mchyper",
+      "evidence": [
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/hyperproperties/adapters.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "compilable",
+          "surface": "decoder"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/results.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "compilable",
+          "surface": "decoder"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/conformance/matrix.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "matrix"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "elaborated",
+          "surface": "parser"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/syntax_core/elaboration.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "elaborated",
+          "surface": "parser"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/parsers/hyper.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "parsed",
+          "surface": "parser"
+        },
+        {
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
+          "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "registry"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/registry.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "declared",
+          "surface": "registry"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/hyperproperties/adapters.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "executable",
+          "surface": "runner"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/backends/process.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "executable",
+          "surface": "runner"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/generated_catalog.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "translatable",
+          "surface": "translator"
+        },
+        {
+          "disposition": "present",
+          "note": "",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/families/translations.py",
+          "schema_version": "logic-claim-runtime-evidence/v1",
+          "stage": "translatable",
+          "surface": "translator"
+        }
+      ],
+      "executable_claim": true,
+      "gaps": [],
+      "kind": "provider",
+      "lifecycle_stage": "executable",
+      "notes": "Independent MCHyper engine requiring a system model.",
+      "owner": "LFP2-001",
+      "schema_version": "logic-claim-runtime-audit-row/v1",
+      "subject": {
+        "provider_id": "mchyper",
+        "declared_in_executable_matrix": "true"
+      },
+      "support": "bounded"
+    },
+    {
+      "authority_bearing": true,
       "authority_ceiling": "over_approximation",
       "claim_id": "provider:proverif",
       "evidence": [
@@ -1977,8 +2322,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2116,8 +2461,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2247,8 +2592,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2338,8 +2683,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2440,8 +2785,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2571,8 +2916,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2702,8 +3047,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -2833,8 +3178,8 @@
           "surface": "parser"
         },
         {
-          "disposition": "present",
-          "note": "",
+          "disposition": "missing",
+          "note": "Path not present in current tree.",
           "path": "docs/architecture/IPFS_DATASETS_LOGIC_FAMILY_PARSER_PLAN.md",
           "schema_version": "logic-claim-runtime-evidence/v1",
           "stage": "declared",
@@ -3073,6 +3418,9 @@
       "proverif",
       "tamarin",
       "hyperltl_autohyper_mchyper",
+      "hyperltl",
+      "autohyper",
+      "mchyper",
       "vampire",
       "eprover",
       "hammer",
@@ -3087,7 +3435,7 @@
     ],
     "parser_catalog_interface": "LogicParserCatalog@1",
     "matrix_interface": "LogicCapabilityMatrix@1",
-    "matrix_cell_count": 867,
+    "matrix_cell_count": 1020,
     "policy": {
       "mocks_cannot_satisfy_execution": true,
       "metadata_only_cannot_satisfy_execution": true,
@@ -3101,9 +3449,9 @@
   "notes": "Current-tree audit only. Live tool availability is out of scope; executable lifecycle requires non-mock runner source evidence.",
   "schema_version": "logic-claim-runtime-audit-report/v1",
   "summary": {
-    "authority_bearing_claim_count": 17,
-    "claim_count": 34,
-    "executable_claim_count": 15,
+    "authority_bearing_claim_count": 20,
+    "claim_count": 37,
+    "executable_claim_count": 18,
     "gap_count": 2,
     "gap_kind_histogram": {
       "missing_evidence": 0,
@@ -3119,7 +3467,7 @@
       "elaborated": 15,
       "translatable": 0,
       "compilable": 1,
-      "executable": 10,
+      "executable": 13,
       "replayed": 2,
       "independently_validated": 3
     },
@@ -3127,7 +3475,7 @@
   },
   "tree_root": ".",
   "version": "1.0.0",
-  "content_digest": "sha256:65e5226d4ec1435a3db418cc31f61ede196b16983a1d756fa8dcf88a49defa97",
+  "content_digest": "sha256:def4b403f9cdbe244d2ac12377f462d00219a7b3be28cc479fb23fdd93bab2c5",
   "materialization": "ipfs_datasets_py.logic.conformance.claim_runtime_audit:build_default_audit",
   "task_id": "LFP2-001",
   "goal_id": "LFP2-G010",
