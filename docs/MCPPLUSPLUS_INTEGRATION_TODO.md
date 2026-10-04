@@ -1,8 +1,0 @@
-# MCP++ → `mcp_server` integration TODO
-
-This document is kept as a stable entrypoint for the MCP++ integration work.
-
-- Full “infinite backlog” lives in [MCPPLUSPLUS_INTEGRATION_INFINITE_TODO.md](MCPPLUSPLUS_INTEGRATION_INFINITE_TODO.md).
-- Original integration plan lives in [MCP_MCPLUSPLUS_IMPROVEMENT_PLAN.md](../ipfs_datasets_py/mcp_server/ARCHIVE/MCP_MCPLUSPLUS_IMPROVEMENT_PLAN.md).
-
-If you linked to this file previously, update bookmarks to the infinite backlog.
